@@ -1,0 +1,13 @@
+
+{
+  "name": "discord-python-executor-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot to execute Python code",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "discord.js": "^13.1.0"
+  }
+}
