@@ -1,39 +1,20 @@
 
-const { Client, Intents } = require('discord.js');
-const express = require('express');
-const app = express();
-const port = 3000;
+const fs = require('node:fs');
+const { Client, Collection, Intents } = require('discord.js');
+
+const token = process.env.DISCORD_TOKEN;
+const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+client.commands = new Collection();
 
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
+const commandFolders = fs.readdirSync('./commands');
+for (const folder of commandFolders) {
+  const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
+  for (const file of commandFiles) {
+    const command = require(`./commands/${folder}/${file}`);
+    client.commands.set(command.data.name, command);
+  }
+}
 
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isCommand() || interaction.commandName !== 'python') return;
-
-  const pythonCode = interaction.options.getString('code');
-  if (!pythonCode) return;
-
-  exec(`python -c "${pythonCode}"`, (error, stdout, stderr) => {
-    if (error) {
-      interaction.reply(`Error executing Python code: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      interaction.reply(`Python Error: ${stderr}`);
-      return;
-    }
-    interaction.reply(`Python Output: ${stdout}`);
-  });
-});
-
-app.post('/webhook', (req, res) => {
-  // Handle webhook here
-});
-
-client.login(process.env.DISCORD_TOKEN);
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
-});
+// Rest of your bot code here
