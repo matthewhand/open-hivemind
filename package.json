@@ -2,12 +2,13 @@
   "name": "discord-python-executor-bot",
   "version": "1.0.0",
   "description": "A Discord bot to execute Python code",
-  "main": "main.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^13.1.0",
+    "@discordjs/rest": "^0.1.0-canary.0",
     "express": "^4.17.1"
   }
 }
