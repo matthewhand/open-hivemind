@@ -1,6 +1,5 @@
 const { Client, Intents } = require('discord.js');
-
-
+const { REST } = require('@discordjs/rest');
 const { exec } = require('child_process');
 
 const clientId = process.env.CLIENT_ID; // Assuming CLIENT_ID is the correct environment variable
