@@ -1,4 +1,6 @@
-const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { Client, Intents } = require('discord.js');
+
+
 const { exec } = require('child_process');
 
 const clientId = process.env.CLIENT_ID; // Assuming CLIENT_ID is the correct environment variable
@@ -6,7 +8,7 @@ const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 const commands = [{
   name: 'python',
