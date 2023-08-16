@@ -1,20 +1,69 @@
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { exec } = require('child_process');
 
-const fs = require('node:fs');
-const { Client, Collection, Intents } = require('discord.js');
-
+const clientId = process.env.CLIENT_ID; // Assuming CLIENT_ID is the correct environment variable
 const token = process.env.DISCORD_TOKEN;
+const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
-client.commands = new Collection();
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-const commandFolders = fs.readdirSync('./commands');
-for (const folder of commandFolders) {
-  const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
-  for (const file of commandFiles) {
-    const command = require(`./commands/${folder}/${file}`);
-    client.commands.set(command.data.name, command);
+const commands = [{
+  name: 'python',
+  description: 'Execute Python code!',
+  options: [{
+    name: 'code',
+    type: 'STRING',
+    description: 'The Python code to execute',
+    required: true,
+  }],
+}];
+
+const rest = new REST({ version: '9' }).setToken(token);
+
+(async () => {
+  try {
+    console.log('Started refreshing application (/) commands.');
+
+    await rest.put(
+      Routes.applicationGuildCommands(clientId, guildId),
+      { body: commands },
+    );
+
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
   }
-}
+})();
 
-// Rest of your bot code here
+client.once('ready', () => {
+  console.log('Ready!');
+});
+
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  const { commandName, user } = interaction;
+
+  if (commandName === 'python') {
+    if (!allowedUsers.includes(user.id)) {
+      return interaction.reply({ content: 'You are not allowed to execute this command.', ephemeral: true });
+    }
+
+    const code = interaction.options.getString('code');
+
+    exec(`python -c "${code}"`, (error, stdout, stderr) => {
+      let response = '';
+
+      if (error) {
+        response = `Error executing code: ${error.message}`;
+      } else {
+        response = `Output:\n${stdout}\nErrors:\n${stderr}`;
+      }
+
+      interaction.reply({ content: response, ephemeral: true });
+    });
+  }
+});
+
+client.login(token);
