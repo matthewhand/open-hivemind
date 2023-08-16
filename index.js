@@ -1,3 +1,4 @@
+const { Routes } = require('@discordjs/rest');
 const { Client, Intents } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { exec } = require('child_process');
