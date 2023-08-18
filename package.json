@@ -1,1 +1,14 @@
-CnsKICAibmFtZSI6ICJkaXNjb3JkLXB5dGhvbi1leGVjdXRvci1ib3QiLAogICJ2ZXJzaW9uIjogIjEuMC4wIiwKICAiZGVzY3JpcHRpb24iOiAiQSBEaXNjb3JkIGJvdCBmb3IgZXhlY3V0aW5nIFB5dGhvbiBjb2RlIiwKICAibWFpbiI6ICJpbmRleC50cyIsCiAgInNjcmlwdHMiOiB7CiAgICAic3RhcnQiOiAidHMtbm9kZSBzcmMvaW5kZXgudHMiCiAgfSwKICAiZGVwZW5kZW5jaWVzIjogewogICAgImRpc2NvcmQuanMiOiAiXjEzLjEuMCIsCiAgICAiQGRpc2NvcmRqcy9yZXN0IjogIl4wLjEuMC1jYW5hcnkuMCIsCiAgICAiZGlzY29yZC1hcGktdHlwZXMiOiAiXjAuMjUuMiIsCiAgICAiZG90ZW52IjogIl4xMC4wLjAiLAogICAgInRzLW5vZGUiOiAiXjEwLjIuMSIKICB9Cn0K
+{
+  "name": "discord-python-executor-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot to execute Python code",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^13.1.0",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "express": "^4.17.1"
+  }
+}
