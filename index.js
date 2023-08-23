@@ -55,12 +55,16 @@ client.on('interactionCreate', async interaction => {
 
 	console.log(`User ${user} executed command ${commandName}`);
 
-	// Find the corresponding execute function and call it
-	const commandExecute = commandsMap.get(commandName);
-	if (commandExecute) {
-		await commandExecute(interaction);
+	const commandExecutor = commandExecutors[commandName];
+	if (commandExecutor) {
+		try {
+			await commandExecutor(interaction);
+		} catch (error) {
+			console.error(`Error executing command ${commandName}: ${error}`);
+			await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
+		}
 	} else {
-		console.log(`[ERROR] Command ${commandName} not found.`);
+		console.log(`[WARNING] No executor found for command ${commandName}`);
 	}
 });
 
