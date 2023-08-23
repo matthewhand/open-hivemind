@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const { registerCommands, handleCommands } = require('./commands');
+const { registerCommands, handleCommands, commandExecutors } = require('./commands');
 const { startWebhookServer } = require('./webhook');
 
 const clientId = process.env.CLIENT_ID;
@@ -11,7 +11,7 @@ registerCommands(clientId, token, guildId);
 
 // Handle Discord commands
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-handleCommands(client, commandExecutors);
+handleCommands(client);
 client.login(token);
 
 // Start webhook server
