@@ -21,7 +21,18 @@ module.exports = {
 
     axios.get(fullUrl)
       .then((response) => {
-        interaction.reply(`Query result: ${response.data}`);
+        // Check if the response data is JSON
+        if (typeof response.data === 'object' && response.data !== null) {
+          // Return the value for the key 'answer' if it exists
+          const answer = response.data.answer;
+          if (answer) {
+            interaction.reply(`Query result: ${answer}`);
+          } else {
+            interaction.reply(`Query result does not contain the key 'answer'`);
+          }
+        } else {
+          interaction.reply(`Query result: ${response.data}`);
+        }
       })
       .catch((error) => {
         interaction.reply(`Error querying database: ${error.message}`);
