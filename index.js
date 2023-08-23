@@ -74,6 +74,8 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(token);
+logger.info('Bot started successfully.');
+
 
 // Start webhook server
 const port = process.env.PORT || 3000;
