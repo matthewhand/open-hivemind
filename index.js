@@ -1,5 +1,6 @@
 require('dotenv').config(); // Load environment variables from .env file
-const { Client, CommandInteraction, Routes } = require('discord.js');
+const { Client, CommandInteraction } = require('discord.js');
+const { Routes } = require('@discord-api-types/v9');
 const { REST } = require('@discordjs/rest');
 const axios = require('axios');
 const fs = require('fs');
