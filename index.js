@@ -16,10 +16,10 @@ const commands = [];
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
-for (const folder of commandFolders) {
-	const commandsPath = path.join(foldersPath, folder);
-	if (fs.statSync(commandsPath).isDirectory()) { // Check if it's a directory
-		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+// for (const folder of commandFolders) {
+	// const commandsPath = path.join(foldersPath, folder);
+	// if (fs.statSync(commandsPath).isDirectory()) { // Check if it's a directory
+		const commandFiles = fs.readdirSync(commandFolders).filter(file => file.endsWith('.js'));
 		for (const file of commandFiles) {
 			const filePath = path.join(commandsPath, file);
 			const command = require(filePath);
@@ -29,8 +29,8 @@ for (const folder of commandFolders) {
 				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 			}
 		}
-	}
-}
+	// }
+// }
 
 
 // Construct and prepare an instance of the REST module
