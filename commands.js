@@ -42,7 +42,7 @@ const handleCommands = (client) => {
 		const commandExecutor = commandExecutors[commandName];
 		if (commandExecutor) {
 			try {
-				await interaction.deferReply(); // Acknowledge the command immediately
+				
 				await commandExecutor(interaction);
 			} catch (error) {
 				console.error(`Error executing command ${commandName}: ${error}`);
