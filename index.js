@@ -32,7 +32,7 @@ client.on('messageCreate', async (message) => {
     }
 
     // Extract all Python code blocks from the message
-    const codeBlocks = message.content.match(/```python\n?([\s\S]+?)```/g);
+    const codeBlocks = message.content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
     if (!codeBlocks) {
       console.log('No Python code blocks found'); // Log if no code blocks are found
       return;
@@ -42,7 +42,7 @@ client.on('messageCreate', async (message) => {
 
     codeBlocks.forEach((codeBlock) => {
       // Extract the Python code from the code block
-      const code = codeBlock.replace(/```python\n?|```/g, '');
+      const code = codeBlock.replace(/\`\`\`python\n?|\`\`\`/g, '');
       const escapedCode = code.replace(/"/g, '\\"'); // Escape double quotes
 
       console.log(`Executing Python code: ${escapedCode}`); // Print the code argument
