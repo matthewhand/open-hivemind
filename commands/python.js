@@ -12,8 +12,10 @@ module.exports = {
 				.setRequired(true)
 		),
 	async execute(interaction) {
+		await interaction.deferReply(); // Acknowledge the command immediately
 		// Check if the user is in the allowed users list
 		const userId = interaction.user.id;
+		
 		if (!allowedUsers.includes(userId)) {
 			return interaction.followUp({ content: 'You do not have permission to execute this command.', ephemeral: true });
 		}
