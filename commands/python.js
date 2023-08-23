@@ -16,17 +16,20 @@ module.exports = {
 		// Check if the user is in the allowed users list
 		const userId = interaction.user.id;
 
-			const guild = interaction.guild; // Get the guild (server) where the command was executed
-	const member = interaction.member; // Get the member who executed the command
+		const guild = interaction.guild; // Get the guild (server) where the command was executed
+		const member = interaction.member; // Get the member who executed the command
 
-	// Check if the member is the owner of the guild
-	if ((guild.ownerId !== member.id) && (!allowedUsers.includes(userId))) {
+		// Check if the member is the owner of the guild
+		if ((guild.ownerId !== member.id) && (!allowedUsers.includes(userId))) {
 			return interaction.followUp({ content: 'You do not have permission to execute this command.', ephemeral: true });
 		}
 
 		const code = interaction.options.getString('code');
+		const escapedCode = code.replace(/"/g, '\\"'); // Escape double quotes
 
-		exec(`python -c "${code}"`, (error, stdout, stderr) => {
+		console.log(`Executing Python code: ${escapedCode}`); // Print the code argument
+
+		exec(`python -c "${escapedCode}"`, (error, stdout, stderr) => {
 			if (error) {
 				interaction.followUp(`Error executing code: ${error.message}`);
 				return;
