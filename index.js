@@ -1,20 +1,22 @@
 require('dotenv').config(); // Load environment variables from .env file
 const { Client, CommandInteraction, Routes } = require('discord.js');
-const { REST } = require('@discordjs/rest'); // Corrected REST import
-const axios = require('axios'); // You'll need to install this package
-const pythonCommand = require('./commands/python_command/python');
-const queryCommand = require('./commands/query_command/query');
+const { REST } = require('@discordjs/rest');
+const axios = require('axios');
+const fs = require('fs');
 
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 
-const commands = [
-  pythonCommand.data,
-  queryCommand.data,
-];
+// Dynamically load commands from the commands directory
+const commands = [];
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+for (const file of commandFiles) {
+  const command = require(`./commands/${file}`);
+  commands.push(command.data);
+}
 
-const rest = new REST({ version: '9' }).setToken(token); // Corrected REST instantiation
+const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {
   try {
@@ -37,8 +39,8 @@ client.on('interactionCreate', async (interaction) => {
 
   const { commandName } = interaction;
 
-  // Dynamic command handling
-  const command = { python: pythonCommand, query: queryCommand }[commandName];
+  // Dynamically execute the corresponding command
+  const command = client.commands.get(commandName);
   if (command) {
     await command.execute(interaction);
   }
