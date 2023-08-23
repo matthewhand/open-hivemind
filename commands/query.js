@@ -23,16 +23,16 @@ module.exports = {
 					// Return the value for the key 'answer' if it exists
 					const answer = response.data.answer;
 					if (answer) {
-						interaction.reply(`Query result: ${answer}`);
+						interaction.followUp(`Query result: ${answer}`);
 					} else {
-						interaction.reply(`Query result does not contain the key 'answer'`);
+						interaction.followUp(`Query result does not contain the key 'answer'`);
 					}
 				} else {
-					interaction.reply(`Query result: ${response.data}`);
+					interaction.followUp(`Query result: ${response.data}`);
 				}
 			})
 			.catch((error) => {
-				interaction.reply(`Error querying database: ${error.message}`);
+				interaction.followUp(`Error querying database: ${error.message}`);
 			});
 	},
 };
