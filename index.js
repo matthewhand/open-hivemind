@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const commands = [];
+const commandsMap = new Map(); // Map to store command name and execution function
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -17,7 +18,8 @@ for (const file of commandFiles) {
 	const filePath = path.join(commandsPath, file);
 	const command = require(filePath);
 	if ('data' in command && 'execute' in command) {
-		commands.push(command.data);
+		commands.push(command.data.toJSON());
+		commandsMap.set(command.data.name, command.execute); // Store the execute function in the map
 	} else {
 		console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 	}
@@ -45,15 +47,21 @@ const rest = new REST({ version: '9' }).setToken(token);
 const { Client, GatewayIntentBits } = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.on('interactionCreate', interaction => {
-  if (!interaction.isCommand()) return;
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isCommand()) return;
 
-  const { commandName } = interaction;
-  const user = interaction.user.tag;
+	const { commandName } = interaction;
+	const user = interaction.user.tag;
 
-  console.log(`User ${user} executed command ${commandName}`);
-  
-  // Your code to handle the command execution goes here
+	console.log(`User ${user} executed command ${commandName}`);
+
+	// Find the corresponding execute function and call it
+	const commandExecute = commandsMap.get(commandName);
+	if (commandExecute) {
+		await commandExecute(interaction);
+	} else {
+		console.log(`[ERROR] Command ${commandName} not found.`);
+	}
 });
 
 client.login(token);
