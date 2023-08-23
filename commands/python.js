@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+import { SlashCommandBuilder } from '@discordjs/builders';
 const { exec } = require('child_process');
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
