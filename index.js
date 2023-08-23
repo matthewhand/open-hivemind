@@ -1,5 +1,7 @@
 // derived from https://discordjs.guide/creating-your-bot/slash-commands.html
-const { REST, Routes } = require('discord.js');
+// const { REST, Routes } = require('discord.js');
+const { Routes } = require('discord-api-types/v9');
+const { REST } = require('@discordjs/rest');
 //const { clientId, guildId, token } = require('./config.json');
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
