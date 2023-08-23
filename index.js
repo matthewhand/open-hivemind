@@ -1,3 +1,4 @@
+// derived from https://discordjs.guide/creating-your-bot/slash-commands.html
 const { REST, Routes } = require('discord.js');
 //const { clientId, guildId, token } = require('./config.json');
 const clientId = process.env.CLIENT_ID;
@@ -11,7 +12,6 @@ const path = require('node:path');
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
 const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
