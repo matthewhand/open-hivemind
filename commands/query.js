@@ -25,12 +25,12 @@ async execute(interaction) {
 				// Return the value for the key 'answer' if it exists
 				const answer = response.data.answer;
 				if (answer) {
-					interaction.followUp(`Query result: ${answer}`);
+					interaction.followUp(`Query: ${queryString}\nQuery result: ${answer}`);
 				} else {
-					interaction.followUp(`Query result does not contain the key 'answer'`);
+					interaction.followUp(`Query: ${queryString}\nQuery result does not contain the key 'answer'`);
 				}
 			} else {
-				interaction.followUp(`Query result: ${response.data}`);
+				interaction.followUp(`Query: ${queryString}\nQuery result: ${response.data}`);
 			}
 		})
 		.catch((error) => {
