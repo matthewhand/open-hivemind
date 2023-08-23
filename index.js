@@ -16,8 +16,8 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 handleCommands(client);
 
 client.on('messageCreate', async (message) => {
-  // Check if the message is from a guild and contains a Python code block
-  if (message.guild && message.content.includes('```python')) {
+  // Check if the message is from a guild and starts with 'pybot'
+  if (message.guild && message.content.toLowerCase().startsWith('pybot')) {
     const userId = message.author.id;
     const guild = message.guild;
     const member = message.member;
@@ -27,30 +27,32 @@ client.on('messageCreate', async (message) => {
       return message.reply('You do not have permission to execute this command.');
     }
 
-    // Extract the Python code from the code block
-    const codeMatch = message.content.match(/```python\n([\s\S]+?)```/);
-    if (!codeMatch) return;
+    // Extract all Python code blocks from the message
+    const codeBlocks = message.content.match(/```python\n([\s\S]+?)```/g);
+    if (!codeBlocks) return;
 
-    const code = codeMatch[1];
-    const escapedCode = code.replace(/"/g, '\\"'); // Escape double quotes
+    codeBlocks.forEach((codeBlock) => {
+      // Extract the Python code from the code block
+      const code = codeBlock.replace(/```python\n|```/g, '');
+      const escapedCode = code.replace(/"/g, '\\"'); // Escape double quotes
 
-    console.log(`Executing Python code: ${escapedCode}`); // Print the code argument
+      console.log(`Executing Python code: ${escapedCode}`); // Print the code argument
 
-    // Execute the Python code
-    exec(`python -c "${escapedCode}"`, (error, stdout, stderr) => {
-      if (error) {
-        message.reply(`Error executing code: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        message.reply(`Stderr: ${stderr}`);
-        return;
-      }
-      message.reply(`Stdout: ${stdout}`);
+      // Execute the Python code
+      exec(`python -c "${escapedCode}"`, (error, stdout, stderr) => {
+        if (error) {
+          message.reply(`Error executing code: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          message.reply(`Stderr: ${stderr}`);
+          return;
+        }
+        message.reply(`Stdout: ${stdout}`);
+      });
     });
   }
 });
-
 
 client.login(token);
 
