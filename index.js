@@ -52,23 +52,23 @@ const rest = new REST().setToken(token);
 	}
 })();
 
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
+// client.on('interactionCreate', async (interaction) => {
+//   if (!interaction.isCommand()) return;
 
-  // Get the user ID of the interaction
-  const userId = interaction.user.id;
+//   // Get the user ID of the interaction
+//   const userId = interaction.user.id;
 
-  // Check if the user is in the allowed users list
-  if (!allowedUsers.includes(userId)) {
-    console.log(`User ${userId} is not allowed to execute this command.`);
-    return interaction.reply({ content: 'You do not have permission to execute this command.', ephemeral: true });
-  }
+//   // Check if the user is in the allowed users list
+//   if (!allowedUsers.includes(userId)) {
+//     console.log(`User ${userId} is not allowed to execute this command.`);
+//     return interaction.reply({ content: 'You do not have permission to execute this command.', ephemeral: true });
+//   }
 
-  // Continue with command execution
-  const { commandName } = interaction;
-  const command = client.commands.get(commandName);
-  if (command) {
-    await command.execute(interaction);
-  }
-});
+//   // Continue with command execution
+//   const { commandName } = interaction;
+//   const command = client.commands.get(commandName);
+//   if (command) {
+//     await command.execute(interaction);
+//   }
+// });
 
