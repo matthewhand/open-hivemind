@@ -1,3 +1,5 @@
+// register the commands
+
 const { Routes } = require('discord-api-types/v9');
 const { REST } = require('@discordjs/rest');
 const clientId = process.env.CLIENT_ID;
@@ -37,3 +39,21 @@ const rest = new REST({ version: '9' }).setToken(token);
 		console.error(error);
 	}
 })();
+
+// handle the commands
+
+const { Client, GatewayIntentBits } = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.on('interactionCreate', interaction => {
+  if (!interaction.isCommand()) return;
+
+  const { commandName } = interaction;
+  const user = interaction.user.tag;
+
+  console.log(`User ${user} executed command ${commandName}`);
+  
+  // Your code to handle the command execution goes here
+});
+
+client.login(token);
