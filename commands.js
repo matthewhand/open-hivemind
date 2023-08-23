@@ -42,16 +42,18 @@ const handleCommands = (client) => {
 		const commandExecutor = commandExecutors[commandName];
 		if (commandExecutor) {
 			try {
+				await interaction.deferReply(); // Acknowledge the command immediately
 				await commandExecutor(interaction);
 			} catch (error) {
 				console.error(`Error executing command ${commandName}: ${error}`);
-				await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
+				await interaction.followUp({ content: 'An error occurred while executing this command.', ephemeral: true });
 			}
 		} else {
 			console.log(`[WARNING] No executor found for command ${commandName}`);
 		}
 	});
 };
+
 
 module.exports = {
 	registerCommands,
