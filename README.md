@@ -103,3 +103,19 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+
+## Docker Support
+To run the bot using Docker, simply build the Docker image using the provided Dockerfile.
+```
+docker build -t discord-python-executor-bot .
+```
+Then run the Docker container:
+```
+docker run -e DISCORD_TOKEN=<Your-Token> -e GUILD_ID=<Your-Guild-ID> -e CLIENT_ID=<Your-Client-ID> discord-python-executor-bot
+```
+Replace `<Your-Token>`, `<Your-Guild-ID>`, and `<Your-Client-ID>` with the appropriate values from the Discord Developer Portal.
+The Guild ID (server ID) can be obtained by right-clicking on the server.
+You can also specify the following environment variables:
+- `ALLOWED_USERS`: Comma-separated list of user IDs that are allowed to execute code.
+- `PORT`: The port number on which the bot will listen for incoming connections.
+For more details, refer to the [Dockerfile](Dockerfile) in the repository.
