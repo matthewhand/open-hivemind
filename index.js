@@ -1,9 +1,10 @@
+require('dotenv').config(); // Load environment variables from .env file
 const { Routes } = require('@discordjs/rest');
 const { Client, Intents } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { exec } = require('child_process');
 
-const clientId = process.env.CLIENT_ID; // Assuming CLIENT_ID is the correct environment variable
+const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
