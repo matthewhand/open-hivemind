@@ -17,9 +17,9 @@ handleCommands(client);
 client.on('messageCreate', async (message) => {
   console.log('Message received:', message.content); // Log the received message
 
-  // Check if the message is from a guild and starts with 'pybot'
-  if (message.guild && message.content.toLowerCase().startsWith('pybot')) {
-    console.log('Message starts with "pybot"'); // Log that the message starts with "pybot"
+  // Check if the message is from a guild and contains 'pybot'
+  if (message.guild && message.content.toLowerCase().includes('pybot')) {
+    console.log('Message contains "pybot"'); // Log that the message contains "pybot"
 
     const userId = message.author.id;
     const guild = message.guild;
@@ -61,10 +61,9 @@ client.on('messageCreate', async (message) => {
       });
     });
   } else {
-    console.log('Message does not start with "pybot"'); // Log if the message does not start with "pybot"
+    console.log('Message does not contain "pybot"'); // Log if the message does not contain "pybot"
   }
 });
-
 
 client.login(token);
 
