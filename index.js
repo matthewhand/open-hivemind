@@ -3,6 +3,7 @@ const { REST, Routes } = require('discord.js');
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
+const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
 const fs = require('node:fs');
 const path = require('node:path');
