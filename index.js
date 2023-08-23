@@ -26,8 +26,12 @@ const rest = new REST({ version: '9' }).setToken(token);
     console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
     console.error(error);
+    if (error.code === 50001) { // You can specify the error code related to token issues
+      console.warn('Token issue detected. Token value:', token);
+    }
   }
 })();
+
 
 const client = new Client({ intents: [] });
 
