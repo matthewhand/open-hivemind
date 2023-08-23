@@ -4,6 +4,25 @@ const fs = require('fs');
 const path = require('path');
 
 const commands = [];
+
+const winston = require('winston');
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} ${level}: ${message}`;
+    })
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'bot.log' })
+  ]
+});
+logger.info('Commands.js file loaded.');
+
+logger.info("Commands initialized.");
 const commandExecutors = {};
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
