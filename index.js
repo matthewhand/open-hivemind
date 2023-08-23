@@ -17,6 +17,8 @@ for (const file of commandFiles) {
   commands.push(command.data);
 }
 
+console.log(`Loaded ${commands.length} commands.`); // Output the number of commands loaded
+
 const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {
