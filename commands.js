@@ -56,4 +56,5 @@ const handleCommands = (client) => {
 module.exports = {
 	registerCommands,
 	handleCommands,
+	commandExecutors
 };
