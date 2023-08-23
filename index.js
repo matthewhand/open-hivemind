@@ -1,3 +1,19 @@
+const { Client, GatewayIntentBits } = require('discord.js');
+const { exec } = require('child_process');
+const { registerCommands, handleCommands, commandExecutors } = require('./commands');
+const { startWebhookServer } = require('./webhook');
+
+const clientId = process.env.CLIENT_ID;
+const token = process.env.DISCORD_TOKEN;
+const guildId = process.env.GUILD_ID;
+const allowedUsers = process.env.ALLOWED_USERS.split(',');
+
+// Register Discord commands
+registerCommands(clientId, token, guildId);
+
+// Handle Discord commands
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent] });
+handleCommands(client);
 client.on('messageCreate', async (message) => {
   console.log('Message received:', message.content); // Log the received message
 
@@ -48,3 +64,10 @@ client.on('messageCreate', async (message) => {
     console.log('Message does not start with "pybot"'); // Log if the message does not start with "pybot"
   }
 });
+
+
+client.login(token);
+
+// Start webhook server
+const port = process.env.PORT || 3000;
+startWebhookServer(port);
