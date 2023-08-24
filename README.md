@@ -32,21 +32,16 @@ A Discord bot that allows users to execute Python code within a Discord server. 
 
 Users can execute Python code by sending a message in the following format:
 
-
-```
-
+````
 pybot
 
-...
-
-\`\`\`python
+```python
 
 import datetime
 
 print("Hello from Discord Bot! Current date and time:", datetime.datetime.now())
-\`\`\`
 ```
-
+````
 
 The bot will execute the code and respond with the output.
 
