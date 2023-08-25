@@ -9,7 +9,7 @@ const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
-const logger = winston.createLogger({
+const debugMode = process.env.DEBUG === 'true';\nconst logLevel = debugMode ? 'debug' : 'info';\nconst logger = winston.createLogger({\n  level: logLevel,\n  format: winston.format.json(),\n  transports: [\n    new winston.transports.Console({ format: winston.format.simple() }),\n  ],\n});\n
   level: 'info',
   format: winston.format.json(),
   transports: [
@@ -25,7 +25,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 handleCommands(client);
 client.on('messageCreate', async (message) => {
   try {
-    logger.info('Message received:', message.content);
+    logger.debug('Received message:', message.content);\nlogger.info('Message received:', message.content);
 
     if (message.guild && message.content.toLowerCase().includes('pybot')) {
       logger.info('Message contains "pybot"');
