@@ -9,13 +9,16 @@ const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 
-const debugMode = process.env.DEBUG === 'true';\nconst logLevel = debugMode ? 'debug' : 'info';\nconst logger = winston.createLogger({\n  level: logLevel,\n  format: winston.format.json(),\n  transports: [\n    new winston.transports.Console({ format: winston.format.simple() }),\n  ],\n});\n
-  level: 'info',
+const debugMode = process.env.DEBUG === 'true';
+const logLevel = debugMode ? 'debug' : 'info';
+const logger = winston.createLogger({
+  level: logLevel,
   format: winston.format.json(),
   transports: [
     new winston.transports.Console({ format: winston.format.simple() }),
   ],
 });
+
 
 // Register Discord commands
 registerCommands(clientId, token, guildId);
