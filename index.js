@@ -28,7 +28,8 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 handleCommands(client);
 client.on('messageCreate', async (message) => {
   try {
-    logger.debug('Received message:', message.content);\nlogger.info('Message received:', message.content);
+    logger.debug('Received message:', message.content);
+    logger.info('Message received:', message.content);
 
     if (message.guild && message.content.toLowerCase().includes('pybot')) {
       logger.info('Message contains "pybot"');
