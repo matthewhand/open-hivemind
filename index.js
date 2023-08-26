@@ -62,7 +62,10 @@ client.on('messageCreate', async (message) => {
         });
       });
     } else {
-      logger.info('Message does not contain "pybot"');
+      // New code for handling other messages
+      if (message.content.toLowerCase() === 'ping') {
+        message.reply('Pong!');
+      }
     }
   } catch (error) {
     logger.error('An error occurred:', error);
