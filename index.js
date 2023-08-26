@@ -29,8 +29,8 @@ logger.info('Bot started successfully.');
 client.on('messageCreate', async (message) => {
   try {
     if (!message.content && message.interaction) {
-      logger.debug('Received message:', message.interaction.content);
-      logger.info('Message received:', message.interaction.content);
+      logger.debug('Received message (interaction):', message.interaction.content);
+      logger.info('Message received (interaction):', message.interaction.content);
     } else {
       logger.debug('Received message:', message.content);
       logger.info('Message received:', message.content);
