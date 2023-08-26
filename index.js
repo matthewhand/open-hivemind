@@ -14,7 +14,7 @@ const allowedUsers = process.env.ALLOWED_USERS.split(',');
 registerCommands(clientId, token, guildId);
 
 // Handle Discord commands
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 handleCommands(client);
 
 // Start Discord client
@@ -78,5 +78,5 @@ client.on('messageCreate', async (message) => {
 });
 
 // Start webhook server
-// const port = process.env.PORT || 3000;
-// startWebhookServer(port);
+const port = process.env.PORT || 3000;
+startWebhookServer(port);
