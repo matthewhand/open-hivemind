@@ -31,10 +31,9 @@ To execute Python code, send a message formatted as follows:
 ```
 pybot
 
-\`\`\`python
-
+```python
 print('Hello, world!')
-\`\`\`
+```
 ```
 
 
