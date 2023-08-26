@@ -51,6 +51,11 @@ The bot will execute the code and respond with the output.
 
 The bot uses [Winston](https://github.com/winstonjs/winston) for logging. You can configure the logging level and format as needed.
 
+## Monitoring
+
+
+The http endpoint returns HTTP/200 for /health.
+
 
 ## Docker Support
 To run the bot using Docker, simply build the Docker image using the provided Dockerfile.
