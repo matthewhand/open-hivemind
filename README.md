@@ -22,7 +22,7 @@ A Discord bot that allows users to execute Python code within a Discord server. 
 
 2. Install the required dependencies using `npm install`.
 
-3. Configure the environment variables as described in the `.env.example` file.
+3. Configure the environment variables as described in the `.env.sample` file.
 
 4. Start the bot using `npm start`.
 
