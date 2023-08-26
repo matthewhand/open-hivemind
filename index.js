@@ -1,9 +1,9 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const { exec } = require('child_process');
-const { registerCommands, handleCommands, commandExecutors } = require('./commands');
+const { registerCommands, handleCommands } = require('./commands');
 const { startWebhookServer } = require('./webhook');
 const logger = require('./logger');
-const fs = require('fs')
+const fs = require('fs');
 
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
@@ -21,12 +21,16 @@ handleCommands(client);
 client.login(token);
 logger.info('Bot started successfully.');
 
-
 // Handle Discord messages
 client.on('messageCreate', async (message) => {
   try {
-    logger.debug('Received message:', message.content);
-    logger.info('Message received:', message.content);
+    if (!message.content && message.interaction) {
+      logger.debug('Received message:', message.interaction.content);
+      logger.info('Message received:', message.interaction.content);
+    } else {
+      logger.debug('Received message:', message.content);
+      logger.info('Message received:', message.content);
+    }
 
     if (message.guild && message.content.toLowerCase().includes('pybot')) {
       logger.info('Message contains "pybot"');
