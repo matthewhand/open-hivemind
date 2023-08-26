@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const { exec } = require('child_process');
 const { registerCommands, handleCommands, commandExecutors } = require('./commands');
 const { startWebhookServer } = require('./webhook');
-const logger = require('./logger');  // Import the logger
+const logger = require('./logger');
 const fs = require('fs')
 
 const clientId = process.env.CLIENT_ID;
@@ -16,6 +16,11 @@ registerCommands(clientId, token, guildId);
 // Handle Discord commands
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent] });
 handleCommands(client);
+
+// Start Discord client
+client.login(token);
+logger.info('Bot started successfully.');
+
 
 // Handle Discord messages
 client.on('messageCreate', async (message) => {
@@ -71,9 +76,6 @@ client.on('messageCreate', async (message) => {
     logger.error('An error occurred:', error);
   }
 });
-
-client.login(token);
-logger.info('Bot started successfully.');
 
 // Start webhook server
 const port = process.env.PORT || 3000;
