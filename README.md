@@ -31,9 +31,10 @@ To execute Python code, send a message formatted as follows:
 ```
 pybot
 
-```python
+\`\`\`python
 
 print('Hello, world!')
+\`\`\`
 ```
 
 
@@ -41,7 +42,7 @@ The bot will respond with the output.
 
 ## Monitoring
 
-The `/health` endpoint returns HTTP/200 for monitoring.
+The `/health` and `/uptime` endpoints return HTTP/200 for monitoring.
 
 ## Docker Support
 
