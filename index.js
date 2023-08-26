@@ -78,5 +78,5 @@ client.on('messageCreate', async (message) => {
 });
 
 // Start webhook server
-const port = process.env.PORT || 3000;
-startWebhookServer(port);
+// const port = process.env.PORT || 3000;
+// startWebhookServer(port);
