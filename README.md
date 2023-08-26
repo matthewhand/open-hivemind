@@ -28,13 +28,13 @@ A Discord bot that executes Python code in a secure and controlled environment. 
 To execute Python code, send a message formatted as follows:
 
 
-```
+````
 pybot
 
 ```python
 print('Hello, world!')
 ```
-```
+````
 
 
 The bot will respond with the output.
