@@ -10,6 +10,12 @@ const startWebhookServer = (port) => {
 		res.sendStatus(200);
 	});
 
+	app.get('/health', (req, res) => {
+		// Handle incoming webhook
+		console.log('Received health:', req.body);
+		res.sendStatus(200);
+	});
+
 	app.listen(port, () => {
 		console.log(`HTTP server listening at http://localhost:${port}`);
 	});
