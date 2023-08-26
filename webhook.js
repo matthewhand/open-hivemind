@@ -12,7 +12,7 @@ const startWebhookServer = (port) => {
 
 	app.get('/health', (req, res) => {
 		// Handle incoming webhook
-		console.log('Received health:', req.body);
+		console.debug('Received health probe');
 		res.sendStatus(200);
 	});
 
