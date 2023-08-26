@@ -19,6 +19,14 @@ const logger = winston.createLogger({
   ],
 });
 
+const logsDir = './logs';
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
+// Additional file transport for logging
+logger.add(new winston.transports.File({ filename: './logs/bot.log' }));
+
 // Register Discord commands
 registerCommands(clientId, token, guildId);
 
