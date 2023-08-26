@@ -20,7 +20,7 @@ A Discord bot that executes Python code in a secure and controlled environment. 
 - `DISCORD_TOKEN`: Your Discord bot token.
 - `GUILD_ID`: The ID of your Discord server.
 - `CLIENT_ID`: Your Discord client ID.
-- `ALLOWED_USERS`: Comma-separated list of user IDs allowed to execute code.
+- `ALLOWED_USERS`: Comma-separated list of user IDs allowed to execute code (server owner allowed by default).
 - `PORT`: Port for the bot's web server (default is 3000).
 
 ## Usage
