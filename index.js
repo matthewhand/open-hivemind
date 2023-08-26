@@ -14,7 +14,11 @@ const allowedUsers = process.env.ALLOWED_USERS.split(',');
 registerCommands(clientId, token, guildId);
 
 // Handle Discord commands
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [
+  GatewayIntentBits.Guilds, 
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.MessageContent
+] });
 handleCommands(client);
 
 // Start Discord client
