@@ -2,30 +2,12 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const { exec } = require('child_process');
 const { registerCommands, handleCommands, commandExecutors } = require('./commands');
 const { startWebhookServer } = require('./webhook');
-const winston = require('winston');
+const logger = require('./logger');  // Import the logger
 
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
-
-const debugMode = process.env.DEBUG === 'true';
-const logLevel = debugMode ? 'debug' : 'info';
-const logger = winston.createLogger({
-  level: logLevel,
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.Console({ format: winston.format.simple() }),
-  ],
-});
-
-const logsDir = './logs';
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
-}
-
-// Additional file transport for logging
-logger.add(new winston.transports.File({ filename: './logs/bot.log' }));
 
 // Register Discord commands
 registerCommands(clientId, token, guildId);
