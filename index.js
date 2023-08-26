@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const { registerCommands, handleCommands, commandExecutors } = require('./commands');
 const { startWebhookServer } = require('./webhook');
 const logger = require('./logger');  // Import the logger
+const fs = require('fs')
 
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
