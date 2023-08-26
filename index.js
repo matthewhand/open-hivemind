@@ -19,13 +19,14 @@ const logger = winston.createLogger({
   ],
 });
 
-
 // Register Discord commands
 registerCommands(clientId, token, guildId);
 
 // Handle Discord commands
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent] });
 handleCommands(client);
+
+// Handle Discord messages
 client.on('messageCreate', async (message) => {
   try {
     logger.debug('Received message:', message.content);
@@ -79,7 +80,6 @@ client.on('messageCreate', async (message) => {
 
 client.login(token);
 logger.info('Bot started successfully.');
-
 
 // Start webhook server
 const port = process.env.PORT || 3000;
