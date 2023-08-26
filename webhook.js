@@ -16,6 +16,12 @@ const startWebhookServer = (port) => {
 		res.sendStatus(200);
 	});
 
+	app.get('/uptime', (req, res) => {
+		// Handle incoming webhook
+		console.debug('Received uptime probe');
+		res.sendStatus(200);
+	});
+
 	app.listen(port, () => {
 		console.log(`HTTP server listening at http://localhost:${port}`);
 	});
