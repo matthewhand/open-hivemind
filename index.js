@@ -9,6 +9,7 @@ const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
+const triggerWord = process.env.TRIGGER_WORD || 'pybot';
 
 // Register Discord commands
 registerCommands(clientId, token, guildId);
@@ -42,8 +43,8 @@ client.on('messageCreate', async (message) => {
       logger.info('Message received:', message.content);
     }
 
-    if (message.guild && message.content.toLowerCase().includes('pybot')) {
-      logger.info('Message contains "pybot"');
+    if (message.guild && message.content.toLowerCase().includes(triggerWord.toLowerCase())) {
+      logger.info(`Message contains "${triggerWord}"`);
 
       const userId = message.author.id;
       const guild = message.guild;
