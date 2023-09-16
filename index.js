@@ -43,7 +43,7 @@ client.on('messageCreate', async (message) => {
       const guild = message.guild;
       const member = message.member;
 
-      if ((guild.ownerId !== member.id) && (!allowedUsers.includes(userId))) {
+      if (!allowedUsers.includes(userId)) {
         logger.warn('User does not have permission');
         return message.reply('You do not have permission to execute this command.');
       }
