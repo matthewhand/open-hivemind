@@ -29,6 +29,11 @@ logger.info(`Allowed users: ${allowedUsers}`);
 // Handle Discord messages
 client.on('messageCreate', async (message) => {
   try {
+    // Prevent bot from responding to its own messages
+    if (message.author.id === client.user.id) {
+      return;
+    }
+
     if (!message.content && message.interaction) {
       logger.debug('Received message (interaction):', message.interaction.content);
       logger.info('Message received (interaction):', message.interaction.content);
