@@ -21,6 +21,7 @@ A Discord bot that executes Python code in a secure and controlled environment. 
 - `GUILD_ID`: The ID of your Discord server.
 - `CLIENT_ID`: Your Discord client ID.
 - `ALLOWED_USERS`: Comma-separated list of user IDs allowed to execute code.
+- `TRIGGER_WORD`: Custom word to trigger code execution (defaults to 'pybot').
 - `PORT`: Port for the bot's web server (default is 3000).
 
 ## Usage
