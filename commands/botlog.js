@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const fs = require('fs');
+const readline = require('readline');
 const winston = require('winston');
-const { EmbedBuilder } = require('discord.js');
+const { MessageEmbed } = require('discord.js'); // It should be MessageEmbed, not EmbedBuilder.
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -9,19 +10,32 @@ module.exports = {
         .setDescription('Fetch and display bot logs.'),
     async execute(interaction) {
         await interaction.deferReply();
-        fs.readFile('./logs/bot.log', 'utf8', (err, data) => {
-            if (err) {
-                winston.error(`Error reading log file: ${err}`);
-                return interaction.followUp('Error reading log file.');
-            }
-            if (data.length > 2048) {
-                data = data.substring(0, 2045) + '...';
-            }
-            const logEmbed = new EmbedBuilder()
-                .setColor('#0099ff')
-                .setTitle('Bot Logs')
-                .setDescription(`${data}`);
-            interaction.followUp({ embeds: [logEmbed] });
+        
+        const fileStream = fs.createReadStream('./logs/bot.log');
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
         });
+
+        let lastLines = [];
+        for await (const line of rl) {
+            lastLines.push(line);
+            if (lastLines.length > 10) {
+                lastLines.shift();
+            }
+        }
+        
+        let data = lastLines.reverse().join('\n');
+        
+        if (data.length > 2048) {
+            data = data.substring(0, 2045) + '...';
+        }
+
+        const logEmbed = new MessageEmbed()
+            .setColor('#0099ff')
+            .setTitle('Bot Logs')
+            .setDescription(`${data}`);
+        
+        interaction.followUp({ embeds: [logEmbed] });
     },
 };
