@@ -45,7 +45,7 @@ client.on('messageCreate', async (message) => {
       const member = message.member;
 
       if (!allowedUsers.includes(userId)) {
-        logger.warn('User, '${userId}' does not have permission');
+        logger.warn('User, \'${userId}\' does not have permission');
         return message.reply('You do not have permission to execute this command.');
       }
 
