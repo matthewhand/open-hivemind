@@ -58,6 +58,10 @@ Run the Docker container:
 docker run -e DISCORD_TOKEN=<Your-Token> -e GUILD_ID=<Your-Guild-ID> -e CLIENT_ID=<Your-Client-ID> discord-python-executor-bot
 ```
 
+## Built with ChatGPT
+
+This entire project was built using ChatGPT.  Helper utilities used to upload to Github using Noteable ChatGPT Plugin can be found in notebooks/.
+
 ## Contributing
 
 Feel free to contribute by opening issues or submitting pull requests.
