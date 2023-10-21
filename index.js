@@ -65,11 +65,17 @@ client.on('messageCreate', async (message) => {
 
       codeBlocks.forEach((codeBlock) => {
         const code = codeBlock.replace(/\`\`\`python\n?|\`\`\`/g, '');
-        const escapedCode = code.replace(/"/g, '\\"');
 
-        logger.info(`Executing Python code: ${escapedCode}`);
+        // Create a unique file name using the current epoch time
+        const fileName = `tmp_${Date.now()}.py`;
 
-        exec(`python -c "${escapedCode}"`, (error, stdout, stderr) => {
+        // Write the code to the file
+        fs.writeFileSync(fileName, code);
+
+        logger.info(`Executing Python code from file: ${fileName}`);
+
+        // Execute the code from the file
+        exec(`python ${fileName}`, (error, stdout, stderr) => {
           if (error) {
             message.reply(`Error executing code: ${error.message}`);
             return;
@@ -79,8 +85,12 @@ client.on('messageCreate', async (message) => {
             return;
           }
           message.reply(`Stdout: ${stdout}`);
+
+          // Cleanup the temporary file
+          fs.unlinkSync(fileName);
         });
       });
+
     } else {
       // New code for handling other messages
       if (message.content.toLowerCase() === 'ping') {
