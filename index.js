@@ -64,7 +64,7 @@ client.on('messageCreate', async (message) => {
       logger.info('Found Python code blocks:', codeBlocks);
 
       codeBlocks.forEach((codeBlock) => {
-        const code = codeBlock.replace(/\`\`\`python\n?|\`\`\`/g, '');
+        const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
 
         // Create a unique file name using the current epoch time
         const fileName = `tmp_${Date.now()}.py`;
