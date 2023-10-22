@@ -27,80 +27,75 @@ client.login(token);
 logger.info('Bot started successfully.');
 logger.info(`Allowed users: ${allowedUsers}`);
 
+// Helper function to check if a user is allowed
+function isUserAllowed(userId) {
+  return allowedUsers.includes(userId);
+}
+
+// Helper function to extract Python code blocks from a message
+function extractPythonCodeBlocks(content) {
+  return content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
+}
+
+// Helper function to execute Python code
+function executePythonCode(code, message) {
+  const fileName = `tmp_${Date.now()}.py`;
+  fs.writeFileSync(fileName, code);
+  exec(`python ${fileName}`, (error, stdout, stderr) => {
+    if (error) {
+      message.reply(`Error executing code: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      message.reply(`Stderr: ${stderr}`);
+      return;
+    }
+    message.reply(`Stdout: ${stdout}`);
+    fs.unlinkSync(fileName);
+  });
+}
+
 // Handle Discord messages
 client.on('messageCreate', async (message) => {
   try {
-    // Prevent bot from responding to its own messages
     if (message.author.id === client.user.id) {
       return;
     }
 
-    if (!message.content && message.interaction) {
-      logger.debug('Received message (interaction):', message.interaction.content);
-      logger.info('Message received (interaction):', message.interaction.content);
-    } else {
-      logger.debug('Received message:', message.content);
-      logger.info('Message received:', message.content);
-    }
-
     if (message.guild && message.content.toLowerCase().includes(triggerWord.toLowerCase())) {
-      logger.info(`Message contains "${triggerWord}"`);
-
       const userId = message.author.id;
-      const guild = message.guild;
-      const member = message.member;
 
-      if (!allowedUsers.includes(userId)) {
-        logger.warn(`User, '${userId}' does not have permission`);
-        return message.reply('You do not have permission to execute this command.');
+      if (!isUserAllowed(userId)) {
+        message.reply('You do not have permission to execute this command.');
+        return;
       }
 
-      const codeBlocks = message.content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
+      const codeBlocks = extractPythonCodeBlocks(message.content);
       if (!codeBlocks) {
         logger.info('No Python code blocks found');
         return;
       }
 
-      logger.info('Found Python code blocks:', codeBlocks);
-
       codeBlocks.forEach((codeBlock) => {
         const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
-
-        // Create a unique file name using the current epoch time
-        const fileName = `tmp_${Date.now()}.py`;
-
-        // Write the code to the file
-        fs.writeFileSync(fileName, code);
-
-        logger.info(`Executing Python code from file: ${fileName}`);
-
-        // Execute the code from the file
-        exec(`python ${fileName}`, (error, stdout, stderr) => {
-          if (error) {
-            message.reply(`Error executing code: ${error.message}`);
-            return;
-          }
-          if (stderr) {
-            message.reply(`Stderr: ${stderr}`);
-            return;
-          }
-          message.reply(`Stdout: ${stdout}`);
-
-          // Cleanup the temporary file
-          fs.unlinkSync(fileName);
-        });
+        executePythonCode(code, message);
       });
 
     } else {
-      // New code for handling other messages
       if (message.content.toLowerCase() === 'ping') {
         message.reply('Pong!');
       }
     }
   } catch (error) {
-    logger.error('An error occurred:', error);
+    handleError(error, message);
   }
 });
+
+// Helper function to handle errors
+function handleError(error, message) {
+  logger.error('An error occurred:', error);
+  message.channel.send('An error occurred while processing your request.');
+}
 
 // Start webhook server
 const port = process.env.PORT || 3000;
