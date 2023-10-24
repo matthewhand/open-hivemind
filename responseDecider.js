@@ -1,0 +1,79 @@
+// responseDecider.js
+
+class LastReplyTimes {
+    constructor(cacheTimeout, unsolicitedChannelCap) {
+        this.cacheTimeout = cacheTimeout;
+        this.unsolicitedChannelCap = unsolicitedChannelCap;
+        this.times = {};
+    }
+
+    purgeOutdated(latestTimestamp) {
+        const oldestTimeToKeep = latestTimestamp - this.cacheTimeout;
+        for (let channel in this.times) {
+            if (this.times[channel] < oldestTimeToKeep) {
+                delete this.times[channel];
+            }
+        }
+    }
+
+    logMention(channelId, sendTimestamp) {
+        this.times[channelId] = sendTimestamp;
+    }
+
+    timeSinceLastMention(channelId, sendTimestamp) {
+        this.purgeOutdated(sendTimestamp);
+        return sendTimestamp - (this.times[channelId] || 0);
+    }
+}
+
+class DecideToRespond {
+    constructor(discordSettings, interrobangBonus, timeVsResponseChance) {
+        this.discordSettings = discordSettings;
+        this.interrobangBonus = interrobangBonus;
+        this.timeVsResponseChance = timeVsResponseChance;
+        this.lastReplyTimes = new LastReplyTimes(
+            Math.max(...timeVsResponseChance.map(item => item[0])),
+            discordSettings.unsolicitedChannelCap
+        );
+    }
+
+    isDirectlyMentioned(ourUserId, message) {
+        if (message.mentions.has(ourUserId)) return true;
+        // ... Include any wakeword check logic ...
+        return false;
+    }
+
+    calcBaseChanceOfUnsolicitedReply(message) {
+        const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, message.createdTimestamp);
+        for (let [duration, chance] of this.timeVsResponseChance) {
+            if (timeSinceLastSend < duration) return chance;
+        }
+        return 0;
+    }
+
+    provideUnsolicitedReplyInChannel(ourUserId, message) {
+        if (this.discordSettings.disableUnsolicitedReplies) return false;
+        const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
+        if (baseChance === 0) return false;
+        let responseChance = baseChance;
+        if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
+        if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
+        return Math.random() < responseChance;
+    }
+
+    shouldReplyToMessage(ourUserId, message) {
+        if (this.isDirectlyMentioned(ourUserId, message)) {
+            return { shouldReply: true, isDirectMention: true };
+        }
+        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
+            return { shouldReply: true, isDirectMention: false };
+        }
+        return { shouldReply: false, isDirectMention: false };
+    }
+
+    logMention(channelId, sendTimestamp) {
+        this.lastReplyTimes.logMention(channelId, sendTimestamp);
+    }
+}
+
+module.exports = { DecideToRespond };
