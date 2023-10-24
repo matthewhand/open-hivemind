@@ -58,7 +58,16 @@ class DecideToRespond {
         let responseChance = baseChance;
         if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
         if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
+
+        // Debug log for the calculated percentage
+        this.debugLog(`Channel: ${message.channel.id}, BaseChance: ${baseChance}, ResponseChance: ${responseChance}`);
+
         return Math.random() < responseChance;
+    }
+
+    // Debug log function
+    debugLog(message) {
+        console.log(`[DEBUG] ${message}`);  // Replace with your logger
     }
 
     shouldReplyToMessage(ourUserId, message) {
