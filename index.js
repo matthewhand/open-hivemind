@@ -111,9 +111,3 @@ const handleError = (error, message) => {
 // Starting webhook server
 const port = process.env.PORT || 3000;
 startWebhookServer(port);
-
-// Importing node-fetch dynamically
-let fetch;
-(async () => {
-  fetch = (await import('node-fetch')).default;
-})();
