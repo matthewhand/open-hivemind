@@ -86,14 +86,14 @@ client.on('messageCreate', async (message) => {
           message.reply('No response from the server.');
         }
       } else {
-        if (!isUserAllowed(userId)) {
-          message.reply('You do not have permission to execute this command.');
-          return;
-        }
-
         const codeBlocks = extractPythonCodeBlocks(message.content);
         if (!codeBlocks) {
           logger.info('No Python code blocks found');
+          return;
+        }
+          
+        if (!isUserAllowed(userId)) {
+          message.reply('You do not have permission to execute this command.');
           return;
         }
 
