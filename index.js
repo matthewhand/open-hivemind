@@ -13,7 +13,7 @@ const discordSettings = {
     // ... other settings ...
 };
 const interrobangBonus = 0.1;
-const timeVsResponseChance = [[60, 0.5], [120, 0.3], [420, 0.1]];
+const timeVsResponseChance = [[60, 0.3], [120, 0.2], [420, 0.1]];
 
 const responseDecider = new DecideToRespond(discordSettings, interrobangBonus, timeVsResponseChance);
 
