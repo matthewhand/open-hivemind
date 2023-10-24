@@ -4,12 +4,15 @@ const { registerCommands, handleCommands } = require('./commands');
 const { startWebhookServer } = require('./webhook');
 const logger = require('./logger');
 const fs = require('fs');
+const fetch = require('node-fetch');
 
 const clientId = process.env.CLIENT_ID;
 const token = process.env.DISCORD_TOKEN;
 const guildId = process.env.GUILD_ID;
 const allowedUsers = process.env.ALLOWED_USERS.split(',');
 const triggerWord = process.env.TRIGGER_WORD || 'pybot';
+const llmUrl = process.env.LLM_URL;
+const llmWakeWords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [triggerWord];
 
 // Register Discord commands
 registerCommands(clientId, token, guildId);
@@ -55,31 +58,51 @@ function executePythonCode(code, message) {
   });
 }
 
-// Handle Discord messages
+
+
+
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.id === client.user.id) {
       return;
     }
 
-    if (message.guild && message.content.toLowerCase().includes(triggerWord.toLowerCase())) {
+    if (message.guild) {
       const userId = message.author.id;
 
-      if (!isUserAllowed(userId)) {
+      const wakeWordDetected = llmWakeWords.some(wakeWord => 
+        message.content.toLowerCase().includes(wakeWord.toLowerCase())
+      );
+
+      if (wakeWordDetected) {
+        const userMessage = message.content;
+        const response = await fetch(`${llmUrl}?user=${encodeURIComponent(userMessage)}`);
+        const responseData = await response.json();
+
+        if (responseData && responseData[0] && responseData[0].response && responseData[0].response.response) {
+          message.reply(responseData[0].response.response);
+        } else {
+          message.reply('No response from the server.');
+        }
+      } else {
+
+       if (!isUserAllowed(userId)) {
         message.reply('You do not have permission to execute this command.');
         return;
       }
 
-      const codeBlocks = extractPythonCodeBlocks(message.content);
-      if (!codeBlocks) {
-        logger.info('No Python code blocks found');
-        return;
-      }
+        const codeBlocks = extractPythonCodeBlocks(message.content);
+        if (!codeBlocks) {
+          logger.info('No Python code blocks found');
+          return;
+        }
 
-      codeBlocks.forEach((codeBlock) => {
-        const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
-        executePythonCode(code, message);
-      });
+        codeBlocks.forEach((codeBlock) => {
+          const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
+          executePythonCode(code, message);
+        });
+        
+      }
 
     } else {
       if (message.content.toLowerCase() === 'ping') {
@@ -90,6 +113,7 @@ client.on('messageCreate', async (message) => {
     handleError(error, message);
   }
 });
+
 
 // Helper function to handle errors
 function handleError(error, message) {
