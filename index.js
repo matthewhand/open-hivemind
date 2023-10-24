@@ -1,24 +1,22 @@
-// Importing required modules
-import { Client, GatewayIntentBits } from 'discord.js';
-import { exec } from 'child_process';
-import { registerCommands, handleCommands } from './commands';
-import { startWebhookServer } from './webhook';
-import logger from './logger';
-import fs from 'fs';
+const { Client, GatewayIntentBits } = require('discord.js');
+const { exec } = require('child_process');
+const { registerCommands, handleCommands } = require('./commands');
+const { startWebhookServer } = require('./webhook');
+const logger = require('./logger');
+const fs = require('fs');
 
-// Configuring environment variables
-const {
-  CLIENT_ID: clientId,
-  DISCORD_TOKEN: token,
-  GUILD_ID: guildId,
-  ALLOWED_USERS: allowedUsersString,
-  TRIGGER_WORD: triggerWord = 'pybot',
-  LLM_URL: llmUrl,
-  LLM_WAKEWORDS: llmWakeWordsString,
-} = process.env;
+const clientId = process.env.CLIENT_ID;
+const token = process.env.DISCORD_TOKEN;
+const guildId = process.env.GUILD_ID;
+const allowedUsers = process.env.ALLOWED_USERS.split(',');
+const triggerWord = process.env.TRIGGER_WORD || 'pybot';
+const llmUrl = process.env.LLM_URL;
+const llmWakeWords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [triggerWord];
 
-const allowedUsers = allowedUsersString.split(',');
-const llmWakeWords = llmWakeWordsString ? llmWakeWordsString.split(',') : [triggerWord];
+let fetch;
+(async () => {
+  fetch = (await import('node-fetch')).default;
+})();
 
 // Defining helper functions
 const isUserAllowed = userId => allowedUsers.includes(userId);
@@ -39,8 +37,6 @@ const executePythonCode = async (code, message) => {
     fs.unlinkSync(fileName);
   });
 }
-
-
 
 // Initializing Discord client and registering commands
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
