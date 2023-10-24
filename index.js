@@ -64,7 +64,8 @@ client.on('messageCreate', async (message) => {
 
       if (wakeWordDetected) {
         const userMessage = message.content;
-        const response = await fetch(`${llmUrl}?user=${encodeURIComponent(userMessage)}`);
+        const system = process.env.LLM_SYSTEM ? `&system=${encodeURIComponent(process.env.LLM_SYSTEM)}` : '';
+        const response = await fetch(`${llmUrl}?user=${encodeURIComponent(userMessage)}${system}`);
         const responseData = await response.json();
 
         if (responseData && responseData[0] && responseData[0].response && responseData[0].response.response) {
