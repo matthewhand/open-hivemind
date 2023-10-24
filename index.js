@@ -1,47 +1,29 @@
-const { Client, GatewayIntentBits } = require('discord.js');
-const { exec } = require('child_process');
-const { registerCommands, handleCommands } = require('./commands');
-const { startWebhookServer } = require('./webhook');
-const logger = require('./logger');
-const fs = require('fs');
-const fetch = require('node-fetch');
+// Importing required modules
+import { Client, GatewayIntentBits } from 'discord.js';
+import { exec } from 'child_process';
+import { registerCommands, handleCommands } from './commands';
+import { startWebhookServer } from './webhook';
+import logger from './logger';
+import fs from 'fs';
 
-const clientId = process.env.CLIENT_ID;
-const token = process.env.DISCORD_TOKEN;
-const guildId = process.env.GUILD_ID;
-const allowedUsers = process.env.ALLOWED_USERS.split(',');
-const triggerWord = process.env.TRIGGER_WORD || 'pybot';
-const llmUrl = process.env.LLM_URL;
-const llmWakeWords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [triggerWord];
+// Configuring environment variables
+const {
+  CLIENT_ID: clientId,
+  DISCORD_TOKEN: token,
+  GUILD_ID: guildId,
+  ALLOWED_USERS: allowedUsersString,
+  TRIGGER_WORD: triggerWord = 'pybot',
+  LLM_URL: llmUrl,
+  LLM_WAKEWORDS: llmWakeWordsString,
+} = process.env;
 
-// Register Discord commands
-registerCommands(clientId, token, guildId);
+const allowedUsers = allowedUsersString.split(',');
+const llmWakeWords = llmWakeWordsString ? llmWakeWordsString.split(',') : [triggerWord];
 
-// Handle Discord commands
-const client = new Client({ intents: [
-  GatewayIntentBits.Guilds, 
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.MessageContent
-] });
-handleCommands(client);
-
-// Start Discord client
-client.login(token);
-logger.info('Bot started successfully.');
-logger.info(`Allowed users: ${allowedUsers}`);
-
-// Helper function to check if a user is allowed
-function isUserAllowed(userId) {
-  return allowedUsers.includes(userId);
-}
-
-// Helper function to extract Python code blocks from a message
-function extractPythonCodeBlocks(content) {
-  return content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
-}
-
-// Helper function to execute Python code
-function executePythonCode(code, message) {
+// Defining helper functions
+const isUserAllowed = userId => allowedUsers.includes(userId);
+const extractPythonCodeBlocks = content => content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
+const executePythonCode = async (code, message) => {
   const fileName = `tmp_${Date.now()}.py`;
   fs.writeFileSync(fileName, code);
   exec(`python ${fileName}`, (error, stdout, stderr) => {
@@ -60,7 +42,17 @@ function executePythonCode(code, message) {
 
 
 
+// Initializing Discord client and registering commands
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+registerCommands(clientId, token, guildId);
+handleCommands(client);
+client.login(token);
 
+// Logging successful start
+logger.info('Bot started successfully.');
+logger.info(`Allowed users: ${allowedUsers}`);
+
+// Handling message creation events
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.id === client.user.id) {
@@ -114,13 +106,18 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-
-// Helper function to handle errors
-function handleError(error, message) {
+// Handling errors
+const handleError = (error, message) => {
   logger.error('An error occurred:', error);
   message.channel.send('An error occurred while processing your request.');
-}
+};
 
-// Start webhook server
+// Starting webhook server
 const port = process.env.PORT || 3000;
 startWebhookServer(port);
+
+// Importing node-fetch dynamically
+let fetch;
+(async () => {
+  fetch = (await import('node-fetch')).default;
+})();
