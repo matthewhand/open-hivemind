@@ -42,6 +42,13 @@ const registerCommands = async (clientId, token, guildId) => {
 	const rest = new REST({ version: '9' }).setToken(token);
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+		
+		if (process.env.DEBUG === 'true') {
+			commands.forEach(command => {
+				console.log(`Adding command: ${JSON.stringify(command, null, 2)}`);
+			});
+		}
+		
 		const data = await rest.put(
 			Routes.applicationGuildCommands(clientId, guildId),
 			{ body: commands },
