@@ -77,10 +77,12 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
         const userMessage = message.content;
-        
+
+        const modelToUse = requestBody.model || process.env.LLM_SYSTEM || 'mistral-7b-instruct';
+
         // Prepare the request body
         const requestBody = {
-          model: process.env.LLM_SYSTEM || 'mistral-7b-instruct',  // Use the specified system, or default to 'mistral-7b-instruct'
+          model: modelToUse,
           messages: [
             { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
             { role: 'user', content: userMessage }
