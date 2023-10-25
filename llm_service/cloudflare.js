@@ -1,4 +1,3 @@
-// Deploy to CloudFlare to create a LLM http endpoint
 import { Ai } from './vendor/@cloudflare/ai.js';
 
 export default {
@@ -16,9 +15,12 @@ export default {
 
         const { model, messages } = requestBody;
 
-        if (!model || !messages) {
-            return new Response('Missing model or messages in request', { status: 400 });
+        if (!Array.isArray(messages) || messages.length === 0) {
+            return new Response('Missing or invalid messages in request', { status: 400 });
         }
+
+        // Use the model from the request if provided, otherwise default to '@cf/meta/llama-2-7b-chat-int8'
+        const modelToUse = model || '@cf/meta/llama-2-7b-chat-int8';
 
         const ai = new Ai(env.AI);
 
@@ -26,14 +28,14 @@ export default {
             messages: messages
         };
 
-        console.log('Starting AI processing for model:', model);
+        console.log('Starting AI processing for model:', modelToUse);
 
         try {
-            const response = await ai.run('@cf/meta/llama-2-7b-chat-int8', chat);
+            const response = await ai.run(modelToUse, chat);  // Use the modelToUse variable here
             const uuid = crypto.randomUUID();
             const responseObj = {
                 id: uuid,
-                model: model,
+                model: modelToUse,
                 created: Date.now(),
                 object: "chat.completion",
                 choices: [{
@@ -45,16 +47,16 @@ export default {
                     },
                     delta: {
                         role: "assistant",
-                        content: ""
+                        content: "LLM did not return a response"
                     }
                 }]
             };
 
-            console.log('AI processing completed for model:', model, 'with UUID:', uuid);
+            console.log('AI processing completed for model:', modelToUse, 'with UUID:', uuid);
 
             return new Response(JSON.stringify(responseObj), { status: 200, headers: { "Content-Type": "application/json" } });
         } catch (e) {
-            console.error('Error processing request for model:', model, e);
+            console.error('Error processing request for model:', modelToUse, e);
             return new Response('Error processing request', { status: 500 });
         }
     }
