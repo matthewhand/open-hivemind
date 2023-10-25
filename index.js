@@ -88,13 +88,14 @@ client.on('messageCreate', async (message) => {
         };
         
         // Send a POST request with a JSON body
-        const response = await fetch(llmUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+    const response = await fetch(llmUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.LLM_API_KEY}`  // Add this line
+        },
+        body: JSON.stringify(requestBody)
+    });
 
 if (!response.ok) {
     console.error('Request failed:', response.statusText);
