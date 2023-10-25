@@ -148,6 +148,39 @@ const handleError = (error, message) => {
   message.channel.send('An error occurred while processing your request.');
 };
 
+function debugEnvVars() {
+  // List of required environment variables
+  const requiredEnvVars = [
+    'CLIENT_ID',
+    'DISCORD_TOKEN',
+    'GUILD_ID',
+    'ALLOWED_USERS',
+    'LLM_URL',
+    'LLM_SYSTEM',
+    'LLM_API_KEY',
+    'PORT'
+  ];
+
+  // Check if DEBUG environment variable is set to true
+  if (process.env.DEBUG && process.env.DEBUG.toLowerCase() === 'true') {
+    // Log all environment variables
+    console.log('Debugging Environment Variables:');
+    requiredEnvVars.forEach(varName => {
+      console.log(`${varName}: ${process.env[varName] || 'Not Set'}`);
+    });
+  }
+
+  // Check if all required environment variables are set
+  const unsetVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  if (unsetVars.length > 0) {
+    console.error(`The following environment variables are not set: ${unsetVars.join(', ')}`);
+    process.exit(1);  // Exit the process with an error code
+  }
+}
+
+// Call the debug function at the start of your application
+debugEnvVars();
+
 const port = process.env.PORT || 3000;
 startWebhookServer(port);
 
