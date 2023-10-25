@@ -87,19 +87,25 @@ client.on('messageCreate', async (message) => {
           ]
         };
         
-        // Send a POST request with a JSON body
+    // Prepare headers
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+    if (process.env.LLM_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
+    }
+
+    // Send a POST request with a JSON body
     const response = await fetch(llmUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.LLM_API_KEY}`  // Add this line
-        },
+        headers: headers,
         body: JSON.stringify(requestBody)
     });
 
+
 if (!response.ok) {
     console.error('Request failed:', response.statusText);
-    message.reply('Server error.');
+    // message.reply('Server error.');
     return;
 }
 
