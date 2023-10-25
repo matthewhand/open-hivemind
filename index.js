@@ -96,6 +96,12 @@ client.on('messageCreate', async (message) => {
             body: JSON.stringify(requestBody)
         });
 
+if (!response.ok) {
+    console.error('Request failed:', response.statusText);
+    message.reply('Server error.');
+    return;
+}
+
         const responseData = await response.json();
 
         if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
