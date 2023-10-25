@@ -95,20 +95,28 @@ client.on('messageCreate', async (message) => {
         headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
     }
 
-    // Send a POST request with a JSON body
-    const response = await fetch(llmUrl, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(requestBody)
-    });
+        // Log the request payload if DEBUG is set to true
+        if (process.env.DEBUG === 'true') {
+            console.log('Request payload:', JSON.stringify(requestBody, null, 2));
+        }
 
+        // Send a POST request with a JSON body
+        const response = await fetch(llmUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(requestBody)
+        });
 
-if (!response.ok) {
-    console.error('Request failed:', response.statusText);
-    // message.reply('Server error.');
-    return;
-}
-
+        if (!response.ok) {
+            console.error('Request failed:', response.statusText);
+            // Log the response body if DEBUG is set to true
+            if (process.env.DEBUG === 'true') {
+                const responseBody = await response.text();
+                console.error('Response body:', responseBody);
+            }
+            // message.reply('Server error.');
+            return;
+        }
         const responseData = await response.json();
 
         if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
