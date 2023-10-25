@@ -77,8 +77,24 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
         const userMessage = message.content;
-        const response = await fetch(`${llmUrl}?user=${encodeURIComponent(userMessage)}`);
-        const responseData = await response.json();
+const requestBody = {
+    model: 'desired-model-name',  // replace with the actual model name you wish to use
+    messages: [
+        {role: 'user', content: userMessage}
+        // Optionally, include a system message if needed
+    ]
+};
+
+const response = await fetch(llmUrl, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+});
+
+const responseData = await response.json();
+
 
         if (responseData && responseData[0] && responseData[0].response && responseData[0].response.response) {
           message.reply(responseData[0].response.response);
