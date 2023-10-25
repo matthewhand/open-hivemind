@@ -80,9 +80,9 @@ client.on('messageCreate', async (message) => {
         
         // Prepare the request body
         const requestBody = {
-          model: 'mistral-7b-instruct',
+          model: process.env.LLM_SYSTEM || 'mistral-7b-instruct',  // Use the specified system, or default to 'mistral-7b-instruct'
           messages: [
-            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
             { role: 'user', content: userMessage }
           ]
         };
