@@ -77,27 +77,29 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
         const userMessage = message.content;
-const requestBody = {
-    model: 'desired-model-name',  // replace with the actual model name you wish to use
-    messages: [
-        {role: 'user', content: userMessage}
-        // Optionally, include a system message if needed
-    ]
-};
+        
+        // Prepare the request body
+        const requestBody = {
+          model: 'mistral-7b-instruct',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: userMessage }
+          ]
+        };
+        
+        // Send a POST request with a JSON body
+        const response = await fetch(llmUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-const response = await fetch(llmUrl, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
-});
+        const responseData = await response.json();
 
-const responseData = await response.json();
-
-
-        if (responseData && responseData[0] && responseData[0].response && responseData[0].response.response) {
-          message.reply(responseData[0].response.response);
+        if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
+          message.reply(responseData.choices[0].message.content);
         } else {
           message.reply('No response from the server.');
         }
