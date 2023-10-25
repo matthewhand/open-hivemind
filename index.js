@@ -78,17 +78,16 @@ client.on('messageCreate', async (message) => {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
         const userMessage = message.content;
 
-        const modelToUse = requestBody.model || process.env.LLM_SYSTEM || 'mistral-7b-instruct';
+        const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';  
 
-        // Prepare the request body
+        // Now create the requestBody object
         const requestBody = {
           model: modelToUse,
           messages: [
             { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
             { role: 'user', content: userMessage }
           ]
-        };
-        
+        };        
     // Prepare headers
     const headers = {
         'Content-Type': 'application/json',
