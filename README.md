@@ -1,18 +1,20 @@
-# Discord Python Executor Bot
+# Discord LLM Interaction Bot
 
-A Discord bot that executes Python code in a secure and controlled environment. Ideal for developers, educators, and Python enthusiasts.
+A Discord bot that interacts with an LLM-based language model to provide responses or execute instructions based on user input. Ideal for developers, educators, and anyone interested in exploring AI-based interactions within Discord.
 
 ## Features
 
-- **Code Execution**: Run Python code blocks securely.
-- **User Permissions**: Limit code execution to specific users or roles.
-- **Logging**: Detailed logging using Winston.
+- **AI Interaction**: Engage with an advanced language model to get responses to queries or instructions.
+- **User Permissions**: Limit interactions to specific users or roles for controlled access.
+- **Dynamic System Setting**: Set the system for LLM queries dynamically using a slash command.
+- **Python Code Execution**: Run Python code blocks securely when required.
+- **Logging**: Detailed logging to monitor bot interactions and diagnose issues.
 
 ## Installation
 
 1. Clone this repository.
 2. Run `npm install`.
-3. Set up the environment variables.
+3. Set up the environment variables as per your Cloudflare and Discord settings.
 4. Start the bot with `npm start`.
 
 ## Environment Variables
@@ -21,13 +23,16 @@ A Discord bot that executes Python code in a secure and controlled environment. 
 - `GUILD_ID`: The ID of your Discord server.
 - `CLIENT_ID`: Your Discord client ID.
 - `ALLOWED_USERS`: Comma-separated list of user IDs allowed to execute code.
-- `TRIGGER_WORD`: Custom word to trigger code execution (defaults to 'pybot').
+- `TRIGGER_WORD`: Custom word to trigger interactions (defaults to 'pybot').
+- `LLM_API_KEY`: Your LLM API Key for authorized access to the LLM server.
+- `LLM_URL`: The URL of your Cloudflare worker for LLM interactions.
+- `LLM_SYSTEM`: The default system for LLM queries (e.g., 'mistral-7b-instruct').
 - `PORT`: Port for the bot's web server (default is 3000).
 
 ## Usage
 
-To execute Python code, send a message formatted as follows:
-
+### AI Interaction
+To engage with the LLM, simply mention the trigger word along with your query or instruction:
 
 ````
 pybot
