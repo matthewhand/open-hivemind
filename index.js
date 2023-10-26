@@ -120,11 +120,20 @@ client.on('messageCreate', async (message) => {
         }
         const responseData = await response.json();
 
-        if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
-          message.reply(responseData.choices[0].message.content);
-        } else {
-          message.reply('No response from the server.');
+if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
+    const replyContent = responseData.choices[0].message.content;
+    if (replyContent.length > 2000) {
+        // Split the message into chunks of 2000 characters or less
+        const chunks = replyContent.match(/.{1,2000}/g);
+        for (let chunk of chunks) {
+            message.reply(chunk);
         }
+    } else {
+        message.reply(replyContent);
+    }
+} else {
+    message.reply('No response from the server.');
+}
       } else {
         const codeBlocks = extractPythonCodeBlocks(message.content);
         if (!codeBlocks) {
