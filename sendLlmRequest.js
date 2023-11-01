@@ -41,4 +41,4 @@ async function sendLlmRequest(message) {
     }
 }
 
-export { sendLlmRequest };
+module.exports = { sendLlmRequest };
