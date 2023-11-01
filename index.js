@@ -66,9 +66,11 @@ async function initialize() {
         if (wakeWordDetected || shouldReply || isDirectMention) {
           logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
 
-          const imageDetected = await handleImageMessage(message);
-          if (!imageDetected) {
-            await sendLlmRequest(message);
+          if (wakeWordDetected || isDirectMention) {
+            const imageDetected = await handleImageMessage(message);
+            if (!imageDetected) {
+              await sendLlmRequest(message);
+            }
           }
         } else {
           const codeBlocks = extractPythonCodeBlocks(message.content);
