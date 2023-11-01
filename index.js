@@ -33,11 +33,6 @@ const triggerWord = process.env.TRIGGER_WORD || 'pybot';
 const llmUrl = process.env.LLM_URL;
 const llmWakeWords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [triggerWord];
 
-let fetch;
-(async () => {
-  fetch = (await import('node-fetch')).default;
-})();
-
 const isUserAllowed = userId => allowedUsers.includes(userId);
 const extractPythonCodeBlocks = content => content.match(/\`\`\`python\n?([\s\S]+?)\`\`\`/g);
 const executePythonCode = async (code, message) => {
