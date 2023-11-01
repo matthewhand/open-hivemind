@@ -5,4 +5,4 @@ function handleError(error, message) {
     message.channel.send('An error occurred while processing your request.');
 }
 
-export { handleError };
+module.exports = { handleError };
