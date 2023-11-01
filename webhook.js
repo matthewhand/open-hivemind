@@ -1,9 +1,11 @@
+const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID) {
-    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID');
+if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID || !process.env.REPLICATE_API_TOKEN) {
+    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID and/or REPLICATE_API_TOKEN');
     process.exit(1);
 }
 
@@ -12,20 +14,38 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
     process.exit(1);
 });
 
+async function getPredictionResult(predictionId) {
+    try {
+        const response = await axios.get(
+            `https://api.replicate.com/v1/predictions/${predictionId}`,
+            {
+                headers: {
+                    'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Failed to get prediction result:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to get prediction result');
+    }
+}
+
 const startWebhookServer = (port) => {
     const app = express();
     app.use(express.json());
 
-    app.post('/webhook', (req, res) => {
+    app.post('/webhook', async (req, res) => {
         console.log('Received webhook:', req.body);
 
-        const predictionResult = req.body;
+        const predictionId = req.body.id;
+        const predictionResult = await getPredictionResult(predictionId);
         const channelId = process.env.CHANNEL_ID;
         const channel = client.channels.cache.get(channelId);
 
         if (channel) {
             const resultMessage = `Prediction Result: ${JSON.stringify(predictionResult, null, 2)}`;
-            channel.send(resultMessage).catch(error => {
+            await channel.send(resultMessage).catch(error => {
                 console.error('Failed to send message to channel:', error.message);
             });
         } else {
