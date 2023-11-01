@@ -1,56 +1,52 @@
-const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const axios = require('axios');
 
-client.login(process.env.DISCORD_TOKEN);  // Login to Discord
-
-const startWebhookServer = (port) => {
-    const app = express();
-    app.use(express.json());
-
-    app.post('/webhook', (req, res) => {
-        // Handle incoming webhook from Replicate
-        console.log('Received webhook:', req.body);
-
-        const predictionResult = req.body;
-        const channelId = process.env.CHANNEL_ID;  // Assuming you have a specific channel to post the result
-        const channel = client.channels.cache.get(channelId);
-
-        if (channel) {
-            const resultMessage = `Prediction Result: ${JSON.stringify(predictionResult, null, 2)}`;
-            channel.send(resultMessage);
-        } else {
-            console.error('Channel not found');
+async function sendLlmRequest(message) {
+    try {
+        const userMessage = message.content;
+        const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';  
+        const requestBody = {
+            model: modelToUse,
+            messages: [
+                { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
+                { role: 'user', content: userMessage }
+            ]
+        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (process.env.LLM_API_KEY) {
+            headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
         }
+        if (process.env.DEBUG === 'true') {
+            console.log('Request payload:', JSON.stringify(requestBody, null, 2));
+        }
+        const response = await axios.post(process.env.LLM_URL, requestBody, { headers: headers });
+        if (response.status !== 200) {
+            console.error('Request failed:', response.statusText);
+            if (process.env.DEBUG === 'true') {
+                console.error('Response body:', response.data);
+            }
+            return;
+        }
+        const responseData = response.data;
+        if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
+            const replyContent = responseData.choices[0].message.content;
+            if (replyContent && replyContent.trim()) {
+                if (replyContent.length > 2000) {
+                    const chunks = replyContent.match(/.{1,2000}/g);
+                    for (let chunk of chunks) {
+                        message.reply(chunk);
+                    }
+                } else {
+                    message.reply(replyContent);
+                }
+            } else {
+                console.error('Empty message not sent.');
+            }
+        } else {
+            message.reply('No response from the server.');
+        }
+    } catch (error) {
+        console.error('Error in sendLlmRequest:', error.message);
+    }
+}
 
-        res.sendStatus(200);
-    });
-
-    app.get('/health', (req, res) => {
-        // Handle incoming webhook
-        console.debug('Received health probe');
-        res.sendStatus(200);
-    });
-
-    app.get('/uptime', (req, res) => {
-        // Handle incoming webhook
-        console.debug('Received uptime probe');
-        res.sendStatus(200);
-    });
-
-    app.listen(port, () => {
-        console.log(`HTTP server listening at http://localhost:${port}`);
-    });
-};
-
-client.once('ready', () => {
-    console.log('Logged in as', client.user.tag);
-
-    // Set the port either from the environment variable or default to 3000
-    const port = process.env.PORT || 3000;
-    startWebhookServer(port);
-});
-
-module.exports = {
-    startWebhookServer,
-};
+module.exports = { sendLlmRequest };
