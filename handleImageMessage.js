@@ -1,5 +1,5 @@
 // Importing necessary libraries and modules
-const fetch = require('node-fetch');
+const fetch = require('cross-fetch');
 const Replicate = require('replicate');
 const { Client, Intents } = require('discord.js');
 
