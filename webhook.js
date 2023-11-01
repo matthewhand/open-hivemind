@@ -1,13 +1,7 @@
 const express = require('express');
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-const client = new Client({
-    intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.MESSAGE_CONTENT
-    ]
-});
 client.login(process.env.DISCORD_TOKEN);  // Login to Discord
 
 // Ensure Discord client is ready before starting the webhook server
