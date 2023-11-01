@@ -48,7 +48,9 @@ app.post('/webhook', async (req, res) => {
         if (predictionResult.status === 'succeeded') {
             const resultArray = predictionResult.output;
             const resultText = resultArray.join(' ');  // Join array elements into a single string with newline separators
-            resultMessage = `Prediction ID: ${predictionId}\nResult:\n${resultText}`;
+            resultMessage = `${resultText}`;
+        } else if (predictionResult.status === 'processing') {
+            console.debug('processing ${predictionId}');
         } else {
             resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
         }
