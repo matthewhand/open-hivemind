@@ -7,8 +7,7 @@ const fs = require('fs');
 const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
 const Replicate = require('replicate');
-
-
+const axios = require('axios');
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
@@ -62,7 +61,7 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
-async function handleImageMessage(message, replicate, fetch, Headers) {
+async function handleImageMessage(message, replicate) {
     try {
         const attachments = message.attachments;
         if (attachments.size > 0) {
@@ -97,7 +96,6 @@ async function handleImageMessage(message, replicate, fetch, Headers) {
         return false;  // An error occurred, assume no image was detected
     }
 }
-
 async function initialize() {
   const nodeFetch = await import('node-fetch');
   global.fetch = nodeFetch.default;
@@ -123,75 +121,62 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
 
-    const imageDetected = await handleImageMessage(message, replicate, global.fetch, global.Headers);
-if (!imageDetected) {
-    
+        const imageDetected = await handleImageMessage(message, replicate);
+        if (!imageDetected) {
+          const userMessage = message.content;
 
+          const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';  
 
+          // Now create the requestBody object
+          const requestBody = {
+            model: modelToUse,
+            messages: [
+              { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
+              { role: 'user', content: userMessage }
+            ]
+          };        
+          // Prepare headers
+          const headers = {
+              'Content-Type': 'application/json',
+          };
+          if (process.env.LLM_API_KEY) {
+              headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
+          }
 
+          // Log the request payload if DEBUG is set to true
+          if (process.env.DEBUG === 'true') {
+              console.log('Request payload:', JSON.stringify(requestBody, null, 2));
+          }
 
+          // Send a POST request with a JSON body
+          const response = await axios.post(llmUrl, requestBody, { headers: headers });
 
-        const userMessage = message.content;
+          if (response.status !== 200) {
+              console.error('Request failed:', response.statusText);
+              // Log the response body if DEBUG is set to true
+              if (process.env.DEBUG === 'true') {
+                  console.error('Response body:', response.data);
+              }
+              // message.reply('Server error.');
+              return;
+          }
+          const responseData = response.data;
 
-        const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';  
-
-        // Now create the requestBody object
-        const requestBody = {
-          model: modelToUse,
-          messages: [
-            { role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' },
-            { role: 'user', content: userMessage }
-          ]
-        };        
-    // Prepare headers
-    const headers = {
-        'Content-Type': 'application/json',
-    };
-    if (process.env.LLM_API_KEY) {
-        headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
-    }
-
-        // Log the request payload if DEBUG is set to true
-        if (process.env.DEBUG === 'true') {
-            console.log('Request payload:', JSON.stringify(requestBody, null, 2));
+          if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
+              const replyContent = responseData.choices[0].message.content;
+              if (replyContent.length > 2000) {
+                  // Split the message into chunks of 2000 characters or less
+                  const chunks = replyContent.match(/.{1,2000}/g);
+                  for (let chunk of chunks) {
+                      message.reply(chunk);
+                  }
+              } else {
+                  message.reply(replyContent);
+              }
+          } else {
+              message.reply('No response from the server.');
+          }
         }
-
-        // Send a POST request with a JSON body
-        const response = await fetch(llmUrl, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            console.error('Request failed:', response.statusText);
-            // Log the response body if DEBUG is set to true
-            if (process.env.DEBUG === 'true') {
-                const responseBody = await response.text();
-                console.error('Response body:', responseBody);
-            }
-            // message.reply('Server error.');
-            return;
-        }
-        const responseData = await response.json();
-
-if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
-    const replyContent = responseData.choices[0].message.content;
-    if (replyContent.length > 2000) {
-        // Split the message into chunks of 2000 characters or less
-        const chunks = replyContent.match(/.{1,2000}/g);
-        for (let chunk of chunks) {
-            message.reply(chunk);
-        }
-
-        }
-
-    } else {
-        message.reply(replyContent);
-    }
-} else {
-    message.reply('No response from the server.');
-}
       } else {
         const codeBlocks = extractPythonCodeBlocks(message.content);
         if (!codeBlocks) {
@@ -218,6 +203,7 @@ if (responseData && responseData.choices && responseData.choices[0] && responseD
     handleError(error, message);
   }
 });
+
 
 }
 
