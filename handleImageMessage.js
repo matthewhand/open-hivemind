@@ -64,7 +64,7 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
   // Ignoring messages from bots
   if (message.author.bot) return;
-  await handleImageMessage(message, replicate);
+  await handleImageMessage(message);
 });
 
 // Logging in to Discord
