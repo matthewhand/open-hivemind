@@ -62,17 +62,9 @@ This will load all the environment variables defined in your `.env` file into yo
 
 The bot uses wakewords to initiate a conversation. Once a conversation is initiated, you can continue interacting with the bot without using the wakeword for a certain period of time.
 
-To engage with the LLM, mention the trigger word along with your query or instruction:
+To engage with the LLM, mention the trigger word along with your query or instruction.
 
-````
-!execute
-
-```python
-print('Hello, world!')
-```
-````
-
-The bot will respond with the output.
+The bot will respond with the output from the LLM backend you provide (see services/ folder for the options I use).
 
 ### Replicate Image Analysis
 
