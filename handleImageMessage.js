@@ -1,37 +1,44 @@
 // Importing necessary libraries and modules
 const fetch = require('cross-fetch');
-const Replicate = require('replicate');
 const { Client, GatewayIntentBits } = require('discord.js');
 
-// Initializing Discord client and Replicate
+// Initializing Discord client
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
+// Function to create prediction via Replicate's REST API
+async function createPrediction(imageUrl) {
+  const response = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
+    },
+    body: JSON.stringify({
+      version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
+      input: { image: imageUrl },
+    }),
+  });
+
+  if (!response.ok) {
+    console.error('Failed to create prediction:', response.statusText);
+    throw new Error('Failed to create prediction');
+  }
+
+  const data = await response.json();
+  return data;
+}
 
 // Handling image message
-async function handleImageMessage(message, replicate) {
+async function handleImageMessage(message) {  // Removed replicate from arguments
   try {
     const attachments = message.attachments;
     if (attachments.size > 0) {
       const imageUrl = attachments.first().url;
       console.debug(`Image URL: ${imageUrl}`);
-      // Checking content before sending
       const content = 'Image detected. Running analysis using Llava 13b on Replicant...';
-      if (content) {
-        await message.channel.send(content);
-      } else {
-        console.error('Message content is undefined');
-      }
+      await message.channel.send(content);
 
-      const modelVersion = process.env.MODEL_VERSION || "yorickvp/llava-13b:2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591";
-      const prediction = await replicate.predictions.create({
-        version: modelVersion,
-        input: { image: imageUrl },
-        webhook: process.env.WEBHOOK_URL,
-        webhook_events_filter: ['completed'],
-      });
+      const prediction = await createPrediction(imageUrl);
       const predictionId = prediction.id;
       console.log(`Prediction ID: ${predictionId}`);
       return true;
