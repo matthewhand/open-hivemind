@@ -29,7 +29,7 @@ A Discord bot that combines the capabilities of an LLM-based language model for 
 To engage with the LLM, mention the trigger word along with your query or instruction:
 
 ````
-pybot
+!execute
 
 ```python
 print('Hello, world!')
