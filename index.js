@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const { registerCommands, handleCommands } = require('./commands');
 const logger = require('./logger');
 const { DecideToRespond } = require('./responseDecider');
-const Replicate = require('replicate');
+//const Replicate = require('replicate');
 const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utils');
 const { handleImageMessage } = require('./handleImageMessage');
 const { sendLlmRequest } = require('./sendLlmRequest');
@@ -35,9 +35,9 @@ client.login(token);
 
 logger.info('Bot started successfully.');
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
+//const replicate = new Replicate({
+//  auth: process.env.REPLICATE_API_TOKEN,
+//});
 
 async function initialize() {
   initializeFetch();
