@@ -29,6 +29,7 @@ async function handleImageMessage(message, replicate) {
       } else {
         console.error('Message content is undefined');
       }
+
       const modelVersion = process.env.MODEL_VERSION || "yorickvp/llava-13b:2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591";
       const prediction = await replicate.predictions.create({
         version: modelVersion,
