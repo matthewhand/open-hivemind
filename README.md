@@ -1,8 +1,10 @@
 # Discord LLM Interaction Bot
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/matthewhand/discord-llm-bot)
-
 A Discord bot that combines the capabilities of an LLM-based language model for text-based interactions and Replicate for image analysis. This bot is ideal for developers, educators, and anyone interested in exploring AI-based interactions within Discord.
+
+[![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.com/invite/1111417036963319928)
+[![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/matthewhand/discord-llm-bot)
 
 ## 🌟 Features
 
@@ -102,9 +104,7 @@ This entire project was built using ChatGPT. Helper utilities used to upload to 
 
 ## Donation Button
 
-If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. You can choose an amount between 1 and 99.
-
-[![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
+If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
 
 <img src="https://github.com/matthewhand/stripe-payment/raw/main/qr_00g14peASeEd7xCcMM.png" width="150" />
 
@@ -122,7 +122,5 @@ Or send to my Ethereum (ETH) wallet
 Feel free to contribute by opening issues or submitting pull requests.
 
 ## 📝 License
-
-[![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.com/invite/1111417036963319928)
 
 This project is under the MIT License. See [LICENSE](LICENSE) for more information.
