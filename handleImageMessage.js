@@ -1,4 +1,5 @@
-global.fetch = require('node-fetch');
+const fetch = require('cross-fetch');
+global.fetch = fetch;
 
 const Replicate = require('replicate');
 
