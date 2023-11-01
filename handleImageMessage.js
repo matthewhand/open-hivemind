@@ -17,7 +17,8 @@ async function createPrediction(imageUrl) {
       version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
       input: { image: imageUrl },
       webhook: process.env.WEBHOOK_URL,
-      webhook_events_filter: ["start", "completed"]
+      webhook_events_filter: ["start", "completed"],
+      prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
     }),
   });
 
