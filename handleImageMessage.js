@@ -41,8 +41,6 @@ async function handleImageMessage(message) {
     if (attachments.size > 0) {
       const imageUrl = attachments.first().url;
       console.debug(`Image URL: ${imageUrl}`);
-      const content = 'Image detected. Running analysis using Llava 13b on replicate.com...';
-      await message.channel.send(content);
 
       const prediction = await createPrediction(imageUrl);
       const predictionId = prediction.id;
