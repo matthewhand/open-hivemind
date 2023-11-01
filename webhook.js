@@ -1,8 +1,8 @@
 const express = require('express');
 const { Client } = require('discord.js');
 
-// Instantiate Discord client
-const client = new Client();
+// Instantiate Discord client with required intents
+const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES'] });
 client.login(process.env.DISCORD_TOKEN);  // Login to Discord
 
 // Ensure Discord client is ready before starting the webhook server
