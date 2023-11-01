@@ -7,12 +7,13 @@ const fs = require('fs');
 const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
 const Replicate = require('replicate');
-
-let fetch;
+let nodeFetch;
 (async () => {
-  fetch = (await import('node-fetch')).default;
+  nodeFetch = await import('node-fetch');
 })();
 
+const fetch = nodeFetch.default;
+const { Headers } = nodeFetch;
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
