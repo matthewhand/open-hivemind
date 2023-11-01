@@ -39,14 +39,16 @@ app.post('/webhook', async (req, res) => {
     console.log('Received webhook:', req.body);
 
     const predictionId = req.body.id;
-    const predictionResult = await getPredictionResult(predictionId);
+    const predictionResult = req.body;  // Adjust this line if necessary to obtain the prediction result
     const channelId = process.env.CHANNEL_ID;
     const channel = client.channels.cache.get(channelId);
 
     if (channel) {
         let resultMessage;
         if (predictionResult.status === 'succeeded') {
-            resultMessage = `Prediction ID: ${predictionId}\nResult: ${predictionResult.output}`;
+            const resultArray = predictionResult.output;
+            const resultText = resultArray.join('\n');  // Join array elements into a single string with newline separators
+            resultMessage = `Prediction ID: ${predictionId}\nResult:\n${resultText}`;
         } else {
             resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
         }
@@ -60,6 +62,7 @@ app.post('/webhook', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.sendStatus(200);
 });
+
 
 
     app.get('/health', (req, res) => {
