@@ -35,26 +35,32 @@ const startWebhookServer = (port) => {
     const app = express();
     app.use(express.json());
 
-    app.post('/webhook', async (req, res) => {
-        console.log('Received webhook:', req.body);
+app.post('/webhook', async (req, res) => {
+    console.log('Received webhook:', req.body);
 
-        const predictionId = req.body.id;
-        const predictionResult = await getPredictionResult(predictionId);
-        const channelId = process.env.CHANNEL_ID;
-        const channel = client.channels.cache.get(channelId);
+    const predictionId = req.body.id;
+    const predictionResult = await getPredictionResult(predictionId);
+    const channelId = process.env.CHANNEL_ID;
+    const channel = client.channels.cache.get(channelId);
 
-        if (channel) {
-            const resultMessage = `Prediction Result: ${JSON.stringify(predictionResult, null, 2)}`;
-            await channel.send(resultMessage).catch(error => {
-                console.error('Failed to send message to channel:', error.message);
-            });
+    if (channel) {
+        let resultMessage;
+        if (predictionResult.status === 'succeeded') {
+            resultMessage = `Prediction ID: ${predictionId}\nResult: ${predictionResult.output}`;
         } else {
-            console.error('Channel not found');
+            resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
         }
+        await channel.send(resultMessage).catch(error => {
+            console.error('Failed to send message to channel:', error.message);
+        });
+    } else {
+        console.error('Channel not found');
+    }
 
-        res.setHeader('Content-Type', 'application/json');
-        res.sendStatus(200);
-    });
+    res.setHeader('Content-Type', 'application/json');
+    res.sendStatus(200);
+});
+
 
     app.get('/health', (req, res) => {
         console.debug('Received health probe');
