@@ -123,7 +123,7 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
 
-    const imageDetected = await handleImageMessage(message, replicate, fetch, Headers);
+    const imageDetected = await handleImageMessage(message, replicate, global.fetch, global.Headers);
 if (!imageDetected) {
     
 
