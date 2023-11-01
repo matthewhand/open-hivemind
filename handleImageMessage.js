@@ -1,7 +1,7 @@
 // Importing necessary libraries and modules
-import fetch from 'node-fetch';
-import Replicate from 'replicate';
-import { Client, Intents } from 'discord.js';
+const fetch = require('node-fetch');
+const Replicate = require('replicate');
+const { Client, Intents } = require('discord.js');
 
 // Initializing Discord client and Replicate
 const client = new Client({
