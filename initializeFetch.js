@@ -4,4 +4,4 @@ async function initializeFetch() {
     global.Headers = nodeFetch.Headers;
 }
 
-export { initializeFetch };
+module.exports = { initializeFetch };
