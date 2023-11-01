@@ -49,19 +49,26 @@ The bot will respond with the output.
 
 The `/health` and `/uptime` endpoints return HTTP/200 for monitoring.
 
+
 ## Docker Support
+
+First, create a `.env` file at the root directory of your project. This file should contain all the environment variables you'll be using. You can copy the `.env.sample` as a starting point.
 
 Build the Docker image:
 
 ```
-docker build -t discord-python-executor-bot .
+docker build -t discord-llm-bot .
 ```
 
 Run the Docker container:
 
 ```
-docker run -e DISCORD_TOKEN=<Your-Token> -e GUILD_ID=<Your-Guild-ID> -e CLIENT_ID=<Your-Client-ID> discord-python-executor-bot
+docker run --env-file .env discord-llm-bot
 ```
+
+This will pick up all the environment variables defined in your `.env` file and pass them to your Docker container.
+
+
 
 ## Built with ChatGPT
 
