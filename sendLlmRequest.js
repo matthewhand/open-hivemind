@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 async function sendLlmRequest(message) {
     const userMessage = message.content;
