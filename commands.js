@@ -55,7 +55,11 @@ const registerCommands = async (clientId, token, guildId) => {
 		);
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
-		console.error(error);
+    		console.error('Error registering commands:', error.message);
+    		console.error('Error code:', error.code);
+    		console.error('HTTP status:', error.status);
+    		console.error('Method:', error.method);
+    		console.error('URL:', error.url);
 	}
 };
 
