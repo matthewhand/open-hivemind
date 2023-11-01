@@ -13,9 +13,10 @@ let Headers;
 
 (async () => {
   const nodeFetch = await import('node-fetch');
-  fetch = nodeFetch.default;
+  fetch = nodeFetch;
   Headers = nodeFetch.Headers;
 })();
+
 
 const fetch = nodeFetch.default;
 const { Headers } = nodeFetch;
