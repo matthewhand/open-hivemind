@@ -34,17 +34,6 @@ async function createPrediction(imageUrl) {
   return data;
 }
 
-
-  if (!response.ok) {
-    const errorDetails = await response.text();
-    console.error('Failed to create prediction:', response.statusText, errorDetails);
-    throw new Error('Failed to create prediction');
-  }
-
-  const data = await response.json();
-  return data;
-}
-
 // Handling image message
 async function handleImageMessage(message) {  // Removed replicate from arguments
   try {
