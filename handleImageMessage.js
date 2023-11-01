@@ -1,5 +1,5 @@
 // Importing necessary libraries and modules
-const fetch = require('cross-fetch');
+const fetch = require('node-fetch');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 // Initializing Discord client
