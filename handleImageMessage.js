@@ -15,12 +15,25 @@ async function createPrediction(imageUrl) {
     },
     body: JSON.stringify({
       version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
-      input: { image: imageUrl },
+      input: { 
+        image: imageUrl,
+        prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
+      },
       webhook: process.env.WEBHOOK_URL,
-      webhook_events_filter: ["start", "completed"],
-      prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
+      webhook_events_filter: ["start", "completed"]
     }),
   });
+
+  if (!response.ok) {
+    const errorDetails = await response.text();
+    console.error('Failed to create prediction:', response.statusText, errorDetails);
+    throw new Error('Failed to create prediction');
+  }
+
+  const data = await response.json();
+  return data;
+}
+
 
   if (!response.ok) {
     const errorDetails = await response.text();
