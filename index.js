@@ -1,14 +1,14 @@
-import { Client, GatewayIntentBits } from 'discord.js';
-import { registerCommands, handleCommands } from './commands';
-import logger from './logger';
-import { DecideToRespond } from './responseDecider';
-import Replicate from 'replicate';
-import { executePythonCode, extractPythonCodeBlocks, isUserAllowed } from './utilities';
-import { handleImageMessage } from './handleImageMessage';
-import { sendLlmRequest } from './sendLlmRequest';
-import { handleError } from './handleError';
-import { debugEnvVars } from './debugEnvVars';
-import { initializeFetch } from './initializeFetch';
+const { Client, GatewayIntentBits } = require('discord.js');
+const { registerCommands, handleCommands } = require('./commands');
+const logger = require('./logger');
+const { DecideToRespond } = require('./responseDecider');
+const Replicate = require('replicate');
+const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utilities');
+const { handleImageMessage } = require('./handleImageMessage');
+const { sendLlmRequest } = require('./sendLlmRequest');
+const { handleError } = require('./handleError');
+const { debugEnvVars } = require('./debugEnvVars');
+const { initializeFetch } = require('./initializeFetch');
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
