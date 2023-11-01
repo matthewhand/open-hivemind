@@ -1,32 +1,54 @@
 const express = require('express');
+const { Client } = require('discord.js');
 
-const startWebhookServer = (port) => {
-	const app = express();
-	app.use(express.json());
+// Instantiate Discord client
+const client = new Client();
+client.login(process.env.DISCORD_TOKEN);  // Login to Discord
 
-	app.post('/webhook', (req, res) => {
-		// Handle incoming webhook
-		console.log('Received webhook:', req.body);
-		res.sendStatus(200);
-	});
+// Ensure Discord client is ready before starting the webhook server
+client.once('ready', () => {
+    console.log('Logged in as', client.user.tag);
 
-	app.get('/health', (req, res) => {
-		// Handle incoming webhook
-		console.debug('Received health probe');
-		res.sendStatus(200);
-	});
+    const startWebhookServer = (port) => {
+        const app = express();
+        app.use(express.json());
 
-	app.get('/uptime', (req, res) => {
-		// Handle incoming webhook
-		console.debug('Received uptime probe');
-		res.sendStatus(200);
-	});
+        app.post('/webhook', (req, res) => {
+            // Handle incoming webhook from Replicate
+            console.log('Received webhook:', req.body);
 
-	app.listen(port, () => {
-		console.log(`HTTP server listening at http://localhost:${port}`);
-	});
-};
+            const predictionResult = req.body;
+            const channelId = process.env.CHANNEL_ID;  // Assuming you have a specific channel to post the result
+            const channel = client.channels.cache.get(channelId);
 
-module.exports = {
-	startWebhookServer,
-};
+            if (channel) {
+                const resultMessage = `Prediction Result: ${JSON.stringify(predictionResult, null, 2)}`;
+                channel.send(resultMessage);
+            } else {
+                console.error('Channel not found');
+            }
+
+            res.sendStatus(200);
+        });
+
+        app.get('/health', (req, res) => {
+            // Handle incoming webhook
+            console.debug('Received health probe');
+            res.sendStatus(200);
+        });
+
+        app.get('/uptime', (req, res) => {
+            // Handle incoming webhook
+            console.debug('Received uptime probe');
+            res.sendStatus(200);
+        });
+
+        app.listen(port, () => {
+            console.log(`HTTP server listening at http://localhost:${port}`);
+        });
+    };
+
+    // Set the port either from the environment variable or default to 3000
+    const port = process.env.PORT || 3000;
+    startWebhookServer(port);
+});
