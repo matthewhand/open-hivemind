@@ -1,5 +1,5 @@
 // Importing necessary libraries and modules
-const fetch = require('node-fetch');
+const axios = require('axios');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 // Initializing Discord client
@@ -7,35 +7,35 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 // Function to create prediction via Replicate's REST API
 async function createPrediction(imageUrl) {
-  const response = await fetch('https://api.replicate.com/v1/predictions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
-    },
-    body: JSON.stringify({
-      version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
-      input: { 
-        image: imageUrl,
-        prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
+  try {
+    const response = await axios.post(
+      'https://api.replicate.com/v1/predictions',
+      {
+        version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
+        input: { 
+          image: imageUrl,
+          prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
+        },
+        webhook: process.env.WEBHOOK_URL,
+        webhook_events_filter: ["start", "completed"]
       },
-      webhook: process.env.WEBHOOK_URL,
-      webhook_events_filter: ["start", "completed"]
-    }),
-  });
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
+        }
+      }
+    );
 
-  if (!response.ok) {
-    const errorDetails = await response.text();
-    console.error('Failed to create prediction:', response.statusText, errorDetails);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create prediction:', error.response ? error.response.data : error.message);
     throw new Error('Failed to create prediction');
   }
-
-  const data = await response.json();
-  return data;
 }
 
 // Handling image message
-async function handleImageMessage(message) {  // Removed replicate from arguments
+async function handleImageMessage(message) {
   try {
     const attachments = message.attachments;
     if (attachments.size > 0) {
