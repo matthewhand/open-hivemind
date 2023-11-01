@@ -1,107 +1,54 @@
+require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
-const { registerCommands, handleCommands } = require('./commands');
-const logger = require('./logger');
-const { DecideToRespond } = require('./responseDecider');
-//const Replicate = require('replicate');
-const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utils');
+const { initializeFetch } = require('./initializeFetch');
 const { handleImageMessage } = require('./handleImageMessage');
 const { sendLlmRequest } = require('./sendLlmRequest');
-const { handleError } = require('./handleError');
-const { debugEnvVars } = require('./debugEnvVars');
-const { initializeFetch } = require('./initializeFetch');
-const { startWebhookServer } = require('./webhook');
+const { isUserAllowed, isRoleAllowed } = require('./permissions');
 
-const discordSettings = {
-    disableUnsolicitedReplies: false,
-    unsolicitedChannelCap: 5,
-    ignore_dms: true,
-    // ... other settings ...
-};
-const interrobangBonus = 0.1;
-const timeVsResponseChance = [[5, 0.05], [60, 0.5], [420, 0.3]];
-
-const responseDecider = new DecideToRespond(discordSettings, interrobangBonus, timeVsResponseChance);
-
-const clientId = process.env.CLIENT_ID;
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers] });
 const token = process.env.DISCORD_TOKEN;
-const guildId = process.env.GUILD_ID;
-const triggerWord = process.env.TRIGGER_WORD || 'pybot';
-const llmWakeWords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [triggerWord];
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// Environment variables
+const allowedRoles = process.env.ALLOWED_ROLES ? process.env.ALLOWED_ROLES.split(',') : [];
 
-registerCommands(clientId, token, guildId);
-handleCommands(client);
-client.login(token);
-
-logger.info('Bot started successfully.');
-
-//const replicate = new Replicate({
-//  auth: process.env.REPLICATE_API_TOKEN,
-//});
-
-async function initialize() {
+client.once('ready', () => {
+  console.log(`Logged in as ${client.user.tag}`);
   initializeFetch();
+});
 
-  // Start the webhook server
-  const webhookPort = process.env.WEBHOOK_PORT || 3000;
-  startWebhookServer(webhookPort);
-
-  client.on('messageCreate', async (message) => {
-    try {
-      if (message.author.id === client.user.id) {
-        return;
-      }
-
-      logger.info(`Received message: ${message.content} from ${message.author.username}`);
-
-      if (message.guild) {
-        const userId = message.author.id;
-        const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(client.user.id, message);
-
-        const wakeWordDetected = llmWakeWords.some(wakeWord => 
-          message.content.toLowerCase().includes(wakeWord.toLowerCase())
-        );
-
-        if (wakeWordDetected || shouldReply || isDirectMention) {
-          logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
-
-          if (wakeWordDetected || isDirectMention) {
-            const imageDetected = await handleImageMessage(message);
-            if (!imageDetected) {
-              await sendLlmRequest(message);
-            }
-          }
-        } else {
-          const codeBlocks = extractPythonCodeBlocks(message.content);
-          if (!codeBlocks) {
-            logger.info('No Python code blocks found');
-            return;
-          }
-
-          if (!isUserAllowed(userId)) {
-            message.reply('You do not have permission to execute this command.');
-            return;
-          }
-
-          codeBlocks.forEach((codeBlock) => {
-            const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
-            executePythonCode(code, message);
-          });
-        }
-      } else {
-        if (message.content.toLowerCase() === 'ping') {
-          message.reply('Pong!');
-        }
-      }
-    } catch (error) {
-      handleError(error, message);
+client.on('messageCreate', async (message) => {
+  try {
+    if (message.author.id === client.user.id || message.author.bot) {
+      return;
     }
-  });
-}
 
-debugEnvVars();
+    const member = await message.guild.members.fetch(message.author.id);
+    const userRoles = member.roles.cache.map(role => role.id);
+    
+    if (!isUserAllowed(message.author.id) && !isRoleAllowed(userRoles, allowedRoles)) {
+      return;
+    }
 
-initialize().catch(error => {
-  console.error('Error during initialization:', error);
+    const command = message.content.split(' ')[0];
+    const wakeWords = ['!command1', '!command2']; // replace with actual wake words
+
+    if (wakeWords.includes(command.toLowerCase())) {
+      sendLlmRequest(message);
+      return;
+    }
+
+    if (command === '!analyse') {
+      await handleImageMessage(message);
+      return;
+    }
+
+    // More conditions and functionalities can go here.
+    
+  } catch (error) {
+    console.error(`Error in message handler: ${error.message}`);
+  }
+});
+
+client.login(token).catch(err => {
+  console.error('Failed to login:', err.message);
 });
