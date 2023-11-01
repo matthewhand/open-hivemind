@@ -13,7 +13,8 @@ COPY --from=python-env /usr/local /usr/local
 # Install Node dependencies
 COPY package*.json ./
 RUN npm install
-RUN npm install node-fetch  # <-- Add this line to install node-fetch
+RUN npm install node-fetch
+RUN npm install replicate
 
 # Copy app source
 COPY . .
