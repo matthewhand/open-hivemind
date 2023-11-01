@@ -116,6 +116,7 @@ Or send to my Ethereum (ETH) wallet
 ## TODO
 
 - [x] Publish code to github
+- [ ] Fix Deploy to Render
 
 ## 🤝 Contributing
 
