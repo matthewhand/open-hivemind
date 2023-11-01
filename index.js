@@ -8,15 +8,6 @@ const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
 const Replicate = require('replicate');
 
-let fetch;
-let Headers;
-
-(async () => {
-  const nodeFetch = await import('node-fetch');
-  fetch = nodeFetch;
-  Headers = nodeFetch.Headers;
-})();
-
 
 
 const discordSettings = {
@@ -107,6 +98,12 @@ async function handleImageMessage(message) {
     }
 }
 
+async function initialize() {
+  const nodeFetch = await import('node-fetch');
+  global.fetch = nodeFetch.default;
+  global.Headers = nodeFetch.Headers;
+
+  
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.id === client.user.id) {
@@ -222,6 +219,8 @@ if (responseData && responseData.choices && responseData.choices[0] && responseD
   }
 });
 
+}
+
 const handleError = (error, message) => {
   logger.error(`An error occurred: ${error.message}`);
   message.channel.send('An error occurred while processing your request.');
@@ -263,3 +262,8 @@ debugEnvVars();
 //const port = process.env.PORT || 3000;
 //startWebhookServer(port);
 
+
+
+initialize().catch(error => {
+  console.error('Error during initialization:', error);
+});
