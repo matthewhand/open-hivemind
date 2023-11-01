@@ -74,6 +74,9 @@ async function handleImageMessage(message) {
 
             console.debug(`Image URL: ${imageUrl}`);  // Debugging line
 
+            // Send a message to the channel
+            await message.channel.send('Image detected. Running analysis using Llava 13b on Replicant...');
+
             const modelVersion = "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591";
             const prediction = await replicate.predictions.create({
                 version: modelVersion,
@@ -87,14 +90,17 @@ async function handleImageMessage(message) {
             // Optionally, you could store the prediction ID to correlate the webhook call later
             const predictionId = prediction.id;
             console.log(`Prediction ID: ${predictionId}`);  // This line is already providing some debug info
+
+            return true;  // Image was detected and analysis initiated
         } else {
             console.debug('No attachments found');  // Debugging line
+            return false;  // No image was detected
         }
     } catch (error) {
         console.error(`Error in handleImageMessage: ${error.message}`);  // Error handling line
+        return false;  // An error occurred, assume no image was detected
     }
 }
-
 
 client.on('messageCreate', async (message) => {
   try {
@@ -103,8 +109,6 @@ client.on('messageCreate', async (message) => {
     }
 
     logger.info(`Received message: ${message.content} from ${message.author.username}`);
-
-    await handleImageMessage(message);
 
     if (message.guild) {
       const userId = message.author.id;
@@ -116,6 +120,15 @@ client.on('messageCreate', async (message) => {
 
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
+
+        const imageDetected = await handleImageMessage(message);
+if (!imageDetected) {
+    
+
+
+
+
+
         const userMessage = message.content;
 
         const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';  
@@ -168,6 +181,9 @@ if (responseData && responseData.choices && responseData.choices[0] && responseD
         for (let chunk of chunks) {
             message.reply(chunk);
         }
+
+        }
+
     } else {
         message.reply(replyContent);
     }
