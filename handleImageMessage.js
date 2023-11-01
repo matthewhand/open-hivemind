@@ -1,3 +1,5 @@
+global.fetch = require('node-fetch');
+
 const Replicate = require('replicate');
 
 const replicate = new Replicate({
