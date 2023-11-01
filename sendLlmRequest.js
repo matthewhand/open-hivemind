@@ -29,6 +29,11 @@ async function sendLlmRequest(message) {
         const responseData = response.data;
 if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
     let replyContent = responseData.choices[0].message.content;
+
+    // Check if replyContent is an object, and if so, stringify it
+    if (typeof replyContent === 'object') {
+        replyContent = JSON.stringify(replyContent, null, 2);
+    }
     
     // Check if replyContent is a string before calling trim
     if (typeof replyContent === 'string') {
