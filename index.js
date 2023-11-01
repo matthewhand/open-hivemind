@@ -1,54 +1,75 @@
-require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
-const { initializeFetch } = require('./initializeFetch');
+const { registerCommands, handleCommands } = require('./commands');
+const logger = require('./logger');
+const { DecideToRespond } = require('./responseDecider');
+const { executePythonCode, extractPythonCodeBlocks, isUserAllowed, isRoleAllowed } = require('./utils');
 const { handleImageMessage } = require('./handleImageMessage');
 const { sendLlmRequest } = require('./sendLlmRequest');
-const { isUserAllowed, isRoleAllowed } = require('./permissions');
+const { handleError } = require('./handleError');
+const { debugEnvVars } = require('./debugEnvVars');
+const { initializeFetch } = require('./initializeFetch');
+const { startWebhookServer } = require('./webhook');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const token = process.env.DISCORD_TOKEN;
 
-// Environment variables
-const allowedRoles = process.env.ALLOWED_ROLES ? process.env.ALLOWED_ROLES.split(',') : [];
+registerCommands(clientId, token, guildId);
+handleCommands(client);
+client.login(token);
 
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`);
+logger.info('Bot started successfully.');
+
+async function initialize() {
   initializeFetch();
-});
-
+  const webhookPort = process.env.WEBHOOK_PORT || 3000;
+  startWebhookServer(webhookPort);
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.id === client.user.id || message.author.bot) {
       return;
     }
 
-    const member = await message.guild.members.fetch(message.author.id);
+    const userId = message.author.id;
+    const member = await message.guild.members.fetch(userId);
     const userRoles = member.roles.cache.map(role => role.id);
-    
-    if (!isUserAllowed(message.author.id) && !isRoleAllowed(userRoles, allowedRoles)) {
+
+    if (!isUserAllowed(userId) && !isRoleAllowed(userRoles)) {
       return;
     }
 
-    const command = message.content.split(' ')[0];
-    const wakeWords = ['!command1', '!command2']; // replace with actual wake words
+    const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(client.user.id, message);
+    const wakeWordDetected = llmWakeWords.some(wakeWord => 
+      message.content.toLowerCase().includes(wakeWord.toLowerCase())
+    );
 
-    if (wakeWords.includes(command.toLowerCase())) {
-      sendLlmRequest(message);
-      return;
-    }
-
-    if (command === '!analyse') {
+    if (message.content.startsWith('!analyse')) {
       await handleImageMessage(message);
-      return;
+      return;  // Exit if this condition is met to avoid further processing
     }
 
-    // More conditions and functionalities can go here.
-    
+    if (message.content.startsWith('!execute')) {
+      const codeBlocks = extractPythonCodeBlocks(message.content);
+      if (codeBlocks) {
+        codeBlocks.forEach((codeBlock) => {
+          const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
+          executePythonCode(code, message);
+        });
+      }
+      return;  // Exit if this condition is met to avoid further processing
+    }
+
+    if (wakeWordDetected || shouldReply || isDirectMention) {
+      await sendLlmRequest(message);
+    }
   } catch (error) {
-    console.error(`Error in message handler: ${error.message}`);
+    handleError(error, message);
   }
 });
+  
+}
 
-client.login(token).catch(err => {
-  console.error('Failed to login:', err.message);
+debugEnvVars();
+
+initialize().catch(error => {
+  console.error('Error during initialization:', error);
 });
