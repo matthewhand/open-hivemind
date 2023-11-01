@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, Intents } = require('discord.js');
 const { exec } = require('child_process');
 const { registerCommands, handleCommands } = require('./commands');
 const { startWebhookServer } = require('./webhook');
@@ -52,7 +52,13 @@ const executePythonCode = async (code, message) => {
   });
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+    intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.MESSAGE_CONTENT
+    ]
+});
 
 registerCommands(clientId, token, guildId);
 handleCommands(client);
