@@ -1,7 +1,7 @@
 // Importing necessary libraries and modules
 const fetch = require('cross-fetch');
 const Replicate = require('replicate');
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 
 // Initializing Discord client and Replicate
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
