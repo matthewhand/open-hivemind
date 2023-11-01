@@ -18,8 +18,6 @@ let Headers;
 })();
 
 
-const fetch = nodeFetch.default;
-const { Headers } = nodeFetch;
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
