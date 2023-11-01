@@ -1,12 +1,13 @@
 # Discord LLM Interaction Bot
 
-A Discord bot that interacts with an LLM-based language model to provide responses or execute instructions based on user input. Ideal for developers, educators, and anyone interested in exploring AI-based interactions within Discord.
+A Discord bot that combines the capabilities of an LLM-based language model for text-based interactions and Replicate for image analysis. This bot is ideal for developers, educators, and anyone interested in exploring AI-based interactions within Discord.
 
 ## Features
 
-- **AI Interaction**: Engage with an advanced language model to get responses to queries or instructions.
+- **LLM AI Interaction**: Engage with an advanced language model to get text-based responses to queries or execute instructions.
+- **Replicate Image Analysis**: Upload an image and get descriptive and insightful analysis based on machine learning models.
 - **User Permissions**: Limit interactions to specific users or roles for controlled access.
-- **Dynamic System Setting**: Set the system for LLM queries dynamically using a slash command.
+- **Dynamic System Setting**: Set the system prompt for LLM queries dynamically using a slash command.
 - **Python Code Execution**: Run Python code blocks securely when required.
 - **Logging**: Detailed logging to monitor bot interactions and diagnose issues.
 
@@ -14,25 +15,18 @@ A Discord bot that interacts with an LLM-based language model to provide respons
 
 1. Clone this repository.
 2. Run `npm install`.
-3. Set up the environment variables as per your Cloudflare and Discord settings.
+3. Create a `.env` file at the root of your project and populate it with necessary environment variables.
 4. Start the bot with `npm start`.
 
 ## Environment Variables
 
-- `DISCORD_TOKEN`: Your Discord bot token.
-- `GUILD_ID`: The ID of your Discord server.
-- `CLIENT_ID`: Your Discord client ID.
-- `ALLOWED_USERS`: Comma-separated list of user IDs allowed to execute code.
-- `TRIGGER_WORD`: Custom word to trigger interactions (defaults to 'pybot').
-- `LLM_API_KEY`: Your LLM API Key for authorized access to the LLM server.
-- `LLM_URL`: The URL of your Cloudflare worker for LLM interactions.
-- `LLM_SYSTEM`: The default system for LLM queries (e.g., 'mistral-7b-instruct').
-- `PORT`: Port for the bot's web server (default is 3000).
+[Refer to `.env.sample` for explanations and sample values.]
 
 ## Usage
 
-### AI Interaction
-To engage with the LLM, simply mention the trigger word along with your query or instruction:
+### LLM AI Interaction
+
+To engage with the LLM, mention the trigger word along with your query or instruction:
 
 ````
 pybot
@@ -42,37 +36,43 @@ print('Hello, world!')
 ```
 ````
 
-
 The bot will respond with the output.
+
+### Replicate Image Analysis
+
+To analyze an image, simply upload it to the designated channel. The bot will send the image for analysis and return the results.
+
+````
+Upload an image to the channel
+````
+
+The bot will provide analysis based on the machine learning model specified.
 
 ## Monitoring
 
 The `/health` and `/uptime` endpoints return HTTP/200 for monitoring.
 
-
 ## Docker Support
 
-First, create a `.env` file at the root directory of your project. This file should contain all the environment variables you'll be using. You can copy the `.env.sample` as a starting point.
+First, create a `.env` file at the root directory of your project. Copy the `.env.sample` as a starting point.
 
 Build the Docker image:
 
-```
+````
 docker build -t discord-llm-bot .
-```
+````
 
 Run the Docker container:
 
-```
+````
 docker run --env-file .env discord-llm-bot
-```
+````
 
-This will pick up all the environment variables defined in your `.env` file and pass them to your Docker container.
-
-
+This will load all the environment variables defined in your `.env` file into your Docker container.
 
 ## Built with ChatGPT
 
-This entire project was built using ChatGPT.  Helper utilities used to upload to Github using Noteable ChatGPT Plugin can be found in notebooks/.
+This entire project was built using ChatGPT. Helper utilities used to upload to Github using the Noteable ChatGPT Plugin can be found in the `notebooks/` directory.
 
 ## Contributing
 
