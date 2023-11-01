@@ -230,6 +230,6 @@ function debugEnvVars() {
 // Call the debug function at the start of your application
 debugEnvVars();
 
-const port = process.env.PORT || 3000;
-startWebhookServer(port);
+//const port = process.env.PORT || 3000;
+//startWebhookServer(port);
 
