@@ -1,5 +1,6 @@
-function isUserAllowed(userId) {
-  const allowedUsers = ['12345', '67890'];  // replace with actual allowed user IDs
+// permissions.js
+
+function isUserAllowed(userId, allowedUsers) {
   return allowedUsers.includes(userId);
 }
 
