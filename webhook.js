@@ -51,3 +51,7 @@ client.once('ready', () => {
     const port = process.env.PORT || 3000;
     startWebhookServer(port);
 });
+
+module.exports = {
+  startWebhookServer,
+};
