@@ -2,7 +2,7 @@
   "name": "discord-python-executor-bot",
   "version": "1.0.0",
   "description": "A Discord bot to execute Python code",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "node index.js"
   },

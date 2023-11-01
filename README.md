@@ -11,16 +11,46 @@ A Discord bot that combines the capabilities of an LLM-based language model for 
 - **Python Code Execution**: Run Python code blocks securely when required.
 - **Logging**: Detailed logging to monitor bot interactions and diagnose issues.
 
-## Installation
+## Deployment
+
+### Environment Variables
+
+[Refer to `.env.sample` for explanations and sample values.]
+
+### Option a: Deploy to Render
+
+You can deploy this project to Render by clicking the button below:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/matthewhand/discord-llm-bot)
+1. Click the \"Deploy to Render\" button.
+2. Follow the on-screen prompts to configure your Discord bot.
+3. Once deployed, go to the service dashboard for further configuration and monitoring
+
+### Option b: Deploy to localhost
 
 1. Clone this repository.
 2. Run `npm install`.
 3. Create a `.env` file at the root of your project and populate it with necessary environment variables.
 4. Start the bot with `npm start`.
 
-## Environment Variables
+### Option c: Deploy to localhost - Docker
 
-[Refer to `.env.sample` for explanations and sample values.]
+First, create a `.env` file at the root directory of your project. Copy the `.env.sample` as a starting point.
+
+Build the Docker image:
+
+````
+docker build -t discord-llm-bot .
+````
+
+Run the Docker container:
+
+````
+docker run --env-file .env discord-llm-bot
+````
+
+This will load all the environment variables defined in your `.env` file into your Docker container.
+
 
 ## Usage
 
@@ -51,24 +81,6 @@ The bot will provide analysis based on the machine learning model specified.
 ## Monitoring
 
 The `/health` and `/uptime` endpoints return HTTP/200 for monitoring.
-
-## Docker Support
-
-First, create a `.env` file at the root directory of your project. Copy the `.env.sample` as a starting point.
-
-Build the Docker image:
-
-````
-docker build -t discord-llm-bot .
-````
-
-Run the Docker container:
-
-````
-docker run --env-file .env discord-llm-bot
-````
-
-This will load all the environment variables defined in your `.env` file into your Docker container.
 
 ## Built with ChatGPT
 
