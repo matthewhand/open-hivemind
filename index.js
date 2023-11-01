@@ -62,7 +62,7 @@ const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
 
-async function handleImageMessage(message) {
+async function handleImageMessage(message, replicate, fetch, Headers) {
     try {
         const attachments = message.attachments;
         if (attachments.size > 0) {
@@ -123,7 +123,7 @@ client.on('messageCreate', async (message) => {
       if (wakeWordDetected || shouldReply || isDirectMention) {
         logger.info(`wakeWordDetected/shouldReply/isDirectMention in message: ${message.content}`);
 
-        const imageDetected = await handleImageMessage(message);
+    const imageDetected = await handleImageMessage(message, replicate, fetch, Headers);
 if (!imageDetected) {
     
 
