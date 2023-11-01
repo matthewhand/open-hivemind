@@ -7,9 +7,14 @@ const fs = require('fs');
 const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
 const Replicate = require('replicate');
-let nodeFetch;
+
+let fetch;
+let Headers;
+
 (async () => {
-  nodeFetch = await import('node-fetch');
+  const nodeFetch = await import('node-fetch');
+  fetch = nodeFetch.default;
+  Headers = nodeFetch.Headers;
 })();
 
 const fetch = nodeFetch.default;
