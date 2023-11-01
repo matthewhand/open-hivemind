@@ -22,4 +22,4 @@ function debugEnvVars() {
     }
 }
 
-export { debugEnvVars };
+module.exports = { debugEnvVars };
