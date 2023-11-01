@@ -43,7 +43,7 @@ The bot will respond with the output.
 To analyze an image, simply upload it to the designated channel. The bot will send the image for analysis and return the results.
 
 ````
-Upload an image to the channel
+Upload an image to the channel with message !analyse
 ````
 
 The bot will provide analysis based on the machine learning model specified.
