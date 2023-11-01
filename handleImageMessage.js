@@ -20,7 +20,8 @@ async function createPrediction(imageUrl) {
   });
 
   if (!response.ok) {
-    console.error('Failed to create prediction:', response.statusText);
+    const errorDetails = await response.text();
+    console.error('Failed to create prediction:', response.statusText, errorDetails);
     throw new Error('Failed to create prediction');
   }
 
