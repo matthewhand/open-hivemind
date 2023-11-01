@@ -13,10 +13,11 @@ COPY --from=python-env /usr/local /usr/local
 # Install Node dependencies
 COPY package*.json ./
 RUN npm install
-RUN npm install node-fetch
-RUN npm install cross-fetch
+#RUN npm install node-fetch
+#RUN npm install cross-fetch
 RUN npm install axios
-RUN npm install replicate
+RUN npm install chalk
+#RUN npm install replicate
 
 # Copy app source
 COPY . .
