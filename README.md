@@ -54,7 +54,11 @@ This will load all the environment variables defined in your `.env` file into yo
 
 ## Usage
 
-### LLM AI Interaction
+### Code Execution and AI Interaction
+
+### Wakewords and Continued Conversation
+
+The bot uses wakewords to initiate a conversation. Once a conversation is initiated, you can continue interacting with the bot without using the wakeword for a certain period of time.
 
 To engage with the LLM, mention the trigger word along with your query or instruction:
 
