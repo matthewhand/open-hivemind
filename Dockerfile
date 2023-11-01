@@ -14,6 +14,7 @@ COPY --from=python-env /usr/local /usr/local
 COPY package*.json ./
 RUN npm install
 RUN npm install node-fetch
+RUN npm install axios
 RUN npm install replicate
 
 # Copy app source
