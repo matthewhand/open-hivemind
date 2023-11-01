@@ -9,6 +9,7 @@ const { sendLlmRequest } = require('./sendLlmRequest');
 const { handleError } = require('./handleError');
 const { debugEnvVars } = require('./debugEnvVars');
 const { initializeFetch } = require('./initializeFetch');
+const { startWebhookServer } = require('./webhook');
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
@@ -41,6 +42,10 @@ logger.info('Bot started successfully.');
 
 async function initialize() {
   initializeFetch();
+
+  // Start the webhook server
+  const webhookPort = process.env.WEBHOOK_PORT || 3000;
+  startWebhookServer(webhookPort);
 
   client.on('messageCreate', async (message) => {
     try {
