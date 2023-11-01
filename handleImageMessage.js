@@ -4,13 +4,8 @@ const Replicate = require('replicate');
 const { Client, Intents } = require('discord.js');
 
 // Initializing Discord client and Replicate
-const client = new Client({
-  intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.MESSAGE_CONTENT,
-  ],
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
