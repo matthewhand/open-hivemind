@@ -2,19 +2,15 @@
 
 This service facilitates interaction with a language model, either through a Cloudflare worker or the Perplexity API.
 
-## Option 1: Deploying on Cloudflare
+## Option 1: Deploying self-hosted on Cloudflare
 
 ### Requirements
 
-- Cloudflare account
-- [Wrangler CLI](https://developers.cloudflare.com/workers/cli-wrangler/install-update) installed
+- Free Cloudflare account
 
-### Deployment Steps
+## Option 2: Consuming existing Perplexity API
 
-1. **Configuration**:
-   - Update the `wrangler.toml` file with your Cloudflare account ID.
-   - Ensure the environment variable settings in `cloudflare.js` are correctly set.
+### Requirements
 
-2. **Login to Cloudflare**:
-   ```bash
-   wrangler login
+- Paid subscription Perplexity account
+
