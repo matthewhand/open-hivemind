@@ -4,7 +4,10 @@ const { registerCommands, handleCommands } = require('./commands');
 const { startWebhookServer } = require('./webhook');
 const logger = require('./logger');
 const fs = require('fs');
+const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
+const Replicate = require('replicate');
+
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
@@ -58,6 +61,32 @@ client.login(token);
 logger.info('Bot started successfully.');
 logger.info(`Allowed users: ${allowedUsers}`);
 
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
+async function handleImageMessage(message) {
+  const attachments = message.attachments;
+  if (attachments.size > 0) {
+    const imageUrl = attachments.first().url;
+
+    const modelVersion = "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591";
+    const prediction = await replicate.predictions.create({
+      version: modelVersion,
+      input: {
+        image: imageUrl,  // Assuming the image is publicly accessible
+      },
+      webhook: process.env.WEBHOOK_URL,  // Use environment variable for webhook URL
+      webhook_events_filter: ["completed"]
+    });
+
+    // Optionally, you could store the prediction ID to correlate the webhook call later
+    const predictionId = prediction.id;
+    console.log(`Prediction ID: ${predictionId}`);
+  }
+}
+
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.id === client.user.id) {
@@ -65,6 +94,8 @@ client.on('messageCreate', async (message) => {
     }
 
     logger.info(`Received message: ${message.content} from ${message.author.username}`);
+
+    await handleImageMessage(message);
 
     if (message.guild) {
       const userId = message.author.id;
