@@ -31,4 +31,4 @@ async function handleImageMessage(message, replicate) {
     }
 }
 
-export { handleImageMessage };
+module.exports = { handleImageMessage };
