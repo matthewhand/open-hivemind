@@ -1,4 +1,4 @@
-import logger from './logger';
+const logger = require('./logger');
 
 function handleError(error, message) {
     logger.error(`An error occurred: ${error.message}`);
