@@ -7,7 +7,7 @@ const fs = require('fs');
 const { promises: fsPromises } = fs;
 const { DecideToRespond } = require('./responseDecider');
 const Replicate = require('replicate');
-
+const { Headers } = require('node-fetch');
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
