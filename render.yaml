@@ -36,5 +36,5 @@ services:
     - key: PORT
       value: # Port number for the bot's web server (default is 3000)
   buildCommand: npm install
-  startCommand: npm start
+  startCommand: "node ./src/index.js"
   # Include other configurations as needed
