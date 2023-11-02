@@ -43,12 +43,28 @@ class DecideToRespond {
         return false;
     }
 
+    calculateDecayedResponseChance(timeSinceLastSend) {
+        // Define the maximum time to consider for decay (e.g., 1 hour)
+        const maxTimeForDecay = 60 * 60 * 1000; // in milliseconds
+        const decayRate = 0.05; // Define how quickly the chance decays per millisecond
+
+        // Calculate the decay factor based on the time since the last send
+        const decayFactor = Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
+        return decayFactor;
+    }
+
     calcBaseChanceOfUnsolicitedReply(message) {
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, message.createdTimestamp);
+        let baseChance = 0;
         for (let [duration, chance] of this.timeVsResponseChance) {
-            if (timeSinceLastSend < duration) return chance;
+            if (timeSinceLastSend < duration) {
+                baseChance = chance;
+                break;
+            }
         }
-        return 0;
+        // Apply the decay to the base chance
+        const decayedChance = baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
+        return decayedChance;
     }
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
