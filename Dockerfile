@@ -20,7 +20,7 @@ RUN npm install chalk
 COPY src/ .
 
 # Copy commands
-RUN mkdir -p commands
-COPY commands/* ./commands/
+#RUN mkdir -p commands
+#COPY commands/* ./commands/
 
 CMD [ "node", "index.js" ]
