@@ -64,12 +64,5 @@ client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-// Message create event
-client.on('messageCreate', async (message) => {
-  // Ignoring messages from bots
-  if (message.author.bot) return;
-  await handleImageMessage(message);
-});
-
 // Logging in to Discord
 client.login(process.env.DISCORD_TOKEN);
