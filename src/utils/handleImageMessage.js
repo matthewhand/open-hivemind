@@ -37,7 +37,7 @@ async function createPrediction(imageUrl, prompt = 'Please describe this image',
 }
 
 // Handling image message
-async function handleImageMessage(message) {
+async function handleImageMessage(message, prompt) {
   try {
 
     if (message.channel.id !== process.env.CHANNEL_ID) {
@@ -50,7 +50,7 @@ async function handleImageMessage(message) {
       const imageUrl = attachments.first().url;
       console.debug(`Image URL: ${imageUrl}`);
 
-      const prediction = await createPrediction(imageUrl);
+      const prediction = await createPrediction(imageUrl, prompt);
       const predictionId = prediction.id;
       console.log(`Prediction ID: ${predictionId}`);
       return true;
