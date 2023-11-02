@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 // Initialize outside of the sendLlmRequest function
-let responseProbability = 0.1; // 50% chance of responding initially
+let responseProbability = 1.0; // 50% chance of responding initially
 let lastMentionTime = Date.now(); // Timestamp of the last mention
 
 // Helper function to calculate response probability
