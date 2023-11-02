@@ -26,7 +26,7 @@ async function sendLlmRequest(message) {
         await message.channel.sendTyping();
 
         const response = await axios.post(process.env.LLM_URL, requestBody, { headers: headers });
-        
+
         if (response.status !== 200) {
             console.error('Request failed:', response.statusText);
             if (process.env.DEBUG === 'true') {
@@ -34,10 +34,11 @@ async function sendLlmRequest(message) {
             }
             return;
         }
+        
         const responseData = response.data;
-        if (responseData && responseData.response) {
-            let replyContent = responseData.response;
-
+        if (responseData && responseData.choices && responseData.choices.length > 0) {
+            let replyContent = responseData.choices[0].message.content.response;
+        
             // Check if replyContent is a string before calling trim
             if (typeof replyContent === 'string') {
                 replyContent = replyContent.trim();
