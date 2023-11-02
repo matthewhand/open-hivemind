@@ -35,29 +35,41 @@ async function sendLlmRequest(message) {
             return;
         }
         
-const responseData = response.data;
-if (responseData && responseData.choices && responseData.choices.length > 0) {
-    let replyContent = responseData.choices[0].message.content;  // Corrected line
+        const responseData = response.data;
+        if (responseData && responseData.choices && responseData.choices.length > 0) {
+            let replyContent = responseData.choices[0].message.content;
 
-    // Check if replyContent is a string before calling trim
-    if (typeof replyContent === 'string') {
-        replyContent = replyContent.trim();
-    } else {
-        console.error('Expected replyContent to be a string, got:', typeof replyContent);
-        replyContent = JSON.stringify(replyContent);  // Convert to string if it's not a string
-    }
-    
-    if (replyContent.length > 2000) {
-        const chunks = replyContent.match(/.{1,2000}/g);
-        for (let chunk of chunks) {
-            message.reply(chunk);
+            // Check if replyContent is a JSON string with a 'response' field
+            if (typeof replyContent === 'string' && replyContent.trim().startsWith('{')) {
+                try {
+                    const jsonContent = JSON.parse(replyContent);
+                    if (jsonContent.response) {
+                        replyContent = jsonContent.response;
+                    }
+                } catch (e) {
+                    console.error('Received string is not valid JSON:', replyContent);
+                }
+            }
+
+            // Ensure replyContent is a string before calling trim
+            if (typeof replyContent === 'string') {
+                replyContent = replyContent.trim();
+            } else {
+                console.error('Expected replyContent to be a string, got:', typeof replyContent);
+                replyContent = JSON.stringify(replyContent);  // Convert to string if it's not a string
+            }
+            
+            if (replyContent.length > 2000) {
+                const chunks = replyContent.match(/.{1,2000}/g);
+                for (let chunk of chunks) {
+                    message.reply(chunk);
+                }
+            } else {
+                message.reply(replyContent);
+            }
+        } else {
+            message.reply('No response from the server.');
         }
-    } else {
-        message.reply(replyContent);
-    }
-} else {
-    message.reply('No response from the server.');
-}
     } catch (error) {
         // Log detailed error information
         console.error('Error in sendLlmRequest:', error);
