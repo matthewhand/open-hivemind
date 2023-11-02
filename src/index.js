@@ -1,14 +1,14 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const { registerCommands, handleCommands } = require('./commands');
 const logger = require('./utils/logger');
-const { DecideToRespond } = require('./responseDecider');
+const { DecideToRespond } = require('./utils/responseDecider');
 //const Replicate = require('replicate');
-const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utils');
-const { handleImageMessage } = require('./handleImageMessage');
-const { sendLlmRequest } = require('./sendLlmRequest');
-const { handleError } = require('./handleError');
-const { debugEnvVars } = require('./debugEnvVars');
-const { initializeFetch } = require('./initializeFetch');
+const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utils/utils');
+const { handleImageMessage } = require('./utils/handleImageMessage');
+const { sendLlmRequest } = require('./utils/sendLlmRequest');
+const { handleError } = require('./utils/handleError');
+const { debugEnvVars } = require('./utils/debugEnvVars');
+const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
 
 const discordSettings = {
