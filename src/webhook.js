@@ -52,7 +52,7 @@ const startWebhookServer = (port) => {
                 const resultArray = predictionResult.output;
                 const resultText = resultArray.join(' ');  // Join array elements into a single string
                 // Include the image URL in the result message
-                resultMessage = `Original Image: ${imageUrl}\n${resultText}`;
+                resultMessage = `${resultText}`;
             } else if (predictionResult.status === 'processing') {
                 console.debug(`Processing: ${predictionId}`);
             } else {
