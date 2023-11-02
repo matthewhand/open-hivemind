@@ -41,7 +41,7 @@ export default {
 
         try {
             const aiResponse = await ai.run(modelToUse, chat);  // Use the modelToUse variable here
-            const responseContent = aiResponse; // Assuming aiResponse is the string you want to return
+            let responseContent = aiResponse; // Assuming aiResponse is the string you want to return
 
             // If aiResponse is an object and contains a 'response' field, extract it
             if (aiResponse && typeof aiResponse === 'object' && 'response' in aiResponse) {
