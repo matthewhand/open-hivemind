@@ -26,34 +26,31 @@ async function sendLlmRequest(message) {
             }
             return;
         }
-        const responseData = response.data;
-if (responseData && responseData.choices && responseData.choices[0] && responseData.choices[0].message && responseData.choices[0].message.content) {
-    let replyContent = responseData.choices[0].message.content;
 
-    // Check if replyContent is an object, and if so, stringify it
-    if (typeof replyContent === 'object') {
-        replyContent = JSON.stringify(replyContent, null, 2);
-    }
-    
-    // Check if replyContent is a string before calling trim
-    if (typeof replyContent === 'string') {
-        replyContent = replyContent.trim();
-    } else {
-        console.error('Expected replyContent to be a string, got:', typeof replyContent);
-        replyContent = JSON.stringify(replyContent);  // Convert to string if it's not a string
-    }
-    
-    if (replyContent.length > 2000) {
-        const chunks = replyContent.match(/.{1,2000}/g);
-        for (let chunk of chunks) {
-            message.reply(chunk);
+        const responseData = response.data;
+        if (responseData && responseData.response) {
+            let replyContent = responseData.response;
+        
+            // Check if replyContent is a string before calling trim
+            if (typeof replyContent === 'string') {
+                replyContent = replyContent.trim();
+            } else {
+                console.error('Expected replyContent to be a string, got:', typeof replyContent);
+                replyContent = JSON.stringify(replyContent);  // Convert to string if it's not a string
+            }
+            
+            if (replyContent.length > 2000) {
+                const chunks = replyContent.match(/.{1,2000}/g);
+                for (let chunk of chunks) {
+                    message.reply(chunk);
+                }
+            } else {
+                message.reply(replyContent);
+            }
+        } else {
+            message.reply('No response from the server.');
         }
-    } else {
-        message.reply(replyContent);
-    }
-} else {
-    message.reply('No response from the server.');
-}
+
     } catch (error) {
         console.error('Error in sendLlmRequest:', error.message);
     }
