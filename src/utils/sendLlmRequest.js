@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 // Initialize outside of the sendLlmRequest function
-let responseProbability = 1.0; // 100% chance of responding initially
+let responseProbability = 0.1; // 50% chance of responding initially
 let lastMentionTime = Date.now(); // Timestamp of the last mention
 
 // Helper function to calculate response probability
@@ -14,7 +14,7 @@ function calculateResponseProbability(isMentioned) {
         lastMentionTime = currentTime; // Update the last mention time
     } else {
         // Calculate decay factor based on time since last mention
-        const decayFactor = Math.max(0.5, 1 - timeSinceLastMention / (60 * 60)); // Adjust decay factor as needed
+        const decayFactor = Math.max(0.5, 1 - timeSinceLastMention / (60 * 5)); // Adjust decay factor as needed
         responseProbability *= decayFactor; // Decrease probability based on time since last mention
     }
 
