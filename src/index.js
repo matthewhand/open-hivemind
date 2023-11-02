@@ -40,11 +40,12 @@ async function initialize() {
   initializeFetch();
   const webhookPort = process.env.WEBHOOK_PORT || 3000;
   startWebhookServer(webhookPort);
-client.on('messageCreate', async (message) => {
-  try {
-    if (message.author.id === client.user.id || message.author.bot) {
-      return;
-    }
+
+  client.on('messageCreate', async (message) => {
+    try {
+      if (message.author.id === client.user.id || message.author.bot) {
+        return;
+      }
 
     const userId = message.author.id;
     const member = await message.guild.members.fetch(userId);
@@ -59,9 +60,12 @@ client.on('messageCreate', async (message) => {
       message.content.toLowerCase().includes(wakeWord.toLowerCase())
     );
 
-    if (message.content.startsWith('!analyse')) {
-      await handleImageMessage(message);
-      return;
+    // Check if the message starts with '!analyse' or '!analyze'
+    const analyseCommandMatch = message.content.match(/^!(analyse|analyze)\s*(.*)/i);
+    if (analyseCommandMatch) {
+      const prompt = analyseCommandMatch[2].trim() || 'Please describe this image'; // Use the provided text or default prompt
+      await handleImageMessage(message, prompt); // Pass the prompt to the handleImageMessage function
+      return; // Exit if this condition is met to avoid further processing
     }
 
     if (message.content.startsWith('!execute')) {
@@ -72,17 +76,17 @@ client.on('messageCreate', async (message) => {
           executePythonCode(code, message);
         });
       }
-      return;
+      return; // Exit if this condition is met to avoid further processing
     }
 
-    if (wakeWordDetected || shouldReply || isDirectMention) {
-      await sendLlmRequest(message);
+      if (wakeWordDetected || shouldReply || isDirectMention) {
+        await sendLlmRequest(message);
+      }
+    }   catch (error) {
+      handleError(error, message);
     }
-  } catch (error) {
-    handleError(error, message);
-  }
-});
-  
+  });
+
 }
 
 debugEnvVars();
