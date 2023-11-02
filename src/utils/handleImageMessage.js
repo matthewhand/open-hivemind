@@ -39,6 +39,12 @@ async function createPrediction(imageUrl) {
 // Handling image message
 async function handleImageMessage(message) {
   try {
+
+    if (message.channel.id !== process.env.CHANNEL_ID) {
+      console.debug(`Ignoring message in channel ${message.channel.id}`);
+      return false;
+    }
+
     const attachments = message.attachments;
     if (attachments.size > 0) {
       const imageUrl = attachments.first().url;
