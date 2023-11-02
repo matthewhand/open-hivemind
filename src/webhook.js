@@ -1,6 +1,7 @@
 const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
+const { predictionImageMap } = require('./utils/handleImageMessage');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -104,3 +105,4 @@ client.once('ready', () => {
 module.exports = {
     startWebhookServer,
 };
+
