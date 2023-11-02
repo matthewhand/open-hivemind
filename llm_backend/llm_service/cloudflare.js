@@ -6,6 +6,15 @@ export default {
             return new Response('Expected POST', { status: 405 });
         }
 
+        // Extract the Authorization header from the request
+        const authHeader = request.headers.get('Authorization');
+        
+        // Compare the Authorization header to the expected API key from environment variables
+        if (!authHeader || authHeader !== `Bearer ${env.LLM_API_KEY}`) {
+            // If the header is missing or does not match, return a 401 Unauthorized response
+            return new Response('Unauthorized', { status: 401 });
+        }
+
         let requestBody;
         try {
             requestBody = await request.json();
@@ -47,7 +56,7 @@ export default {
                     },
                     delta: {
                         role: "assistant",
-                        content: "LLM did not return a response"
+                        content: ""
                     }
                 }]
             };
