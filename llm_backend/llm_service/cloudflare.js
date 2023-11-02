@@ -40,28 +40,22 @@ export default {
         console.log('Starting AI processing for model:', modelToUse);
 
         try {
-            const response = await ai.run(modelToUse, chat);  // Use the modelToUse variable here
-            const uuid = crypto.randomUUID();
+            const aiResponse = await ai.run(modelToUse, chat);  // Use the modelToUse variable here
+            const responseContent = aiResponse; // Assuming aiResponse is the string you want to return
+
+            // If aiResponse is an object and contains a 'response' field, extract it
+            if (aiResponse && typeof aiResponse === 'object' && 'response' in aiResponse) {
+                responseContent = aiResponse.response;
+            }
+
             const responseObj = {
-                id: uuid,
+                id: crypto.randomUUID(),
                 model: modelToUse,
                 created: Date.now(),
-                object: "chat.completion",
-                choices: [{
-                    index: 0,
-                    finish_reason: "stop",
-                    message: {
-                        role: "assistant",
-                        content: response  // Assuming `response` is a string with the reply
-                    },
-                    delta: {
-                        role: "assistant",
-                        content: ""
-                    }
-                }]
+                response: responseContent  // Return the response directly
             };
 
-            console.log('AI processing completed for model:', modelToUse, 'with UUID:', uuid);
+            console.log('AI processing completed for model:', modelToUse);
 
             return new Response(JSON.stringify(responseObj), { status: 200, headers: { "Content-Type": "application/json" } });
         } catch (e) {
