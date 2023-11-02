@@ -71,7 +71,8 @@ The bot will respond with the output from the LLM backend you provide (see servi
 To analyze an image, simply upload it to the designated channel. The bot will send the image for analysis and return the results.
 
 ````
-Upload an image to the channel with message !analyse
+Upload an image to the channel along with a prompt prefixed with !analyse
+e.g. !analyse what is the primary subject of this image?
 ````
 
 The bot will provide analysis based on the machine learning model specified.
