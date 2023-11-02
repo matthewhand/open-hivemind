@@ -23,14 +23,10 @@ async function sendLlmRequest(message) {
             console.log('Request payload:', JSON.stringify(requestBody, null, 2));
         }
 
-        // Start typing
-        message.channel.startTyping();
+        await message.channel.sendTyping();
 
         const response = await axios.post(process.env.LLM_URL, requestBody, { headers: headers });
         
-        // Stop typing
-        message.channel.stopTyping(true);
-
         if (response.status !== 200) {
             console.error('Request failed:', response.statusText);
             if (process.env.DEBUG === 'true') {
@@ -62,8 +58,6 @@ async function sendLlmRequest(message) {
             message.reply('No response from the server.');
         }
     } catch (error) {
-        // Stop typing in case of error
-        message.channel.stopTyping(true);
         console.error('Error in sendLlmRequest:', error.message);
     }
 }
