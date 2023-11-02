@@ -1,0 +1,40 @@
+services:
+- type: web
+  name: discord-llm-bot
+  env: node
+  envVars:
+    - key: DISCORD_TOKEN
+      value: # Your Discord bot token
+    - key: GUILD_ID
+      value: # The ID of your Discord server
+    - key: CLIENT_ID
+      value: # Your Discord client ID
+    - key: CHANNEL_ID
+      value: # ID of the Discord channel where the bot will operate
+    - key: ALLOWED_USERS
+      value: # Comma-separated list of user IDs who can execute code
+    - key: ALLOWED_ROLES
+      value: # Comma-separated list of role IDs who can execute code
+    - key: LLM_API_KEY
+      value: # Your LLM API Key
+    - key: LLM_URL
+      value: # The URL to which requests will be sent for LLM
+    - key: LLM_MODEL
+      value: # The model to use for LLM (e.g., 'mistral-7b-instruct')
+    - key: LLM_SYSTEM
+      value: # System prompt for LLM queries
+    - key: MODEL_VERSION
+      value: # Version of the model to use for image prediction
+    - key: IMAGE_PROMPT
+      value: # Prompt for the image prediction model
+    - key: REPLICATE_API_TOKEN
+      value: # API token for Replicate
+    - key: WEBHOOK_URL
+      value: # Webhook URL for Replicate API notifications
+    - key: DEBUG
+      value: # Set to 'true' to enable debug logs
+    - key: PORT
+      value: # Port number for the bot's web server (default is 3000)
+  buildCommand: npm install
+  startCommand: npm start
+  # Include other configurations as needed
