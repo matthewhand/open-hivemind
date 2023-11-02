@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const { registerCommands, handleCommands } = require('./commands');
-const logger = require('./logger');
+const logger = require('./utils/logger');
 const { DecideToRespond } = require('./responseDecider');
 //const Replicate = require('replicate');
 const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('./utils');
