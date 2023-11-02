@@ -18,7 +18,15 @@ async function sendLlmRequest(message) {
         if (process.env.DEBUG === 'true') {
             console.log('Request payload:', JSON.stringify(requestBody, null, 2));
         }
+
+        // Start typing
+        message.channel.startTyping();
+
         const response = await axios.post(process.env.LLM_URL, requestBody, { headers: headers });
+        
+        // Stop typing
+        message.channel.stopTyping();
+
         if (response.status !== 200) {
             console.error('Request failed:', response.statusText);
             if (process.env.DEBUG === 'true') {
@@ -26,11 +34,10 @@ async function sendLlmRequest(message) {
             }
             return;
         }
-
         const responseData = response.data;
         if (responseData && responseData.response) {
             let replyContent = responseData.response;
-        
+
             // Check if replyContent is a string before calling trim
             if (typeof replyContent === 'string') {
                 replyContent = replyContent.trim();
@@ -50,8 +57,9 @@ async function sendLlmRequest(message) {
         } else {
             message.reply('No response from the server.');
         }
-
     } catch (error) {
+        // Stop typing in case of error
+        message.channel.stopTyping();
         console.error('Error in sendLlmRequest:', error.message);
     }
 }
