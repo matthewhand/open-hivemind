@@ -35,36 +35,42 @@ const startWebhookServer = (port) => {
     const app = express();
     app.use(express.json());
 
-app.post('/webhook', async (req, res) => {
-    console.log('Received webhook:', req.body);
+    app.post('/webhook', async (req, res) => {
+        console.log('Received webhook:', req.body);
 
-    const predictionId = req.body.id;
-    const predictionResult = req.body;  // Adjust this line if necessary to obtain the prediction result
-    const channelId = process.env.CHANNEL_ID;
-    const channel = client.channels.cache.get(channelId);
+        const predictionId = req.body.id;
+        const predictionResult = req.body;  // Adjust this line if necessary to obtain the prediction result
+        const imageUrl = predictionImageMap.get(predictionId); // Retrieve the image URL using the prediction ID
 
-    if (channel) {
-        let resultMessage;
-        if (predictionResult.status === 'succeeded') {
-            const resultArray = predictionResult.output;
-            const resultText = resultArray.join(' ');  // Join array elements into a single string with newline separators
-            resultMessage = `${resultText}`;
-        } else if (predictionResult.status === 'processing') {
-            console.debug('processing ${predictionId}');
+        const channelId = process.env.CHANNEL_ID;
+        const channel = client.channels.cache.get(channelId);
+
+        if (channel) {
+            let resultMessage;
+            if (predictionResult.status === 'succeeded') {
+                const resultArray = predictionResult.output;
+                const resultText = resultArray.join(' ');  // Join array elements into a single string
+                // Include the image URL in the result message
+                resultMessage = `Original Image: ${imageUrl}\n${resultText}`;
+            } else if (predictionResult.status === 'processing') {
+                console.debug(`Processing: ${predictionId}`);
+            } else {
+                resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
+            }
+
+            await channel.send(resultMessage).catch(error => {
+                console.error('Failed to send message to channel:', error.message);
+            });
+
+            // Remove the image URL from the map after sending the message
+            predictionImageMap.delete(predictionId);
         } else {
-            resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
+            console.error('Channel not found');
         }
-        await channel.send(resultMessage).catch(error => {
-            console.error('Failed to send message to channel:', error.message);
-        });
-    } else {
-        console.error('Channel not found');
-    }
 
-    res.setHeader('Content-Type', 'application/json');
-    res.sendStatus(200);
-});
-
+        res.setHeader('Content-Type', 'application/json');
+        res.sendStatus(200);
+    });
 
 
     app.get('/health', (req, res) => {

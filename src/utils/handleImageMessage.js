@@ -1,9 +1,8 @@
 // Importing necessary libraries and modules
 const axios = require('axios');
-const { Client, GatewayIntentBits } = require('discord.js');
 
-// Initializing Discord client
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// This map will store the association between prediction IDs and image URLs
+const predictionImageMap = new Map();
 
 // Function to create prediction via Replicate's REST API
 async function createPrediction(imageUrl) {
@@ -11,7 +10,7 @@ async function createPrediction(imageUrl) {
     const response = await axios.post(
       'https://api.replicate.com/v1/predictions',
       {
-        version: process.env.MODEL_VERSION || "2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591", // https://replicate.com/yorickvp/llava-13b/api
+        version: process.env.MODEL_VERSION || "default-model-version", // Replace with your model version
         input: { 
           image: imageUrl,
           prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
@@ -26,6 +25,9 @@ async function createPrediction(imageUrl) {
         }
       }
     );
+
+    // Store the image URL with the associated prediction ID
+    predictionImageMap.set(response.data.id, imageUrl);
 
     return response.data;
   } catch (error) {
@@ -56,13 +58,5 @@ async function handleImageMessage(message) {
   }
 }
 
-// Exporting the function
-module.exports = { handleImageMessage };
-
-// Client ready event
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
-
-// Logging in to Discord
-client.login(process.env.DISCORD_TOKEN);
+// Exporting the function and the map
+module.exports = { handleImageMessage, predictionImageMap };
