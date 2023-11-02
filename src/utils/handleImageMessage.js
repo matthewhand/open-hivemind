@@ -5,15 +5,15 @@ const axios = require('axios');
 const predictionImageMap = new Map();
 
 // Function to create prediction via Replicate's REST API
-async function createPrediction(imageUrl) {
+async function createPrediction(imageUrl, prompt = 'Please describe this image', model = '2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591') {
   try {
     const response = await axios.post(
       'https://api.replicate.com/v1/predictions',
       {
-        version: process.env.MODEL_VERSION || "default-model-version", // Replace with your model version
+        version: model,
         input: { 
           image: imageUrl,
-          prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
+          prompt: prompt
         },
         webhook: process.env.WEBHOOK_URL,
         webhook_events_filter: ["start", "completed"]
