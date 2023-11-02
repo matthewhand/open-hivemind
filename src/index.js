@@ -61,7 +61,7 @@ client.on('messageCreate', async (message) => {
 
     if (message.content.startsWith('!analyse')) {
       await handleImageMessage(message);
-      return;  // Exit if this condition is met to avoid further processing
+      return;
     }
 
     if (message.content.startsWith('!execute')) {
@@ -72,7 +72,7 @@ client.on('messageCreate', async (message) => {
           executePythonCode(code, message);
         });
       }
-      return;  // Exit if this condition is met to avoid further processing
+      return;
     }
 
     if (wakeWordDetected || shouldReply || isDirectMention) {
