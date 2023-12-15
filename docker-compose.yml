@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"  # Adjust the port mapping as per your application's requirement
+    env_file:
+      - .env
+    volumes:
+      - ./src:/usr/src/app
+      - /usr/src/app/node_modules  # Persist node_modules volume
+    restart: always
