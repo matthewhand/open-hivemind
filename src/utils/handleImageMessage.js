@@ -5,15 +5,15 @@ const axios = require('axios');
 const predictionImageMap = new Map();
 
 // Function to create prediction via Replicate's REST API
-async function createPrediction(imageUrl, prompt = 'Please describe this image', model = '2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591') {
+async function createPrediction(imageUrl) {
   try {
     const response = await axios.post(
       'https://api.replicate.com/v1/predictions',
       {
-        version: model,
+        version: process.env.MODEL_VERSION || "default-model-version", // Replace with your model version
         input: { 
           image: imageUrl,
-          prompt: prompt
+          prompt: process.env.IMAGE_PROMPT || 'Please describe this image'
         },
         webhook: process.env.WEBHOOK_URL,
         webhook_events_filter: ["start", "completed"]
@@ -37,7 +37,7 @@ async function createPrediction(imageUrl, prompt = 'Please describe this image',
 }
 
 // Handling image message
-async function handleImageMessage(message, prompt) {
+async function handleImageMessage(message) {
   try {
 
     if (message.channel.id !== process.env.CHANNEL_ID) {
@@ -50,7 +50,7 @@ async function handleImageMessage(message, prompt) {
       const imageUrl = attachments.first().url;
       console.debug(`Image URL: ${imageUrl}`);
 
-      const prediction = await createPrediction(imageUrl, prompt);
+      const prediction = await createPrediction(imageUrl);
       const predictionId = prediction.id;
       console.log(`Prediction ID: ${predictionId}`);
       return true;
