@@ -28,7 +28,7 @@ function debugEnvVars() {
         optionalEnvVars.push(`FLOWISE_${action.toUpperCase()}_ID`);
     });
 
-    const redactSuffixes = ['_TOKEN', '_KEY']; // Adjust these suffixes as needed
+    const redactSuffixes = ['_TOKEN', '_KEY'];
 
     if (process.env.BOT_DEBUG_MODE && process.env.BOT_DEBUG_MODE.toLowerCase() === 'true') {
         console.log('Debugging Environment Variables:');
