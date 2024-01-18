@@ -1,6 +1,7 @@
 # ---- Build Python Environment ----
 FROM python:3.9-slim-buster AS python-env
 WORKDIR /usr/src/python-env
+RUN apt-get update && apt-get install -y gcc python3-dev
 RUN pip install --no-cache-dir psutil requests bs4 opencv-python numpy nltk
 
 # ---- Build Node Environment ----
@@ -20,7 +21,7 @@ RUN npm install chalk
 COPY src/ .
 
 # Copy commands
-#RUN mkdir -p commands
-#COPY commands/* ./commands/
+#RUN mkdir -p slashCommands
+#COPY src/slashCommands/* ./slashCommands/
 
 CMD [ "node", "index.js" ]

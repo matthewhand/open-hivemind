@@ -1,4 +1,4 @@
-import { Ai } from './vendor/@cloudflare/ai.js';
+import { Ai } from '@cloudflare/ai';
 
 export default {
     async fetch(request, env) {
@@ -28,8 +28,8 @@ export default {
             return new Response('Missing or invalid messages in request', { status: 400 });
         }
 
-        // Use the model from the request if provided, otherwise default to '@cf/meta/llama-2-7b-chat-int8'
-        const modelToUse = model || '@cf/meta/llama-2-7b-chat-int8';
+        // Use the model from the request if provided, otherwise default to '@cf/mistral/mistral-7b-instruct-v0.1'
+        const modelToUse = model || '@cf/mistral/mistral-7b-instruct-v0.1';
 
         const ai = new Ai(env.AI);
 

@@ -1,104 +1,107 @@
 const axios = require('axios');
 const fetchConversationHistory = require('./fetchConversationHistory');
 
-const MAX_CONTENT_LENGTH = process.env.LLM_MAX_CONTEXT_SIZE ? parseInt(process.env.LLM_MAX_CONTEXT_SIZE, 10) : 4096;
-const MAX_RESPONSE_SIZE = process.env.LLM_MAX_RESPONSE_SIZE ? parseInt(process.env.LLM_MAX_RESPONSE_SIZE, 10) : 2048;
+const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
+const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
+const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
+const LLM_URL = process.env.LLM_ENDPOINT_URL;
+const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
+const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
+const API_KEY = process.env.LLM_API_KEY;
+
+// This function should be in the same file, above the sendLlmRequest function
+function isValidRequestBody(body) {
+    // Example validation rules (extend as needed)
+    if (!body.model || typeof body.model !== 'string') return false;
+    if (!Array.isArray(body.messages)) return false;
+
+    for (const message of body.messages) {
+        if (!message.role || !['user', 'system'].includes(message.role)) return false;
+        if (typeof message.content !== 'string') return false;
+    }
+
+    return true;
+}
 
 async function sendLlmRequest(message) {
-    let typingTimeout;
+    if (!LLM_URL) {
+        console.error('LLM endpoint URL is not set.');
+        return;
+    }
 
-    const sendTypingWithRandomDelay = () => {
-        message.channel.sendTyping();
-        const delay = 10000 + Math.random() * 10000;
-        typingTimeout = setTimeout(sendTypingWithRandomDelay, delay);
-    };
+    if (message.author.bot && !BOT_TO_BOT_MODE) return; // Ignore other bots unless BOT_TO_BOT_MODE is true
+
+    let typingTimeout = startTypingIndicator(message.channel);
 
     try {
-        console.debug("sendLlmRequest: Starting request process...");
-
-        const userMessage = message.content;
-
-        const modelToUse = process.env.LLM_MODEL || 'mistral-7b-instruct';
-        console.debug(`Model selected: ${modelToUse}`);
-
-        console.debug("Fetching conversation history...");
+        console.debug("sendLlmRequest: Fetching conversation history...");
         const historyMessages = await fetchConversationHistory(message.channel);
-        console.debug(`Fetched ${historyMessages.length} messages from history.`);
 
         console.debug("Preparing LLM request body...");
-        const maxTotalSize = MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE;
-        let requestBody = {
-            model: modelToUse,
-            messages: [{ role: 'system', content: process.env.LLM_SYSTEM || 'You are a helpful assistant.' }]
-        };
+        let requestBody = buildRequestBody(historyMessages, message.content);
 
-        let currentSize = JSON.stringify(requestBody).length;
-
-        for (let msg of historyMessages) {
-            let msgSize = JSON.stringify({ role: 'user', content: msg }).length;
-            if (currentSize + msgSize > maxTotalSize) {
-                console.debug("Maximum context size reached. Stopping addition of history messages.");
-                break;
-            }
-            requestBody.messages.push({ role: 'user', content: msg });
-            currentSize += msgSize;
-        }
-
-        console.debug(`Total request size: ${currentSize} bytes`);
-
-        requestBody.messages.push({ role: 'user', content: userMessage });
-
-        sendTypingWithRandomDelay();
-
-        const headers = { 'Content-Type': 'application/json' };
-        if (process.env.LLM_API_KEY) {
-            headers['Authorization'] = `Bearer ${process.env.LLM_API_KEY}`;
-        }
-
-        console.debug("Sending request to LLM...");
-        const response = await axios.post(process.env.LLM_URL, requestBody, { headers: headers });
-        clearTimeout(typingTimeout);
-
-        if (response.status !== 200) {
-            console.error(`Request failed with status ${response.status}: ${response.statusText}`);
-            console.debug(`Response body on failure: ${JSON.stringify(response.data)}`);
+        if (!isValidRequestBody(requestBody)) {
+            console.error('Invalid request body');
             return;
         }
 
+        console.debug("Sending request to LLM...");
+        const response = await axios.post(LLM_URL, requestBody, buildHeaders());
+        if (response.status !== 200) handleFailedResponse(response);
+
         console.debug("LLM request successful. Processing response...");
-        const responseData = response.data;
-        if (responseData && responseData.choices && responseData.choices.length > 0) {
-            let replyContent = responseData.choices[0].message.content;
-
-            // Additional debug to check the type and existence of replyContent
-            console.debug(`Type of replyContent: ${typeof replyContent}`);
-            if (replyContent === undefined) {
-                console.debug("replyContent is undefined. Full responseData: " + JSON.stringify(responseData));
-                message.reply('Received an undefined response.');
-                return;
-            }
-
-            replyContent = typeof replyContent === 'string' ? replyContent.trim() : JSON.stringify(replyContent);
-
-            console.debug(`Response received. Length: ${replyContent.length} characters`);
-            if (replyContent.length > 2000) {
-                const chunks = replyContent.match(/.{1,2000}/g);
-                for (let chunk of chunks) {
-                    message.reply(chunk);
-                }
-            } else {
-                message.reply(replyContent);
-            }
-        } else {
-            console.debug("No response or empty response from the server.");
-            console.debug("Full responseData: " + JSON.stringify(responseData));
-            message.reply('No response from the server.');
-        }
+        const replyContent = processResponse(response.data);
+        message.reply(replyContent);
     } catch (error) {
-        clearTimeout(typingTimeout);
         console.error('Error in sendLlmRequest:', error);
-        console.debug(`Error details: ${error.message}`);
+    } finally {
+        clearTimeout(typingTimeout);
     }
 }
 
+function startTypingIndicator(channel) {
+    const sendTyping = () => channel.sendTyping();
+    return setInterval(sendTyping, randomDelay(10000, 20000));
+}
+
+function buildRequestBody(historyMessages, userMessage) {
+    let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
+    let currentSize = JSON.stringify(requestBody).length;
+
+    for (let msg of historyMessages) {
+        const messageObj = { role: 'user', content: msg };
+        if (currentSize + JSON.stringify(messageObj).length > MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) break;
+        requestBody.messages.push(messageObj);
+        currentSize += JSON.stringify(messageObj).length;
+    }
+
+    requestBody.messages.push({ role: 'user', content: userMessage });
+    return requestBody;
+}
+
+function randomDelay(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    if (API_KEY) headers['Authorization'] = `Bearer ${API_KEY}`;
+    return headers;
+}
+
+function handleFailedResponse(response) {
+    console.error(`Request failed with status ${response.status}: ${response.statusText}`);
+    console.debug(`Response body on failure: ${JSON.stringify(response.data)}`);
+}
+
+function processResponse(data) {
+    if (!data || !data.choices || data.choices.length === 0) {
+        console.debug("No response or empty response from the server.");
+        return 'No response from the server.';
+    }
+    let replyContent = data.choices[0].message.content;
+    return (typeof replyContent === 'string' ? replyContent.trim() : JSON.stringify(replyContent)).substring(0, 2000);
+}
+
 module.exports = { sendLlmRequest };
+

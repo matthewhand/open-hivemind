@@ -7,12 +7,15 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "discord.js": "latest",
     "@discordjs/rest": "^0.1.0-canary.0",
-    "discord-api-types": "^0.25.2",
-    "express": "^4.17.1",
-    "dotenv": "^10.0.0",
     "axios": "^0.21.1",
+    "discord-api-types": "^0.25.2",
+    "discord.js": "latest",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
     "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "wrangler": "^3.22.5"
   }
 }

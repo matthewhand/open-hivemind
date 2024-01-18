@@ -5,8 +5,8 @@ const { predictionImageMap } = require('./utils/handleImageMessage');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID || !process.env.REPLICATE_API_TOKEN) {
-    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID and/or REPLICATE_API_TOKEN');
+if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID || !process.env.REPLICATE_TOKEN) {
+    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID and/or REPLICATE_TOKEN');
     process.exit(1);
 }
 
