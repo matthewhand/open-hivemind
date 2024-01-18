@@ -1,4 +1,7 @@
 function redactValue(value) {
+    if (!value) {
+        return 'Not Set'; // Return 'Not Set' if the value is undefined or null
+    }
     if (value.length <= 4) {
         return '*'.repeat(value.length);
     }
@@ -33,11 +36,9 @@ function debugEnvVars() {
     if (process.env.BOT_DEBUG_MODE && process.env.BOT_DEBUG_MODE.toLowerCase() === 'true') {
         console.log('Debugging Environment Variables:');
         [...requiredEnvVars, ...optionalEnvVars].forEach(varName => {
-            let value = process.env[varName];
-            if (redactSuffixes.some(suffix => varName.endsWith(suffix))) {
-                value = redactValue(value);
-            }
-            console.log(`${varName}: ${value || 'Not Set'}`);
+            const value = process.env[varName];
+            const redactedValue = redactSuffixes.some(suffix => varName.endsWith(suffix)) ? redactValue(value) : value;
+            console.log(`${varName}: ${redactedValue}`);
         });
     }
 
