@@ -66,16 +66,20 @@ function startTypingIndicator(channel) {
 
 function buildRequestBody(historyMessages, userMessage) {
     let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
-    let currentSize = JSON.stringify(requestBody).length;
 
     for (let msg of historyMessages) {
         const messageObj = { role: 'user', content: msg };
-        if (currentSize + JSON.stringify(messageObj).length > MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) break;
         requestBody.messages.push(messageObj);
-        currentSize += JSON.stringify(messageObj).length;
+        const currentSize = JSON.stringify(requestBody).length;
+
+        if (currentSize > MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+            requestBody.messages.pop(); // Remove last message if over limit
+            break;
+        }
     }
 
     requestBody.messages.push({ role: 'user', content: userMessage });
+    console.debug(`Final request body: ${JSON.stringify(requestBody, null, 2)}`);
     return requestBody;
 }
 
@@ -104,4 +108,3 @@ function processResponse(data) {
 }
 
 module.exports = { sendLlmRequest };
-
