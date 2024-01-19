@@ -76,7 +76,15 @@ function processResponse(data) {
         console.debug("No response or empty response from the server.");
         return 'No response from the server.';
     }
-    let replyContent = data.choices[0].message.content;
+
+    const choice = data.choices[0];
+
+    // Hypothetical metadata handling
+    if (choice.metadata && choice.metadata.unsolicitedResponseChance) {
+        console.debug(`Unsolicited response chance: ${choice.metadata.unsolicitedResponseChance}`);
+    }
+
+    let replyContent = choice.message.content;
     return (typeof replyContent === 'string' ? replyContent.trim() : JSON.stringify(replyContent)).substring(0, 2000);
 }
 
