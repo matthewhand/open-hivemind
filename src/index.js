@@ -42,7 +42,7 @@ async function initialize() {
             }
 
             if (message.content.startsWith('!')) {
-		await commandHandler(message);
+                await commandHandler(message);
                 return;
             }
 

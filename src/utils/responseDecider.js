@@ -1,5 +1,4 @@
 // responseDecider.js
-
 class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
         this.cacheTimeout = cacheTimeout;
@@ -35,69 +34,69 @@ class DecideToRespond {
             Math.max(...timeVsResponseChance.map(item => item[0])),
             discordSettings.unsolicitedChannelCap
         );
-
-        // Read LLM_WAKEWORDS from environment variables and split into an array
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
+        this.recentMessagesCount = {};
     }
 
     isDirectlyMentioned(ourUserId, message) {
-        // Check for direct mentions
         if (message.mentions.has(ourUserId)) return true;
-
-        // Check for wakewords
         for (const wakeword of this.llmWakewords) {
             if (message.content.includes(wakeword.trim())) {
                 return true;
             }
         }
-
         return false;
     }
-    
-    calculateDecayedResponseChance(timeSinceLastSend) {
-        // Define the maximum time to consider for decay (e.g., 1 hour)
-        const maxTimeForDecay = 60 * 60 * 1000; // in milliseconds
-        const decayRate = 0.005; // Define how quickly the chance decays per millisecond
 
-        // Calculate the decay factor based on the time since the last send
-        const decayFactor = Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
-        return decayFactor;
+    calculateDecayedResponseChance(timeSinceLastSend) {
+        const maxTimeForDecay = 60 * 60 * 1000; // 1 hour in milliseconds
+        const decayRate = 0.005;
+        return Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
     }
 
     calcBaseChanceOfUnsolicitedReply(message) {
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, message.createdTimestamp);
-        let baseChance = 0;
-        for (let [duration, chance] of this.timeVsResponseChance) {
-            if (timeSinceLastSend < duration) {
-                baseChance = chance;
-                break;
-            }
-        }
-        // Apply the decay to the base chance
-        const decayedChance = baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
-        return decayedChance;
+        let baseChance = this.timeVsResponseChance
+            .filter(([duration, _]) => timeSinceLastSend < duration)
+            .reduce((acc, [_, chance]) => acc + chance, 0) / this.timeVsResponseChance.length;
+        const dynamicFactor = this.calculateDynamicFactor(message);
+        baseChance *= dynamicFactor;
+        return baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
+    }
+
+    calculateDynamicFactor(message) {
+        const recentMessages = this.getRecentMessagesCount(message.channel.id);
+        return recentMessages > 10 ? 0.5 : 1;
+    }
+
+    getRecentMessagesCount(channelId) {
+        return this.recentMessagesCount[channelId] || 0;
+    }
+
+    logMessage(message) {
+        const channelId = message.channel.id;
+        this.recentMessagesCount[channelId] = (this.recentMessagesCount[channelId] || 0) + 1;
+        setTimeout(() => {
+            this.recentMessagesCount[channelId]--;
+        }, 60000); // Decrease count after 1 minute
     }
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
-        if (this.discordSettings.disableUnsolicitedReplies) return false;
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
         let responseChance = baseChance;
         if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
         if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
-
-        // Debug log for the calculated percentage
         this.debugLog(`Channel: ${message.channel.id}, BaseChance: ${baseChance}, ResponseChance: ${responseChance}`);
-
         return Math.random() < responseChance;
     }
 
-    // Debug log function
     debugLog(message) {
-        console.log(`[DEBUG] ${message}`);  // Replace with your logger
+        console.log(`[DEBUG] ${message}`);
     }
 
     shouldReplyToMessage(ourUserId, message) {
+        this.logMessage(message);
         if (this.isDirectlyMentioned(ourUserId, message)) {
             return { shouldReply: true, isDirectMention: true };
         }
@@ -105,10 +104,6 @@ class DecideToRespond {
             return { shouldReply: true, isDirectMention: false };
         }
         return { shouldReply: false, isDirectMention: false };
-    }
-
-    logMention(channelId, sendTimestamp) {
-        this.lastReplyTimes.logMention(channelId, sendTimestamp);
     }
 }
 
