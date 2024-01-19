@@ -56,14 +56,25 @@ class DecideToRespond {
 
     calcBaseChanceOfUnsolicitedReply(message) {
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, message.createdTimestamp);
-        let baseChance = this.timeVsResponseChance
-            .filter(([duration, _]) => timeSinceLastSend < duration)
-            .reduce((acc, [_, chance]) => acc + chance, 0) / this.timeVsResponseChance.length;
+        console.log(`Time since last send: ${timeSinceLastSend}`);
+    
+        let filteredChances = this.timeVsResponseChance
+           .filter(([duration, _]) => timeSinceLastSend < duration);
+        console.log(`Filtered chances: ${JSON.stringify(filteredChances)}`);
+    
+        let baseChance = filteredChances
+           .reduce((acc, [_, chance]) => acc + chance, 0) / this.timeVsResponseChance.length;
+        console.log(`Base chance before dynamic factor: ${baseChance}`);
+    
         const dynamicFactor = this.calculateDynamicFactor(message);
+        console.log(`Dynamic factor: ${dynamicFactor}`);
+    
         baseChance *= dynamicFactor;
+        console.log(`Base chance after dynamic factor: ${baseChance}`);
+    
         return baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
     }
-
+    
     calculateDynamicFactor(message) {
         const recentMessages = this.getRecentMessagesCount(message.channel.id);
         return recentMessages > 10 ? 0.5 : 1;
