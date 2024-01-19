@@ -66,9 +66,17 @@ class DecideToRespond {
                 break;
             }
         }
-        return baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
+    
+        const decayedChance = baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
+    
+        // Debugging information
+        console.log(`Time since last send: ${timeSinceLastSend}`);
+        console.log(`Base chance before decay: ${baseChance}`);
+        console.log(`Decayed chance: ${decayedChance}`);
+    
+        return decayedChance;
     }
-
+    
     calculateDynamicFactor(message) {
         const recentMessages = this.getRecentMessagesCount(message.channel.id);
         return recentMessages > 10 ? 0.5 : 1;
