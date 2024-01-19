@@ -16,7 +16,7 @@ const discordSettings = {
     ignore_dms: true,
 };
 const interrobangBonus = 0.1;
-const timeVsResponseChance = [[5, 0.05], [60, 0.5], [420, 0.3]];
+const timeVsResponseChance = [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]];
 
 const responseDecider = new DecideToRespond(discordSettings, interrobangBonus, timeVsResponseChance);
 
