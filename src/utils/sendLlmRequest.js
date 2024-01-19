@@ -65,8 +65,12 @@ async function sendLlmRequest(message) {
 
         console.debug("LLM request successful. Processing response...");
         const replyContent = processResponse(response.data);
-        message.reply(replyContent);
-    } catch (error) {
+        message.reply(replyContent).then(() => {
+            // Log the time of this reply
+            responseDecider.logMention(message.channel.id, Date.now());
+        });
+
+        } catch (error) {
         console.error('Error in sendLlmRequest:', error);
     }
 }
