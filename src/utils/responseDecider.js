@@ -19,9 +19,11 @@ class LastReplyTimes {
         this.times[channelId] = sendTimestamp;
     }
 
-    timeSinceLastMention(channelId, sendTimestamp) {
-        this.purgeOutdated(sendTimestamp);
-        return sendTimestamp - (this.times[channelId] || 0);
+    timeSinceLastMention(channelId, currentTimestamp) {
+        if (!this.times[channelId]) {
+            return Infinity;
+        }
+        return currentTimestamp - this.times[channelId];
     }
 }
 
@@ -50,30 +52,22 @@ class DecideToRespond {
 
     calculateDecayedResponseChance(timeSinceLastSend) {
         const maxTimeForDecay = 60 * 60 * 1000; // 1 hour in milliseconds
-        const decayRate = 0.005;
+        const decayRate = 0.00001;
         return Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
     }
 
     calcBaseChanceOfUnsolicitedReply(message) {
-        const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, message.createdTimestamp);
-        console.log(`Time since last send: ${timeSinceLastSend}`);
-
-        // Calculate the base chance based on the time since the last send
-        let baseChance = this.timeVsResponseChance
-            .filter(([duration, _]) => timeSinceLastSend >= duration)
-            .map(([_, chance]) => chance)
-            .reduce((maxChance, chance) => Math.max(maxChance, chance), 0);
-        console.log(`Base chance: ${baseChance}`);
-
-        // Apply dynamic factor and decay
-        const dynamicFactor = this.calculateDynamicFactor(message);
-        console.log(`Dynamic factor: ${dynamicFactor}`);
-        baseChance *= dynamicFactor;
-        baseChance *= this.calculateDecayedResponseChance(timeSinceLastSend);
-        console.log(`Final chance after dynamic factor and decay: ${baseChance}`);
-
-        return baseChance;
-    }    
+        const currentTimestamp = Date.now();
+        const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
+        let baseChance = 0;
+        for (let [duration, chance] of this.timeVsResponseChance) {
+            if (timeSinceLastSend < duration) {
+                baseChance = chance;
+                break;
+            }
+        }
+        return baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
+    }
 
     calculateDynamicFactor(message) {
         const recentMessages = this.getRecentMessagesCount(message.channel.id);
@@ -88,7 +82,7 @@ class DecideToRespond {
         const channelId = message.channel.id;
         this.recentMessagesCount[channelId] = (this.recentMessagesCount[channelId] || 0) + 1;
         setTimeout(() => {
-            this.recentMessagesCount[channelId]--;
+            this.recentMessagesCount[channelId] = Math.max(0, this.recentMessagesCount[channelId] - 1);
         }, 60000); // Decrease count after 1 minute
     }
 
@@ -98,29 +92,23 @@ class DecideToRespond {
         let responseChance = baseChance;
         if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
         if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
-        console.log(`Channel: ${message.channel.id}, BaseChance: ${baseChance}, ResponseChance: ${responseChance}`);
         return Math.random() < responseChance;
-    }
-
-    debugLog(message) {
-        console.log(`[DEBUG] ${message}`);
     }
 
     shouldReplyToMessage(ourUserId, message) {
         this.logMessage(message);
-        console.log('Checking if should reply to message'); 
-    
         if (this.isDirectlyMentioned(ourUserId, message)) {
-            console.log('Directly mentioned'); 
             return { shouldReply: true, isDirectMention: true };
         }
         if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
-            console.log('Decided to provide unsolicited reply');
             return { shouldReply: true, isDirectMention: false };
         }
-        console.log('No reply needed'); // Add this line
         return { shouldReply: false, isDirectMention: false };
     }
+
+    logMention(channelId, sendTimestamp) {
+        this.lastReplyTimes.logMention(channelId, sendTimestamp);
     }
+}
 
 module.exports = { DecideToRespond };
