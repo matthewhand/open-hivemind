@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y gcc python3-dev
 RUN pip install --no-cache-dir psutil requests bs4 opencv-python numpy nltk
 
 # ---- Build Node Environment ----
-FROM node:16-buster
+FROM node:18-buster
 WORKDIR /usr/src/app
 
 # Copy Python environment
