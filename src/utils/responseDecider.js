@@ -97,14 +97,19 @@ class DecideToRespond {
 
     shouldReplyToMessage(ourUserId, message) {
         this.logMessage(message);
+        console.log('Checking if should reply to message'); 
+    
         if (this.isDirectlyMentioned(ourUserId, message)) {
+            console.log('Directly mentioned'); 
             return { shouldReply: true, isDirectMention: true };
         }
         if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
+            console.log('Decided to provide unsolicited reply');
             return { shouldReply: true, isDirectMention: false };
         }
+        console.log('No reply needed'); // Add this line
         return { shouldReply: false, isDirectMention: false };
     }
-}
+    }
 
 module.exports = { DecideToRespond };
