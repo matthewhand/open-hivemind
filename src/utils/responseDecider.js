@@ -87,7 +87,7 @@ class DecideToRespond {
         let responseChance = baseChance;
         if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
         if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
-        this.debugLog(`Channel: ${message.channel.id}, BaseChance: ${baseChance}, ResponseChance: ${responseChance}`);
+        console.log(`Channel: ${message.channel.id}, BaseChance: ${baseChance}, ResponseChance: ${responseChance}`);
         return Math.random() < responseChance;
     }
 
