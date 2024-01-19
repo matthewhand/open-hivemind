@@ -57,7 +57,7 @@ class DecideToRespond {
     calculateDecayedResponseChance(timeSinceLastSend) {
         // Define the maximum time to consider for decay (e.g., 1 hour)
         const maxTimeForDecay = 60 * 60 * 1000; // in milliseconds
-        const decayRate = 0.05; // Define how quickly the chance decays per millisecond
+        const decayRate = 0.005; // Define how quickly the chance decays per millisecond
 
         // Calculate the decay factor based on the time since the last send
         const decayFactor = Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
