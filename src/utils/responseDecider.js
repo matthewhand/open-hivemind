@@ -35,14 +35,25 @@ class DecideToRespond {
             Math.max(...timeVsResponseChance.map(item => item[0])),
             discordSettings.unsolicitedChannelCap
         );
+
+        // Read LLM_WAKEWORDS from environment variables and split into an array
+        this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
     }
 
     isDirectlyMentioned(ourUserId, message) {
+        // Check for direct mentions
         if (message.mentions.has(ourUserId)) return true;
-        // ... Include any wakeword check logic ...
+
+        // Check for wakewords
+        for (const wakeword of this.llmWakewords) {
+            if (message.content.includes(wakeword.trim())) {
+                return true;
+            }
+        }
+
         return false;
     }
-
+    
     calculateDecayedResponseChance(timeSinceLastSend) {
         // Define the maximum time to consider for decay (e.g., 1 hour)
         const maxTimeForDecay = 60 * 60 * 1000; // in milliseconds
