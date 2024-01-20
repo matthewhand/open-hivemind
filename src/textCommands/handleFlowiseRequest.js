@@ -1,13 +1,11 @@
 const axios = require('axios');
 
-// Random error messages similar to the ones in messageHandler
 const errorMessages = [
     "Oops, my circuits got scrambled! 🤖",
     "Whoa, I slipped on a digital banana peel! 🍌",
     "Ah, I just had a byte burp! 🤖💨",
     "Looks like I bungled the bits! 💾",
     "Yikes, my code got a hiccup. 🤖🤧",
-    // More messages can be added here
 ];
 
 function getRandomErrorMessage() {
@@ -16,13 +14,13 @@ function getRandomErrorMessage() {
 }
 
 async function handleFlowiseRequest(message, args) {
-    if (!args) {
+    if (!args || args.trim() === '') {
         const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
         message.reply(`Available Flowise actions: ${flowiseActions.join(', ')}`);
         return;
     }
 
-    const [action, ...queryParts] = args.split(' ');
+    const [action, ...queryParts] = args.trim().split(' ');
     const query = queryParts.join(' ');
 
     if (!query) {
