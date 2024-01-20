@@ -47,10 +47,6 @@ async function initialize() {
                     commandContent = message.content.replace(botMentionWithNick, '').trim();
                 }
     
-                if (commandContent.startsWith('!')) {
-                    commandContent = commandContent.slice(1).trim();
-                }
-    
                 await commandHandler(message, commandContent);
                 return;
             }
