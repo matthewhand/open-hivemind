@@ -33,23 +33,28 @@ async function initialize() {
 
     client.on('messageCreate', async (message) => {
         try {
-            if (message.author.bot || message.author.id === client.user.id) {
-                return;
-            }
-
-            const botMention = `<@!${client.user.id}>`;
-            let commandContent = message.content;
-            if (commandContent.includes(botMention)) {
-                commandContent = commandContent.replace(botMention, '').trim();
-                console.log(`After bot mention removal: ${commandContent}`); // Debug
-            }
-
-            if (commandContent.startsWith('!')) {
-                console.log(`Passing to commandHandler: ${commandContent}`); // Debug
+            if (message.author.bot || message.author.id === client.user.id) return;
+    
+            const botMention = `<@${client.user.id}>`;
+            const botMentionWithNick = `<@!${client.user.id}>`;
+    
+            if (message.content.startsWith('!') || message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
+                let commandContent = message.content;
+                
+                if (message.content.includes(botMention)) {
+                    commandContent = message.content.replace(botMention, '').trim();
+                } else if (message.content.includes(botMentionWithNick)) {
+                    commandContent = message.content.replace(botMentionWithNick, '').trim();
+                }
+    
+                if (commandContent.startsWith('!')) {
+                    commandContent = commandContent.slice(1).trim();
+                }
+    
                 await commandHandler(message, commandContent);
                 return;
             }
-
+    
             // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
