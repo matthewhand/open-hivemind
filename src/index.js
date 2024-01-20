@@ -6,7 +6,6 @@ const { handleError } = require('./utils/handleError');
 const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
-const { isUserAllowed } = require('./utils/permissions');
 const messageHandler = require('./utils/messageHandler');
 
 const discordSettings = {
@@ -38,8 +37,12 @@ async function initialize() {
                 return;
             }
 
-            if (message.content.startsWith('!')) {
-                await commandHandler(message);
+            const botMention = `<@${client.user.id}>`;
+            if (message.content.startsWith('!') || message.content.startsWith(botMention)) {
+                const commandContent = message.content.startsWith(botMention) 
+                    ? message.content.slice(botMention.length).trim() 
+                    : message.content;
+                await commandHandler(message, commandContent);
                 return;
             }
 
