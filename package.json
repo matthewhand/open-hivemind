@@ -1,7 +1,7 @@
 {
-  "name": "discord-python-executor-bot",
+  "name": "discord-llm-bot",
   "version": "1.0.0",
-  "description": "A Discord bot to execute Python code",
+  "description": "A Discord bot to communicate with LLMs and execute Python code",
   "main": "src/index.js",
   "scripts": {
     "start": "node index.js"
@@ -11,6 +11,7 @@
     "axios": "^1.6.5",
     "discord-api-types": "^0.37.67",
     "discord.js": "latest",
+    "node-fetch": "^2.6.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "winston": "^3.11.0"
