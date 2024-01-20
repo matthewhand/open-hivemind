@@ -33,40 +33,24 @@ async function initialize() {
 
     client.on('messageCreate', async (message) => {
         try {
-            console.debug("Message received:", message.content);
-    
             if (message.author.bot || message.author.id === client.user.id) {
-                console.debug("Message is from a bot or the bot itself, ignoring.");
                 return;
             }
-    
-            const botMention = `<@!${client.user.id}>`;
-            console.debug("Bot mention string:", botMention);
-    
-            if (message.content.startsWith('!') || message.content.includes(botMention)) {
-                let commandContent = message.content;
-    
-                if (message.content.includes(botMention)) {
-                    console.debug("Message includes bot mention.");
-                    commandContent = message.content.replace(botMention, '').trim();
-                    console.debug("Message after removing bot mention:", commandContent);
-                }
-    
+
+            const botMentionRegex = new RegExp(`<@!?${client.user.id}>`);
+            if (message.content.startsWith('!') || botMentionRegex.test(message.content)) {
+                let commandContent = message.content.replace(botMentionRegex, '').trim();
                 if (commandContent.startsWith('!')) {
-                    console.debug("Message starts with '!'.");
                     commandContent = commandContent.slice(1).trim();
-                    console.debug("Command content after removing '!':", commandContent);
                 }
-    
-                console.debug("Passing to commandHandler with content:", commandContent);
+                console.log(`Passing to commandHandler with commandContent: ${commandContent}`); // Debug
                 await commandHandler(message, commandContent);
                 return;
             }
-    
-            console.debug("Passing to messageHandler.");
+
+            console.log(`Passing to messageHandler.`); // Debug
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
-            console.error("Error in message event:", error);
             handleError(error, message);
         }
     });
