@@ -36,16 +36,20 @@ async function initialize() {
             if (message.author.bot || message.author.id === client.user.id) {
                 return;
             }
-
-            const botMention = `<@${client.user.id}>`;
-            if (message.content.startsWith('!') || message.content.startsWith(botMention)) {
-                const commandContent = message.content.startsWith(botMention) 
-                    ? message.content.slice(botMention.length).trim() 
-                    : message.content;
+    
+            const botMention = `<@!${client.user.id}>`;
+            if (message.content.startsWith('!') || message.content.includes(botMention)) {
+                let commandContent = message.content;
+                if (message.content.includes(botMention)) {
+                    commandContent = message.content.replace(botMention, '').trim();
+                    if (commandContent.startsWith('!')) {
+                        commandContent = commandContent.slice(1).trim();
+                    }
+                }
                 await commandHandler(message, commandContent);
                 return;
             }
-
+    
             // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
