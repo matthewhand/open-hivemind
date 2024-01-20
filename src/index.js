@@ -13,7 +13,7 @@ const discordSettings = {
     unsolicitedChannelCap: 5,
     ignore_dms: true,
 };
-const interrobangBonus = 0.1;
+const interrobangBonus = 0.8;
 const timeVsResponseChance = [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]];
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
