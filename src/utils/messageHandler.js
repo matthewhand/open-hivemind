@@ -35,6 +35,10 @@ async function sendLlmRequest(message) {
     try {
         const historyMessages = await fetchConversationHistory(message.channel);
         const requestBody = buildRequestBody(historyMessages, message.content, message);
+
+        // Debugging: log the request payload
+        console.debug("Sending LLM request with payload:", JSON.stringify(requestBody));
+
         const response = await axios.post(LLM_URL, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
