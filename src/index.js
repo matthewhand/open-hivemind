@@ -7,8 +7,7 @@ const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
 const { isUserAllowed } = require('./utils/permissions');
-const { DecideToRespond } = require('./utils/responseDecider');
-const { sendLlmRequest } = require('./utils/sendLlmRequest');
+const messageHandler = require('./utils/messageHandler');
 
 const discordSettings = {
     disableUnsolicitedReplies: false,
@@ -17,8 +16,6 @@ const discordSettings = {
 };
 const interrobangBonus = 0.1;
 const timeVsResponseChance = [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]];
-
-const responseDecider = new DecideToRespond(discordSettings, interrobangBonus, timeVsResponseChance);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -47,10 +44,7 @@ async function initialize() {
             }
 
             // Handling non-command messages
-            const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(client.user.id, message);
-            if (shouldReply || isDirectMention) {
-                await sendLlmRequest(message);
-            }
+            await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
             handleError(error, message);
         }
@@ -59,4 +53,3 @@ async function initialize() {
 
 debugEnvVars();
 initialize().catch(error => console.error('Error during initialization:', error));
-
