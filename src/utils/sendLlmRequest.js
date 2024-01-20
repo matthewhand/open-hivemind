@@ -38,18 +38,14 @@ async function sendLlmRequest(message) {
         return;
     }
 
-    if (message.author.bot && !BOT_TO_BOT_MODE) return; // Ignore other bots unless BOT_TO_BOT_MODE is true
+    if (message.author.bot && !BOT_TO_BOT_MODE) return;
 
     try {
-        console.debug("sendLlmRequest: Fetching conversation history...");
         const historyMessages = await fetchConversationHistory(message.channel);
-
-        console.debug("Preparing LLM request body...");
         const requestBody = buildRequestBody(historyMessages, message.content, message);
 
-        console.debug("Outgoing payload:", JSON.stringify(requestBody, null, 2)); // Debug outgoing payload
+        console.debug("Outgoing payload:", JSON.stringify(requestBody, null, 2));
 
-        console.debug("Sending request to LLM...");
         const response = await axios.post(LLM_URL, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
@@ -63,15 +59,24 @@ async function sendLlmRequest(message) {
             return;
         }
 
-        console.debug("LLM request successful. Processing response...");
-        const replyContent = processResponse(response.data);
-        message.reply(replyContent).then(() => {
+        let replyContent = processResponse(response.data);
+        sendReplyInChunks(message, replyContent).then(() => {
             // Log the time of this reply
             responseDecider.logMention(message.channel.id, Date.now());
         });
 
-        } catch (error) {
+    } catch (error) {
         console.error('Error in sendLlmRequest:', error);
+    }
+}
+
+function sendReplyInChunks(message, replyContent) {
+    if (replyContent.length <= 2000) {
+        return message.reply(replyContent);
+    } else {
+        const chunks = replyContent.match(/[\s\S]{1,2000}/g);
+        const promises = chunks.map(chunk => message.reply(chunk));
+        return Promise.all(promises);
     }
 }
 
