@@ -36,23 +36,21 @@ async function initialize() {
             if (message.author.bot || message.author.id === client.user.id) {
                 return;
             }
-
-            const botMention = `<@!${client.user.id}>`;
-            logger.debug(`Message content: ${message.content}`);
+    
+            const botMention = `<@${client.user.id}>`;
             if (message.content.startsWith('!') || message.content.includes(botMention)) {
                 let commandContent = message.content;
                 if (message.content.includes(botMention)) {
                     commandContent = message.content.replace(botMention, '').trim();
-                    logger.debug(`Command after bot mention removal: ${commandContent}`);
                     if (commandContent.startsWith('!')) {
                         commandContent = commandContent.slice(1).trim();
                     }
                 }
-                logger.debug(`Executing command: ${commandContent}`);
+                // Handle the command
                 await commandHandler(message, commandContent);
                 return;
             }
-
+    
             // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
