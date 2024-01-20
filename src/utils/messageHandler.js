@@ -16,6 +16,21 @@ const responseDecider = new DecideToRespond({
     ignore_dms: true
 }, 0.1, [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]]);
 
+// Random error messages
+const errorMessages = [
+    "Oops, I tripped over my own code! 🤖",
+    "Whoa, I got a bit tangled in my wires there. 🌐",
+    "Ah, my circuits are in a twist! 🔧",
+    "Looks like I zapped the wrong bytes! ⚡",
+    "Yikes, I think I just had a code hiccup. 🤖🤧",
+    // Add more messages as desired
+];
+
+function getRandomErrorMessage() {
+    const randomIndex = Math.floor(Math.random() * errorMessages.length);
+    return errorMessages[randomIndex];
+}
+
 async function sendLlmRequest(message) {
     try {
         const historyMessages = await fetchConversationHistory(message.channel);
@@ -33,9 +48,11 @@ async function sendLlmRequest(message) {
             responseDecider.logMention(message.channel.id, Date.now());
         } else {
             console.error(`Request failed with status ${response.status}: ${response.statusText}`);
+            await message.reply(getRandomErrorMessage());
         }
     } catch (error) {
         console.error('Error in sendLlmRequest:', error);
+        await message.reply(getRandomErrorMessage());
     }
 }
 
