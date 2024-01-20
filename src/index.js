@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('./utils/logger');
 const { registerCommands } = require('./utils/registerSlashCommands');
-const { commandHandler } = require('./textCommands/commandHandler');
+const commandHandler = require('./textCommands/commandHandler');
 const { handleError } = require('./utils/handleError');
 const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
@@ -36,26 +36,20 @@ async function initialize() {
             if (message.author.bot || message.author.id === client.user.id) {
                 return;
             }
-    
+
             const botMention = `<@!${client.user.id}>`;
-            if (message.content.startsWith('!') || message.content.includes(botMention)) {
-                console.log(`Original message: ${message.content}`); // Debug: Check the original message
-    
-                let commandContent = message.content;
-                if (message.content.includes(botMention)) {
-                    commandContent = message.content.replace(botMention, '').trim();
-                    console.log(`After bot mention removal: ${commandContent}`); // Debug: After removing bot mention
-    
-                    if (commandContent.startsWith('!')) {
-                        commandContent = commandContent.slice(1).trim();
-                        console.log(`After '!' removal: ${commandContent}`); // Debug: After removing '!'
-                    }
-                }
-                console.log(`Passing to commandHandler with: ${commandContent}`); // Debug: Final command passed to handler
+            let commandContent = message.content;
+            if (commandContent.includes(botMention)) {
+                commandContent = commandContent.replace(botMention, '').trim();
+                console.log(`After bot mention removal: ${commandContent}`); // Debug
+            }
+
+            if (commandContent.startsWith('!')) {
+                console.log(`Passing to commandHandler: ${commandContent}`); // Debug
                 await commandHandler(message, commandContent);
                 return;
             }
-    
+
             // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {

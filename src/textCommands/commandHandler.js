@@ -16,27 +16,26 @@ const commandHandlers = {
 };
 
 async function commandHandler(message, commandContent) {
-    console.log(`Received in commandHandler: ${commandContent}`); // Debug: Check what commandHandler received
+    console.log(`Received in commandHandler: ${commandContent}`); // Debug
 
-    const commandRegex = /^(\w+)\s*/;
+    const commandRegex = /^!(\w+)\s*/;
     const matches = commandContent.match(commandRegex);
 
     if (matches) {
         const command = matches[1].toLowerCase();
-        console.log(`Command identified: ${command}`); // Debug: Identified command
+        console.log(`Command identified: ${command}`); // Debug
 
         const args = commandContent.replace(commandRegex, '');
-        console.log(`Arguments: ${args}`); // Debug: Arguments for the command
+        console.log(`Arguments: ${args}`); // Debug
 
         if (commandHandlers[command]) {
             await commandHandlers[command](message, args);
         } else {
-            console.log(`Unknown command: ${command}`); // Debug: Unknown command
+            console.log(`Unknown command: ${command}`); // Debug
         }
     } else {
-        console.log('No command found in the message'); // Debug: No command found
+        console.log('No command found in the message'); // Debug
     }
 }
 
 module.exports = { commandHandler };
-
