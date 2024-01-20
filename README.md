@@ -1,77 +1,73 @@
 # Discord LLM Interaction Bot
 
-A versatile Discord bot that integrates advanced language models, image analysis via Replicate, and additional services like Perplexity, Quivr, and Flowise for a comprehensive AI-driven experience.
+A versatile Discord bot integrating advanced language models, image analysis, and additional AI services for a comprehensive experience in Discord servers.
 
 ## 🌟 Features
 
-- **LLM AI Interaction**: Utilize language models for intelligent text responses.
-- **Replicate Image Analysis**: Analyze images using machine learning models.
-- **Perplexity Integration**: Leverage the Perplexity language model for complex conversations.
-- **Quivr Integration**: Access Quivr for a diverse range of AI responses.
-- **Flowise Integration**: Connect to Flowise for specialized data processing.
-- **Python Code Execution**: Run Python code blocks securely.
-- **User Permissions**: Restrict access to specific users or roles.
-- **Dynamic System Setting**: Dynamically set system prompts for different models.
-- **Logging**: Detailed logs for monitoring interactions and troubleshooting.
+- **LLM AI Interaction**: Engage with various language models for intelligent and dynamic text responses.
+- **Replicate Image Analysis**: Analyze and describe images using machine learning models from Replicate (pay-as-you-go).
+- **Perplexity Integration**: Utilize the Perplexity language model for detailed and nuanced conversations.
+- **Quivr Integration**: Access Quivr's AI capabilities for a range of responses and data processing.
+- **Flowise Integration**: Connect to Flowise for workflow automation and complex queries.
+- **Python Code Execution**: Safely run Python code blocks directly in Discord.
+- **User Permissions & Security**: Restrict command usage to specific users or roles.
+- **Dynamic System Setting**: Dynamically configure system prompts for different models and scenarios.
+- **Monitoring & Health Checks**: Utilize `/health` and `/uptime` endpoints for monitoring bot status.
+- **Hosting Flexibility**: Host on cloud platforms (OCI, Render.com, Back4App) or on-premises (Linux, Windows).
+- **Image Analysis with LLaVA 13B (Replicate)**: Analyze images with LLaVA 13B model (pay-per-use).
+- **DIY RAG Endpoint (Modal)**: Utilize custom RAG endpoints hosted on Modal's free tier.
+
+[ ] TODO: Integrate free Hugging Face LLaVA model for image analysis.
 
 ## 🚀 Deployment
 
 ### Prerequisites
 
 - Node.js
-- Docker (optional for Docker deployment)
-- A Discord bot token and client ID
+- Docker (optional)
+- Discord bot token and client ID
 
-### Environment Variables
+### Environment Setup
 
-Configure the following environment variables in a `.env` file:
+Create a `.env` file with necessary variables as detailed in `.env.sample`.
 
-- `DISCORD_TOKEN`: Your Discord bot token.
-- `GUILD_ID`: Your Discord server ID.
-- `CLIENT_ID`: Your Discord client ID.
-- `CHANNEL_ID`: ID of the channel where the bot operates.
-- LLM, Perplexity, Quivr, Flowise, and Replicate configurations (see `.env.sample` for more details).
+### Deployment Options
 
-### Option a: Deploy to localhost
+#### Localhost
 
 1. Clone the repository.
-2. Run `npm install`.
-3. Create a `.env` file with necessary environment variables.
-4. Start the bot: `npm start`.
+2. Install dependencies: `npm install`.
+3. Set up `.env` with required variables.
+4. Run the bot: `npm start`.
 
-### Option b: Deploy to localhost - Docker
+#### Docker
 
-1. Create a `.env` file with necessary variables.
-2. Build the Docker image: `docker build -t discord-llm-bot .`
-3. Run the container: `docker run --env-file .env discord-llm-bot`
+1. Set up `.env`.
+2. Build Docker image: `docker build -t discord-llm-bot .`.
+3. Run Docker container: `docker run --env-file .env discord-llm-bot`.
 
-### Option c: Deploy to a cloud service
+#### Cloud Services
 
-Follow the specific instructions provided by the cloud service to deploy the application. Ensure environment variables are correctly set in the cloud environment.
+Deploy using provided instructions by your cloud service provider, ensuring the correct setting of environment variables.
 
 ## 🛠 Usage
 
 ### Text Commands
 
-- `!analyse`, `!analyze`, `!llava`: Trigger image analysis.
-- `!perplexity`: Engage with Perplexity LLM.
-- `!quivr`: Use Quivr for AI responses.
-- `!flowise <action>`: Send queries to Flowise.
-- `!python`, `!execute`: Execute Python code.
+Invoke various functionalities using `!command` format, e.g., `!perplexity`, `!quivr`.
 
 ### Wakewords
 
-Initiate conversations with the bot using wakewords specified in the environment variables.
+Engage in conversations using designated wakewords.
 
 ## 📊 Monitoring
 
-Endpoints `/health` and `/uptime` return HTTP 200 for uptime monitoring.
+Use `/health` and `/uptime` endpoints for bot's operational status.
 
 ## 🤝 Contributing
 
-Contributions are welcome. Open issues or submit pull requests to improve the bot.
+Contribute via issues or pull requests. Refer to `CONTRIBUTING.md` for guidelines.
 
 ## 📝 License
 
-This project is under the MIT License. See [LICENSE](LICENSE) for more information.
-
+MIT License. See [LICENSE](LICENSE).
