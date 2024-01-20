@@ -13,7 +13,7 @@ const discordSettings = {
     unsolicitedChannelCap: 5,
     ignore_dms: true,
 };
-const interrobangBonus = 0.8;
+const interrobangBonus = 0.1;
 const timeVsResponseChance = [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]];
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -28,7 +28,7 @@ client.once('ready', () => {
 
 async function initialize() {
     initializeFetch();
-    const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+    const webhookPort = process.env.WEB SERVER_PORT || 3000;
     startWebhookServer(webhookPort);
 
     client.on('messageCreate', async (message) => {
@@ -36,21 +36,20 @@ async function initialize() {
             if (message.author.bot || message.author.id === client.user.id) {
                 return;
             }
-    
-            const botMention = `<@${client.user.id}>`;
-            if (message.content.startsWith('!') || message.content.includes(botMention)) {
-                let commandContent = message.content;
-                if (message.content.includes(botMention)) {
-                    commandContent = message.content.replace(botMention, '').trim();
-                    if (commandContent.startsWith('!')) {
-                        commandContent = commandContent.slice(1).trim();
-                    }
-                }
-                // Handle the command
+
+            const botMentionPattern = new RegExp(`<@!?${client.user.id}>`);
+            let commandContent = message.content;
+
+            if (botMentionPattern.test(message.content)) {
+                commandContent = commandContent.replace(botMentionPattern, '').trim();
+            }
+
+            if (commandContent.startsWith('!')) {
+                commandContent = commandContent.slice(1).trim();
                 await commandHandler(message, commandContent);
                 return;
             }
-    
+
             // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
