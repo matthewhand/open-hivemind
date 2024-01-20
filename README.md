@@ -48,7 +48,7 @@ Create a `.env` file with necessary variables as detailed in `.env.sample`.
 
 #### Cloud Services
 
-Deploy using provided instructions by your cloud service provider, ensuring the correct setting of environment variables.
+Deploy using provided instructions by your cloud service provider, ensuring the correct setting of environment variables. For detailed guidance on setting up and configuring the backend for cloud services, please refer to the [README in the llm_backend folder](./llm_backend/README.md).
 
 ## 🛠 Usage
 
