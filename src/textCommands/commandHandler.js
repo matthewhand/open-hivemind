@@ -25,8 +25,9 @@ async function commandHandler(message) {
 
         if (commandHandlers[command]) {
             await commandHandlers[command](message, args);
-        } else {
-            message.reply(`Unknown command: ${command}`);
+        } 
+        else {
+            console.log(`Unknown command: ${command}`);
         }
     }
 }
