@@ -38,10 +38,11 @@ async function initialize() {
             }
     
             const botMention = `<@!${client.user.id}>`;
-            if (message.content.startsWith('!') || message.content.includes(botMention)) {
+            if (message.content.startsWith(botMention) || message.content.startsWith('!')) {
                 let commandContent = message.content;
-                if (message.content.includes(botMention)) {
-                    commandContent = message.content.replace(botMention, '').trim();
+                if (message.content.startsWith(botMention)) {
+                    // Extracts command after bot mention
+                    commandContent = message.content.slice(botMention.length).trim();
                     if (commandContent.startsWith('!')) {
                         commandContent = commandContent.slice(1).trim();
                     }
