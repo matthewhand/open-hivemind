@@ -36,19 +36,27 @@ async function initialize() {
             if (message.author.bot || message.author.id === client.user.id) {
                 return;
             }
-
-            const botMentionRegex = new RegExp(`<@!?${client.user.id}>`);
-            if (message.content.startsWith('!') || botMentionRegex.test(message.content)) {
-                let commandContent = message.content.replace(botMentionRegex, '').trim();
-                if (commandContent.startsWith('!')) {
-                    commandContent = commandContent.slice(1).trim();
+    
+            const botMention = `<@!${client.user.id}>`;
+            if (message.content.startsWith('!') || message.content.includes(botMention)) {
+                console.log(`Original message: ${message.content}`); // Debug: Check the original message
+    
+                let commandContent = message.content;
+                if (message.content.includes(botMention)) {
+                    commandContent = message.content.replace(botMention, '').trim();
+                    console.log(`After bot mention removal: ${commandContent}`); // Debug: After removing bot mention
+    
+                    if (commandContent.startsWith('!')) {
+                        commandContent = commandContent.slice(1).trim();
+                        console.log(`After '!' removal: ${commandContent}`); // Debug: After removing '!'
+                    }
                 }
-                console.log(`Passing to commandHandler with commandContent: ${commandContent}`); // Debug
+                console.log(`Passing to commandHandler with: ${commandContent}`); // Debug: Final command passed to handler
                 await commandHandler(message, commandContent);
                 return;
             }
-
-            console.log(`Passing to messageHandler.`); // Debug
+    
+            // Handling non-command messages
             await messageHandler(message, discordSettings, interrobangBonus, timeVsResponseChance);
         } catch (error) {
             handleError(error, message);
