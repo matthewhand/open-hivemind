@@ -14,6 +14,7 @@ function getRandomErrorMessage() {
 }
 
 async function handleFlowiseRequest(message, args) {
+    // If args is undefined or empty, list available actions
     if (!args || args.trim() === '') {
         const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
         message.reply(`Available Flowise actions: ${flowiseActions.join(', ')}`);
