@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('./utils/logger');
 const { registerCommands } = require('./utils/registerSlashCommands');
-const commandHandler = require('./textCommands/commandHandler');
+const { commandHandler } = require('./textCommands/commandHandler');
 const { handleError } = require('./utils/handleError');
 const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
