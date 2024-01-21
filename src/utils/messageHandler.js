@@ -21,12 +21,12 @@ const responseDecider = new DecideToRespond({
 
 // Random error messages
 const errorMessages = [
+    // Add more messages as desired
     "Oops, I tripped over my own code! 🤖",
     "Whoa, I got a bit tangled in my wires there. 🌐",
     "Ah, my circuits are in a twist! 🔧",
     "Looks like I zapped the wrong bytes! ⚡",
-    "Yikes, I think I just had a code hiccup. 🤖🤧",
-    // Add more messages as desired
+    "Yikes, I think I just had a code hiccup. 🤖🤧"
 ];
 
 function getRandomErrorMessage() {
@@ -35,28 +35,10 @@ function getRandomErrorMessage() {
 }
 
 function validateRequestBody(requestBody) {
-    // Check if requestBody exists
-    if (!requestBody) {
-        console.debug("Validation failed: requestBody is undefined or null.");
+    if (!requestBody || !Array.isArray(requestBody.messages) || requestBody.messages.length === 0) {
+        console.debug("Validation failed for requestBody:", JSON.stringify(requestBody));
         return false;
     }
-
-    // Check if requestBody has the 'messages' array
-    if (!Array.isArray(requestBody.messages)) {
-        console.debug("Validation failed: 'messages' is not an array. requestBody:", JSON.stringify(requestBody));
-        return false;
-    }
-
-    // Check if the 'messages' array is empty
-    if (requestBody.messages.length === 0) {
-        console.debug("Validation failed: 'messages' array is empty.");
-        return false;
-    }
-
-    // Additional validation checks can be added here
-    // ...
-
-    // If all checks pass
     console.debug("Validation passed for requestBody.");
     return true;
 }
@@ -66,13 +48,9 @@ async function sendLlmRequest(message) {
         const historyMessages = await fetchConversationHistory(message.channel);
         const requestBody = buildRequestBody(historyMessages, message.content, message);
 
-        // Validate the request body before sending
         if (!validateRequestBody(requestBody)) {
-            console.error('Invalid request body:', JSON.stringify(requestBody));
             throw new Error('Invalid request body');
         }
-
-        console.debug("Sending LLM request with payload:", JSON.stringify(requestBody));
 
         const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
             headers: {
@@ -81,10 +59,13 @@ async function sendLlmRequest(message) {
             }
         });
 
-        if (response.status === 200) {
+        if (response.status === 200 && response.data) {
             const replyContent = processResponse(response.data);
-            await message.reply(replyContent);
-            responseDecider.logMention(message.channel.id, Date.now());
+            if (replyContent && replyContent.trim() !== '') {
+                await message.reply(replyContent);
+            } else {
+                console.debug("LLM returned an empty or invalid response.");
+            }
         } else {
             console.error(`Request failed with status ${response.status}: ${response.statusText}, Response: ${JSON.stringify(response.data)}`);
             await message.reply(getRandomErrorMessage());
@@ -99,28 +80,23 @@ function buildRequestBody(historyMessages, userMessage, message) {
     let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
     let currentSize = JSON.stringify(requestBody).length;
 
-    // Reverse the order of historyMessages to process newest messages first
     const reversedHistoryMessages = historyMessages.slice().reverse();
 
     for (let msg of reversedHistoryMessages) {
-        if (msg.author) { // Check if msg.author exists
-            const formattedMessage = `<@${msg.author.id}>: ${msg.content}`;
-            const messageObj = { role: 'user', content: formattedMessage };
-            currentSize += JSON.stringify(messageObj).length;
+        const authorId = msg.author ? msg.author.id : 'unknown-author';
+        const formattedMessage = `<@${authorId}>: ${msg.content}`;
+        const messageObj = { role: 'user', content: formattedMessage };
+        currentSize += JSON.stringify(messageObj).length;
 
-            if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
-                requestBody.messages.push(messageObj);
-            } else {
-                break; // Stop adding messages if the maximum size is reached
-            }
+        if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+            requestBody.messages.push(messageObj);
+        } else {
+            break;
         }
     }
 
-    // Add the current message last
-    if (message.author) { // Check if message.author exists
-        const userFormattedMessage = `<@${message.author.id}>: ${userMessage}`;
-        requestBody.messages.push({ role: 'user', content: userFormattedMessage });
-    }
+    const userFormattedMessage = `<@${message.author ? message.author.id : 'current-author'}>: ${userMessage}`;
+    requestBody.messages.push({ role: 'user', content: userFormattedMessage });
 
     return requestBody;
 }
