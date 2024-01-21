@@ -59,23 +59,22 @@ class DecideToRespond {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
         let baseChance = 0;
-        for (let [duration, chance] of this.timeVsResponseChance) {
-            if (timeSinceLastSend < duration) {
+    
+        // Sort the timeVsResponseChance array in descending order of duration
+        const sortedTimeVsResponseChance = [...this.timeVsResponseChance].sort((a, b) => b[0] - a[0]);
+    
+        for (let [duration, chance] of sortedTimeVsResponseChance) {
+            console.debug(`Checking interval: less than ${duration}ms, chance: ${chance}`);
+            if (timeSinceLastSend >= duration) {
                 baseChance = chance;
+                console.debug(`Time since last send is greater than or equal to ${duration}ms, setting base chance to ${chance}`);
                 break;
             }
         }
     
-        const decayedChance = baseChance * this.calculateDecayedResponseChance(timeSinceLastSend);
-    
-        // Debugging information
-        console.log(`Time since last send: ${timeSinceLastSend}`);
-        console.log(`Base chance before decay: ${baseChance}`);
-        console.log(`Decayed chance: ${decayedChance}`);
-    
-        return decayedChance;
+        return baseChance;
     }
-    
+        
     calculateDynamicFactor(message) {
         const recentMessages = this.getRecentMessagesCount(message.channel.id);
         return recentMessages > 10 ? 0.5 : 1;
