@@ -1,4 +1,3 @@
-// responseDecider.js
 class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
         this.cacheTimeout = cacheTimeout;

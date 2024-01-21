@@ -5,16 +5,19 @@ const { DecideToRespond } = require('./responseDecider');
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
 const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
-const LLM_URL = process.env.LLM_ENDPOINT_URL;
+const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
+
+const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.1');
+const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ? JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : [[5 * 60000, 0.05], [120 * 60000, 0.5], [420 * 60000, 0.9], [6900 * 60000, 0.1]];
 
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true
-}, 0.1, [[5, 0.05], [120, 0.5], [420, 0.9], [6900, 0.1]]);
+}, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
 
 // Random error messages
 const errorMessages = [
@@ -72,7 +75,7 @@ async function sendLlmRequest(message) {
         // Debugging: log the request payload
         console.debug("Sending LLM request with payload:", JSON.stringify(requestBody));
 
-        const response = await axios.post(LLM_URL, requestBody, {
+        const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
                 ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` })
