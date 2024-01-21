@@ -36,6 +36,12 @@ async function sendLlmRequest(message) {
         const historyMessages = await fetchConversationHistory(message.channel);
         const requestBody = buildRequestBody(historyMessages, message.content, message);
 
+        // Validate the request body before sending
+        if (!validateRequestBody(requestBody)) {
+            console.error('Invalid request body:', JSON.stringify(requestBody));
+            throw new Error('Invalid request body');
+        }
+
         // Debugging: log the request payload
         console.debug("Sending LLM request with payload:", JSON.stringify(requestBody));
 
