@@ -2,7 +2,7 @@ class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
         this.cacheTimeout = cacheTimeout;
         this.unsolicitedChannelCap = unsolicitedChannelCap;
-        this.times = {};
+        this.times = {}; // Initialize with an empty object
     }
 
     purgeOutdated(latestTimestamp) {
@@ -79,21 +79,25 @@ class DecideToRespond {
     provideUnsolicitedReplyInChannel(ourUserId, message) {
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
-        let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
+        let responseChance = baseChance + (message.content.endsWith('?') or message.content.endsWith('!') ? this.interrobangBonus : 0);
         return Math.random() < responseChance;
     }
 
     shouldReplyToMessage(ourUserId, message) {
         this.logMessage(message);
-        return this.isDirectlyMentioned(ourUserId, message) ? { shouldReply: true, isDirectMention: true } :
-               this.provideUnsolicitedReplyInChannel(ourUserId, message) ? { shouldReply: true, isDirectMention: false } :
-               { shouldReply: false, isDirectMention: false };
+        if (this.isDirectlyMentioned(ourUserId, message)) {
+            return { shouldReply: true, isDirectMention: true };
+        }
+        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
+            return { shouldReply: true, isDirectMention: false };
+        }
+        return { shouldReply: false, isDirectMention: false };
     }
 
     logMention(channelId, sendTimestamp) {
         console.debug(`Logging mention for channel ${channelId} at timestamp ${sendTimestamp}`);
         this.times[channelId] = sendTimestamp;
     }
-    }
+}
 
 module.exports = { DecideToRespond };
