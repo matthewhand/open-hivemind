@@ -103,20 +103,24 @@ function buildRequestBody(historyMessages, userMessage, message) {
     const reversedHistoryMessages = historyMessages.slice().reverse();
 
     for (let msg of reversedHistoryMessages) {
-        const formattedMessage = `<@${msg.author.id}>: ${msg.content}`;
-        const messageObj = { role: 'user', content: formattedMessage };
-        currentSize += JSON.stringify(messageObj).length;
+        if (msg.author) { // Check if msg.author exists
+            const formattedMessage = `<@${msg.author.id}>: ${msg.content}`;
+            const messageObj = { role: 'user', content: formattedMessage };
+            currentSize += JSON.stringify(messageObj).length;
 
-        if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
-            requestBody.messages.push(messageObj);
-        } else {
-            break; // Stop adding messages if the maximum size is reached
+            if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+                requestBody.messages.push(messageObj);
+            } else {
+                break; // Stop adding messages if the maximum size is reached
+            }
         }
     }
 
     // Add the current message last
-    const userFormattedMessage = `<@${message.author.id}>: ${userMessage}`;
-    requestBody.messages.push({ role: 'user', content: userFormattedMessage });
+    if (message.author) { // Check if message.author exists
+        const userFormattedMessage = `<@${message.author.id}>: ${userMessage}`;
+        requestBody.messages.push({ role: 'user', content: userFormattedMessage });
+    }
 
     return requestBody;
 }
