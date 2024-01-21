@@ -83,11 +83,10 @@ async function sendLlmRequest(message) {
 }
 
 function startTypingIndicator(channel) {
-    channel.startTyping();
+    channel.sendTyping();
     return setInterval(() => {
-        channel.stopTyping();
-        channel.startTyping();
-    }, 5000);
+        channel.sendTyping();
+    }, 15000);
 }
 
 function buildRequestBody(historyMessages, userMessage, message) {
