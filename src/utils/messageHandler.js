@@ -67,6 +67,7 @@ async function sendLlmRequest(message) {
             console.debug("LLM response:", replyContent);
             if (replyContent && replyContent.trim() !== '') {
                 await message.reply(replyContent);
+                responseDecider.logMention(message.channel.id, Date.now());
             } else {
                 console.debug("LLM returned an empty or invalid response.");
             }
