@@ -14,10 +14,6 @@ class LastReplyTimes {
         });
     }
 
-    logMention(channelId, sendTimestamp) {
-        this.times[channelId] = sendTimestamp;
-    }
-
     timeSinceLastMention(channelId, currentTimestamp) {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
@@ -95,8 +91,9 @@ class DecideToRespond {
     }
 
     logMention(channelId, sendTimestamp) {
-        this.lastReplyTimes.logMention(channelId, sendTimestamp);
+        console.debug(`Logging mention for channel ${channelId} at timestamp ${sendTimestamp}`);
+        this.times[channelId] = sendTimestamp;
     }
-}
+    }
 
 module.exports = { DecideToRespond };
