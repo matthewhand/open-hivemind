@@ -5,7 +5,7 @@ const { DecideToRespond } = require('./responseDecider');
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
 const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
-const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
+const LLM_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
@@ -61,6 +61,7 @@ function validateRequestBody(requestBody) {
     return true;
 }
 
+
 async function sendLlmRequest(message) {
     try {
         const historyMessages = await fetchConversationHistory(message.channel);
@@ -72,7 +73,6 @@ async function sendLlmRequest(message) {
             throw new Error('Invalid request body');
         }
 
-        // Debugging: log the request payload
         console.debug("Sending LLM request with payload:", JSON.stringify(requestBody));
 
         const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
@@ -87,11 +87,11 @@ async function sendLlmRequest(message) {
             await message.reply(replyContent);
             responseDecider.logMention(message.channel.id, Date.now());
         } else {
-            console.error(`Request failed with status ${response.status}: ${response.statusText}`);
+            console.error(`Request failed with status ${response.status}: ${response.statusText}, Response: ${JSON.stringify(response.data)}`);
             await message.reply(getRandomErrorMessage());
         }
     } catch (error) {
-        console.error('Error in sendLlmRequest:', error);
+        console.error(`Error in sendLlmRequest: ${error.message}, Stack: ${error.stack}`);
         await message.reply(getRandomErrorMessage());
     }
 }
