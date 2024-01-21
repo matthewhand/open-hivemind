@@ -11,7 +11,7 @@ const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.1');
-const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ? JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : [[5 * 60000, 0.05], [120 * 60000, 0.5], [420 * 60000, 0.9], [6900 * 60000, 0.1]];
+const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ? JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : [[1 * 60000, 0.05], [5 * 60000, 0.8], [42 * 60000, 0.4], [69 * 60000, 0.2]];
 
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
@@ -60,7 +60,6 @@ function validateRequestBody(requestBody) {
     console.debug("Validation passed for requestBody.");
     return true;
 }
-
 
 async function sendLlmRequest(message) {
     try {
