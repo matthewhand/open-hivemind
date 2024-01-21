@@ -15,30 +15,29 @@ const commandHandlers = {
     'execute': handlePythonRequest
 };
 
-const registerCommands = async (clientId, token, guildId) => {
-    const rest = new REST({ version: '9' }).setToken(token);
-    try {
-        logger.info(`Started refreshing ${commands.length} application (/) commands.`);
+async function commandHandler(message, commandContent) {
+    console.log(`Received in commandHandler: ${commandContent}`); // Debug: log received command content
 
-        // Log the commands being registered for debugging
-        logger.debug("Registering the following commands:", commands);
+    const commandRegex = /^!(\w+)\s*/;
+    const matches = commandContent.match(commandRegex);
 
-        const data = await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
-            { body: commands },
-        );
-        logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
-    } catch (error) {
-        logger.error('Error registering commands:', error.message);
-        if (error.code === 50001) {
-            logger.error('Missing Access: The bot does not have permissions to register slash commands in the guild.');
-        } else if (error.code === 50013) {
-            logger.error('Missing Permissions: The bot lacks necessary permissions to execute this operation.');
+    if (matches) {
+        const command = matches[1].toLowerCase();
+        console.log(`Command identified: ${command}`); // Debug: log identified command
+
+        const args = commandContent.replace(commandRegex, '');
+        console.log(`Arguments: ${args}`); // Debug: log arguments
+
+        if (commandHandlers[command]) {
+            console.log(`Executing handler for command: ${command}`); // Debug: log before executing handler
+            await commandHandlers[command](message, args);
+            console.log(`Executed handler for command: ${command}`); // Debug: log after executing handler
+        } else {
+            console.log(`Unknown command: ${command}`); // Debug: log if command is unknown
         }
-
-        // Log the error details for more information
-        logger.debug('Error details:', error);
+    } else {
+        console.log('No command found in the message'); // Debug: log if no command is found
     }
-};
+}
 
 module.exports = { commandHandler };
