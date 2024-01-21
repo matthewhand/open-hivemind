@@ -23,7 +23,7 @@ async function getPredictionResult(predictionId) {
                 headers: {
                     'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
                 }
-            }
+             }
         );
         return response.data;
     } catch (error) {
@@ -98,7 +98,7 @@ const startWebhookServer = (port) => {
 client.once('ready', () => {
     console.log('Logged in as', client.user.tag);
 
-    const port = process.env.PORT || 3000;
+    const port = process.env.WEBHOOK_PORT || 3001;
     startWebhookServer(port);
 });
 
