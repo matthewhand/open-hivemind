@@ -5,7 +5,7 @@ const { DecideToRespond } = require('./responseDecider');
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
 const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
-const LLM_URL = process.env.LLM_ENDPOINT_URL;
+const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
