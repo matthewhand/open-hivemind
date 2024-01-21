@@ -79,7 +79,7 @@ class DecideToRespond {
     provideUnsolicitedReplyInChannel(ourUserId, message) {
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
-        let responseChance = baseChance + (message.content.endsWith('?') or message.content.endsWith('!') ? this.interrobangBonus : 0);
+        let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
         return Math.random() < responseChance;
     }
 
