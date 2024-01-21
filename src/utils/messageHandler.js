@@ -99,20 +99,25 @@ function buildRequestBody(historyMessages, userMessage, message) {
     let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
     let currentSize = JSON.stringify(requestBody).length;
 
-    for (let msg of historyMessages) {
-        const formattedMessage = `${msg.username}: ${msg.content}`;
+    // Reverse the order of historyMessages to process newest messages first
+    const reversedHistoryMessages = historyMessages.slice().reverse();
+
+    for (let msg of reversedHistoryMessages) {
+        const formattedMessage = `<@${msg.author.id}>: ${msg.content}`;
         const messageObj = { role: 'user', content: formattedMessage };
         currentSize += JSON.stringify(messageObj).length;
 
         if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
             requestBody.messages.push(messageObj);
         } else {
-            break;
+            break; // Stop adding messages if the maximum size is reached
         }
     }
 
-    const userFormattedMessage = `${message.author.username}: ${userMessage}`;
+    // Add the current message last
+    const userFormattedMessage = `<@${message.author.id}>: ${userMessage}`;
     requestBody.messages.push({ role: 'user', content: userFormattedMessage });
+
     return requestBody;
 }
 
