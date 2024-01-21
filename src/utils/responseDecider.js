@@ -7,11 +7,11 @@ class LastReplyTimes {
 
     purgeOutdated(latestTimestamp) {
         const oldestTimeToKeep = latestTimestamp - this.cacheTimeout;
-        for (let channel in this.times) {
+        Object.keys(this.times).forEach(channel => {
             if (this.times[channel] < oldestTimeToKeep) {
                 delete this.times[channel];
             }
-        }
+        });
     }
 
     logMention(channelId, sendTimestamp) {
@@ -19,10 +19,7 @@ class LastReplyTimes {
     }
 
     timeSinceLastMention(channelId, currentTimestamp) {
-        if (!this.times[channelId]) {
-            return Infinity;
-        }
-        return currentTimestamp - this.times[channelId];
+        return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
 }
 
@@ -32,7 +29,7 @@ class DecideToRespond {
         this.interrobangBonus = interrobangBonus;
         this.timeVsResponseChance = timeVsResponseChance;
         this.lastReplyTimes = new LastReplyTimes(
-            Math.max(...timeVsResponseChance.map(item => item[0])),
+            Math.max(...timeVsResponseChance.map(([duration]) => duration)),
             discordSettings.unsolicitedChannelCap
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
@@ -40,13 +37,8 @@ class DecideToRespond {
     }
 
     isDirectlyMentioned(ourUserId, message) {
-        if (message.mentions.has(ourUserId)) return true;
-        for (const wakeword of this.llmWakewords) {
-            if (message.content.includes(wakeword.trim())) {
-                return true;
-            }
-        }
-        return false;
+        return message.mentions.has(ourUserId) || 
+               this.llmWakewords.some(wakeword => message.content.includes(wakeword.trim()));
     }
 
     calculateDecayedResponseChance(timeSinceLastSend) {
@@ -58,28 +50,24 @@ class DecideToRespond {
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
-        let baseChance = 0;
-    
-        // Sort the timeVsResponseChance array in descending order of duration
+
+        // Sort in descending order of duration
         const sortedTimeVsResponseChance = [...this.timeVsResponseChance].sort((a, b) => b[0] - a[0]);
-    
         console.debug(`[calcBaseChance] Time since last send: ${timeSinceLastSend}ms`);
-    
+
         for (let [duration, chance] of sortedTimeVsResponseChance) {
-            console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) >= duration (${duration}ms)`);
-            if (timeSinceLastSend >= duration) {
-                baseChance = chance;
+            console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) <= duration (${duration}ms)`);
+            if (timeSinceLastSend <= duration) {
                 console.debug(`[calcBaseChance] Interval selected: less than ${duration}ms, setting base chance to ${chance}`);
-                break;
+                return chance;
             }
         }
-    
-        return baseChance;
+
+        return 0;
     }
                 
     calculateDynamicFactor(message) {
-        const recentMessages = this.getRecentMessagesCount(message.channel.id);
-        return recentMessages > 10 ? 0.5 : 1;
+        return this.getRecentMessagesCount(message.channel.id) > 10 ? 0.5 : 1;
     }
 
     getRecentMessagesCount(channelId) {
@@ -97,21 +85,15 @@ class DecideToRespond {
     provideUnsolicitedReplyInChannel(ourUserId, message) {
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
-        let responseChance = baseChance;
-        if (message.content.endsWith('?')) responseChance += this.interrobangBonus;
-        if (message.content.endsWith('!')) responseChance += this.interrobangBonus;
+        let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
         return Math.random() < responseChance;
     }
 
     shouldReplyToMessage(ourUserId, message) {
         this.logMessage(message);
-        if (this.isDirectlyMentioned(ourUserId, message)) {
-            return { shouldReply: true, isDirectMention: true };
-        }
-        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
-            return { shouldReply: true, isDirectMention: false };
-        }
-        return { shouldReply: false, isDirectMention: false };
+        return this.isDirectlyMentioned(ourUserId, message) ? { shouldReply: true, isDirectMention: true } :
+               this.provideUnsolicitedReplyInChannel(ourUserId, message) ? { shouldReply: true, isDirectMention: false } :
+               { shouldReply: false, isDirectMention: false };
     }
 
     logMention(channelId, sendTimestamp) {
