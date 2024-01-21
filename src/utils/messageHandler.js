@@ -1,4 +1,9 @@
-SPONSE_SIZE || '2048', 10);
+const axios = require('axios');
+const fetchConversationHistory = require('./fetchConversationHistory');
+const { DecideToRespond } = require('./responseDecider');
+
+const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
+const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
 const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
