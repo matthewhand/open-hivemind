@@ -15,27 +15,30 @@ const commandHandlers = {
     'execute': handlePythonRequest
 };
 
-async function commandHandler(message, commandContent) {
-    console.log(`Received in commandHandler: ${commandContent}`); // Debug
+const registerCommands = async (clientId, token, guildId) => {
+    const rest = new REST({ version: '9' }).setToken(token);
+    try {
+        logger.info(`Started refreshing ${commands.length} application (/) commands.`);
 
-    const commandRegex = /^!(\w+)\s*/;
-    const matches = commandContent.match(commandRegex);
+        // Log the commands being registered for debugging
+        logger.debug("Registering the following commands:", commands);
 
-    if (matches) {
-        const command = matches[1].toLowerCase();
-        console.log(`Command identified: ${command}`); // Debug
-
-        const args = commandContent.replace(commandRegex, '');
-        console.log(`Arguments: ${args}`); // Debug
-
-        if (commandHandlers[command]) {
-            await commandHandlers[command](message, args);
-        } else {
-            console.log(`Unknown command: ${command}`); // Debug
+        const data = await rest.put(
+            Routes.applicationGuildCommands(clientId, guildId),
+            { body: commands },
+        );
+        logger.info(`Successfully reloaded ${data.length} application (/) commands.`);
+    } catch (error) {
+        logger.error('Error registering commands:', error.message);
+        if (error.code === 50001) {
+            logger.error('Missing Access: The bot does not have permissions to register slash commands in the guild.');
+        } else if (error.code === 50013) {
+            logger.error('Missing Permissions: The bot lacks necessary permissions to execute this operation.');
         }
-    } else {
-        console.log('No command found in the message'); // Debug
+
+        // Log the error details for more information
+        logger.debug('Error details:', error);
     }
-}
+};
 
 module.exports = { commandHandler };
