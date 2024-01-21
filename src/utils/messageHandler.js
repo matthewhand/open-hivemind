@@ -31,6 +31,33 @@ function getRandomErrorMessage() {
     return errorMessages[randomIndex];
 }
 
+function validateRequestBody(requestBody) {
+    // Check if requestBody exists
+    if (!requestBody) {
+        console.debug("Validation failed: requestBody is undefined or null.");
+        return false;
+    }
+
+    // Check if requestBody has the 'messages' array
+    if (!Array.isArray(requestBody.messages)) {
+        console.debug("Validation failed: 'messages' is not an array. requestBody:", JSON.stringify(requestBody));
+        return false;
+    }
+
+    // Check if the 'messages' array is empty
+    if (requestBody.messages.length === 0) {
+        console.debug("Validation failed: 'messages' array is empty.");
+        return false;
+    }
+
+    // Additional validation checks can be added here
+    // ...
+
+    // If all checks pass
+    console.debug("Validation passed for requestBody.");
+    return true;
+}
+
 async function sendLlmRequest(message) {
     try {
         const historyMessages = await fetchConversationHistory(message.channel);
