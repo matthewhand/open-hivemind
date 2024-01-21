@@ -1,9 +1,4 @@
-const axios = require('axios');
-const fetchConversationHistory = require('./fetchConversationHistory');
-const { DecideToRespond } = require('./responseDecider');
-
-const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
-const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
+SPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
 const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
@@ -52,12 +47,18 @@ async function sendLlmRequest(message) {
             throw new Error('Invalid request body');
         }
 
+        // Start Typing Indicator
+        const typingInterval = startTypingIndicator(message.channel);
+
         const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
                 ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` })
             }
         });
+
+        // Stop Typing Indicator
+        clearInterval(typingInterval);
 
         if (response.status === 200 && response.data) {
             const replyContent = processResponse(response.data);
@@ -74,6 +75,14 @@ async function sendLlmRequest(message) {
         console.error(`Error in sendLlmRequest: ${error.message}, Stack: ${error.stack}`);
         await message.reply(getRandomErrorMessage());
     }
+}
+
+function startTypingIndicator(channel) {
+    channel.startTyping();
+    return setInterval(() => {
+        channel.stopTyping();
+        channel.startTyping();
+    }, 5000);
 }
 
 function buildRequestBody(historyMessages, userMessage, message) {
