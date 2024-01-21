@@ -51,10 +51,10 @@ class DecideToRespond {
 
     calculateDecayedResponseChance(timeSinceLastSend) {
         const maxTimeForDecay = 60 * 60 * 1000; // 1 hour in milliseconds
-        const decayRate = 0.00001;
+        const decayRate = 0.000001; 
         return Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
     }
-
+    
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
