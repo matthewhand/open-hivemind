@@ -89,9 +89,17 @@ class DecideToRespond {
     }
 
     logMention(channelId, sendTimestamp) {
-        console.debug(`Logging mention for channel ${channelId} at timestamp ${sendTimestamp}`);
-        this.times[channelId] = sendTimestamp;
+        console.debug(`Attempting to log mention for channel ${channelId} at timestamp ${sendTimestamp}`);
+        // Ensure that this.lastReplyTimes.times is initialized
+        if (!this.lastReplyTimes.times) {
+            console.error("Error: 'times' object in LastReplyTimes is undefined.");
+            this.lastReplyTimes.times = {}; // Initialize if undefined
+        }
+        // Correctly access and modify the 'times' property of the LastReplyTimes instance
+        this.lastReplyTimes.times[channelId] = sendTimestamp;
+        console.debug(`Logged mention for channel ${channelId}. Current state:`, this.lastReplyTimes.times);
     }
+
 }
 
 module.exports = { DecideToRespond };
