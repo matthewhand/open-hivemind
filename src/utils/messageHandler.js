@@ -45,22 +45,20 @@ function processResponse(data) {
     return ['No response from the server.'];
 }
 
-// Split message into chunks of max length
 function splitMessage(message, maxLength) {
     const suffix = "...";
     let parts = [];
     while (message.length > 0) {
-        let part = message.substring(0, maxLength);
         let nextIndex = maxLength;
-
-        // If not the last part, add the suffix and find a good breaking point
         if (message.length > maxLength) {
-            part += suffix;
-            nextIndex = Math.min(message.lastIndexOf(' ', maxLength - suffix.length), maxLength) + 1;
+            const lastSpaceIndex = message.lastIndexOf(' ', maxLength);
+            nextIndex = lastSpaceIndex > -1 ? lastSpaceIndex : maxLength;
+            parts.push(message.substring(0, nextIndex) + suffix);
+        } else {
+            parts.push(message.substring(0, nextIndex));
         }
-
-        parts.push(part);
-        message = message.substring(nextIndex);
+        message = message.substring(nextIndex).trim();
+        console.debug("Split part:", parts[parts.length - 1]); 
     }
     return parts;
 }
