@@ -2,7 +2,7 @@ class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
         this.cacheTimeout = cacheTimeout;
         this.unsolicitedChannelCap = unsolicitedChannelCap;
-        this.times = {}; // Initialize with an empty object
+        this.times = {};
     }
 
     purgeOutdated(latestTimestamp) {
@@ -37,12 +37,6 @@ class DecideToRespond {
                this.llmWakewords.some(wakeword => message.content.includes(wakeword.trim()));
     }
 
-    calculateDecayedResponseChance(timeSinceLastSend) {
-        const maxTimeForDecay = 60 * 60 * 1000; // 1 hour in milliseconds
-        const decayRate = 0.000001; 
-        return Math.exp(-decayRate * Math.min(timeSinceLastSend, maxTimeForDecay));
-    }
-    
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
@@ -57,9 +51,9 @@ class DecideToRespond {
             }
         }
     
-        return 0; // Default case if no interval is matched
+        return 0;
     }
-                    
+
     calculateDynamicFactor(message) {
         return this.getRecentMessagesCount(message.channel.id) > 10 ? 0.5 : 1;
     }
@@ -73,7 +67,7 @@ class DecideToRespond {
         this.recentMessagesCount[channelId] = (this.recentMessagesCount[channelId] || 0) + 1;
         setTimeout(() => {
             this.recentMessagesCount[channelId] = Math.max(0, this.recentMessagesCount[channelId] - 1);
-        }, 60000); // Decrease count after 1 minute
+        }, 60000);
     }
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
@@ -95,14 +89,9 @@ class DecideToRespond {
     }
 
     logMention(channelId, sendTimestamp) {
-        console.debug(`Attempting to log mention for channel ${channelId} at timestamp ${sendTimestamp}`);
-        if (!this.times) {
-            console.error("Error: 'times' object is undefined.");
-            this.times = {}; // Initialize if undefined, though this should be handled in the constructor
-        }
+        console.debug(`Logging mention for channel ${channelId} at timestamp ${sendTimestamp}`);
         this.times[channelId] = sendTimestamp;
-        console.debug(`Logged mention for channel ${channelId}. Current state:`, this.times);
     }
-    }
+}
 
 module.exports = { DecideToRespond };
