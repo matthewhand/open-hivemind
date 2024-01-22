@@ -19,12 +19,12 @@ class LastReplyTimes {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
 
-    resetTimer(channelId, callback) {
+    resetTimer(channelId, timeout, callback) {
         clearTimeout(this.timers[channelId]);
         this.timers[channelId] = setTimeout(() => {
             callback();
             delete this.timers[channelId]; // Clean up after execution
-        }, this.cacheTimeout);
+        }, timeout);
     }
 
     logMessage(channelId, currentTimestamp) {
@@ -36,12 +36,12 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(discordSettings, interrobangBonus, timeVsResponseChance) {
+    constructor(discordSettings, interrobangBonus, timeVsResponseChance, inactivityThreshold) {
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
         this.timeVsResponseChance = timeVsResponseChance;
         this.lastReplyTimes = new LastReplyTimes(
-            Math.max(...timeVsResponseChance.map(([duration]) => duration)),
+            inactivityThreshold,
             discordSettings.unsolicitedChannelCap
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
@@ -49,7 +49,7 @@ class DecideToRespond {
     }
 
     startInactivityTimer(channelId, revivalCallback) {
-        this.lastReplyTimes.resetTimer(channelId, revivalCallback);
+        this.lastReplyTimes.resetTimer(channelId, INACTIVITY_THRESHOLD, revivalCallback);
     }
 
     isDirectlyMentioned(ourUserId, message) {
