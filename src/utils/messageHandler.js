@@ -186,7 +186,18 @@ function processResponse(data) {
     return 'No response from the server.';
 }
 
-// Message Handler
+async function generateReviveMessage(channel) {
+    const revivePrompt = "Generate an engaging message to revive a quiet conversation in a friendly and casual tone.";
+    const historyMessages = await fetchConversationHistory(channel);
+    const fakeMessage = {
+        channel: channel,
+        content: revivePrompt,
+        historyMessages: historyMessages // Include the chat history
+    };
+
+    await sendLlmRequest(fakeMessage, true); // Pass true to indicate revival message
+}
+
 async function messageHandler(message) {
     if (message.author.bot && !BOT_TO_BOT_MODE) {
         console.debug("Ignoring bot message as BOT_TO_BOT_MODE is disabled.");
