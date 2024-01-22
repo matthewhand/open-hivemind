@@ -3,6 +3,7 @@ const { handlePerplexityRequest } = require('./handlePerplexityRequest');
 const { handleQuivrRequest } = require('./handleQuivrRequest');
 const { handleFlowiseRequest } = require('./handleFlowiseRequest');
 const { handlePythonRequest } = require('./handlePythonRequest');
+const { handleHttpCommand } = require('./handleHttpCommand');
 
 const commandHandlers = {
     'analyse': handleImageAnalysis,
@@ -12,7 +13,8 @@ const commandHandlers = {
     'quivr': handleQuivrRequest,
     'flowise': handleFlowiseRequest,
     'python': handlePythonRequest,
-    'execute': handlePythonRequest
+    'execute': handlePythonRequest,
+    'http': handleHttpCommand
 };
 
 async function commandHandler(message, commandContent) {
