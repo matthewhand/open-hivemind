@@ -3,7 +3,6 @@ class LastReplyTimes {
         this.cacheTimeout = cacheTimeout;
         this.unsolicitedChannelCap = unsolicitedChannelCap;
         this.times = {};
-        this.timers = {};
     }
 
     purgeOutdated(latestTimestamp) {
@@ -18,38 +17,19 @@ class LastReplyTimes {
     timeSinceLastMention(channelId, currentTimestamp) {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
-
-    resetTimer(channelId, timeout, callback) {
-        clearTimeout(this.timers[channelId]);
-        this.timers[channelId] = setTimeout(() => {
-            callback();
-            delete this.timers[channelId]; // Clean up after execution
-        }, timeout);
-    }
-
-    logMessage(channelId, currentTimestamp) {
-        this.times[channelId] = currentTimestamp;
-        if (this.timers[channelId]) {
-            clearTimeout(this.timers[channelId]);
-        }
-    }
 }
 
 class DecideToRespond {
-    constructor(discordSettings, interrobangBonus, timeVsResponseChance, inactivityThreshold) {
+    constructor(discordSettings, interrobangBonus, timeVsResponseChance) {
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
         this.timeVsResponseChance = timeVsResponseChance;
         this.lastReplyTimes = new LastReplyTimes(
-            inactivityThreshold,
+            Math.max(...timeVsResponseChance.map(([duration]) => duration)),
             discordSettings.unsolicitedChannelCap
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
-    }
-
-    startInactivityTimer(channelId, revivalCallback) {
-        this.lastReplyTimes.resetTimer(channelId, INACTIVITY_THRESHOLD, revivalCallback);
     }
 
     isDirectlyMentioned(ourUserId, message) {
@@ -98,22 +78,14 @@ class DecideToRespond {
     }
 
     shouldReplyToMessage(ourUserId, message) {
-        console.debug("shouldReplyToMessage called");
-
-        // Logging basic message details
-        console.debug(`Message ID: ${message.id}, Channel ID: ${message.channel.id}, Author ID: ${message.author.id}`);
-
-        // Logging the decision process
         this.logMessage(message);
         if (this.isDirectlyMentioned(ourUserId, message)) {
-            console.debug("User is directly mentioned. Should reply.");
             return { shouldReply: true, isDirectMention: true };
         }
-
-        const unsolicitedReply = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-        console.debug(`Unsolicited reply decision: ${unsolicitedReply}`);
-        
-        return { shouldReply: unsolicitedReply, isDirectMention: false };
+        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
+            return { shouldReply: true, isDirectMention: false };
+        }
+        return { shouldReply: false, isDirectMention: false };
     }
 
     logMention(channelId, sendTimestamp) {
