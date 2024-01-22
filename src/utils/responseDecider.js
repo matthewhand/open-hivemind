@@ -95,9 +95,14 @@ class DecideToRespond {
     }
 
     logMention(channelId, sendTimestamp) {
-        console.debug(`Logging mention for channel ${channelId} at timestamp ${sendTimestamp}`);
+        console.debug(`Attempting to log mention for channel ${channelId} at timestamp ${sendTimestamp}`);
+        if (!this.times) {
+            console.error("Error: 'times' object is undefined.");
+            this.times = {}; // Initialize if undefined, though this should be handled in the constructor
+        }
         this.times[channelId] = sendTimestamp;
+        console.debug(`Logged mention for channel ${channelId}. Current state:`, this.times);
     }
-}
+    }
 
 module.exports = { DecideToRespond };

@@ -89,13 +89,13 @@ function startTypingIndicator(channel) {
     }, 15000);
 }
 
-// Build Request Body
 function buildRequestBody(historyMessages, userMessage, message) {
     let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
     let currentSize = JSON.stringify(requestBody).length;
 
     const reversedHistoryMessages = historyMessages.slice().reverse();
-    reversedHistoryMessages.forEach(msg => {
+
+    for (let msg of reversedHistoryMessages) {
         const authorId = msg.author ? msg.author.id : 'unknown-author';
         const formattedMessage = `<@${authorId}>: ${msg.content}`;
         const messageObj = { role: 'user', content: formattedMessage };
@@ -103,13 +103,14 @@ function buildRequestBody(historyMessages, userMessage, message) {
 
         if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
             requestBody.messages.push(messageObj);
+        } else {
+            break;
         }
-    });
+    }
 
     const userFormattedMessage = `<@${message.author ? message.author.id : 'current-author'}>: ${userMessage}`;
     requestBody.messages.push({ role: 'user', content: userFormattedMessage });
 
-    console.debug("Constructed request body:", JSON.stringify(requestBody));
     return requestBody;
 }
 
