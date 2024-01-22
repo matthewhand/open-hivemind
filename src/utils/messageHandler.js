@@ -206,7 +206,6 @@ async function messageHandler(message) {
 
     console.debug("Deciding whether to respond...");
     const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
-    console.debug(`Reply Decision: ${JSON.stringify(replyDecision)}`);
 
     responseDecider.logMessage(message.channel.id, Date.now());
     responseDecider.startInactivityTimer(message.channel.id, async () => {
