@@ -13,19 +13,19 @@ const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 
 // Bonuses and Response Chances
-const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.1');
+const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
 const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
     JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
     [[1 * 60000, 0.05], [7 * 60000, 0.8], [69 * 60000, 0.1]];
 
-// Response Decider
+// Response Decider Singleton
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true
 }, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
 
-// Validate the Request Body
+// Validate Request Body
 function validateRequestBody(requestBody) {
     if (!requestBody || !Array.isArray(requestBody.messages) || requestBody.messages.length === 0) {
         console.debug("Validation failed for requestBody:", JSON.stringify(requestBody));
@@ -84,18 +84,15 @@ async function sendLlmRequest(message) {
 // Start Typing Indicator
 function startTypingIndicator(channel) {
     channel.sendTyping();
-    return setInterval(() => {
-        channel.sendTyping();
-    }, 15000);
+    return setInterval(() => channel.sendTyping(), 15000);
 }
 
+// Build Request Body
 function buildRequestBody(historyMessages, userMessage, message) {
-    let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };
+    let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };      
     let currentSize = JSON.stringify(requestBody).length;
 
-    const reversedHistoryMessages = historyMessages.slice().reverse();
-
-    for (let msg of reversedHistoryMessages) {
+    historyMessages.slice().reverse().forEach(msg => {
         const authorId = msg.author ? msg.author.id : 'unknown-author';
         const formattedMessage = `<@${authorId}>: ${msg.content}`;
         const messageObj = { role: 'user', content: formattedMessage };
@@ -103,14 +100,13 @@ function buildRequestBody(historyMessages, userMessage, message) {
 
         if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
             requestBody.messages.push(messageObj);
-        } else {
-            break;
         }
-    }
+    });
 
     const userFormattedMessage = `<@${message.author ? message.author.id : 'current-author'}>: ${userMessage}`;
     requestBody.messages.push({ role: 'user', content: userFormattedMessage });
 
+    console.debug("Constructed request body:", JSON.stringify(requestBody));
     return requestBody;
 }
 
