@@ -124,7 +124,7 @@ async function sendLlmRequest(message) {
         console.debug("Stopping typing indicator...");
         clearInterval(typingInterval);
 
-        console.debug("Processing LLM response...");
+        console.console.debug("Processing LLM response...");
         if (response.status === 200 && response.data) {
             const replyContent = processResponse(response.data);
             console.debug("LLM response:", replyContent);
