@@ -120,7 +120,10 @@ function processResponse(data) {
 
 // Message Handler
 async function messageHandler(message) {
-    if (message.author.bot && !BOT_TO_BOT_MODE) return;
+    if (message.author.bot && !BOT_TO_BOT_MODE) {
+        console.debug("Ignoring bot message as BOT_TO_BOT_MODE is disabled.");
+        return;
+    }
 
     console.debug("Deciding whether to respond...");
     const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
