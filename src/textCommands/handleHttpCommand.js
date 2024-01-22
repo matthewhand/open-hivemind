@@ -62,4 +62,6 @@ async function handleHttpCommand(message, args) {
     }
 }
 
+handleHttpCommand.isAvailable = () => process.env.HTTP_ACTIONS && process.env.HTTP_ACTIONS.split(',').length > 0;
+
 module.exports = { handleHttpCommand };
