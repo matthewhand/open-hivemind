@@ -2,16 +2,29 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
-// Parses the .env file for HTTP actions and their corresponding URLs
-const httpActions = process.env.HTTP_ACTIONS.split(',');
+// Safely parse HTTP_ACTIONS, defaulting to an empty array if it's not set
+const httpActions = process.env.HTTP_ACTIONS ? process.env.HTTP_ACTIONS.split(',') : [];
 const httpUrls = httpActions.reduce((acc, action) => {
-    acc[action] = process.env[`HTTP_${action.toUpperCase()}_URL`];
+    const url = process.env[`HTTP_${action.toUpperCase()}_URL`];
+    if (url) {
+        acc[action] = url;
+    }
     return acc;
 }, {});
 
 async function handleHttpCommand(message, args) {
+    // Do not respond to !http commands if HTTP_ACTIONS is not defined
+    if (httpActions.length === 0) {
+        return;
+    }
+
     if (!args) {
-        message.reply('Please provide an action and a query.');
+        if (httpActions.length > 0) {
+            const availableActions = httpActions.join(', ');
+            message.reply(`Available actions: ${availableActions}`);
+        } else {
+            message.reply('No available HTTP actions.');
+        }
         return;
     }
 
@@ -24,6 +37,7 @@ async function handleHttpCommand(message, args) {
         message.reply(`Unknown action: ${action}`);
         return;
     }
+
     if (!query) {
         message.reply(`Please provide a query for the action: ${action}.`);
         return;
@@ -36,7 +50,7 @@ async function handleHttpCommand(message, args) {
         const response = await axios.get(fullUrl);
 
         if (response.status === 200 && response.data) {
-            const responseText = JSON.stringify(response.data); // Adjust this line if the response format is known and different
+            const responseText = JSON.stringify(response.data); // Adjust if the response format is different
             message.reply(`Response from ${action}: ${responseText}`);
         } else {
             logger.error(`Error from ${action} API: Status ${response.status}`);

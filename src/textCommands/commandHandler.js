@@ -14,8 +14,14 @@ const commandHandlers = {
     'flowise': handleFlowiseRequest,
     'python': handlePythonRequest,
     'execute': handlePythonRequest,
-    'http': handleHttpCommand
+    'http': handleHttpCommand,
+    'help': handleHelpCommand
 };
+
+function handleHelpCommand(message) {
+    const availableCommands = Object.keys(commandHandlers).join(', ');
+    message.reply(`Available commands: ${availableCommands}`);
+}
 
 async function commandHandler(message, commandContent) {
     console.log(`Received in commandHandler: ${commandContent}`); // Debug: log received command content
@@ -36,6 +42,7 @@ async function commandHandler(message, commandContent) {
             console.log(`Executed handler for command: ${command}`); // Debug: log after executing handler
         } else {
             console.log(`Unknown command: ${command}`); // Debug: log if command is unknown
+            message.reply('Unknown command: ' + command); // Inform the user about an unknown command
         }
     } else {
         console.log('No command found in the message'); // Debug: log if no command is found
