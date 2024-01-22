@@ -35,6 +35,36 @@ function validateRequestBody(requestBody) {
     return true;
 }
 
+
+// Process LLM Response
+function processResponse(data) {
+    if (data && data.choices && data.choices.length > 0) {
+        let content = data.choices[0].message.content.trim();
+        return splitMessage(content, 2000);
+    }
+    return ['No response from the server.'];
+}
+
+// Split message into chunks of max length
+function splitMessage(message, maxLength) {
+    const suffix = "...";
+    let parts = [];
+    while (message.length > 0) {
+        let part = message.substring(0, maxLength);
+        let nextIndex = maxLength;
+
+        // If not the last part, add the suffix and find a good breaking point
+        if (message.length > maxLength) {
+            part += suffix;
+            nextIndex = Math.min(message.lastIndexOf(' ', maxLength - suffix.length), maxLength) + 1;
+        }
+
+        parts.push(part);
+        message = message.substring(nextIndex);
+    }
+    return parts;
+}
+
 // Send LLM Request
 async function sendLlmRequest(message) {
     try {
@@ -66,7 +96,12 @@ async function sendLlmRequest(message) {
             const replyContent = processResponse(response.data);
             console.debug("LLM response:", replyContent);
             if (replyContent && replyContent.trim() !== '') {
-                await message.reply(replyContent);
+                // await message.reply(replyContent);
+                const messagesToSend = processResponse(replyContent);
+                for (const msg of messagesToSend) {
+                    await message.reply(msg);
+                }
+
                 responseDecider.logMention(message.channel.id, Date.now());
             } else {
                 console.debug("LLM returned an empty or invalid response.");
