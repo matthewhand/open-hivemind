@@ -89,17 +89,17 @@ async function sendLlmRequest(message) {
         console.debug("Stopping typing indicator...");
         clearInterval(typingInterval);
 
-        console.debug("Processing LLM response...");
+        console.console.debug("Processing LLM response...");
         if (response.status === 200 && response.data) {
             const replyContent = processResponse(response.data);
             console.debug("LLM response:", replyContent);
             if (replyContent && replyContent.trim() !== '') {
-                // await message.reply(replyContent);
-                const messagesToSend = processResponse(replyContent);
+                // Split the replyContent if needed and send it
+                const messagesToSend = splitMessage(replyContent, 2000);
                 for (const msg of messagesToSend) {
                     await message.reply(msg);
                 }
-
+        
                 responseDecider.logMention(message.channel.id, Date.now());
             } else {
                 console.debug("LLM returned an empty or invalid response.");
