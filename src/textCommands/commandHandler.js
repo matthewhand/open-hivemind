@@ -48,12 +48,11 @@ const commandHandlers = {
     }
 };
 
-
 // Define the help command handler
 function handleHelpCommand(message) {
     let helpMessage = 'Available commands:\n';
     for (const [command, info] of Object.entries(commandHandlers)) {
-        helpMessage += `- ${command}: ${info.description}\n`;
+        helpMessage += `- !${command}: ${info.description}\n`;
     }
     message.reply(helpMessage);
 }
