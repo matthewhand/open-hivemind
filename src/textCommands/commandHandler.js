@@ -26,10 +26,6 @@ const commandHandlers = {
         handler: handleQuivrRequest,
         description: 'Sends a query to the Quivr API. Usage: !quivr [query]'
     },
-    'flowise': {
-        handler: handleFlowiseRequest,
-        description: 'Sends a query to the Flowise API. Usage: !flowise [query]'
-    },
     'python': {
         handler: handlePythonRequest,
         description: 'Executes Python code blocks. Usage: !python [code]'
@@ -38,9 +34,13 @@ const commandHandlers = {
         handler: handlePythonRequest,
         description: 'Executes Python code (alias for !python). Usage: !execute [code]'
     },
+    'flowise': {
+        handler: handleFlowiseRequest,
+        description: 'Sends a query to the Flowise API or lists available actions if on argument is provided. Usage: !flowise [action] [query]'
+    },
     'http': {
         handler: handleHttpCommand,
-        description: 'Executes HTTP commands. Usage: !http [action] [query]'
+        description: 'Executes HTTP commands or lists available actions if no argument is provided. Usage: !http [action] [query]'
     },
     'help': {
         handler: handleHelpCommand, // Defined below
