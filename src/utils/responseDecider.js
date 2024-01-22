@@ -3,6 +3,7 @@ class LastReplyTimes {
         this.cacheTimeout = cacheTimeout;
         this.unsolicitedChannelCap = unsolicitedChannelCap;
         this.times = {};
+        this.timers = {};
     }
 
     purgeOutdated(latestTimestamp) {
@@ -16,14 +17,6 @@ class LastReplyTimes {
 
     timeSinceLastMention(channelId, currentTimestamp) {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
-    }
-
-
-    constructor(cacheTimeout, unsolicitedChannelCap) {
-        this.cacheTimeout = cacheTimeout;
-        this.unsolicitedChannelCap = unsolicitedChannelCap;
-        this.times = {};
-        this.timers = {}; // New: Store timers for each channel
     }
 
     resetTimer(channelId, callback) {
