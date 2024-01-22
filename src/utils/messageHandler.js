@@ -208,9 +208,9 @@ async function messageHandler(message) {
     const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
 
     responseDecider.logMessage(message.channel.id, Date.now());
-    responseDecider.startInactivityTimer(message.channel.id, async () => {
-        await generateReviveMessage(message.channel.id);
-    });
+    // responseDecider.startInactivityTimer(message.channel.id, async () => {
+    //     await generateReviveMessage(message.channel.id);
+    // });
 
     if (shouldReply || isDirectMention) {
         console.debug("Sending LLM request for message...");
