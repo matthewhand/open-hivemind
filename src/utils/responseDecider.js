@@ -98,14 +98,22 @@ class DecideToRespond {
     }
 
     shouldReplyToMessage(ourUserId, message) {
+        console.debug("shouldReplyToMessage called");
+
+        // Logging basic message details
+        console.debug(`Message ID: ${message.id}, Channel ID: ${message.channel.id}, Author ID: ${message.author.id}`);
+
+        // Logging the decision process
         this.logMessage(message);
         if (this.isDirectlyMentioned(ourUserId, message)) {
+            console.debug("User is directly mentioned. Should reply.");
             return { shouldReply: true, isDirectMention: true };
         }
-        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
-            return { shouldReply: true, isDirectMention: false };
-        }
-        return { shouldReply: false, isDirectMention: false };
+
+        const unsolicitedReply = this.provideUnsolicitedReplyInChannel(ourUserId, message);
+        console.debug(`Unsolicited reply decision: ${unsolicitedReply}`);
+        
+        return { shouldReply: unsolicitedReply, isDirectMention: false };
     }
 
     logMention(channelId, sendTimestamp) {
