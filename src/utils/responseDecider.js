@@ -17,6 +17,29 @@ class LastReplyTimes {
     timeSinceLastMention(channelId, currentTimestamp) {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
+
+
+    constructor(cacheTimeout, unsolicitedChannelCap) {
+        this.cacheTimeout = cacheTimeout;
+        this.unsolicitedChannelCap = unsolicitedChannelCap;
+        this.times = {};
+        this.timers = {}; // New: Store timers for each channel
+    }
+
+    resetTimer(channelId, callback) {
+        clearTimeout(this.timers[channelId]);
+        this.timers[channelId] = setTimeout(() => {
+            callback();
+            delete this.timers[channelId]; // Clean up after execution
+        }, this.cacheTimeout);
+    }
+
+    logMessage(channelId, currentTimestamp) {
+        this.times[channelId] = currentTimestamp;
+        if (this.timers[channelId]) {
+            clearTimeout(this.timers[channelId]);
+        }
+    }
 }
 
 class DecideToRespond {
@@ -30,6 +53,10 @@ class DecideToRespond {
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
+    }
+
+    startInactivityTimer(channelId, revivalCallback) {
+        this.lastReplyTimes.resetTimer(channelId, revivalCallback);
     }
 
     isDirectlyMentioned(ourUserId, message) {

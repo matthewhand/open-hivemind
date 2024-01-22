@@ -11,6 +11,7 @@ const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
+const INACTIVITY_THRESHOLD = parseInt(process.env.INACTIVITY_THRESHOLD || '120000', 10); // Default: 2 minutes
 
 // Bonuses and Response Chances
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
@@ -61,6 +62,40 @@ function splitMessage(message, maxLength) {
         console.debug("Split part:", parts[parts.length - 1]); 
     }
     return parts;
+}
+
+function buildReviveRequestBody(historyMessages, revivePrompt) {
+    // Create a system message that includes both the chat history context and the instruction
+    const systemMessage = "The following is the chat history. Please generate a message that can revive the conversation in a friendly and engaging manner based on this history.";
+
+    // Initialize the request body with the model, system prompt, and the combined system message
+    let requestBody = { 
+        model: MODEL_TO_USE, 
+        messages: [
+            { role: 'system', content: SYSTEM_PROMPT + "\n" + systemMessage }
+        ] 
+    };
+
+    let currentSize = JSON.stringify(requestBody).length;
+
+    // Add each message from the chat history
+    historyMessages.slice().reverse().forEach(msg => {
+        const authorId = msg.author ? msg.author.id : 'unknown-author';
+        const formattedMessage = `<@${authorId}>: ${msg.content}`;
+        const messageObj = { role: 'user', content: formattedMessage };
+        currentSize += JSON.stringify(messageObj).length;
+
+        if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+            requestBody.messages.push(messageObj);
+        }
+    });
+
+    // Add the user's revival prompt if provided
+    if (revivePrompt) {
+        requestBody.messages.push({ role: 'user', content: revivePrompt });
+    }
+
+    return requestBody;
 }
 
 // Send LLM Request
@@ -160,6 +195,11 @@ async function messageHandler(message) {
 
     console.debug("Deciding whether to respond...");
     const { shouldReply, isDirectMention } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
+
+    responseDecider.logMessage(message.channel.id, Date.now());
+    responseDecider.startInactivityTimer(message.channel.id, async () => {
+        await generateReviveMessage(message.channel);
+    });
 
     if (shouldReply || isDirectMention) {
         console.debug("Sending LLM request for message...");
