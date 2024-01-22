@@ -16,7 +16,7 @@ const API_KEY = process.env.LLM_API_KEY;
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.1');
 const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
     JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
-    [[1 * 60000, 0.05], [5 * 60000, 0.8], [42 * 60000, 0.4], [69 * 60000, 0.2]];
+    [[1 * 60000, 0.05], [7 * 60000, 0.8], [69 * 60000, 0.1]];
 
 // Response Decider
 const responseDecider = new DecideToRespond({
