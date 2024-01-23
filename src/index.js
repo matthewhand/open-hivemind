@@ -24,6 +24,42 @@ client.once('ready', () => {
     registerCommands(client);
 });
 
+// Exception Handling and Auto-Restart Logic
+const RESTART_MIN_INTERVAL = parseInt(process.env.RESTART_MIN_INTERVAL || 42 * 60 * 1000); // 42 minutes in milliseconds
+const RESTART_MAX_INTERVAL = parseInt(process.env.RESTART_MAX_INTERVAL || 69 * 60 * 1000); // 69 minutes in milliseconds
+const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID; // Use CHANNEL_ID for notification
+
+function handleExceptionAndScheduleRestart() {
+    try {
+        // Announce failure in the specified channel
+        const channel = client.channels.cache.get(NOTIFICATION_CHANNEL_ID);
+        if (channel) {
+            channel.send('⚠️ The bot has encountered an issue and will restart shortly.');
+        }
+
+        logger.error('Bot encountered an exception. Scheduling a restart.');
+
+        // Schedule a restart
+        const restartInterval = Math.floor(Math.random() * (RESTART_MAX_INTERVAL - RESTART_MIN_INTERVAL + 1)) + RESTART_MIN_INTERVAL;
+        setTimeout(() => {
+            const exec = require('child_process').exec;
+            exec('cd ~/discord-llm-bot/ && docker-compose up -d', (error, stdout, stderr) => {
+                if (error) {
+                    logger.error(`Restart command failed: ${error}`);
+                    return;
+                }
+                logger.info(`Bot restarted successfully: ${stdout}`);
+            });
+        }, restartInterval);
+
+    } catch (err) {
+        logger.error(`Error during exception handling and restart: ${err}`);
+    }
+}
+
+process.on('uncaughtException', handleExceptionAndScheduleRestart);
+process.on('unhandledRejection', handleExceptionAndScheduleRestart);
+
 async function initialize() {
     initializeFetch();
     const webhookPort = process.env.WEB_SERVER_PORT || 3000;
@@ -32,10 +68,8 @@ async function initialize() {
     client.on('messageCreate', async (message) => {
         try {
             if (message.author.bot || message.author.id === client.user.id) return;
-    
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
-    
             let commandContent = message.content;
             if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
                 commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
@@ -44,7 +78,6 @@ async function initialize() {
                     return;
                 }
             }
-    
             await messageHandler(message, discordSettings);
         } catch (error) {
             handleError(error, message);

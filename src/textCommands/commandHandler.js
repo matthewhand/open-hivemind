@@ -4,6 +4,7 @@ const { handleQuivrRequest } = require('./handleQuivrRequest');
 const { handleFlowiseRequest } = require('./handleFlowiseRequest');
 const { handlePythonRequest } = require('./handlePythonRequest');
 const { handleHttpCommand } = require('./handleHttpCommand');
+const { handleReportCommand } = require('./handleReportCommand');
 
 const commandHandlers = {
     'analyse': {
@@ -41,6 +42,10 @@ const commandHandlers = {
     'http': {
         handler: handleHttpCommand,
         description: 'Executes HTTP commands or lists available actions if no argument is provided. Usage: !http [action] [query]'
+    },
+    'report': { 
+        handler: handleReportCommand,
+        description: "User reports about issues or rule violations within the server"
     },
     'help': {
         handler: handleHelpCommand, // Defined below
