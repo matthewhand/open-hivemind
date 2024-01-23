@@ -11,6 +11,8 @@ const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.';
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
+const MIN_RESPONSE_TIME = process.env.LLM_SYSTEM_PROMPT || 5000;
+const SCALE_RESPONSE_TIME = parseFloat(process.env.SCALE_RESPONSE_TIME || '0.1'); // Additional delay per character
 
 // Bonuses and Response Chances
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
@@ -34,7 +36,6 @@ function validateRequestBody(requestBody) {
     console.debug("Validation passed for requestBody.");
     return true;
 }
-
 
 // Process LLM Response
 function processResponse(data) {
@@ -63,7 +64,6 @@ function splitMessage(message, maxLength) {
     return parts;
 }
 
-// Send LLM Request
 async function sendLlmRequest(message) {
     try {
         console.debug("Fetching conversation history...");
@@ -77,6 +77,8 @@ async function sendLlmRequest(message) {
 
         console.debug("Starting typing indicator...");
         const typingInterval = startTypingIndicator(message.channel);
+       
+        const startTime = Date.now();
 
         console.debug("Sending LLM request...");
         const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
@@ -86,33 +88,46 @@ async function sendLlmRequest(message) {
             }
         });
 
+        console.debug("Processing LLM response...");
+        const replyContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
+        console.debug("LLM response:", replyContent);
+
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        console.debug(`Response generated in ${responseTime} ms`);
+
+        if (replyContent && replyContent.trim() !== '') {
+            const contentLength = replyContent.length;
+            const scaledDelay = contentLength * SCALE_RESPONSE_TIME;
+
+            // Calculate total delay considering response time and scaled delay
+            const totalDelay = Math.max(MIN_RESPONSE_TIME - responseTime, scaledDelay);
+
+            if (totalDelay > 0) {
+                console.debug(`Adding total delay of ${totalDelay} ms to mimic human response time`);
+                await new Promise(resolve => setTimeout(resolve, totalDelay));
+            }
+
+            // Split the replyContent if needed and send it
+            const messagesToSend = splitMessage(replyContent, 2000);
+            for (const msg of messagesToSend) {
+                await message.reply(msg);
+            }
+
+            responseDecider.logMention(message.channel.id, Date.now());
+        } else {
+            console.debug("LLM returned an empty or invalid response.");
+        }
+
         console.debug("Stopping typing indicator...");
         clearInterval(typingInterval);
-
-        console.debug("Processing LLM response...");
-        if (response.status === 200 && response.data) {
-            const replyContent = processResponse(response.data);
-            console.debug("LLM response:", replyContent);
-            if (replyContent && replyContent.trim() !== '') {
-                // Split the replyContent if needed and send it
-                const messagesToSend = splitMessage(replyContent, 2000);
-                for (const msg of messagesToSend) {
-                    await message.reply(msg);
-                }
         
-                responseDecider.logMention(message.channel.id, Date.now());
-            } else {
-                console.debug("LLM returned an empty or invalid response.");
-            }
-        } else {
-            console.error(`Request failed with status ${response.status}: ${response.statusText}, Response: ${JSON.stringify(response.data)}`);
-            await message.reply(getRandomErrorMessage());
-        }
     } catch (error) {
         console.error(`Error in sendLlmRequest: ${error.message}, Stack: ${error.stack}`);
         await message.reply(getRandomErrorMessage());
     }
 }
+
 
 // Start Typing Indicator
 function startTypingIndicator(channel) {
