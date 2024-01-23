@@ -48,18 +48,20 @@ function processResponse(data) {
 
 function splitMessage(message, maxLength) {
     const suffix = "...";
+    const effectiveMaxLength = maxLength - suffix.length; // Adjusting for suffix length
     let parts = [];
+
     while (message.length > 0) {
-        let nextIndex = maxLength;
         if (message.length > maxLength) {
-            const lastSpaceIndex = message.lastIndexOf(' ', maxLength);
-            nextIndex = lastSpaceIndex > -1 ? lastSpaceIndex : maxLength;
-            parts.push(message.substring(0, nextIndex) + suffix);
+            let lastSpaceIndex = message.lastIndexOf(' ', effectiveMaxLength);
+            lastSpaceIndex = lastSpaceIndex > -1 ? lastSpaceIndex : effectiveMaxLength;
+            parts.push(message.substring(0, lastSpaceIndex) + suffix);
+            message = message.substring(lastSpaceIndex).trim();
         } else {
-            parts.push(message.substring(0, nextIndex));
+            parts.push(message);
+            break; // No more splitting needed
         }
-        message = message.substring(nextIndex).trim();
-        console.debug("Split part:", parts[parts.length - 1]); 
+        console.debug("Split part:", parts[parts.length - 1]);
     }
     return parts;
 }
