@@ -64,6 +64,13 @@ function splitMessage(message, maxLength) {
     return parts;
 }
 
+function scaleMinResponseTime(responseLength) {
+    const baseMinTime = MIN_RESPONSE_TIME;
+    const scalingFactor = SCALE_RESPONSE_TIME;
+
+    return baseMinTime + (responseLength * scalingFactor);
+}
+
 async function sendLlmRequest(message) {
     try {
         console.debug("Fetching conversation history...");
@@ -92,16 +99,14 @@ async function sendLlmRequest(message) {
         const replyContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
         console.debug("LLM response:", replyContent);
 
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
-        console.debug(`Response generated in ${responseTime} ms`);
-
         if (replyContent && replyContent.trim() !== '') {
-            const contentLength = replyContent.length;
-            const scaledDelay = contentLength * SCALE_RESPONSE_TIME;
-
-            // Calculate total delay considering response time and scaled delay
-            const totalDelay = Math.max(MIN_RESPONSE_TIME - responseTime, scaledDelay);
+            const responseTime = Date.now() - startTime;
+            const scaledMinResponseTime = scaleMinResponseTime(replyContent.length);
+    
+            let totalDelay = 0;
+            if (responseTime < scaledMinResponseTime) {
+                totalDelay = scaledMinResponseTime - responseTime;
+            }
 
             if (totalDelay > 0) {
                 console.debug(`Adding total delay of ${totalDelay} ms to mimic human response time`);
