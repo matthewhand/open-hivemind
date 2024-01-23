@@ -12,7 +12,7 @@ const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assist
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 const MIN_RESPONSE_TIME = process.env.LLM_SYSTEM_PROMPT || 5000;
-const SCALE_RESPONSE_TIME = parseFloat(process.env.SCALE_RESPONSE_TIME || '0.1'); // Additional delay per character
+const SCALE_RESPONSE_TIME = parseFloat(process.env.SCALE_RESPONSE_TIME || '1.5'); // Additional delay per character
 
 // Bonuses and Response Chances
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
