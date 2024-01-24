@@ -112,17 +112,10 @@ async function commandHandler(message, commandContent) {
 
 // Translate alias to actual command
 if (aliases[command]) {
-    const translatedCommand = '!' + aliases[command] + ' ' + args.trim();
-    console.log(`Translated command: ${translatedCommand}`); // Debug log
-    matches = translatedCommand.match(commandRegex);
-    if (matches) {
-        command = matches[1].toLowerCase();
-        args = matches[2];
-    } else {
-        console.error(`Error translating alias: ${translatedCommand}`);
-        message.reply('Error processing command alias.');
-        return;
-    }
+    let fullCommand = aliases[command] + ' ' + args.trim();
+    let parts = fullCommand.split(' ');
+    command = parts[0];
+    args = parts.slice(1).join(' ');
 }
 
         console.log(`Command identified: ${command}`); // Debug log
