@@ -192,9 +192,11 @@ async function sendFollowUpRequest(message) {
         }
 
     } catch (error) {
+        // Log the error but do not reply to the channel
         console.error(`Error in sendFollowUpRequest: ${error.message}, Stack: ${error.stack}`);
-        await message.reply(getRandomErrorMessage());
+        // Removed the line that replies to the channel with an error message
     }
+}
 }
 
 function buildFollowUpRequestBody(historyMessages, message) {
