@@ -37,13 +37,17 @@ function validateRequestBody(requestBody) {
     return true;
 }
 
-// Process LLM Response
 function processResponse(data) {
     if (data && data.choices && data.choices.length > 0) {
         let content = data.choices[0].message.content.trim();
-        return splitMessage(content, 2000);
+
+        // Regular expression to match patterns like '<@anything>: '
+        const pattern = /^<@\w+>: /;
+        content = content.replace(pattern, '');
+
+        return content;
     }
-    return ['No response from the server.'];
+    return 'No response from the server.';
 }
 
 function splitMessage(message, maxLength) {
