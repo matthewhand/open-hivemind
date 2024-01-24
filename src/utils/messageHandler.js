@@ -4,6 +4,9 @@ const { DecideToRespond } = require('./responseDecider');
 const getRandomErrorMessage = require('./errorMessages');
 
 // Constants
+const followUpEnabled = process.env.FOLLOW_UP_ENABLED !== 'false'; // Enabled by default
+const followUpMinDelay = parseInt(process.env.FOLLOW_UP_MIN_DELAY || '2', 10) * 60 * 1000; // Default 2 minutes
+const followUpMaxDelay = parseInt(process.env.FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000; // Default 60 minutes
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
 const MAX_RESPONSE_SIZE = parseInt(process.env.LLM_MAX_RESPONSE_SIZE || '2048', 10);
 const MODEL_TO_USE = process.env.LLM_MODEL || 'mistral-7b-instruct';
