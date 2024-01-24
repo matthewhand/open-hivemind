@@ -92,13 +92,19 @@ async function commandHandler(message, commandContent) {
         let command = matches[1].toLowerCase();
         let args = matches[2];
 
-        // Translate alias to actual command
-        if (aliases[command]) {
-            const translatedCommand = aliases[command] + ' ' + args;
-            matches = translatedCommand.match(commandRegex);
-            command = matches && matches[1].toLowerCase();
-            args = matches && matches[2] ? matches[2] : '';
-        }
+// Translate alias to actual command
+if (aliases[command]) {
+    const translatedCommand = '!' + aliases[command] + ' ' + args;
+    matches = translatedCommand.match(commandRegex);
+    if (matches) {
+        command = matches[1].toLowerCase();
+        args = matches[2];
+    } else {
+        // Handle the case where translated command does not match the expected format
+        console.error(`Error translating alias: ${translatedCommand}`);
+        return;
+    }
+}
 
         console.log(`Command identified: ${command}`); // Debug log
 
