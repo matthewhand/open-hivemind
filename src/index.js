@@ -65,9 +65,17 @@ async function initialize() {
     const webhookPort = process.env.WEB_SERVER_PORT || 3000;
     startWebhookServer(webhookPort);
 
+    // Bot-to-bot interaction is enabled by default; only disabled if explicitly set to 'false'
+    const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false';
+
     client.on('messageCreate', async (message) => {
         try {
-            if (message.author.bot || message.author.id === client.user.id) return;
+            // Skip if the message is from the bot itself
+            if (message.author.id === client.user.id) return;
+
+            // Skip other bots' messages if BOT_TO_BOT_MODE is explicitly set to 'false'
+            if (message.author.bot && !botToBotMode) return;
+
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
             let commandContent = message.content;
