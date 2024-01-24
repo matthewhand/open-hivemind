@@ -197,7 +197,6 @@ async function sendFollowUpRequest(message) {
         // Removed the line that replies to the channel with an error message
     }
 }
-}
 
 function buildFollowUpRequestBody(historyMessages, message) {
     let requestBody = { model: MODEL_TO_USE, messages: [] };
