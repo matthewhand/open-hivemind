@@ -88,22 +88,21 @@ function handleHelpCommand(message) {
     message.reply(helpMessage);
 }
 
-// Main command handler function
 async function commandHandler(message, commandContent) {
     console.log(`Received in commandHandler: ${commandContent}`); // Debug log
 
-    // Identify if the command is an alias and translate it
-    const commandRegex = /^!(\w+)\s*/;
+    const commandRegex = /^!(\w+)\s*(.*)/; // Modified to capture the rest of the command
     let matches = commandContent.match(commandRegex);
     if (matches) {
         let command = matches[1].toLowerCase();
-        const args = commandContent.replace(commandRegex, '');
+        let args = matches[2]; // Capture the rest of the command as arguments
 
         // Translate alias to actual command
         if (aliases[command]) {
             const translatedCommand = aliases[command] + ' ' + args;
             matches = translatedCommand.match(commandRegex);
-            command = matches[1].toLowerCase();
+            command = matches && matches[1].toLowerCase();
+            args = matches[2];
         }
 
         console.log(`Command identified: ${command}`); // Debug log

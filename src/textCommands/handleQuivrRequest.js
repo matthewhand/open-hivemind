@@ -9,8 +9,13 @@ async function handleQuivrRequest(message, args) {
         return;
     }
 
-    const [action, ...queryParts] = args.trim().split(' ');
-    const query = queryParts.join(' ');
+    const [action, ...restArgs] = args.split(' ');
+    if (!action) {
+        message.reply("Please specify a Quivr action.");
+        return;
+    }
+
+    const query = restArgs.join(' ');
 
     if (!query) {
         message.reply(`Please provide a query for Quivr ${action}.`);
