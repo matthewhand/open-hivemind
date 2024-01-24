@@ -55,11 +55,29 @@ const commandHandlers = {
         handler: handleReportCommand,
         description: "User reports about issues or rule violations within the server"
     },
+    'alias': {
+        handler: handleAliasCommand,
+        description: 'Lists all configured command aliases. Usage: !alias'
+    },
     'help': {
         handler: handleHelpCommand, // Defined below
         description: 'Displays this help message. Usage: !help'
     }
 };
+
+const aliases = {
+    'shakespear': 'quivr shakespear',
+    'gpt4': 'flowise gpt4',
+    // Add more aliases here as needed
+};
+
+function handleAliasCommand(message) {
+    let aliasMessage = 'Configured command aliases:\n';
+    for (const [alias, command] of Object.entries(aliases)) {
+        aliasMessage += `- !${alias}: ${command}\n`;
+    }
+    message.reply(aliasMessage);
+}
 
 // Define the help command handler
 function handleHelpCommand(message) {
@@ -74,15 +92,21 @@ function handleHelpCommand(message) {
 async function commandHandler(message, commandContent) {
     console.log(`Received in commandHandler: ${commandContent}`); // Debug log
 
+    // Identify if the command is an alias and translate it
     const commandRegex = /^!(\w+)\s*/;
-    const matches = commandContent.match(commandRegex);
-
+    let matches = commandContent.match(commandRegex);
     if (matches) {
-        const command = matches[1].toLowerCase();
-        console.log(`Command identified: ${command}`); // Debug log
-
+        let command = matches[1].toLowerCase();
         const args = commandContent.replace(commandRegex, '');
-        console.log(`Arguments: ${args}`); // Debug log
+
+        // Translate alias to actual command
+        if (aliases[command]) {
+            const translatedCommand = aliases[command] + ' ' + args;
+            matches = translatedCommand.match(commandRegex);
+            command = matches[1].toLowerCase();
+        }
+
+        console.log(`Command identified: ${command}`); // Debug log
 
         if (commandHandlers[command]) {
             console.log(`Executing handler for command: ${command}`); // Debug log
