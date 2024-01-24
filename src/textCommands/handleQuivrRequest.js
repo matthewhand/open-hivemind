@@ -6,27 +6,28 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
     logger.debug(`Received Quivr request with args: ${args} and actionFromAlias: ${actionFromAlias}`);
 
     if (!args || args.trim() === '') {
-        const quivrActions = process.env.QUIVR_ACTIONS.split(',');
-        message.reply(`Available Quivr actions: ${quivrActions.join(', ')}`);
+        const quivrChats = process.env.QUIVR_CHATS.split(',');
+        message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
         return;
     }
 
-    const action = actionFromAlias || args.split(' ')[0];
+    const chatCategory = actionFromAlias || args.split(' ')[0];
     const query = actionFromAlias ? args : args.split(' ').slice(1).join(' ');
 
     if (!query) {
-        message.reply(`Please provide a query for Quivr action ${action}.`);
+        message.reply(`Please provide a query for Quivr chat ${chatCategory}.`);
         return;
     }
 
-    const quivrActions = process.env.QUIVR_ACTIONS.split(',');
-    if (!quivrActions.includes(action)) {
-        message.reply(`Unknown or disabled Quivr action: ${action}`);
+    const quivrChats = process.env.QUIVR_CHATS.split(',');
+    if (!quivrChats.includes(chatCategory)) {
+        message.reply(`Unknown or disabled Quivr chat: ${chatCategory}`);
         return;
     }
 
-    const quivrEndpointId = process.env[`QUIVR_${action.toUpperCase()}_ID`];
-    const quivrUrl = `${process.env.QUIVR_BASE_URL}${quivrEndpointId}/question?brain_id=${process.env.QUIVR_BRAIN_ID}`;
+    const quivrChatId = process.env[`QUIVR_${chatCategory.toUpperCase()}_CHAT`];
+    const quivrBrainId = process.env[`QUIVR_${chatCategory.toUpperCase()}_BRAIN`];
+    const quivrUrl = `${process.env.QUIVR_BASE_URL}${quivrChatId}/question?brain_id=${quivrBrainId}`;
 
     logger.debug(`Sending request to Quivr: ${quivrUrl} with query: ${query}`);
 

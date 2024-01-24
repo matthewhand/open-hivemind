@@ -72,12 +72,21 @@ function handleAliasCommand(message) {
     message.reply(aliasMessage);
 }
 
-// Define the help command handler
 function handleHelpCommand(message) {
     let helpMessage = 'Available commands:\n';
     for (const [command, info] of Object.entries(commandHandlers)) {
         helpMessage += `- !${command}: ${info.description}\n`;
     }
+
+    // Add a section for aliases
+    helpMessage += '\nCommand Aliases:\n';
+    for (const [alias, command] of Object.entries(aliases)) {
+        helpMessage += `- !${alias}: ${command}\n`;
+    }
+
+    // You can include other dynamic sections here (e.g., Quivr chats, Flowise actions)
+    // ...
+
     message.reply(helpMessage);
 }
 
