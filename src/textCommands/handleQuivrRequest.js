@@ -15,7 +15,7 @@ async function handleQuivrRequest(message, args) {
         return;
     }
 
-    const query = restArgs.join(' ');
+    const query = action + ' ' + args;
 
     if (!query) {
         message.reply(`Please provide a query for Quivr ${action}.`);
