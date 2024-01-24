@@ -84,8 +84,10 @@ function handleHelpCommand(message) {
 async function commandHandler(message, commandContent) {
     console.log(`Received in commandHandler: ${commandContent}`); // Debug log
 
-    const commandRegex = /^!(\w+)\s*(.*)/; // Capture the command and the rest
+    // Updated regex to handle optional @bot prefix
+    const commandRegex = /(?:@bot\s+)?^!(\w+)\s*(.*)/; 
     let matches = commandContent.match(commandRegex);
+
     if (matches) {
         let command = matches[1].toLowerCase();
         let args = matches[2];
@@ -95,16 +97,13 @@ async function commandHandler(message, commandContent) {
             const translatedCommand = aliases[command] + ' ' + args;
             matches = translatedCommand.match(commandRegex);
             command = matches && matches[1].toLowerCase();
-            args = matches[2];
+            args = matches && matches[2] ? matches[2] : '';
         }
 
         console.log(`Command identified: ${command}`); // Debug log
 
-        // Special handling for Quivr command
-        if (command === 'quivr' && args) {
-            const [action, ...restArgs] = args.split(' ');
-            handleQuivrRequest(message, restArgs.join(' '), action);
-        } else if (commandHandlers[command]) {
+        // Special handling for Quivr and other commands
+        if (commandHandlers[command]) {
             console.log(`Executing handler for command: ${command}`); // Debug log
             await commandHandlers[command].handler(message, args);
             console.log(`Executed handler for command: ${command}`); // Debug log
