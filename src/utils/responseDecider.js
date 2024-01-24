@@ -1,3 +1,5 @@
+const logger = require('./logger'); // Ensure logger is imported
+
 class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
         this.cacheTimeout = cacheTimeout;
@@ -30,6 +32,8 @@ class DecideToRespond {
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
+        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.2');
+
     }
 
     isDirectlyMentioned(ourUserId, message) {
@@ -78,14 +82,26 @@ class DecideToRespond {
     }
 
     shouldReplyToMessage(ourUserId, message) {
-        this.logMessage(message);
-        if (this.isDirectlyMentioned(ourUserId, message)) {
-            return { shouldReply: true, isDirectMention: true };
+        try {
+            this.logMessage(message);
+
+            if (this.isDirectlyMentioned(ourUserId, message)) {
+                return { shouldReply: true, isDirectMention: true };
+            }
+
+            let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
+
+            // Apply bot response penalty if the message is from another bot
+            if (message.author.bot) {
+                baseChance *= this.botResponsePenalty;
+                logger.debug(`Bot response penalty applied. New chance: ${baseChance}`);
+            }
+
+            return { shouldReply: Math.random() < baseChance, isDirectMention: false };
+        } catch (error) {
+            logger.error(`Error in shouldReplyToMessage: ${error.message}`);
+            return { shouldReply: false, isDirectMention: false };
         }
-        if (this.provideUnsolicitedReplyInChannel(ourUserId, message)) {
-            return { shouldReply: true, isDirectMention: false };
-        }
-        return { shouldReply: false, isDirectMention: false };
     }
 
     logMention(channelId, sendTimestamp) {

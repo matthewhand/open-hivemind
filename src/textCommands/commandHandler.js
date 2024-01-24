@@ -56,22 +56,22 @@ const commandHandlers = {
 
 const aliases = {
     // HTTP handler
-    'video': 'http modal',
+    'video': 'http:modal',
 
     // PPLX handler
     'web': 'perplexity',
 
     // Flowise handler
-    'gpt4': 'flowise gpt4',
-    'mtg': 'flowise qdrant_pplx',
-    'mtg': 'flowise qdrant_pplx',
+    'gpt4': 'flowise:gpt4',
+    'mtg': 'flowise:qdrant_pplx',
+    'mtg': 'flowise:qdrant_pplx',
 
     // Quivr handler
-    'deep': 'quivr philosophic',
-    'geb': 'quivr philosophic geb',
-    'book': 'quivr literature',
-    'shakespear': 'quivr literature shakespear',
-    'suntzu': 'quivr literature suntzu',
+    'deep': 'quivr:philosophic',
+    'geb': 'quivr:philosophic geb',
+    'book': 'quivr:literature',
+    'shakespear': 'quivr:literature shakespear',
+    'suntzu': 'quivr:literature suntzu',
 
     // Add more aliases here as needed
 };
@@ -115,6 +115,7 @@ function handleHelpCommand(message) {
 async function commandHandler(message, commandContent) {
     console.log(`Received in commandHandler: ${commandContent}`);
 
+    // Regex to match commands with or without action
     const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
     let matches = commandContent.match(commandRegex);
 
@@ -123,13 +124,11 @@ async function commandHandler(message, commandContent) {
         let action = matches[2];
         let args = matches[3];
 
-        // Translate alias to actual command
+        // Check if command is an alias
         if (aliases[command]) {
-            let fullCommand = aliases[command] + ' ' + args.trim();
-            let parts = fullCommand.split(' ');
-            command = parts[0];
-            action = parts[1]; // Assumes alias includes the action
-            args = parts.slice(2).join(' ');
+            let aliasParts = aliases[command].split(':');
+            command = aliasParts[0];
+            action = aliasParts[1]; // Override action if alias defines one
         }
 
         console.log(`Command identified: ${command}, Action: ${action}`);
