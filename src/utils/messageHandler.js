@@ -155,6 +155,10 @@ function shouldSendFollowUp() {
     return Math.random() < 0.5; //  50% chance
 }
 
+function getRandomDelay(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 async function sendFollowUpRequest(message) {
     try {
         console.debug("Fetching conversation history for follow-up...");
