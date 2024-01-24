@@ -67,7 +67,10 @@ const commandHandlers = {
 
 const aliases = {
     'shakespear': 'quivr shakespear',
+    'suntzu': 'quivr suntzu',
     'gpt4': 'flowise gpt4',
+    'mtg': 'flowise qdrant_pplx',
+    'video': 'http modal',
     // Add more aliases here as needed
 };
 
