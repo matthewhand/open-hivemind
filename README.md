@@ -16,6 +16,8 @@ A versatile Discord bot integrating advanced language models, image analysis, an
 - **Hosting Flexibility**: Host on cloud platforms (OCI, Render.com, Back4App) or on-premises (Linux, Windows).
 - **Image Analysis with LLaVA 13B (Replicate)**: Analyze images with LLaVA 13B model (pay-per-use).
 - **DIY RAG Endpoint (Modal)**: Utilize custom RAG endpoints hosted on Modal's free tier.
+- **Advanced Moderation System**: Implement a comprehensive voting system for server moderation with AI-assisted decision-making.
+- **Automated Exception Handling & Restart**: In-built resilience with automated error notification and scheduled restarts.
 
 [ ] TODO: Integrate free Hugging Face LLaVA model for image analysis.
 
@@ -43,8 +45,9 @@ Create a `.env` file with necessary variables as detailed in `.env.sample`.
 #### Docker
 
 1. Set up `.env`.
-2. Build Docker image: `docker build -t discord-llm-bot .`.
-3. Run Docker container: `docker run --env-file .env discord-llm-bot`.
+2. Navigate to the root directory of the project.
+3. Run Docker Compose to build and start the container: `docker-compose up --build -d`.
+4. Optionally, follow the logs: `docker-compose logs -f`.
 
 #### Cloud Services
 
