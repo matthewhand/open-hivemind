@@ -17,4 +17,4 @@ function getRandomErrorMessage() {
     return errorMessages[randomIndex];
 }
 
-export { getRandomErrorMessage };
+module.exports = { getRandomErrorMessage };
