@@ -132,6 +132,14 @@ async function sendLlmRequest(message) {
 
         console.debug("Stopping typing indicator...");
         clearInterval(typingInterval);
+
+        // Follow-up message logic
+        if (followUpEnabled && shouldSendFollowUp()) {
+            const delay = getRandomDelay(followUpMinDelay, followUpMaxDelay);
+            setTimeout(() => {
+                   sendFollowUpRequest(message);
+            }, delay);
+        }
         
     } catch (error) {
         console.error(`Error in sendLlmRequest: ${error.message}, Stack: ${error.stack}`);
@@ -139,6 +147,75 @@ async function sendLlmRequest(message) {
     }
 }
 
+function shouldSendFollowUp() {
+    // Randomly return true or false
+    return Math.random() < 0.5; //  50% chance
+}
+
+async function sendFollowUpRequest(message) {
+    try {
+        console.debug("Fetching conversation history for follow-up...");
+        const historyMessages = await fetchConversationHistory(message.channel);
+
+        console.debug("Building request body for follow-up...");
+        const requestBody = buildFollowUpRequestBody(historyMessages, message);
+
+        if (!validateRequestBody(requestBody)) {
+            throw new Error('Invalid request body for follow-up');
+        }
+
+        console.debug("Sending LLM follow-up request...");
+        const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` })
+            }
+        });
+
+        const followUpContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
+        console.debug("LLM follow-up response:", followUpContent);
+
+        if (followUpContent && followUpContent.trim() !== '') {
+            const messagesToSend = splitMessage(followUpContent, 2000);
+            for (const msg of messagesToSend) {
+                await message.reply(msg);
+            }
+        } else {
+            console.debug("LLM returned an empty or invalid follow-up response.");
+        }
+
+    } catch (error) {
+        console.error(`Error in sendFollowUpRequest: ${error.message}, Stack: ${error.stack}`);
+        await message.reply(getRandomErrorMessage());
+    }
+}
+
+function buildFollowUpRequestBody(historyMessages, message) {
+    let requestBody = { model: MODEL_TO_USE, messages: [] };
+    let currentSize = 0;
+
+    historyMessages.slice().reverse().forEach(msg => {
+        const messageObj = formatMessageObject(msg);
+        currentSize += JSON.stringify(messageObj).length;
+
+        if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+            requestBody.messages.push(messageObj);
+        }
+    });
+
+    // Modify the system prompt for reflection
+    const reflectivePrompt = `Reflecting on my last message, ${requestBody.messages[requestBody.messages.length - 1].content}, what insights and educational value can be drawn from it?`;
+    requestBody.messages.push({ role: 'system', content: reflectivePrompt });
+
+    console.debug("Constructed follow-up request body:", JSON.stringify(requestBody));
+    return requestBody;
+}
+
+function formatMessageObject(msg) {
+    const authorId = msg.author ? msg.author.id : 'unknown-author';
+    const formattedContent = `<@${authorId}>: ${msg.content}`;
+    return { role: 'user', content: formattedContent };
+}
 
 // Start Typing Indicator
 function startTypingIndicator(channel) {
