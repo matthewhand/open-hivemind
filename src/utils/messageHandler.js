@@ -211,8 +211,13 @@ function buildFollowUpRequestBody(historyMessages, message) {
         }
     });
 
-    // Modify the system prompt for reflection
-    const reflectivePrompt = `Reflecting on my last message, ${requestBody.messages[requestBody.messages.length - 1].content}, what insights and educational value can be drawn from it?`;
+    const lastMessageContent = requestBody.messages[requestBody.messages.length - 1].content;
+    const commandSuggestion = Math.random() < 0.5 ? '!perplexity' : '!quivr';
+    const commandUsageExample = commandSuggestion === '!perplexity' ? 
+        `${commandSuggestion} "${lastMessageContent}"` : 
+        `${commandSuggestion} "here is a question about ${lastMessageContent}"`;
+
+    const reflectivePrompt = `Reflecting on my last message, "${lastMessageContent}", how might we use the command ${commandUsageExample} to explore insights and educational value?`;
     requestBody.messages.push({ role: 'system', content: reflectivePrompt });
 
     console.debug("Constructed follow-up request body:", JSON.stringify(requestBody));
