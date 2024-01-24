@@ -21,7 +21,7 @@ const SCALE_RESPONSE_TIME = parseFloat(process.env.SCALE_RESPONSE_TIME || '6.9')
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
 const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
     JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
-    [[12345, 0.1], [7 * 60000, 0.8], [69 * 60000, 0.1]];
+    [[12345, 0.1], [7 * 60000, 0.8], [69 * 60000, 0.4]];
 
 // Response Decider Singleton
 const responseDecider = new DecideToRespond({
