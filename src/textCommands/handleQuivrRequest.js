@@ -2,23 +2,20 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 const getRandomErrorMessage = require('./errorMessages');
 
-async function handleQuivrRequest(message, args) {
+async function handleQuivrRequest(message, args, actionFromAlias = '') {
+    logger.debug(`Received Quivr request with args: ${args} and actionFromAlias: ${actionFromAlias}`);
+
     if (!args || args.trim() === '') {
         const quivrActions = process.env.QUIVR_ACTIONS.split(',');
         message.reply(`Available Quivr actions: ${quivrActions.join(', ')}`);
         return;
     }
 
-    const [action, ...restArgs] = args.split(' ');
-    if (!action) {
-        message.reply("Please specify a Quivr action.");
-        return;
-    }
-
-    const query = action + ' ' + args;
+    const action = actionFromAlias || args.split(' ')[0];
+    const query = actionFromAlias ? args : args.split(' ').slice(1).join(' ');
 
     if (!query) {
-        message.reply(`Please provide a query for Quivr ${action}.`);
+        message.reply(`Please provide a query for Quivr action ${action}.`);
         return;
     }
 
@@ -31,14 +28,16 @@ async function handleQuivrRequest(message, args) {
     const quivrEndpointId = process.env[`QUIVR_${action.toUpperCase()}_ID`];
     const quivrUrl = `${process.env.QUIVR_BASE_URL}${quivrEndpointId}/question?brain_id=${process.env.QUIVR_BRAIN_ID}`;
 
-    logger.debug(`Sending request to Quivr: ${quivrUrl} with args: ${args}`);
+    logger.debug(`Sending request to Quivr: ${quivrUrl} with query: ${query}`);
 
     try {
         const quivrResponse = await axios.post(
             quivrUrl,
-            { question: args },
+            { question: query },
             { headers: { 'Authorization': `Bearer ${process.env.QUIVR_API_KEY}` } }
         );
+
+        logger.debug(`Quivr API response: ${JSON.stringify(quivrResponse.data)}`);
 
         if (quivrResponse.status === 200 && quivrResponse.data.assistant) {
             const quivrResult = quivrResponse.data.assistant;
