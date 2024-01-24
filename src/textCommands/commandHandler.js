@@ -55,12 +55,21 @@ const commandHandlers = {
 };
 
 const aliases = {
-    'shakespear': 'quivr shakespear',
-    'suntzu': 'quivr suntzu',
+    // HTTP handler
+    'video': 'http modal',
+
+    // PPLX handler
+    'search': 'perplexity',
+
+    // Flowise handler
     'gpt4': 'flowise gpt4',
     'mtg': 'flowise qdrant_pplx',
-    'search': 'perplexity',
-    'video': 'http modal',
+
+    // Quivr handler
+    'geb': 'quivr philosophic geb',
+    'shakespear': 'quivr literature shakespear',
+    'suntzu': 'quivr literature suntzu',
+
     // Add more aliases here as needed
 };
 

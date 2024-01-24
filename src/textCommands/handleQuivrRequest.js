@@ -5,14 +5,23 @@ const getRandomErrorMessage = require('./errorMessages');
 async function handleQuivrRequest(message, args, actionFromAlias = '') {
     logger.debug(`Received Quivr request with args: ${args} and actionFromAlias: ${actionFromAlias}`);
 
-    if (!args || args.trim() === '') {
-        const quivrChats = process.env.QUIVR_CHATS.split(',');
-        message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
-        return;
-    }
+    let chatCategory, query;
 
-    const chatCategory = actionFromAlias || args.split(' ')[0];
-    const query = actionFromAlias ? args : args.split(' ').slice(1).join(' ');
+    if (actionFromAlias) {
+        // Split the alias into the category and the rest of the query
+        [chatCategory, ...queryParts] = actionFromAlias.split(' ');
+        query = queryParts.join(' ');
+    } else {
+        if (!args || args.trim() === '') {
+            const quivrChats = process.env.QUIVR_CHATS.split(',');
+            message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
+            return;
+        }
+
+        // Split the args into the category and the rest of the query
+        [chatCategory, ...queryParts] = args.split(' ');
+        query = queryParts.join(' ');
+    }
 
     if (!query) {
         message.reply(`Please provide a query for Quivr chat ${chatCategory}.`);
