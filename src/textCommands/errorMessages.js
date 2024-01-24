@@ -17,4 +17,4 @@ function getRandomErrorMessage() {
     return errorMessages[randomIndex];
 }
 
-export default getRandomErrorMessage;
+export { getRandomErrorMessage };

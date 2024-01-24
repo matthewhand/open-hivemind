@@ -5,6 +5,7 @@ const { handleFlowiseRequest } = require('./handleFlowiseRequest');
 const { handlePythonRequest } = require('./handlePythonRequest');
 const { handleHttpCommand } = require('./handleHttpCommand');
 const { handleReportCommand } = require('./handleReportCommand');
+const { handleMuteCommand } = require('./handleMuteCommand');
 
 const commandHandlers = {
     'analyse': {
@@ -23,9 +24,16 @@ const commandHandlers = {
         handler: handlePerplexityRequest,
         description: 'Calculates perplexity for provided text. Usage: !perplexity [text]'
     },
+    'mute': {
+        handler: handleMuteCommand,
+        description: 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]'
+    },
     'quivr': {
-        handler: handleQuivrRequest,
-        description: 'Sends a query to the Quivr API. Usage: !quivr [query]'
+        handler: (message, args) => {
+            const [action, ...restArgs] = args.split(' ');
+            handleQuivrRequest(message, restArgs.join(' '), action);
+        },
+        description: 'Sends a query to the Quivr API. Usage: !quivr [action] [query]'
     },
     'python': {
         handler: handlePythonRequest,
