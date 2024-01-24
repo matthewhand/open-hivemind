@@ -8,17 +8,9 @@ const { handleReportCommand } = require('./handleReportCommand');
 const { handleMuteCommand } = require('./handleMuteCommand');
 
 const commandHandlers = {
-    'analyse': {
+    'image': {
         handler: handleImageAnalysis,
-        description: 'Analyzes an image. Usage: !analyse [imageUrl]'
-    },
-    'analyze': {
-        handler: handleImageAnalysis,
-        description: 'Analyzes an image (alias for !analyse). Usage: !analyze [imageUrl]'
-    },
-    'llava': {
-        handler: handleImageAnalysis,
-        description: 'Alias for !analyze. Usage: !llava [imageUrl]'
+        description: 'Analyzes an image. Usage: !image [imageUrl]'
     },
     'perplexity': {
         handler: handlePerplexityRequest,
@@ -29,10 +21,7 @@ const commandHandlers = {
         description: 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]'
     },
     'quivr': {
-        handler: (message, args) => {
-            const [action, ...restArgs] = args.split(' ');
-            handleQuivrRequest(message, restArgs.join(' '), action);
-        },
+        handler: handleQuivrRequest,
         description: 'Sends a query to the Quivr API. Usage: !quivr [action] [query]'
     },
     'python': {
@@ -70,6 +59,7 @@ const aliases = {
     'suntzu': 'quivr suntzu',
     'gpt4': 'flowise gpt4',
     'mtg': 'flowise qdrant_pplx',
+    'search': 'perplexity',
     'video': 'http modal',
     // Add more aliases here as needed
 };
