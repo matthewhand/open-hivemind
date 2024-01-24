@@ -59,7 +59,7 @@ const aliases = {
     'video': 'http modal',
 
     // PPLX handler
-    'search': 'perplexity',
+    'web': 'perplexity',
 
     // Flowise handler
     'gpt4': 'flowise gpt4',
@@ -86,6 +86,12 @@ function handleAliasCommand(message) {
 
 function handleHelpCommand(message) {
     let helpMessage = 'Available commands:\n';
+
+    // Explain the new command syntax
+    helpMessage += 'Commands can be used with an action using the syntax `!<command>:<action> [args]`. ';
+    helpMessage += 'If no action is specified, a default action will be used.\n\n';
+
+    // List all commands and their descriptions
     for (const [command, info] of Object.entries(commandHandlers)) {
         helpMessage += `- !${command}: ${info.description}\n`;
     }
@@ -93,47 +99,51 @@ function handleHelpCommand(message) {
     // Add a section for aliases
     helpMessage += '\nCommand Aliases:\n';
     for (const [alias, command] of Object.entries(aliases)) {
-        helpMessage += `- !${alias}: ${command}\n`;
+        helpMessage += `- !${alias}: Translates to !${command}\n`;
     }
 
-    // You can include other dynamic sections here (e.g., Quivr chats, Flowise actions)
-    // ...
+    // Example usage
+    helpMessage += '\nExample Usage:\n';
+    helpMessage += '- `!quivr:action query` - Executes the specified action with the query in Quivr.\n';
+    helpMessage += '- `!quivr query` - Uses the default Quivr action with the query.\n';
+    helpMessage += '- `!web query` - Uses an alias to execute a command with the query.\n';
 
     message.reply(helpMessage);
 }
 
-async function commandHandler(message, commandContent) {
-    console.log(`Received in commandHandler: ${commandContent}`); // Debug log
 
-    // Updated regex to handle optional @bot prefix
-    const commandRegex = /(?:@bot\s+)?^!(\w+)\s*(.*)/; 
+async function commandHandler(message, commandContent) {
+    console.log(`Received in commandHandler: ${commandContent}`);
+
+    const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
     let matches = commandContent.match(commandRegex);
 
     if (matches) {
         let command = matches[1].toLowerCase();
-        let args = matches[2];
+        let action = matches[2];
+        let args = matches[3];
 
-// Translate alias to actual command
-if (aliases[command]) {
-    let fullCommand = aliases[command] + ' ' + args.trim();
-    let parts = fullCommand.split(' ');
-    command = parts[0];
-    args = parts.slice(1).join(' ');
-}
+        // Translate alias to actual command
+        if (aliases[command]) {
+            let fullCommand = aliases[command] + ' ' + args.trim();
+            let parts = fullCommand.split(' ');
+            command = parts[0];
+            action = parts[1]; // Assumes alias includes the action
+            args = parts.slice(2).join(' ');
+        }
 
-        console.log(`Command identified: ${command}`); // Debug log
+        console.log(`Command identified: ${command}, Action: ${action}`);
 
-        // Special handling for Quivr and other commands
         if (commandHandlers[command]) {
-            console.log(`Executing handler for command: ${command}`); // Debug log
-            await commandHandlers[command].handler(message, args);
-            console.log(`Executed handler for command: ${command}`); // Debug log
+            console.log(`Executing handler for command: ${command}`);
+            await commandHandlers[command].handler(message, action, args);
+            console.log(`Executed handler for command: ${command}`);
         } else {
-            console.log(`Unknown command: ${command}`); // Debug log
+            console.log(`Unknown command: ${command}`);
             message.reply('Unknown command: ' + command);
         }
     } else {
-        console.log('No command found in the message'); // Debug log
+        console.log('No command found in the message');
     }
 }
 
