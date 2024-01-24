@@ -2,6 +2,8 @@ const axios = require('axios');
 const fetchConversationHistory = require('./fetchConversationHistory');
 const { DecideToRespond } = require('./responseDecider');
 const getRandomErrorMessage = require('./errorMessages');
+const { aliases } = require('../textCommands/commandHandler'); // Adjust the path as necessary
+const logger = require('./logger');
 
 // Constants
 const followUpEnabled = process.env.FOLLOW_UP_ENABLED !== 'false'; // Enabled by default
@@ -202,25 +204,31 @@ function buildFollowUpRequestBody(historyMessages, message) {
     let requestBody = { model: MODEL_TO_USE, messages: [] };
     let currentSize = 0;
 
-    historyMessages.slice().reverse().forEach(msg => {
-        const messageObj = formatMessageObject(msg);
-        currentSize += JSON.stringify(messageObj).length;
+    try {
+        historyMessages.slice().reverse().forEach(msg => {
+            const messageObj = formatMessageObject(msg);
+            currentSize += JSON.stringify(messageObj).length;
 
-        if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
-            requestBody.messages.push(messageObj);
-        }
-    });
+            if (currentSize <= MAX_CONTENT_LENGTH - MAX_RESPONSE_SIZE) {
+                requestBody.messages.push(messageObj);
+            }
+        });
 
-    const lastMessageContent = requestBody.messages[requestBody.messages.length - 1].content;
-    const commandSuggestion = Math.random() < 0.5 ? '!perplexity' : '!quivr';
-    const commandUsageExample = commandSuggestion === '!perplexity' ? 
-        `${commandSuggestion} "${lastMessageContent}"` : 
-        `${commandSuggestion} "here is a question about ${lastMessageContent}"`;
+        const lastMessageContent = requestBody.messages[requestBody.messages.length - 1].content;
 
-    const reflectivePrompt = `Reflecting on my last message, "${lastMessageContent}", how might we use the command ${commandUsageExample} to explore insights and educational value?`;
-    requestBody.messages.push({ role: 'system', content: reflectivePrompt });
+        // Select a random alias command
+        const aliasKeys = Object.keys(aliases);
+        const randomAlias = aliasKeys[Math.floor(Math.random() * aliasKeys.length)];
+        const command = `!${randomAlias} "${lastMessageContent}"`;
 
-    console.debug("Constructed follow-up request body:", JSON.stringify(requestBody));
+        const reflectivePrompt = `Reflecting on my last message, "${lastMessageContent}", how might we use the command ${command} to explore insights and educational value?`;
+        requestBody.messages.push({ role: 'system', content: reflectivePrompt });
+
+        logger.debug("Constructed follow-up request body:", JSON.stringify(requestBody));
+    } catch (error) {
+        logger.error("Error constructing follow-up request body:", error);
+    }
+
     return requestBody;
 }
 
