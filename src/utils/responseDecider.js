@@ -75,22 +75,24 @@ class DecideToRespond {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
 
-        // For new entries, instead of giving 100%, use a default or minimum chance
-        if (timeSinceLastSend === Infinity) {
-            const defaultNewChannelChance = 0.001; 
-            console.debug(`[calcBaseChance] New channel, setting base chance to ${defaultNewChannelChance}`);
-            return defaultNewChannelChance;
+        // Check if the bot's name is mentioned in a new channel
+        if (timeSinceLastSend === Infinity && this.isDirectlyMentioned(message.client.user.id, message)) {
+            console.debug('[calcBaseChance] Bot name mentioned in new channel, setting base chance to 1 (100%)');
+            return 1; // 100% chance when bot name is mentioned in a new channel
         }
 
-        for (let [duration, chance] of this.timeVsResponseChance) {
-            console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) <= duration (${duration}ms)`);
-            if (timeSinceLastSend <= duration) {
-                console.debug(`[calcBaseChance] Interval selected: less than ${duration}ms, setting base chance to ${chance}`);
-                return chance;
+        // For existing channels, use the time-based chance calculation
+        if (timeSinceLastSend !== Infinity) {
+            for (let [duration, chance] of this.timeVsResponseChance) {
+                console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) <= duration (${duration}ms)`);
+                if (timeSinceLastSend <= duration) {
+                    console.debug(`[calcBaseChance] Interval selected: less than ${duration}ms, setting base chance to ${chance}`);
+                    return chance;
+                }
             }
         }
     
-        return 0; // Return 0 if none of the intervals apply
+        return 0; // Default to 0% if none of the conditions apply
     }
 
     calculateDynamicFactor(message) {
