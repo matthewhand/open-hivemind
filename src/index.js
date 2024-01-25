@@ -23,6 +23,8 @@ const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
 const includeUsername = process.env.INCLUDE_USERNAME === 'true';
 const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false'; // Defaults to true
 
+const responseDecider = new DecideToRespond(discordSettings, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
+
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
