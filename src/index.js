@@ -24,7 +24,18 @@ const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
 const includeUsername = process.env.INCLUDE_USERNAME === 'true';
 const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false'; // Defaults to true
 
-const responseDecider = new DecideToRespond(discordSettings, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
+// Bonuses and Response Chances
+const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
+const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
+    JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
+    [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.1]];
+
+// Response Decider Singleton
+const responseDecider = new DecideToRespond({
+    disableUnsolicitedReplies: false,
+    unsolicitedChannelCap: 5,
+    ignore_dms: true
+}, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
