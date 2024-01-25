@@ -74,15 +74,14 @@ class DecideToRespond {
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
-    
-        console.debug(`[calcBaseChance] Time since last send: ${timeSinceLastSend}ms`);
 
-        // If time since last send is Infinity, return 100% chance
+        // For new entries, instead of giving 100%, use a default or minimum chance
         if (timeSinceLastSend === Infinity) {
-            console.debug('[calcBaseChance] Time since last send is Infinity, setting base chance to 1 (100%)');
-            return 1; // 100% chance
+            const defaultNewChannelChance = 0.001; 
+            console.debug(`[calcBaseChance] New channel, setting base chance to ${defaultNewChannelChance}`);
+            return defaultNewChannelChance;
         }
-    
+
         for (let [duration, chance] of this.timeVsResponseChance) {
             console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) <= duration (${duration}ms)`);
             if (timeSinceLastSend <= duration) {
@@ -91,7 +90,7 @@ class DecideToRespond {
             }
         }
     
-        return 0;
+        return 0; // Return 0 if none of the intervals apply
     }
 
     calculateDynamicFactor(message) {
@@ -122,7 +121,7 @@ class DecideToRespond {
         if (baseChance === 0) return false;
         let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
         decision = Math.random() < responseChance;
-        
+
         // If deciding to reply, increment the reply count
         if (decision) {
             this.lastReplyTimes.incrementReplyCount(message.channel.id);
