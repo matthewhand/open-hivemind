@@ -110,7 +110,7 @@ async function messageHandler(message) {
         return;
     }
 
-    const { shouldReply } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
+    const shouldReply = responseDecider.shouldReplyToMessage(message.client.user.id, message);
     console.log(`[Message Handler] Decision to reply: ${shouldReply}`);
 
     if (shouldReply) {
