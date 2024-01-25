@@ -27,6 +27,14 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
 
+client.login(process.env.DISCORD_TOKEN);
+logger.info('Bot started successfully.');
+
+client.once('ready', () => {
+    logger.info('Bot is ready!');
+    registerCommands(client);
+});
+
 // Read and write functions for restart delay
 function readRestartDelay() {
     if (fs.existsSync(restartDelayFile)) {
