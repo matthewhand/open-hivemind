@@ -21,11 +21,11 @@ const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000
 const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
 const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
 const includeUsername = process.env.INCLUDE_USERNAME === 'true';
+const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false'; // Defaults to true
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
-
 
 // Read and write functions for restart delay
 function readRestartDelay() {
@@ -75,8 +75,9 @@ async function initialize() {
         try {
             console.log(`Received message: ${message.content}`); // Debug: Log received message
     
-            if (message.author.bot || message.author.id === client.user.id) {
-                console.log('Message is from a bot or from the bot itself. Ignoring.'); // Debug
+            // Check if the message is from the bot itself or from another bot, depending on BOT_TO_BOT_MODE
+            if (message.author.id === client.user.id || (message.author.bot && !botToBotMode)) {
+                console.log('Ignoring message from the bot itself or from other bots (based on BOT_TO_BOT_MODE).'); // Debug
                 return;
             }
     
