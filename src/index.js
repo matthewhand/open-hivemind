@@ -20,6 +20,7 @@ const restartDelayFile = './restartDelay.json';
 const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000); // Max delay, default 60 minutes
 const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
 const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
+
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
 });
@@ -72,27 +73,33 @@ async function initialize() {
         try {
             if (message.author.bot) return;
     
-            let commandContent = message.content;
-            if (requireBotMention) {
-                const botMention = `<@${client.user.id}>`;
-                const botMentionWithNick = `<@!${client.user.id}>`;
-                if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
+            const botMention = `<@${client.user.id}>`;
+            const botMentionWithNick = `<@!${client.user.id}>`;
+            const isMentioned = message.content.includes(botMention) || message.content.includes(botMentionWithNick);
+    
+            // Check if it's a command with or without bot mention
+            if (message.content.startsWith('!') || isMentioned) {
+                let commandContent = message.content;
+                if (isMentioned) {
+                    // Remove bot mention from the message content
                     commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-                } else {
-                    // Skip if the message does not mention the bot
-                    return;
+                }
+    
+                if (commandContent.startsWith('!')) {
+                    if (!requireBotMention || isMentioned) {
+                        await commandHandler(message, commandContent);
+                        return;
+                    }
                 }
             }
     
-            if (commandContent.startsWith('!')) {
-                await commandHandler(message, commandContent);
-            } else {
-                await messageHandler(message, discordSettings);
-            }
+            // Fallback to message handler
+            await messageHandler(message, discordSettings);
         } catch (error) {
             handleError(error, message);
         }
     });
+    
 }
 
 debugEnvVars();
