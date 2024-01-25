@@ -29,9 +29,9 @@ class DecideToRespond {
 
         // Default values
         const defaultTimeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
-        const defaultInterrobangBonus = 0.2;
+        const defaultInterrobangBonus = 0.1;
         const defaultMentionBonus = 0.2;
-        const defaultBotResponsePenalty = 0.4;
+        const defaultBotResponsePenalty = 0.3;
 
         // Environment variables or default values
         this.interrobangBonus = parseFloat(process.env.INTERROBANG_BONUS || defaultInterrobangBonus);
