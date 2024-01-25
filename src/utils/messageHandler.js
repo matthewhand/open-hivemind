@@ -18,13 +18,12 @@ const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
     JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
     [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.0]];
 
-// Response Decider Singleton
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true
-}, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
-
+});
+    
 // Validate Request Body
 function validateRequestBody(requestBody) {
     if (!requestBody || !Array.isArray(requestBody.messages) || requestBody.messages.length === 0) {
