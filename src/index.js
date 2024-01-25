@@ -73,22 +73,31 @@ async function initialize() {
 
     client.on('messageCreate', async (message) => {
         try {
-            if (message.author.bot || message.author.id === client.user.id) return;
+            console.log(`Received message: ${message.content}`); // Debug: Log received message
+    
+            if (message.author.bot || message.author.id === client.user.id) {
+                console.log('Message is from a bot or from the bot itself. Ignoring.'); // Debug
+                return;
+            }
     
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
     
             let commandContent = message.content;
             if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
+                console.log('Bot is mentioned in the message.'); // Debug
                 commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
                 if (commandContent.startsWith('!')) {
+                    console.log(`Processing command: ${commandContent}`); // Debug
                     await commandHandler(message, commandContent);
                     return;
                 }
             }
     
+            console.log('Passing message to messageHandler.'); // Debug
             await messageHandler(message, discordSettings);
         } catch (error) {
+            console.error(`Error in messageCreate event: ${error}`);
             handleError(error, message);
         }
     });
