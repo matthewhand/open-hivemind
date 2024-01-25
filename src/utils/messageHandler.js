@@ -105,21 +105,19 @@ async function sendLlmRequest(message) {
 
 // Message Handler
 async function messageHandler(message) {
-    logger.debug("Entered messageHandler.");
-
     if (message.author.bot && !BOT_TO_BOT_MODE) {
-        logger.debug("Ignoring bot message as BOT_TO_BOT_MODE is disabled.");
+        console.log('[Message Handler] Ignoring bot message (BOT_TO_BOT_MODE disabled).');
         return;
     }
 
     const { shouldReply } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
-    logger.debug(`Decision to reply: ${shouldReply}`);
+    console.log(`[Message Handler] Decision to reply: ${shouldReply}`);
 
     if (shouldReply) {
-        logger.debug("Decided to respond to the message. Sending LLM request.");
+        console.log('[Message Handler] Decided to respond. Sending LLM request.');
         await sendLlmRequest(message);
     } else {
-        logger.debug("Decided not to respond to the message.");
+        console.log('[Message Handler] Decided not to respond.');
     }
 }
 

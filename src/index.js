@@ -50,42 +50,38 @@ async function initialize() {
 
     client.on('messageCreate', async (message) => {
         try {
-            // Debug: Log received message
-            console.log(`Received message: ${message.content}`);
-        
-            // Skip if the message is from the bot itself
+            console.log(`[Message Received] Content: ${message.content}, Author: ${message.author.username}`);
+    
             if (message.author.id === client.user.id) {
-                console.log('Ignoring message from the bot itself.');
+                console.log('[Message Handling] Message from the bot itself. Ignored.');
                 return;
             }
-        
-            // Check for direct mention by a user
+    
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
             let commandContent = message.content;
-        
+    
             if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
-                console.log('Bot is directly mentioned by a user.');
+                console.log('[Message Handling] Bot directly mentioned by a user.');
                 commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-        
+    
                 if (commandContent.startsWith('!')) {
-                    console.log(`Processing command: ${commandContent}`);
+                    console.log(`[Command Handling] Command detected: ${commandContent}`);
                     await commandHandler(message, commandContent);
                 } else {
-                    console.log('Passing message to messageHandler.');
+                    console.log('[Message Handling] Passing to messageHandler.');
                     await messageHandler(message, discordSettings);
                 }
                 return;
             }
-        
-            // For other cases, pass the message to messageHandler
+    
             await messageHandler(message, discordSettings);
+            console.log('[Message Handling] Passed to messageHandler without direct mention.');
         } catch (error) {
-            console.error(`Error in messageCreate event: ${error}`);
-            handleError(error, message);
+            console.error(`[Error] Message Handling: ${error}`);
         }
     });
-        
+            
 }
 
 debugEnvVars();

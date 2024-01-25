@@ -108,45 +108,30 @@ class DecideToRespond {
 
     shouldReplyToMessage(ourUserId, message) {
         try {
-            // Log the received message for analysis
-            logger.debug(`[shouldReplyToMessage] Received message: ${message.content}`);
-            logger.debug(`[shouldReplyToMessage] From user: ${message.author.id}, Bot User ID: ${ourUserId}`);
-    
-            // Log the initial message logging step
             this.logMessage(message);
-            logger.debug(`[shouldReplyToMessage] Logged the message in recent messages count`);
     
-            // Calculate and log base chance of reply
             let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-            logger.debug(`[shouldReplyToMessage] Base chance of reply (before penalties and bonuses): ${baseChance}`);
+            console.log(`[DecideToRespond] Base chance of reply (before penalties/bonuses): ${baseChance}`);
     
-            // Check if the message is from another bot and apply penalty
             if (message.author.bot) {
                 baseChance *= this.botResponsePenalty;
-                logger.debug(`[shouldReplyToMessage] Message is from another bot. Bot response penalty applied. Adjusted chance: ${baseChance}`);
+                console.log(`[DecideToRespond] Bot response penalty applied. Adjusted chance: ${baseChance}`);
             }
     
-            // Check if the bot is directly mentioned and apply bonus
             if (this.isDirectlyMentioned(ourUserId, message)) {
                 baseChance += this.mentionBonus;
-                logger.debug(`[shouldReplyToMessage] Bot is directly mentioned. Mention bonus applied. Adjusted chance: ${baseChance}`);
+                console.log(`[DecideToRespond] Mention bonus applied. Final chance: ${baseChance}`);
             }
     
-            // Calculate final decision and log it
-            const decision = Math.random();
-            logger.debug(`[shouldReplyToMessage] Random decision value: ${decision}`);
-            const shouldReply = decision < baseChance;
-            logger.debug(`[shouldReplyToMessage] Should reply: ${shouldReply}`);
-    
-            return shouldReply;
+            const decision = Math.random() < baseChance;
+            console.log(`[DecideToRespond] Final decision to reply: ${decision}`);
+            return decision;
         } catch (error) {
-            // Log any errors encountered during the function execution
-            logger.error(`Error in shouldReplyToMessage: ${error.message}`);
-            logger.error(`Error stack: ${error.stack}`);
+            console.error(`[Error] DecideToRespond: ${error}`);
             return false;
         }
     }
-
+    
     logMention(channelId, sendTimestamp) {
         console.debug(`Attempting to log mention for channel ${channelId} at timestamp ${sendTimestamp}`);
         // Ensure that this.lastReplyTimes.times is initialized
