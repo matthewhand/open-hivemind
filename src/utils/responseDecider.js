@@ -30,47 +30,22 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(discordSettings) {
-        console.log("DecideToRespond Constructor: Initializing...");
+    constructor(config, discordSettings) {
+        this.interrobangBonus = config.interrobangBonus;
+        this.mentionBonus = config.mentionBonus;
+        this.botResponsePenalty = config.botResponsePenalty;
+        this.timeVsResponseChance = config.timeVsResponseChance;
+        this.llmWakewords = config.llmWakewords;
 
         this.discordSettings = discordSettings;
-
-        // Default values
-        const defaultTimeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
-        const defaultInterrobangBonus = 0.2;  // added
-        const defaultMentionBonus = 0.3; // added
-        const defaultBotResponsePenalty = 0.1; // multiplied
-
-        // Environment variables or default values
-        this.interrobangBonus = parseFloat(process.env.INTERROBANG_BONUS || defaultInterrobangBonus);
-        this.mentionBonus = parseFloat(process.env.MENTION_BONUS || defaultMentionBonus);
-        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || defaultBotResponsePenalty);
-
-        // Parse the TIME_VS_RESPONSE_CHANCE environment variable or use default values
-        let timeVsResponseChance;
-        try {
-            timeVsResponseChance = JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE || '[[12345, 0.05], [420000, 0.75], [4140000, 0.1]]');
-        } catch (e) {
-            console.error("Error parsing TIME_VS_RESPONSE_CHANCE, using default values:", e);
-            timeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
-        }
-
-        this.timeVsResponseChance = timeVsResponseChance;
-
         this.lastReplyTimes = new LastReplyTimes(
-            Math.max(...timeVsResponseChance.map(([duration]) => duration)),
-            discordSettings.unsolicitedChannelCap
+            Math.max(...this.timeVsResponseChance.map(([duration]) => duration)),
+            this.discordSettings.unsolicitedChannelCap
         );
-
-        this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
 
-        console.log("DecideToRespond Constructor: Initialization Complete");
-    }    isDirectlyMentioned(ourUserId, message) {
-        return message.mentions.has(ourUserId) || 
-               this.llmWakewords.some(wakeword => message.content.includes(wakeword.trim()));
+        console.log("DecideToRespond initialized");
     }
-
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
@@ -139,46 +114,50 @@ class DecideToRespond {
 
     shouldReplyToMessage(ourUserId, message) {
         try {
+            // Log the message to keep track of recent messages for each channel
             this.logMessage(message);
-
+    
+            // Calculate the base chance of sending an unsolicited reply
             let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-
-            // Apply mention bonus
+    
+            // If our bot is directly mentioned in the message, increase the chance by adding the mention bonus
             if (this.isDirectlyMentioned(ourUserId, message)) {
                 baseChance += this.mentionBonus;
             }
-
-            // Apply bot response penalty
+    
+            // If the message author is a bot, reduce the chance of replying. This prevents endless loops between bots.
+            // The reduction is done by subtracting the bot response penalty from the base chance.
+            // However, the chance cannot go below zero, hence the use of Math.max().
             if (message.author.bot) {
-                baseChance *= this.botResponsePenalty;
+                baseChance = Math.max(0, baseChance - this.botResponsePenalty);
             }
-
-            // Ensure baseChance is between 0 and 1
-            baseChance = Math.max(0, Math.min(baseChance, 1));
-
-            // Declare and assign the decision based on baseChance
+    
+            // Make a random decision to reply or not, based on the calculated chance
+            // Math.random() generates a number between 0 and 1. If it's less than the chance, the decision is true (reply).
             const decision = Math.random() < baseChance;
-            
-            console.log(`[DecideToRespond] Final chance after adjustments: ${baseChance}`);
-            console.log(`[DecideToRespond] Final decision to reply: ${decision}`);
-
+    
+            // Log the final decision and the chance for debugging and monitoring purposes
+            console.log(`[DecideToRespond] Decision: ${decision}, Chance: ${baseChance}`);
+    
+            // Return the decision (true for reply, false for no reply)
             return decision;
         } catch (error) {
-            console.error(`[Error] DecideToRespond: ${error}`);
+            // Log any errors that occur in the decision-making process
+            console.error(`[Error] in shouldReplyToMessage: ${error.message}`);
+            console.error(`Error Details: `, error);
+    
+            // In case of error, default to not replying
             return false;
         }
     }
-    
+        
     logMention(channelId, sendTimestamp) {
-        console.debug(`Attempting to log mention for channel ${channelId} at timestamp ${sendTimestamp}`);
-        // Ensure that this.lastReplyTimes.times is initialized
-        if (!this.lastReplyTimes.times) {
-            console.error("Error: 'times' object in LastReplyTimes is undefined.");
-            this.lastReplyTimes.times = {}; // Initialize if undefined
+        try {
+            this.lastReplyTimes.times[channelId] = sendTimestamp;
+            logger.debug(`[logMention] Logged mention for channel ${channelId}. Current state:`, this.lastReplyTimes.times);
+        } catch (error) {
+            logger.error("[Error] Error in logging mention:", error); // Optimistic logging
         }
-        // Correctly access and modify the 'times' property of the LastReplyTimes instance
-        this.lastReplyTimes.times[channelId] = sendTimestamp;
-        console.debug(`Logged mention for channel ${channelId}. Current state:`, this.lastReplyTimes.times);
     }
 
 }
