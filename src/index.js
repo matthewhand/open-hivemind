@@ -102,13 +102,8 @@ async function initialize() {
             // Decide whether to reply
             const { shouldReply } = responseDecider.shouldReplyToMessage(client.user.id, message);
             if (shouldReply) {
-                if (commandContent.startsWith('!')) {
-                    console.log(`Processing command: ${commandContent}`); // Debug
-                    await commandHandler(message, commandContent);
-                } else {
-                    console.log('Passing message to messageHandler.'); // Debug
-                    await messageHandler(message, discordSettings);
-                }
+                console.log('Passing message to messageHandler.'); // Debug
+                await messageHandler(message, discordSettings);
             }
         } catch (error) {
             console.error(`Error in messageCreate event: ${error}`);
