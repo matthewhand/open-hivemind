@@ -11,6 +11,7 @@ const SYSTEM_PROMPT = process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assist
 const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
+const followUpEnabled = process.env.FOLLOW_UP_ENABLED !== 'false'; // Enabled by default
 
 // Bonuses and Response Chances
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
