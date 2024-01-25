@@ -84,20 +84,23 @@ class DecideToRespond {
     shouldReplyToMessage(ourUserId, message) {
         try {
             this.logMessage(message);
-
-            let baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
-
-            // Apply bot response penalty globally, regardless of who sent the message
+    
+            let baseChance = 0;
+    
+            // Check if the bot is directly mentioned
+            if (this.isDirectlyMentioned(ourUserId, message)) {
+                baseChance = 1; // If directly mentioned, set base chance to 1 (100%)
+            } else {
+                baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
+            }
+    
+            // Apply bot response penalty if the message is from another bot
             if (message.author.bot) {
                 baseChance *= this.botResponsePenalty;
-                logger.debug(`Global bot response penalty applied. New chance: ${baseChance}`);
+                logger.debug(`Bot response penalty applied. New chance: ${baseChance}`);
             }
-
-            if (this.isDirectlyMentioned(ourUserId, message)) {
-                return { shouldReply: Math.random() < baseChance, isDirectMention: true };
-            }
-
-            return { shouldReply: Math.random() < baseChance, isDirectMention: false };
+    
+            return { shouldReply: Math.random() < baseChance, isDirectMention: this.isDirectlyMentioned(ourUserId, message) };
         } catch (error) {
             logger.error(`Error in shouldReplyToMessage: ${error.message}`);
             return { shouldReply: false, isDirectMention: false };
