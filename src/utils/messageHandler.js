@@ -61,6 +61,8 @@ function buildRequestBody(historyMessages, userMessage, message) {
 
 // Send LLM Request
 async function sendLlmRequest(message) {
+    logger.debug("Entered sendLlmRequest.");
+
     try {
         const historyMessages = await fetchConversationHistory(message.channel);
         const requestBody = buildRequestBody(historyMessages, message.content, message);
@@ -78,6 +80,7 @@ async function sendLlmRequest(message) {
 
         const replyContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
         if (replyContent && replyContent.trim() !== '') {
+            logger.debug(`Replying with content: ${replyContent}`);
             await message.reply(replyContent);
             responseDecider.logMention(message.channel.id, Date.now());
         } else {
@@ -85,24 +88,33 @@ async function sendLlmRequest(message) {
         }
     } catch (error) {
         logger.error(`Error in sendLlmRequest: ${error.message}`);
+        logger.debug(`Error stack: ${error.stack}`);
+        if (error.response) {
+            logger.debug(`Error response data: ${JSON.stringify(error.response.data)}`);
+            logger.debug(`Error response status: ${error.response.status}`);
+            logger.debug(`Error response headers: ${JSON.stringify(error.response.headers)}`);
+        }
         await message.reply(getRandomErrorMessage());
     }
 }
 
 // Message Handler
 async function messageHandler(message) {
+    logger.debug("Entered messageHandler.");
+
     if (message.author.bot && !BOT_TO_BOT_MODE) {
         logger.debug("Ignoring bot message as BOT_TO_BOT_MODE is disabled.");
         return;
     }
 
-    // Decide whether to respond to the message
     const { shouldReply } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
+    logger.debug(`Decision to reply: ${shouldReply}`);
+
     if (shouldReply) {
-        logger.info("Decided to respond to the message.");
+        logger.debug("Decided to respond to the message. Sending LLM request.");
         await sendLlmRequest(message);
     } else {
-        logger.info("Decided not to respond to the message.");
+        logger.debug("Decided not to respond to the message.");
     }
 }
 

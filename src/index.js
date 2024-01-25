@@ -16,26 +16,8 @@ const discordSettings = {
     unsolicitedChannelCap: 5,
     ignore_dms: true,
 };
-const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID;
+// const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID;
 const restartDelayFile = './restartDelay.json';
-const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000); // Max delay, default 60 minutes
-const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
-const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
-const includeUsername = process.env.INCLUDE_USERNAME === 'true';
-const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false'; // Defaults to true
-
-// Bonuses and Response Chances
-const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
-const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
-    JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
-    [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.1]];
-
-// Response Decider Singleton
-const responseDecider = new DecideToRespond({
-    disableUnsolicitedReplies: false,
-    unsolicitedChannelCap: 5,
-    ignore_dms: true
-}, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
@@ -60,29 +42,6 @@ function readRestartDelay() {
 function writeRestartDelay(delay) {
     fs.writeFileSync(restartDelayFile, JSON.stringify({ restartDelay: delay }), 'utf8');
 }
-
-// // Exception Handling and Auto-Restart Logic
-// function handleExceptionAndScheduleRestart() {
-//     try {
-//         // Announce failure in the specified channel
-//         const channel = client.channels.cache.get(NOTIFICATION_CHANNEL_ID);
-//         if (channel) {
-//             channel.send('⚠️ The bot has encountered an issue and will restart shortly.');
-//         }
-
-//         logger.error('Bot encountered an exception. Triggering restart.');
-
-//         // Exit the current Node.js process
-//         process.exit(1);
-
-//     } catch (err) {
-//         logger.error(`Error during exception handling: ${err}`);
-//         process.exit(1); // Ensure exit in case of error in the catch block
-//     }
-// }
-
-// process.on('uncaughtException', handleExceptionAndScheduleRestart);
-// process.on('unhandledRejection', handleExceptionAndScheduleRestart);
 
 async function initialize() {
     initializeFetch();
