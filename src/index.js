@@ -20,6 +20,7 @@ const restartDelayFile = './restartDelay.json';
 const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000); // Max delay, default 60 minutes
 const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
 const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
+const includeUsername = process.env.INCLUDE_USERNAME === 'true';
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
@@ -69,38 +70,35 @@ async function initialize() {
 
     // Bot-to-bot interaction is enabled by default; only disabled if explicitly set to 'false'
     const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false';
+
     client.on('messageCreate', async (message) => {
         try {
-            if (message.author.bot) return;
+            if (message.author.bot || message.author.id === client.user.id) return;
     
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
-            const isMentioned = message.content.includes(botMention) || message.content.includes(botMentionWithNick);
+            let commandContent = message.content;
     
-            // Check if it's a command with or without bot mention
-            if (message.content.startsWith('!') || isMentioned) {
-                let commandContent = message.content;
-                if (isMentioned) {
-                    // Remove bot mention from the message content
-                    commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-                }
-    
-                if (commandContent.startsWith('!')) {
-                    if (!requireBotMention || isMentioned) {
-                        await commandHandler(message, commandContent);
-                        return;
-                    }
-                }
+            if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
+                commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
             }
     
-            // Fallback to message handler
+            // Append username if INCLUDE_USERNAME is true
+            if (includeUsername) {
+                commandContent = `${message.author.username}: ${commandContent}`;
+            }
+    
+            if (commandContent.startsWith('!')) {
+                await commandHandler(message, commandContent);
+                return;
+            }
+    
             await messageHandler(message, discordSettings);
         } catch (error) {
             handleError(error, message);
         }
     });
-    
-}
+    }
 
 debugEnvVars();
 initialize().catch(error => console.error('Error during initialization:', error));
