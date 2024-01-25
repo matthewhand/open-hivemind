@@ -93,7 +93,6 @@ async function initialize() {
         }
     });
 }
-    }
 
 debugEnvVars();
 initialize().catch(error => console.error('Error during initialization:', error));
