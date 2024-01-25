@@ -24,7 +24,7 @@ const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
 
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
-    unsolicitedChannelCap: 5,
+    unsolicitedChannelCap: 3,
     ignore_dms: true
 });
     

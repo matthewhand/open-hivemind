@@ -19,6 +19,14 @@ class LastReplyTimes {
     timeSinceLastMention(channelId, currentTimestamp) {
         return this.times[channelId] ? currentTimestamp - this.times[channelId] : Infinity;
     }
+
+    getReplyCount(channelId) {
+        return this.times[channelId] || 0;
+    }
+
+    incrementReplyCount(channelId) {
+        this.times[channelId] = (this.times[channelId] || 0) + 1;
+    }
 }
 
 class DecideToRespond {
@@ -103,10 +111,24 @@ class DecideToRespond {
     }
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
+        const channelReplyCount = this.lastReplyTimes.getReplyCount(message.channel.id);
+
+        // Check if the reply count for the channel has reached the cap
+        if (channelReplyCount >= this.discordSettings.unsolicitedChannelCap) {
+            return false; // Do not reply if cap is reached
+        }
+        
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
         let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
-        return Math.random() < responseChance;
+        decision = Math.random() < responseChance;
+        
+        // If deciding to reply, increment the reply count
+        if (decision) {
+            this.lastReplyTimes.incrementReplyCount(message.channel.id);
+        }
+
+        return decision;
     }
 
     shouldReplyToMessage(ourUserId, message) {
