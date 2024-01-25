@@ -47,28 +47,28 @@ function writeRestartDelay(delay) {
     fs.writeFileSync(restartDelayFile, JSON.stringify({ restartDelay: delay }), 'utf8');
 }
 
-// Exception Handling and Auto-Restart Logic
-function handleExceptionAndScheduleRestart() {
-    try {
-        // Announce failure in the specified channel
-        const channel = client.channels.cache.get(NOTIFICATION_CHANNEL_ID);
-        if (channel) {
-            channel.send('⚠️ The bot has encountered an issue and will restart shortly.');
-        }
+// // Exception Handling and Auto-Restart Logic
+// function handleExceptionAndScheduleRestart() {
+//     try {
+//         // Announce failure in the specified channel
+//         const channel = client.channels.cache.get(NOTIFICATION_CHANNEL_ID);
+//         if (channel) {
+//             channel.send('⚠️ The bot has encountered an issue and will restart shortly.');
+//         }
 
-        logger.error('Bot encountered an exception. Triggering restart.');
+//         logger.error('Bot encountered an exception. Triggering restart.');
 
-        // Exit the current Node.js process
-        process.exit(1);
+//         // Exit the current Node.js process
+//         process.exit(1);
 
-    } catch (err) {
-        logger.error(`Error during exception handling: ${err}`);
-        process.exit(1); // Ensure exit in case of error in the catch block
-    }
-}
+//     } catch (err) {
+//         logger.error(`Error during exception handling: ${err}`);
+//         process.exit(1); // Ensure exit in case of error in the catch block
+//     }
+// }
 
-process.on('uncaughtException', handleExceptionAndScheduleRestart);
-process.on('unhandledRejection', handleExceptionAndScheduleRestart);
+// process.on('uncaughtException', handleExceptionAndScheduleRestart);
+// process.on('unhandledRejection', handleExceptionAndScheduleRestart);
 
 
 async function initialize() {
