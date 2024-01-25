@@ -25,9 +25,12 @@ client.once('ready', () => {
 });
 
 // Exception Handling and Auto-Restart Logic
-const RESTART_MIN_INTERVAL = parseInt(process.env.RESTART_MIN_INTERVAL || 42 * 60 * 1000); // 42 minutes in milliseconds
-const RESTART_MAX_INTERVAL = parseInt(process.env.RESTART_MAX_INTERVAL || 69 * 60 * 1000); // 69 minutes in milliseconds
 const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID; // Use CHANNEL_ID for notification
+
+// Backoff strategy variables
+let restartDelay = parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000); // Initial delay, default 5 minutes
+const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000); // Max delay, default 60 minutes
+const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
 
 function handleExceptionAndScheduleRestart() {
     try {
@@ -39,21 +42,26 @@ function handleExceptionAndScheduleRestart() {
 
         logger.error('Bot encountered an exception. Scheduling a restart.');
 
-        // Schedule a restart
-        const restartInterval = Math.floor(Math.random() * (RESTART_MAX_INTERVAL - RESTART_MIN_INTERVAL + 1)) + RESTART_MIN_INTERVAL;
+        // Use an exponential backoff strategy for restarts
         setTimeout(() => {
             const exec = require('child_process').exec;
             exec('cd ~/discord-llm-bot/ && docker-compose up -d', (error, stdout, stderr) => {
                 if (error) {
                     logger.error(`Restart command failed: ${error}`);
+                    // Increase the delay for the next restart attempt
+                    restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
                     return;
                 }
                 logger.info(`Bot restarted successfully: ${stdout}`);
+                // Reset delay after a successful restart
+                restartDelay = parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000);
             });
-        }, restartInterval);
+        }, restartDelay);
 
     } catch (err) {
         logger.error(`Error during exception handling and restart: ${err}`);
+        // Increase the delay for the next restart attempt
+        restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
     }
 }
 
