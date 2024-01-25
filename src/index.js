@@ -98,23 +98,32 @@ client.on('messageCreate', async (message) => {
         const botMentionWithNick = `<@!${client.user.id}>`;
 
         let commandContent = message.content;
-        
-        // Check if the bot is mentioned and the author is not a bot
+
+        // Check if the bot is mentioned by a user (not a bot)
         if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
             console.log('Bot is directly mentioned by a user.'); // Debug
+
+            // Remove bot mention from message content
             commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
+
+            // Check for command prefix and process accordingly
             if (commandContent.startsWith('!')) {
                 console.log(`Processing command: ${commandContent}`); // Debug
                 await commandHandler(message, commandContent);
-                return;
+            } else {
+                console.log('Passing message to messageHandler.'); // Debug
+                await messageHandler(message, discordSettings);
             }
+            return;
         }
 
-        // Use responseDecider to decide whether to reply
+        // Use responseDecider to decide whether to reply in other cases
         const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
         if (shouldReply) {
-            console.log('Passing message to messageHandler.'); // Debug
+            console.log('Decided to reply. Passing message to messageHandler.'); // Debug
             await messageHandler(message, discordSettings);
+        } else {
+            console.log('Decided not to reply.'); // Debug
         }
     } catch (error) {
         console.error(`Error in messageCreate event: ${error}`);
