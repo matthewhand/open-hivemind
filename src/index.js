@@ -68,9 +68,6 @@ async function initialize() {
     const webhookPort = process.env.WEB_SERVER_PORT || 3000;
     startWebhookServer(webhookPort);
 
-    // Bot-to-bot interaction is enabled by default; only disabled if explicitly set to 'false'
-    const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false';
-
     client.on('messageCreate', async (message) => {
         try {
             console.log(`Received message: ${message.content}`); // Debug: Log received message
