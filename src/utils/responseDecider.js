@@ -32,7 +32,7 @@ class DecideToRespond {
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
-        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.2');
+        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.6');
 
     }
 
@@ -85,16 +85,16 @@ class DecideToRespond {
         try {
             this.logMessage(message);
 
-            if (this.isDirectlyMentioned(ourUserId, message)) {
-                return { shouldReply: true, isDirectMention: true };
-            }
+            let baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
 
-            let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-
-            // Apply bot response penalty if the message is from another bot
+            // Apply bot response penalty globally, regardless of who sent the message
             if (message.author.bot) {
                 baseChance *= this.botResponsePenalty;
-                logger.debug(`Bot response penalty applied. New chance: ${baseChance}`);
+                logger.debug(`Global bot response penalty applied. New chance: ${baseChance}`);
+            }
+
+            if (this.isDirectlyMentioned(ourUserId, message)) {
+                return { shouldReply: Math.random() < baseChance, isDirectMention: true };
             }
 
             return { shouldReply: Math.random() < baseChance, isDirectMention: false };
