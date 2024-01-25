@@ -99,10 +99,10 @@ async function messageHandler(message) {
     // Decide whether to respond to the message
     const { shouldReply } = responseDecider.shouldReplyToMessage(message.client.user.id, message);
     if (shouldReply) {
-        logger.debug("Decided to respond to the message.");
+        logger.info("Decided to respond to the message.");
         await sendLlmRequest(message);
     } else {
-        logger.debug("Decided not to respond to the message.");
+        logger.info("Decided not to respond to the message.");
     }
 }
 
