@@ -84,52 +84,59 @@ function writeRestartDelay(delay) {
 // process.on('uncaughtException', handleExceptionAndScheduleRestart);
 // process.on('unhandledRejection', handleExceptionAndScheduleRestart);
 
-client.on('messageCreate', async (message) => {
-    try {
-        console.log(`Received message: ${message.content}`); // Debug: Log received message
+async function initialize() {
+    initializeFetch();
+    const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+    startWebhookServer(webhookPort);
 
-        // Skip if the message is from the bot itself
-        if (message.author.id === client.user.id) {
-            console.log('Ignoring message from the bot itself.'); // Debug
-            return;
-        }
-
-        const botMention = `<@${client.user.id}>`;
-        const botMentionWithNick = `<@!${client.user.id}>`;
-
-        let commandContent = message.content;
-
-        // Check if the bot is mentioned by a user (not a bot)
-        if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
-            console.log('Bot is directly mentioned by a user.'); // Debug
-
-            // Remove bot mention from message content
-            commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-
-            // Check for command prefix and process accordingly
-            if (commandContent.startsWith('!')) {
-                console.log(`Processing command: ${commandContent}`); // Debug
-                await commandHandler(message, commandContent);
-            } else {
-                console.log('Passing message to messageHandler.'); // Debug
-                await messageHandler(message, discordSettings);
+    client.on('messageCreate', async (message) => {
+        try {
+            console.log(`Received message: ${message.content}`); // Debug: Log received message
+    
+            // Skip if the message is from the bot itself
+            if (message.author.id === client.user.id) {
+                console.log('Ignoring message from the bot itself.'); // Debug
+                return;
             }
-            return;
+    
+            const botMention = `<@${client.user.id}>`;
+            const botMentionWithNick = `<@!${client.user.id}>`;
+    
+            let commandContent = message.content;
+    
+            // Check if the bot is mentioned by a user (not a bot)
+            if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
+                console.log('Bot is directly mentioned by a user.'); // Debug
+    
+                // Remove bot mention from message content
+                commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
+    
+                // Check for command prefix and process accordingly
+                if (commandContent.startsWith('!')) {
+                    console.log(`Processing command: ${commandContent}`); // Debug
+                    await commandHandler(message, commandContent);
+                } else {
+                    console.log('Passing message to messageHandler.'); // Debug
+                    await messageHandler(message, discordSettings);
+                }
+                return;
+            }
+    
+            // Use responseDecider to decide whether to reply in other cases
+            const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
+            if (shouldReply) {
+                console.log('Decided to reply. Passing message to messageHandler.'); // Debug
+                await messageHandler(message, discordSettings);
+            } else {
+                console.log('Decided not to reply.'); // Debug
+            }
+        } catch (error) {
+            console.error(`Error in messageCreate event: ${error}`);
+            handleError(error, message);
         }
-
-        // Use responseDecider to decide whether to reply in other cases
-        const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
-        if (shouldReply) {
-            console.log('Decided to reply. Passing message to messageHandler.'); // Debug
-            await messageHandler(message, discordSettings);
-        } else {
-            console.log('Decided not to reply.'); // Debug
-        }
-    } catch (error) {
-        console.error(`Error in messageCreate event: ${error}`);
-        handleError(error, message);
-    }
-});
+    });
+    
+}
 
 debugEnvVars();
 initialize().catch(error => console.error('Error during initialization:', error));
