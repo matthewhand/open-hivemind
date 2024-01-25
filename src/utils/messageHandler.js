@@ -159,6 +159,11 @@ async function sendFollowUpRequest(message) {
         logger.debug("[Follow-Up Handler] Fetching conversation history for follow-up...");
         const historyMessages = await fetchConversationHistory(message.channel);
 
+        if (!historyMessages || historyMessages.length === 0) {
+            logger.debug("[Follow-Up Handler] No conversation history available for follow-up.");
+            return; // Exit if no history messages are available
+        }
+
         logger.debug("[Follow-Up Handler] Building request body for follow-up...");
         const requestBody = buildFollowUpRequestBody(historyMessages, message);
 
@@ -196,23 +201,27 @@ async function sendFollowUpRequest(message) {
 }
 
 function buildFollowUpRequestBody(historyMessages, message) {
-    let requestBody = { model: MODEL_TO_USE, messages: [] };
-    let currentSize = 0;
+    try {
+        if (!historyMessages || historyMessages.length === 0) {
+            throw new Error("History messages are empty or undefined.");
+        }
 
-    // ... (Existing code for handling historyMessages)
+        // Select a random alias command
+        const aliasKeys = Object.keys(aliases);
+        const randomAlias = aliasKeys[Math.floor(Math.random() * aliasKeys.length)];
 
-    // Select a random alias command
-    const aliasKeys = Object.keys(aliases);
-    const randomAlias = aliasKeys[Math.floor(Math.random() * aliasKeys.length)];
+        // Construct the query using the random alias
+        const command = `!${randomAlias}`;
+        const reflectivePrompt = `Reflecting on the conversation, how might we use the command ${command} for further insights?`;
+        requestBody.messages.push({ role: 'system', content: reflectivePrompt });
 
-    // Construct the query using the random alias
-    const command = `!${randomAlias}`;
-    const reflectivePrompt = `Reflecting on the conversation, how might we use the command ${command} for further insights?`;
-    requestBody.messages.push({ role: 'system', content: reflectivePrompt });
+        logger.debug("[Follow-Up Handler] Constructed follow-up request body.");
 
-    logger.debug("[Follow-Up Handler] Constructed follow-up request body.");
-
-    return requestBody;
+        return requestBody;
+    } catch (error) {
+        logger.error("Error constructing follow-up request body:", error);
+        return null; // Return null to indicate a failure in building the request body
+    }
 }
 
 
