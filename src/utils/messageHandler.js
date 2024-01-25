@@ -18,6 +18,7 @@ const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 const MIN_RESPONSE_TIME = process.env.MIN_RESPONSE_TIME || 3000;
 const SCALE_RESPONSE_TIME = parseFloat(process.env.SCALE_RESPONSE_TIME || '6.9');
+const CONTRARIAN_CHANCE = parseFloat(process.env.CONTRARIAN_CHANCE || '0.2'); // 20% by default
 
 // Bonuses and Response Chances
 const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
@@ -246,7 +247,16 @@ function startTypingIndicator(channel) {
 
 // Build Request Body
 function buildRequestBody(historyMessages, userMessage, message) {
-    let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: SYSTEM_PROMPT }] };      
+    // Retrieve the Discord channel topic
+    const channelTopic = message.channel.topic || "general discussion";
+    let systemPrompt = `${SYSTEM_PROMPT} The current topic of discussion in this channel is about ${channelTopic}.  Please steer conversation towards current topic (or topic-adjacent), and/or progress the topic with relevant information (randomly from funny, informative, etc). `;
+
+    // Occasionally switch to a contrarian or adjacent topic
+    if (Math.random() < CONTRARIAN_CHANCE) {
+        systemPrompt += ` Lean into the adjacent topic.`;
+    }
+
+    let requestBody = { model: MODEL_TO_USE, messages: [{ role: 'system', content: systemPrompt }] };      
     let currentSize = JSON.stringify(requestBody).length;
 
     historyMessages.slice().reverse().forEach(msg => {
