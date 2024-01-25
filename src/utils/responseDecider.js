@@ -46,6 +46,12 @@ class DecideToRespond {
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
     
         console.debug(`[calcBaseChance] Time since last send: ${timeSinceLastSend}ms`);
+
+        // If time since last send is Infinity, return 100% chance
+        if (timeSinceLastSend === Infinity) {
+            console.debug('[calcBaseChance] Time since last send is Infinity, setting base chance to 1 (100%)');
+            return 1; // 100% chance
+        }
     
         for (let [duration, chance] of this.timeVsResponseChance) {
             console.debug(`[calcBaseChance] Checking: timeSinceLastSend (${timeSinceLastSend}ms) <= duration (${duration}ms)`);
@@ -57,7 +63,7 @@ class DecideToRespond {
     
         return 0;
     }
-
+    
     calculateDynamicFactor(message) {
         return this.getRecentMessagesCount(message.channel.id) > 10 ? 0.5 : 1;
     }
