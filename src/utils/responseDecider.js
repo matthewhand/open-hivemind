@@ -22,7 +22,7 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(discordSettings, interrobangBonus, timeVsResponseChance) {
+    constructor(discordSettings, interrobangBonus, timeVsResponseChance, mentionBonus) {
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
         this.timeVsResponseChance = timeVsResponseChance;
@@ -32,8 +32,8 @@ class DecideToRespond {
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
-        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.6');
-
+        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.4');
+        this.mentionBonus = mentionBonus || 0.2;  // Default to 0.2 if not provided
     }
 
     isDirectlyMentioned(ourUserId, message) {
@@ -84,26 +84,25 @@ class DecideToRespond {
     shouldReplyToMessage(ourUserId, message) {
         try {
             this.logMessage(message);
-    
-            let baseChance = 0;
-    
-            // Check if the bot is directly mentioned
-            if (this.isDirectlyMentioned(ourUserId, message)) {
-                baseChance = 1; // If directly mentioned, set base chance to 1 (100%)
-            } else {
-                baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-            }
-    
+
+            let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
+
             // Apply bot response penalty if the message is from another bot
             if (message.author.bot) {
                 baseChance *= this.botResponsePenalty;
                 logger.debug(`Bot response penalty applied. New chance: ${baseChance}`);
             }
-    
-            return { shouldReply: Math.random() < baseChance, isDirectMention: this.isDirectlyMentioned(ourUserId, message) };
+
+            // Apply mention bonus if the bot is directly mentioned
+            if (this.isDirectlyMentioned(ourUserId, message)) {
+                baseChance += this.mentionBonus;
+                logger.debug(`Bot mention bonus applied. New chance: ${baseChance}`);
+            }
+
+            return Math.random() < baseChance;
         } catch (error) {
             logger.error(`Error in shouldReplyToMessage: ${error.message}`);
-            return { shouldReply: false, isDirectMention: false };
+            return false;
         }
     }
 

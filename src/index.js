@@ -70,7 +70,6 @@ function writeRestartDelay(delay) {
 // process.on('uncaughtException', handleExceptionAndScheduleRestart);
 // process.on('unhandledRejection', handleExceptionAndScheduleRestart);
 
-
 async function initialize() {
     initializeFetch();
     const webhookPort = process.env.WEB_SERVER_PORT || 3000;
@@ -79,29 +78,38 @@ async function initialize() {
     client.on('messageCreate', async (message) => {
         try {
             console.log(`Received message: ${message.content}`); // Debug: Log received message
-    
-            // Check if the message is from the bot itself or from another bot, depending on BOT_TO_BOT_MODE
+
+            // Skip messages from the bot itself or, depending on BOT_TO_BOT_MODE, from other bots
             if (message.author.id === client.user.id || (message.author.bot && !botToBotMode)) {
                 console.log('Ignoring message from the bot itself or from other bots (based on BOT_TO_BOT_MODE).'); // Debug
                 return;
             }
-    
+
+            // Check if the bot is mentioned
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
-    
-            let commandContent = message.content;
-            if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
-                console.log('Bot is mentioned in the message.'); // Debug
-                commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
+            let isBotMentioned = message.content.includes(botMention) || message.content.includes(botMentionWithNick);
+
+            let commandContent = message.content.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
+
+            // If bot is mentioned and the message starts with a command, process the command
+            if (isBotMentioned && commandContent.startsWith('!')) {
+                console.log(`Processing command: ${commandContent}`); // Debug
+                await commandHandler(message, commandContent);
+                return;
+            }
+
+            // Decide whether to reply
+            const { shouldReply } = responseDecider.shouldReplyToMessage(client.user.id, message);
+            if (shouldReply) {
                 if (commandContent.startsWith('!')) {
                     console.log(`Processing command: ${commandContent}`); // Debug
                     await commandHandler(message, commandContent);
-                    return;
+                } else {
+                    console.log('Passing message to messageHandler.'); // Debug
+                    await messageHandler(message, discordSettings);
                 }
             }
-    
-            console.log('Passing message to messageHandler.'); // Debug
-            await messageHandler(message, discordSettings);
         } catch (error) {
             console.error(`Error in messageCreate event: ${error}`);
             handleError(error, message);
