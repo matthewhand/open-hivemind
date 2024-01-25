@@ -113,34 +113,39 @@ function handleHelpCommand(message) {
 
 
 async function commandHandler(message, commandContent) {
-    console.log(`Received in commandHandler: ${commandContent}`);
+    try {
+        console.log(`Received in commandHandler: ${commandContent}`);
 
-    // Regex to match commands with or without action
-    const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
-    let matches = commandContent.match(commandRegex);
+        // Regex to match commands with or without action
+        const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
+        let matches = commandContent.match(commandRegex);
 
-    if (matches) {
-        let command = matches[1].toLowerCase();
-        let action = matches[2];
-        let args = matches[3];
+        if (matches) {
+            let command = matches[1].toLowerCase();
+            let action = matches[2];
+            let args = matches[3];
 
-        // Check if command is an alias
-        if (aliases[command]) {
-            let aliasParts = aliases[command].split(':');
-            command = aliasParts[0];
-            action = aliasParts[1]; // Override action if alias defines one
-        }
+            // Check if command is an alias
+            if (aliases[command]) {
+                let aliasParts = aliases[command].split(':');
+                command = aliasParts[0];
+                action = aliasParts[1]; // Override action if alias defines one
+            }
 
-        console.log(`Command identified: ${command}, Action: ${action}`);
+            console.log(`Command identified: ${command}, Action: ${action}`);
 
-        if (commandHandlers[command]) {
-            console.log(`Executing handler for command: ${command}`);
-            await commandHandlers[command].handler(message, action, args);
-            console.log(`Executed handler for command: ${command}`);
+            if (commandHandlers[command]) {
+                console.log(`Executing handler for command: ${command}`);
+                await commandHandlers[command].handler(message, action, args);
+                console.log(`Executed handler for command: ${command}`);
+            } else {
+                console.log(`Unknown command: ${command}`);
+                message.reply('Unknown command: ' + command);
+            }
         } else {
-            console.log(`Unknown command: ${command}`);
-            message.reply('Unknown command: ' + command);
+            console.log('No command found in the message');
         }
+
     } catch (error) {
         console.error(`Error while handling command: ${commandContent}`);
         console.error(`Error message: ${error.message}`);
