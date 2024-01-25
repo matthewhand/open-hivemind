@@ -17,7 +17,7 @@ const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true
-});
+}, INTERROBANG_BONUS, TIME_VS_RESPONSE_CHANCE);
 
 // Validate Request Body
 function validateRequestBody(requestBody) {
