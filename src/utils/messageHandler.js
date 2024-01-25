@@ -195,9 +195,14 @@ async function sendFollowUpRequest(message) {
         }
 
     } catch (error) {
-        // Log the error but do not reply to the channel
-        console.error(`Error in sendFollowUpRequest: ${error.message}, Stack: ${error.stack}`);
-        // Removed the line that replies to the channel with an error message
+        console.error(`Error in sendLlmRequest: ${error.message}`);
+        console.error(`Error stack: ${error.stack}`);
+        if (error.response) {
+            console.error(`Error response data: ${JSON.stringify(error.response.data)}`);
+            console.error(`Error response status: ${error.response.status}`);
+            console.error(`Error response headers: ${JSON.stringify(error.response.headers)}`);
+        }
+        await message.reply(getRandomErrorMessage());
     }
 }
 

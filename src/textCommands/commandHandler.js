@@ -141,8 +141,18 @@ async function commandHandler(message, commandContent) {
             console.log(`Unknown command: ${command}`);
             message.reply('Unknown command: ' + command);
         }
-    } else {
-        console.log('No command found in the message');
+    } catch (error) {
+        console.error(`Error while handling command: ${commandContent}`);
+        console.error(`Error message: ${error.message}`);
+        console.error(`Stack Trace: ${error.stack}`);
+        // Log additional error details if available
+        if (error.response) {
+            console.error(`Error response data: ${JSON.stringify(error.response.data)}`);
+            console.error(`Error response status: ${error.response.status}`);
+            console.error(`Error response headers: ${JSON.stringify(error.response.headers)}`);
+        }
+        // Reply to the message with a generic error or specific error message
+        message.reply('An error occurred while processing your command.');
     }
 }
 
