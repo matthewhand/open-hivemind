@@ -7,7 +7,10 @@ RUN pip install --no-cache-dir psutil requests bs4 opencv-python numpy nltk
 # ---- Build Node Environment ----
 FROM node:18-buster
 WORKDIR /usr/src/app
-
+COPY src/ .
+COPY entrypoint.sh ./
+# Make the entrypoint script executable
+RUN chmod +x ./entrypoint.sh
 # Copy Python environment
 COPY --from=python-env /usr/local /usr/local
 
