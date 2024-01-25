@@ -123,13 +123,13 @@ async function initialize() {
             }
     
             // Use responseDecider to decide whether to reply in other cases
-            const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
-            if (shouldReply) {
-                console.log('Decided to reply. Passing message to messageHandler.'); // Debug
+            // const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
+            // if (shouldReply) {
+                // console.log('Passing message to messageHandler.'); // Debug
                 await messageHandler(message, discordSettings);
-            } else {
-                console.log('Decided not to reply.'); // Debug
-            }
+            // } else {
+                // console.log('Decided not to reply.'); // Debug
+            // }
         } catch (error) {
             console.error(`Error in messageCreate event: ${error}`);
             handleError(error, message);

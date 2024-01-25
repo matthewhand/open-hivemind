@@ -22,18 +22,28 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(discordSettings, interrobangBonus, timeVsResponseChance, mentionBonus) {
+    constructor(discordSettings, interrobangBonus, timeVsResponseChanceEnv, mentionBonus = 0.2) {
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
-        this.timeVsResponseChance = timeVsResponseChance;
+        this.mentionBonus = mentionBonus;
+
+        let timeVsResponseChance;
+        try {
+            timeVsResponseChance = JSON.parse(timeVsResponseChanceEnv);
+        } catch (e) {
+            console.error("Error parsing TIME_VS_RESPONSE_CHANCE, using default values:", e);
+            timeVsResponseChance = [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.1]]; // Default values
+        }
+
         this.lastReplyTimes = new LastReplyTimes(
             Math.max(...timeVsResponseChance.map(([duration]) => duration)),
             discordSettings.unsolicitedChannelCap
         );
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
-        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.4');
-        this.mentionBonus = mentionBonus || 0.2;  // Default to 0.2 if not provided
+        this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.4'); // multiply percentage by 0.4
+
+        this.mentionBonus = mentionBonus || 0.2;  // Default to +20% if not provided
     }
 
     isDirectlyMentioned(ourUserId, message) {
@@ -63,7 +73,7 @@ class DecideToRespond {
     
         return 0;
     }
-    
+
     calculateDynamicFactor(message) {
         return this.getRecentMessagesCount(message.channel.id) > 10 ? 0.5 : 1;
     }
