@@ -111,17 +111,20 @@ class DecideToRespond {
             this.logMessage(message);
     
             let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-            console.log(`[DecideToRespond] Base chance of reply (before penalties/bonuses): ${baseChance}`);
     
-            if (message.author.bot) {
-                baseChance *= this.botResponsePenalty;
-                console.log(`[DecideToRespond] Bot response penalty applied. Adjusted chance: ${baseChance}`);
-            }
-    
+            // Apply mention bonus
             if (this.isDirectlyMentioned(ourUserId, message)) {
                 baseChance += this.mentionBonus;
-                console.log(`[DecideToRespond] Mention bonus applied. Final chance: ${baseChance}`);
             }
+    
+            // Apply bot response penalty
+            if (message.author.bot) {
+                baseChance *= this.botResponsePenalty;
+            }
+    
+            // Ensure baseChance is between 0 and 1
+            baseChance = Math.max(0, Math.min(baseChance, 1));
+            console.log(`[DecideToRespond] Final chance after adjustments: ${baseChance}`);
     
             const decision = Math.random() < baseChance;
             console.log(`[DecideToRespond] Final decision to reply: ${decision}`);
