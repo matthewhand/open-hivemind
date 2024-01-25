@@ -8,6 +8,7 @@ const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
 const messageHandler = require('./utils/messageHandler');
+const { DecideToRespond } = require('./utils/responseDecider');
 
 // Constants and initialization
 const discordSettings = {
