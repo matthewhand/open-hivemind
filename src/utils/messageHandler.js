@@ -148,6 +148,10 @@ async function sendLlmRequest(message) {
     }
 }
 
+function getRandomDelay(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 async function sendFollowUpRequest(message) {
     try {
         logger.debug("[Follow-Up Handler] Fetching conversation history for follow-up...");
