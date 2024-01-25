@@ -24,5 +24,5 @@ COPY src/ .
 #RUN mkdir -p slashCommands
 #COPY src/slashCommands/* ./slashCommands/
 
-#CMD [ "node", "index.js" ]
-CMD [ "node", "watcher.js" ]
+CMD [ "node", "index.js" ]
+#CMD [ "node", "watcher.js" ]
