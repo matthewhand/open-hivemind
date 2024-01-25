@@ -75,6 +75,26 @@ function buildRequestBody(historyMessages, userMessage, message) {
     return requestBody;
 }
 
+function splitMessage(message, maxLength = 2000) {
+    const splitMessages = [];
+    let currentMessage = '';
+
+    message.split(' ').forEach(word => {
+        if ((currentMessage + word).length > maxLength) {
+            splitMessages.push(currentMessage);
+            currentMessage = '';
+        }
+        currentMessage += `${word} `;
+    });
+
+    if (currentMessage.length > 0) {
+        splitMessages.push(currentMessage.trim());
+    }
+
+    return splitMessages;
+}
+
+
 async function sendLlmRequest(message) {
     try {
         // Fetch conversation history
