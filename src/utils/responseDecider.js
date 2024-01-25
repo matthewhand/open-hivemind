@@ -22,24 +22,24 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(discordSettings, interrobangBonus, timeVsResponseChanceEnv, mentionBonus = 0.2) {
+    constructor(discordSettings, interrobangBonus, mentionBonus = 0.2) {
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
         this.mentionBonus = mentionBonus;
 
-        let timeVsResponseChance = [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.1]]; // Default values
+        // Default time vs response chance values
+        const defaultTimeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
 
-        // Only parse TIME_VS_RESPONSE_CHANCE if it is provided and valid
+        // Initialize timeVsResponseChance with default values
+        let timeVsResponseChance = defaultTimeVsResponseChance;
+
+        // Try to parse the TIME_VS_RESPONSE_CHANCE environment variable
+        const timeVsResponseChanceEnv = process.env.TIME_VS_RESPONSE_CHANCE;
         if (timeVsResponseChanceEnv) {
             try {
-                const parsed = JSON.parse(timeVsResponseChanceEnv);
-                if (Array.isArray(parsed) && parsed.every(item => Array.isArray(item) && item.length === 2 && typeof item[0] === 'number' && typeof item[1] === 'number')) {
-                    timeVsResponseChance = parsed;
-                } else {
-                    console.error("TIME_VS_RESPONSE_CHANCE is not in the expected format.");
-                }
+                timeVsResponseChance = JSON.parse(timeVsResponseChanceEnv);
             } catch (e) {
-                console.error("Error parsing TIME_VS_RESPONSE_CHANCE:", e);
+                console.error("Error parsing TIME_VS_RESPONSE_CHANCE, using default values. Error:", e.message);
             }
         }
 
@@ -47,6 +47,7 @@ class DecideToRespond {
             Math.max(...timeVsResponseChance.map(([duration]) => duration)),
             discordSettings.unsolicitedChannelCap
         );
+
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
         this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.4');
