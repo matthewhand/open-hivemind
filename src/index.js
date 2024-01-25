@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js');
+const fs = require('fs');
 const logger = require('./utils/logger');
 const { registerCommands } = require('./utils/registerSlashCommands');
 const { commandHandler } = require('./textCommands/commandHandler');
@@ -8,30 +9,35 @@ const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
 const messageHandler = require('./utils/messageHandler');
 
+// Constants and initialization
 const discordSettings = {
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true,
 };
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
-
-client.login(process.env.DISCORD_TOKEN);
-logger.info('Bot started successfully.');
-
-client.once('ready', () => {
-    logger.info('Bot is ready!');
-    registerCommands(client);
-});
-
-// Exception Handling and Auto-Restart Logic
-const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID; // Use CHANNEL_ID for notification
-
-// Backoff strategy variables
-let restartDelay = parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000); // Initial delay, default 5 minutes
+const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID;
+const restartDelayFile = './restartDelay.json';
 const maxRestartDelay = parseInt(process.env.MAX_RESTART_DELAY || 60 * 60 * 1000); // Max delay, default 60 minutes
 const delayMultiplier = parseFloat(process.env.DELAY_MULTIPLIER || 2); // Delay increase factor
+const requireBotMention = process.env.REQUIRE_BOT_MENTION === 'true';
+const client = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+});
 
+
+// Read and write functions for restart delay
+function readRestartDelay() {
+    if (fs.existsSync(restartDelayFile)) {
+        return JSON.parse(fs.readFileSync(restartDelayFile, 'utf8')).restartDelay;
+    }
+    return parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000); // Default 5 minutes
+}
+
+function writeRestartDelay(delay) {
+    fs.writeFileSync(restartDelayFile, JSON.stringify({ restartDelay: delay }), 'utf8');
+}
+
+// Exception Handling and Auto-Restart Logic
 function handleExceptionAndScheduleRestart() {
     try {
         // Announce failure in the specified channel
@@ -42,31 +48,32 @@ function handleExceptionAndScheduleRestart() {
 
         logger.error('Bot encountered an exception. Scheduling a restart.');
 
-        // Use an exponential backoff strategy for restarts
+        let restartDelay = readRestartDelay(); // Read the persisted restart delay
         setTimeout(() => {
             const exec = require('child_process').exec;
             exec('cd ~/discord-llm-bot/ && docker-compose up -d', (error, stdout, stderr) => {
                 if (error) {
                     logger.error(`Restart command failed: ${error}`);
-                    // Increase the delay for the next restart attempt
                     restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
+                    writeRestartDelay(restartDelay); // Persist the new delay
                     return;
                 }
                 logger.info(`Bot restarted successfully: ${stdout}`);
-                // Reset delay after a successful restart
-                restartDelay = parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000);
+                writeRestartDelay(parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000)); // Reset delay after a successful restart
             });
         }, restartDelay);
 
     } catch (err) {
         logger.error(`Error during exception handling and restart: ${err}`);
-        // Increase the delay for the next restart attempt
+        let restartDelay = readRestartDelay();
         restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
+        writeRestartDelay(restartDelay); // Persist the new delay even in case of errors in this block
     }
 }
 
 process.on('uncaughtException', handleExceptionAndScheduleRestart);
 process.on('unhandledRejection', handleExceptionAndScheduleRestart);
+
 
 async function initialize() {
     initializeFetch();
@@ -75,26 +82,27 @@ async function initialize() {
 
     // Bot-to-bot interaction is enabled by default; only disabled if explicitly set to 'false'
     const botToBotMode = process.env.BOT_TO_BOT_MODE !== 'false';
-
     client.on('messageCreate', async (message) => {
         try {
-            // Skip if the message is from the bot itself
-            if (message.author.id === client.user.id) return;
-
-            // Skip other bots' messages if BOT_TO_BOT_MODE is explicitly set to 'false'
-            if (message.author.bot && !botToBotMode) return;
-
-            const botMention = `<@${client.user.id}>`;
-            const botMentionWithNick = `<@!${client.user.id}>`;
+            if (message.author.bot) return;
+    
             let commandContent = message.content;
-            if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
-                commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
-                if (commandContent.startsWith('!')) {
-                    await commandHandler(message, commandContent);
+            if (requireBotMention) {
+                const botMention = `<@${client.user.id}>`;
+                const botMentionWithNick = `<@!${client.user.id}>`;
+                if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
+                    commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
+                } else {
+                    // Skip if the message does not mention the bot
                     return;
                 }
             }
-            await messageHandler(message, discordSettings);
+    
+            if (commandContent.startsWith('!')) {
+                await commandHandler(message, commandContent);
+            } else {
+                await messageHandler(message, discordSettings);
+            }
         } catch (error) {
             handleError(error, message);
         }
