@@ -38,13 +38,16 @@ class DecideToRespond {
         this.mentionBonus = parseFloat(process.env.MENTION_BONUS || defaultMentionBonus);
         this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || defaultBotResponsePenalty);
 
+        // Parse the TIME_VS_RESPONSE_CHANCE environment variable or use default values
         let timeVsResponseChance;
         try {
-            timeVsResponseChance = JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE || JSON.stringify(defaultTimeVsResponseChance));
+            timeVsResponseChance = JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE || '[[12345, 0.05], [420000, 0.75], [4140000, 0.1]]');
         } catch (e) {
             console.error("Error parsing TIME_VS_RESPONSE_CHANCE, using default values:", e);
-            timeVsResponseChance = defaultTimeVsResponseChance;
+            timeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
         }
+
+        this.timeVsResponseChance = timeVsResponseChance;
 
         this.lastReplyTimes = new LastReplyTimes(
             Math.max(...timeVsResponseChance.map(([duration]) => duration)),
