@@ -23,24 +23,26 @@ class LastReplyTimes {
 
 class DecideToRespond {
     constructor(discordSettings, interrobangBonus, mentionBonus = 0.2) {
+        console.log("DecideToRespond Constructor: Initializing...");
+
         this.discordSettings = discordSettings;
         this.interrobangBonus = interrobangBonus;
         this.mentionBonus = mentionBonus;
 
+        console.log(`Interrobang Bonus: ${interrobangBonus}`);
+        console.log(`Mention Bonus: ${mentionBonus}`);
+
         // Default time vs response chance values
-        const defaultTimeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
+        const timeVsResponseChanceEnv = process.env.TIME_VS_RESPONSE_CHANCE || '[[12345, 0.05], [420000, 0.75], [4140000, 0.1]]';
+        let timeVsResponseChance;
 
-        // Initialize timeVsResponseChance with default values
-        let timeVsResponseChance = defaultTimeVsResponseChance;
-
-        // Try to parse the TIME_VS_RESPONSE_CHANCE environment variable
-        const timeVsResponseChanceEnv = process.env.TIME_VS_RESPONSE_CHANCE;
-        if (timeVsResponseChanceEnv) {
-            try {
-                timeVsResponseChance = JSON.parse(timeVsResponseChanceEnv);
-            } catch (e) {
-                console.error("Error parsing TIME_VS_RESPONSE_CHANCE, using default values. Error:", e.message);
-            }
+        try {
+            timeVsResponseChance = JSON.parse(timeVsResponseChanceEnv);
+            console.log(`Parsed TIME_VS_RESPONSE_CHANCE:`, timeVsResponseChance);
+        } catch (e) {
+            console.error(`Error parsing TIME_VS_RESPONSE_CHANCE:`, e.message);
+            // Fallback to default values if parsing fails
+            timeVsResponseChance = [[12345, 0.05], [420000, 0.75], [4140000, 0.1]];
         }
 
         this.lastReplyTimes = new LastReplyTimes(
@@ -48,9 +50,13 @@ class DecideToRespond {
             discordSettings.unsolicitedChannelCap
         );
 
+        console.log(`LLM Wakewords:`, process.env.LLM_WAKEWORDS);
         this.llmWakewords = process.env.LLM_WAKEWORDS ? process.env.LLM_WAKEWORDS.split(',') : [];
         this.recentMessagesCount = {};
         this.botResponsePenalty = parseFloat(process.env.BOT_RESPONSE_CHANGE_PENALTY || '0.4');
+
+        console.log(`Bot response penalty: ${this.botResponsePenalty}`);
+        console.log("DecideToRespond Constructor: Initialization Complete");
     }
 
     isDirectlyMentioned(ourUserId, message) {
