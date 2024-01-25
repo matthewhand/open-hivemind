@@ -34,10 +34,21 @@ function validateRequestBody(requestBody) {
     return true;
 }
 
-// Process LLM Response
 function processResponse(data) {
     if (data && data.choices && data.choices.length > 0) {
-        return data.choices[0].message.content.trim();
+        let content = data.choices[0].message.content.trim();
+
+        // Regular expression to match patterns like '<@anything>: '
+        const pattern = /^<@\w+>: /;
+
+        // Check if the pattern exists and log it
+        if (pattern.test(content)) {
+            console.debug(`Stripping pattern from response: ${content.match(pattern)[0]}`);
+        }
+
+        content = content.replace(pattern, '');
+
+        return content;
     }
     return 'No response from the server.';
 }
@@ -64,11 +75,9 @@ function buildRequestBody(historyMessages, userMessage, message) {
     return requestBody;
 }
 
-// Send LLM Request
 async function sendLlmRequest(message) {
-    logger.debug("Entered sendLlmRequest.");
-
     try {
+        // Fetch conversation history
         const historyMessages = await fetchConversationHistory(message.channel);
         const requestBody = buildRequestBody(historyMessages, message.content, message);
 
@@ -76,6 +85,10 @@ async function sendLlmRequest(message) {
             throw new Error('Invalid request body');
         }
 
+        // Start Typing Indicator
+        const typingInterval = startTypingIndicator(message.channel);
+
+        // Send LLM request
         const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
             headers: {
                 'Content-Type': 'application/json',
@@ -83,24 +96,39 @@ async function sendLlmRequest(message) {
             }
         });
 
-        const replyContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
+        // Process LLM response
+        const replyContent = processResponse(response.data);
+
+        // Stop Typing Indicator
+        clearInterval(typingInterval);
+
         if (replyContent && replyContent.trim() !== '') {
-            logger.debug(`Replying with content: ${replyContent}`);
-            await message.reply(replyContent);
+            // Send reply
+            const messagesToSend = splitMessage(replyContent, 2000);
+            for (const msg of messagesToSend) {
+                await message.reply(msg);
+            }
+
+            // Log mention time
             responseDecider.logMention(message.channel.id, Date.now());
+
+            // Follow-up logic
+            if (followUpEnabled) {
+                const delay = getRandomDelay(followUpMinDelay, followUpMaxDelay);
+                setTimeout(() => sendFollowUpRequest(message), delay);
+            }
         } else {
-            logger.debug("LLM returned an empty or invalid response.");
+            console.debug("LLM returned an empty or invalid response.");
         }
     } catch (error) {
-        logger.error(`Error in sendLlmRequest: ${error.message}`);
-        logger.debug(`Error stack: ${error.stack}`);
-        if (error.response) {
-            logger.debug(`Error response data: ${JSON.stringify(error.response.data)}`);
-            logger.debug(`Error response status: ${error.response.status}`);
-            logger.debug(`Error response headers: ${JSON.stringify(error.response.headers)}`);
-        }
+        console.error(`Error in sendLlmRequest: ${error.message}, Stack: ${error.stack}`);
         await message.reply(getRandomErrorMessage());
     }
+}
+
+function startTypingIndicator(channel) {
+    channel.sendTyping();
+    return setInterval(() => channel.sendTyping(), 15000);
 }
 
 // Message Handler
