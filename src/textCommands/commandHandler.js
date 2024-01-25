@@ -161,4 +161,4 @@ async function commandHandler(message, commandContent) {
     }
 }
 
-module.exports = { commandHandler };
+module.exports = { commandHandler, aliases };
