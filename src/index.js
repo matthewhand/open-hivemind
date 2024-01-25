@@ -84,47 +84,43 @@ function writeRestartDelay(delay) {
 // process.on('uncaughtException', handleExceptionAndScheduleRestart);
 // process.on('unhandledRejection', handleExceptionAndScheduleRestart);
 
-async function initialize() {
-    initializeFetch();
-    const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-    startWebhookServer(webhookPort);
+client.on('messageCreate', async (message) => {
+    try {
+        console.log(`Received message: ${message.content}`); // Debug: Log received message
 
-    client.on('messageCreate', async (message) => {
-        try {
-            console.log(`Received message: ${message.content}`); // Debug: Log received message
+        // Skip if the message is from the bot itself
+        if (message.author.id === client.user.id) {
+            console.log('Ignoring message from the bot itself.'); // Debug
+            return;
+        }
 
-            // Skip messages from the bot itself or, depending on BOT_TO_BOT_MODE, from other bots
-            if (message.author.id === client.user.id || (message.author.bot && !botToBotMode)) {
-                console.log('Ignoring message from the bot itself or from other bots (based on BOT_TO_BOT_MODE).'); // Debug
-                return;
-            }
+        const botMention = `<@${client.user.id}>`;
+        const botMentionWithNick = `<@!${client.user.id}>`;
 
-            // Check if the bot is mentioned
-            const botMention = `<@${client.user.id}>`;
-            const botMentionWithNick = `<@!${client.user.id}>`;
-            let isBotMentioned = message.content.includes(botMention) || message.content.includes(botMentionWithNick);
-
-            let commandContent = message.content.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-
-            // If bot is mentioned and the message starts with a command, process the command
-            if (isBotMentioned && commandContent.startsWith('!')) {
+        let commandContent = message.content;
+        
+        // Check if the bot is mentioned and the author is not a bot
+        if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
+            console.log('Bot is directly mentioned by a user.'); // Debug
+            commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
+            if (commandContent.startsWith('!')) {
                 console.log(`Processing command: ${commandContent}`); // Debug
                 await commandHandler(message, commandContent);
                 return;
             }
-
-            // Decide whether to reply
-            const { shouldReply } = responseDecider.shouldReplyToMessage(client.user.id, message);
-            if (shouldReply) {
-                console.log('Passing message to messageHandler.'); // Debug
-                await messageHandler(message, discordSettings);
-            }
-        } catch (error) {
-            console.error(`Error in messageCreate event: ${error}`);
-            handleError(error, message);
         }
-    });
-}
+
+        // Use responseDecider to decide whether to reply
+        const shouldReply = responseDecider.shouldReplyToMessage(client.user.id, message);
+        if (shouldReply) {
+            console.log('Passing message to messageHandler.'); // Debug
+            await messageHandler(message, discordSettings);
+        }
+    } catch (error) {
+        console.error(`Error in messageCreate event: ${error}`);
+        handleError(error, message);
+    }
+});
 
 debugEnvVars();
 initialize().catch(error => console.error('Error during initialization:', error));
