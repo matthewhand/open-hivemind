@@ -46,28 +46,14 @@ function handleExceptionAndScheduleRestart() {
             channel.send('⚠️ The bot has encountered an issue and will restart shortly.');
         }
 
-        logger.error('Bot encountered an exception. Scheduling a restart.');
+        logger.error('Bot encountered an exception. Triggering restart.');
 
-        let restartDelay = readRestartDelay(); // Read the persisted restart delay
-        setTimeout(() => {
-            const exec = require('child_process').exec;
-            exec('cd ~/discord-llm-bot/ && docker-compose up -d', (error, stdout, stderr) => {
-                if (error) {
-                    logger.error(`Restart command failed: ${error}`);
-                    restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
-                    writeRestartDelay(restartDelay); // Persist the new delay
-                    return;
-                }
-                logger.info(`Bot restarted successfully: ${stdout}`);
-                writeRestartDelay(parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000)); // Reset delay after a successful restart
-            });
-        }, restartDelay);
+        // Exit the current Node.js process
+        process.exit(1);
 
     } catch (err) {
-        logger.error(`Error during exception handling and restart: ${err}`);
-        let restartDelay = readRestartDelay();
-        restartDelay = Math.min(restartDelay * delayMultiplier, maxRestartDelay);
-        writeRestartDelay(restartDelay); // Persist the new delay even in case of errors in this block
+        logger.error(`Error during exception handling: ${err}`);
+        process.exit(1); // Ensure exit in case of error in the catch block
     }
 }
 
