@@ -77,20 +77,14 @@ async function initialize() {
     
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
-            let commandContent = message.content;
     
+            let commandContent = message.content;
             if (message.content.includes(botMention) || message.content.includes(botMentionWithNick)) {
                 commandContent = commandContent.replace(new RegExp(botMention + '|' + botMentionWithNick, 'g'), '').trim();
-            }
-    
-            // Append username if INCLUDE_USERNAME is true
-            if (includeUsername) {
-                commandContent = `${message.author.username}: ${commandContent}`;
-            }
-    
-            if (commandContent.startsWith('!')) {
-                await commandHandler(message, commandContent);
-                return;
+                if (commandContent.startsWith('!')) {
+                    await commandHandler(message, commandContent);
+                    return;
+                }
             }
     
             await messageHandler(message, discordSettings);
@@ -98,6 +92,7 @@ async function initialize() {
             handleError(error, message);
         }
     });
+}
     }
 
 debugEnvVars();
