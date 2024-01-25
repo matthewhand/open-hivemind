@@ -1,3 +1,4 @@
+const { aliases } = require('../textCommands/commandHandler'); 
 const axios = require('axios');
 const fetchConversationHistory = require('./fetchConversationHistory');
 const { DecideToRespond } = require('./responseDecider');
@@ -146,6 +147,68 @@ async function sendLlmRequest(message) {
         await message.reply(getRandomErrorMessage());
     }
 }
+
+async function sendFollowUpRequest(message) {
+    try {
+        logger.debug("[Follow-Up Handler] Fetching conversation history for follow-up...");
+        const historyMessages = await fetchConversationHistory(message.channel);
+
+        logger.debug("[Follow-Up Handler] Building request body for follow-up...");
+        const requestBody = buildFollowUpRequestBody(historyMessages, message);
+
+        if (!validateRequestBody(requestBody)) {
+            throw new Error('Invalid request body for follow-up');
+        }
+
+        logger.debug("[Follow-Up Handler] Sending LLM follow-up request...");
+        const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` })
+            }
+        });
+
+        const followUpContent = (response.status === 200 && response.data) ? processResponse(response.data) : 'No response from the server.';
+        logger.debug("[Follow-Up Handler] LLM follow-up response received.");
+
+        if (followUpContent && followUpContent.trim() !== '') {
+            const messagesToSend = splitMessage(followUpContent, 2000);
+            for (const msg of messagesToSend) {
+                await message.reply(msg);
+            }
+            logger.debug("[Follow-Up Handler] Reply sent.");
+        } else {
+            logger.debug("[Follow-Up Handler] LLM returned an empty or invalid follow-up response.");
+        }
+    } catch (error) {
+        logger.error(`[Error] Follow-Up Handler: ${error.message}`);
+        if (error.response) {
+            logger.error(`Error response data: ${JSON.stringify(error.response.data)}`);
+        }
+        await message.reply(getRandomErrorMessage());
+    }
+}
+
+function buildFollowUpRequestBody(historyMessages, message) {
+    let requestBody = { model: MODEL_TO_USE, messages: [] };
+    let currentSize = 0;
+
+    // ... (Existing code for handling historyMessages)
+
+    // Select a random alias command
+    const aliasKeys = Object.keys(aliases);
+    const randomAlias = aliasKeys[Math.floor(Math.random() * aliasKeys.length)];
+
+    // Construct the query using the random alias
+    const command = `!${randomAlias}`;
+    const reflectivePrompt = `Reflecting on the conversation, how might we use the command ${command} for further insights?`;
+    requestBody.messages.push({ role: 'system', content: reflectivePrompt });
+
+    logger.debug("[Follow-Up Handler] Constructed follow-up request body.");
+
+    return requestBody;
+}
+
 
 function startTypingIndicator(channel) {
     channel.sendTyping();
