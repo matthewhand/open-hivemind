@@ -113,7 +113,7 @@ class DecideToRespond {
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
         const channelReplyCount = this.lastReplyTimes.getReplyCount(message.channel.id);
-
+    
         // Check if the reply count for the channel has reached the cap
         if (channelReplyCount >= this.discordSettings.unsolicitedChannelCap) {
             return false; // Do not reply if cap is reached
@@ -121,39 +121,47 @@ class DecideToRespond {
         
         const baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
         if (baseChance === 0) return false;
-        let responseChance = baseChance + (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
-        decision = Math.random() < responseChance;
-
+    
+        // Calculate the response chance
+        const responseChance = baseChance + 
+            (message.content.endsWith('?') || message.content.endsWith('!') ? this.interrobangBonus : 0);
+    
+        // Make a decision based on the response chance
+        const decision = Math.random() < responseChance;
+    
         // If deciding to reply, increment the reply count
         if (decision) {
             this.lastReplyTimes.incrementReplyCount(message.channel.id);
         }
-
+    
         return decision;
-    }
+    }    
 
     shouldReplyToMessage(ourUserId, message) {
         try {
             this.logMessage(message);
-    
+
             let baseChance = this.provideUnsolicitedReplyInChannel(ourUserId, message);
-    
+
             // Apply mention bonus
             if (this.isDirectlyMentioned(ourUserId, message)) {
                 baseChance += this.mentionBonus;
             }
-    
+
             // Apply bot response penalty
             if (message.author.bot) {
                 baseChance *= this.botResponsePenalty;
             }
-    
+
             // Ensure baseChance is between 0 and 1
             baseChance = Math.max(0, Math.min(baseChance, 1));
-            console.log(`[DecideToRespond] Final chance after adjustments: ${baseChance}`);
-    
+
+            // Declare and assign the decision based on baseChance
             const decision = Math.random() < baseChance;
+            
+            console.log(`[DecideToRespond] Final chance after adjustments: ${baseChance}`);
             console.log(`[DecideToRespond] Final decision to reply: ${decision}`);
+
             return decision;
         } catch (error) {
             console.error(`[Error] DecideToRespond: ${error}`);
