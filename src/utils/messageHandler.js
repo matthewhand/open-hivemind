@@ -12,6 +12,12 @@ const BOT_TO_BOT_MODE = process.env.BOT_TO_BOT_MODE !== 'false';
 const API_KEY = process.env.LLM_API_KEY;
 const MAX_CONTENT_LENGTH = parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10);
 
+// Bonuses and Response Chances
+const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
+const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
+    JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
+    [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.1]];
+
 // Response Decider Singleton
 const responseDecider = new DecideToRespond({
     disableUnsolicitedReplies: false,
