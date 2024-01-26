@@ -16,17 +16,22 @@ const followUpEnabled = process.env.FOLLOW_UP_ENABLED !== 'false'; // Enabled by
 const followUpMinDelay = parseInt(process.env.FOLLOW_UP_MIN_DELAY || '2', 10) * 60 * 1000; // Default 2 minutes
 const followUpMaxDelay = parseInt(process.env.FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000; // Default 60 minutes
 
-// Bonuses and Response Chances
-const INTERROBANG_BONUS = parseFloat(process.env.INTERROBANG_BONUS || '0.2');
-const TIME_VS_RESPONSE_CHANCE = process.env.TIME_VS_RESPONSE_CHANCE ?
-    JSON.parse(process.env.TIME_VS_RESPONSE_CHANCE) : 
-    [[12345, 0.05], [7 * 60000, 0.75], [69 * 60000, 0.0]];
+// In your messageHandler.js or wherever DecideToRespond is initialized
+const responseDeciderConfig = {
+    interrobangBonus: 0.2,
+    mentionBonus: 0.4,
+    botResponsePenalty: 0.8,
+    timeVsResponseChance: [[12345, 0.05], [420000, 0.75], [4140000, 0.1]],
+    llmWakewords: ['!help']
+};
 
-const responseDecider = new DecideToRespond({
-    disableUnsolicitedReplies: false,
-    unsolicitedChannelCap: 3,
-    ignore_dms: true
-});
+const discordSettings = {
+    unsolicitedChannelCap: 5,
+    // other settings...
+};
+
+const responseDecider = new DecideToRespond(responseDeciderConfig, discordSettings);
+
     
 // Validate Request Body
 function validateRequestBody(requestBody) {
