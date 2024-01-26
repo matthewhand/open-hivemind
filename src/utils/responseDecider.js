@@ -112,6 +112,12 @@ class DecideToRespond {
         return decision;
     }    
 
+    isDirectlyMentioned(ourUserId, message) {
+        // Check if the message mentions our bot user ID
+        return message.mentions.has(ourUserId) ||
+               this.llmWakewords.some(wakeword => message.content.includes(wakeword.trim()));
+    }
+
     shouldReplyToMessage(ourUserId, message) {
         try {
             // Log the message to keep track of recent messages for each channel
