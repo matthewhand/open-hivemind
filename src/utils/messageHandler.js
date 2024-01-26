@@ -21,7 +21,7 @@ const responseDeciderConfig = {
     interrobangBonus: 0.2,
     mentionBonus: 0.4,
     botResponsePenalty: 0.8,
-    timeVsResponseChance: [[12345, 0.05], [420000, 0.75], [4140000, 0.1]],
+    timeVsResponseChance: [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
     llmWakewords: ['!help']
 };
 
