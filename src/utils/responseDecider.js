@@ -31,31 +31,31 @@ class LastReplyTimes {
 
 class DecideToRespond {
     constructor(config, discordSettings) {
+        // Initialization with config and discordSettings
         this.interrobangBonus = config.interrobangBonus;
         this.mentionBonus = config.mentionBonus;
         this.botResponsePenalty = config.botResponsePenalty;
         this.timeVsResponseChance = config.timeVsResponseChance;
         this.llmWakewords = config.llmWakewords;
-
         this.discordSettings = discordSettings;
         this.lastReplyTimes = new LastReplyTimes(
             Math.max(...this.timeVsResponseChance.map(([duration]) => duration)),
             this.discordSettings.unsolicitedChannelCap
         );
         this.recentMessagesCount = {};
-
         console.log("DecideToRespond initialized");
     }
+
     calcBaseChanceOfUnsolicitedReply(message) {
         const currentTimestamp = Date.now();
         const timeSinceLastSend = this.lastReplyTimes.timeSinceLastMention(message.channel.id, currentTimestamp);
-
+    
         // Check if the bot's name is mentioned in a new channel
         if (timeSinceLastSend === Infinity && this.isDirectlyMentioned(message.client.user.id, message)) {
             console.debug('[calcBaseChance] Bot name mentioned in new channel, setting base chance to 1 (100%)');
             return 1; // 100% chance when bot name is mentioned in a new channel
         }
-
+    
         // For existing channels, use the time-based chance calculation
         if (timeSinceLastSend !== Infinity) {
             for (let [duration, chance] of this.timeVsResponseChance) {
@@ -69,7 +69,7 @@ class DecideToRespond {
     
         return 0; // Default to 0% if none of the conditions apply
     }
-
+    
     calculateDynamicFactor(message) {
         return this.getRecentMessagesCount(message.channel.id) > 10 ? 0.5 : 1;
     }
@@ -125,15 +125,12 @@ class DecideToRespond {
                 baseChance += this.mentionBonus;
             }
     
-            // If the message author is a bot, reduce the chance of replying. This prevents endless loops between bots.
-            // The reduction is done by subtracting the bot response penalty from the base chance.
-            // However, the chance cannot go below zero, hence the use of Math.max().
+            // If the message author is a bot, reduce the chance of replying.
             if (message.author.bot) {
                 baseChance = Math.max(0, baseChance - this.botResponsePenalty);
             }
     
             // Make a random decision to reply or not, based on the calculated chance
-            // Math.random() generates a number between 0 and 1. If it's less than the chance, the decision is true (reply).
             const decision = Math.random() < baseChance;
     
             // Log the final decision and the chance for debugging and monitoring purposes
@@ -150,7 +147,7 @@ class DecideToRespond {
             return false;
         }
     }
-        
+            
     logMention(channelId, sendTimestamp) {
         try {
             this.lastReplyTimes.times[channelId] = sendTimestamp;
