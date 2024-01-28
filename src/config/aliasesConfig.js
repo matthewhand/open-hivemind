@@ -8,8 +8,10 @@ const aliases = {
     // Flowise handler
     'gpt4': 'flowise:gpt4',
     'docs': 'flowise:docs',
+    'qdrant': 'flowise:qdrant',
+    'pinecone': 'flowise:pinecone',
     'mtg': 'flowise:qdrant_pplx',
-    'mtg': 'flowise:qdrant_pplx',
+    'magic': 'flowise:qdrant_oai',
 
     // Quivr handler
     'deep': 'quivr:philosophic',
