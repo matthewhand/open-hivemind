@@ -21,6 +21,8 @@ async function handleFlowiseRequest(message, args) {
         return;
     }
 
+    console.log(`[handleFlowiseRequest] Raw args: ${args}`);
+
     const [action, ...queryParts] = args.trim().split(' ');
     console.log(`[handleFlowiseRequest] Parsed action: ${action}`);
     console.log(`[handleFlowiseRequest] Parsed query parts: ${queryParts.join(' ')}`);
