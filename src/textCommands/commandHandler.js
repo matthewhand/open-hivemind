@@ -104,6 +104,8 @@ async function commandHandler(message, commandContent) {
             let action = matches[2];
             let args = matches[3];
 
+            console.log(`[commandHandler] Command: ${command}, Action: ${action}, Args: ${args}`);
+
             // Check if command is an alias
             if (aliases[command]) {
                 let aliasParts = aliases[command].split(':');
