@@ -4,19 +4,23 @@
   "description": "A Discord bot to communicate with LLMs and execute Python code",
   "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
+    "test": "jest"
   },
   "dependencies": {
     "@discordjs/rest": "^2.2.0",
     "axios": "^1.6.5",
     "discord-api-types": "^0.37.67",
     "discord.js": "latest",
-    "node-fetch": "^2.6.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "node-fetch": "^2.6.1",
     "winston": "^3.11.0"
   },
+  "jest": {
+    "testEnvironment": "node"
+  },
   "devDependencies": {
+    "jest": "^29.7.0",
     "wrangler": "^3.23.0"
   }
 }
