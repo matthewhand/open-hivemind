@@ -111,9 +111,8 @@ async function commandHandler(message, commandContent) {
                 let aliasParts = aliases[command].split(':');
                 command = aliasParts[0];
                 action = aliasParts[1]; // Override action if alias defines one
+                console.log(`[commandHandler] Alias Command: ${command}, Action: ${action}, Args: ${args}`);
             }
-
-            console.log(`Command identified: ${command}, Action: ${action}`);
 
             if (commandHandlers[command]) {
                 console.log(`Executing handler for command: ${command}`);
