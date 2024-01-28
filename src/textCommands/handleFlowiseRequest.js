@@ -1,38 +1,21 @@
-const axios = require('axios');
+const getRandomErrorMessage = require('./errorMessages');
 
-const errorMessages = [
-    "Oops, my circuits got scrambled! 🤖",
-    "Whoa, I slipped on a digital banana peel! 🍌",
-    "Ah, I just had a byte burp! 🤖💨",
-    "Looks like I bungled the bits! 💾",
-    "Yikes, my code got a hiccup. 🤖🤧",
-];
+async function handleFlowiseRequest(message, action = undefined, args = undefined) {
+    console.log(`[handleFlowiseRequest] Action: ${action}, Args: ${args}`);
 
-function getRandomErrorMessage() {
-    const randomIndex = Math.floor(Math.random() * errorMessages.length);
-    return errorMessages[randomIndex];
-}
-
-async function handleFlowiseRequest(message, args) {
-    // If args is undefined or empty, list available actions
-    if (!args || args.trim() === '') {
+    // If action is undefined or empty, list available actions
+    if (!action || action.trim() === '') {
         const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
         message.reply(`Available Flowise actions: ${flowiseActions.join(', ')}`);
         return;
     }
 
-    console.log(`[handleFlowiseRequest] Raw args: ${args}`);
-
-    const [action, ...queryParts] = args.trim().split(' ');
-    console.log(`[handleFlowiseRequest] Parsed action: ${action}`);
-    console.log(`[handleFlowiseRequest] Parsed query parts: ${queryParts.join(' ')}`);
-
-    const query = queryParts.join(' ');
-
-    if (!query) {
+    // If args is undefined or empty after the action, request a query
+    if (!args || args.trim() === '') {
         message.reply(`Please provide a query for Flowise ${action}.`);
         return;
     }
+
 
     const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
     if (!flowiseActions.includes(action)) {
@@ -44,7 +27,7 @@ async function handleFlowiseRequest(message, args) {
     const flowiseUrl = `${process.env.FLOWISE_API_BASE_URL}${flowiseEndpointId}`;
 
     try {
-        const flowiseResponse = await axios.post(flowiseUrl, { question: query });
+        const flowiseResponse = await axios.post(flowiseUrl, { question: args });
 
         if (flowiseResponse.status === 200) {
             const flowiseText = flowiseResponse.data.text;
