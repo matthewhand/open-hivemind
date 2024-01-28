@@ -7,6 +7,7 @@ const aliases = {
 
     // Flowise handler
     'gpt4': 'flowise:gpt4',
+    'docs': 'flowise:docs',
     'mtg': 'flowise:qdrant_pplx',
     'mtg': 'flowise:qdrant_pplx',
 
