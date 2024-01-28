@@ -1,4 +1,4 @@
-const getRandomErrorMessage = require('./errorMessages');
+const { getRandomErrorMessage } = require('./errorMessages');
 
 async function handleFlowiseRequest(message, action = undefined, args = undefined) {
     console.log(`[handleFlowiseRequest] Action: ${action}, Args: ${args}`);
