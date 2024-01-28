@@ -6,6 +6,7 @@ const { handlePythonRequest } = require('./handlePythonRequest');
 const { handleHttpCommand } = require('./handleHttpCommand');
 const { handleReportCommand } = require('./handleReportCommand');
 const { handleMuteCommand } = require('./handleMuteCommand');
+const { aliases } = require('../config/aliasesConfig');
 
 const commandHandlers = {
     'image': {
@@ -52,28 +53,6 @@ const commandHandlers = {
         handler: handleHelpCommand, // Defined below
         description: 'Displays this help message. Usage: !help'
     }
-};
-
-const aliases = {
-    // HTTP handler
-    'video': 'http:modal',
-
-    // PPLX handler
-    'web': 'perplexity',
-
-    // Flowise handler
-    'gpt4': 'flowise:gpt4',
-    'mtg': 'flowise:qdrant_pplx',
-    'mtg': 'flowise:qdrant_pplx',
-
-    // Quivr handler
-    'deep': 'quivr:philosophic',
-    'geb': 'quivr:philosophic geb',
-    'book': 'quivr:literature',
-    'shakespear': 'quivr:literature shakespear',
-    'suntzu': 'quivr:literature suntzu',
-
-    // Add more aliases here as needed
 };
 
 function handleAliasCommand(message) {
