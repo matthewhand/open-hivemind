@@ -6,8 +6,10 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
     let chatCategory, query;
 
     if (actionFromAlias) {
-        [chatCategory, query] = actionFromAlias.split(':'); // Splitting alias on ':' to separate category and query
-        if (query) query = query.trim();
+        // Assume the format is "!quivr:category query"
+        const firstColonIndex = actionFromAlias.indexOf(':');
+        chatCategory = actionFromAlias.substring(0, firstColonIndex);
+        query = actionFromAlias.substring(firstColonIndex + 1);
     } else {
         if (!args || args.trim() === '') {
             const quivrChats = process.env.QUIVR_CHATS.split(',');
