@@ -2,6 +2,7 @@
   "deciderConfig": {
     "interrobangBonus": 0.2,
     "mentionBonus": 0.4,
+    "familiarBonus": 0.6,
     "botResponsePenalty": 0.8,
     "timeVsResponseChance": [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
     "llmWakewords": ["!help"]

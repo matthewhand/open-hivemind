@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const configFilePath = path.join(__dirname, 'config.json');
+const configFilePath = path.join(__dirname, '../config.json');
 let config = {};
 
 function loadConfig() {
@@ -10,7 +10,8 @@ function loadConfig() {
     } else {
         config = {
             channelHandlers: {},
-            enabledModules: {} // Default empty if config file doesn't exist
+            enabledModules: {}, // Default empty if config file doesn't exist
+            llmBackendConfig: {} // Adding LLM backend configuration
         };
     }
 }

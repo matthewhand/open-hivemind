@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { config, saveConfig } = require('../utils/configUtils'); // Adjust path as necessary
+const { config, saveConfig } = require('../utils/configUtils'); 
 
 module.exports = {
     data: new SlashCommandBuilder()
