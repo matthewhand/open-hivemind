@@ -6,15 +6,17 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
     let chatCategory, query;
 
     if (actionFromAlias) {
-        const parts = actionFromAlias.split(':');
-        if (parts.length > 1) {
-            chatCategory = parts[0].trim();
-            query = parts.slice(1).join(':').trim(); // Join back the remaining parts in case there are multiple colons
+        // Split the actionFromAlias string at the first colon
+        const colonIndex = actionFromAlias.indexOf(':');
+        if (colonIndex !== -1) {
+            chatCategory = actionFromAlias.substring(0, colonIndex).trim();
+            query = actionFromAlias.substring(colonIndex + 1).trim();
         } else {
             chatCategory = actionFromAlias.trim();
             query = '';
         }
     } else {
+        // Fallback for args-based parsing
         if (!args || args.trim() === '') {
             const quivrChats = process.env.QUIVR_CHATS.split(',');
             message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
