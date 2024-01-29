@@ -7,6 +7,7 @@ let config = {};
 function loadConfig() {
     if (fs.existsSync(configFilePath)) {
         config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
+        console.log("Configuration loaded:", config); // Add this line for debugging
     } else {
         config = {
             channelHandlers: {},
