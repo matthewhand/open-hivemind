@@ -3,10 +3,11 @@ const logger = require('../utils/logger');
 const { getRandomErrorMessage } = require('./errorMessages');
 
 async function handleQuivrRequest(message, args, actionFromAlias = '') {
-    let chatCategory, queryParts;
+    let chatCategory, query;
 
     if (actionFromAlias) {
-        [chatCategory, ...queryParts] = actionFromAlias.split(' ');
+        [chatCategory, query] = actionFromAlias.split(':'); // Splitting alias on ':' to separate category and query
+        if (query) query = query.trim();
     } else {
         if (!args || args.trim() === '') {
             const quivrChats = process.env.QUIVR_CHATS.split(',');
@@ -14,8 +15,8 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
             return;
         }
         [chatCategory, ...queryParts] = args.split(' ');
+        query = queryParts.join(' ');
     }
-    const query = queryParts.join(' ');
 
     console.log(`[handleQuivrRequest] Chat Category: ${chatCategory}, Query: ${query}`);
 
