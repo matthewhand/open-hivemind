@@ -6,11 +6,10 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
     let chatCategory, query;
 
     if (actionFromAlias) {
-        // Split the alias using the first colon as the delimiter
-        const colonIndex = actionFromAlias.indexOf(':');
-        if (colonIndex !== -1) {
-            chatCategory = actionFromAlias.substring(0, colonIndex);
-            query = actionFromAlias.substring(colonIndex + 1).trim();
+        const parts = actionFromAlias.split(':');
+        if (parts.length > 1) {
+            chatCategory = parts[0].trim();
+            query = parts.slice(1).join(':').trim(); // Join back the remaining parts in case there are multiple colons
         } else {
             chatCategory = actionFromAlias.trim();
             query = '';
