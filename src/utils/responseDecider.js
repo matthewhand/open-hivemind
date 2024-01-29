@@ -1,4 +1,5 @@
-const logger = require('./logger'); // Ensure logger is imported
+const { config } = require('./configUtils'); // Import the configuration utilities
+const logger = require('./logger');
 
 class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
@@ -30,14 +31,13 @@ class LastReplyTimes {
 }
 
 class DecideToRespond {
-    constructor(config, discordSettings) {
-        // Initialization with config and discordSettings
-        this.interrobangBonus = config.interrobangBonus;
-        this.mentionBonus = config.mentionBonus;
-        this.botResponsePenalty = config.botResponsePenalty;
-        this.timeVsResponseChance = config.timeVsResponseChance;
-        this.llmWakewords = config.llmWakewords;
-        this.discordSettings = discordSettings;
+    constructor() {
+        this.interrobangBonus = config.deciderConfig.interrobangBonus;
+        this.mentionBonus = config.deciderConfig.mentionBonus;
+        this.botResponsePenalty = config.deciderConfig.botResponsePenalty;
+        this.timeVsResponseChance = config.deciderConfig.timeVsResponseChance;
+        this.llmWakewords = config.deciderConfig.llmWakewords;
+        this.discordSettings = config.discordSettings;
         this.lastReplyTimes = new LastReplyTimes(
             Math.max(...this.timeVsResponseChance.map(([duration]) => duration)),
             this.discordSettings.unsolicitedChannelCap
@@ -79,16 +79,24 @@ class DecideToRespond {
     }
 
     logMessage(message) {
+        // Ensure message and its properties are defined
+        if (!message || !message.channel || !message.channel.id) return;
         const channelId = message.channel.id;
         this.recentMessagesCount[channelId] = (this.recentMessagesCount[channelId] || 0) + 1;
         setTimeout(() => {
             this.recentMessagesCount[channelId] = Math.max(0, this.recentMessagesCount[channelId] - 1);
         }, 60000);
-    }
+    }    
 
     provideUnsolicitedReplyInChannel(ourUserId, message) {
+        // Ensure message and its channel are defined
+        if (!message || !message.channel || !message.channel.id) {
+            console.error("Message or channel is undefined in provideUnsolicitedReplyInChannel");
+            return false;
+        }
+
         const channelReplyCount = this.lastReplyTimes.getReplyCount(message.channel.id);
-    
+
         // Check if the reply count for the channel has reached the cap
         if (channelReplyCount >= this.discordSettings.unsolicitedChannelCap) {
             return false; // Do not reply if cap is reached
@@ -111,15 +119,23 @@ class DecideToRespond {
     
         return decision;
     }    
-
+    // Ensure to include the updated isDirectlyMentioned method
     isDirectlyMentioned(ourUserId, message) {
-        // Check if the message mentions our bot user ID
+        // Ensure message and its mentions are defined
+        if (!message || !message.mentions) {
+            console.error("Message or mentions are undefined in isDirectlyMentioned");
+            return false;
+        }
         return message.mentions.has(ourUserId) ||
                this.llmWakewords.some(wakeword => message.content.includes(wakeword.trim()));
     }
 
     shouldReplyToMessage(ourUserId, message) {
         try {
+            if (!message || !message.client || !message.client.user) {
+                throw new Error('Invalid message object');
+            }
+
             // Log the message to keep track of recent messages for each channel
             this.logMessage(message);
     

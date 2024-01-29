@@ -1,0 +1,19 @@
+{
+  "deciderConfig": {
+    "interrobangBonus": 0.2,
+    "mentionBonus": 0.4,
+    "botResponsePenalty": 0.8,
+    "timeVsResponseChance": [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
+    "llmWakewords": ["!help"]
+  },
+  "discordSettings": {
+    "unsolicitedChannelCap": 2
+  },
+  "enabledModules": {
+    "flowise": true,
+    "quivr": true,
+    "http": true,
+    "python": true,
+    "help": true
+  }
+}
