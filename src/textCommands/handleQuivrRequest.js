@@ -1,36 +1,37 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
-const getRandomErrorMessage = require('./errorMessages');
+const { getRandomErrorMessage } = require('./errorMessages');
 
 async function handleQuivrRequest(message, args, actionFromAlias = '') {
-    logger.debug(`Received Quivr request with args: ${args} and actionFromAlias: ${actionFromAlias}`);
-
-    let chatCategory, query;
+    let chatCategory, queryParts;
 
     if (actionFromAlias) {
-        // Split the alias into the category and the rest of the query
         [chatCategory, ...queryParts] = actionFromAlias.split(' ');
-        query = queryParts.join(' ');
     } else {
         if (!args || args.trim() === '') {
             const quivrChats = process.env.QUIVR_CHATS.split(',');
             message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
             return;
         }
-
-        // Split the args into the category and the rest of the query
         [chatCategory, ...queryParts] = args.split(' ');
-        query = queryParts.join(' ');
     }
+    const query = queryParts.join(' ');
 
-    if (!query) {
-        message.reply(`Please provide a query for Quivr chat ${chatCategory}.`);
+    console.log(`[handleQuivrRequest] Chat Category: ${chatCategory}, Query: ${query}`);
+
+    if (!chatCategory || chatCategory.trim() === '') {
+        message.reply('Please specify a Quivr chat category.');
         return;
     }
 
     const quivrChats = process.env.QUIVR_CHATS.split(',');
     if (!quivrChats.includes(chatCategory)) {
         message.reply(`Unknown or disabled Quivr chat: ${chatCategory}`);
+        return;
+    }
+
+    if (!query) {
+        message.reply(`Please provide a query for Quivr chat ${chatCategory}.`);
         return;
     }
 
