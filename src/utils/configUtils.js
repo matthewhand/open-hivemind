@@ -7,12 +7,14 @@ let config = {};
 function loadConfig() {
     if (fs.existsSync(configFilePath)) {
         config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
-        console.log("Configuration loaded:", config); // Add this line for debugging
+        console.log("Configuration loaded:", config); // Debugging line
     } else {
+        console.error("Config file not found at", configFilePath);
         config = {
-            channelHandlers: {},
-            enabledModules: {}, // Default empty if config file doesn't exist
-            llmBackendConfig: {} // Adding LLM backend configuration
+            // Default configuration structure if config file doesn't exist
+            deciderConfig: {},
+            discordSettings: {},
+            enabledModules: {}
         };
     }
 }
