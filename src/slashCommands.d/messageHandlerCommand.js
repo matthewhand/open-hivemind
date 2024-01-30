@@ -1,4 +1,4 @@
-const { config, saveConfig } = require('./configUtils'); // Assuming these functions exist
+const { config, saveConfig } = require('../utils/configUtils');
 
 async function messageHandlerCommand(interaction) {
     // Check if the interaction has the 'handler' option
