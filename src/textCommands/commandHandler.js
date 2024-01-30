@@ -6,9 +6,14 @@ const { handlePythonRequest } = require('./handlePythonRequest');
 const { handleHttpCommand } = require('./handleHttpCommand');
 const { handleReportCommand } = require('./handleReportCommand');
 const { handleMuteCommand } = require('./handleMuteCommand');
+const { handleOaiRequest } = require('./oaiCommandHandler');
 const { aliases } = require('../config/aliasesConfig');
 
 const commandHandlers = {
+    'oai': {
+        handler: handleOaiRequest,
+        description: 'Interact with OpenAI models. Usage: !oai:[model] [query]'
+    },
     'image': {
         handler: handleImageAnalysis,
         description: 'Analyzes an image. Usage: !image [imageUrl]'
@@ -23,7 +28,7 @@ const commandHandlers = {
     },
     'quivr': {
         handler: handleQuivrRequest,
-        description: 'Sends a query to the Quivr API. Usage: !quivr [action] [query]'
+        description: 'Sends a query to the Quivr API. Usage: !quivr:[action] [query]'
     },
     'python': {
         handler: handlePythonRequest,
@@ -35,7 +40,7 @@ const commandHandlers = {
     },
     'flowise': {
         handler: handleFlowiseRequest,
-        description: 'Sends a query to the Flowise API or lists available actions if on argument is provided. Usage: !flowise [action] [query]'
+        description: 'Sends a query to the Flowise API or lists available actions if on argument is provided. Usage: !flowise:[action] [query]'
     },
     'http': {
         handler: handleHttpCommand,

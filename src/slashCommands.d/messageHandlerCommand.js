@@ -1,23 +1,28 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
-const { config, saveConfig } = require('../utils/configUtils'); 
+const { config, saveConfig } = require('./configUtils'); // Assuming these functions exist
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('messagehandler')
-        .setDescription('Specifies the handler for processing messages.')
-        .addStringOption(option => 
-            option.setName('handler')
-                .setDescription('The handler to process messages')
-                .setRequired(true)),
-
-    async execute(interaction) {
-        const handlerName = interaction.options.getString('handler');
-
-        // Update channel handler mapping
-        config.channelHandlers = config.channelHandlers || {};
-        config.channelHandlers[interaction.channelId] = handlerName;
-        saveConfig(); // Save the updated configuration
-
-        await interaction.reply(`Message handler for this channel updated to ${handlerName}`);
+async function messageHandlerCommand(interaction) {
+    // Check if the interaction has the 'handler' option
+    if (!interaction.options.getString('handler')) {
+        // No handler provided, show current setting
+        const currentSetting = getCurrentHandlerSetting(interaction.guild.id);
+        await interaction.reply(`Current message handler setting: ${currentSetting}`);
+    } else {
+        // Handler argument provided, update the setting
+        const newSetting = interaction.options.getString('handler');
+        updateHandlerSetting(interaction.guild.id, newSetting);
+        await interaction.reply(`Message handler updated to: ${newSetting}`);
     }
-};
+}
+
+function getCurrentHandlerSetting(guildId) {
+    // Retrieve the current setting for the server
+    return config.guildHandlers[guildId] || 'Default Handler (e.g., !mixtral)';
+}
+
+function updateHandlerSetting(guildId, newSetting) {
+    // Update the setting for the server
+    config.guildHandlers[guildId] = newSetting;
+    saveConfig(); // Save the updated config
+}
+
+module.exports = { messageHandlerCommand };

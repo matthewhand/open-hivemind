@@ -16,7 +16,6 @@ const discordSettings = {
     unsolicitedChannelCap: 5,
     ignore_dms: true,
 };
-// const NOTIFICATION_CHANNEL_ID = process.env.CHANNEL_ID;
 const restartDelayFile = './restartDelay.json';
 
 const client = new Client({
@@ -51,20 +50,20 @@ async function initialize() {
     client.on('messageCreate', async (message) => {
         try {
             console.log(`[Message Received] Content: ${message.content}, Author: ${message.author.username}`);
-    
+
             if (message.author.id === client.user.id) {
                 console.log('[Message Handling] Message from the bot itself. Ignored.');
                 return;
             }
-    
+
             const botMention = `<@${client.user.id}>`;
             const botMentionWithNick = `<@!${client.user.id}>`;
             let commandContent = message.content;
-    
+
             if ((message.content.includes(botMention) || message.content.includes(botMentionWithNick)) && !message.author.bot) {
                 console.log('[Message Handling] Bot directly mentioned by a user.');
-                commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim();
-    
+                commandContent = commandContent.replace(new RegExp(`${botMention}|${botMentionWithNick}`, 'g'), '').trim(); 
+
                 if (commandContent.startsWith('!')) {
                     console.log(`[Command Handling] Command detected: ${commandContent}`);
                     await commandHandler(message, commandContent);
@@ -74,14 +73,14 @@ async function initialize() {
                 }
                 return;
             }
-    
+
             await messageHandler(message, discordSettings);
             console.log('[Message Handling] Passed to messageHandler without direct mention.');
         } catch (error) {
             console.error(`[Error] Message Handling: ${error}`);
         }
     });
-            
+
 }
 
 debugEnvVars();
