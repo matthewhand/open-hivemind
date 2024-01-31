@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { aliases } = require('../textCommands/commandHandler');
+const { commandHandler } = require('./textCommands/commandHandler'); 
 const { splitMessage, getRandomDelay, startTypingIndicator } = require('../utils/common');
 const { DecideToRespond } = require('./responseDecider');
 const getRandomErrorMessage = require('./errorMessages');
@@ -108,10 +109,15 @@ function buildFollowUpRequestBody(historyMessages) {
 }
 
 async function messageHandler(message) {
-    if (message.author.bot && !constants.BOT_TO_BOT_MODE) return;
-    if (responseDecider.shouldReplyToMessage(message.client.user.id, message)) {
-        await sendLlmRequest(message);
-    }
-}
+    if (message.author.bot) return;
 
-module.exports = { messageHandler };
+    // Get the handler setting for the current guild
+    const guildId = message.guild.id;
+    const handlerAlias = config.guildHandlers[guildId] || 'oai'; // defaults to OAI compatible
+
+    // Prepend the handler alias to the message content
+    const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
+
+    // Pass the modified message content to your general command handler
+    await commandHandler(message, modifiedMessageContent);
+}
