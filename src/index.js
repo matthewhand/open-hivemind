@@ -6,7 +6,7 @@ const { commandHandler } = require('./handlers/commandHandler');
 const { debugEnvVars } = require('./config/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./handlers/webhookHandler');
-const { messageHandler } = require('./utils/messageHandler');
+const { messageHandler } = require('./handlers/messageHandler');
 // const { handleError } = require('./utils/handleError');
 // const { DecideToRespond } = require('./handlers/responseHandler');
 
