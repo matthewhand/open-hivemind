@@ -1,14 +1,14 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const logger = require('./utils/logger');
-const { registerCommands } = require('./utils/registerSlashCommands');
+const { registerCommands } = require('./handlers/slashCommandHandler');
 const { commandHandler } = require('./textCommands/commandHandler');
 const { handleError } = require('./utils/handleError');
 const { debugEnvVars } = require('./utils/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./webhook');
 const { messageHandler } = require('./utils/messageHandler');
-const { DecideToRespond } = require('./utils/responseDecider');
+const { DecideToRespond } = require('./handlers/responseHandler');
 
 // Constants and initialization
 const discordSettings = {
