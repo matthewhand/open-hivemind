@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { aliases } = require('../textCommands/commandHandler');
-const { commandHandler } = require('./textCommands/commandHandler'); 
+const { commandHandler } = require('../textCommands/commandHandler'); 
 const { splitMessage, getRandomDelay, startTypingIndicator } = require('../utils/common');
 const { DecideToRespond } = require('./responseDecider');
 const getRandomErrorMessage = require('./errorMessages');
