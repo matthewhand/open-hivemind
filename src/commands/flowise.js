@@ -1,4 +1,4 @@
-const { getRandomErrorMessage } = require('./errorMessages');
+const { getRandomErrorMessage } = require('../config/errorMessages');
 const axios = require('axios');
 const logger = require('../utils/logger');
 

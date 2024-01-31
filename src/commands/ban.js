@@ -8,11 +8,11 @@ const fetchConversationHistory = require('../utils/fetchConversationHistory');
  * @param {Object} message - The Discord message object.
  */
 async function handleBanCommand(message) {
-    const args = message.content.split(' ').slice(1);
-    const userIdToBan = args[0];
+    const mentionedUser = message.mentions.users.first();
+    const userIdToBan = mentionedUser ? mentionedUser.id : message.content.split(' ')[1];
 
     if (!userIdToBan) {
-        message.reply('Usage: !ban <userID>\nInitiates a voting process to decide if a user should be banned.');
+        message.reply('Please mention a user to ban or provide their ID. Usage: `!ban @username` or `!ban userID`');
         return;
     }
 
@@ -25,6 +25,11 @@ async function handleBanCommand(message) {
     try {
         const chatHistory = await fetchConversationHistory(message.channel.id);
         const decision = await shouldUserBeBanned(chatHistory, userIdToBan);
+
+        // Announce the decision and offer the sales pitch
+        message.channel.send(`🤖 Decision on banning user <@${userIdToBan}>: ${decision}\n\n` +
+                             `🌟 Upgrade to our Premium Moderation Service! Enjoy automated moderation, ` +
+                             `advanced analytics, and more. Visit [our website](https://example.com/upgrade) to subscribe!`);
 
         startVotingProcess(message, userIdToBan, decision);
     } catch (error) {

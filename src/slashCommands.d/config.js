@@ -8,7 +8,7 @@ const nonOverridableEnvVars = new Set(['CLIENT_ID', 'DISCORD_TOKEN', 'GUILD_ID']
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('configupdate')
+        .setName('config')
         .setDescription('Updates the bot configuration.')
         .addStringOption(option =>
             option.setName('setting')
@@ -23,7 +23,6 @@ module.exports = {
         const userId = interaction.user.id;
         const userRoles = interaction.member.roles.cache.map(role => role.id);
 
-        // Check if the user is allowed to execute this command
         if (!isUserAllowed(userId, allowedUsers) && !isRoleAllowed(userRoles, allowedRoles)) {
             await interaction.reply({ content: 'You do not have permission to execute this command.', ephemeral: true });
             return;
@@ -42,8 +41,6 @@ module.exports = {
             return;
         }
 
-        // Update process.env[setting] = value; if you implement dynamic config updates
         await interaction.reply({ content: `Configuration updated: ${setting} is now ${value} (Note: Changes might require a bot restart to take effect)`, ephemeral: true });
     }
 };
-

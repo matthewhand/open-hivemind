@@ -1,4 +1,4 @@
-const { config } = require('./configUtils'); // Import the configuration utilities
+const { config } = require('../config/configUtils'); // Import the configuration utilities
 const logger = require('./logger');
 
 class LastReplyTimes {

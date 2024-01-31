@@ -4,6 +4,9 @@ WORKDIR /usr/src/python-env
 RUN apt-get update && apt-get install -y gcc python3-dev
 RUN pip install --no-cache-dir psutil requests bs4 opencv-python numpy nltk
 
+# Install Ollama
+RUN pip install ollama
+
 # ---- Build Node Environment ----
 FROM node:18-buster
 WORKDIR /usr/src/app

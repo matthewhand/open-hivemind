@@ -1,12 +1,12 @@
-const { handleImageAnalysis } = require('./handleImageAnalysis');
-const { handlePerplexityRequest } = require('./handlePerplexityRequest');
-const { handleQuivrRequest } = require('./handleQuivrRequest');
-const { handleFlowiseRequest } = require('./handleFlowiseRequest');
-const { handlePythonRequest } = require('./handlePythonRequest');
-const { handleHttpCommand } = require('./handleHttpCommand');
-const { handleReportCommand } = require('./handleReportCommand');
-const { handleMuteCommand } = require('./handleMuteCommand');
-const { handleOaiRequest } = require('./oaiCommandHandler');
+const { handleImageAnalysis } = require('../commands/image');
+const { handlePerplexityRequest } = require('../commands/perplexity');
+const { handleQuivrRequest } = require('../commands/quivr');
+const { handleFlowiseRequest } = require('../commands/flowise');
+const { handlePythonRequest } = require('../commands/python');
+const { handleHttpCommand } = require('../commands/http');
+const { handleReportCommand } = require('../commands/report');
+const { handleMuteCommand } = require('../commands/mute');
+const { handleOaiRequest } = require('../commands/oai');
 const { aliases } = require('../config/aliasesConfig');
 
 const commandHandlers = {

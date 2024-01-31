@@ -3,7 +3,7 @@ jest.mock('axios', () => ({ post: jest.fn() }));
 
 const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
 const axios = require('axios');
-jest.mock('../../src/utils/configUtils', () => ({
+jest.mock('../../src/config/configUtils', () => ({
     config: {
         deciderConfig: {
             interrobangBonus: 0.2,
@@ -25,7 +25,7 @@ jest.mock('../../src/utils/configUtils', () => ({
         }
     }
 }));
-const { messageHandler } = require('../../src/utils/messageHandler');
+const { messageHandler } = require('../../src/handlers/messageHandler');
 
 describe('messageHandler Tests', () => {
     beforeEach(() => {

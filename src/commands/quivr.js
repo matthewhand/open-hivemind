@@ -1,6 +1,6 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
-const { getRandomErrorMessage } = require('./errorMessages');
+const { getRandomErrorMessage } = require('../config/errorMessages');
 
 async function handleQuivrRequest(message, args, actionFromAlias = '') {
     let chatCategory, query;

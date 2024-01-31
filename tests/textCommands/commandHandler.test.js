@@ -3,15 +3,15 @@ const mockHandleFlowiseRequest = jest.fn();
 const mockHandleImageAnalysis = jest.fn();
 // Add more mocks for other handlers as needed
 
-jest.mock('../../src/textCommands/handleFlowiseRequest', () => ({
+jest.mock('../../src/commands/flowise', () => ({
   handleFlowiseRequest: mockHandleFlowiseRequest,
 }));
 
-jest.mock('../../src/textCommands/handleImageAnalysis', () => ({
+jest.mock('../../src/commands/image', () => ({
   handleImageAnalysis: mockHandleImageAnalysis,
 }));
 
-const { commandHandler } = require('../../src/textCommands/commandHandler');
+const { commandHandler } = require('../../src/handlers/commandHandler');
 
 describe('commandHandler Tests', () => {
   beforeEach(() => {

@@ -1,12 +1,12 @@
 const axios = require('axios');
-const { aliases } = require('../textCommands/commandHandler');
-const { commandHandler } = require('../textCommands/commandHandler'); 
+const { aliases } = require('./commandHandler');
+const { commandHandler } = require('./commandHandler'); 
 const { splitMessage, getRandomDelay, startTypingIndicator } = require('../utils/common');
-const { DecideToRespond } = require('./responseDecider');
-const getRandomErrorMessage = require('./errorMessages');
-const logger = require('./logger');
+const { DecideToRespond } = require('../utils/responseDecider');
+const getRandomErrorMessage = require('../utils/errorMessages');
+const logger = require('../utils/logger');
 const constants = require('../config/constants');
-const fetchConversationHistory = require('./fetchConversationHistory');
+const fetchConversationHistory = require('../utils/fetchConversationHistory');
 
 const responseDecider = new DecideToRespond(constants.responseDeciderConfig);
 

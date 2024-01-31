@@ -4,6 +4,6 @@ module.exports = {
     handleQuivrRequest: require('./handleQuivrRequest'),
     handleFlowiseRequest: require('./handleFlowiseRequest'),
     handlePythonRequest: require('./handlePythonRequest'),
-    commandHandler: require('./commandHandler')
+    commandHandler: require('../textCommands/commandHandler')
 };
 
