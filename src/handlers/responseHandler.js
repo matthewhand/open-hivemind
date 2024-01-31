@@ -1,5 +1,5 @@
 const { config } = require('../config/configUtils'); // Import the configuration utilities
-const logger = require('./logger');
+const logger = require('../utils/logger');
 
 class LastReplyTimes {
     constructor(cacheTimeout, unsolicitedChannelCap) {
