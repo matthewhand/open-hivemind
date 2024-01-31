@@ -2,13 +2,13 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
-const { commandHandler } = require('./textCommands/commandHandler');
-const { handleError } = require('./utils/handleError');
-const { debugEnvVars } = require('./utils/debugEnvVars');
+const { commandHandler } = require('./handlers/commandHandler');
+const { debugEnvVars } = require('./config/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
-const { startWebhookServer } = require('./webhook');
+const { startWebhookServer } = require('./handlers/webhookHandler');
 const { messageHandler } = require('./utils/messageHandler');
-const { DecideToRespond } = require('./handlers/responseHandler');
+// const { handleError } = require('./utils/handleError');
+// const { DecideToRespond } = require('./handlers/responseHandler');
 
 // Constants and initialization
 const discordSettings = {
@@ -31,16 +31,16 @@ client.once('ready', () => {
 });
 
 // Read and write functions for restart delay
-function readRestartDelay() {
-    if (fs.existsSync(restartDelayFile)) {
-        return JSON.parse(fs.readFileSync(restartDelayFile, 'utf8')).restartDelay;
-    }
-    return parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000); // Default 5 minutes
-}
+// function readRestartDelay() {
+//     if (fs.existsSync(restartDelayFile)) {
+//         return JSON.parse(fs.readFileSync(restartDelayFile, 'utf8')).restartDelay;
+//     }
+//     return parseInt(process.env.INITIAL_RESTART_DELAY || 5 * 60 * 1000); // Default 5 minutes
+// }
 
-function writeRestartDelay(delay) {
-    fs.writeFileSync(restartDelayFile, JSON.stringify({ restartDelay: delay }), 'utf8');
-}
+// function writeRestartDelay(delay) {
+//     fs.writeFileSync(restartDelayFile, JSON.stringify({ restartDelay: delay }), 'utf8');
+// }
 
 async function initialize() {
     initializeFetch();
