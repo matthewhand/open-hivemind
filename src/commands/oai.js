@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { splitMessage, startTypingIndicator } = require('../utils/common');
-const getRandomErrorMessage = require('../utils/errorMessages');
+const getRandomErrorMessage = require('../config/errorMessages');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 const fetchConversationHistory = require('../utils/fetchConversationHistory');
