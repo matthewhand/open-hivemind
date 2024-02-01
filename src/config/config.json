@@ -11,10 +11,15 @@
     "unsolicitedChannelCap": 2
   },
   "enabledModules": {
+    "oai": true,
     "flowise": true,
     "quivr": true,
+    "memgpt": true,
     "http": true,
     "python": true,
+    "replicate": true,
+    "ollama": true,
+    "moderation": true,
     "help": true
   }
 }

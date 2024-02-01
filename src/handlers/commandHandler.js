@@ -100,10 +100,9 @@ function handleHelpCommand(message) {
     message.reply(helpMessage);
 }
 
-
 async function commandHandler(message, commandContent) {
     try {
-        console.log(`Received in commandHandler: ${commandContent}`);
+        console.debug(`Received in commandHandler: ${commandContent}`);
 
         // Regex to match commands with or without action
         const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
@@ -114,29 +113,31 @@ async function commandHandler(message, commandContent) {
             let action = matches[2];
             let args = matches[3];
 
-            console.log(`[commandHandler] Command: ${command}, Action: ${action}, Args: ${args}`);
+            console.debug(`[commandHandler] Command: ${command}, Action: ${action}, Args: ${args}`);
 
             // Check if command is an alias
             if (aliases[command]) {
-                let [aliasedCommand, ...actionParts] = aliases[command].split(':');
-                command = aliasedCommand;
-                let aliasedAction = actionParts.join(':').split(' ')[0]; // Extracts the first word as action
-                let additionalArg = actionParts.join(':').substring(aliasedAction.length).trim(); // Extracts the rest as additional argument
-                action = aliasedAction;
-                args = additionalArg + ' ' + args; // Prepend the additional argument
-                console.log(`[commandHandler] Alias Command: ${command}, Action: ${action}, Args: ${args}`);
+                let aliasParts = aliases[command].split(':');
+                command = aliasParts[0];
+                let additionalArgs = aliasParts.slice(1).join(':');
+
+                if (additionalArgs) {
+                    additionalArgs += ' '; // Add a space before the user's args if there are additional args
+                }
+                args = additionalArgs + args;
+                console.debug(`[commandHandler] Alias Command: ${command}, Action: ${action}, Args: ${args}`);
             }
-            
+
             if (commandHandlers[command]) {
-                console.log(`Executing handler for command: ${command}`);
+                console.debug(`Executing handler for command: ${command}`);
                 await commandHandlers[command].handler(message, action, args);
-                console.log(`Executed handler for command: ${command}`);
+                console.debug(`Executed handler for command: ${command}`);
             } else {
-                console.log(`Unknown command: ${command}`);
+                console.debug(`Unknown command: ${command}`);
                 message.reply('Unknown command: ' + command);
             }
         } else {
-            console.log('No command found in the message');
+            console.debug('No command found in the message');
         }
 
     } catch (error) {
