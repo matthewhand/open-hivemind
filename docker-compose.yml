@@ -12,4 +12,5 @@ services:
     volumes:
       - ./src:/usr/src/app
       - /usr/src/app/node_modules  # Persist node_modules volume
+      - ./src/config/config.json:/config.json  # Map config.json to /config.json in the container
     restart: always
