@@ -1,3 +1,4 @@
+const { config } = require('../config/configUtils');
 const axios = require('axios');
 const { aliases } = require('./commandHandler');
 const { commandHandler } = require('./commandHandler'); 
