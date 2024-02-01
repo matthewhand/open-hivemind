@@ -6,7 +6,7 @@ const { handlePythonRequest } = require('../commands/python');
 const { handleHttpCommand } = require('../commands/http');
 const { handleReportCommand } = require('../commands/report');
 const { handleMuteCommand } = require('../commands/mute');
-const { handleMemGptRequest } = require('../commands/memgpt');
+const { sendMemGptRequest } = require('../commands/memgpt');
 const { handleOaiRequest } = require('../commands/oai');
 const { aliases } = require('../config/aliases');
 
@@ -16,7 +16,7 @@ const commandHandlers = {
         description: 'Interact with OpenAI models. Usage: !oai:[model] [query]'
     },
     'memgpt': {
-        handler: handleMemGptRequest,
+        handler: sendMemGptRequest,
         description: 'Interacts with the MemGPT service. Usage: !memgpt [query]'
     },
     'image': {
