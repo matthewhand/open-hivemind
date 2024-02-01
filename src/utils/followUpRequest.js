@@ -1,7 +1,7 @@
 const logger = require('./logger');
 const fetchConversationHistory = require('./fetchConversationHistory');
 const { getRandomAliasCommand } = require('./aliasUtils');
-const { sendLlmRequest } = require('./llmRequest');
+const { sendLlmRequest } = require('./sendLlmRequest');
 
 async function shouldSendFollowUp(message, threshold) {
     try {
