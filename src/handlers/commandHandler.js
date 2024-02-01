@@ -118,12 +118,15 @@ async function commandHandler(message, commandContent) {
 
             // Check if command is an alias
             if (aliases[command]) {
-                let aliasParts = aliases[command].split(':');
-                command = aliasParts[0];
-                action = aliasParts[1]; // Override action if alias defines one
+                let [aliasedCommand, ...actionParts] = aliases[command].split(':');
+                command = aliasedCommand;
+                let aliasedAction = actionParts.join(':').split(' ')[0]; // Extracts the first word as action
+                let additionalArg = actionParts.join(':').substring(aliasedAction.length).trim(); // Extracts the rest as additional argument
+                action = aliasedAction;
+                args = additionalArg + ' ' + args; // Prepend the additional argument
                 console.log(`[commandHandler] Alias Command: ${command}, Action: ${action}, Args: ${args}`);
             }
-
+            
             if (commandHandlers[command]) {
                 console.log(`Executing handler for command: ${command}`);
                 await commandHandlers[command].handler(message, action, args);
