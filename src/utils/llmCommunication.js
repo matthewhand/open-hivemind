@@ -1,24 +1,18 @@
 const axios = require('axios');
-const logger = require('./logger'); // Assumed existing logger utility
-const serverPolicyReader = require('./serverPolicyReader'); // Utility to read server policy
+const logger = require('./logger');
+const loadServerPolicy = require('./loadServerPolicy');
 
 const LLM_ENDPOINT_URL = process.env.LLM_ENDPOINT_URL;
 const LLM_API_KEY = process.env.LLM_API_KEY;
 
-/**
- * Sends a request to the LLM endpoint to evaluate if a user should be banned.
- * @param {string} chatHistory - Recent chat history for context.
- * @param {string} userId - ID of the user in question.
- * @returns {Promise<string>} - The LLM's decision on whether to ban the user.
- */
 async function shouldUserBeBanned(chatHistory, userId) {
-    const serverPolicy = await serverPolicyReader.readServerPolicy();
+    const serverPolicy = loadServerPolicy();
     const prompt = process.env.BAN_DECISION_PROMPT || `Should user ${userId} be banned based on server policy?`;
 
     const requestBody = {
-        model: "text-davinci-003", // Replace with your model of choice
+        model: "text-davinci-003",
         prompt: `${chatHistory}\n\nServer Policy:\n${serverPolicy}\n\n${prompt}`,
-        max_tokens: 1024, // Adjust as needed
+        max_tokens: 1024,
     };
 
     try {

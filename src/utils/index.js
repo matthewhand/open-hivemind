@@ -16,7 +16,6 @@ const parseCommand = require('./parseCommand');
 const permissions = require('./permissions');
 const reconstructCommandFromAlias = require('./reconstructCommandFromAlias');
 const sendFollowUpRequest = require('./sendFollowUpRequest');
-const tokenization = require('./tokenization');
 const votingUtils = require('./votingUtils');
 
 module.exports = {
@@ -37,6 +36,5 @@ module.exports = {
     permissions,
     reconstructCommandFromAlias,
     sendFollowUpRequest,
-    tokenization,
     votingUtils
 };

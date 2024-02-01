@@ -1,4 +1,4 @@
-const { aliases } = require('../config/aliasesConfig');
+const { aliases } = require('../config/aliases');
 
 function reconstructCommandFromAlias(alias, additionalArgs) {
     if (!aliases[alias]) return null;

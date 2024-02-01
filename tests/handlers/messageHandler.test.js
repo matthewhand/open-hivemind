@@ -3,34 +3,35 @@ jest.mock('axios', () => ({ post: jest.fn() }));
 
 const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
 const axios = require('axios');
-jest.mock('../../src/config/configUtils', () => ({
-    config: {
-        deciderConfig: {
-            interrobangBonus: 0.2,
-            mentionBonus: 0.4,
-            familiarBonus: 0.6,
-            botResponsePenalty: 0.8,
-            timeVsResponseChance: [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
-            llmWakewords: ["!help"]
-        },
-        discordSettings: {
-            unsolicitedChannelCap: 2
-        },
-        enabledModules: {
-            flowise: true,
-            quivr: true,
-            http: true,
-            python: true,
-            help: true
-        }
-    }
-}));
 const { messageHandler } = require('../../src/handlers/messageHandler');
+
+// Mock the configuration directly in the test environment
+const mockConfig = {
+    deciderConfig: {
+        interrobangBonus: 0.2,
+        mentionBonus: 0.4,
+        familiarBonus: 0.6,
+        botResponsePenalty: 0.8,
+        timeVsResponseChance: [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
+        llmWakewords: ["!help"]
+    },
+    discordSettings: {
+        unsolicitedChannelCap: 2
+    },
+    enabledModules: {
+        flowise: true,
+        quivr: true,
+        http: true,
+        python: true,
+        help: true
+    }
+};
 
 describe('messageHandler Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Mock setup as before...
+        // Setup the mock configuration for each test
+        global.config = mockConfig;
     });
 
     test('ignores bot messages if BOT_TO_BOT_MODE is disabled', async () => {

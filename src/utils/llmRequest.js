@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { constants } = require('../config');
+const { constants } = require('./configUtils');
 const { splitMessage } = require('./common');
 const logger = require('./logger');
 

@@ -1,4 +1,4 @@
-const { aliases } = require('../config/aliasesConfig');
+const { aliases } = require('../config/aliases');
 const logger = require('./logger');
 
 function getRandomAliasCommand() {

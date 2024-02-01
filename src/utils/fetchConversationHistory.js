@@ -1,5 +1,5 @@
 const logger = require('./logger');
-const { config } = require('../config/configUtils'); // Import config utilities
+const { config } = require('../utils/configUtils'); // Import config utilities
 
 async function fetchConversationHistory(channel) {
     try {

@@ -3,8 +3,8 @@ const { aliases } = require('../config/aliases');
 const { commandHandler } = require('./commandHandler');
 const { scheduleFollowUpRequest, shouldSendFollowUp } = require('../utils/followUpRequest');
 const logger = require('../utils/logger');
-const { config, saveConfig } = require('../config/configUtils');
-const { splitMessage, getRandomDelay } = require('../utils/common');
+const { config } = require('../utils/configUtils');
+const { getRandomDelay } = require('../utils/common');
 
 // Handles incoming messages and decides on follow-up actions
 async function messageHandler(message) {

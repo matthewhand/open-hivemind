@@ -6,8 +6,9 @@ const { handlePythonRequest } = require('../commands/python');
 const { handleHttpCommand } = require('../commands/http');
 const { handleReportCommand } = require('../commands/report');
 const { handleMuteCommand } = require('../commands/mute');
+const { handleMemGptRequest } = require('../commands/memgpt');
 const { handleOaiRequest } = require('../commands/oai');
-const { aliases } = require('../config/aliasesConfig');
+const { aliases } = require('../config/aliases');
 
 const commandHandlers = {
     'oai': {
