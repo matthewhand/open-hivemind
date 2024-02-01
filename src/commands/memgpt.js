@@ -1,26 +1,14 @@
 const axios = require('axios');
 const { fetchConversationHistory, sendLlmRequest } = require('../utils');
 
-/**
- * Handles the MemGPT request from the Discord message.
- *
- * @param {Object} message - The Discord message object.
- * @param {string} action - The specific action to perform (if any).
- * @param {string} args - The arguments provided in the message.
- */
 async function handleMemGptRequest(message, action = '', args) {
-    console.debug(`Processing MemGPT request for message: ${message.content}`);
-
-    // Retrieve environment variables for agent and user IDs
     const agent = action || process.env.MEMGPT_AGENT_ID;
     const userId = process.env.MEMGPT_USER_ID;
     const query = args.trim();
 
-    // Check if the query is empty and handle accordingly
     if (!query) {
-        console.debug('No query provided, generating error message...');
         let errorMessage = 'Please provide a query for MemGPT.';
-    
+
         if (process.env.DYNAMIC_ERROR_MESSAGE_ENABLED !== 'false') {
             try {
                 const history = await fetchConversationHistory(message.channel);
@@ -31,22 +19,28 @@ async function handleMemGptRequest(message, action = '', args) {
                 errorMessage = 'An error occurred while generating the error message.';
             }
         }
-    
+
         message.reply(errorMessage);
         return;
     }
 
     try {
-        console.debug('Sending request to MemGPT API...');
+        const currentTime = new Date().toISOString();
+
+        const payload = {
+            type: 'user_message',
+            message: query,
+            time: currentTime
+        };
+
         const response = await axios.post(`${process.env.MEMGPT_ENDPOINT_URL}/api/agents/message`, {
             agent_id: agent,
             user_id: userId,
-            message: query
+            payload: payload // Adjusted payload structure
         }, {
             headers: { 'Authorization': `Bearer ${process.env.MEMGPT_API_KEY}` }
         });
 
-        console.debug('Received response from MemGPT API, sending back to Discord...');
         const memGptResponse = response.data.messages.join('\n');
         message.reply(memGptResponse);
     } catch (error) {
