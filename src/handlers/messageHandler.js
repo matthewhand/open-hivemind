@@ -12,16 +12,16 @@ const maxMessageLength = 2000;
 const continuationString = '...';
 let responseTimer = null;
 
-function addToResponseQueue(messageResponse) {
+function addToResponseQueue(messageResponse, channel) {
     responseQueue.push(messageResponse);
 
     if (!responseTimer) {
-        responseTimer = setTimeout(() => sendBatchedResponses(message.channel), 10000); // Adjust timer as needed
+        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000); // 30 seconds
     }
 }
 
 function sendBatchedResponses(channel) {
-    const batchedResponse = responseQueue.join('\n');
+    let batchedResponse = responseQueue.join('\n');
     sendInChunks(channel, batchedResponse);
     responseQueue.length = 0;
     clearTimeout(responseTimer);
@@ -52,7 +52,8 @@ async function messageHandler(message) {
 
     try {
         const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
-        await commandHandler(message, modifiedMessageContent);
+        const response = await commandHandler(message, modifiedMessageContent);
+        addToResponseQueue(response, message.channel);
         logger.info(`Handled message: ${message.id}`);
 
         // Schedule a follow-up request with a random delay
