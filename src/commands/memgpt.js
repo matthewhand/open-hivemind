@@ -1,5 +1,5 @@
-const axios = require('axios');
 const { fetchConversationHistory, sendLlmRequest } = require('../utils');
+const sendMemGptRequest = require('./sendMemGptRequest'); // Import sendMemGptRequest utility
 
 async function handleMemGptRequest(message, action = '', args) {
     const agentId = action || process.env.MEMGPT_AGENT_ID;
@@ -13,7 +13,7 @@ async function handleMemGptRequest(message, action = '', args) {
             try {
                 const history = await fetchConversationHistory(message.channel);
                 const prompt = `Given this conversation context: ${history.join(' ')}\nGenerate a helpful error message for a missing MemGPT query:`;
-                errorMessage = await sendLlmRequest(prompt);
+                errorMessage = await sendLlmRequest(message, prompt);
             } catch (err) {
                 console.error('Error fetching conversation history or generating dynamic error message:', err);
                 errorMessage = 'An error occurred while generating the error message.';
@@ -25,19 +25,11 @@ async function handleMemGptRequest(message, action = '', args) {
     }
 
     try {
-        const requestUrl = `${process.env.MEMGPT_ENDPOINT_URL}/api/agents/message`;
-        console.debug(`Sending request to ${requestUrl} with payload:`, query);
+        // Use sendMemGptRequest utility to make API request
+        const memGptResponseData = await sendMemGptRequest(agentId, userId, query);
 
-        const response = await axios.post(requestUrl, {
-            agent_id: agentId,
-            user_id: userId,
-            message: query
-        }, {
-            headers: { 'Authorization': `Bearer ${process.env.MEMGPT_API_KEY}` }
-        });
-
-        console.debug(`Received response:`, response.data);
-        const memGptResponse = response.data.messages.map(msg => msg.assistant_message || msg.internal_monologue).join('\n');
+        // Process and reply with the MemGPT response
+        const memGptResponse = memGptResponseData.messages.map(msg => msg.assistant_message || msg.internal_monologue).join('\n');
         message.reply(memGptResponse);
     } catch (error) {
         console.error(`Error in handleMemGptRequest:`, error);
