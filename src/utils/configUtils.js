@@ -1,7 +1,7 @@
 // In your configUtils.js or a similar configuration file
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4, validate: uuidValidate } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 const configFilePath = path.join(__dirname, 'config.json');
 let config = {};
@@ -14,7 +14,7 @@ function loadConfig() {
     }
 
     // Check for user_id in environment variable and validate it
-    if (process.env.USER_ID && uuidValidate(process.env.USER_ID)) {
+    if (process.env.USER_ID && uuidv4.isUuid(process.env.USER_ID)) {
         config.userId = process.env.USER_ID;
     } else {
         // Generate a new UUID if not valid or not present
