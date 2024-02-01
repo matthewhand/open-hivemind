@@ -14,6 +14,10 @@ const commandHandlers = {
         handler: handleOaiRequest,
         description: 'Interact with OpenAI models. Usage: !oai:[model] [query]'
     },
+    'memgpt': {
+        handler: handleMemGptRequest,
+        description: 'Interacts with the MemGPT service. Usage: !memgpt [query]'
+    },
     'image': {
         handler: handleImageAnalysis,
         description: 'Analyzes an image. Usage: !image [imageUrl]'
