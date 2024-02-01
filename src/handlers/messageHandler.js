@@ -6,6 +6,38 @@ const logger = require('../utils/logger');
 const { config } = require('../utils/configUtils');
 const { getRandomDelay } = require('../utils/common');
 
+// Response batching logic
+const responseQueue = [];
+const maxMessageLength = 2000;
+const continuationString = '...';
+let responseTimer = null;
+
+function addToResponseQueue(messageResponse) {
+    responseQueue.push(messageResponse);
+
+    if (!responseTimer) {
+        responseTimer = setTimeout(() => sendBatchedResponses(message.channel), 10000); // Adjust timer as needed
+    }
+}
+
+function sendBatchedResponses(channel) {
+    const batchedResponse = responseQueue.join('\n');
+    sendInChunks(channel, batchedResponse);
+    responseQueue.length = 0;
+    clearTimeout(responseTimer);
+    responseTimer = null;
+}
+
+function sendInChunks(channel, text) {
+    let start = 0;
+    while (start < text.length) {
+        let end = start + maxMessageLength - continuationString.length;
+        const chunk = text.substring(start, end);
+        channel.send(chunk + (end < text.length ? continuationString : ''));
+        start = end;
+    }
+}
+
 // Handles incoming messages and decides on follow-up actions
 async function messageHandler(message) {
     // Ignore messages from bots
