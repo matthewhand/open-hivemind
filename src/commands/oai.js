@@ -23,7 +23,15 @@ async function handleOaiRequest(message, action, args) {
         const replyContent = processResponse(response.data);
         if (replyContent) {
             const messagesToSend = splitMessage(replyContent, 2000);
-            for (const msg of messagesToSend) await message.reply(msg);
+            if (messagesToSend.length > 0) {
+                // Send first message as a reply
+                await message.reply(messagesToSend[0]);
+
+                // Send subsequent messages as normal messages in the channel
+                for (const msg of messagesToSend.slice(1)) {
+                    await message.channel.send(msg);
+                }
+            }
         }
     } catch (error) {
         logger.error(`Error in handleOaiRequest: ${error.message}`, error);

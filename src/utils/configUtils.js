@@ -3,20 +3,23 @@ const fs = require('fs');
 const path = require('path');
 
 const configFilePath = path.join(__dirname, 'config.json');
-let config = {};
+let rawConfig = {};
 
-function loadConfig() {
-    if (fs.existsSync(configFilePath)) {
-        config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
-    } else {
-        config = { guildHandlers: {} }; // Default structure
+if (fs.existsSync(configFilePath)) {
+    rawConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
+} else {
+    rawConfig = { guildHandlers: {} }; // Default structure
+}
+
+const handler = {
+    set(target, key, value) {
+        target[key] = value;
+        // Automatically update config.json whenever a change is made
+        fs.writeFileSync(configFilePath, JSON.stringify(rawConfig, null, 2), 'utf-8');
+        return true;
     }
-}
+};
 
-function saveConfig() {
-    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2), 'utf-8');
-}
+const config = new Proxy(rawConfig, handler);
 
-loadConfig();
-
-module.exports = { config, saveConfig };
+module.exports = { config };
