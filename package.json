@@ -16,6 +16,8 @@
     "node-fetch": "^2.6.1",
     "ollama-node": "^0.1.27",
     "openai": "^4.26.0",
+    "uuid": "^9.0.1",
+    "uuidv4": "^6.2.13",
     "winston": "^3.11.0"
   },
   "jest": {

@@ -1,25 +1,32 @@
-// configUtils.js
+// In your configUtils.js or a similar configuration file
 const fs = require('fs');
 const path = require('path');
+const { v4: uuidv4, validate: uuidValidate } = require('uuid');
 
 const configFilePath = path.join(__dirname, 'config.json');
-let rawConfig = {};
+let config = {};
 
-if (fs.existsSync(configFilePath)) {
-    rawConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
-} else {
-    rawConfig = { guildHandlers: {} }; // Default structure
+function loadConfig() {
+    if (fs.existsSync(configFilePath)) {
+        config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
+    } else {
+        config = { guildHandlers: {} }; // Default structure
+    }
+
+    // Check for user_id in environment variable and validate it
+    if (process.env.USER_ID && uuidValidate(process.env.USER_ID)) {
+        config.userId = process.env.USER_ID;
+    } else {
+        // Generate a new UUID if not valid or not present
+        config.userId = config.userId || uuidv4();
+        saveConfig(); // Save the newly generated UUID
+    }
 }
 
-const handler = {
-    set(target, key, value) {
-        target[key] = value;
-        // Automatically update config.json whenever a change is made
-        fs.writeFileSync(configFilePath, JSON.stringify(rawConfig, null, 2), 'utf-8');
-        return true;
-    }
-};
+function saveConfig() {
+    fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2), 'utf-8');
+}
 
-const config = new Proxy(rawConfig, handler);
+loadConfig();
 
-module.exports = { config };
+module.exports = { config, saveConfig };
