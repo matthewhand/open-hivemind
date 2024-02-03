@@ -1,48 +1,56 @@
 const axios = require('axios');
-const { splitMessage, startTypingIndicator } = require('../utils/common');
-const getRandomErrorMessage = require('../config/errorMessages');
 const logger = require('../utils/logger');
+const getRandomErrorMessage = require('../config/errorMessages');
 const constants = require('../config/constants');
 const fetchConversationHistory = require('../utils/fetchConversationHistory');
 
-async function handleOaiRequest(message, action, args) {
+const data = {
+    name: 'oai',
+    description: 'Interact with OpenAI models. Usage: !oai:[model] [query]'
+};
+
+async function execute(message, action = 'gpt-3.5-turbo', args) {
     try {
-        // Determine the model based on the action, default to a predefined model
-        const model = action || 'gpt-3.5-turbo'; // Default model
-
         const historyMessages = await fetchConversationHistory(message.channel);
-        const requestBody = buildOaiRequestBody(historyMessages, args, model);
-        if (!validateRequestBody(requestBody)) throw new Error('Invalid request body');
+        const requestBody = buildOaiRequestBody(historyMessages, args, action);
 
-        const typingInterval = startTypingIndicator(message.channel);
+        if (!validateRequestBody(requestBody)) {
+            throw new Error('Invalid request body');
+        }
+
         const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, {
-            headers: { 'Content-Type': 'application/json', ...(constants.API_KEY && { 'Authorization': `Bearer ${constants.API_KEY}` }) }
+            headers: {
+                'Content-Type': 'application/json',
+                ...(constants.API_KEY && { 'Authorization': `Bearer ${constants.API_KEY}` })
+            }
         });
 
-        clearInterval(typingInterval);
         const replyContent = processResponse(response.data);
         if (replyContent) {
             const messagesToSend = splitMessage(replyContent, 2000);
-            if (messagesToSend.length > 0) {
-                // Send first message as a reply
-                await message.reply(messagesToSend[0]);
-
-                // Send subsequent messages as normal messages in the channel
-                for (const msg of messagesToSend.slice(1)) {
-                    await message.channel.send(msg);
-                }
+            for (const msg of messagesToSend) {
+                await message.channel.send(msg);
             }
         }
     } catch (error) {
-        logger.error(`Error in handleOaiRequest: ${error.message}`, error);
+        logger.error(`Error in handleOaiRequest: ${error.message}`);
+        if (error.response) {
+            // Log additional details if available
+            logger.error(`Response: ${JSON.stringify(error.response.data)}`);
+            logger.error(`Status: ${error.response.status}`);
+            logger.error(`Headers: ${JSON.stringify(error.response.headers)}`);
+        }
         await message.reply(getRandomErrorMessage());
     }
 }
 
 function buildOaiRequestBody(historyMessages, userMessage, model) {
-    let requestBody = { model: constants.MODEL_TO_USE, messages: [{ role: 'system', content: constants.SYSTEM_PROMPT }] };  
-    let currentSize = JSON.stringify(requestBody).length;
+    let requestBody = { 
+        model: model, 
+        messages: [{ role: 'system', content: constants.SYSTEM_PROMPT }] 
+    };  
 
+    let currentSize = JSON.stringify(requestBody).length;
     historyMessages.slice().reverse().forEach(msg => {
         const formattedMessage = `<@${msg.userId}>: ${msg.content}`;
         const messageObj = { role: 'user', content: formattedMessage };
@@ -57,23 +65,17 @@ function buildOaiRequestBody(historyMessages, userMessage, model) {
 }
 
 function validateRequestBody(requestBody) {
-    if (!requestBody || !Array.isArray(requestBody.messages) || requestBody.messages.length === 0) {
-        logger.debug("Validation failed for requestBody:", JSON.stringify(requestBody));
-        return false;
-    }
-    logger.debug("Validation passed for requestBody.");
-    return true;
+    return requestBody && Array.isArray(requestBody.messages) && requestBody.messages.length > 0;
 }
+
 function processResponse(data) {
     if (data && data.choices && data.choices.length > 0) {
         let content = data.choices[0].message.content.trim();
         const pattern = /^<@\w+>: /;
-        if (pattern.test(content)) {
-            content = content.replace(pattern, '');
-        }
+        content = content.replace(pattern, '');
         return content;
     }
     return 'No response from the server.';
 }
 
-module.exports = { handleOaiRequest };
+module.exports = { data, execute };

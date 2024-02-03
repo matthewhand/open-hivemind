@@ -1,20 +1,24 @@
 const axios = require('axios');
+const logger = require('../utils/logger');
 
-async function handleImageAnalysis(message, args) {
+const data = {
+    name: 'image',
+    description: 'Analyzes an image using a specified AI model. Usage: !image [prompt]'
+};
+
+async function execute(message) {
     const attachments = message.attachments;
     if (attachments.size > 0) {
         const imageUrl = attachments.first().url;
-        const prompt = args.trim() || process.env.IMAGE_PROMPT || 'Please describe this image';
+        const prompt = message.content.split(' ').slice(1).join(' ') || process.env.IMAGE_PROMPT || 'Please describe this image';
 
         try {
+            logger.debug(`Sending image analysis request for ${imageUrl}`);
             const response = await axios.post(
                 'https://api.replicate.com/v1/predictions',
                 {
                     version: process.env.MODEL_VERSION || "default-model-version",
-                    input: {
-                        image: imageUrl,
-                        prompt: prompt
-                    },
+                    input: { image: imageUrl, prompt: prompt },
                     webhook: process.env.WEBHOOK_URL,
                     webhook_events_filter: ["start", "completed"]
                 },
@@ -26,18 +30,16 @@ async function handleImageAnalysis(message, args) {
                 }
             );
 
-            // Store the image URL with the associated prediction ID if needed
-            // predictionImageMap.set(response.data.id, imageUrl);
-
+            logger.info(`Image analysis initiated for ${imageUrl}. Prediction ID: ${response.data.id}`);
             message.reply(`Image analysis initiated. Prediction ID: ${response.data.id}`);
         } catch (error) {
-            console.error('Error in handleImageAnalysis:', error.response ? JSON.stringify(error.response.data) : error.message);
-            message.reply('An error occurred while analyzing the image: ' + error.message);
+            logger.error(`Error in execute function of image analysis: ${error.message}`);
+            message.reply(`An error occurred while analyzing the image: ${error.message}`);
         }
     } else {
+        logger.warn('No image attached for analysis.');
         message.reply('Please attach an image to analyze.');
     }
 }
 
-module.exports = { handleImageAnalysis };
-
+module.exports = { data, execute };

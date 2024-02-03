@@ -2,40 +2,18 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 const { getRandomErrorMessage } = require('../config/errorMessages');
 
-async function handleQuivrRequest(message, args, actionFromAlias = '') {
-    let chatCategory, query;
+const data = {
+    name: 'quivr',
+    description: 'Sends a query to the Quivr API. Usage: !quivr:[chatCategory] [query]'
+};
 
-    if (actionFromAlias) {
-        // Split the actionFromAlias string at the first colon
-        const colonIndex = actionFromAlias.indexOf(':');
-        if (colonIndex !== -1) {
-            chatCategory = actionFromAlias.substring(0, colonIndex).trim();
-            query = actionFromAlias.substring(colonIndex + 1).trim();
-        } else {
-            chatCategory = actionFromAlias.trim();
-            query = '';
-        }
-    } else {
-        // Fallback for args-based parsing
-        if (!args || args.trim() === '') {
-            const quivrChats = process.env.QUIVR_CHATS.split(',');
-            message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
-            return;
-        }
-        [chatCategory, ...queryParts] = args.split(' ');
-        query = queryParts.join(' ');
-    }
+async function execute(message, args) {
+    let [chatCategory, ...queryParts] = args.split(' ');
+    const query = queryParts.join(' ');
 
-    console.log(`[handleQuivrRequest] Chat Category: ${chatCategory}, Query: ${query}`);
-
-    if (!chatCategory || chatCategory.trim() === '') {
-        message.reply('Please specify a Quivr chat category.');
-        return;
-    }
-
-    const quivrChats = process.env.QUIVR_CHATS.split(',');
-    if (!quivrChats.includes(chatCategory)) {
-        message.reply(`Unknown or disabled Quivr chat: ${chatCategory}`);
+    if (!chatCategory) {
+        const quivrChats = process.env.QUIVR_CHATS.split(',');
+        message.reply(`Available Quivr chats: ${quivrChats.join(', ')}`);
         return;
     }
 
@@ -57,26 +35,20 @@ async function handleQuivrRequest(message, args, actionFromAlias = '') {
             { headers: { 'Authorization': `Bearer ${process.env.QUIVR_API_KEY}` } }
         );
 
-        logger.debug(`Quivr API response: ${JSON.stringify(quivrResponse.data)}`);
-
         if (quivrResponse.status === 200 && quivrResponse.data.assistant) {
             const quivrResult = quivrResponse.data.assistant;
             const messageChunks = quivrResult.match(/[\s\S]{1,2000}/g) || [quivrResult];
             for (const chunk of messageChunks) {
                 await message.reply(chunk);
             }
-            logger.info('Quivr response sent successfully.');
         } else {
             logger.error(`Error from Quivr API: Status ${quivrResponse.status}`);
             message.reply(getRandomErrorMessage());
         }
     } catch (error) {
-        logger.error(`Error in handleQuivrRequest: ${error.message}`);
-        if (error.response) {
-            logger.error(`Response: ${JSON.stringify(error.response)}`);
-        }
+        logger.error(`Error in Quivr request: ${error.message}`);
         message.reply(getRandomErrorMessage());
     }
 }
 
-module.exports = { handleQuivrRequest };
+module.exports = { data, execute };

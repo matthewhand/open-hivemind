@@ -1,15 +1,15 @@
-// handleMuteCommand.js
 const { checkMutingEligibility, startMutingProcess } = require('../utils/mutingUtils');
 const logger = require('../utils/logger');
 
-/**
- * Handles the !mute command.
- * @param {Object} message - The Discord message object.
- */
-async function handleMuteCommand(message) {
+const data = {
+    name: 'mute',
+    description: 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]'
+};
+
+async function execute(message) {
     const args = message.content.split(' ').slice(1);
     const userIdToMute = args[0];
-    const muteDuration = args[1] || '1h'; // Default duration 1 hour
+    const muteDuration = args[1] || '1h'; // Default duration of 1 hour
 
     if (!userIdToMute) {
         message.reply('Usage: !mute <userID> [duration]\nInitiates a process to mute a user for a specified duration.');
@@ -22,12 +22,13 @@ async function handleMuteCommand(message) {
     }
 
     try {
-        // Implement logic for muting (e.g., adding to a muted role, scheduling unmute, etc.)
-        startMutingProcess(message, userIdToMute, muteDuration);
+        logger.debug(`Attempting to mute user ${userIdToMute} for ${muteDuration}`);
+        await startMutingProcess(message, userIdToMute, muteDuration);
+        message.reply(`User <@${userIdToMute}> has been muted for ${muteDuration}.`);
     } catch (error) {
-        logger.error(`Error in handleMuteCommand: ${error.message}`);
+        logger.error(`Error in execute function of mute command: ${error.message}`);
         message.reply('An error occurred while processing the mute request.');
     }
 }
 
-module.exports = { handleMuteCommand };
+module.exports = { data, execute };

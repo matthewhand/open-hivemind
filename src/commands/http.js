@@ -1,4 +1,3 @@
-// src/textCommands/handleHttpCommand.js
 const axios = require('axios');
 const logger = require('../utils/logger');
 
@@ -12,19 +11,21 @@ const httpUrls = httpActions.reduce((acc, action) => {
     return acc;
 }, {});
 
-async function handleHttpCommand(message, args) {
+const data = {
+    name: 'http',
+    description: 'Executes HTTP commands. Usage: !http [action] [query]'
+};
+
+async function execute(message, args) {
     // Do not respond to !http commands if HTTP_ACTIONS is not defined
     if (httpActions.length === 0) {
+        message.reply('No HTTP actions are currently available.');
         return;
     }
 
     if (!args) {
-        if (httpActions.length > 0) {
-            const availableActions = httpActions.join(', ');
-            message.reply(`Available actions: ${availableActions}`);
-        } else {
-            message.reply('No available HTTP actions.');
-        }
+        const availableActions = httpActions.join(', ');
+        message.reply(`Available actions: ${availableActions}`);
         return;
     }
 
@@ -57,11 +58,9 @@ async function handleHttpCommand(message, args) {
             message.reply(`An error occurred while processing your request to ${action}.`);
         }
     } catch (error) {
-        logger.error(`Error in handleHttpCommand: ${error.message}`);
+        logger.error(`Error in execute (HTTP Command): ${error.message}`);
         message.reply(`An error occurred while processing your request to ${action}.`);
     }
 }
 
-handleHttpCommand.isAvailable = () => process.env.HTTP_ACTIONS && process.env.HTTP_ACTIONS.split(',').length > 0;
-
-module.exports = { handleHttpCommand };
+module.exports = { data, execute };
