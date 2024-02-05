@@ -16,8 +16,12 @@ const logger = winston.createLogger({
   format: winston.format.json(),
   transports: [
     new winston.transports.Console({ format: winston.format.simple() }),
-    new winston.transports.File({ filename: './logs/bot.log' })
-  ],
+        // File transport for 'warn' and 'error' logs
+        new winston.transports.File({
+          level: 'warn', // Only logs at 'warn' level and more severe will be logged
+          filename: './logs/bot.log'
+      })
+    ],
 });
 
 module.exports = logger;
