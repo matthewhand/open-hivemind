@@ -12,24 +12,30 @@ class OaiCommand extends Command {
 
     async execute(message, args) {
         try {
-            if (!args) {
+            if (!args || args.trim() === '') {
                 logger.warn('[oai] No arguments provided to oai command.');
-                return message.reply('Error: No arguments provided.');
+                return await message.reply('Error: No arguments provided.');
             }
 
-            const action = args.split(' ')[0] || 'gpt-3.5-turbo';
-            const userMessage = args.split(' ').slice(1).join(' ');
+            const argsSplit = args.split(' ');
+            const action = argsSplit[0] || 'gpt-3.5-turbo';
+            const userMessage = argsSplit.slice(1).join(' ');
 
             logger.debug(`[oai] Action: ${action}, User Message: ${userMessage}`);
 
             const historyMessages = await fetchConversationHistory(message.channel);
-            const requestBody = oaiApi.buildRequestBody(historyMessages, userMessage, action);
+            if (!historyMessages || historyMessages.length === 0) {
+                logger.warn('[oai] No history messages found.');
+                return await message.reply('Error: Unable to fetch conversation history.');
+            }
 
+            const requestBody = oaiApi.buildRequestBody(historyMessages, userMessage, action);
             logger.debug(`[oai] Request body: ${JSON.stringify(requestBody)}`);
 
             const responseData = await oaiApi.sendRequest(requestBody);
-            const replyContent = this.processResponse(responseData);
+            logger.debug(`[oai] Response Data: ${JSON.stringify(responseData)}`);
 
+            const replyContent = this.processResponse(responseData);
             logger.debug(`[oai] Reply Content: ${replyContent}`);
 
             if (replyContent) {
@@ -39,7 +45,7 @@ class OaiCommand extends Command {
                 }
             } else {
                 logger.warn('[oai] No reply content received');
-                message.reply('No response received from OpenAI.');
+                await message.reply('No response received from OpenAI.');
             }
         } catch (error) {
             logger.error(`[oai] Error in execute: ${error.message}`, error);

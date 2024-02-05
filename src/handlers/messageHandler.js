@@ -12,24 +12,16 @@ const maxMessageLength = 2000;
 const continuationString = '...';
 let responseTimer = null;
 
-// Adds a message response to the response queue for the specified channel.
-// If the queue was empty, it also sets a timer to send out the batched responses
-// after a specified delay.
 function addToResponseQueue(messageResponse, channel) {
-    // Only add non-empty responses to the queue
     if (messageResponse) {
         responseQueue.push(messageResponse);
     }
 
-    // If there is no timer set (responseTimer is null), set a timer.
-    // The timer delays the sending of messages, which allows batching
-    // multiple responses together if they are generated in quick succession.
     if (!responseTimer) {
-        // Set a timer for 30 seconds. After 30 seconds, sendBatchedResponses 
-        // will be called to send all messages in the queue as a single batch.
-        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000); // 30 seconds delay
+        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000);
     }
 }
+
 function sendBatchedResponses(channel) {
     let batchedResponse = responseQueue.join('\n');
     sendInChunks(channel, batchedResponse);
@@ -48,7 +40,6 @@ function sendInChunks(channel, text) {
     }
 }
 
-// Handles incoming messages and decides on follow-up actions
 async function messageHandler(message) {
     if (message.author.bot) {
         logger.debug('Ignoring bot message');
@@ -63,14 +54,16 @@ async function messageHandler(message) {
         const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
         logger.debug(`Delegating to commandHandler with modifiedMessageContent: ${modifiedMessageContent}`);
         const response = await commandHandler(message, modifiedMessageContent);
-        addToResponseQueue(response, message.channel);
+        if (response) {
+            addToResponseQueue(response, message.channel);
+        }
 
-        // Schedule a follow-up request with a random delay
+        // Follow-up request logic
         const delay = getRandomDelay(config.FOLLOW_UP_MIN_DELAY, config.FOLLOW_UP_MAX_DELAY);
         setTimeout(async () => {
-            if (await shouldSendFollowUp(message, 5)) {
-                scheduleFollowUpRequest(message);
-                logger.info(`Follow-up request scheduled for message: ${message.id}`);
+            if (await shouldSendFollowUp(message, config.unsolicitedChannelCap)) {
+                await scheduleFollowUpRequest(message);
+                logger.info(`Scheduled follow-up request for message: ${message.id}`);
             } else {
                 logger.info(`No follow-up required for message: ${message.id}`);
             }
@@ -78,7 +71,7 @@ async function messageHandler(message) {
 
         logger.info(`Handled message: ${message.id}`);
     } catch (error) {
-        logger.error(`Error in messageHandler for message: ${message.id}, Error: ${error}`);
+        logger.error(`Error in messageHandler for message: ${message.id}: ${error}`);
     }
 }
 
