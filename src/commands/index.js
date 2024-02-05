@@ -1,29 +1,34 @@
-const fs = require('fs');
-const path = require('path');
 const logger = require('../utils/logger');
+const Command = require('../utils/Command');
 
-const commandFiles = fs.readdirSync(path.join(__dirname, '.'))
-                       .filter(file => file.endsWith('.js') && file !== 'index.js');
+// Manually require each command (instances)
+const banCommand = require('./ban');
+const flowiseCommand = require('./flowise');
+const helpCommand = require('./help');
+const httpCommand = require('./http');
+const imageCommand = require('./image');
+// ... other commands ...
 
 const commands = {};
 
-commandFiles.forEach(file => {
-    try {
-        const command = require(`./${file}`);
-        const commandName = file.replace('.js', '');
-
-        // Providing default values if not present in the command module
-        if (!command.data) command.data = { name: commandName, description: 'TODO: Description' };
-        if (!command.execute) command.execute = async (message) => message.reply('TODO: Command functionality not implemented yet.');
-
-        commands[command.data.name] = command;
-        logger.info(`Loaded command: ${command.data.name}`);
-    } catch (error) {
-        logger.error(`Failed to load command file ${file}: ${error.message}`);
+// Function to register a command
+function registerCommand(commandInstance) {
+    if (commandInstance instanceof Command) {
+        commands[commandInstance.name] = commandInstance;
+        logger.info(`Loaded command: ${commandInstance.name}`);
+    } else {
+        logger.warn(`Provided module is not a Command instance: ${commandInstance.name}`);
     }
-});
+}
 
-// Debug log to check loaded commands
-logger.debug(`Loaded commands: ${Object.keys(commands).join(', ')}`);
+// Register each command
+registerCommand(banCommand);
+registerCommand(flowiseCommand);
+registerCommand(helpCommand);
+registerCommand(httpCommand);
+registerCommand(imageCommand);
+// ... register other commands ...
+
+logger.debug('Loaded commands:', Object.keys(commands));
 
 module.exports = commands;

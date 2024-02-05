@@ -1,34 +1,43 @@
-const { checkMutingEligibility, startMutingProcess } = require('../utils/mutingUtils');
+const Command = require('../utils/Command');
 const logger = require('../utils/logger');
+const { checkMutingEligibility, muteMember, parseDuration } = require('../utils/mutingUtils');
+const { getRandomErrorMessage } = require('../config/errorMessages');
 
-const data = {
-    name: 'mute',
-    description: 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]'
-};
-
-async function execute(message) {
-    const args = message.content.split(' ').slice(1);
-    const userIdToMute = args[0];
-    const muteDuration = args[1] || '1h'; // Default duration of 1 hour
-
-    if (!userIdToMute) {
-        message.reply('Usage: !mute <userID> [duration]\nInitiates a process to mute a user for a specified duration.');
-        return;
+class MuteCommand extends Command {
+    constructor() {
+        super('mute', 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]');
     }
 
-    if (!checkMutingEligibility(message.author.id)) {
-        message.reply('You have already initiated a mute this year.');
-        return;
-    }
+    async execute(message) {
+        try {
+            const args = message.content.split(' ').slice(1);
+            const userIdToMute = args[0];
+            const muteDuration = args[1] || '1h'; // Default duration of 1 hour
 
-    try {
-        logger.debug(`Attempting to mute user ${userIdToMute} for ${muteDuration}`);
-        await startMutingProcess(message, userIdToMute, muteDuration);
-        message.reply(`User <@${userIdToMute}> has been muted for ${muteDuration}.`);
-    } catch (error) {
-        logger.error(`Error in execute function of mute command: ${error.message}`);
-        message.reply('An error occurred while processing the mute request.');
+            if (!userIdToMute) {
+                message.reply('Usage: !mute <userID> [duration]\nInitiates a process to mute a user for a specified duration.');
+                return;
+            }
+
+            if (!checkMutingEligibility(message.author.id)) {
+                message.reply('You are not eligible to initiate a mute.');
+                return;
+            }
+
+            const memberToMute = message.guild.members.cache.get(userIdToMute);
+            if (!memberToMute) {
+                message.reply('User not found.');
+                return;
+            }
+
+            const durationMs = parseDuration(muteDuration);
+            await muteMember(memberToMute, durationMs, `Muted by ${message.author.tag}`);
+            message.reply(`User <@${userIdToMute}> has been muted for ${muteDuration}.`);
+        } catch (error) {
+            logger.error(`Error in MuteCommand execute:`, error);
+            message.reply(getRandomErrorMessage());
+        }
     }
 }
 
-module.exports = { data, execute };
+module.exports = new MuteCommand();

@@ -12,14 +12,24 @@ const maxMessageLength = 2000;
 const continuationString = '...';
 let responseTimer = null;
 
+// Adds a message response to the response queue for the specified channel.
+// If the queue was empty, it also sets a timer to send out the batched responses
+// after a specified delay.
 function addToResponseQueue(messageResponse, channel) {
-    responseQueue.push(messageResponse);
+    // Only add non-empty responses to the queue
+    if (messageResponse) {
+        responseQueue.push(messageResponse);
+    }
 
+    // If there is no timer set (responseTimer is null), set a timer.
+    // The timer delays the sending of messages, which allows batching
+    // multiple responses together if they are generated in quick succession.
     if (!responseTimer) {
-        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000); // 30 seconds
+        // Set a timer for 30 seconds. After 30 seconds, sendBatchedResponses 
+        // will be called to send all messages in the queue as a single batch.
+        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000); // 30 seconds delay
     }
 }
-
 function sendBatchedResponses(channel) {
     let batchedResponse = responseQueue.join('\n');
     sendInChunks(channel, batchedResponse);
@@ -40,21 +50,20 @@ function sendInChunks(channel, text) {
 
 // Handles incoming messages and decides on follow-up actions
 async function messageHandler(message) {
-    // Ignore messages from bots
     if (message.author.bot) {
         logger.debug('Ignoring bot message');
         return;
     }
 
-    // Retrieve the handler alias from the runtime configuration
+    logger.debug(`Received message: ${message.content}`);
     const guildId = message.guild.id;
     const handlerAlias = config.guildHandlers && config.guildHandlers[guildId] ? config.guildHandlers[guildId] : 'oai';
 
     try {
         const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
+        logger.debug(`Delegating to commandHandler with modifiedMessageContent: ${modifiedMessageContent}`);
         const response = await commandHandler(message, modifiedMessageContent);
         addToResponseQueue(response, message.channel);
-        logger.info(`Handled message: ${message.id}`);
 
         // Schedule a follow-up request with a random delay
         const delay = getRandomDelay(config.FOLLOW_UP_MIN_DELAY, config.FOLLOW_UP_MAX_DELAY);
@@ -66,6 +75,8 @@ async function messageHandler(message) {
                 logger.info(`No follow-up required for message: ${message.id}`);
             }
         }, delay);
+
+        logger.info(`Handled message: ${message.id}`);
     } catch (error) {
         logger.error(`Error in messageHandler for message: ${message.id}, Error: ${error}`);
     }

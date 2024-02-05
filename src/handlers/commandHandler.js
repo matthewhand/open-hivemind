@@ -1,38 +1,44 @@
 const { aliases } = require('../config/aliases');
 const commands = require('../commands'); // Assuming this imports your command modules
-const logger = require('../utils/logger'); // Assuming you have a logger utility
+
+// Function to parse command content
+const logger = require('../utils/logger'); // Import logger utility
+
+// Rest of your code...
+function parseCommand(commandContent) {
+    logger.debug(`Parsing command content: ${commandContent}`);
+    
+    const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
+    const matches = commandContent.match(commandRegex);
+
+    if (matches) {
+        const commandName = matches[1].toLowerCase();
+        const action = matches[2];
+        const args = matches[3];
+        
+        logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ${args}`);
+        return { commandName, action, args };
+    }
+
+    logger.debug('No command pattern matched in the content');
+    return null; // Return null if no command is found
+}
+
 
 async function commandHandler(message, commandContent) {
     try {
-        const resolveCommand = (commandName) => {
-            if (aliases[commandName]) {
-                const [resolvedCommand, additionalArgs] = aliases[commandName].split(':');
-                logger.debug(`Alias found: ${commandName} -> ${resolvedCommand} with additional args: ${additionalArgs}`);
-                return [resolveCommand(resolvedCommand), additionalArgs]; // Recursive resolution
-            }
-            logger.debug(`No alias found for command: ${commandName}`);
-            return [commandName, null];
-        };
+        const resolvedCommand = parseCommand(commandContent);
 
-        const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
-        const matches = commandContent.match(commandRegex);
-
-        if (matches) {
-            logger.debug(`Command regex match found: ${JSON.stringify(matches)}`);
-            const [aliasResolvedCommand, aliasAction] = resolveCommand(matches[1].toLowerCase());
-            const action = aliasAction || matches[2];
-            const args = matches[3];
-            const command = commands[aliasResolvedCommand];
-
-            logger.debug(`Command Handler: Resolved Command - ${aliasResolvedCommand}, Action - ${action}, Args - ${args}`);
+        if (resolvedCommand) {
+            const { commandName, action, args } = resolvedCommand;
+            const resolvedAlias = aliases[commandName] || commandName;
+            const command = commands[resolvedAlias];
 
             if (command) {
-                logger.debug(`Executing command: ${aliasResolvedCommand}`);
                 await command.execute(message, action, args);
-                logger.debug(`Executed command: ${aliasResolvedCommand}`);
             } else {
-                logger.warn(`Unknown command: ${aliasResolvedCommand}`);
-                message.reply(`Unknown command: ${aliasResolvedCommand}`);
+                logger.warn(`Unknown command: ${commandName}`);
+                message.reply(`Unknown command: ${commandName}`);
             }
         } else {
             logger.warn('No command found in the message');
@@ -44,4 +50,4 @@ async function commandHandler(message, commandContent) {
     }
 }
 
-module.exports = { commandHandler };
+module.exports = { commandHandler, parseCommand };

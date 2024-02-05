@@ -1,46 +1,53 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 const { getRandomErrorMessage } = require('../config/errorMessages');
+const Command = require('../utils/Command');
 
-const data = {
-    name: 'flowise',
-    description: 'Sends a query to the Flowise API. Usage: !flowise:[action] [query]'
-};
-
-async function execute(message, action='', args) {
-    // Check if the action is defined and valid
-    const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
-    if (!action || !flowiseActions.includes(action)) {
-        message.reply(`Please specify a valid action. Available Flowise actions: ${flowiseActions.join(', ')}`);
-        return;
+class FlowiseCommand extends Command {
+    constructor() {
+        super('flowise', 'Sends a query to the Flowise API. Usage: !flowise:[action] [query]');
     }
 
-    // Check if args are provided
-    if (!args) {
-        message.reply(`Please provide a query for Flowise action "${action}".`);
-        return;
-    }
+    async execute(message, args) {
+        try {
+            let action = '';
+            let query = '';
 
-    // Construct the endpoint URL for the specified action
-    const flowiseEndpointId = process.env[`FLOWISE_${action.toUpperCase()}_ID`];
-    const flowiseUrl = `${process.env.FLOWISE_API_BASE_URL}${flowiseEndpointId}`;
+            if (typeof args === 'string') {
+                const parts = args.split(' ');
+                action = parts[0];
+                query = parts.slice(1).join(' ');
+            }
 
-    logger.debug(`Sending request to Flowise: ${flowiseUrl} with action: ${action} and query: ${args}`);
+            const flowiseActions = process.env.FLOWISE_ACTIONS.split(',');
+            if (!action || !flowiseActions.includes(action)) {
+                message.reply(`Please specify a valid action. Available Flowise actions: ${flowiseActions.join(', ')}`);
+                return;
+            }
 
-    try {
-        const response = await axios.post(flowiseUrl, { question: args });
+            if (!query) {
+                message.reply(`Please provide a query for Flowise action "${action}".`);
+                return;
+            }
 
-        if (response.status === 200) {
-            const flowiseText = response.data.text;
-            message.reply(`Flowise "${action}" response: ${flowiseText}`);
-        } else {
-            logger.error(`Error from Flowise API: ${response.status}`);
+            const flowiseEndpointId = process.env[`FLOWISE_${action.toUpperCase()}_ID`];
+            const flowiseUrl = `${process.env.FLOWISE_API_BASE_URL}${flowiseEndpointId}`;
+
+            logger.debug(`Sending request to Flowise: ${flowiseUrl} with action: ${action} and query: ${query}`);
+            const response = await axios.post(flowiseUrl, { question: query });
+
+            if (response.status === 200) {
+                const flowiseText = response.data.text;
+                message.reply(`Flowise "${action}" response: ${flowiseText}`);
+            } else {
+                logger.error(`Error from Flowise API: ${response.status} - ${response.statusText}`);
+                message.reply(getRandomErrorMessage());
+            }
+        } catch (error) {
+            logger.error(`Error in Flowise request: ${error}`);
             message.reply(getRandomErrorMessage());
         }
-    } catch (error) {
-        logger.error(`Error in Flowise request: ${error.message}`);
-        message.reply(getRandomErrorMessage());
     }
 }
 
-module.exports = { data, execute };
+module.exports = new FlowiseCommand();
