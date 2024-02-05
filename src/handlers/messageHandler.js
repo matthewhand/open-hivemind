@@ -12,30 +12,31 @@ const maxMessageLength = 2000;
 const continuationString = '...';
 let responseTimer = null;
 
-function addToResponseQueue(messageResponse, channel) {
+function addToResponseQueue(messageResponse) {
     if (messageResponse) {
         responseQueue.push(messageResponse);
     }
 
     if (!responseTimer) {
-        responseTimer = setTimeout(() => sendBatchedResponses(channel), 30000);
+        responseTimer = setTimeout(sendBatchedResponses, 30000);
     }
 }
 
-function sendBatchedResponses(channel) {
+function sendBatchedResponses() {
     let batchedResponse = responseQueue.join('\n');
-    sendInChunks(channel, batchedResponse);
+    sendInChunks(batchedResponse);
     responseQueue.length = 0;
     clearTimeout(responseTimer);
     responseTimer = null;
 }
 
-function sendInChunks(channel, text) {
+function sendInChunks(text) {
     let start = 0;
     while (start < text.length) {
-        let end = start + maxMessageLength - continuationString.length;
+        let end = Math.min(start + maxMessageLength, text.length);
         const chunk = text.substring(start, end);
-        channel.send(chunk + (end < text.length ? continuationString : ''));
+        // Send chunk to Discord channel
+        // channel.send(chunk);
         start = end;
     }
 }
@@ -47,20 +48,13 @@ async function messageHandler(message) {
     }
 
     logger.debug(`Received message: ${message.content}`);
-    const guildId = message.guild.id;
-    const handlerAlias = config.guildHandlers && config.guildHandlers[guildId] ? config.guildHandlers[guildId] : 'oai';
-
+    
     try {
-        const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
-        logger.debug(`Delegating to commandHandler with modifiedMessageContent: ${modifiedMessageContent}`);
-
-        // Debugging the response from commandHandler
-        const response = await commandHandler(message, modifiedMessageContent);
-        logger.debug(`Response from commandHandler: ${response}`);
-
+        // Directly use message content without modification
+        const response = await commandHandler(message, message.content);
         if (response) {
-            addToResponseQueue(response, message.channel);
-            logger.debug(`Added response to queue for channel: ${message.channel.id}`);
+            addToResponseQueue(response);
+            logger.debug(`Added response to queue`);
         }
 
         // Follow-up request logic
@@ -76,8 +70,7 @@ async function messageHandler(message) {
 
         logger.info(`Handled message: ${message.id}`);
     } catch (error) {
-        logger.error(`Error in messageHandler for message: ${message.id}: ${error}`);
-        logger.debug(`Error details: ${error.stack}`); // Debugging the error stack
+        logger.error(`Error in messageHandler for message: ${message.id}`, error);
     }
 }
 
