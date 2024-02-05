@@ -13,6 +13,8 @@ class OaiCommand extends Command {
 
     async execute(message, args) {
         try {
+            logger.debug(`[oai] Received args: ${args}`);
+
             if (!args || args.trim() === '') {
                 logger.warn('[oai] No arguments provided to oai command.');
                 return await message.reply('Error: No arguments provided.');

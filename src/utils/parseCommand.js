@@ -1,10 +1,24 @@
-function parseCommand(messageContent) {
-    const commandRegex = /(?:@bot\s+)?^!(\w+)(?::(\w+))?\s*(.*)/;
-    const matches = messageContent.match(commandRegex);
-    if (!matches) return null;
+const logger = require('../utils/logger');
 
-    const [_, command, action, args] = matches;
-    return { command: command.toLowerCase(), action, args };
+function parseCommand(commandContent) {
+    logger.debug(`Parsing command content: ${commandContent}`);
+
+    // Adjusted regular expression to optionally capture action and arguments
+    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)?/;
+    const matches = commandContent.match(commandRegex);
+
+    if (matches) {
+        const commandName = matches[1].toLowerCase();
+        const action = matches[2] ? matches[2].toLowerCase() : '';
+        const args = matches[3] ? matches[3].trim() : '';
+
+        logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ${args}`);
+        return { commandName, action, args };
+    }
+
+    logger.debug('No command pattern matched in the content');
+    return null;
 }
+
 
 module.exports = { parseCommand };
