@@ -1,34 +1,25 @@
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const Command = require('../utils/Command');
 
-// Manually require each command (instances)
-const banCommand = require('./ban');
-const flowiseCommand = require('./flowise');
-const helpCommand = require('./help');
-const httpCommand = require('./http');
-const imageCommand = require('./image');
-// ... other commands ...
+const commandsDirectory = path.join(__dirname, '.');
+const commandFiles = fs.readdirSync(commandsDirectory).filter(file => file.endsWith('.js') && file !== 'index.js');
 
 const commands = {};
 
-// Function to register a command
-function registerCommand(commandInstance) {
-    if (commandInstance instanceof Command) {
-        commands[commandInstance.name] = commandInstance;
-        logger.info(`Loaded command: ${commandInstance.name}`);
+commandFiles.forEach(file => {
+    const filePath = path.join(commandsDirectory, file);
+    const commandModule = require(filePath);
+
+    if (commandModule instanceof Command) {
+        commands[commandModule.name] = commandModule;
+        logger.info(`Dynamically loaded command: ${commandModule.name}`);
     } else {
-        logger.warn(`Provided module is not a Command instance: ${commandInstance.name}`);
+        logger.warn(`File ${file} does not export a Command instance.`);
     }
-}
+});
 
-// Register each command
-registerCommand(banCommand);
-registerCommand(flowiseCommand);
-registerCommand(helpCommand);
-registerCommand(httpCommand);
-registerCommand(imageCommand);
-// ... register other commands ...
-
-logger.debug('Loaded commands:', Object.keys(commands));
+logger.debug('Dynamically loaded commands:', Object.keys(commands));
 
 module.exports = commands;
