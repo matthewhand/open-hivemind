@@ -1,4 +1,5 @@
-const { commandHandler, parseCommand } = require('../../src/handlers/commandHandler');
+const { commandHandler } = require('../../src/handlers/commandHandler');
+const { parseCommand } = require('../../src/utils/commandParser');
 const mockCommands = require('../../src/commands/inline');
 
 jest.mock('../../src/commands/inline', () => ({

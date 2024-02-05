@@ -1,29 +1,8 @@
 const { aliases } = require('../config/aliases');
 const commands = require('../commands/inline');
 const logger = require('../utils/logger');
+const { parseCommand } = require('../utils/commandParser');
 
-// Function to parse the command from the message content
-function parseCommand(commandContent) {
-    logger.debug(`Parsing command content: ${commandContent}`);
-    
-    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
-    const matches = commandContent.match(commandRegex);
-
-    if (matches) {
-        const commandName = matches[1].toLowerCase();
-        const action = matches[2] || ''; // Ensure action is not undefined
-        const args = matches[3] || ''; // Ensure args is not undefined
-
-        logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ${args}`);
-        return { commandName, action, args };
-    }
-
-    logger.debug('No command pattern matched in the content');
-    return null;
-}
-
-
-// Function to handle the command
 async function commandHandler(message, commandContent) {
     try {
         const resolvedCommand = parseCommand(commandContent);
@@ -50,4 +29,4 @@ async function commandHandler(message, commandContent) {
     }
 }
 
-module.exports = { commandHandler, parseCommand };
+module.exports = { commandHandler };
