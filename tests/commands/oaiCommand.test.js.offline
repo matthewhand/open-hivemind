@@ -1,0 +1,36 @@
+const OaiCommand = require('../../src/commands/inline/oai');
+const oaiApi = require('../../src/services/oaiApi');
+const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
+jest.mock('../../src/services/oaiApi');
+jest.mock('../../src/utils/fetchConversationHistory');
+
+describe('OAI Command Tests', () => {
+    const mockMessage = {
+        content: '!oai test query',
+        reply: jest.fn(),
+        author: { id: '123456' }, // Mock author ID
+        channel: { send: jest.fn() }
+    };
+    const oaiCommand = OaiCommand; // exported as instance
+
+    beforeEach(() => {
+        // Mock the fetchConversationHistory function
+        fetchConversationHistory.mockResolvedValue([
+            { userId: '123', content: 'Previous message' }
+        ]);
+    });
+
+    test('executes with valid arguments', async () => {
+        oaiApi.sendRequest.mockResolvedValue({ choices: [{ message: { content: 'Test response' } }] });
+        await oaiCommand.execute(mockMessage, 'test query');
+        expect(mockMessage.channel.send).toHaveBeenCalledWith('Test response');
+    });
+
+    test('handles no response from API', async () => {
+        oaiApi.sendRequest.mockResolvedValue({ choices: [] });
+        await oaiCommand.execute(mockMessage, 'test query');
+        expect(mockMessage.reply).toHaveBeenCalledWith('No response from the server.');
+    });
+
+    // Add more tests as needed...
+});

@@ -4,6 +4,7 @@ const { getRandomErrorMessage } = require('../../config/errorMessages');
 const { splitMessage } = require('../../utils/common');
 const fetchConversationHistory = require('../../utils/fetchConversationHistory');
 const oaiApi = require('../../services/oaiApi');
+const constants = require('../../config/constants'); // Import constants
 
 class OaiCommand extends Command {
     constructor() {
@@ -17,9 +18,9 @@ class OaiCommand extends Command {
                 return await message.reply('Error: No arguments provided.');
             }
 
-            const argsSplit = args.split(' ');
-            const action = argsSplit[0] || 'gpt-3.5-turbo';
-            const userMessage = argsSplit.slice(1).join(' ');
+            const argsArray = args.trim().split(/\s+/);
+            const action = argsArray[0]; // action may override the model
+            const userMessage = argsArray.slice(1).join(' ');
 
             logger.debug(`[oai] Action: ${action}, User Message: ${userMessage}`);
 
@@ -29,7 +30,7 @@ class OaiCommand extends Command {
                 return await message.reply('Error: Unable to fetch conversation history.');
             }
 
-            const requestBody = oaiApi.buildRequestBody(historyMessages, userMessage, action);
+            const requestBody = oaiApi.buildRequestBody(historyMessages, userMessage, message.author.id, action);
             logger.debug(`[oai] Request body: ${JSON.stringify(requestBody)}`);
 
             const responseData = await oaiApi.sendRequest(requestBody);
@@ -52,19 +53,39 @@ class OaiCommand extends Command {
             await message.reply(getRandomErrorMessage());
         }
     }
-
+    
     processResponse(data) {
-        if (data && data.choices && data.choices.length > 0) {
-            let content = data.choices[0].message.content.trim();
-            const pattern = /^<@\w+>: /;
-            if (pattern.test(content)) {
-                content = content.replace(pattern, '');
-            }
-            return content;
+        if (!data) {
+            logger.warn('[oai] Received null or undefined data from the server.');
+            return 'No response from the server.';
         }
-        logger.warn('[oai] No valid response from the server.');
-        return 'No response from the server.';
+    
+        if (!data.choices || data.choices.length === 0) {
+            logger.warn('[oai] Received empty choices array from the server.');
+            return 'No response from the server.';
+        }
+    
+        const firstChoice = data.choices[0];
+        if (!firstChoice || !firstChoice.message || !firstChoice.message.content) {
+            logger.warn('[oai] Missing content in the first choice of the response.');
+            return 'No response from the server.';
+        }
+    
+        let content = firstChoice.message.content.trim();
+        const pattern = /^<@\w+>: /;
+    
+        if (pattern.test(content)) {
+            content = content.replace(pattern, '');
+        }
+    
+        if (content === '') {
+            logger.warn('[oai] Response content is empty after processing.');
+            return 'No meaningful response from the server.';
+        }
+    
+        return content;
     }
+    
 }
 
 module.exports = new OaiCommand();

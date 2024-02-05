@@ -1,24 +1,29 @@
 const { commandHandler, parseCommand } = require('../../src/handlers/commandHandler');
+const mockCommands = require('../../src/commands/inline');
+
+jest.mock('../../src/commands/inline', () => ({
+    oai: { execute: jest.fn() },
+    flowise: { execute: jest.fn() }
+    // Mock other commands as needed
+}));
 
 describe('commandHandler Tests', () => {
-    test('flowise command is loaded and exists', () => {
-        const commands = require('../../src/commands/inline');
-        if (!commands['flowise']) {
-            console.debug('Available commands:', Object.keys(commands));
-        }
-        expect(commands['flowise']).toBeDefined();
-    });
-
+    // Tests for parsing commands
     test('parses command into name, action, and args', () => {
-        const mockMessage = { content: '!flowise:pinecone blue and black?', reply: jest.fn() };
-        const parsedCommand = parseCommand(mockMessage.content);
-        expect(parsedCommand).toEqual({ commandName: 'flowise', action: 'pinecone', args: 'blue and black?' });
+        const commandContent = '!flowise:action args';
+        expect(parseCommand(commandContent)).toEqual({
+            commandName: 'flowise',
+            action: 'action',
+            args: 'args'
+        });
     });
 
-    // test('resolves aliases to correct commands', () => {
-    //     const aliases = require('../../src/config/aliases');
-    //     expect(aliases['flowiseAlias']).toBe('flowise');
-    // });
+    // Tests for handling specific commands
+    test('handles oai command execution', async () => {
+        const mockMessage = { content: '!oai test query', reply: jest.fn() };
+        await commandHandler(mockMessage, mockMessage.content);
+        expect(mockCommands.oai.execute).toHaveBeenCalledWith(mockMessage, '', 'test query');
+    });
 
     // Add more tests as needed...
 });

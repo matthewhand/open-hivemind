@@ -1,6 +1,6 @@
 module.exports = {
     API_KEY: process.env.LLM_API_KEY,
-    LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL,
+    LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL || "http://",
     // Optional..
     MODEL_TO_USE: process.env.LLM_MODEL || 'mistral-7b-instruct',
     SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.',
