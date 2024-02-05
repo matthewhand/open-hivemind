@@ -1,7 +1,7 @@
 // commands/python.js
-const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('../utils/utils');
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
+const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('../../utils/utils');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
 
 class PythonCommand extends Command {
     constructor() {

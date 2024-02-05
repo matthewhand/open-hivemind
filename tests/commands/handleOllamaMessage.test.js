@@ -1,4 +1,4 @@
-const { handleOllamaMessage } = require('../../src/commands/ollama');
+const { handleOllamaMessage } = require('../../src/commands/inline/ollama');
 
 describe('handleOllamaMessage', () => {
     let mockSend;

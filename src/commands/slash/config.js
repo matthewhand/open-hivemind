@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { isUserAllowed, isRoleAllowed } = require('../utils/permissions');
+const { isUserAllowed, isRoleAllowed } = require('../../utils/permissions');
 
 // Retrieve allowed users and roles from environment variables
 const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];

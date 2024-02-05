@@ -1,8 +1,8 @@
-const Command = require('../utils/Command');
+const Command = require('../../utils/Command');
 const commandHandlers = require('.'); // Import all command handlers from the current directory (commands/index.js)
-const { aliases } = require('../config/aliases');
-const logger = require('../utils/logger');
-const { getRandomErrorMessage } = require('../config/errorMessages');
+const { aliases } = require('../../config/aliases');
+const logger = require('../../utils/logger');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
 
 class HelpCommand extends Command {
     constructor() {

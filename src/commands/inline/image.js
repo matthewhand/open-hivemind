@@ -1,7 +1,7 @@
 const axios = require('axios');
-const logger = require('../utils/logger');
-const Command = require('../utils/Command');
-const { getRandomErrorMessage } = require('../config/errorMessages');
+const logger = require('../../utils/logger');
+const Command = require('../../utils/Command');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
 
 class ImageCommand extends Command {
     constructor() {

@@ -1,8 +1,8 @@
-const { shouldUserBeBanned } = require('../utils/llmCommunication');
-const { startVotingProcess, checkVotingEligibility } = require('../utils/votingUtils');
-const logger = require('../utils/logger');
-const fetchConversationHistory = require('../utils/fetchConversationHistory');
-const Command = require('../utils/Command');
+const { shouldUserBeBanned } = require('../../utils/llmCommunication');
+const { startVotingProcess, checkVotingEligibility } = require('../../utils/votingUtils');
+const logger = require('../../utils/logger');
+const fetchConversationHistory = require('../../utils/fetchConversationHistory');
+const Command = require('../../utils/Command');
 
 class BanCommand extends Command {
     constructor() {

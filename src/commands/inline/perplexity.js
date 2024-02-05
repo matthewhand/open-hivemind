@@ -1,7 +1,7 @@
 // commands/perplexity.js
 const axios = require('axios');
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
 
 class PerplexityCommand extends Command {
     constructor() {

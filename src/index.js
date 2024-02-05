@@ -1,4 +1,3 @@
-// index.js
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { debugEnvVars } = require('./config/debugEnvVars');
@@ -15,12 +14,21 @@ const discordSettings = {
 };
 
 async function initialize() {
-    initializeFetch();
-    const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-    startWebhookServer(webhookPort);
+    try {
+        initializeFetch();
+        logger.info('Fetch initialized successfully.');
 
-    registerCommands(bot.client); // Register commands using the bot client
+        const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+        startWebhookServer(webhookPort);
+        logger.info(`Webhook server started on port: ${webhookPort}`);
+
+        await registerCommands(bot.client); // Register commands using the bot client
+        logger.info('Commands registered successfully.');
+    } catch (error) {
+        logger.error('Error during initialization:', error);
+        process.exit(1); // Exit the process in case of critical failure
+    }
 }
 
 debugEnvVars();
-initialize().catch(error => logger.error('Error during initialization:', error));
+initialize().catch(error => logger.error('Unhandled error during initialization:', error));

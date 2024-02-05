@@ -1,7 +1,7 @@
 const axios = require('axios');
-const logger = require('../utils/logger');
-const { getRandomErrorMessage } = require('../config/errorMessages');
-const Command = require('../utils/Command');
+const logger = require('../../utils/logger');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
+const Command = require('../../utils/Command');
 
 class FlowiseCommand extends Command {
     constructor() {

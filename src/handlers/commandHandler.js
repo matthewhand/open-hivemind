@@ -1,10 +1,10 @@
 const { aliases } = require('../config/aliases');
-const commands = require('../commands'); // Assuming this imports your command modules
+const commands = require('../commands/inline'); 
 
-// Function to parse command content
-const logger = require('../utils/logger'); // Import logger utility
 
-// Rest of your code...
+const logger = require('../utils/logger'); 
+
+
 function parseCommand(commandContent) {
     logger.debug(`Parsing command content: ${commandContent}`);
     

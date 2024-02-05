@@ -1,7 +1,7 @@
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
-const { checkMutingEligibility, muteMember, parseDuration } = require('../utils/mutingUtils');
-const { getRandomErrorMessage } = require('../config/errorMessages');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
+const { checkMutingEligibility, muteMember, parseDuration } = require('../../utils/mutingUtils');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
 
 class MuteCommand extends Command {
     constructor() {

@@ -1,5 +1,5 @@
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
 const { MessageEmbed, MessageCollector } = require('discord.js');
 
 class ReportCommand extends Command {

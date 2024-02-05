@@ -1,8 +1,8 @@
 // commands/quivr.js
 const axios = require('axios');
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
-const { getRandomErrorMessage } = require('../config/errorMessages');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
 
 class QuivrCommand extends Command {
     constructor() {

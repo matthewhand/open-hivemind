@@ -1,7 +1,7 @@
-const Command = require('../utils/Command');
+const Command = require('../../utils/Command');
 const { Ollama } = require('ollama-node');
-const { OLLAMA_DEFAULT_MODEL } = require('../config/constants');
-const logger = require('../utils/logger');
+const { OLLAMA_DEFAULT_MODEL } = require('../../config/constants');
+const logger = require('../../utils/logger');
 
 class OllamaCommand extends Command {
     constructor() {

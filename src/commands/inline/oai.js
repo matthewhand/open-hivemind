@@ -1,9 +1,9 @@
-const Command = require('../utils/Command');
-const logger = require('../utils/logger');
-const { getRandomErrorMessage } = require('../config/errorMessages');
-const { splitMessage } = require('../utils/common');
-const fetchConversationHistory = require('../utils/fetchConversationHistory');
-const oaiApi = require('../services/oaiApi');
+const Command = require('../../utils/Command');
+const logger = require('../../utils/logger');
+const { getRandomErrorMessage } = require('../../config/errorMessages');
+const { splitMessage } = require('../../utils/common');
+const fetchConversationHistory = require('../../utils/fetchConversationHistory');
+const oaiApi = require('../../services/oaiApi');
 
 class OaiCommand extends Command {
     constructor() {
