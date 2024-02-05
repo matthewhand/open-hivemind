@@ -16,7 +16,7 @@ const discordSettings = {
 
 async function initialize() {
     initializeFetch();
-    const webhookPort = process.env.WEB SERVER_PORT || 3000;
+    const webhookPort = process.env.WEB_SERVER_PORT || 3000;
     startWebhookServer(webhookPort);
 
     registerCommands(bot.client); // Register commands using the bot client
