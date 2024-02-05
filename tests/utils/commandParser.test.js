@@ -12,13 +12,9 @@ describe('parseCommand', () => {
     //     const commandContent = '!help';
     //     const result = parseCommand(commandContent);
     //     console.log(result); // This will output to the test run console
-    //     expect(result).toEqual({
-    //         commandName: 'help',
-    //         action: '',
-    //         args: ''
-    //     });
+    //     expect(result.commandName).toEqual('help');
     // });
-    
+
     test('parses command with multiple arguments', () => {
         const commandContent = '!ban user123 for breaking rules';
         expect(parseCommand(commandContent)).toEqual({

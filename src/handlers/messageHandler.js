@@ -53,9 +53,14 @@ async function messageHandler(message) {
     try {
         const modifiedMessageContent = `!${handlerAlias} ${message.content}`;
         logger.debug(`Delegating to commandHandler with modifiedMessageContent: ${modifiedMessageContent}`);
+
+        // Debugging the response from commandHandler
         const response = await commandHandler(message, modifiedMessageContent);
+        logger.debug(`Response from commandHandler: ${response}`);
+
         if (response) {
             addToResponseQueue(response, message.channel);
+            logger.debug(`Added response to queue for channel: ${message.channel.id}`);
         }
 
         // Follow-up request logic
@@ -72,6 +77,7 @@ async function messageHandler(message) {
         logger.info(`Handled message: ${message.id}`);
     } catch (error) {
         logger.error(`Error in messageHandler for message: ${message.id}: ${error}`);
+        logger.debug(`Error details: ${error.stack}`); // Debugging the error stack
     }
 }
 
