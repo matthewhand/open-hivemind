@@ -2,7 +2,7 @@ const { commandHandler, parseCommand } = require('../../src/handlers/commandHand
 
 describe('commandHandler Tests', () => {
     test('flowise command is loaded and exists', () => {
-        const commands = require('../../src/commands');
+        const commands = require('../../src/commands/inline');
         if (!commands['flowise']) {
             console.debug('Available commands:', Object.keys(commands));
         }
