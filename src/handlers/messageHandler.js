@@ -6,56 +6,18 @@ const logger = require('../utils/logger');
 const { config } = require('../utils/configUtils');
 const { getRandomDelay } = require('../utils/common');
 
-// Response batching logic
-const responseQueue = [];
-const maxMessageLength = 2000;
-const continuationString = '...';
-let responseTimer = null;
-
-function addToResponseQueue(messageResponse) {
-    if (messageResponse) {
-        responseQueue.push(messageResponse);
-    }
-
-    if (!responseTimer) {
-        responseTimer = setTimeout(sendBatchedResponses, 30000);
-    }
-}
-
-function sendBatchedResponses() {
-    let batchedResponse = responseQueue.join('\n');
-    sendInChunks(batchedResponse);
-    responseQueue.length = 0;
-    clearTimeout(responseTimer);
-    responseTimer = null;
-}
-
-function sendInChunks(text) {
-    let start = 0;
-    while (start < text.length) {
-        let end = Math.min(start + maxMessageLength, text.length);
-        const chunk = text.substring(start, end);
-        // Send chunk to Discord channel
-        // channel.send(chunk);
-        start = end;
-    }
-}
-
 async function messageHandler(message) {
     if (message.author.bot) {
         logger.debug('Ignoring bot message');
         return;
     }
 
-    logger.debug(`Received message: ${message.content}`);
-    
+    logger.info(`Received message: ${message.content}`);
+
     try {
-        // Directly use message content without modification
-        const response = await commandHandler(message, message.content);
-        if (response) {
-            addToResponseQueue(response);
-            logger.debug(`Added response to queue`);
-        }
+        // Call commandHandler to directly handle the command execution and response
+        // This assumes commandHandler itself takes care of sending responses back to the Discord channel
+        await commandHandler(message, message.content);
 
         // Follow-up request logic
         const delay = getRandomDelay(config.FOLLOW_UP_MIN_DELAY, config.FOLLOW_UP_MAX_DELAY);
@@ -71,6 +33,8 @@ async function messageHandler(message) {
         logger.info(`Handled message: ${message.id}`);
     } catch (error) {
         logger.error(`Error in messageHandler for message: ${message.id}`, error);
+        // Ensure to provide feedback to the user that an error occurred
+        message.reply('An error occurred while processing your command. Please try again later.');
     }
 }
 

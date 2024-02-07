@@ -6,6 +6,7 @@ const { parseCommand } = require('../utils/commandParser');
 async function commandHandler(message, commandContent) {
     try {
         const resolvedCommand = parseCommand(commandContent);
+        logger.info(`resolved command: ${resolvedCommand}`);
 
         if (resolvedCommand) {
             const { commandName, action, args } = resolvedCommand;
