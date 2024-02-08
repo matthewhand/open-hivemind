@@ -28,7 +28,8 @@ class OaiCommand extends Command {
                 return await message.reply('Error: Unable to fetch conversation history.');
             }
 
-            const requestBody = oaiApi.buildRequestBody(historyMessages, args, message.author.id, action);
+            const model = action || constants.LLM_MODEL;
+            const requestBody = oaiApi.buildRequestBody(historyMessages, args, message.author.id, model);
             logger.debug(`[oai] Request body: ${JSON.stringify(requestBody)}`);
 
             const responseData = await oaiApi.sendRequest(requestBody);
