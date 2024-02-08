@@ -10,8 +10,8 @@ class MemGPTCommand extends Command {
 
     async execute(message, args=null, action=null) {
         try {
-            const agentId = args[0]; // Assuming first argument is the agentId
-            const messageContent = args.slice(1).join(' '); // Rest of the arguments form the message
+            const agentId = action;
+            const messageContent = args;
 
             const requestUrl = `${process.env.MEMGPT_ENDPOINT_URL}/api/agents/message`;
             const userId = process.env.MEMGPT_USER_ID;

@@ -23,7 +23,7 @@ describe('commandHandler Tests', () => {
     test('handles oai command execution', async () => {
         const mockMessage = { content: '!oai test query', reply: jest.fn() };
         await commandHandler(mockMessage, mockMessage.content);
-        expect(mockCommands.oai.execute).toHaveBeenCalledWith(mockMessage, '', 'test query');
+        expect(mockCommands.oai.execute).toHaveBeenCalledWith(mockMessage, 'test query', '');
     });
 
     // Add more tests as needed...

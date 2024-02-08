@@ -10,6 +10,13 @@ class QuivrCommand extends Command {
     }
 
     async execute(message, args=null, action=null) {
+
+        if (!args) {
+            logger.warn('No query provided for Quivr.');
+            message.reply('Please provide a query for Quivr.');
+            return;
+        }
+
         let [chatCategory, ...queryParts] = args.split(' ');
         const query = queryParts.join(' ');
 

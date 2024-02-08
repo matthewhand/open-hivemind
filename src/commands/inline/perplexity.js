@@ -9,7 +9,6 @@ class PerplexityCommand extends Command {
     }
 
     async execute(message, args=null, action=null) {
-        const args = message.content.split(' ').slice(1).join(' ');
 
         if (!args) {
             logger.warn('No query provided for Perplexity.');
