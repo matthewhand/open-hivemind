@@ -20,8 +20,7 @@ class OaiCommand extends Command {
                 return await message.reply('Error: No arguments provided.');
             }
 
-            const argsArray = args.trim().split(/\s+/);
-            const userMessage = argsArray.slice(1).join(' ');
+            const userMessage = args;
 
             logger.debug(`[oai] Action: ${action}, User Message: ${userMessage}`);
 
