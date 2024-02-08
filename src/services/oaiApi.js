@@ -30,9 +30,6 @@ const oaiApi = {
     },
 
     buildRequestBody(historyMessages, userMessage, botUserId, model = 'gpt-3.5-turbo') {
-        if (model === '') {
-            model = 'gpt-3.5-turbo'; // Ensure there's a default model
-        }
 
         if (!historyMessages || !Array.isArray(historyMessages)) {
             throw new Error('Invalid history messages provided for building request body.');
@@ -49,7 +46,7 @@ const oaiApi = {
         });
 
         // Append the current user's message directly to chat history
-        chatHistory += `<@${botUserId}>: ${userMessage}`;
+        chatHistory += `\n<@${botUserId}>: ${userMessage}\n`;
 
         // Prompt the machine
         chatHistory += `<YOU>: `;
