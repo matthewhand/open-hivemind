@@ -30,35 +30,40 @@ const oaiApi = {
     },
 
     buildRequestBody(historyMessages, userMessage, botUserId, model = 'gpt-3.5-turbo') {
-        // Validate history messages before building the request body
         if (model === '') {
-            model = 'gpt-3.5-turbo'; // TODO tidy up
+            model = 'gpt-3.5-turbo'; // Ensure there's a default model
         }
+
         if (!historyMessages || !Array.isArray(historyMessages)) {
             throw new Error('Invalid history messages provided for building request body.');
         }
-        
-        let requestBody = {
-            model: model,
-            messages: [{ role: 'system', content: constants.SYSTEM_PROMPT }]
-        };
 
-        let currentSize = JSON.stringify(requestBody).length;
+        let chatHistory = '';
         historyMessages.slice().reverse().forEach(msg => {
-            const formattedMessage = `<@${msg.userId}>: ${msg.content}`;
-            const messageObj = { role: 'user', content: formattedMessage };
-            currentSize += JSON.stringify(messageObj).length;
-
-            if (currentSize <= constants.MAX_CONTENT_LENGTH) {
-                requestBody.messages.push(messageObj);
+            // Format includes user ID and message content
+            const formattedMessage = `<@${msg.userId}>: ${msg.content}\n`;
+            // Check if adding this message exceeds the MAX_CONTENT_LENGTH
+            if ((chatHistory.length + formattedMessage.length + userMessage.length + 1) <= constants.MAX_CONTENT_LENGTH) {
+                chatHistory += formattedMessage;
             }
         });
 
-        // Append the user's message and a placeholder for the bot's response
-        requestBody.messages.push({ role: 'user', content: userMessage });
-        requestBody.messages.push({ role: 'user', content: `<@${botUserId}>: ` });
+        // Append the current user's message directly to chat history
+        chatHistory += `<@${botUserId}>: ${userMessage}`;
 
-        // Log the built request body for debugging
+        // Prompt the machine
+        chatHistory += `<YOU>: `;
+
+        let requestBody = {
+            model: model,
+            messages: [
+                // System prompt to provide context or instructions for the AI
+                { role: 'system', content: constants.SYSTEM_PROMPT },
+                // The entire chat history, including the current message, as a single 'user' message
+                { role: 'user', content: chatHistory }
+            ]
+        };
+
         logger.debug(`OAI Request Body Built: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
