@@ -20,9 +20,7 @@ class OaiCommand extends Command {
                 return await message.reply('Error: No arguments provided.');
             }
 
-            const userMessage = args;
-
-            logger.debug(`[oai] Action: ${action}, User Message: ${userMessage}`);
+            logger.debug(`[oai] Action: ${action}, User Message: ${args}`);
 
             const historyMessages = await fetchConversationHistory(message.channel);
             if (!historyMessages || historyMessages.length === 0) {
@@ -30,7 +28,7 @@ class OaiCommand extends Command {
                 return await message.reply('Error: Unable to fetch conversation history.');
             }
 
-            const requestBody = oaiApi.buildRequestBody(historyMessages, userMessage, message.author.id, action);
+            const requestBody = oaiApi.buildRequestBody(historyMessages, args, message.author.id, action);
             logger.debug(`[oai] Request body: ${JSON.stringify(requestBody)}`);
 
             const responseData = await oaiApi.sendRequest(requestBody);

@@ -53,7 +53,7 @@ const oaiApi = {
 
         // Append the user's message and a placeholder for the bot's response
         requestBody.messages.push({ role: 'user', content: userMessage });
-        requestBody.messages.push({ role: 'assistant', content: `<@${botUserId}>: ` });
+        requestBody.messages.push({ role: 'user', content: `<@${botUserId}>: ` });
 
         // Log the built request body for debugging
         logger.debug(`OAI Request Body Built: ${JSON.stringify(requestBody, null, 2)}`);
