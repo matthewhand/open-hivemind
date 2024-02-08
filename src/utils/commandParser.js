@@ -20,7 +20,7 @@ function parseCommand(commandContent) {
             // Adjusted regex to handle both types of mentions
             const argsWithoutMention = commandContent.replace(/<@!?(\d+)>\s*/, '');
             logger.debug(`Defaulting to command: ${defaultCommand} with args: ${argsWithoutMention}`);
-            return { commandName: defaultCommand, action: '', args: argsWithoutMention };
+            return { commandName: defaultCommand, action: null, args: argsWithoutMention };
         }
     }
 

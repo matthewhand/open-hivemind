@@ -31,6 +31,9 @@ const oaiApi = {
 
     buildRequestBody(historyMessages, userMessage, botUserId, model = 'gpt-3.5-turbo') {
         // Validate history messages before building the request body
+        if (model === '') {
+            model = 'gpt-3.5-turbo'; // TODO tidy up
+        }
         if (!historyMessages || !Array.isArray(historyMessages)) {
             throw new Error('Invalid history messages provided for building request body.');
         }
