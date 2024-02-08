@@ -11,7 +11,7 @@ class OaiCommand extends Command {
         super('oai', 'Interact with OpenAI models. Usage: !oai:[model] [query]');
     }
 
-    async execute(message, args) {
+    async execute(message, args, action=null) {
         try {
             logger.debug(`[oai] Received args: ${args}`);
 
@@ -21,7 +21,6 @@ class OaiCommand extends Command {
             }
 
             const argsArray = args.trim().split(/\s+/);
-            const action = argsArray[0]; // action may override the model
             const userMessage = argsArray.slice(1).join(' ');
 
             logger.debug(`[oai] Action: ${action}, User Message: ${userMessage}`);

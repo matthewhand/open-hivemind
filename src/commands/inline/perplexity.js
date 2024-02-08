@@ -8,7 +8,7 @@ class PerplexityCommand extends Command {
         super('perplexity', 'Searches online using perplexity.ai for the provided text. Usage: !perplexity [text]');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         const args = message.content.split(' ').slice(1).join(' ');
 
         if (!args) {

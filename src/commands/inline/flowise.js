@@ -8,7 +8,7 @@ class FlowiseCommand extends Command {
         super('flowise', 'Sends a query to the Flowise API. Usage: !flowise:[action] [query]');
     }
 
-    async execute(message, args) {
+    async execute(message, args=null, action=null) {
         try {
             let action = '';
             let query = '';

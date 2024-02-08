@@ -8,7 +8,7 @@ class MuteCommand extends Command {
         super('mute', 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         try {
             const args = message.content.split(' ').slice(1);
             const userIdToMute = args[0];

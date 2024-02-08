@@ -9,7 +9,7 @@ class QuivrCommand extends Command {
         super('quivr', 'Sends a query to the Quivr API. Usage: !quivr:[chatCategory] [query]');
     }
 
-    async execute(message, args) {
+    async execute(message, args=null, action=null) {
         let [chatCategory, ...queryParts] = args.split(' ');
         const query = queryParts.join(' ');
 

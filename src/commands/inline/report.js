@@ -7,7 +7,7 @@ class ReportCommand extends Command {
         super('report', 'User reports about issues or rule violations. Usage: !report');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         const filter = m => m.author.id === message.author.id;
         message.channel.send('Please describe the issue you are reporting within the next 30 seconds:');
 

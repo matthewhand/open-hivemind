@@ -8,7 +8,7 @@ class ImageCommand extends Command {
         super('image', 'Analyzes an image using a specified AI model. Usage: !image [prompt]');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         try {
             const attachments = message.attachments;
             if (attachments.size > 0) {

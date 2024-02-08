@@ -8,7 +8,7 @@ class OllamaCommand extends Command {
         super('ollama', 'Generates a response using the Ollama model. Usage: !ollama [message]');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         try {
             const parts = message.content.split(' ');
             const command = parts[0];

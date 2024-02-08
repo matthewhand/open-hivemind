@@ -11,7 +11,7 @@ class HelpCommand extends Command {
                     'You can also use it to get detailed help for a specific command by typing !help [command].';
     }
 
-    async execute(message, args) {
+    async execute(message, args=null, action=null) {
         try {
             let helpMessage = this.help + '\n\n';
 

@@ -15,7 +15,7 @@ async function commandHandler(message, commandContent) {
 
             if (command) {
                 logger.info(`Executing command: ${commandName} with action: ${action}, args: ${args}`);
-                await command.execute(message, action, args);
+                await command.execute(message, args, action);
             } else {
                 logger.warn(`Unknown command: ${commandName}`);
                 message.reply(`Unknown command: ${commandName}`);

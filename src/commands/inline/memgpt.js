@@ -8,7 +8,7 @@ class MemGPTCommand extends Command {
         super('memgpt', 'Interacts with the MemGPT service.');
     }
 
-    async execute(message, args) {
+    async execute(message, args=null, action=null) {
         try {
             const agentId = args[0]; // Assuming first argument is the agentId
             const messageContent = args.slice(1).join(' '); // Rest of the arguments form the message

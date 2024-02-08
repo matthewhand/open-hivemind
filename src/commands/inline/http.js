@@ -17,7 +17,7 @@ class HttpCommand extends Command {
         }, {});
     }
 
-    async execute(message, args) {
+    async execute(message, args=null, action=null) {
         try {
             if (this.httpActions.length === 0) {
                 message.reply('No HTTP actions are currently available.');

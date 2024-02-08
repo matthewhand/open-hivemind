@@ -9,7 +9,7 @@ class BanCommand extends Command {
         super('ban', 'Initiates a ban voting process for a user. Usage: !ban @username or !ban userID');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         try {
             const mentionedUser = message.mentions.users.first();
             const userIdToBan = mentionedUser ? mentionedUser.id : message.content.split(' ')[1];

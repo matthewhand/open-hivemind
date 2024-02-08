@@ -8,7 +8,7 @@ class PythonCommand extends Command {
         super('python', 'Executes Python code blocks. Usage: !python [code]');
     }
 
-    async execute(message) {
+    async execute(message, args=null, action=null) {
         const userId = message.author.id;
         const member = await message.guild.members.fetch(userId);
         const userRoles = member.roles.cache.map(role => role.id);
