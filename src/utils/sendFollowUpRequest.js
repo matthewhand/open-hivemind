@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { config, aliases } = require('../config');
+const { constants } = require('../utils/configUtils');
 const logger = require('./logger');
 const { getRandomDelay } = require('./common');
 
@@ -10,7 +11,7 @@ async function sendFollowUpRequest(message, aliasCommand) {
 
         // Make a request to the LLM endpoint
         const response = await axios.post(config.LLM_ENDPOINT_URL, {
-            model: config.MODEL_TO_USE,
+            model: constants.LLM_MODEL,
             prompt: reflectivePrompt,
             max_tokens: 200 // Adjust as needed
         }, {
