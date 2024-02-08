@@ -6,7 +6,7 @@ const oaiApi = {
     async sendRequest(requestBody) {
         try {
             // Validate request body before sending the request
-            if (!requestBody || !requestBody.messages || !requestBody.model) {
+            if (!requestBody || !requestBody.messages) {
                 throw new Error('Invalid request body for OAI API request.');
             }
 
