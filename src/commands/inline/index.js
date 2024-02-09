@@ -20,6 +20,6 @@ commandFiles.forEach(file => {
     }
 });
 
-logger.debug('Dynamically loaded commands:', Object.keys(commands));
+logger.info('Dynamically loaded commands:', Object.keys(commands));
 
 module.exports = commands;

@@ -1,6 +1,6 @@
 jest.mock('axios');
 
-const oaiApi = require('../../src/services/oaiApi');
+const oaiApi = require('../../src/managers/oaiApi');
 const axios = require('axios');
 const constants = require('../../src/config/constants');
 const oaiCommand = require('../../src/commands/inline/oai');

@@ -11,16 +11,12 @@ class OaiCommand extends Command {
         super('oai', 'Interact with OpenAI models. Usage: !oai:[model] [query]');
     }
 
-    async execute(message, args, action=null) {
+    async execute(message, args, action=n) {
         try {
-            logger.debug(`[oai] Received args: ${args}`);
-
             if (!args || args.trim() === '') {
                 logger.warn('[oai] No arguments provided to oai command.');
                 return await message.reply('Error: No arguments provided.');
             }
-
-            logger.debug(`[oai] Action: ${action}, User Message: ${args}`);
 
             const historyMessages = await fetchConversationHistory(message.channel);
             if (!historyMessages || historyMessages.length === 0) {
@@ -30,21 +26,16 @@ class OaiCommand extends Command {
 
             const model = action || constants.LLM_MODEL;
             const requestBody = oaiApi.buildRequestBody(historyMessages, args, message.author.id, model);
-            logger.debug(`[oai] Request body: ${JSON.stringify(requestBody)}`);
 
             const responseData = await oaiApi.sendRequest(requestBody);
-            logger.debug(`[oai] Response Data: ${JSON.stringify(responseData)}`);
 
             const replyContent = this.processResponse(responseData);
-            logger.debug(`[oai] Reply Content: ${replyContent}`);
-
             if (replyContent) {
                 const messagesToSend = splitMessage(replyContent, 2000);
                 for (const msg of messagesToSend) {
                     await message.channel.send(msg);
                 }
             } else {
-                logger.warn('[oai] No reply content received');
                 await message.reply('No response received from OpenAI.');
             }
         } catch (error) {
@@ -54,37 +45,23 @@ class OaiCommand extends Command {
     }
     
     processResponse(data) {
-        if (!data) {
-            logger.warn('[oai] Received null or undefined data from the server.');
-            return 'No response from the server.';
+        if (!data || !data.choices || data.choices.length === 0 || !data.choices[0].message || !data.choices[0].message.content) {
+            logger.warn('[oai] Inadequate response data from the server.');
+            return 'No meaningful response from the server.';
         }
-    
-        if (!data.choices || data.choices.length === 0) {
-            logger.warn('[oai] Received empty choices array from the server.');
-            return 'No response from the server.';
+
+        let content = data.choices[0].message.content.trim();
+        if (/^<@\w+>: /.test(content)) {
+            content = content.replace(/^<@\w+>: /, '');
         }
-    
-        const firstChoice = data.choices[0];
-        if (!firstChoice || !firstChoice.message || !firstChoice.message.content) {
-            logger.warn('[oai] Missing content in the first choice of the response.');
-            return 'No response from the server.';
-        }
-    
-        let content = firstChoice.message.content.trim();
-        const pattern = /^<@\w+>: /;
-    
-        if (pattern.test(content)) {
-            content = content.replace(pattern, '');
-        }
-    
+
         if (content === '') {
             logger.warn('[oai] Response content is empty after processing.');
             return 'No meaningful response from the server.';
         }
-    
+
         return content;
     }
-    
 }
 
 module.exports = new OaiCommand();

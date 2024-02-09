@@ -1,7 +1,7 @@
 const OaiCommand = require('../../src/commands/inline/oai');
-const oaiApi = require('../../src/services/oaiApi');
+const oaiApi = require('../../src/managers/oaiApi');
+jest.mock('../../src/managers/oaiApi'); // Corrected path
 const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
-jest.mock('../../src/services/oaiApi');
 jest.mock('../../src/utils/fetchConversationHistory');
 
 describe('OAI Command Tests', () => {

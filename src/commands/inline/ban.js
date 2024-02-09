@@ -1,8 +1,10 @@
-const { shouldUserBeBanned } = require('../../utils/llmCommunication');
+// src/commands/inline/ban.js
 const { startVotingProcess, checkVotingEligibility } = require('../../utils/votingUtils');
 const logger = require('../../utils/logger');
-const fetchConversationHistory = require('../../utils/fetchConversationHistory');
+// Update the import to use messageUtils instead of fetchConversationHistory directly
+const { fetchConversationHistory } = require('../../utils/messageUtils'); // Updated import
 const Command = require('../../utils/Command');
+
 
 class BanCommand extends Command {
     constructor() {

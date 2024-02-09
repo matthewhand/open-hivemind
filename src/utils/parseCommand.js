@@ -1,45 +1,43 @@
+// parseCommand.js
+const logger = require('./logger'); // Adjust the path as per your project structure
+
+/**
+ * Parses a command string and extracts the command name, action, and arguments.
+ * @param {string} commandContent - The command string to parse.
+ * @returns {?{commandName: string, action: string, args: string}} - The parsed command object or null if parsing fails.
+ */
 function parseCommand(commandContent) {
-    logger.debug(`Parsing command content: ${commandContent}`);
-
-        // Hardcoding a response for the "!help" command
-        if (commandContent === '!help') {
-            logger.debug('DEBUG !help');    
-            return {
-                commandName: 'help',
-                action: '',
-                args: ''
-            };
-        } else {
-            logger.debug('DEBUG not !help');    
-        }
-
-    if (!commandContent.startsWith('!')) {
-        logger.debug('No command pattern matched in the content');
-        return null;
+    // Check for non-empty command content
+    if (!commandContent) {
+        logger.warn('No command content provided to parseCommand');
+        return null; // Early return for empty command strings
     }
 
-    const parts = commandContent.slice(1).split(' '); // Remove '!' and split by space
+    // Logging the attempt to parse the command content
+    logger.debug(`Attempting to parse command content: "${commandContent}"`);
 
-    if (parts.length === 0) {
-        logger.debug('No command pattern matched in the content');
-        return null;
+    // Regular expression to match the command pattern: !commandName:action args
+    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
+    const matches = commandContent.match(commandRegex);
+
+    if (matches) {
+        // Extracting and trimming command parts
+        const [, commandName, action = '', args = ''] = matches.map(match => match.trim());
+
+        // Debug log for the parsed command details
+        logger.debug(`Parsed command - Name: "${commandName}", Action: "${action}", Args: "${args}"`);
+
+        // Returning the structured command object
+        return {
+            commandName: commandName.toLowerCase(), // Ensuring command name is case-insensitive
+            action: action.toLowerCase(), // Lowercasing action for consistency
+            args // Keeping arguments as a single string
+        };
     }
 
-    const firstPart = parts[0].split(':'); // Split first part by ':'
-    const commandName = firstPart[0].toLowerCase();
-    const action = firstPart.length > 1 ? firstPart[1].toLowerCase() : '';
-    
-    // If there are no more parts after the command and action, return with empty args
-    if (parts.length === 1) {
-        logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ''`);
-        return { commandName, action, args: '' };
-    }
-
-    parts.shift(); // Remove the command and action part
-    const args = parts.join(' ').trim();
-
-    logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ${args}`);
-    return { commandName, action, args };
+    // Log if the command content did not match the expected pattern
+    logger.debug('Command content did not match expected pattern and no default command could be applied.');
+    return null; // Returning null if no command could be parsed
 }
 
 module.exports = { parseCommand };
