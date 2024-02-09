@@ -3,14 +3,17 @@ const axios = require('axios');
 const logger = require('./logger');
 const { splitMessage } = require('./common');
 const loadServerPolicy = require('./loadServerPolicy');
-const configurationManager = require('../config/configurationManager'); // Ensure this module is correctly set up
-const { aliases } = require('../config/aliases'); // Adjust path as necessary
+const configurationManager = require('../config/configurationManager');
+const { aliases } = require('../config/aliases');
 
-// Consolidating sendLlmRequest, fetchConversationHistory, sendFollowUpRequest, and shouldUserBeBanned
-
+// Enhanced sendLlmRequest function with prioritized logging
 async function sendLlmRequest(message, prompt) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
+
+    // Logging the initiation of LLM request
+    logger.info(`Sending LLM request for model: ${LLM_MODEL} with prompt: ${prompt.substring(0, 50)}...`);
+
     try {
         const response = await axios.post(LLM_ENDPOINT_URL, {
             prompt: prompt,
@@ -19,17 +22,25 @@ async function sendLlmRequest(message, prompt) {
             headers: { 'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}` }
         });
 
+        // Check and log if the response is successful
         if (response.data) {
             const replyContent = response.data.choices[0].text.trim();
+            logger.info(`LLM request successful. Response length: ${replyContent.length} characters`);
+
             const messagesToSend = splitMessage(replyContent, 2000);
             for (const msg of messagesToSend) {
                 await message.channel.send(msg);
             }
+        } else {
+            // Log if response is successful but missing expected data
+            logger.warn('LLM request returned a successful response but did not contain expected data');
         }
     } catch (error) {
-        logger.error(`Error in sendLlmRequest: ${error.message}`, error);
+        // Detailed logging when an error occurs
+        logger.error(`Error in sendLlmRequest: ${error.message}. Prompt: ${prompt.substring(0, 50)}...`, error);
     }
 }
+
 
 async function fetchConversationHistory(channel) {
     try {
