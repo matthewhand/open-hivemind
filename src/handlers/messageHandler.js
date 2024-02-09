@@ -33,7 +33,7 @@ async function messageHandler(message) {
         if (isValidCommand(message.content, botId)) {
             logger.info('Valid command identified, proceeding with commandHandler.');
             await commandHandler(message);
-        } else if (messageResponseManager.shouldReplyToMessage(botId, message)) {
+        } else if (manager.shouldReplyToMessage(botId, message)) {
             logger.info('Decision to respond made. Generating response.');
             await sendLlmRequest(message, "Response based on dynamic decision making.");
         }
