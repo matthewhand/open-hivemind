@@ -1,12 +1,26 @@
 // src/handlers/messageHandler.js
 const logger = require('../utils/logger');
-const { isValidCommand } = require('../utils/commandUtils');
+// const { isValidCommand } = require('../utils/commandUtils');
 const { commandHandler } = require('./commandHandler');
 const { sendLlmRequest } = require('../utils/messageUtils');
 const { DecideToRespond } = require('../managers/responseManager');
 const { config } = require('../config/configUtils');
 
 const decisionManager = new DecideToRespond();
+
+// TODO better smarts here...
+/**
+ * Checks if a given message content represents a valid command.
+ * @param {string} content - The content of the message to check.
+ * @param {string} botId - The ID of the bot to check for mentions.
+ * @returns {boolean} - Returns true if the message content is a valid command.
+ */
+function isValidCommand(content, botId) {
+    // Basic implementation: check if the message starts with a command prefix
+    // You might want to extend this to check for bot mentions or specific command formats
+    const commandPrefix = '!'; // Assuming commands start with '!'
+    return content.startsWith(commandPrefix);
+}
 
 async function messageHandler(message) {
     // Corrected bot-to-bot mode check and logic
