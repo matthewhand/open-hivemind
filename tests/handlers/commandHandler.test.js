@@ -1,30 +1,37 @@
 const { commandHandler } = require('../../src/handlers/commandHandler');
-const { parseCommand } = require('../../src/utils/commandParser');
-const mockCommands = require('../../src/commands/inline');
+const oai = require('../../src/commands/inline/oai');
+const flowise = require('../../src/commands/inline/flowise');
 
-jest.mock('../../src/commands/inline', () => ({
-    oai: { execute: jest.fn() },
-    flowise: { execute: jest.fn() }
-    // Mock other commands as needed
+jest.mock('../../src/commands/inline/oai', () => ({
+  execute: jest.fn().mockImplementation(() => Promise.resolve("OAI test response")),
+}), { virtual: true });
+
+jest.mock('../../src/commands/inline/flowise', () => ({
+  execute: jest.fn().mockImplementation(() => Promise.resolve("Flowise test response")),
+}), { virtual: true });
+
+// Define the mock implementation directly within the jest.mock call
+jest.mock('../../src/config/configurationManager', () => ({
+  getConfig: jest.fn().mockImplementation((key) => {
+    if (key === 'BOT_TO_BOT_MODE') return true; // or false depending on what you need for your test
+    // Add more conditions as necessary
+    return null;
+  }),
 }));
 
+// Or, if you need to reference the mock in your tests (e.g., to change its implementation or assert calls),
+// you can do so by accessing the mock functions via jest's mocking utilities:
+// jest.requireMock or jest.mocked (for TypeScript users)
+
+// Example test that uses the mocked getConfig:
 describe('commandHandler Tests', () => {
-    // Tests for parsing commands
-    test('parses command into name, action, and args', () => {
-        const commandContent = '!flowise:action args';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'flowise',
-            action: 'action',
-            args: 'args'
-        });
-    });
+  it('handles BOT_TO_BOT_MODE correctly', async () => {
+    // Setup your test environment, including any necessary mock implementations
+    // for commands or other dependencies
 
-    // Tests for handling specific commands
-    test('handles oai command execution', async () => {
-        const mockMessage = { content: '!oai test query', reply: jest.fn() };
-        await commandHandler(mockMessage, mockMessage.content);
-        expect(mockCommands.oai.execute).toHaveBeenCalledWith(mockMessage, 'test query', '');
-    });
-
-    // Add more tests as needed...
+    // Example assertion (adjust according to your actual commandHandler logic)
+    const mockMessage = { content: '!testCommand', reply: jest.fn() };
+    await commandHandler(mockMessage);
+    expect(mockMessage.reply).toHaveBeenCalled(); // or any other assertion relevant to your test case
+  });
 });

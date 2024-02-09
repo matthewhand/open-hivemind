@@ -1,20 +1,9 @@
+// Assuming configurationManager.js exports a getConfig method to access specific config values
 const { parseCommand } = require('../../src/utils/commandParser');
 const logger = require('../../src/utils/logger');
-
-// // Mock the logger to prevent actual logging during tests
-// jest.mock('../../src/utils/logger', () => ({
-//     debug: jest.fn(),
-// }));
+const configurationManager = require('../../src/config/configurationManager');
 
 describe('parseCommand', () => {
-
-    // test('parses basic command without arguments', () => {
-    //     const commandContent = '!help';
-    //     const result = parseCommand(commandContent);
-    //     console.log(result); // This will output to the test run console
-    //     expect(result.commandName).toEqual('help');
-    // });
-
     test('parses command with multiple arguments', () => {
         const commandContent = '!ban user123 for breaking rules';
         expect(parseCommand(commandContent)).toEqual({
@@ -23,7 +12,7 @@ describe('parseCommand', () => {
             args: 'user123 for breaking rules'
         });
     });
-    
+
     test('parses command with action and arguments', () => {
         const commandContent = '!user:add user123 admin';
         expect(parseCommand(commandContent)).toEqual({
@@ -32,6 +21,7 @@ describe('parseCommand', () => {
             args: 'user123 admin'
         });
     });
+    
     test('parses command with special characters in arguments', () => {
         const commandContent = '!message @user123 👋 Hello!';
         expect(parseCommand(commandContent)).toEqual({

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { isUserAllowed, isRoleAllowed } = require('../../utils/permissions');
+const configManager = require('../../config/configurationManager');
 
 // Retrieve allowed users and roles from environment variables
 const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];
@@ -9,15 +10,21 @@ const nonOverridableEnvVars = new Set(['CLIENT_ID', 'DISCORD_TOKEN', 'GUILD_ID']
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('config')
-        .setDescription('Updates the bot configuration.')
-        .addStringOption(option =>
-            option.setName('setting')
-                .setDescription('The configuration setting to update')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('value')
-                .setDescription('The new value for the setting')
-                .setRequired(true)),
+        .setDescription('Updates or saves the bot configuration.')
+        .addSubcommand(subcommand =>
+            subcommand.setName('update')
+                .setDescription('Updates a configuration setting.')
+                .addStringOption(option =>
+                    option.setName('setting')
+                        .setDescription('The configuration setting to update')
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('value')
+                        .setDescription('The new value for the setting')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand.setName('save')
+                .setDescription('Saves the current configuration to the file.')),
 
     async execute(interaction) {
         const userId = interaction.user.id;
@@ -28,19 +35,22 @@ module.exports = {
             return;
         }
 
-        const setting = interaction.options.getString('setting');
-        const value = interaction.options.getString('value');
+        if (interaction.options.getSubcommand() === 'update') {
+            const setting = interaction.options.getString('setting');
+            const value = interaction.options.getString('value');
 
-        if (nonOverridableEnvVars.has(setting)) {
-            await interaction.reply({ content: `The setting ${setting} cannot be overridden.`, ephemeral: true });
-            return;
+            if (nonOverridableEnvVars.has(setting)) {
+                await interaction.reply({ content: `The setting ${setting} cannot be overridden.`, ephemeral: true });
+                return;
+            }
+
+            // Update the configuration using ConfigurationManager
+            configManager.setConfig(setting, value);
+            await interaction.reply({ content: `Configuration updated: ${setting} is now ${value}.`, ephemeral: true });
+        } else if (interaction.options.getSubcommand() === 'save') {
+            // Save the current configuration to file
+            configManager.saveConfig();
+            await interaction.reply({ content: 'Configuration saved successfully.', ephemeral: true });
         }
-
-        if (!(setting in process.env)) {
-            await interaction.reply({ content: `Invalid setting. Make sure the setting name is correct.`, ephemeral: true });
-            return;
-        }
-
-        await interaction.reply({ content: `Configuration updated: ${setting} is now ${value} (Note: Changes might require a bot restart to take effect)`, ephemeral: true });
     }
 };

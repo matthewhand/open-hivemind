@@ -1,30 +1,41 @@
 const logger = require('./logger');
-const config = require('../config'); // Ensure correct import path
+const configManager = require('../config/configurationManager');
 
 function parseCommand(commandContent) {
-    logger.debug(`Parsing command content: ${commandContent}`);
+    
+    if (!commandContent) {
+        logger.warn('No command content provided to parseCommand');
+        return null; // Or handle as appropriate
+    }
+    
+    // Simplify logging by summarizing the parsing attempt
+    logger.debug(`Attempting to parse command content: "${commandContent}"`);
 
-    const commandRegex = /^!(\w+)(?::(\w+))?\s+(.*)/;
+    // Define regex for command parsing: !commandName:action args
+    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
     const matches = commandContent.match(commandRegex);
 
     if (matches) {
-        const commandName = matches[1].toLowerCase();
-        const action = matches[2] || '';
-        const args = matches[3].trim();
+        // Destructure matches with sensible defaults
+        const [, commandName, action = '', args = ''] = matches.map(match => match?.trim() || '');
 
-        logger.debug(`Parsed command - Name: ${commandName}, Action: ${action}, Args: ${args}`);
-        return { commandName, action, args };
+        logger.debug(`Parsed command - Name: "${commandName}", Action: "${action}", Args: "${args}"`);
+        return { commandName: commandName.toLowerCase(), action, args };
     } else {
-        const defaultCommand = config.defaultCommand || 'oai';
-        if (defaultCommand) {
-            // Adjusted regex to handle both types of mentions
-            const argsWithoutMention = commandContent.replace(/<@!?(\d+)>\s*/, '');
-            logger.debug(`Defaulting to command: ${defaultCommand} with args: ${argsWithoutMention}`);
-            return { commandName: defaultCommand, action: null, args: argsWithoutMention };
+        // Fallback to a default command if specified in the configuration
+        const defaultCommand = configManager.getConfig('defaultCommand') || 'oai';
+
+        // Extract arguments by removing bot mentions
+        const argsWithoutMention = commandContent.replace(/<@!?(\d+)>\s*/, '').trim();
+
+        if (defaultCommand && argsWithoutMention) {
+            logger.debug(`Fallback to default command: "${defaultCommand}" with args: "${argsWithoutMention}"`);
+            return { commandName: defaultCommand, action: '', args: argsWithoutMention };
         }
     }
 
-    logger.debug('No command pattern matched in the content, and no default command defined');
+    // Log a clear message if no command could be parsed
+    logger.debug('Command content did not match expected pattern and no default command could be applied.');
     return null;
 }
 

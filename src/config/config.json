@@ -1,51 +1,51 @@
 {
-  "deciderConfig": {
-    "interrobangBonus": 0.2,
-    "mentionBonus": 0.4,
-    "familiarBonus": 0.6,
-    "botResponsePenalty": 0.8,
-    "timeVsResponseChance": [
-      [
-        12345,
-        0.4
+    "deciderConfig": {
+      "interrobangBonus": 0.2,
+      "mentionBonus": 0.4,
+      "familiarBonus": 0.6,
+      "botResponsePenalty": 0.8,
+      "timeVsResponseChance": [
+        [
+          12345,
+          0.4
+        ],
+        [
+          420000,
+          0.6
+        ],
+        [
+          4140000,
+          0.2
+        ]
       ],
-      [
-        420000,
-        0.6
-      ],
-      [
-        4140000,
-        0.2
+      "llmWakewords": [
+        "!help"
       ]
-    ],
-    "llmWakewords": [
-      "!help"
-    ]
-  },
-  "discordSettings": {
-    "unsolicitedChannelCap": 2
-  },
-  "enabledModules": {
-    "oai": true,
-    "flowise": true,
-    "quivr": true,
-    "memgpt": true,
-    "http": true,
-    "python": true,
-    "replicate": true,
-    "ollama": true,
-    "moderation": true,
-    "help": true
-  },
-  "userId": "123e4567-e89b-12d3-a456-426614174000",
-  "BOT_TO_BOT_MODE": true,
-  "FOLLOW_UP_ENABLED": true,
-  "FOLLOW_UP_MIN_DELAY": 120000,
-  "FOLLOW_UP_MAX_DELAY": 3600000,
-  "LLM_ENDPOINT_URL": "http://localhost:5000/v1/chat/completions",
-  "LLM_MODEL": "mistral-7b-instruct",
-  "SYSTEM_PROMPT": "You are a helpful assistant.",
-  "MAX_CONTENT_LENGTH": 4096,
-  "OLLAMA_ENABLED": "true",
-  "OLLAMA_DEFAULT_MODEL": "orca-mini"
-}
+    },
+    "discordSettings": {
+      "unsolicitedChannelCap": 2
+    },
+    "enabledModules": {
+      "oai": true,
+      "flowise": true,
+      "quivr": true,
+      "memgpt": true,
+      "http": true,
+      "python": true,
+      "replicate": true,
+      "ollama": true,
+      "moderation": true,
+      "help": true
+    },
+    "userId": "123e4567-e89b-12d3-a456-426614174000",
+    "BOT_TO_BOT_MODE": true,
+    "FOLLOW_UP_ENABLED": true,
+    "FOLLOW_UP_MIN_DELAY": 120000,
+    "FOLLOW_UP_MAX_DELAY": 3600000,
+    "LLM_ENDPOINT_URL": "http://localhost:5000/v1/chat/completions",
+    "LLM_MODEL": "mistral-7b-instruct",
+    "SYSTEM_PROMPT": "You are a helpful assistant.",
+    "MAX_CONTENT_LENGTH": 4096,
+    "OLLAMA_ENABLED": "true",
+    "OLLAMA_DEFAULT_MODEL": "orca-mini"
+  }
