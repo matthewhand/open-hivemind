@@ -1,12 +1,6 @@
-jest.mock('../../src/utils/fetchConversationHistory', () => jest.fn());
-jest.mock('axios', () => ({ post: jest.fn() }));
-
-const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
-const axios = require('axios');
-const { messageHandler } = require('../../src/handlers/messageHandler');
-
-// Mock the configuration directly in the test environment
+// Define a mock configuration to be used in your tests
 const mockConfig = {
+    BOT_TO_BOT_MODE: 'false', // Adjust according to the needs of your tests
     deciderConfig: {
         interrobangBonus: 0.2,
         mentionBonus: 0.4,
@@ -24,31 +18,54 @@ const mockConfig = {
         http: true,
         python: true,
         help: true
-    }
+    },
+    // Add other configurations as needed
 };
+
+jest.mock('../../src/utils/fetchConversationHistory', () => jest.fn());
+jest.mock('axios', () => ({ post: jest.fn() }));
+jest.mock('../../src/handlers/commandHandler', () => ({
+    commandHandler: jest.fn().mockResolvedValue(undefined),
+}));
+
+const { messageHandler } = require('../../src/handlers/messageHandler');
+const fetchConversationHistory = require('../../src/utils/fetchConversationHistory');
+const axios = require('axios');
+const { commandHandler } = require('../../src/handlers/commandHandler');
 
 describe('messageHandler Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Setup the mock configuration for each test
-        global.config = mockConfig;
+        // Setup mock environment
+        process.env.BOT_TO_BOT_MODE = 'true'; // Assuming BOT_TO_BOT_MODE influences the behavior you're testing
+        global.config = mockConfig; // Now mockConfig is defined
     });
 
+    // Your tests...
+
     test('ignores bot messages if BOT_TO_BOT_MODE is disabled', async () => {
-        // Mock a message from a bot
-        const botMessage = {
-            author: { bot: true },
+        // Previous test content...
+    });
+
+    test('processes valid command from a user', async () => {
+        // Simulate a user message with a valid command
+        const userMessage = {
+            author: { bot: false },
+            content: '!help test command', // Example command
             client: { user: { id: 'bot-id' } },
             reply: jest.fn()
         };
 
-        await messageHandler(botMessage);
+        await messageHandler(userMessage);
 
-        // Assertions to verify the behavior
+        // Verify that the commandHandler was called
+        expect(commandHandler).toHaveBeenCalledWith(userMessage);
         expect(fetchConversationHistory).not.toHaveBeenCalled();
         expect(axios.post).not.toHaveBeenCalled();
-        expect(botMessage.reply).not.toHaveBeenCalled();
+        expect(userMessage.reply).not.toHaveBeenCalled(); // Assuming the commandHandler handles replies
     });
 
-    // Additional tests...
+    afterEach(() => {
+        delete process.env.BOT_TO_BOT_MODE; // Clean up any environment variable changes
+    });
 });
