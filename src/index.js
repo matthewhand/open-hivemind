@@ -1,6 +1,5 @@
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
-const { debugEnvVars } = require('./config/debugEnvVars');
 const { initializeFetch } = require('./utils/initializeFetch');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const bot = require('./bot'); // Import the initialized bot from bot.js
