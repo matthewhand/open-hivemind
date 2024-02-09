@@ -4,80 +4,86 @@ const logger = require('./logger');
 
 class ReplyManager {
     constructor() {
+        // Initializes storage for tracking replies and message counts per channel
         this.lastReplyTimes = {};
-        this.recentMessagesCount = {};
+        this.replyCounts = {};
     }
 
+    // Records a reply's occurrence in a specific channel and updates the last reply time and count
     logReply(channelId) {
-        const now = Date.now();
-        this.lastReplyTimes[channelId] = now;
-        this.recentMessagesCount[channelId] = (this.recentMessagesCount[channelId] || 0) + 1;
-        logger.info(`Logged reply for channel ${channelId} at ${now}`);
+        const currentTime = Date.now();
+        this.lastReplyTimes[channelId] = currentTime;
+        this.replyCounts[channelId] = (this.replyCounts[channelId] || 0) + 1;
+        logger.info(`Logged reply for channel ${channelId} at ${currentTime}`);
     }
 
+    // Retrieves the time elapsed since the last reply in a specific channel
     getTimeSinceLastReply(channelId) {
-        return Date.now() - (this.lastReplyTimes[channelId] || 0);
+        const lastReplyTime = this.lastReplyTimes[channelId];
+        return lastReplyTime ? Date.now() - lastReplyTime : Infinity;
     }
 
-    shouldReply(ourUserId, message) {
-        // Direct mention always triggers a reply
-        if (this.isDirectlyMentioned(ourUserId, message)) {
-            this.logReply(message.channel.id);
-            return true;
-        }
-
-        // Unsolicited replies are controlled by a threshold
-        const unsolicitedReplyThreshold = configurationManager.getConfig('unsolicitedReplyThreshold') || 300000; // Default 5 minutes
-        if (this.getTimeSinceLastReply(message.channel.id) > unsolicitedReplyThreshold) {
-            this.logReply(message.channel.id);
-            return true;
-        }
-
-        return false;
+    // Returns the number of replies sent by the bot in a specific channel
+    getReplyCount(channelId) {
+        return this.replyCounts[channelId] || 0;
     }
 
-    isDirectlyMentioned(ourUserId, message) {
-        // Check for direct mentions or wake words
-        const wakeWords = configurationManager.getConfig('wakeWords') || [];
-        return message.mentions.users.has(ourUserId) || wakeWords.some(word => message.content.includes(word));
+    // Resets the count of replies sent by the bot in a specific channel
+    resetReplyCount(channelId) {
+        this.replyCounts[channelId] = 0;
     }
 
-    calculateDynamicFactor(channelId) {
-        // Adjust reply likelihood based on channel activity
-        const messageCount = this.recentMessagesCount[channelId] || 0;
-        return messageCount > 10 ? 0.5 : 1; // Reduce likelihood for active channels
+/**
+ * Calculates a dynamic factor for replying based on the recent activity in a channel.
+ * This method adjusts the likelihood of a reply, making the bot less likely to respond
+ * in very active channels to avoid flooding.
+ *
+ * @param {string} channelId - The ID of the Discord channel.
+ * @return {number} A dynamic factor between 0 and 1, where 1 indicates no adjustment
+ * to the reply likelihood and values less than 1 reduce the likelihood.
+ */
+calculateDynamicFactor(channelId) {
+    const recentMessageCount = this.replyCounts[channelId] || 0;
+    // Example thresholds and factors; customize based on desired behavior
+    if (recentMessageCount > 20) {
+        return 0.3; // Significantly reduce likelihood for very active channels
+    } else if (recentMessageCount > 10) {
+        return 0.6; // Moderately reduce likelihood for active channels
     }
+    return 1; // No adjustment for channels with low to moderate activity
 }
 
-// Additional utility functions can be added here for managing replies
-const ReplyManagerInstance = new ReplyManager();
+}
 
+// Singleton pattern to ensure a single instance of ReplyManager is used application-wide
+const replyManagerInstance = new ReplyManager();
+
+// Encapsulates ReplyManager methods for external usage, providing a clear interface
 function getLastReplyTime(channelId) {
-    return ReplyManagerInstance.getTimeSinceLastReply(channelId);
+    return replyManagerInstance.getTimeSinceLastReply(channelId);
 }
 
 function incrementReplyCount(channelId) {
-    ReplyManagerInstance.logReply(channelId);
+    replyManagerInstance.logReply(channelId);
 }
 
+function getReplyCount(channelId) {
+    return replyManagerInstance.getReplyCount(channelId);
+}
+
+function resetReplyCount(channelId) {
+    replyManagerInstance.resetReplyCount(channelId);
+}
+
+// Exporting the updated calculateDynamicFactor function for external use
 function calculateDynamicFactor(channelId) {
-    return ReplyManagerInstance.calculateDynamicFactor(channelId);
-}
-
-function shouldConsiderReply(channelId) {
-    // Logic to decide if a reply should be considered based on channel-specific conditions
-    return true; // Placeholder, implement based on your requirements
-}
-
-function adjustBaseChanceForContent(message, baseChance) {
-    // Logic to adjust the base chance of replying based on the content of the message
-    return baseChance; // Placeholder, implement your own logic
+    return replyManagerInstance.calculateDynamicFactor(channelId);
 }
 
 module.exports = {
     getLastReplyTime,
     incrementReplyCount,
     calculateDynamicFactor,
-    shouldConsiderReply,
-    adjustBaseChanceForContent
+    getReplyCount,
+    resetReplyCount
 };
