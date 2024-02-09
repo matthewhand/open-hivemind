@@ -29,5 +29,4 @@ async function initialize() {
     }
 }
 
-debugEnvVars();
 initialize().catch(error => logger.error('Unhandled error during initialization:', error));
