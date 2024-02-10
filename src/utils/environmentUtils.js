@@ -1,6 +1,3 @@
-::::::::::::::
-src/config/debugEnvVars.js
-::::::::::::::
 function redactValue(value) {
     if (!value) {
         return 'Not Set'; // Return 'Not Set' if the value is undefined or null
