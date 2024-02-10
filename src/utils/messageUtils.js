@@ -1,4 +1,3 @@
-// src/utils/messageUtils.js
 const axios = require('axios');
 const logger = require('./logger');
 const { splitMessage } = require('./common');
@@ -6,13 +5,14 @@ const loadServerPolicy = require('./loadServerPolicy');
 const configurationManager = require('../config/configurationManager');
 const { aliases } = require('../config/aliases');
 
-// Enhanced sendLlmRequest function with prioritized logging
-async function sendLlmRequest(message, prompt) {
+// Enhanced sendLlmRequest function to include dynamic context-based prompts
+async function sendLlmRequest(message) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
-
-    // Logging the initiation of LLM request
-    logger.info(`Sending LLM request for model: ${LLM_MODEL} with prompt: ${prompt.substring(0, 50)}...`);
+    // Fetch conversation history to include as context for the LLM request
+    const history = await fetchConversationHistory(message.channel);
+    const context = history.map(msg => `${msg.username}: ${msg.content}`).join('\n');
+    const prompt = `Given the conversation history:\n${context}\nHow might we respond to the latest message: "${message.content}"?`;
 
     try {
         const response = await axios.post(LLM_ENDPOINT_URL, {
@@ -22,26 +22,21 @@ async function sendLlmRequest(message, prompt) {
             headers: { 'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}` }
         });
 
-        // Check and log if the response is successful
         if (response.data) {
             const replyContent = response.data.choices[0].text.trim();
-            logger.info(`LLM request successful. Response length: ${replyContent.length} characters`);
-
             const messagesToSend = splitMessage(replyContent, 2000);
             for (const msg of messagesToSend) {
                 await message.channel.send(msg);
             }
         } else {
-            // Log if response is successful but missing expected data
             logger.warn('LLM request returned a successful response but did not contain expected data');
         }
     } catch (error) {
-        // Detailed logging when an error occurs
-        logger.error(`Error in sendLlmRequest: ${error.message}. Prompt: ${prompt.substring(0, 50)}...`, error);
+        logger.error(`Error in sendLlmRequestWithHistory: ${error.message}`, error);
     }
 }
 
-
+// Function to fetch conversation history from a Discord channel
 async function fetchConversationHistory(channel) {
     try {
         const limit = configurationManager.getConfig('historyFetchLimit') || 50;
