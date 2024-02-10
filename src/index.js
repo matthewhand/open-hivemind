@@ -4,7 +4,7 @@ const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const bot = require('./bot'); // Import the initialized bot from bot.js
 require('./eventhandlers'); // Import the event handlers
-const { debugEnvVars } = require('./src/utils/environmentUtils');
+const { debugEnvVars } = require('./utils/environmentUtils');
 
 debugEnvVars();
 
