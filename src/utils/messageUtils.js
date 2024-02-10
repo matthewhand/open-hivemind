@@ -13,17 +13,22 @@ async function sendLlmRequest(message, prompt) {
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
     const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
 
-    // Ensure messages is structured as an array of objects, not a string
-    const messages = [
-        // Add previously existing conversation history as needed. For example:
-        // { role: 'user', content: 'Previous message content here' },
-        { role: "user", content: prompt }
-    ];
+    // Attempt to fetch conversation history if applicable
+    let history = [];
+    try {
+        history = await fetchConversationHistory(message.channel);
+    } catch (error) {
+        logger.error('Error fetching conversation history:', error);
+        // Consider whether to continue or abort if history cannot be fetched
+    }
+
+    // Append the latest message to the history
+    history.push({ role: "user", content: prompt });
 
     try {
-        logger.debug(`Sending LLM request to ${LLM_ENDPOINT_URL} with payload`, { model: LLM_MODEL, messages });
+        logger.debug(`Sending LLM request to ${LLM_ENDPOINT_URL} with payload`, { model: LLM_MODEL, messages: history });
 
-        const response = await axios.post(LLM_ENDPOINT_URL, { model: LLM_MODEL, messages }, {
+        const response = await axios.post(LLM_ENDPOINT_URL, { model: LLM_MODEL, messages: history }, {
             headers: { 'Authorization': `Bearer ${LLM_API_KEY}` },
         });
 
@@ -34,7 +39,7 @@ async function sendLlmRequest(message, prompt) {
         }
     } catch (error) {
         logger.error(`Error sending LLM request: ${error.message}`, {
-            detail: { endpoint: LLM_ENDPOINT_URL, model: LLM_MODEL, messages, errorDetails: error.response?.data || 'No additional error info' },
+            detail: { endpoint: LLM_ENDPOINT_URL, model: LLM_MODEL, messages: history, errorDetails: error.response?.data || 'No additional error info' },
         });
         throw error; // Ensuring upstream error handling can take place
     }
@@ -49,7 +54,7 @@ async function fetchConversationHistory(channel) {
     try {
         const limit = configurationManager.getConfig('historyFetchLimit') || 50;
         const messages = await channel.messages.fetch({ limit });
-        return messages.map((msg) => ({
+        return Array.from(messages.values()).map((msg) => ({
             role: msg.author.bot ? 'assistant' : 'user', // Assuming bot messages as 'assistant' and others as 'user'
             content: msg.content,
         })).reverse();
