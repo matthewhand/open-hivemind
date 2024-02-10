@@ -2,7 +2,6 @@
 const axios = require('axios');
 const logger = require('./logger');
 const { splitMessage } = require('./common');
-const loadServerPolicy = require('./loadServerPolicy');
 const configurationManager = require('../config/configurationManager');
 
 /**
@@ -22,7 +21,6 @@ function debugLogRequestResponse(url, requestBody, responseBody, error = null) {
 
 /**
  * Sends a request to a Large Language Model (LLM) endpoint with a given prompt.
- * Includes detailed debugging for request and response.
  * @param {Object} message - The Discord message object to respond to.
  * @param {string} prompt - The prompt to send to the LLM.
  */
@@ -30,32 +28,28 @@ async function sendLlmRequest(message, prompt) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
     const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
-    const requestBody = {
+    const payload = {
         prompt: prompt,
         model: LLM_MODEL,
     };
 
     try {
-        const response = await axios.post(LLM_ENDPOINT_URL, requestBody, {
-            headers: { 'Authorization': `Bearer ${LLM_API_KEY}` },
+        logger.debug(`Sending LLM request: ${JSON.stringify({ url: LLM_ENDPOINT_URL, payload }, null, 2)}`);
+        const response = await axios.post(LLM_ENDPOINT_URL, payload, {
+            headers: { 'Authorization': `Bearer ${LLM_API_KEY}` }
         });
-
-        debugLogRequestResponse(LLM_ENDPOINT_URL, requestBody, response.data);
 
         if (response.data && response.data.choices && response.data.choices.length > 0) {
             const replyContent = response.data.choices[0].text.trim();
-            const messagesToSend = splitMessage(replyContent, 2000);
-            messagesToSend.forEach(async (msg) => await message.channel.send(msg));
+            await message.channel.send(replyContent);
         } else {
             logger.warn('LLM request did not return expected data.');
         }
     } catch (error) {
-        debugLogRequestResponse(LLM_ENDPOINT_URL, requestBody, null, error);
-        logger.error(`Error sending LLM request: ${error}`, { prompt: prompt.substring(0, 50) });
-        await message.channel.send('An error occurred while processing your request.');
+        logger.error(`Error sending LLM request: ${error.message}`, { payload, errorDetails: error.response?.data || error.message });
+        throw error; // Rethrowing the error for potential higher-level handling
     }
 }
-
 
 /**
  * Fetches the conversation history from a channel.
