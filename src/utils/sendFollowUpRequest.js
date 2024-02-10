@@ -1,21 +1,22 @@
+// src/utils/sendFollowUpRequest.js
 const axios = require('axios');
-const { config, aliases } = require('../config');
-const { constants } = require('../utils/configUtils');
+const configurationManager = require('../config/configurationManager'); 
 const logger = require('./logger');
 const { getRandomDelay } = require('./common');
+const { aliases } = require('../config/aliases'); 
 
 async function sendFollowUpRequest(message, aliasCommand) {
     try {
         // Construct a reflective prompt for the LLM
         const reflectivePrompt = `Given the conversation, how might the command !${aliasCommand} provide further insights?`;
 
-        // Make a request to the LLM endpoint
-        const response = await axios.post(config.LLM_ENDPOINT_URL, {
-            model: constants.LLM_MODEL,
+        // Make a request to the LLM endpoint using configuration from configurationManager
+        const response = await axios.post(configurationManager.getConfig('LLM_ENDPOINT_URL'), {
+            model: configurationManager.getConfig('LLM_MODEL'),
             prompt: reflectivePrompt,
             max_tokens: 200 // Adjust as needed
         }, {
-            headers: { 'Authorization': `Bearer ${config.API_KEY}` }
+            headers: { 'Authorization': `Bearer ${configurationManager.getConfig('API_KEY')}` }
         });
 
         // Process the LLM response and suggest the command to the user
@@ -33,4 +34,4 @@ function scheduleFollowUpRequest(message) {
     setTimeout(() => sendFollowUpRequest(message, randomAlias), delay);
 }
 
-module.exports = { scheduleFollowUpRequest };
+module.exports = { sendFollowUpRequest, scheduleFollowUpRequest };
