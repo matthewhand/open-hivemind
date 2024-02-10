@@ -35,7 +35,7 @@ async function sendLlmRequest(message, prompt) {
         if (response.data && response.data.response) {
             await message.channel.send(response.data.response);
         } else {
-            logger.warn('LLM request did not return the expected data structure.');
+            logger.warn('LLM request did not return the expected data structure.', response.data);
         }
     } catch (error) {
         logger.error(`Error sending LLM request: ${error.message}`, {
