@@ -1,10 +1,9 @@
 // utils/index.js
 const aliasUtils = require('./aliasUtils');
 const common = require('./common');
-// Removed configUtils import since the file has been deleted
 const handleError = require('./handleError');
 const handleImageMessage = require('./handleImageMessage');
-const initializeFetch = require('./initializeFetch');
+// const initializeFetch = require('./initializeFetch'); // Remove or comment out this line
 const logger = require('./logger');
 const mutingUtils = require('./mutingUtils');
 const parseCommand = require('./parseCommand');
@@ -16,10 +15,9 @@ const votingUtils = require('./votingUtils');
 module.exports = {
     aliasUtils,
     common,
-    // configUtils removed from here
     handleError,
     handleImageMessage,
-    initializeFetch,
+    // initializeFetch, // Also remove or comment out this line
     logger,
     mutingUtils,
     parseCommand,
@@ -27,5 +25,4 @@ module.exports = {
     reconstructCommandFromAlias,
     sendFollowUpRequest,
     votingUtils
-    // Removed the undefined references
 };

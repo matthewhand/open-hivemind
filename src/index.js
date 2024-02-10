@@ -1,6 +1,6 @@
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
-const { initializeFetch } = require('./utils/initializeFetch');
+// const { initializeFetch } = require('./utils/initializeFetch'); // This line should be removed or commented out
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const bot = require('./bot'); // Import the initialized bot from bot.js
 require('./eventhandlers'); // Import the event handlers
@@ -14,7 +14,7 @@ const discordSettings = {
 
 async function initialize() {
     try {
-        initializeFetch();
+        // initializeFetch(); // This line should also be removed or commented out
         logger.info('Fetch initialized successfully.');
 
         const webhookPort = process.env.WEB_SERVER_PORT || 3000;
