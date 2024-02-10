@@ -1,0 +1,37 @@
+// tests/utils/sendFollowUpRequest.test.js
+const axios = require('axios');
+jest.mock('axios');
+
+const { sendFollowUpRequest } = require('../../src/utils/sendFollowUpRequest');
+
+describe('sendFollowUpRequest functionality', () => {
+    beforeEach(() => {
+        axios.post.mockClear();
+    });
+
+    it('should successfully send a follow-up request', async () => {
+        // Mock axios to simulate a successful API call
+        axios.post.mockResolvedValue({ data: { success: true } });
+
+        // Call sendFollowUpRequest with your test parameters
+        await sendFollowUpRequest(/* test parameters */);
+
+        // Assert that axios.post was called correctly
+        expect(axios.post).toHaveBeenCalledWith(/* expected arguments */);
+        
+        // Additional assertions as necessary
+    });
+
+    it('should handle errors from the request gracefully', async () => {
+        // Mock axios to simulate a failed API call
+        axios.post.mockRejectedValue(new Error('Request failed'));
+
+        // Call sendFollowUpRequest with your test parameters
+        await sendFollowUpRequest(/* test parameters */);
+
+        // Assert how sendFollowUpRequest should handle the error
+        // This might involve checking for console logs, error handling, etc.
+    });
+
+    // Additional tests as necessary
+});

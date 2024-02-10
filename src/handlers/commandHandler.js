@@ -1,12 +1,16 @@
+// handlers/commandHandler.js
 const { aliases } = require('../config/aliases');
 const commands = require('../commands/inline');
 const logger = require('../utils/logger');
 const { parseCommand } = require('../utils/commandParser');
+const { extractCommandContent } = require('../utils/commandUtils'); // Ensure this path matches your project structure
 
-async function commandHandler(message, commandContent) {
+async function commandHandler(message) {
     try {
+        // Use the utility function to extract command content
+        const commandContent = extractCommandContent(message);
         const resolvedCommand = parseCommand(commandContent);
-        logger.info(`resolved command: ${resolvedCommand}`);
+        logger.info(`Resolved command: ${JSON.stringify(resolvedCommand)}`);
 
         if (resolvedCommand) {
             const { commandName, action, args } = resolvedCommand;
@@ -25,7 +29,7 @@ async function commandHandler(message, commandContent) {
             message.reply('No command found in the message');
         }
     } catch (error) {
-        logger.error(`Error while handling command: ${commandContent}`, error);
+        logger.error(`Error while handling command: ${error}`, error);
         message.reply('An error occurred while processing your command.');
     }
 }
