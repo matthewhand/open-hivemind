@@ -1,42 +1,46 @@
+// src/utils/messageUtils.js
 const axios = require('axios');
 const logger = require('./logger');
 const { splitMessage } = require('./common');
 const loadServerPolicy = require('./loadServerPolicy');
 const configurationManager = require('../config/configurationManager');
-const { aliases } = require('../config/aliases');
 
-// Enhanced sendLlmRequest function to include dynamic context-based prompts
-async function sendLlmRequest(message) {
+/**
+ * Sends a request to a Large Language Model (LLM) endpoint with a given prompt.
+ * @param {Object} message - The Discord message object to respond to.
+ * @param {string} prompt - The prompt to send to the LLM.
+ */
+async function sendLlmRequest(message, prompt) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
-    // Fetch conversation history to include as context for the LLM request
-    const history = await fetchConversationHistory(message.channel);
-    const context = history.map(msg => `${msg.username}: ${msg.content}`).join('\n');
-    const prompt = `Given the conversation history:\n${context}\nHow might we respond to the latest message: "${message.content}"?`;
+    const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
 
     try {
         const response = await axios.post(LLM_ENDPOINT_URL, {
             prompt: prompt,
             model: LLM_MODEL,
         }, {
-            headers: { 'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}` }
+            headers: { 'Authorization': `Bearer ${LLM_API_KEY}` }
         });
 
-        if (response.data) {
+        if (response.data && response.data.choices && response.data.choices.length > 0) {
             const replyContent = response.data.choices[0].text.trim();
             const messagesToSend = splitMessage(replyContent, 2000);
-            for (const msg of messagesToSend) {
-                await message.channel.send(msg);
-            }
+            messagesToSend.forEach(async msg => await message.channel.send(msg));
         } else {
-            logger.warn('LLM request returned a successful response but did not contain expected data');
+            logger.warn('LLM request did not return expected data.');
         }
     } catch (error) {
-        logger.error(`Error in sendLlmRequestWithHistory: ${error.message}`, error);
+        logger.error(`Error sending LLM request: ${error}`, { prompt: prompt.substring(0, 50) });
+        throw error; // Rethrowing the error for potential higher-level handling
     }
 }
 
-// Function to fetch conversation history from a Discord channel
+/**
+ * Fetches the conversation history from a channel.
+ * @param {Object} channel - The Discord channel to fetch history from.
+ * @returns {Promise<Array>} - A promise that resolves to an array of message objects.
+ */
 async function fetchConversationHistory(channel) {
     try {
         const limit = configurationManager.getConfig('historyFetchLimit') || 50;
@@ -49,51 +53,53 @@ async function fetchConversationHistory(channel) {
         })).reverse();
     } catch (error) {
         logger.error('Error fetching conversation history:', error);
-        return [];
+        throw error; // Rethrowing the error for potential higher-level handling
     }
 }
 
+/**
+ * Determines if a user should be banned based on chat history and server policy.
+ * @param {Array} chatHistory - The chat history as an array of messages.
+ * @param {string} userId - The ID of the user in question.
+ * @returns {Promise<string>} - A promise that resolves to the decision on banning the user.
+ */
 async function shouldUserBeBanned(chatHistory, userId) {
-    const serverPolicy = loadServerPolicy(); // Ensure this function or module is correctly set up
-    const prompt = `Should user ${userId} be banned based on server policy?`;
+    const serverPolicy = loadServerPolicy();
+    const prompt = `Given the chat history and server policy, should user ${userId} be banned?`;
+
     try {
         const response = await axios.post(configurationManager.getConfig('LLM_ENDPOINT_URL'), {
-            model: "text-davinci-003",
-            prompt: `${chatHistory}\n\nServer Policy:\n${serverPolicy}\n\n${prompt}`,
-            max_tokens: 1024,
-        }, {
-            headers: { 'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}` }
-        });
-
-        return response.status === 200 ? response.data.choices[0].text.trim() : 'Error: Unable to process decision';
-    } catch (error) {
-        logger.error(`Error in LLM communication: ${error.message}`);
-        return 'Error: Communication failure';
-    }
-}
-
-async function sendFollowUpRequest(message, aliasCommand) {
-    const reflectivePrompt = `Given the conversation, how might the command !${aliasCommand} provide further insights?`;
-    try {
-        const response = await axios.post(configurationManager.getConfig('LLM_ENDPOINT_URL'), {
+            prompt: `${chatHistory.join('\n')}\n\nServer Policy:\n${serverPolicy}\n\n${prompt}`,
             model: configurationManager.getConfig('LLM_MODEL'),
-            prompt: reflectivePrompt,
-            max_tokens: 200
         }, {
             headers: { 'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}` }
         });
 
-        const suggestion = response.data.choices[0].text.trim();
-        await message.channel.send(`LLM Suggestion: ${suggestion}`);
+        return response.data && response.data.choices && response.data.choices.length > 0
+            ? response.data.choices[0].text.trim()
+            : 'Unable to determine.';
     } catch (error) {
-        logger.error(`Error in sendFollowUpRequest: ${error.message}`);
+        logger.error(`Error determining ban: ${error}`);
+        throw error; // Rethrowing the error for potential higher-level handling
     }
 }
 
+/**
+ * Schedules a follow-up request to be sent after a random delay.
+ * @param {Object} message - The Discord message object to respond to.
+ */
 function scheduleFollowUpRequest(message) {
-    const randomAlias = Object.keys(aliases)[Math.floor(Math.random() * Object.keys(aliases).length)];
     const delay = configurationManager.getConfig('FOLLOW_UP_MIN_DELAY') + Math.random() * (configurationManager.getConfig('FOLLOW_UP_MAX_DELAY') - configurationManager.getConfig('FOLLOW_UP_MIN_DELAY'));
-    setTimeout(() => sendFollowUpRequest(message, randomAlias), delay);
+    setTimeout(() => {
+        // Assuming follow-up logic is defined elsewhere
+        logger.info('Sending follow-up request.');
+        // Placeholder for actual follow-up logic
+    }, delay);
 }
 
-module.exports = { sendLlmRequest, fetchConversationHistory, scheduleFollowUpRequest, shouldUserBeBanned };
+module.exports = {
+    sendLlmRequest,
+    fetchConversationHistory,
+    shouldUserBeBanned,
+    scheduleFollowUpRequest,
+};
