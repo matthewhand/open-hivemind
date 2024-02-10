@@ -4,33 +4,34 @@ const logger = require('./logger');
 const { splitMessage } = require('./common');
 const configurationManager = require('../config/configurationManager');
 
-/**
- * Helper function to log requests and responses for debugging.
- * Redacts sensitive information like API keys from the logs.
- */
-function debugLogRequestResponse(url, requestBody, responseBody, error = null) {
-    // Redact sensitive information from logs
-    const redactedRequestBody = { ...requestBody, model: requestBody.model }; // Example of redaction, adjust as needed
-    const logPayload = {
-        request: { url, body: redactedRequestBody },
-        response: responseBody ? { data: responseBody } : undefined,
-        error: error ? { message: error.message, stack: error.stack } : undefined,
-    };
-    logger.debug("LLM API Request and Response:", logPayload);
-}
 
 /**
  * Sends a request to a Large Language Model (LLM) endpoint with a given prompt.
  * @param {Object} message - The Discord message object to respond to.
+ * @param {Array} conversationHistory - An array representing the conversation history, 
+ * where each item is an object with a 'role' ('user' or 'assistant') and 'content'.
  * @param {string} prompt - The prompt to send to the LLM.
  */
-async function sendLlmRequest(message, prompt) {
+async function sendLlmRequest(message, conversationHistory, prompt) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
     const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
+
+    // Construct the messages array with system, user, and assistant messages
+    let messages = [];
+
+    if (conversationHistory && conversationHistory.length > 0) {
+        // Add existing conversation history
+        messages.push(...conversationHistory);
+    }
+
+    // Add the new user prompt to the conversation
+    messages.push({ role: "user", content: prompt });
+
+    // Define the payload including the model and messages
     const payload = {
-        prompt: prompt,
         model: LLM_MODEL,
+        messages: messages,
     };
 
     try {
