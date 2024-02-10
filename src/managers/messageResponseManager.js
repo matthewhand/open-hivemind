@@ -5,7 +5,8 @@ const {
     incrementReplyCount,
     calculateDynamicFactor,
     getReplyCount,
-    resetReplyCount
+    resetReplyCount,
+    logReply
 } = require('../utils/messageResponseUtils');
 
 class messageResponseManager {
@@ -26,26 +27,20 @@ class messageResponseManager {
 
     shouldReplyToMessage(ourUserId, message) {
         try {
-            // Validating message object
-            if (!message || !message.client || !message.client.user) throw new Error('Invalid message object');
-
             let baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
             baseChance *= calculateDynamicFactor(message.channel.id);
 
-            // Adjusting for direct mentions and content
-            if (this.isDirectlyMentioned(ourUserId, message) || this.containsWakeWords(message)) {
+            if (this.isDirectlyMentioned(ourUserId, message)) {
                 baseChance += this.mentionBonus;
             }
 
-            // Penalizing bot messages to avoid loops
             if (message.author.bot) baseChance = Math.max(0, baseChance - this.botResponsePenalty);
 
-            // Making the decision to reply or not
             const decision = Math.random() < baseChance;
             if (decision) {
                 incrementReplyCount(message.channel.id);
                 if (getReplyCount(message.channel.id) >= this.unsolicitedChannelCap) {
-                    resetReplyCount(message.channel.id); // Resetting after cap is reached
+                    resetReplyCount(message.channel.id);
                 }
             }
 
@@ -58,21 +53,14 @@ class messageResponseManager {
 
     calcBaseChanceOfUnsolicitedReply(message) {
         const timeSinceLastSend = getLastReplyTime(message.channel.id);
-        // Iterating through configured time vs response chance
         for (let [duration, chance] of this.timeVsResponseChance) {
             if (timeSinceLastSend <= duration) return chance;
         }
-        return 0; // Defaulting to 0% if conditions aren't met
+        return 0;
     }
 
     isDirectlyMentioned(ourUserId, message) {
-        // Checking for direct mentions
         return message.mentions.users.has(ourUserId);
-    }
-
-    containsWakeWords(message) {
-        // Checking for wake words in message content
-        return this.llmWakewords.some(wakeword => message.content.toLowerCase().includes(wakeword.toLowerCase()));
     }
 }
 
