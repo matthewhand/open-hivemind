@@ -68,7 +68,7 @@ class ConfigurationManager {
 
     debugEnvVars() {
         console.log('Debugging Environment Variables:');
-        [...requiredEnvVars, ...Object.keys(this.config)].forEach(varName => {
+        [...Object.keys(this.config)].forEach(varName => {
             const value = this.config[varName];
             console.log(`${varName}: ${value}`);
         });
