@@ -6,16 +6,19 @@ const configurationManager = require('../config/configurationManager');
 /**
  * Sends a request to the Large Language Model (LLM) endpoint, incorporating conversation history and the latest user prompt.
  * @param {Object} message - The Discord message object to respond to.
- * @param {Array} conversationHistory - An array of conversation history, with each item being an object containing 'role' and 'content'.
  * @param {string} prompt - The latest user prompt to send to the LLM.
  */
-async function sendLlmRequest(message, conversationHistory, prompt) {
+async function sendLlmRequest(message, prompt) {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
     const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
 
-    // Preparing the messages payload, including existing conversation history and the new user prompt
-    const messages = conversationHistory ? [...conversationHistory, { role: "user", content: prompt }] : [{ role: "user", content: prompt }];
+    // Ensure messages is structured as an array of objects, not a string
+    const messages = [
+        // Add previously existing conversation history as needed. For example:
+        // { role: 'user', content: 'Previous message content here' },
+        { role: "user", content: prompt }
+    ];
 
     try {
         logger.debug(`Sending LLM request to ${LLM_ENDPOINT_URL} with payload`, { model: LLM_MODEL, messages });
@@ -24,9 +27,7 @@ async function sendLlmRequest(message, conversationHistory, prompt) {
             headers: { 'Authorization': `Bearer ${LLM_API_KEY}` },
         });
 
-        // Handling different response structures
         if (response.data && response.data.response) {
-            // Assuming response.data.response contains the direct reply
             await message.channel.send(response.data.response);
         } else {
             logger.warn('LLM request did not return the expected data structure.');
