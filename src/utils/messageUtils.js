@@ -1,26 +1,42 @@
 // src/utils/messageUtils.js
 const axios = require('axios');
+const { encode, decode } = require('gpt-tokenizer');
 const logger = require('./logger');
 const configurationManager = require('../config/configurationManager');
 
-/**
- * Sends a request to the LLM endpoint with conversation history and the latest user message.
- * @param {Object} message - Discord message object to respond to.
- */
+// Helper function to trim the history to fit within the max token count
+function trimHistoryToFit(history, newPrompt, maxTokens) {
+    let combinedText = history.map(msg => msg.content).join('\n') + '\n' + newPrompt;
+    let encoded = encode(combinedText);
+    
+    // Calculate the max tokens allowed for history
+    let maxHistoryTokens = maxTokens - encode(newPrompt).length;
+    
+    while (encoded.length > maxHistoryTokens) {
+        history.shift(); // Remove the oldest messages from history
+        combinedText = history.map(msg => msg.content).join('\n') + '\n' + newPrompt;
+        encoded = encode(combinedText);
+    }
+
+    return history;
+}
+
 async function sendLlmRequest(message) {
     const endpointUrl = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const model = configurationManager.getConfig('LLM_MODEL');
     const apiKey = configurationManager.getConfig('LLM_API_KEY');
+    const maxTokens = configurationManager.getConfig('MAX_CONTENT_LENGTH') || 2048; // Default to 2048 if not set
 
-    // Fetch conversation history here if necessary or pass it from outside if already available
     const history = await fetchConversationHistory(message.channel);
     const newPrompt = message.content; // Assuming the new message is the prompt
 
-    // Build the request payload.
+    // Adjust history to fit within max token count
+    const trimmedHistory = trimHistoryToFit(history, newPrompt, maxTokens);
+
     const payload = {
         model,
         prompt: [
-            ...history.map(msg => ({ role: msg.role, content: msg.content })),
+            ...trimmedHistory.map(msg => ({ role: msg.role, content: msg.content })),
             { role: "user", content: newPrompt }
         ],
     };
@@ -34,7 +50,7 @@ async function sendLlmRequest(message) {
             },
         });
 
-        // Process the response from LLM.
+        // Process the response from LLM
         if (response.data && response.data.choices && response.data.choices.length > 0) {
             await message.channel.send(response.data.choices[0].message.content);
         } else {
@@ -45,17 +61,10 @@ async function sendLlmRequest(message) {
     }
 }
 
-/**
- * Fetches conversation history from a Discord channel.
- * @param {Object} channel - Discord channel to fetch messages from.
- * @returns {Promise<Array>} - A promise that resolves to an array of messages.
- */
 async function fetchConversationHistory(channel) {
     try {
         const limit = configurationManager.getConfig('HISTORY_FETCH_LIMIT') || 50;
-        // Fetch messages returns a Collection, not an array
         const fetchedMessages = await channel.messages.fetch({ limit });
-        // Convert the Collection to an Array
         const messagesArray = Array.from(fetchedMessages.values());
         return messagesArray.map(msg => ({
             role: msg.author.bot ? 'assistant' : 'user',
@@ -67,12 +76,7 @@ async function fetchConversationHistory(channel) {
     }
 }
 
-/**
- * Placeholder for scheduling a follow-up action.
- * @param {Object} message - Discord message object to target for the follow-up.
- */
 function scheduleFollowUpRequest(message) {
-    // Implementation for scheduling follow-ups if needed.
     logger.info(`Scheduled follow-up for message ${message.id}`);
 }
 
