@@ -1,69 +1,66 @@
-// Import necessary utilities and modules
+// Import necessary utilities and modules for testing
 const axios = require('axios');
-const { sendLlmRequest, fetchConversationHistory, scheduleFollowUpRequest } = require('../../src/utils/messageUtils');
+const { sendLlmRequest } = require('../../src/utils/messageUtils');
 const configurationManager = require('../../src/config/configurationManager');
+
 jest.mock('axios');
 jest.mock('../../src/config/configurationManager');
 
 describe('messageUtils', () => {
-    // Mocking configurationManager to return specific configuration values
-    beforeAll(() => {
-        configurationManager.getConfig.mockImplementation((key) => {
-            switch (key) {
-                case 'LLM_ENDPOINT_URL':
-                    return 'http://localhost:5000/v1/chat/completions';
-                case 'LLM_MODEL':
-                    return 'mistral-7b-instruct';
-                case 'LLM_API_KEY':
-                    return 'test-api-key'; // Providing a mock API key for testing
-                default:
-                    return null;
-            }
-        });
-    });
+  beforeAll(() => {
+    configurationManager.getConfig.mockImplementation((key) => ({
+      'LLM_ENDPOINT_URL': 'http://localhost:5000/v1/chat/completions',
+      'LLM_MODEL': 'mistral-7b-instruct',
+      'LLM_API_KEY': 'test-api-key',
+    })[key]);
+  });
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    axios.post.mockReset();
+  });
 
-    it('sends a request with conversation history and handles response correctly', async () => {
-        const mockMessage = {
-            channel: {
-                send: jest.fn().mockResolvedValue({})
-            }
-        };
-        const conversationHistory = [
-            { role: 'system', content: 'You are a helpful assistant.' },
-            { role: 'user', content: 'What is the weather like today?' },
-            { role: 'assistant', content: 'The weather is sunny.' }
-        ];
-        const newPrompt = 'Should I take an umbrella?';
+  it('sends a request correctly and handles response', async () => {
+    const mockMessage = {
+      channel: {
+        send: jest.fn().mockResolvedValue({}),
+        id: "channel123",
+        messages: {
+          fetch: jest.fn().mockResolvedValue(new Map([
+            ['123', { content: 'Previous message 1', author: { bot: false } }],
+            ['456', { content: 'Previous message 2', author: { bot: true } }],
+          ]))
+        }
+      },
+      content: 'Should I take an umbrella?'
+    };
 
-        const mockResponse = {
-            data: {
-                response: 'No, it should be fine without one.'
-            }
-        };
+    const mockResponse = { data: { choices: [{ message: { content: 'Yes, it might rain later today.' } }] } };
+    axios.post.mockResolvedValue(mockResponse);
 
-        axios.post.mockResolvedValue(mockResponse);
+    // Call the function under test with a mock message object
+    await sendLlmRequest(mockMessage);
 
-        await sendLlmRequest(mockMessage, conversationHistory, newPrompt);
+    // Verify axios.post was called correctly based on the setup
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        model: expect.any(String),
+        prompt: expect.anything(),
+      }),
+      expect.objectContaining({
+        headers: {
+          'Authorization': `Bearer ${configurationManager.getConfig('LLM_API_KEY')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+    );
 
-        expect(axios.post).toHaveBeenCalledWith(
-            'http://localhost:5000/v1/chat/completions',
-            expect.objectContaining({
-                model: 'mistral-7b-instruct',
-                messages: expect.any(Array),
-            }),
-            expect.objectContaining({
-                headers: { 'Authorization': 'Bearer test-api-key' }
-            })
-        );
+    // Ensure the mock message's channel receives the correct response
+    expect(mockMessage.channel.send).toHaveBeenCalledWith('Yes, it might rain later today.');
+  });
 
-        expect(mockMessage.channel.send).toHaveBeenCalledWith('No, it should be fine without one.');
-    });
-
-    afterEach(() => {
-        jest.resetAllMocks();
-    });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 });

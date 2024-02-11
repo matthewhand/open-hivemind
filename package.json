@@ -11,7 +11,7 @@
     "axios": "^1.6.5",
     "discord-api-types": "^0.37.67",
     "discord.js": "latest",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.4.2",
     "express": "^4.18.2",
     "node-fetch": "^2.6.1",
     "ollama-node": "^0.1.27",
@@ -21,7 +21,8 @@
     "winston": "^3.11.0"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFiles": ["./tests/testSetup.js"]
   },
   "devDependencies": {
     "jest": "^29.7.0",

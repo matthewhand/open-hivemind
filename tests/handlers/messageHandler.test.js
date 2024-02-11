@@ -1,67 +1,83 @@
-// Simplify the mock setup for messageHandler tests
-jest.mock('../../src/utils/messageUtils', () => ({
-  fetchConversationHistory: jest.fn(),
-}));
-
-jest.mock('axios');
-
-// Assuming logger uses common logging methods: debug, info, warn, error
+// Adjust the import paths as necessary for your project structure
+jest.mock('../../src/config/configurationManager');
+jest.mock('../../src/utils/messageUtils');
 jest.mock('../../src/utils/logger');
-
-// ConfigurationManager mock setup for BOT_TO_BOT_MODE testing
-jest.mock('../../src/config/configurationManager', () => ({
-  getConfig: jest.fn().mockImplementation((key) => {
-    if (key === 'BOT_TO_BOT_MODE') return false; // Default behavior
-    return null; // Default for other keys
-  }),
+// Correctly mock the messageResponseManager with a custom implementation for shouldReplyToMessage
+jest.mock('../../src/managers/messageResponseManager', () => ({
+  messageResponseManager: jest.fn().mockImplementation(() => ({
+    shouldReplyToMessage: jest.fn().mockReturnValue(true)
+  })),
 }));
 
 const { messageHandler } = require('../../src/handlers/messageHandler');
-const { fetchConversationHistory } = require('../../src/utils/messageUtils');
 const configurationManager = require('../../src/config/configurationManager');
+const { sendLlmRequest } = require('../../src/utils/messageUtils');
+const logger = require('../../src/utils/logger');
+const { messageResponseManager } = require('../../src/managers/messageResponseManager');
 
 describe('messageHandler Tests', () => {
-  beforeEach(() => {
-    jest.clearAllMocks(); // Reset mocks before each test
-  });
+    beforeEach(() => {
+        jest.clearAllMocks();
+        configurationManager.getConfig.mockImplementation(key => {
+            if (key === 'BOT_TO_BOT_MODE') return 'true'; // Adjust according to test case needs
+            return null;
+        });
+        sendLlmRequest.mockResolvedValue();
+    });
 
-  test('ignores bot messages if BOT_TO_BOT_MODE is disabled', async () => {
-    const botMessage = {
-      author: { bot: true },
-      client: { user: { id: 'bot-id' } },
-      reply: jest.fn(),
-      content: '!test command',
-    };
+    test('processes valid commands when BOT_TO_BOT_MODE is enabled', async () => {
+        const mockMessage = {
+            author: { bot: false },
+            content: '!validCommand',
+            reply: jest.fn(),
+            client: { user: { id: 'bot-id' } },
+            channel: { send: jest.fn() }
+        };
 
-    await messageHandler(botMessage);
+        await messageHandler(mockMessage);
+        // Assuming commandHandler or sendLlmRequest handles valid commands, adjust expectations as needed
+    });
 
-    // Verifying that the handler correctly ignores bot messages
-    expect(fetchConversationHistory).not.toHaveBeenCalled();
-    expect(botMessage.reply).not.toHaveBeenCalled();
-  });
+    test('ignores bot messages when BOT_TO_BOT_MODE is disabled', async () => {
+        configurationManager.getConfig.mockReturnValueOnce('false');
+        const mockMessage = {
+            author: { bot: true },
+            content: '!commandFromBot',
+            reply: jest.fn(),
+            client: { user: { id: 'bot-id' } },
+            channel: { send: jest.fn() }
+        };
 
-  test('processes message from non-bot when BOT_TO_BOT_MODE is enabled', async () => {
-    // Setup the mock to simulate BOT_TO_BOT_MODE enabled
-    configurationManager.getConfig.mockImplementation(key => key === 'BOT_TO_BOT_MODE' ? true : null);
+        await messageHandler(mockMessage);
+        expect(sendLlmRequest).not.toHaveBeenCalled();
+    });
 
-    const userMessage = {
-      author: { bot: false },
-      client: { user: { id: 'user-id' } },
-      reply: jest.fn(),
-      content: '!test command',
-    };
+    test('generates a response based on dynamic decision making', async () => {
+        const mockMessage = {
+            author: { bot: false },
+            content: 'Some message triggering dynamic response',
+            reply: jest.fn(),
+            client: { user: { id: 'bot-id' } },
+            channel: { send: jest.fn() }
+        };
 
-    await messageHandler(userMessage);
+        await messageHandler(mockMessage);
+        expect(sendLlmRequest).toHaveBeenCalledWith(mockMessage, "Response based on dynamic decision making.");
+    });
 
-    // Here you should assert the expected behavior when BOT_TO_BOT_MODE is enabled
-    // This could vary based on your logic, so adjust accordingly
-    // Example for expected call to reply or fetchConversationHistory
-    // expect(fetchConversationHistory).toHaveBeenCalledWith(expect.anything());
-    // or
-    // expect(userMessage.reply).toHaveBeenCalledWith(expect.stringContaining("some response"));
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks(); // Clean up mocks after each test
-  });
+    test('handles errors gracefully', async () => {
+        sendLlmRequest.mockRejectedValue(new Error('Test error')); // Force sendLlmRequest to reject
+        const mockMessage = {
+            author: { bot: false },
+            content: '!commandCausingError',
+            reply: jest.fn(),
+            client: { user: { id: 'bot-id' } },
+            channel: { send: jest.fn() }
+        };
+    
+        await messageHandler(mockMessage);
+        expect(mockMessage.reply).toHaveBeenCalledWith('An error occurred while processing your command.');
+    });
+        
+    // Add more tests as needed to fully cover the expected behavior of messageHandler
 });

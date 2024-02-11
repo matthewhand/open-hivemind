@@ -1,76 +1,72 @@
 # Discord LLM Interaction Bot
 
-A versatile Discord bot integrating advanced language models, image analysis, and additional AI services for a comprehensive experience in Discord servers.
+A sophisticated Discord bot leveraging cutting-edge language models, image analysis, and diverse AI services, designed to enrich user interaction within Discord communities.
 
 ## 🌟 Features
 
-- **LLM AI Interaction**: Engage with various language models for intelligent and dynamic text responses.
-- **Replicate Image Analysis**: Analyze and describe images using machine learning models from Replicate (pay-as-you-go).
-- **Perplexity Integration**: Utilize the Perplexity language model for detailed and nuanced conversations.
-- **Quivr Integration**: Access Quivr's AI capabilities for a range of responses and data processing.
-- **Flowise Integration**: Connect to Flowise for workflow automation and complex queries.
-- **Python Code Execution**: Safely run Python code blocks directly in Discord.
-- **User Permissions & Security**: Restrict command usage to specific users or roles.
-- **Dynamic System Setting**: Dynamically configure system prompts for different models and scenarios.
-- **Monitoring & Health Checks**: Utilize `/health` and `/uptime` endpoints for monitoring bot status.
-- **Hosting Flexibility**: Host on cloud platforms (OCI, Render.com, Back4App) or on-premises (Linux, Windows).
-- **Image Analysis with LLaVA 13B (Replicate)**: Analyze images with LLaVA 13B model (pay-per-use).
-- **DIY RAG Endpoint (Modal)**: Utilize custom RAG endpoints hosted on Modal's free tier.
-- **Advanced Moderation System**: Implement a comprehensive voting system for server moderation with AI-assisted decision-making.
-- **Automated Exception Handling & Restart**: In-built resilience with automated error notification and scheduled restarts.
-
-[ ] TODO: Integrate free Hugging Face LLaVA model for image analysis.
+- **Advanced LLM AI Interaction**: Seamlessly engage with state-of-the-art language models for dynamic, context-aware text responses, offering users a rich conversational experience.
+- **Comprehensive Image Analysis**: Utilize advanced ML models from Replicate and the LLaVA 13B model for detailed image descriptions and insights, supporting both pay-as-you-go and free usage models.
+- **Integrated AI Services**:
+  - **Perplexity Integration**: Leverage the Perplexity AI for deep, nuanced conversations and information retrieval.
+  - **Quivr Integration**: Access Quivr's diverse AI functionalities for responsive and intelligent data processing.
+  - **Flowise Integration**: Connect with Flowise for efficient workflow automation and handling complex AI-driven queries.
+- **Secure Python Code Execution**: Execute Python code blocks within Discord securely, with permissions and safety checks in place.
+- **Enhanced User Permissions & Security**: Configure command access based on user roles or specific permissions, ensuring operational security.
+- **Dynamic Configuration**: Tailor system prompts and settings for varied models and interaction scenarios via dynamic configuration.
+- **Robust Moderation System**: A sophisticated AI-assisted voting system for server moderation, enabling informed decision-making processes.
+- **Automated Resilience**: Built-in error handling and auto-restart mechanisms ensure continuous bot operation with minimal downtime.
+- **Versatile Hosting Options**: Deploy on cloud platforms like OCI, Render.com, and Back4App, or opt for on-premises hosting across different OS environments.
+- **Monitoring & Diagnostics**: Employ `/health` and `/uptime` endpoints to monitor the bot's health and operational status.
 
 ## 🚀 Deployment
 
 ### Prerequisites
 
-- Node.js
-- Docker (optional)
-- Discord bot token and client ID
+- Node.js (version 16.x or higher recommended)
+- Docker (for containerized deployment)
+- A Discord bot token and client ID from the Discord Developer Portal
 
 ### Environment Setup
 
-Create a `.env` file with necessary variables as detailed in `.env.sample`.
+1. Create a `.env` file at the project root, following the template provided in `.env.sample`.
 
-### Deployment Options
+### Deployment Guide
 
 #### Localhost
 
-1. Clone the repository.
-2. Install dependencies: `npm install`.
-3. Set up `.env` with required variables.
-4. Run the bot: `npm start`.
+1. Clone the repository to your local machine.
+2. Install dependencies using `npm install`.
+3. Configure your `.env` file with the necessary environment variables.
+4. Start the bot with `npm start`.
 
 #### Docker
 
-1. Set up `.env`.
-2. Navigate to the root directory of the project.
-3. Run Docker Compose to build and start the container: `docker-compose up --build -d`.
-4. Optionally, follow the logs: `docker-compose logs -f`.
+1. Ensure your `.env` file is set up with required configurations.
+2. From the project's root directory, run `docker-compose up --build -d` to initiate the build and start the bot in a Docker container.
+3. Monitor bot activity via `docker-compose logs -f`.
 
-#### Cloud Services
+#### Cloud Deployment
 
-Deploy using provided instructions by your cloud service provider, ensuring the correct setting of environment variables. For detailed guidance on setting up and configuring the backend for cloud services, please refer to the [README in the llm_backend folder](./llm_backend/README.md).
+For deploying on cloud platforms, follow the setup instructions provided by your cloud hosting service. Detailed backend setup and configuration instructions can be found in [llm_backend/README.md](./llm_backend/README.md).
 
 ## 🛠 Usage
 
-### Text Commands
+### Commands
 
-Invoke various functionalities using `!command` format, e.g., `!perplexity`, `!quivr`.
+Utilize a variety of commands in the `!command` format, such as `!perplexity` and `!quivr`, to access the bot's functionalities.
 
 ### Wakewords
 
-Engage in conversations using designated wakewords.
+Initiate AI-driven conversations and queries using predefined wakewords, enhancing user engagement and interaction.
 
 ## 📊 Monitoring
 
-Use `/health` and `/uptime` endpoints for bot's operational status.
+The bot's operational status and health can be monitored through `/health` and `/uptime` endpoints, providing real-time diagnostics.
 
 ## 🤝 Contributing
 
-Contribute via issues or pull requests. Refer to `CONTRIBUTING.md` for guidelines.
+We welcome contributions! Please refer to `CONTRIBUTING.md` for contribution guidelines and submit issues or pull requests as needed.
 
 ## 📝 License
 
-MIT License. See [LICENSE](LICENSE).
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

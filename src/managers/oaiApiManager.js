@@ -2,7 +2,7 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 
-const oaiApi = {
+const oaiApiManager = {
     async sendRequest(requestBody) {
         try {
             // Validate request body before sending the request
@@ -11,7 +11,7 @@ const oaiApi = {
             }
 
             // Log the request body for debugging
-            logger.debug(`OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
+            logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
 
             const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, {
                 headers: {
@@ -21,29 +21,26 @@ const oaiApi = {
             });
 
             // Log the response data for debugging
-            logger.debug(`OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
+            logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
             return response.data;
         } catch (error) {
-            logger.error(`Error in OAI API request: ${error.message}`, error);
+            logger.error(`Error in OAI API request: ${error.message}`, { error });
             throw error;
         }
     },
 
     buildRequestBody(historyMessages, userMessage, botUserId, model = 'gpt-3.5-turbo') {
-
         if (!historyMessages || !Array.isArray(historyMessages)) {
             throw new Error('Invalid history messages provided for building request body.');
         }
 
-        let chatHistory = '';
-        historyMessages.slice().reverse().forEach(msg => {
-            // Format includes user ID and message content
+        let chatHistory = historyMessages.slice().reverse().reduce((acc, msg) => {
             const formattedMessage = `<@${msg.userId}>: ${msg.content}\n`;
-            // Check if adding this message exceeds the MAX_CONTENT_LENGTH
-            if ((chatHistory.length + formattedMessage.length + userMessage.length + 1) <= constants.MAX_CONTENT_LENGTH) {
-                chatHistory += formattedMessage;
+            if ((acc.length + formattedMessage.length + userMessage.length + 1) <= constants.MAX_CONTENT_LENGTH) {
+                return acc + formattedMessage;
             }
-        });
+            return acc;
+        }, '');
 
         // Append the current user's message directly to chat history
         chatHistory += `\n<@${botUserId}>: ${userMessage}\n`;
@@ -52,18 +49,16 @@ const oaiApi = {
         chatHistory += `<YOU>: `;
 
         let requestBody = {
-            model: model,
+            model,
             messages: [
-                // System prompt to provide context or instructions for the AI
                 { role: 'system', content: constants.SYSTEM_PROMPT },
-                // The entire chat history, including the current message, as a single 'user' message
                 { role: 'user', content: chatHistory }
             ]
         };
 
-        logger.debug(`OAI Request Body Built: ${JSON.stringify(requestBody, null, 2)}`);
+        logger.debug(`Built OAI Request Body: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
 };
 
-module.exports = oaiApi;
+module.exports = oaiApiManager;

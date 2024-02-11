@@ -3,7 +3,7 @@ const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
 const { splitMessage } = require('../../utils/common');
 const fetchConversationHistory = require('../../utils/fetchConversationHistory');
-const oaiApi = require('../../managers/oaiApi');
+const oaiApi = require('../../managers/oaiApiManager');
 const constants = require('../../config/constants'); // Import constants
 
 class OaiCommand extends Command {
