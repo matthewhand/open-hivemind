@@ -17,6 +17,8 @@ RUN chmod +x ./entrypoint.sh
 # Copy Python environment
 COPY --from=python-env /usr/local /usr/local
 
+RUN npm install -g npm@latest
+
 # Install Node dependencies
 COPY package*.json ./
 RUN npm install
