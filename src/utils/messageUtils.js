@@ -1,48 +1,38 @@
 // src/utils/messageUtils.js
 const axios = require('axios');
-const { encode, decode } = require('gpt-tokenizer');
+const { encode } = require('gpt-tokenizer');
 const logger = require('./logger');
 const configurationManager = require('../config/configurationManager');
 
-// Helper function to trim the history to fit within the max token count
-function trimHistoryToFit(history, newPrompt, maxTokens) {
-    let combinedText = history.map(msg => msg.content).join('\n') + '\n' + newPrompt;
-    let encoded = encode(combinedText);
-    
-    // Calculate the max tokens allowed for history
-    let maxHistoryTokens = maxTokens - encode(newPrompt).length;
-    
-    while (encoded.length > maxHistoryTokens) {
-        history.shift(); // Remove the oldest messages from history
-        combinedText = history.map(msg => msg.content).join('\n') + '\n' + newPrompt;
-        encoded = encode(combinedText);
-    }
-
-    return history;
-}
-
+/**
+ * Sends a request to the LLM with the conversation history and new prompt.
+ * @param {Object} message - The new message object from Discord.
+ */
 async function sendLlmRequest(message) {
+    logger.debug('Sending LLM request started');
     const endpointUrl = configurationManager.getConfig('LLM_ENDPOINT_URL');
     const model = configurationManager.getConfig('LLM_MODEL');
     const apiKey = configurationManager.getConfig('LLM_API_KEY');
-    const maxTokens = configurationManager.getConfig('MAX_CONTENT_LENGTH') || 2048; // Default to 2048 if not set
 
-    const history = await fetchConversationHistory(message.channel);
-    const newPrompt = message.content; // Assuming the new message is the prompt
+    // Debug log for the configuration used in the request
+    logger.debug(`LLM request configs: Endpoint URL - ${endpointUrl}, Model - ${model}, API Key - ${apiKey}`);
 
-    // Adjust history to fit within max token count
-    const trimmedHistory = trimHistoryToFit(history, newPrompt, maxTokens);
+    // Fetch and trim the conversation history
+    const trimmedHistory = await fetchAndTrimConversationHistory(message.channel, message.content);
+    logger.debug(`Trimmed history: ${JSON.stringify(trimmedHistory)}`);
 
+    // Prepare the payload for the LLM request
     const payload = {
         model,
         prompt: [
             ...trimmedHistory.map(msg => ({ role: msg.role, content: msg.content })),
-            { role: "user", content: newPrompt }
+            { role: "user", content: message.content } // Include the new user message
         ],
     };
 
+    logger.debug(`Payload for LLM request: ${JSON.stringify(payload)}`);
+
     try {
-        logger.debug(`Sending LLM request to ${endpointUrl} with payload: ${JSON.stringify(payload)}`);
         const response = await axios.post(endpointUrl, payload, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -50,7 +40,8 @@ async function sendLlmRequest(message) {
             },
         });
 
-        // Process the response from LLM
+        logger.debug(`LLM response data: ${JSON.stringify(response.data)}`);
+
         if (response.data && response.data.choices && response.data.choices.length > 0) {
             await message.channel.send(response.data.choices[0].message.content);
         } else {
@@ -61,18 +52,55 @@ async function sendLlmRequest(message) {
     }
 }
 
-async function fetchConversationHistory(channel) {
+/**
+ * Fetches and trims the conversation history to fit within the LLM context window based on token count.
+ * @param {Object} channel - The Discord channel from which to fetch the history.
+ * @param {string} newPrompt - The new user message to include in the token count.
+ * @returns {Array} The trimmed conversation history suitable for the LLM prompt.
+ */
+async function fetchAndTrimConversationHistory(channel, newPrompt) {
+    logger.debug('Fetching and trimming conversation history started');
+
+    // Configuration for fetching messages
+    const maxMessagesToFetch = parseInt(configurationManager.getConfig('HISTORY_FETCH_LIMIT') || 50);
+    const maxContentLength = parseInt(configurationManager.getConfig('MAX_CONTENT_LENGTH')) || 2048;
+    const responseAllocation = parseInt(configurationManager.getConfig('RESPONSE_ALLOCATION')) || 512;
+    const maxTokensForHistory = maxContentLength - responseAllocation;
+
+    // Debug log for the fetch configuration
+    logger.debug(`Fetch configs: Max messages to fetch - ${maxMessagesToFetch}, Max content length - ${maxContentLength}, Response allocation - ${responseAllocation}, Max tokens for history - ${maxTokensForHistory}`);
+
     try {
-        const limit = configurationManager.getConfig('HISTORY_FETCH_LIMIT') || 50;
-        const fetchedMessages = await channel.messages.fetch({ limit });
-        const messagesArray = Array.from(fetchedMessages.values());
-        return messagesArray.map(msg => ({
+        // Fetch messages from the channel
+        const fetchedMessages = await channel.messages.fetch({ limit: maxMessagesToFetch });
+        let messagesArray = Array.from(fetchedMessages.values());
+
+        logger.debug(`Fetched ${messagesArray.length} messages from Discord channel`);
+
+        // Prepare the history for trimming
+        let history = messagesArray.map(msg => ({
             role: msg.author.bot ? 'assistant' : 'user',
             content: msg.content,
-        })).reverse();
+        }));
+
+        const systemPrompt = configurationManager.getConfig('SYSTEM_PROMPT') || 'You are a helpful assistant.';
+        let totalTokens = encode(systemPrompt).length + encode(newPrompt).length;
+
+        // Trim the history based on token count
+        const trimmedHistory = [];
+        for (const message of history.reverse()) {
+            const tokens = encode(message.content);
+            if (totalTokens + tokens.length > maxTokensForHistory) break;
+            trimmedHistory.unshift(message); // Maintain chronological order
+            totalTokens += tokens.length;
+        }
+
+        logger.debug(`Trimmed history based on token count: ${trimmedHistory.length} messages retained`);
+
+        return trimmedHistory;
     } catch (error) {
-        logger.error('Error fetching conversation history:', error);
-        throw error;
+        logger.error(`Error fetching and trimming conversation history: ${error}`, error);
+        return [];
     }
 }
 
@@ -82,6 +110,5 @@ function scheduleFollowUpRequest(message) {
 
 module.exports = {
     sendLlmRequest,
-    fetchConversationHistory,
     scheduleFollowUpRequest,
 };
