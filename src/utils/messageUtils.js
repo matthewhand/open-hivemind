@@ -62,7 +62,7 @@ async function fetchAndTrimConversationHistory(channel, newPrompt) {
     logger.debug('Fetching and trimming conversation history started');
 
     // Configuration for fetching messages
-    const maxMessagesToFetch = parseInt(configurationManager.getConfig('HISTORY_FETCH_LIMIT') || 50);
+    const maxMessagesToFetch = parseInt(configurationManager.getConfig('HISTORY_FETCH_LIMIT') || 10);
     const maxContentLength = parseInt(configurationManager.getConfig('MAX_CONTENT_LENGTH')) || 2048;
     const responseAllocation = parseInt(configurationManager.getConfig('RESPONSE_ALLOCATION')) || 512;
     const maxTokensForHistory = maxContentLength - responseAllocation;
