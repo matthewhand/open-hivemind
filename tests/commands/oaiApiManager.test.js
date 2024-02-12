@@ -1,18 +1,23 @@
-// Import the shouldTestsRun flag from the test setup script
-const { shouldTestsRun } = require('../testSetup');
+// oaiApiManager.test.js
 
+// Import dependencies
 const axios = require('axios');
-jest.mock('axios'); // Mock axios for all tests in this file
+jest.mock('axios'); // Mock axios for all HTTP requests
 
-const constants = require('../../src/config/constants');
+// Mock the configuration constants
+jest.mock('../../src/config/constants', () => ({
+  ...jest.requireActual('../../src/config/constants'), // Preserve other constants
+  LLM_API_KEY: 'DUMMY-KEY-OOBABOOGAFTW', // Mock the API Key
+  LLM_ENDPOINT_URL: 'http://localhost:5000/v1/chat/completions', // Ensure endpoint matches expected test value
+}));
+
+// Import the module under test after mocks are defined
 const oaiApiManager = require('../../src/managers/oaiApiManager');
+const constants = require('../../src/config/constants');
 
-// Use describe.skip or describe based on the shouldTestsRun flag
-const describeConditional = shouldTestsRun ? describe : describe.skip;
-
-describeConditional('OAI API Manager Tests', () => {
+describe('OAI API Manager Tests', () => {
     beforeEach(() => {
-        // Clear all instances and calls to constructor and all methods:
+        // Clear all mock instances and calls before each test
         axios.post.mockClear();
     });
 
@@ -36,7 +41,7 @@ describeConditional('OAI API Manager Tests', () => {
             requestBody,
             {
                 headers: {
-                    'Authorization': `Bearer ${process.env.LLM_API_KEY}`,
+                    'Authorization': `Bearer ${constants.LLM_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
             }
@@ -47,7 +52,11 @@ describeConditional('OAI API Manager Tests', () => {
         // Setup axios to mock a rejected promise with an error
         const errorMessage = 'API Error';
         axios.post.mockRejectedValue(new Error(errorMessage));
-        const requestBody = { model: 'text-davinci-003', messages: ['Error test'] };
+
+        const requestBody = {
+            model: 'text-davinci-003',
+            messages: ['Error test']
+        };
 
         // Assert that the function throws the expected error
         await expect(oaiApiManager.sendRequest(requestBody)).rejects.toThrow(errorMessage);
@@ -64,7 +73,7 @@ describeConditional('OAI API Manager Tests', () => {
             // Execute the function to be tested
             const requestBody = oaiApiManager.buildRequestBody(historyMessages, userMessage, botUserId, model);
 
-            // Assert that the request body is formatted as expected
+            // Assert that the request body is correctly formatted
             expect(requestBody).toHaveProperty('model', model);
             expect(requestBody.messages).toEqual(expect.arrayContaining([
                 { role: 'system', content: constants.SYSTEM_PROMPT },

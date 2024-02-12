@@ -13,12 +13,13 @@ const oaiApiManager = {
             // Log the request body for debugging
             logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
 
-            const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(constants.API_KEY && { 'Authorization': `Bearer ${constants.API_KEY}` })
-                }
-            });
+            // Prepare headers, conditionally include Authorization if LLM_API_KEY is set
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(constants.LLM_API_KEY && { 'Authorization': `Bearer ${constants.LLM_API_KEY}` }),
+            };
+
+            const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
 
             // Log the response data for debugging
             logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
