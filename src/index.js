@@ -1,5 +1,5 @@
 const logger = require('./utils/logger');
-const DiscordBotManager = require('./managers/discordBotManager');
+const DiscordManager = require('./managers/DiscordManager');
 const setupEventHandlers = require('./eventhandlers');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
@@ -18,26 +18,30 @@ const discordSettings = {
 async function initialize() {
     try {
         logger.info('Initialization started.');
-        const discordBotManager = new DiscordBotManager(logger);
+        // Utilize DiscordManager singleton instance
+        const discordManager = DiscordManager.getInstance();
 
-        await discordBotManager.initBot(); // Ensure this properly awaits the client to be ready
+        // Ensuring the Discord client is properly initialized and ready
+        discordManager.client.once('ready', async () => {
+            logger.info(`Logged in as ${discordManager.client.user.tag}!`);
 
-        // Setup event handlers after the client is ready
-        setupEventHandlers(discordBotManager.client);
-
-        discordBotManager.client.once('ready', async () => {
-            logger.info(`Logged in as ${discordBotManager.client.user.tag}!`);
-
+            // Start the webhook server
             const webhookPort = process.env.WEB_SERVER_PORT || 3000;
             startWebhookServer(webhookPort);
             logger.info(`Webhook server started on port: ${webhookPort}`);
 
-            await registerCommands(discordBotManager.client);
+            // Register commands after the client is ready
+            await registerCommands(discordManager.client);
             logger.info('Commands registered successfully.');
 
-            configurationManager.setConfig('BOT_USER_ID', discordBotManager.client.user.id);
-            logger.info(`Bot ID stored: ${discordBotManager.client.user.id}`);
+            // Storing the bot user ID for later use
+            configurationManager.setConfig('BOT_USER_ID', discordManager.client.user.id);
+            logger.info(`Bot ID stored: ${discordManager.client.user.id}`);
         });
+
+        // Setup event handlers
+        setupEventHandlers(discordManager.client);
+
     } catch (error) {
         logger.error('Error during initialization:', error);
         process.exit(1);

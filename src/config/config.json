@@ -50,4 +50,5 @@
     "OLLAMA_ENABLED": "true",
     "OLLAMA_DEFAULT_MODEL": "orca-mini",
     "HISTORY_FETCH_LIMIT": 10
+    
   }

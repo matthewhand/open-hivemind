@@ -1,6 +1,5 @@
 module.exports = (client) => {
     const logger = require('./utils/logger');
-    const { commandHandler } = require('./handlers/commandHandler');
     const { messageHandler } = require('./handlers/messageHandler');
 
     // Event Handler for new messages

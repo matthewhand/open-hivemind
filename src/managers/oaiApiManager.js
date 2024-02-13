@@ -1,8 +1,9 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
+const LlmInterface = require('../interfaces/LlmInterface');
 
-const oaiApiManager = {
+class OpenAiManager extends LlmInterface {
     async sendRequest(requestBody) {
         try {
             if (!requestBody || !requestBody.messages) {
@@ -24,7 +25,7 @@ const oaiApiManager = {
             logger.error(`Error in OAI API request: ${error.message}`, { error });
             throw error;
         }
-    },
+    }
 
     buildRequestBody(historyMessages, userMessage, model = constants.LLM_MODEL) {
         if (!historyMessages || !Array.isArray(historyMessages)) {
@@ -58,6 +59,11 @@ const oaiApiManager = {
         logger.debug(`Built OAI Request Body: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
+
+    requiresHistory() {
+        // Override to specify that this manager requires chat history
+        return true;
+    }
 };
 
-module.exports = oaiApiManager;
+module.exports = OpenAiManager;
