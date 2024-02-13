@@ -5,15 +5,12 @@ const constants = require('../config/constants');
 const oaiApiManager = {
     async sendRequest(requestBody) {
         try {
-            // Validate request body before sending the request
             if (!requestBody || !requestBody.messages) {
                 throw new Error('Invalid request body for OAI API request.');
             }
 
-            // Log the request body for debugging
             logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
 
-            // Prepare headers, including Authorization if LLM_API_KEY is set
             const headers = {
                 'Content-Type': 'application/json',
                 ...(constants.LLM_API_KEY && { 'Authorization': `Bearer ${constants.LLM_API_KEY}` }),
@@ -21,7 +18,6 @@ const oaiApiManager = {
 
             const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
 
-            // Log the response data for debugging
             logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
             return response.data;
         } catch (error) {
@@ -31,18 +27,20 @@ const oaiApiManager = {
     },
 
     buildRequestBody(historyMessages, userMessage, model = constants.LLM_MODEL) {
-        // Validate input parameters
         if (!historyMessages || !Array.isArray(historyMessages)) {
             throw new Error('Invalid history messages provided for building request body.');
         }
-        if (!userMessage) {
-            throw new Error('Invalid user message provided for building request body.');
-        }
 
         const messages = historyMessages.map(msg => ({
-            role: msg.userId === constants.BOT_USER_ID ? 'assistant' : 'user',
+            role: msg.role, // Assuming 'role' is already 'user' or 'assistant' as per API requirements
             content: msg.content
         }));
+
+        // Optionally, add a system message if required by your API schema
+        messages.unshift({
+            role: 'system',
+            content: constants.SYSTEM_PROMPT // Ensure SYSTEM_PROMPT is defined in your constants
+        });
 
         // Add the user's current message
         messages.push({ role: 'user', content: userMessage });
