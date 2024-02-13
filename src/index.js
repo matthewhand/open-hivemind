@@ -1,15 +1,14 @@
 const logger = require('./utils/logger');
+const DiscordBotManager = require('./managers/discordBotManager');
+const setupEventHandlers = require('./eventhandlers');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
-const DiscordBotManager = require('./managers/discordBotManager');
-
-require('./eventhandlers'); // Import the event handlers
 const { debugEnvVars } = require('./utils/environmentUtils');
-const configurationManager = require('./config/configurationManager'); // Import configuration manager
+const configurationManager = require('./config/configurationManager');
 
 debugEnvVars();
 
-// Constants and initialization
+// Constants and initialization settings
 const discordSettings = {
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
@@ -19,34 +18,30 @@ const discordSettings = {
 async function initialize() {
     try {
         logger.info('Initialization started.');
+        const discordBotManager = new DiscordBotManager(logger);
 
-       
-// Instantiating the DiscordBotManager with the logger
-        
-       
-        const bot = new DiscordBotManager(logger);
-        bot.initBot();
+        await discordBotManager.initBot(); // Ensure this properly awaits the client to be ready
 
-        bot.client.once('ready', async () => {
-            logger.info(`Logged in as ${bot.client.user.tag}!`);
-            // Now that we're sure the client is ready, proceed with the rest of the initialization
+        // Setup event handlers after the client is ready
+        setupEventHandlers(discordBotManager.client);
+
+        discordBotManager.client.once('ready', async () => {
+            logger.info(`Logged in as ${discordBotManager.client.user.tag}!`);
+
             const webhookPort = process.env.WEB_SERVER_PORT || 3000;
             startWebhookServer(webhookPort);
             logger.info(`Webhook server started on port: ${webhookPort}`);
 
-            await registerCommands(bot.client); // Register commands using the bot client
+            await registerCommands(discordBotManager.client);
             logger.info('Commands registered successfully.');
 
-            // Store the bot's ID for later use in request payload construction
-            configurationManager.setConfig('BOT_USER_ID', bot.client.user.id);
-            logger.info(`Bot ID stored: ${bot.client.user.id}`);
+            configurationManager.setConfig('BOT_USER_ID', discordBotManager.client.user.id);
+            logger.info(`Bot ID stored: ${discordBotManager.client.user.id}`);
         });
     } catch (error) {
         logger.error('Error during initialization:', error);
-        process.exit(1); // Exit the process in case of critical failure
+        process.exit(1);
     }
 }
 
-// Call initialize without waiting for bot.client to be ready
 initialize().catch(error => logger.error('Unhandled error during initialization:', error));
-

@@ -12,6 +12,10 @@ class DiscordBotManager {
         this.initBot = this.initBot.bind(this);
     }
 
+    getClient() {
+        return this.client;
+    }
+
     initBot() {
         // Set up event listener for the 'ready' event before logging in
         this.client.once('ready', () => {
