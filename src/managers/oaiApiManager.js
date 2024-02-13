@@ -52,7 +52,6 @@ const oaiApiManager = {
         
     },
     buildRequestBody(historyMessages, userMessage, model = constants.LLM_MODEL) {
-        // Directly retrieve the bot's ID from the configuration
         const botUserId = configurationManager.getConfig('BOT_USER_ID');
     
         const systemPrompt = { role: 'system', content: constants.LLM_SYSTEM_PROMPT };
@@ -65,7 +64,7 @@ const oaiApiManager = {
     
         let requestBody = {
             model,
-            messages: [systemPrompt, ...formattedMessages],
+            prompt: [systemPrompt, ...formattedMessages], // Adjusted to use 'prompt' instead of 'messages'
             temperature: constants.LLM_TEMPERATURE,
             max_tokens: constants.LLM_MAX_TOKENS,
             top_p: constants.LLM_TOP_P,
@@ -76,5 +75,6 @@ const oaiApiManager = {
         logger.debug(`Built OAI Request Body: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
+    
 }    
 module.exports = oaiApiManager;
