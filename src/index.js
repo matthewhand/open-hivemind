@@ -1,7 +1,9 @@
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
-const bot = require('./bot'); // Import the initialized bot from bot.js
+const DiscordBotManager = require('./src/manager/discordBotManager');
+const logger = require('./utils/logger'); // Ensure this path is correct
+
 require('./eventhandlers'); // Import the event handlers
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager'); // Import configuration manager
@@ -18,6 +20,13 @@ const discordSettings = {
 async function initialize() {
     try {
         logger.info('Initialization started.');
+
+       
+// Instantiating the DiscordBotManager with the logger
+        
+       
+        const bot = new DiscordBotManager(logger);
+        bot.initBot();
 
         bot.client.once('ready', async () => {
             logger.info(`Logged in as ${bot.client.user.tag}!`);

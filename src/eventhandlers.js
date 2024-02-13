@@ -1,7 +1,7 @@
 const logger = require('./utils/logger');
 const { commandHandler } = require('./handlers/commandHandler');
 const { messageHandler } = require('./handlers/messageHandler');
-const client = require('./bot');
+const client = require('./managers/discordBotManager');
 
 // Event Handler for new messages
 client.on('messageCreate', async message => {
