@@ -1,10 +1,10 @@
 const logger = require('./utils/logger');
 const { registerCommands } = require('./handlers/slashCommandHandler');
-// const { initializeFetch } = require('./utils/initializeFetch'); // This line should be removed or commented out
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const bot = require('./bot'); // Import the initialized bot from bot.js
 require('./eventhandlers'); // Import the event handlers
 const { debugEnvVars } = require('./utils/environmentUtils');
+const configurationManager = require('./config/configurationManager'); // Import configuration manager
 
 debugEnvVars();
 
@@ -17,8 +17,16 @@ const discordSettings = {
 
 async function initialize() {
     try {
-        // initializeFetch(); // This line should also be removed or commented out
-        logger.info('Fetch initialized successfully.');
+        logger.info('Initialization started.');
+
+        // Ensuring the bot client is ready and has connected to Discord
+        bot.client.once('ready', () => {
+            logger.info(`Logged in as ${bot.client.user.tag}!`);
+            
+            // Store the bot's ID for later use in request payload construction
+            configurationManager.setConfig('BOT_USER_ID', bot.client.user.id);
+            logger.info(`Bot ID stored: ${bot.client.user.id}`);
+        });
 
         const webhookPort = process.env.WEB_SERVER_PORT || 3000;
         startWebhookServer(webhookPort);

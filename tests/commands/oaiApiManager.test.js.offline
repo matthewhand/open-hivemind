@@ -1,0 +1,98 @@
+const axios = require('axios');
+jest.mock('axios');
+
+// Mocking configurationManager without referencing out-of-scope variables directly
+jest.mock('../../src/config/configurationManager', () => {
+  const actualConfigManager = jest.requireActual('../../src/config/configurationManager');
+  return {
+    getConfig: jest.fn().mockImplementation((key) => {
+      // Define mock returns for specific keys
+      const mockConfigs = {
+        'BOT_USER_ID': 'mock-bot-id',
+        'LLM_TEMPERATURE': 0.5,
+        'LLM_MAX_TOKENS': 100,
+        'LLM_TOP_P': 1.0,
+        'LLM_FREQUENCY_PENALTY': 0.0,
+        'LLM_PRESENCE_PENALTY': 0.0,
+        'LLM_ENDPOINT_URL': "http://mockendpoint.com/v1/chat/completions",
+        'LLM_API_KEY': "mock-api-key",
+      };
+      // Return mock value if defined, otherwise fallback to actual implementation
+      return mockConfigs[key] || actualConfigManager.getConfig(key);
+    }),
+  };
+});
+
+// Requiring constants might be necessary if used directly in the tests
+const constants = jest.requireActual('../../src/config/constants');
+
+// Re-import oaiApiManager inside beforeEach to ensure mocks are applied
+let oaiApiManager;
+
+beforeEach(() => {
+  jest.resetModules(); // Clears the Jest cache
+  axios.post.mockClear();
+  // Re-import to ensure the mock configurationManager is used
+  oaiApiManager = require('../../src/managers/oaiApiManager');
+  // Reset or redefine mocks here if necessary
+});
+
+describe('OAI API Manager Tests', () => {
+  it('sends a request and receives a successful response', async () => {
+    const mockResponse = { data: { choices: [{ message: { content: 'Test response' } }] } };
+    axios.post.mockResolvedValue(mockResponse);
+
+    const requestBody = {
+      model: 'text-davinci-003',
+      messages: ["Hello, world!"],
+      temperature: constants.LLM_TEMPERATURE,
+      max_tokens: constants.LLM_MAX_TOKENS,
+      top_p: constants.LLM_TOP_P,
+      frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+      presence_penalty: constants.LLM_PRESENCE_PENALTY,
+    };
+
+    const response = await oaiApiManager.sendRequest(requestBody);
+
+    expect(response).toEqual(mockResponse.data);
+    expect(axios.post).toHaveBeenCalledWith(
+      constants.LLM_ENDPOINT_URL,
+      expect.objectContaining(requestBody),
+      {
+        headers: {
+          'Authorization': `Bearer ${constants.LLM_API_KEY}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+  });
+
+
+    it('correctly formats the request body with chat history', () => {
+        const historyMessages = [
+            { userId: 'user1', content: "How are you?" },
+            { userId: 'mock-bot-id', content: "I'm fine, thanks!" }
+        ];
+        const userMessage = "What's the weather like today?";
+        const model = 'text-davinci-003';
+
+        const requestBody = oaiApiManager.buildRequestBody(historyMessages, userMessage, model);
+
+        expect(requestBody).toMatchObject({
+            model,
+            messages: expect.arrayContaining([
+                { role: 'system', content: constants.SYSTEM_PROMPT },
+                { role: 'user', content: "How are you?" },
+                { role: 'assistant', content: "I'm fine, thanks!" },
+                { role: 'user', content: userMessage }
+            ]),
+            temperature: constants.LLM_TEMPERATURE,
+            max_tokens: constants.LLM_MAX_TOKENS,
+            top_p: constants.LLM_TOP_P,
+            frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+            presence_penalty: constants.LLM_PRESENCE_PENALTY,
+        });
+    });
+
+    // Add more tests as needed...
+});

@@ -9,22 +9,29 @@
 // Predefined Constants: Settings like deciderConfig which are more about the operational logic of the application and less likely to be sensitive or change between environments.
 
 module.exports = {
-    // Reponse settings
-    BOT_TO_BOT_MODE: process.env.BOT_TO_BOT_MODE !== 'false',
-    FOLLOW_UP_ENABLED: process.env.FOLLOW_UP_ENABLED !== 'false',
-    FOLLOW_UP_MIN_DELAY: parseInt(process.env.FOLLOW_UP_MIN_DELAY || '2', 10) * 60 * 1000,
-    FOLLOW_UP_MAX_DELAY: parseInt(process.env.FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000,
+    // Response settings
+    BOT_TO_BOT_MODE: process.env.LLM_BOT_TO_BOT_MODE !== 'false',
+    FOLLOW_UP_ENABLED: process.env.LLM_FOLLOW_UP_ENABLED !== 'false',
+    FOLLOW_UP_MIN_DELAY: parseInt(process.env.LLM_FOLLOW_UP_MIN_DELAY || '2', 10) * 60 * 1000,
+    FOLLOW_UP_MAX_DELAY: parseInt(process.env.LLM_FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000,
 
-    // Remote LLM
-    API_KEY: process.env.LLM_API_KEY,
+    // Remote LLM Settings
+    LLM_API_KEY: process.env.LLM_API_KEY,
     LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL || "http://localhost:5000/v1/chat/completions",
-    LLM_MODEL: process.env.LLM_MODEL || 'mistral-7b-instruct',
-    SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.',
-    MAX_CONTENT_LENGTH: parseInt(process.env.LLM_MAX_CONTEXT_SIZE || '4096', 10),
 
-    // Local LLM
-    OLLAMA_ENABLED: process.env.OLLAMA_DEFAULT_MODEL || 'true',
-    OLLAMA_DEFAULT_MODEL: process.env.OLLAMA_DEFAULT_MODEL || 'orca-mini',
+    // LLM Parameters
+    LLM_MODEL: process.env.LLM_MODEL || 'mistral-7b-instruct',
+    LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.',
+    LLM_MAX_CONTENT_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
+    LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.5'),
+    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '100', 10),
+    LLM_TOP_P: parseFloat(process.env.LLM_TOP_P || '1.0'),
+    LLM_FREQUENCY_PENALTY: parseFloat(process.env.LLM_FREQUENCY_PENALTY || '0.0'),
+    LLM_PRESENCE_PENALTY: parseFloat(process.env.LLM_PRESENCE_PENALTY || '0.0'),
+
+    // Local LLM Settings (overrides remote)
+    OLLAMA_ENABLED: process.env.LLM_OLLAMA_ENABLED !== 'false',
+    OLLAMA_DEFAULT_MODEL: process.env.LLM_OLLAMA_DEFAULT_MODEL || 'orca-mini',
 
     // Other constants...
 };
