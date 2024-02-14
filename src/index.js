@@ -42,10 +42,10 @@ async function initialize() {
         // Setup event handlers after the client is ready
         setupEventHandlers(discordManager.client);
 
-        // Re-enable webhook server
-        const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-        startWebhookServer(webhookPort);
-        logger.info(`Webhook server started on port: ${webhookPort}`);
+        // // Re-enable webhook server
+        // const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+        // startWebhookServer(webhookPort);
+        // logger.info(`Webhook server started on port: ${webhookPort}`);
 
         await registerCommands(discordManager.client);
         logger.info('Commands registered successfully.');
