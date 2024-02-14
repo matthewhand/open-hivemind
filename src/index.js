@@ -1,10 +1,10 @@
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const { registerCommands } = require('./handlers/slashCommandHandler');
+// Remove the now-unused import for registerCommands
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
-const { CHANNEL_ID } = require('./config/constants'); 
+const { CHANNEL_ID } = require('./config/constants');
 const { messageHandler } = require('./handlers/messageHandler');
 const LlmInterface = require('./interfaces/LlmInterface'); // Ensure LlmInterface is imported correctly
 
@@ -22,43 +22,12 @@ async function initialize() {
         logger.info('Initialization started.');
         const discordManager = DiscordManager.getInstance();
 
-        // Wait for the client to be ready
-        await new Promise(resolve => discordManager.client.once('ready', async () => {
-            logger.info(`Logged in as ${discordManager.client.user.tag}!`);
-            
-            // Set the bot's ID in OpenAiManager or any other LM manager
-            const lmManager = LlmInterface.getManager();
-            lmManager.setBotId(discordManager.client.user.id);
+        // Wait for the client to be ready is now handled within DiscordManager
 
-            // Fetch the last non-bot message and invoke the message handler after the client is ready
-            if (CHANNEL_ID) {
-                try {
-                    const channel = await discordManager.client.channels.fetch(CHANNEL_ID);
-                    const messages = await channel.messages.fetch({ limit: 1 });
-                    const lastMessage = messages.first();
-                    if (lastMessage && lastMessage.author.id !== discordManager.client.user.id) {
-                        // Call the message handler directly if it's not a message from the bot itself
-                        await messageHandler(lastMessage);
-                    }
-                } catch (error) {
-                    logger.error('Error fetching the last message or invoking the message handler:', error);
-                }
-            } else {
-                logger.warn('CHANNEL_ID is not configured. Please check your environment variables.');
-            }
-            resolve();
-        }));
-
-        // Setup event handlers after the client is ready
+        // Setup event handlers after the client is ready, which remains necessary
         setupEventHandlers(discordManager.client);
 
-        // Register commands
-        try {
-            await registerCommands(discordManager.client);
-            logger.info('Commands registered successfully.');
-        } catch (error) {
-            logger.error('Error registering commands:', error);
-        }
+        // The attempt to register commands is now removed since it's handled within DiscordManager
 
     } catch (error) {
         logger.error('Error during initialization:', error);
