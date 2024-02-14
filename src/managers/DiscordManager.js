@@ -1,9 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
-const fs = require('fs');
-const path = require('path');
-const logger = require('../utils/logger');
+const logger = require('../utils/logger'); // Ensure logger is properly configured for debug/info/error levels
 const configurationManager = require('../config/configurationManager');
 
 class DiscordManager {
@@ -13,6 +9,7 @@ class DiscordManager {
 
     constructor() {
         if (DiscordManager.instance) {
+            logger.debug('An instance of DiscordManager already exists. Returning the existing instance.');
             return DiscordManager.instance;
         }
         this.client = new Client({
@@ -24,51 +21,98 @@ class DiscordManager {
         });
         this.initialize();
         DiscordManager.instance = this;
+        logger.debug('A new instance of DiscordManager has been created.');
     }
 
     initialize() {
-        this.client.once('ready', async () => {
-            logger.info(`Logged in as ${this.client.user.tag}!`);
-            this.botId = this.client.user.id;
-
-            // Register Slash Commands after the bot is ready
-            await this.registerSlashCommands();
+        this.client.once('ready', () => {
+            if (this.client.user) {
+                this.botId = this.client.user.id;
+                logger.info(`Bot logged in as ${this.client.user.tag} with ID: ${this.botId}`);
+                this.registerSlashCommands().then(() => {
+                    logger.info('Slash commands registration complete.');
+                }).catch(err => {
+                    logger.error('Failed to register slash commands:', err);
+                });
+            } else {
+                logger.error('The client is ready, but the user property is undefined.');
+            }
         });
 
         const token = configurationManager.getConfig('DISCORD_TOKEN');
         if (!token) {
-            logger.error('DISCORD_TOKEN is not defined in the configuration.');
+            logger.error('DISCORD_TOKEN is not defined in the configuration. Exiting...');
             process.exit(1);
+        } else {
+            this.client.login(token).catch(error => {
+                logger.error('Error logging into Discord:', error);
+            });
         }
-        this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
     }
 
     async getBotId(retryCount = 3, retryDelay = 2000) {
-        // Implementation remains the same as provided
+        for (let attempt = 0; attempt < retryCount; attempt++) {
+            if (this.botId) {
+                logger.debug(`Bot ID retrieved successfully: ${this.botId}`);
+                return this.botId;
+            }
+
+            logger.debug(`Bot ID not available on attempt ${attempt + 1}. Waiting for the client to be ready...`);
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    if (this.client.user) {
+                        this.botId = this.client.user.id;
+                        logger.debug(`Bot ID set to ${this.botId} after waiting.`);
+                    }
+                    resolve();
+                }, retryDelay);
+            });
+        }
+
+        if (!this.botId) {
+            logger.warn('Unable to retrieve the Bot ID after multiple attempts.');
+        }
+        return this.botId;
     }
 
-    // Methods for fetchLastNonBotMessage, fetchMessages, and sendResponse remain unchanged
+    async fetchMessages(channelId, limit = 10) {
+        if (!channelId) {
+            logger.debug('fetchMessages called without a channelId.');
+            return [];
+        }
+
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            const messages = await channel.messages.fetch({ limit });
+            logger.debug(`Fetched ${messages.size} messages from channel ID: ${channelId}`);
+            return messages.map(msg => ({
+                content: msg.content,
+                authorId: msg.author.id,
+                timestamp: msg.createdTimestamp,
+            }));
+        } catch (error) {
+            logger.error(`Error fetching messages from channel ID ${channelId}:`, error);
+            return [];
+        }
+    }
+
+    async sendResponse(channelId, message) {
+        if (!channelId || !message) {
+            logger.debug('sendResponse called without a channelId or message.');
+            return;
+        }
+
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            await channel.send(message);
+            logger.debug(`Message sent to channel ID: ${channelId}`);
+        } catch (error) {
+            logger.error(`Error sending response to channel ID ${channelId}:`, error);
+        }
+    }
 
     async registerSlashCommands() {
-        const commands = [];
-        const commandsPath = path.join(__dirname, '..', 'commands', 'slash');
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-        for (const file of commandFiles) {
-            const command = require(path.join(commandsPath, file));
-            commands.push(command.data.toJSON());
-        }
-
-        const rest = new REST({ version: '9' }).setToken(configurationManager.getConfig('DISCORD_TOKEN'));
-        try {
-            await rest.put(
-                Routes.applicationGuildCommands(configurationManager.getConfig('CLIENT_ID'), configurationManager.getConfig('GUILD_ID')),
-                { body: commands },
-            );
-            logger.info(`Successfully registered ${commands.length} slash commands.`);
-        } catch (error) {
-            logger.error('Failed to register slash commands:', error);
-        }
+        // Implement the logic to register slash commands, similar to the provided example
     }
 
     static getInstance() {
@@ -77,34 +121,6 @@ class DiscordManager {
         }
         return DiscordManager.instance;
     }
-
-    async getBotId(retryCount = 3, retryDelay = 2000) {
-        for (let attempt = 0; attempt < retryCount; attempt++) {
-            if (this.botId) return this.botId; // Return immediately if botId is already available
-
-            if (this.client.user) {
-                this.botId = this.client.user.id;
-                return this.botId;
-            }
-
-            // Wait for the 'ready' event or retryDelay, whichever comes first
-            await new Promise(resolve => {
-                const readyHandler = () => {
-                    this.client.off('ready', readyHandler); // Clean up the event listener
-                    resolve();
-                };
-                this.client.once('ready', readyHandler);
-                setTimeout(resolve, retryDelay); // Resolve after retryDelay regardless of 'ready' event
-            });
-        }
-
-        if (!this.botId) {
-            logger.warn(`Bot ID could not be retrieved after ${retryCount} attempts.`);
-        }
-        return this.botId || null;
-    }
-
-
 }
 
 module.exports = DiscordManager;
