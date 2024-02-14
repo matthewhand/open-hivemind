@@ -4,8 +4,9 @@ const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
-const { CHANNEL_ID } = require('./config/constants'); // Ensure this is correctly pointing to where CHANNEL_ID is defined
-const { messageHandler } = require('./handlers/messageHandler'); // Ensure messageHandler is imported correctly
+const { CHANNEL_ID } = require('./config/constants'); 
+const { messageHandler } = require('./handlers/messageHandler');
+const LlmInterface = require('./interfaces/LlmInterface'); // Ensure LlmInterface is imported correctly
 
 debugEnvVars();
 
@@ -24,14 +25,23 @@ async function initialize() {
         // Wait for the client to be ready
         await new Promise(resolve => discordManager.client.once('ready', async () => {
             logger.info(`Logged in as ${discordManager.client.user.tag}!`);
+            
+            // Set the bot's ID in OpenAiManager or any other LM manager
+            const lmManager = LlmInterface.getManager();
+            lmManager.setBotId(discordManager.client.user.id);
+
             // Fetch the last non-bot message and invoke the message handler after the client is ready
             if (CHANNEL_ID) {
-                const channel = await discordManager.client.channels.fetch(CHANNEL_ID);
-                const messages = await channel.messages.fetch({ limit: 1 });
-                const lastMessage = messages.first();
-                if (lastMessage && lastMessage.author.id !== discordManager.client.user.id) {
-                    // Call the message handler directly if it's not a message from the bot itself
-                    await messageHandler(lastMessage);
+                try {
+                    const channel = await discordManager.client.channels.fetch(CHANNEL_ID);
+                    const messages = await channel.messages.fetch({ limit: 1 });
+                    const lastMessage = messages.first();
+                    if (lastMessage && lastMessage.author.id !== discordManager.client.user.id) {
+                        // Call the message handler directly if it's not a message from the bot itself
+                        await messageHandler(lastMessage);
+                    }
+                } catch (error) {
+                    logger.error('Error fetching the last message or invoking the message handler:', error);
                 }
             } else {
                 logger.warn('CHANNEL_ID is not configured. Please check your environment variables.');
@@ -42,13 +52,13 @@ async function initialize() {
         // Setup event handlers after the client is ready
         setupEventHandlers(discordManager.client);
 
-        // // Re-enable webhook server
-        // const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-        // startWebhookServer(webhookPort);
-        // logger.info(`Webhook server started on port: ${webhookPort}`);
-
-        await registerCommands(discordManager.client);
-        logger.info('Commands registered successfully.');
+        // Register commands
+        try {
+            await registerCommands(discordManager.client);
+            logger.info('Commands registered successfully.');
+        } catch (error) {
+            logger.error('Error registering commands:', error);
+        }
 
     } catch (error) {
         logger.error('Error during initialization:', error);
