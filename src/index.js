@@ -5,6 +5,7 @@ const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
 const { CHANNEL_ID } = require('./config/constants'); // Ensure this is correctly pointing to where CHANNEL_ID is defined
+const { messageHandler } = require('./handlers/messageHandler'); // Ensure messageHandler is imported correctly
 
 debugEnvVars();
 
@@ -41,10 +42,10 @@ async function initialize() {
         // Setup event handlers after the client is ready
         setupEventHandlers(discordManager.client);
 
-        // Conditional activation for webhook server
-        // const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-        // startWebhookServer(webhookPort);
-        // logger.info(`Webhook server started on port: ${webhookPort}`);
+        // Re-enable webhook server
+        const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+        startWebhookServer(webhookPort);
+        logger.info(`Webhook server started on port: ${webhookPort}`);
 
         await registerCommands(discordManager.client);
         logger.info('Commands registered successfully.');
@@ -59,8 +60,6 @@ initialize().catch(error => logger.error('Unhandled error during initialization:
 
 // Define and export the event handlers setup function
 function setupEventHandlers(client) {
-    const { messageHandler } = require('./handlers/messageHandler');
-
     client.on('messageCreate', async message => {
         try {
             logger.debug(`New message received: ${message.content}`);

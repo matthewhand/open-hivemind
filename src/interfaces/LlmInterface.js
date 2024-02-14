@@ -1,4 +1,4 @@
-// src/interfaces/llmInterface.js
+// src/interfaces/LlmInterface.js
 class LlmInterface {
     async prepareRequestData(message, history=[]) {
         throw new Error("prepareRequestData method must be implemented");
