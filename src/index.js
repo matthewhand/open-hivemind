@@ -18,30 +18,23 @@ const discordSettings = {
 async function initialize() {
     try {
         logger.info('Initialization started.');
-        // Utilize DiscordManager singleton instance
         const discordManager = DiscordManager.getInstance();
 
-        // Ensuring the Discord client is properly initialized and ready
-        discordManager.client.once('ready', async () => {
-            logger.info(`Logged in as ${discordManager.client.user.tag}!`);
+        // Wait for the client to be ready
+        await new Promise(resolve => discordManager.client.once('ready', resolve));
 
-            // Start the webhook server
-            const webhookPort = process.env.WEB_SERVER_PORT || 3000;
-            startWebhookServer(webhookPort);
-            logger.info(`Webhook server started on port: ${webhookPort}`);
+        logger.info(`Logged in as ${discordManager.client.user.tag}!`);
 
-            // Register commands after the client is ready
-            await registerCommands(discordManager.client);
-            logger.info('Commands registered successfully.');
+        // Now that the client is ready, proceed with setting up the rest of the bot
+        const webhookPort = process.env.WEB_SERVER_PORT || 3000;
+        startWebhookServer(webhookPort);
+        logger.info(`Webhook server started on port: ${webhookPort}`);
 
-            // Storing the bot user ID for later use
-            configurationManager.setConfig('BOT_USER_ID', discordManager.client.user.id);
-            logger.info(`Bot ID stored: ${discordManager.client.user.id}`);
-        });
+        await registerCommands(discordManager.client);
+        logger.info('Commands registered successfully.');
 
-        // Setup event handlers
+        // Setup event handlers after the client is ready
         setupEventHandlers(discordManager.client);
-
     } catch (error) {
         logger.error('Error during initialization:', error);
         process.exit(1);
