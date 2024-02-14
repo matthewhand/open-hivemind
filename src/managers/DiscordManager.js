@@ -4,6 +4,7 @@ const configurationManager = require('../config/configurationManager');
 
 class DiscordManager {
     static instance;
+    botId; // Declare botId to store the client's user ID
 
     constructor() {
         if (DiscordManager.instance) {
@@ -25,6 +26,7 @@ class DiscordManager {
     initialize() {
         this.client.once('ready', () => {
             logger.info(`Logged in as ${this.client.user.tag}!`);
+            this.botId = this.client.user.id; // Store the bot's user ID on client ready
         });
 
         const token = configurationManager.getConfig('DISCORD_TOKEN');
@@ -61,7 +63,7 @@ class DiscordManager {
     }
 
     getBotId() {
-        return this.client.user.id;
+        return this.botId; // Use the stored botId
     }
 
     static getInstance() {
