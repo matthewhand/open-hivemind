@@ -52,18 +52,44 @@ class DiscordManager {
     // }
 
     // Method to lazily get the bot ID
-    async getBotId() {
-        if (!this.botId && this.client.user) {
-            this.botId = this.client.user.id;
-        } else if (!this.botId) {
-            // Optionally wait for the client to be ready if the bot ID is still not set
-            await new Promise(resolve => this.client.once('ready', () => resolve()));
-            this.botId = this.client.user?.id;
+    // async getBotId() {
+    //     if (!this.botId && this.client.user) {
+    //         this.botId = this.client.user.id;
+    //     } else if (!this.botId) {
+    //         // Optionally wait for the client to be ready if the bot ID is still not set
+    //         await new Promise(resolve => this.client.once('ready', () => resolve()));
+    //         this.botId = this.client.user?.id;
+    //     }
+    //     if (!this.botId) {
+    //         logger.warn('Bot ID is still not available after waiting for client ready event.');
+    //     }
+    //     return this.botId;
+    // }
+
+    async getBotId(retryCount = 3, retryDelay = 2000) {
+        for (let attempt = 0; attempt < retryCount; attempt++) {
+            if (this.botId) return this.botId; // Return immediately if botId is already available
+
+            if (this.client.user) {
+                this.botId = this.client.user.id;
+                return this.botId;
+            }
+
+            // Wait for the 'ready' event or retryDelay, whichever comes first
+            await new Promise(resolve => {
+                const readyHandler = () => {
+                    this.client.off('ready', readyHandler); // Clean up the event listener
+                    resolve();
+                };
+                this.client.once('ready', readyHandler);
+                setTimeout(resolve, retryDelay); // Resolve after retryDelay regardless of 'ready' event
+            });
         }
+
         if (!this.botId) {
-            logger.warn('Bot ID is still not available after waiting for client ready event.');
+            logger.warn(`Bot ID could not be retrieved after ${retryCount} attempts.`);
         }
-        return this.botId;
+        return this.botId || null;
     }
 
     // New method to fetch the last non-bot message
