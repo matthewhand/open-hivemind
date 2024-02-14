@@ -8,7 +8,7 @@ class OpenAiManager extends LlmInterface {
         logger.debug("OpenAiManager.sendRequest called with requestBody:", requestBody);
 
         try {
-            if (!requestBody || !requestBody.messages) {
+            if (!requestBody || !Array.isArray(requestBody.messages)) {
                 throw new Error('Invalid request body for OAI API request.');
             }
 
@@ -35,14 +35,17 @@ class OpenAiManager extends LlmInterface {
             content: constants.LLM_SYSTEM_PROMPT
         } : null;
 
-        const messages = [
-            ...(systemMessage ? [systemMessage] : []),
-            ...history.map(msg => {
-                logger.debug("Mapping history message:", msg);
-                return { role: msg.role, content: msg.content };
-            }),
-            { role: 'user', content: userMessage }
-        ];
+        let messages = systemMessage ? [systemMessage] : [];
+
+        if (Array.isArray(history) && history.length > 0) {
+            history.forEach(msg => {
+                if (msg && msg.role && msg.content) {
+                    messages.push({ role: msg.role, content: msg.content });
+                }
+            });
+        }
+
+        messages.push({ role: 'user', content: userMessage });
 
         logger.debug("Constructed messages array for requestBody:", messages);
 
