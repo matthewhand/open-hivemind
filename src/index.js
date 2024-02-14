@@ -24,6 +24,9 @@ async function initialize() {
 
         logger.info(`Logged in as ${discordManager.client.user.tag}!`);
 
+        // Setup event handlers after the client is ready
+        setupEventHandlers(discordManager.client);
+
         // Now that the client is ready, proceed with setting up the rest of the bot
         const webhookPort = process.env.WEB_SERVER_PORT || 3000;
         startWebhookServer(webhookPort);
@@ -31,9 +34,8 @@ async function initialize() {
 
         await registerCommands(discordManager.client);
         logger.info('Commands registered successfully.');
-
-        // Setup event handlers after the client is ready
-        setupEventHandlers(discordManager.client);
+        
+        
     } catch (error) {
         logger.error('Error during initialization:', error);
         process.exit(1);
