@@ -21,20 +21,23 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages, userMessage) {
-        const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
-            role: 'system',
-            content: constants.LLM_SYSTEM_PROMPT
-        } : null;
+        // Initialize messages array, optionally including the system message
+        let messages = constants.LLM_SYSTEM_PROMPT ? [{ role: 'system', content: constants.LLM_SYSTEM_PROMPT }] : [];
 
-        let messages = systemMessage ? [systemMessage] : [];
-        for (let msg of historyMessages) {
-            messages.push({ role: msg.role, content: msg.content });
+        // If there's history, iterate through and append each message
+        if (historyMessages && historyMessages.length > 0) {
+            historyMessages.forEach(msg => {
+                messages.push({ role: msg.role, content: msg.content });
+            });
         }
+
+        // Append the current user message, ensuring it's the last message
         messages.push({ role: 'user', content: userMessage });
 
+        // Prepare and return the complete request body
         return {
             model: constants.LLM_MODEL,
-            messages: messages,
+            messages,
             temperature: constants.LLM_TEMPERATURE,
             max_tokens: constants.LLM_MAX_TOKENS,
             top_p: constants.LLM_TOP_P,
