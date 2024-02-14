@@ -1,12 +1,12 @@
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
-const LlmInterface = require('../interfaces/LlmInterface'); // Assuming LlmInterface includes a getManager method
+const LlmInterface = require('../interfaces/LlmInterface'); 
 
 async function messageHandler(message) {
     logger.debug(`Received message: ${message?.content ?? "Undefined Content"}`);
 
-    if (!(message?.content?.trim())) {
+    if (!message?.content?.trim()) {
         logger.debug('Ignoring empty or undefined message.');
         return;
     }
@@ -16,44 +16,39 @@ async function messageHandler(message) {
         return;
     }
 
-    let discordManager;
+    let discordManager = DiscordManager.getInstance();
+    
     try {
-        discordManager = DiscordManager.getInstance();
-        const botId = discordManager?.getBotId?.();
-
-        if (!botId) {
-            logger.error('Bot ID is not available or undefined. Ensure the Discord client is ready.');
-            return;
-        }
+        // Attempt to lazily get the bot ID when needed
+        const botId = await discordManager.getBotId();
 
         logger.info('Generating dynamic response...');
-        const history = await discordManager?.fetchMessages?.(message?.channel?.id, 20);
+        const history = await discordManager.fetchMessages(message.channel.id, 20);
 
-        if (!(history?.length)) {
-            logger.warn('No message history available for context or history is undefined.');
-            await discordManager?.sendResponse?.(message?.channel?.id, "Sorry, I can't find any relevant history to respond to or channel is undefined.");
+        if (!history.length) {
+            logger.warn('No message history available for context.');
+            await discordManager.sendResponse(message.channel.id, "Sorry, I can't find any relevant history to respond to.");
             return;
         }
 
-        const lmManager = LlmInterface.getManager?.(); // Utilize the static method to obtain an LM manager instance
-        const lmRequestBody = lmManager?.buildRequestBody?.(history.map(msg => ({
-            role: msg?.author?.id === botId ? 'assistant' : 'user',
-            content: msg?.content ?? "Undefined message content"
+        // Assuming getManager method of LlmInterface handles lazy loading or initialization of the LM manager
+        const lmManager = LlmInterface.getManager(); 
+        const lmRequestBody = lmManager.buildRequestBody(history.map(msg => ({
+            role: msg.author.id === botId ? 'assistant' : 'user',
+            content: msg.content
         })));
 
-        const response = await lmManager?.sendRequest?.(lmRequestBody);
-        const replyText = response?.choices?.[0]?.message?.content ?? "I'm not sure how to respond to that or response is undefined.";
+        const response = await lmManager.sendRequest(lmRequestBody);
+        const replyText = response.choices?.[0]?.message?.content ?? "I'm not sure how to respond to that.";
 
-        await discordManager?.sendResponse?.(message?.channel?.id, replyText);
-        logger.info(`Replied to message in channel ${message?.channel?.id ?? "Undefined Channel"} with: ${replyText}`);
+        await discordManager.sendResponse(message.channel.id, replyText);
+        logger.info(`Replied to message in channel ${message.channel.id} with: ${replyText}`);
     } catch (error) {
-        logger.error(`Error processing message: ${error?.message ?? "Undefined Error"}`);
-        try {
-            if (discordManager) {
-                await discordManager?.sendResponse?.(message?.channel?.id, 'Sorry, I encountered an error processing your message.');
-            }
-        } catch (sendError) {
-            logger.error(`Error sending error response to Discord: ${sendError?.message ?? "Undefined Send Error"}`);
+        logger.error(`Error processing message: ${error.message}`);
+        if (discordManager) {
+            await discordManager.sendResponse(message.channel.id, 'Sorry, I encountered an error processing your message.').catch(sendError => {
+                logger.error(`Error sending error response to Discord: ${sendError.message}`);
+            });
         }
     }
 }

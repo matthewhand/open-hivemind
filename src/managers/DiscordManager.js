@@ -43,10 +43,25 @@ class DiscordManager {
         this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
     }
     
-    getBotId() {
+    // getBotId() {
+    //     if (!this.botId) {
+    //         logger.error('Trying to access bot ID before it is set. Ensure client is ready.');
+    //         return null; // Or handle this case as needed
+    //     }
+    //     return this.botId;
+    // }
+
+    // Method to lazily get the bot ID
+    async getBotId() {
+        if (!this.botId && this.client.user) {
+            this.botId = this.client.user.id;
+        } else if (!this.botId) {
+            // Optionally wait for the client to be ready if the bot ID is still not set
+            await new Promise(resolve => this.client.once('ready', () => resolve()));
+            this.botId = this.client.user?.id;
+        }
         if (!this.botId) {
-            logger.error('Trying to access bot ID before it is set. Ensure client is ready.');
-            return null; // Or handle this case as needed
+            logger.warn('Bot ID is still not available after waiting for client ready event.');
         }
         return this.botId;
     }
