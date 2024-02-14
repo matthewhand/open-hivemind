@@ -28,6 +28,7 @@ class OpenAiManager extends LlmInterface {
     }
 }
 
+
 buildRequestBody(historyMessages, userMessage) {
     // Prepend a system message if defined in constants
     const systemMessage = constants.LLM_SYSTEM_PROMPT ? [{
@@ -50,19 +51,18 @@ buildRequestBody(historyMessages, userMessage) {
     // Combine all parts into the messages array
     const messages = [...systemMessage, ...history, currentUserMessage];
 
-    // Return the structured payload for the API request
+    // Correct the request structure for the API
     return {
         model: constants.LLM_MODEL,
-        messages,
+        messages: messages, // Ensure this aligns with the API's expected format
         temperature: constants.LLM_TEMPERATURE,
         max_tokens: constants.LLM_MAX_TOKENS,
         top_p: constants.LLM_TOP_P,
         frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
         presence_penalty: constants.LLM_PRESENCE_PENALTY,
     };
-}
-
-    requiresHistory() {
+    
+}    requiresHistory() {
         return true; // Assuming this manager requires chat history
     }
 }
