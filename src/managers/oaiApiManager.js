@@ -36,7 +36,7 @@ class OpenAiManager extends LlmInterface {
         // Optionally, add a system message
         messages.unshift({
             role: 'system',
-            content: constants.SYSTEM_PROMPT
+            content: constants.LLM_SYSTEM_PROMPT
         });
     
         // Add the user's current message
