@@ -8,6 +8,7 @@ class DiscordManager {
 
     constructor() {
         if (DiscordManager.instance) {
+            logger.debug('Returning existing instance of DiscordManager.');
             return DiscordManager.instance;
         }
         this.client = new Client({
@@ -19,6 +20,7 @@ class DiscordManager {
         });
         this.initialize();
         DiscordManager.instance = this;
+        logger.debug('DiscordManager instance created.');
     }
 
     initialize() {
@@ -37,7 +39,7 @@ class DiscordManager {
             logger.error('DISCORD_TOKEN is not defined in the configuration.');
             process.exit(1);
         }
-        this.client.login(token).catch(logger.error);
+        this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
     }
 
     getBotId() {
@@ -47,6 +49,19 @@ class DiscordManager {
         }
         return this.botId;
     }
+
+    // Your fetchMessages and sendResponse methods here...
+
+    static getInstance() {
+        if (!DiscordManager.instance) {
+            logger.debug('Creating a new instance of DiscordManager.');
+            DiscordManager.instance = new DiscordManager();
+        } else {
+            logger.debug('DiscordManager instance already exists.');
+        }
+        return DiscordManager.instance;
+    }
+
 
     async fetchMessages(channelId, limit = 10) {
         try {
@@ -72,12 +87,6 @@ class DiscordManager {
         }
     }
 
-    static getInstance() {
-        if (!DiscordManager.instance) {
-            DiscordManager.instance = new DiscordManager();
-        }
-        return DiscordManager.instance;
-    }
 }
 
 module.exports = DiscordManager;
