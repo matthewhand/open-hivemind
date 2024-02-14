@@ -25,12 +25,27 @@ async function messageHandler(message) {
     try {
         logger.info('Generating dynamic response...');
 
-        // Fetch recent messages for context, ensuring to exclude the bot's messages from the history
-        const history = await discordManager.fetchMessages(message.channel.id, 20); // Example: fetch last 20 messages
-        // No need to filter current message since we're excluding bot messages in fetchMessages now
+        // Fetch recent messages for context
+        let history = await discordManager.fetchMessages(message.channel.id, 20); // Example: fetch last 20 messages
 
-        // Pass both the history and the user message to the LLM manager
-        const llmRequestBody = llmManager.buildRequestBody(history, message.content);
+        // Ensure the current message is not included in the history
+        history = history.filter(m => m.id !== message.id);
+
+        // Sort history in chronological order (oldest first)
+        history.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Prepare history for the LLM including role assignment
+        const preparedHistory = history.map(m => ({
+            role: m.authorId === discordManager.botUserId ? 'assistant' : 'user',
+            content: m.content
+        }));
+
+        // Construct the request body including the current message
+        const llmRequestBody = llmManager.buildRequestBody([...preparedHistory, {
+            role: 'user',
+            content: message.content
+        }]);
+
         const response = await llmManager.sendRequest(llmRequestBody);
 
         // Parse the response and send it back in Discord
