@@ -27,13 +27,14 @@ class DiscordManager {
         this.client.once('ready', () => {
             if (this.client.user) {
                 logger.info(`Logged in as ${this.client.user.tag}!`);
-                this.botId = this.client.user.id; // Store the bot's user ID on client ready
+                this.botId = this.client.user.id; // Safely store the bot's user ID on client ready
                 logger.debug(`Bot ID set to ${this.botId}`);
             } else {
                 logger.error('Client is ready but client.user is undefined.');
+                // Handle the situation appropriately, maybe set a flag or retry login
             }
         });
-
+    
         const token = configurationManager.getConfig('DISCORD_TOKEN');
         if (!token) {
             logger.error('DISCORD_TOKEN is not defined in the configuration.');
@@ -41,7 +42,7 @@ class DiscordManager {
         }
         this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
     }
-
+    
     getBotId() {
         if (!this.botId) {
             logger.error('Trying to access bot ID before it is set. Ensure client is ready.');
