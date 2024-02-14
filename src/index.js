@@ -1,6 +1,6 @@
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const setupEventHandlers = require('./eventhandlers');
+const setupEventHandlers = require('./eventhandlers.js.DELETE');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
@@ -13,6 +13,24 @@ const discordSettings = {
     disableUnsolicitedReplies: false,
     unsolicitedChannelCap: 5,
     ignore_dms: true,
+};
+
+// src/eventhandlers.js or within src/index.js
+
+module.exports = (client) => {
+    const logger = require('./utils/logger');
+    const { messageHandler } = require('./handlers/messageHandler');
+
+    client.on('messageCreate', async message => {
+        try {
+            logger.debug(`New message received: ${message.content}`);
+            if (message.author.bot) return; // Ignore messages from bots
+
+            await messageHandler(message);
+        } catch (error) {
+            logger.error(`Error in messageCreate handler: ${error}`);
+        }
+    });
 };
 
 async function initialize() {
