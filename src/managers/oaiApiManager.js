@@ -11,14 +11,11 @@ class OpenAiManager extends LlmInterface {
             }
 
             logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
-
             const headers = {
                 'Content-Type': 'application/json',
-                ...(constants.LLM_API_KEY && { 'Authorization': `Bearer ${constants.LLM_API_KEY}` }),
+                'Authorization': `Bearer ${constants.LLM_API_KEY}`,
             };
-
             const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
-
             logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
             return response.data;
         } catch (error) {
@@ -27,23 +24,23 @@ class OpenAiManager extends LlmInterface {
         }
     }
 
-    buildRequestBody(historyMessages, userMessage, model = constants.LLM_MODEL) {
-        const messages = historyMessages.map(msg => ({
-            role: msg.authorId === 'ASSISTANT_AUTHOR_ID' ? 'assistant' : 'user', // Determine role based on authorId or another property
-            content: msg.content
-        }));
-    
-        // Optionally, add a system message
-        messages.unshift({
+    buildRequestBody(historyMessages, userMessage) {
+        const systemMessage = {
             role: 'system',
-            content: constants.LLM_SYSTEM_PROMPT
-        });
-    
-        // Add the user's current message
-        messages.push({ role: 'user', content: userMessage });
-    
+            content: constants.LLM_SYSTEM_PROMPT // Ensure this is defined in your constants
+        };
+
+        const messages = [
+            systemMessage,
+            ...historyMessages.map(msg => ({
+                role: msg.role, // Assuming historyMessages already have 'role' defined as 'user' or 'assistant'
+                content: msg.content
+            })),
+            { role: 'user', content: userMessage }
+        ];
+
         return {
-            model,
+            model: constants.LLM_MODEL,
             messages,
             temperature: constants.LLM_TEMPERATURE,
             max_tokens: constants.LLM_MAX_TOKENS,
@@ -52,11 +49,10 @@ class OpenAiManager extends LlmInterface {
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
     }
-    
+
     requiresHistory() {
-        // Override to specify that this manager requires chat history
-        return true;
+        return true; // Assuming this manager requires chat history
     }
-};
+}
 
 module.exports = OpenAiManager;

@@ -4,20 +4,24 @@ const constants = require('../../src/config/constants');
 describe('OpenAiManager buildRequestBody', () => {
     const openAiManager = new OpenAiManager();
     const model = constants.LLM_MODEL;
-    const systemPrompt = constants.SYSTEM_PROMPT;
+    const systemPrompt = constants.LLM_SYSTEM_PROMPT; // Ensure this is correctly sourced
 
     beforeEach(() => {
-        // Reset constants or mocks if necessary
+        jest.resetAllMocks();
     });
 
-    test('correctly structures payload with a single user message', () => {
-        const historyMessages = []; // No history
-        const userMessage = 'What is AI?';
+    test('correctly structures payload with mixed message history and system prompt', () => {
+        const historyMessages = [
+            { role: 'user', content: 'Hello, how are you?' },
+            { role: 'user', content: 'I am fine, thank you!' } // Assuming all history messages are from 'user'
+        ];
+        const userMessage = 'Can you tell me a joke?';
 
         const expectedPayload = {
             model,
             messages: [
                 { role: 'system', content: systemPrompt },
+                ...historyMessages,
                 { role: 'user', content: userMessage }
             ],
             temperature: constants.LLM_TEMPERATURE,
@@ -27,15 +31,14 @@ describe('OpenAiManager buildRequestBody', () => {
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
 
-        const payload = openAiManager.buildRequestBody(historyMessages, userMessage, model);
-
+        const payload = openAiManager.buildRequestBody(historyMessages, userMessage);
         expect(payload).toEqual(expectedPayload);
     });
-    
+
     test('handles empty message history', () => {
         const historyMessages = [];
         const userMessage = 'Hello!';
-    
+
         const expectedPayload = {
             model,
             messages: [
@@ -48,10 +51,10 @@ describe('OpenAiManager buildRequestBody', () => {
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
-    
-        const payload = openAiManager.buildRequestBody(historyMessages, userMessage, model);
-    
+
+        const payload = openAiManager.buildRequestBody(historyMessages, userMessage);
         expect(payload).toEqual(expectedPayload);
     });
-        // Additional tests as needed...
+
+    // Additional tests as needed...
 });
