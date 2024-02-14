@@ -7,11 +7,28 @@ class OpenAiManager extends LlmInterface {
     constructor() {
         super();
         this.botId = null; // This will be set externally
+        this.retryDelay = 5000; // Delay in milliseconds for retry
+        this.maxRetries = 5; // Maximum number of retries
+    }
+
+    async ensureBotId() {
+        let retries = 0;
+        while (!this.botId && retries < this.maxRetries) {
+            logger.warn(`Bot ID not set in OpenAiManager, retrying in ${this.retryDelay / 1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+            retries++;
+        }
+        if (!this.botId) {
+            logger.error(`Failed to set Bot ID after ${this.maxRetries} retries.`);
+            throw new Error("Bot ID not set in OpenAiManager after retries");
+        }
     }
 
     async sendRequest(requestBody) {
+        await this.ensureBotId(); // Ensure botId is set before proceeding
+
         try {
-            logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
+            logger.debug(`Sending OAI API Request with bot ID ${this.botId}: ${JSON.stringify(requestBody, null, 2)}`);
             const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${constants.LLM_API_KEY}`,
@@ -27,7 +44,11 @@ class OpenAiManager extends LlmInterface {
 
     buildRequestBody(historyMessages) {
         if (!this.botId) {
-            throw new Error("Bot ID not set in OpenAiManager");
+            logger.warn("Bot ID is not available at the time of building request body. Attempting to ensure Bot ID is set...");
+            this.ensureBotId().catch(error => {
+                logger.error("Failed to ensure Bot ID is set:", error.message);
+                throw error;
+            });
         }
 
         const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
@@ -36,9 +57,10 @@ class OpenAiManager extends LlmInterface {
         } : null;
 
         let messages = systemMessage ? [systemMessage] : [];
-        for (let msg of historyMessages) {
-            messages.push({ role: msg.authorId === this.botId ? 'assistant' : 'user', content: msg.content });
-        }
+        messages = messages.concat(historyMessages.map(msg => ({
+            role: msg.authorId === this.botId ? 'assistant' : 'user',
+            content: msg.content
+        })));
 
         return {
             model: constants.LLM_MODEL,
@@ -52,6 +74,7 @@ class OpenAiManager extends LlmInterface {
     }
 
     setBotId(botId) {
+        logger.debug(`Setting bot ID in OpenAiManager: ${botId}`);
         this.botId = botId;
     }
 
