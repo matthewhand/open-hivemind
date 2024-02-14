@@ -1,14 +1,14 @@
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
-const constants = require('../config/constants');
+const OpenAiManager = require('../managers/OpenAiManager');
+const constants = require('../config/constants'); // Make sure to require constants if you're using it
 
 function getLmManager() {
     switch (constants.LLM_PROVIDER) {
         case 'OpenAI':
-            const OpenAiManager = require('../managers/oaiApiManager');
             return new OpenAiManager();
         default:
-            logger.error('Unsupported LLM Provider specified in constants');
+            logger.error(`Unsupported LLM Provider specified in constants: ${constants.LLM_PROVIDER}`);
             throw new Error('Unsupported LLM Provider');
     }
 }
@@ -19,39 +19,29 @@ async function messageHandler(message) {
         return;
     }
 
-    const discordManager = DiscordManager.getInstance();
-    const llmManager = getLmManager(); // Dynamically select the LLM manager
+    logger.debug(`Processing message from ${message.author.id}: ${message.content}`);
 
     try {
+        const discordManager = DiscordManager.getInstance();
+        const botId = discordManager.getBotId(); // Assuming botId is available
+        logger.debug(`Bot ID obtained: ${botId}`);
+
+        const openAiManager = getLmManager(); // Use getLmManager to abstract the manager creation
+        openAiManager.setBotId(botId); // Ensure botId is set if it's required
+
         logger.info('Generating dynamic response...');
+        const history = await discordManager.fetchMessages(message.channel.id, 20);
+        logger.debug(`Fetched ${history.length} historical messages`);
 
-        // Fetch recent messages for context
-        let history = await discordManager.fetchMessages(message.channel.id, 20); // Example: fetch last 20 messages
+        const llmRequestBody = openAiManager.buildRequestBody(history);
+        logger.debug(`LLM Request Body: ${JSON.stringify(llmRequestBody)}`);
 
-        // Ensure the current message is not included in the history
-        history = history.filter(m => m.id !== message.id);
+        const response = await openAiManager.sendRequest(llmRequestBody);
+        logger.debug(`LLM Response: ${JSON.stringify(response)}`);
 
-        // Sort history in chronological order (oldest first)
-        history.sort((a, b) => a.timestamp - b.timestamp);
-
-        // Prepare history for the LLM including role assignment
-        const preparedHistory = history.map(m => ({
-            role: m.authorId === discordManager.botUserId ? 'assistant' : 'user',
-            content: m.content
-        }));
-
-        // Construct the request body including the current message
-        const llmRequestBody = llmManager.buildRequestBody([...preparedHistory, {
-            role: 'user',
-            content: message.content
-        }]);
-
-        const response = await llmManager.sendRequest(llmRequestBody);
-
-        // Parse the response and send it back in Discord
         const replyText = response.choices?.[0]?.text ?? "I'm not sure how to respond to that.";
         await discordManager.sendResponse(message.channel.id, replyText);
-
+        logger.info(`Replied to ${message.author.id} in ${message.channel.id}`);
     } catch (error) {
         logger.error(`Error processing message: ${error}`);
         await discordManager.sendResponse(message.channel.id, 'Sorry, I encountered an error.');

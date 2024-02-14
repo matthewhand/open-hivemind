@@ -4,6 +4,11 @@ const constants = require('../config/constants');
 const LlmInterface = require('../interfaces/LlmInterface');
 
 class OpenAiManager extends LlmInterface {
+    constructor() {
+        super();
+        this.botId = null; // This will be set externally
+    }
+
     async sendRequest(requestBody) {
         try {
             logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
@@ -20,21 +25,21 @@ class OpenAiManager extends LlmInterface {
         }
     }
 
-    buildRequestBody(historyMessages, userMessage) {
-        // Initialize messages array, optionally including the system message
-        let messages = constants.LLM_SYSTEM_PROMPT ? [{ role: 'system', content: constants.LLM_SYSTEM_PROMPT }] : [];
-
-        // If there's history, iterate through and append each message
-        if (historyMessages && historyMessages.length > 0) {
-            historyMessages.forEach(msg => {
-                messages.push({ role: msg.role, content: msg.content });
-            });
+    buildRequestBody(historyMessages) {
+        if (!this.botId) {
+            throw new Error("Bot ID not set in OpenAiManager");
         }
 
-        // Append the current user message, ensuring it's the last message
-        messages.push({ role: 'user', content: userMessage });
+        const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
+            role: 'system',
+            content: constants.LLM_SYSTEM_PROMPT
+        } : null;
 
-        // Prepare and return the complete request body
+        let messages = systemMessage ? [systemMessage] : [];
+        for (let msg of historyMessages) {
+            messages.push({ role: msg.authorId === this.botId ? 'assistant' : 'user', content: msg.content });
+        }
+
         return {
             model: constants.LLM_MODEL,
             messages,
@@ -44,6 +49,10 @@ class OpenAiManager extends LlmInterface {
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
+    }
+
+    setBotId(botId) {
+        this.botId = botId;
     }
 
     requiresHistory() {

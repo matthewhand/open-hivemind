@@ -1,0 +1,49 @@
+// tests/handlers/messageHandler.test.js
+jest.mock('../../src/config/configurationManager', () => ({
+  getConfig: jest.fn().mockReturnValue({}),
+}));
+
+jest.mock('../../src/managers/DiscordManager', () => ({
+  getInstance: jest.fn().mockImplementation(() => ({
+    sendResponse: jest.fn(),
+    fetchMessages: jest.fn().mockResolvedValue([]),
+    getBotId: jest.fn().mockReturnValue('mocked-bot-id'),
+  })),
+}));
+
+jest.mock('../../src/managers/OpenAiManager', () => {
+  return jest.fn().mockImplementation(() => ({
+    sendRequest: jest.fn().mockResolvedValue({
+      choices: [{ text: 'Mocked response' }],
+    }),
+    buildRequestBody: jest.fn().mockReturnValue({}),
+    requiresHistory: jest.fn().mockReturnValue(true),
+  }));
+});
+
+const { messageHandler } = require('../../src/handlers/messageHandler');
+const { getInstance } = require('../../src/managers/DiscordManager');
+
+describe('messageHandler', () => {
+  let mockSendResponse;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSendResponse = getInstance().sendResponse;
+  });
+
+  test('responds to user messages', async () => {
+    const userMessage = {
+      author: { bot: false },
+      content: 'Hello, world!',
+      channel: { id: 'test-channel' },
+    };
+
+    await messageHandler(userMessage);
+
+    expect(mockSendResponse).toHaveBeenCalledTimes(1);
+    expect(mockSendResponse).toHaveBeenCalledWith('test-channel', 'Mocked response');
+  });
+
+  // This test ensures the `messageHandler` correctly invokes `sendResponse` with expected arguments.
+});
