@@ -29,15 +29,15 @@ async function messageHandler(message) {
     try {
         logger.info('Generating dynamic response...');
 
-        // Fetch recent messages if necessary for context (not shown here)
-        // This can be adjusted based on whether your LLM interaction requires conversational context
-        const history = await discordManager.fetchMessages(message.channel.id);
+        // Fetch recent messages for context, ensuring to exclude the current message from the history
+        const messages = await discordManager.fetchMessages(message.channel.id, 20); // Example: fetch last 20 messages
+        const history = messages.filter(m => m.id !== message.id).map(m => ({
+            role: m.author.id === message.author.id ? 'user' : 'assistant', // Example role determination
+            content: m.content
+        }));
 
-        // Transform Discord messages into a format suitable for the LLM request
-        const prompt = transformDiscordMessagesToPrompt(message.content, history);
-
-        // Send the request to the LLM
-        const llmRequestBody = llmManager.buildRequestBody(prompt);
+        // Now correctly pass both the history and the user message to the LLM manager
+        const llmRequestBody = llmManager.buildRequestBody(history, message.content);
         const response = await llmManager.sendRequest(llmRequestBody);
 
         // Parse the response and send it back in Discord
