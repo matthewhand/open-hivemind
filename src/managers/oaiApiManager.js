@@ -5,60 +5,46 @@ const LlmInterface = require('../interfaces/LlmInterface');
 
 class OpenAiManager extends LlmInterface {
     async sendRequest(requestBody) {
-        logger.debug("Sending OAI API Request with requestBody: ", JSON.stringify(requestBody, null, 2));
-
         try {
-            if (!requestBody || typeof requestBody !== 'object' || !Array.isArray(requestBody.messages)) {
-                throw new Error('Invalid request body for OAI API request.');
-            }
-
+            logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
             const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${constants.LLM_API_KEY}`,
             };
-
             const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
-            logger.debug("Received OAI API Response: ", JSON.stringify(response.data, null, 2));
+            logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
             return response.data;
         } catch (error) {
-            logger.error("Error in OAI API request: ", error.message);
+            logger.error(`Error in OAI API request: ${error.message}`, { error });
             throw error;
         }
     }
 
-    buildRequestBody(history = [], userMessage) {
-        logger.debug("Building request body with history and userMessage: ", history, userMessage);
-
-        const systemMessage = constants.LLM_SYSTEM_PROMPT ? [{
+    buildRequestBody(historyMessages, userMessage) {
+        const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
             role: 'system',
             content: constants.LLM_SYSTEM_PROMPT
-        }] : [];
+        } : null;
 
-        const messages = systemMessage.concat(history.filter(msg => msg.content).map(msg => ({
-            role: msg.role,
-            content: msg.content
-        })));
-
-        if (userMessage) {
-            messages.push({ role: 'user', content: userMessage });
+        let messages = systemMessage ? [systemMessage] : [];
+        for (let msg of historyMessages) {
+            messages.push({ role: msg.role, content: msg.content });
         }
+        messages.push({ role: 'user', content: userMessage });
 
-        const requestBody = {
+        return {
             model: constants.LLM_MODEL,
-            messages,
+            messages: messages,
             temperature: constants.LLM_TEMPERATURE,
             max_tokens: constants.LLM_MAX_TOKENS,
             top_p: constants.LLM_TOP_P,
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
-
-        logger.debug("Constructed requestBody: ", requestBody);
-        return requestBody;
     }
 
     requiresHistory() {
-        return true; // Indicating this manager requires chat history
+        return true;
     }
 }
 

@@ -1,4 +1,3 @@
-// src/managers/DiscordManager.js
 const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
@@ -17,6 +16,8 @@ class DiscordManager {
             ],
         });
 
+        this.botUserId = null; // Add a property to store the bot's user ID
+
         this.initialize();
         DiscordManager.instance = this;
     }
@@ -24,6 +25,7 @@ class DiscordManager {
     initialize() {
         this.client.once('ready', () => {
             logger.info(`Logged in as ${this.client.user.tag}!`);
+            this.botUserId = this.client.user.id; // Store the bot's user ID upon successful login
             this.postInitialization();
         });
 
@@ -38,16 +40,16 @@ class DiscordManager {
 
     postInitialization() {
         // Setup event handlers and any other necessary post-initialization logic here
-        // For example, registering command handlers or setting up listeners for other events
     }
 
     async fetchMessages(channelId, limit = 10) {
         try {
             const channel = await this.client.channels.fetch(channelId);
             const messages = await channel.messages.fetch({ limit });
+            // Enhance the map function to include role based on authorId comparison with botUserId
             return messages.map(msg => ({
                 content: msg.content,
-                authorId: msg.author.id,
+                role: msg.author.id === this.botUserId ? 'assistant' : 'user', // Determine role based on ID comparison
                 timestamp: msg.createdTimestamp,
             }));
         } catch (error) {
@@ -70,6 +72,11 @@ class DiscordManager {
             DiscordManager.instance = new DiscordManager();
         }
         return DiscordManager.instance;
+    }
+
+    // Add a getter for the botUserId for external access if needed
+    getBotUserId() {
+        return this.botUserId;
     }
 }
 
