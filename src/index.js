@@ -1,6 +1,5 @@
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const setupEventHandlers = require('./eventhandlers.js.DELETE');
 const { registerCommands } = require('./handlers/slashCommandHandler');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
