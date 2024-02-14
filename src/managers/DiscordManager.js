@@ -10,7 +10,6 @@ class DiscordManager {
         if (DiscordManager.instance) {
             return DiscordManager.instance;
         }
-
         this.client = new Client({
             intents: [
                 GatewayIntentBits.Guilds,
@@ -18,15 +17,19 @@ class DiscordManager {
                 GatewayIntentBits.MessageContent,
             ],
         });
-
         this.initialize();
         DiscordManager.instance = this;
     }
 
     initialize() {
         this.client.once('ready', () => {
-            logger.info(`Logged in as ${this.client.user.tag}!`);
-            this.botId = this.client.user.id; // Store the bot's user ID on client ready
+            if (this.client.user) {
+                logger.info(`Logged in as ${this.client.user.tag}!`);
+                this.botId = this.client.user.id; // Store the bot's user ID on client ready
+                logger.debug(`Bot ID set to ${this.botId}`);
+            } else {
+                logger.error('Client is ready but client.user is undefined.');
+            }
         });
 
         const token = configurationManager.getConfig('DISCORD_TOKEN');
@@ -34,8 +37,15 @@ class DiscordManager {
             logger.error('DISCORD_TOKEN is not defined in the configuration.');
             process.exit(1);
         }
+        this.client.login(token).catch(logger.error);
+    }
 
-        this.client.login(token);
+    getBotId() {
+        if (!this.botId) {
+            logger.error('Trying to access bot ID before it is set. Ensure client is ready.');
+            return null; // Or handle this case as needed
+        }
+        return this.botId;
     }
 
     async fetchMessages(channelId, limit = 10) {
@@ -60,10 +70,6 @@ class DiscordManager {
         } catch (error) {
             logger.error(`Error sending response to Discord: ${error}`);
         }
-    }
-
-    getBotId() {
-        return this.botId; // Use the stored botId
     }
 
     static getInstance() {
