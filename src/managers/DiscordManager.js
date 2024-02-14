@@ -66,7 +66,7 @@ class DiscordManager {
 
     static getInstance() {
         if (!DiscordManager.instance) {
-            new DiscordManager();
+            DiscordManager.instance = new DiscordManager();
         }
         return DiscordManager.instance;
     }
