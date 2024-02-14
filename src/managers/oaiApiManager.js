@@ -28,25 +28,21 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages, userMessage, model = constants.LLM_MODEL) {
-        if (!historyMessages || !Array.isArray(historyMessages)) {
-            throw new Error('Invalid history messages provided for building request body.');
-        }
-
         const messages = historyMessages.map(msg => ({
-            role: msg.role, // Assuming 'role' is already 'user' or 'assistant' as per API requirements
+            role: msg.authorId === 'ASSISTANT_AUTHOR_ID' ? 'assistant' : 'user', // Determine role based on authorId or another property
             content: msg.content
         }));
-
-        // Optionally, add a system message if required by your API schema
+    
+        // Optionally, add a system message
         messages.unshift({
             role: 'system',
-            content: constants.SYSTEM_PROMPT // Ensure SYSTEM_PROMPT is defined in your constants
+            content: constants.SYSTEM_PROMPT
         });
-
+    
         // Add the user's current message
         messages.push({ role: 'user', content: userMessage });
-
-        let requestBody = {
+    
+        return {
             model,
             messages,
             temperature: constants.LLM_TEMPERATURE,
@@ -55,11 +51,8 @@ class OpenAiManager extends LlmInterface {
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
-
-        logger.debug(`Built OAI Request Body: ${JSON.stringify(requestBody, null, 2)}`);
-        return requestBody;
     }
-
+    
     requiresHistory() {
         // Override to specify that this manager requires chat history
         return true;
