@@ -14,24 +14,6 @@ const discordSettings = {
     ignore_dms: true,
 };
 
-// src/eventhandlers.js or within src/index.js
-
-module.exports = (client) => {
-    const logger = require('./utils/logger');
-    const { messageHandler } = require('./handlers/messageHandler');
-
-    client.on('messageCreate', async message => {
-        try {
-            logger.debug(`New message received: ${message.content}`);
-            if (message.author.bot) return; // Ignore messages from bots
-
-            await messageHandler(message);
-        } catch (error) {
-            logger.error(`Error in messageCreate handler: ${error}`);
-        }
-    });
-};
-
 async function initialize() {
     try {
         logger.info('Initialization started.');
@@ -59,3 +41,23 @@ async function initialize() {
 }
 
 initialize().catch(error => logger.error('Unhandled error during initialization:', error));
+
+// Define and export the event handlers setup function
+function setupEventHandlers(client) {
+    const { messageHandler } = require('./handlers/messageHandler');
+
+    client.on('messageCreate', async message => {
+        try {
+            logger.debug(`New message received: ${message.content}`);
+            if (message.author.bot) return; // Ignore messages from bots
+
+            await messageHandler(message);
+        } catch (error) {
+            logger.error(`Error in messageCreate handler: ${error}`);
+        }
+    });
+
+    // Include additional event handlers here as needed
+}
+
+module.exports = setupEventHandlers;
