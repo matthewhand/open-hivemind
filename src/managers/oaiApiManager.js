@@ -11,44 +11,56 @@ class OpenAiManager extends LlmInterface {
             }
 
             logger.debug(`Sending OAI API Request: ${JSON.stringify(requestBody, null, 2)}`);
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${constants.LLM_API_KEY}`,
-            };
-            const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
-            logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
-            return response.data;
-        } catch (error) {
-            logger.error(`Error in OAI API request: ${error.message}`, { error });
-            throw error;
-        }
-    }
-
-    buildRequestBody(historyMessages, userMessage) {
-        const systemMessage = {
-            role: 'system',
-            content: constants.LLM_SYSTEM_PROMPT // Ensure this is defined in your constants
+        // Prepare the headers with the authorization token
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${constants.LLM_API_KEY}`,
         };
 
-        const messages = [
-            systemMessage,
-            ...historyMessages.map(msg => ({
-                role: msg.role, // Assuming historyMessages already have 'role' defined as 'user' or 'assistant'
-                content: msg.content
-            })),
-            { role: 'user', content: userMessage }
-        ];
+        // Perform the POST request to the specified endpoint URL
+        const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
 
-        return {
-            model: constants.LLM_MODEL,
-            messages,
-            temperature: constants.LLM_TEMPERATURE,
-            max_tokens: constants.LLM_MAX_TOKENS,
-            top_p: constants.LLM_TOP_P,
-            frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
-            presence_penalty: constants.LLM_PRESENCE_PENALTY,
-        };
+        logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
+        return response.data;
+    } catch (error) {
+        logger.error(`Error in OAI API request: ${error.message}`, { error });
+        throw error;
     }
+}
+
+buildRequestBody(historyMessages, userMessage) {
+    // Prepend a system message if defined in constants
+    const systemMessage = constants.LLM_SYSTEM_PROMPT ? [{
+        role: 'system',
+        content: constants.LLM_SYSTEM_PROMPT
+    }] : [];
+
+    // Map history messages to the expected format
+    const history = historyMessages.map(msg => ({
+        role: msg.role, // 'user' or 'assistant', assuming roles are predefined
+        content: msg.content
+    }));
+
+    // Append the user's current message
+    const currentUserMessage = {
+        role: 'user',
+        content: userMessage
+    };
+
+    // Combine all parts into the messages array
+    const messages = [...systemMessage, ...history, currentUserMessage];
+
+    // Return the structured payload for the API request
+    return {
+        model: constants.LLM_MODEL,
+        messages,
+        temperature: constants.LLM_TEMPERATURE,
+        max_tokens: constants.LLM_MAX_TOKENS,
+        top_p: constants.LLM_TOP_P,
+        frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+        presence_penalty: constants.LLM_PRESENCE_PENALTY,
+    };
+}
 
     requiresHistory() {
         return true; // Assuming this manager requires chat history
