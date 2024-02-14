@@ -31,7 +31,7 @@ async function messageHandler(message) {
 
         // Fetch recent messages if necessary for context (not shown here)
         // This can be adjusted based on whether your LLM interaction requires conversational context
-        let history = []; // Placeholder for message history, if needed
+        const history = await discordManager.fetchMessages(message.channel.id);
 
         // Transform Discord messages into a format suitable for the LLM request
         const prompt = transformDiscordMessagesToPrompt(message.content, history);
