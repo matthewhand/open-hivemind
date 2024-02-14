@@ -51,7 +51,20 @@ class DiscordManager {
         return this.botId;
     }
 
-    // Your fetchMessages and sendResponse methods here...
+    // New method to fetch the last non-bot message
+    async fetchLastNonBotMessage(channelId) {
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            const messages = await channel.messages.fetch({ limit: 100 }); // Adjust limit as needed
+            const lastNonBotMessage = messages.find(msg => msg.author.id !== this.client.user.id);
+            return lastNonBotMessage;
+        } catch (error) {
+            logger.error(`Error fetching last non-bot message: ${error}`);
+            return null;
+        }
+    }
+
+    
 
     static getInstance() {
         if (!DiscordManager.instance) {

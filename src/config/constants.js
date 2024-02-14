@@ -15,6 +15,9 @@ module.exports = {
     FOLLOW_UP_MIN_DELAY: parseInt(process.env.LLM_FOLLOW_UP_MIN_DELAY || '2', 10) * 60 * 1000,
     FOLLOW_UP_MAX_DELAY: parseInt(process.env.LLM_FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000,
 
+    // Default channel
+    CHANNEL_ID: process.env.CHANNEL_ID,
+
     // Remote LLM Settings
     LLM_API_KEY: process.env.LLM_API_KEY,
     LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL || "http://localhost:5000/v1/chat/completions",
