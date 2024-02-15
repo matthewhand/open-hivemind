@@ -3,6 +3,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
+const DiscordMessage = require('../models/DiscordMessage');
 
 class DiscordManager {
     static instance;
