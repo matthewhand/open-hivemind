@@ -1,0 +1,20 @@
+env:
+  browser: true
+  commonjs: true
+  es2021: true
+  node: true  # This line enables Node.js global variables like `__dirname` and `process`
+  jest: true  # This line enables Jest testing framework globals
+
+extends: eslint:recommended
+
+parserOptions:
+  ecmaVersion: latest
+
+rules:
+  # Example rule adjustments
+  no-unused-vars: warn  # Change to "warn" to reduce noise from unused variables
+  no-undef: warn  # Change to "warn" for undefined variables, consider addressing or explicitly defining them
+  no-case-declarations: error  # Ensure case block declarations are correctly scoped
+  no-useless-escape: warn  # Warn about unnecessary escape characters
+
+  # Add custom rules or modify existing ones according to your project's needs

@@ -5,9 +5,10 @@ const constants = require('../config/constants');
 class LlmInterface {
     static getManager() {
         switch (constants.LLM_PROVIDER) {
-            case 'OpenAI':
-                const OpenAiManager = require('../managers/OpenAiManager'); // Dynamic require
+            case 'OpenAI': {
+                const OpenAiManager = require('../managers/OpenAiManager'); // Dynamic require within a block
                 return new OpenAiManager();
+            }
             // Add more cases as needed for different providers
             default:
                 logger.error(`Unsupported LLM Provider specified in constants: ${constants.LLM_PROVIDER}`);

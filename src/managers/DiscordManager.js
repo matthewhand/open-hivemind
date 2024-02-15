@@ -3,8 +3,6 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
-const DiscordMessage = require('../models/DiscordMessage');
-require('dotenv').config(); // Ensure environment variables are loaded
 
 class DiscordManager {
     static instance;
@@ -21,7 +19,6 @@ class DiscordManager {
                 GatewayIntentBits.MessageContent,
             ],
         });
-        logger.debug(`Bot initialized with CLIENT_ID: ${process.env.CLIENT_ID}`);
         this.initialize();
         DiscordManager.instance = this;
     }
@@ -29,7 +26,6 @@ class DiscordManager {
     initialize() {
         this.client.once('ready', () => {
             logger.info(`Bot logged in as ${this.client.user.tag}`);
-            // Initialization actions that depend on the bot being ready
             this.setupEventHandlers();
         });
 
@@ -38,14 +34,17 @@ class DiscordManager {
             logger.error('DISCORD_TOKEN is not defined in the configuration. Exiting...');
             process.exit(1);
         } else {
-            this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
+            this.client.login(token).catch(error => {
+                logger.error('Error logging into Discord:', error);
+                process.exit(1); // Consider a more graceful exit or retry logic
+            });
         }
     }
 
     setupEventHandlers() {
         this.client.on('messageCreate', async (discordMessage) => {
             try {
-                const processedMessage = new DiscordMessage(discordMessage, process.env.CLIENT_ID);
+                const processedMessage = new DiscordMessage(discordMessage);
                 if (this.messageHandler) {
                     await this.messageHandler(processedMessage);
                 } else {
@@ -71,8 +70,6 @@ class DiscordManager {
     async sendResponse(channelId, messageText) {
         return discordUtils.sendResponse(this.client, channelId, messageText);
     }
-
-    // Removing getBotId and setBotId methods as we're directly using process.env.CLIENT_ID now
 
     static getInstance() {
         if (!DiscordManager.instance) {

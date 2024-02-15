@@ -1,0 +1,61 @@
+const { Client, GatewayIntentBits } = require('discord.js');
+const EventEmitter = require('events').EventEmitter;
+const DiscordManager = require('../../../src/managers/DiscordManager');
+const configurationManager = require('../../../src/config/configurationManager');
+const logger = require('../../../src/utils/logger');
+// Assuming DiscordMessage is imported correctly in your DiscordManager
+// or define a mock DiscordMessage for testing purposes if needed
+
+jest.mock('discord.js', () => {
+  const EventEmitter = require('events').EventEmitter; // Move require inside the mock
+  class MockClient extends EventEmitter {
+    constructor() {
+      super();
+      this.login = jest.fn().mockResolvedValue('Logged In');
+      this.on = jest.fn((event, listener) => super.on(event, listener));
+      this.once = jest.fn((event, listener) => super.once(event, listener));
+      this.user = { tag: 'test#1234' };
+    }
+  }
+
+  return {
+    Client: MockClient,
+    GatewayIntentBits: {
+      Guilds: 'GUILDS',
+      GuildMessages: 'GUILD_MESSAGES',
+      MessageContent: 'MESSAGE_CONTENT',
+    },
+  };
+});
+
+jest.mock('../../../src/config/configurationManager', () => ({
+  getConfig: jest.fn().mockReturnValue('dummy_token'),
+}));
+
+jest.mock('../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  debug: jest.fn(),
+}));
+
+describe('DiscordManager Message Handling', () => {
+  let manager;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    manager = DiscordManager.getInstance();
+    // Assuming manager.setMessageHandler is correctly implemented
+    manager.setMessageHandler(jest.fn()); // Set a mock message handler
+  });
+
+
+  it('calls the message handler with a new message', async () => {
+    // Simulate receiving a message
+    const mockMessage = { content: "Hello, world!", author: { bot: false } };
+    manager.client.emit('messageCreate', mockMessage);
+
+    // Verify the message handler was called with the expected message
+    // Use await nextTick or similar if the event handling is asynchronous
+    await new Promise(process.nextTick); // Helps in waiting for all pending Promises to resolve
+    expect(manager.messageHandler).toHaveBeenCalledWith(expect.anything());
+  });
+});
