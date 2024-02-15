@@ -25,26 +25,20 @@ class DiscordManager {
     }
 
     initialize() {
-        // Event listener for the 'ready' event to ensure the client is fully initialized
         this.client.once('ready', () => {
-            // Logging the bot's tag is moved inside the 'ready' event callback
             logger.info(`Bot connected as ${this.client.user.tag}`);
             this.setupEventHandlers();
         });
 
-        // Retrieve the Discord token from configuration
         const token = configurationManager.getConfig('DISCORD_TOKEN');
         if (!token) {
             logger.error('DISCORD_TOKEN is not defined in the configuration. Exiting...');
-            process.exit(1); // Consider handling this case more gracefully in a real-world application
+            process.exit(1);
         } else {
-            // Attempt to log in to Discord with the provided token
             this.client.login(token).then(() => {
                 logger.info('Bot login attempt successful.');
             }).catch(error => {
-                // Handle login errors more gracefully
                 logger.error('Error logging into Discord:', error);
-                // Consider implementing retry logic here instead of exiting
                 process.exit(1);
             });
         }
@@ -82,7 +76,7 @@ class DiscordManager {
 
     static getInstance() {
         if (!DiscordManager.instance) {
-            DiscordManager.instance = a new DiscordManager();
+            DiscordManager.instance = new DiscordManager();
         }
         return DiscordManager.instance;
     }
