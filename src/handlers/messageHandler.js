@@ -46,12 +46,13 @@ async function messageHandler(originalMessage) {
         logger.info(`Replied to message in channel ${channelId} with: ${replyText}`);
     } catch (error) {
         logger.error(`Error processing message: ${error}`, { errorDetail: error });
+        // DANGEROUS - infinite loop spam issue with 2 bots...
         // Attempt to send a fallback error message
-        try {
-            await DiscordManager.getInstance().sendResponse(channelId, 'Sorry, I encountered an error processing your message.');
-        } catch (sendError) {
-            logger.error(`Error sending error response to Discord: ${sendError}`, { sendErrorDetail: sendError });
-        }
+        // try {
+        //     await DiscordManager.getInstance().sendResponse(channelId, 'Sorry, I encountered an error processing your message.');
+        // } catch (sendError) {
+        //     logger.error(`Error sending error response to Discord: ${sendError}`, { sendErrorDetail: sendError });
+        // }
     }
 }
 
