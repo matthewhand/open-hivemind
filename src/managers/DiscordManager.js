@@ -25,7 +25,7 @@ class DiscordManager {
 
     initialize() {
         this.client.once('ready', () => {
-            logger.info(`Bot logged in as ${this.client.user.tag}`);
+            logger.info(`Bot connected as ${this.client.user.tag}`);
             this.setupEventHandlers();
         });
 
@@ -38,6 +38,8 @@ class DiscordManager {
                 logger.error('Error logging into Discord:', error);
                 process.exit(1); // Consider a more graceful exit or retry logic
             });
+
+            logger.info(`Bot logged in as ${this.client.user.tag}`);
         }
     }
 

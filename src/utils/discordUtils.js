@@ -3,10 +3,14 @@ const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
-const DiscordMessage = require('../models/DiscordMessage'); // Ensure DiscordMessage implements IMessage interface
-require('dotenv').config(); // Ensure environment variables are loaded for direct CLIENT_ID access if needed
+const DiscordMessage = require('../models/DiscordMessage');
+require('dotenv').config(); // Ensures environment variables are loaded, especially for CLIENT_ID
 
-// Collect command definitions from slash command files
+/**
+ * Collects slash command definitions from command files within a specified directory.
+ * @param {string} commandsPath - The path to the directory containing command files.
+ * @returns {Object[]} An array of command definitions ready to be registered with Discord.
+ */
 function collectSlashCommands(commandsPath) {
     const commands = [];
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -19,9 +23,14 @@ function collectSlashCommands(commandsPath) {
     return commands;
 }
 
-// Register slash commands with Discord
+/**
+ * Registers slash commands with Discord for a specific guild.
+ * @param {string} token - The bot token used for authentication with the Discord API.
+ * @param {string} guildId - The ID of the guild where commands will be registered.
+ * @param {Object[]} commands - The commands to be registered.
+ */
 async function registerSlashCommands(token, guildId, commands) {
-    const clientId = process.env.CLIENT_ID; // Directly using CLIENT_ID
+    const clientId = process.env.CLIENT_ID;
     const rest = new REST({ version: '9' }).setToken(token);
 
     try {
@@ -33,7 +42,13 @@ async function registerSlashCommands(token, guildId, commands) {
     }
 }
 
-// Fetch messages from a Discord channel
+/**
+ * Fetches messages from a specified Discord channel.
+ * @param {Discord.Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the channel from which messages are fetched.
+ * @param {number} limit - The maximum number of messages to fetch.
+ * @returns {Promise<DiscordMessage[]>} An array of messages in a generic format.
+ */
 async function fetchMessages(client, channelId, limit = 20) {
     try {
         const channel = await client.channels.fetch(channelId);
@@ -47,7 +62,12 @@ async function fetchMessages(client, channelId, limit = 20) {
     }
 }
 
-// Send a response message to a Discord channel
+/**
+ * Sends a response message to a specified Discord channel.
+ * @param {Discord.Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the channel where the message will be sent.
+ * @param {string} messageText - The content of the message to be sent.
+ */
 async function sendResponse(client, channelId, messageText) {
     try {
         const channel = await client.channels.fetch(channelId);
@@ -59,9 +79,9 @@ async function sendResponse(client, channelId, messageText) {
 }
 
 /**
- * Converts a Discord message to a generic message format.
+ * Processes a Discord message and converts it to a generic format.
  * @param {Discord.Message} message - The Discord message to process.
- * @returns {DiscordMessage} - An instance of DiscordMessage or a similar object that implements the IMessage interface.
+ * @returns {Promise<DiscordMessage>} A promise that resolves to an instance of DiscordMessage.
  */
 async function processDiscordMessage(message) {
     return new DiscordMessage(message);
@@ -73,5 +93,4 @@ module.exports = {
     registerSlashCommands,
     fetchMessages,
     sendResponse,
-    // Removed getBotId function as it's no longer necessary with direct CLIENT_ID usage
 };
