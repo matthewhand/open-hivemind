@@ -80,6 +80,16 @@ class DiscordManager {
         }
         return DiscordManager.instance;
     }
+
+
+    setBotId(botId) {
+        this.botId = botId;
+        logger.debug(`Bot ID set to: ${this.botId}`);
+    }
+
+    async getBotId() {
+        return this.botId;
+    }
 }
 
 module.exports = DiscordManager;
