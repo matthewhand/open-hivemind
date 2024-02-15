@@ -8,6 +8,11 @@ debugEnvVars();
 
 async function initialize() {
     try {
+
+        logger.debug('Debug logging is enabled.');
+        logger.info('Info level log.');
+        logger.error('Error level log.');
+
         logger.info('Initialization started.');
         // Retrieve CLIENT_ID from your configuration manager or directly from process.env
         const CLIENT_ID = configurationManager.getConfig('CLIENT_ID') || process.env.CLIENT_ID;
