@@ -43,20 +43,23 @@ class DiscordManager {
     }
 
     setupEventHandlers() {
-        this.client.on('messageCreate', async (message) => {
-            if (this.messageHandler) {
-                try {
-                    const processedMessage = await discordUtils.processDiscordMessage(message);
+        this.client.on('messageCreate', async (discordMessage) => {
+            try {
+                // Assuming DiscordMessage class correctly wraps the discord.js message object
+                const processedMessage = new DiscordMessage(discordMessage);
+    
+                // Now pass this processed message to the message handler
+                if (this.messageHandler) {
                     await this.messageHandler(processedMessage);
-                } catch (error) {
-                    logger.error('Error processing message:', error);
+                } else {
+                    logger.warn('Message handler not set in DiscordManager.');
                 }
-            } else {
-                logger.warn('Message handler not set in DiscordManager.');
+            } catch (error) {
+                logger.error(`Error processing message: ${error}`, { errorDetail: error });
             }
         });
     }
-
+    
     // The fetchMessages, sendResponse, and getBotId methods remain as you've defined them.
     // Make sure these methods correctly use discordUtils as intended.
 
