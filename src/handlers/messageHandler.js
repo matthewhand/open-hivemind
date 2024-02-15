@@ -22,7 +22,7 @@ async function messageHandler(originalMessage) {
     }
 
     // Check if the message is from the bot itself to prevent self-response
-    if (originalMessage.getAuthorId() === process.env.CLIENT_ID && !constants.BOT_TO_BOT_MODE) {
+    if (originalMessage.getAuthorId() === constants.CLIENT_ID && !constants.BOT_TO_BOT_MODE) {
         logger.debug('Ignoring message from the bot itself due to BOT_TO_BOT_MODE setting.');
         return;
     }
@@ -37,7 +37,7 @@ async function messageHandler(originalMessage) {
         }
 
         const lmManager = LlmInterface.getManager();
-        const lmRequestBody = lmManager.buildRequestBody(history, process.env.CLIENT_ID);
+        const lmRequestBody = lmManager.buildRequestBody(history);
 
         const response = await lmManager.sendRequest(lmRequestBody);
         const replyText = response.choices?.[0]?.message?.content ?? "I'm not sure how to respond to that.";
@@ -46,13 +46,7 @@ async function messageHandler(originalMessage) {
         logger.info(`Replied to message in channel ${channelId} with: ${replyText}`);
     } catch (error) {
         logger.error(`Error processing message: ${error}`, { errorDetail: error });
-        // DANGEROUS - infinite loop spam issue with 2 bots...
-        // Attempt to send a fallback error message
-        // try {
-        //     await DiscordManager.getInstance().sendResponse(channelId, 'Sorry, I encountered an error processing your message.');
-        // } catch (sendError) {
-        //     logger.error(`Error sending error response to Discord: ${sendError}`, { sendErrorDetail: sendError });
-        // }
+        // Consider handling error responses to avoid potential infinite loops
     }
 }
 

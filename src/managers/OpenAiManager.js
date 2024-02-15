@@ -6,12 +6,13 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
+        // Removed botId from constructor, as we'll use constants.CLIENT_ID directly
     }
 
     async sendRequest(requestBody) {
-
+        const botId = constants.CLIENT_ID; // Directly using constants.CLIENT_ID
         try {
-            logger.debug(`Sending OAI API Request with bot ID ${this.botId}: ${JSON.stringify(requestBody, null, 2)}`);
+            logger.debug(`Sending OAI API Request with bot ID ${botId}: ${JSON.stringify(requestBody, null, 2)}`);
             const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${constants.LLM_API_KEY}`,
@@ -20,17 +21,13 @@ class OpenAiManager extends LlmInterface {
             logger.info(`OAI API Response received successfully.`);
             return response.data;
         } catch (error) {
-            const errMsg = `Error in OAI API request with bot ID ${this.botId}: ${error.message}`;
+            const errMsg = `Error in OAI API request with bot ID ${botId}: ${error.message}`;
             logger.error(errMsg, { error });
             throw new Error(errMsg);
         }
     }
 
     buildRequestBody(historyMessages) {
-        if (!this.botId) {
-            logger.warn("Bot ID is not available at the time of building request body. Attempting to ensure Bot ID is set...");
-            throw new Error("Bot ID must be set before building request body.");
-        }
 
         const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
             role: 'system',
@@ -39,7 +36,7 @@ class OpenAiManager extends LlmInterface {
 
         let messages = systemMessage ? [systemMessage] : [];
         messages = messages.concat(historyMessages.map(msg => ({
-            role: msg.authorId === this.botId ? 'assistant' : 'user',
+            role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user', // Using constants.CLIENT_ID directly
             content: msg.content
         })));
 
