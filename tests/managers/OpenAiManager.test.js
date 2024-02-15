@@ -1,5 +1,16 @@
+// Mock the DiscordMessage model
+jest.mock('../../src/models/DiscordMessage', () => {
+  return jest.fn().mockImplementation((message) => ({
+    getText: () => message.content,
+    getChannelId: () => message.channelId,
+    getAuthorId: () => message.authorId,
+    isFromBot: () => message.isBot || false,
+  }));
+});
+
+// Mock the constants if necessary
 jest.mock('../../src/config/constants', () => ({
-  CLIENT_ID: '1234567890', // Mock bot ID to match with openAiManager.botId
+  CLIENT_ID: '1234567890', // Example bot ID
   LLM_MODEL: "gpt-3.5-turbo",
   LLM_SYSTEM_PROMPT: "System prompt message",
   LLM_MAX_TOKENS: 150,
@@ -8,8 +19,8 @@ jest.mock('../../src/config/constants', () => ({
   LLM_FREQUENCY_PENALTY: 0,
   LLM_PRESENCE_PENALTY: 0,
 }));
-
 const OpenAiManager = require('../../src/managers/OpenAiManager');
+const DiscordMessage = require('../../src/models/DiscordMessage');
 
 describe('OpenAiManager buildRequestBody', () => {
   let openAiManager;
@@ -19,12 +30,14 @@ describe('OpenAiManager buildRequestBody', () => {
   });
 
   test('correctly structures payload with mixed message history and system prompt', () => {
+    // Prepare your mock messages
     const historyMessages = [
-      { authorId: 'not-bot', content: 'Hello, how are you?' }, // Simulate user messages
-      { authorId: 'not-bot', content: 'I am fine, thank you!' },
+      new DiscordMessage({ content: 'Hello, how are you?', authorId: 'not-bot', channelId: '123', isBot: false }),
+      new DiscordMessage({ content: 'I am fine, thank you!', authorId: 'not-bot', channelId: '123', isBot: false }),
     ];
-    const userMessage = { authorId: 'not-bot', content: 'Can you tell me a joke?' }; // Simulate a user message
+    const userMessage = new DiscordMessage({ content: 'Can you tell me a joke?', authorId: 'not-bot', channelId: '123', isBot: false });
 
+    // Expected payload structure
     const expectedPayload = {
       model: "gpt-3.5-turbo",
       messages: [
@@ -40,9 +53,12 @@ describe('OpenAiManager buildRequestBody', () => {
       presence_penalty: 0,
     };
 
+    // Call the method under test
     const result = openAiManager.buildRequestBody([...historyMessages, userMessage]);
+
+    // Assertions
     expect(result).toEqual(expectedPayload);
   });
 
-  // Continue with other tests...
+  // Add more tests as needed...
 });

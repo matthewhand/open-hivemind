@@ -5,26 +5,23 @@ const IMessage = require('../interfaces/IMessage');
 class DiscordMessage extends IMessage {
     constructor(message) {
         super(message);
+        this.message = message; // Store the original Discord message object
     }
 
     getText() {
-        // Direct access seems correct based on your description
-        return this.data.content;
+        return this.message.content;
     }
 
     getChannelId() {
-        // Adjust if the actual path to channelId is different
-        return this.data.channelId; // Assuming direct access is correct
+        return this.message.channel.id;
     }
 
     getAuthorId() {
-        // Adjust if the actual path to authorId is different
-        return this.data.authorId; // Assuming direct access is correct
+        return this.message.author.id;
     }
 
     isFromBot() {
-        // Assuming this.data.author might be an object with a 'bot' property
-        return this.data.author.bot;
+        return this.message.author.bot;
     }
 }
 
