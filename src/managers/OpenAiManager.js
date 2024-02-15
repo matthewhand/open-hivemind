@@ -46,11 +46,16 @@ class OpenAiManager extends LlmInterface {
             content: constants.LLM_SYSTEM_PROMPT,
         } : null;
 
+        // Start with the system message if it exists
         const messages = systemMessage ? [systemMessage] : [];
-        messages.push(...historyMessages.map(msg => ({
-            role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user',
-            content: msg.content,
-        })));
+
+        // Append history messages, defaulting to "user" role and switching to "assistant" if the ID matches the bot's ID
+        messages.push(...historyMessages.map(msg => {
+            return {
+                role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user',
+                content: msg.content,
+            };
+        }));
 
         const requestBody = {
             model: constants.LLM_MODEL,

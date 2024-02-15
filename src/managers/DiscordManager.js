@@ -82,11 +82,6 @@ class DiscordManager {
         return DiscordManager.instance;
     }
 
-    setBotId(botId) {
-        // this.botId = botId;
-        logger.debug(`Deprecated: Bot ID not set to: ${botId}`);
-    }
-
     async getBotId() {
         return constants.CLIENT_ID;
     }

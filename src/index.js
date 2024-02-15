@@ -18,9 +18,6 @@ async function initialize() {
         const discordManager = DiscordManager.getInstance();
         discordManager.setMessageHandler(messageHandler);
         
-        // Optionally, set the bot ID (CLIENT_ID) in discordManager or elsewhere as needed
-        discordManager.setBotId(CLIENT_ID);
-
         logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}`);
         // Additional initialization logic if necessary
     } catch (error) {
