@@ -46,7 +46,7 @@ async function messageHandler(originalMessage) {
         logger.info(`Replied to message in channel ${channelId} with: ${replyText}`);
     } catch (error) {
         logger.error(`Error processing message: ${error}`, { errorDetail: error });
-        // Consider handling error responses to avoid potential infinite loops
+        // Additional error handling logic could be implemented here
     }
 }
 

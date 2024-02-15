@@ -31,7 +31,7 @@ class DiscordManager {
             logger.info(`Bot connected as ${this.client.user.tag}`);
             this.setupEventHandlers();
         });
-    
+
         // Retrieve the Discord token from configuration
         const token = configurationManager.getConfig('DISCORD_TOKEN');
         if (!token) {
@@ -45,11 +45,10 @@ class DiscordManager {
                 // Handle login errors more gracefully
                 logger.error('Error logging into Discord:', error);
                 // Consider implementing retry logic here instead of exiting
-                // process.exit(1);
+                process.exit(1);
             });
         }
     }
-    
 
     setupEventHandlers() {
         this.client.on('messageCreate', async (discordMessage) => {
@@ -83,21 +82,10 @@ class DiscordManager {
 
     static getInstance() {
         if (!DiscordManager.instance) {
-            DiscordManager.instance = new DiscordManager();
+            DiscordManager.instance = a new DiscordManager();
         }
         return DiscordManager.instance;
     }
-
-    setBotId(botId) {
-        this.botId = botId;
-        logger.debug(`Bot ID set to: ${this.botId}`);
-    }
-
-    async getBotId() {
-        return this.botId;
-    }
-    
-
 }
 
 module.exports = DiscordManager;
