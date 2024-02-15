@@ -4,49 +4,49 @@ const logger = require('../utils/logger');
 const constants = require('../config/constants');
 const LlmInterface = require('../interfaces/LlmInterface');
 
+/**
+ * Handles incoming messages by processing them and generating responses.
+ * @param {IMessage} originalMessage - The message to handle, which must implement the IMessage interface.
+ */
 async function messageHandler(originalMessage) {
-    // Ensure the originalMessage provides necessary interfaces
-    if (typeof originalMessage.getText !== 'function' ||
-        typeof originalMessage.getChannelId !== 'function' ||
-        typeof originalMessage.getAuthorId !== 'function') {
-        logger.error("Message object does not implement required interface methods.");
+    // Validate the message against the IMessage interface.
+    if (!originalMessage.getText || !originalMessage.getChannelId || !originalMessage.getAuthorId) {
+        logger.error("Provided message does not conform to IMessage interface.");
         return;
     }
 
     const messageText = originalMessage.getText();
-    logger.debug(`Received message: ${messageText || "Undefined Content"}`);
-
     if (!messageText.trim()) {
-        logger.debug('Ignoring empty or undefined message.');
+        logger.debug("Ignoring blank or whitespace-only messages.");
         return;
     }
 
-    // Check if the message is from the bot itself to prevent self-response
+    // Avoid processing messages sent by the bot itself, unless BOT_TO_BOT_MODE is enabled.
     if (originalMessage.getAuthorId() === constants.CLIENT_ID && !constants.BOT_TO_BOT_MODE) {
-        logger.debug('Ignoring message from the bot itself due to BOT_TO_BOT_MODE setting.');
+        logger.debug("Skipping bot's own messages.");
         return;
     }
 
+    // Fetch the message history for context.
     const channelId = originalMessage.getChannelId();
+    const history = await DiscordManager.getInstance().fetchMessages(channelId, 20); // Assuming fetchMessages returns an array of IMessage instances.
+    if (history.length === 0) {
+        logger.warn("No historical messages found for context.");
+        await DiscordManager.getInstance().sendResponse(channelId, "I'm unable to provide context-based responses without message history.");
+        return;
+    }
+
+    // Prepare the request for the language model.
+    const lmManager = LlmInterface.getManager();
+    const requestBody = lmManager.prepareRequestData(originalMessage, history);
+
     try {
-        const history = await DiscordManager.getInstance().fetchMessages(channelId, 20);
-        if (history.length === 0) {
-            logger.warn('No message history available for context.');
-            await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I can't find any relevant history to respond to.");
-            return;
-        }
-
-        const lmManager = LlmInterface.getManager();
-        const lmRequestBody = lmManager.buildRequestBody(history);
-
-        const response = await lmManager.sendRequest(lmRequestBody);
-        const replyText = response.choices?.[0]?.message?.content ?? "I'm not sure how to respond to that.";
-
-        await DiscordManager.getInstance().sendResponse(channelId, replyText);
-        logger.info(`Replied to message in channel ${channelId} with: ${replyText}`);
+        const responseContent = await lmManager.sendRequest(requestBody);
+        await DiscordManager.getInstance().sendResponse(channelId, responseContent);
+        logger.info(`Response sent for message in channel ${channelId}.`);
     } catch (error) {
-        logger.error(`Error processing message: ${error}`, { errorDetail: error });
-        // Additional error handling logic could be implemented here
+        logger.error(`Failed to process message: ${error}`, { errorDetail: error });
+        // Implement retry logic, notification, or other error handling as needed.
     }
 }
 

@@ -6,38 +6,51 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
-        // Additional initialization if needed can be placed here
+        // Initialized OpenAiManager, ready to handle requests
+        logger.debug('OpenAiManager initialized');
     }
 
+    /**
+     * Sends a request to the OpenAI API and returns the response.
+     * @param {Object} requestBody - The body of the request to send to the API.
+     * @returns {Promise<Object>} - The response from the OpenAI API.
+     */
     async sendRequest(requestBody) {
+        const url = constants.LLM_ENDPOINT_URL;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${constants.LLM_API_KEY}`,
+        };
+
+        logger.debug(`Sending request to OpenAI API: ${url} with body: ${JSON.stringify(requestBody, null, 2)}`);
+
         try {
-            logger.debug(`Sending request to OpenAI API with body: ${JSON.stringify(requestBody, null, 2)}`);
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${constants.LLM_API_KEY}`,
-            };
-            const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
-            logger.info('Response successfully received from OpenAI API.');
+            const response = await axios.post(url, requestBody, { headers });
+            logger.info('Response received from OpenAI API.');
             return response.data;
         } catch (error) {
-            const errMsg = `OpenAI API request error: ${error.message}`;
+            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
             logger.error(errMsg, { error });
             throw new Error(errMsg);
         }
     }
 
+    /**
+     * Builds the request body for the OpenAI API based on the provided history messages.
+     * @param {Array<Object>} historyMessages - The history of messages to include in the request.
+     * @returns {Object} - The constructed request body.
+     */
     buildRequestBody(historyMessages) {
-        const systemMessage = constants.LLM_SYSTEM_PROMPT ? [{
+        const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
             role: 'system',
-            content: constants.LLM_SYSTEM_PROMPT
-        }] : [];
+            content: constants.LLM_SYSTEM_PROMPT,
+        } : null;
 
-        const transformedMessages = historyMessages.map(msg => ({
+        const messages = systemMessage ? [systemMessage] : [];
+        messages.push(...historyMessages.map(msg => ({
             role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user',
-            content: msg.content
-        }));
-
-        const messages = [...systemMessage, ...transformedMessages];
+            content: msg.content,
+        })));
 
         const requestBody = {
             model: constants.LLM_MODEL,
@@ -49,12 +62,17 @@ class OpenAiManager extends LlmInterface {
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
 
-        logger.debug(`Constructed request body for OpenAI API: ${JSON.stringify(requestBody)}`);
+        logger.debug(`Request body for OpenAI API constructed: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
 
+    /**
+     * Indicates whether the manager requires message history for constructing the request.
+     * @returns {boolean} - True if message history is required, false otherwise.
+     */
     requiresHistory() {
-        return true; // Indicates that message history is necessary for constructing the request
+        // This implementation always requires message history.
+        return true;
     }
 }
 
