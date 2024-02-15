@@ -1,17 +1,27 @@
-// index.js or equivalent initializer
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const { messageHandler } = require('./handlers/messageHandler');
+const messageHandler = require('./handlers/messageHandler').messageHandler; // Adjusted import based on your setup
 const { debugEnvVars } = require('./utils/environmentUtils');
+const configurationManager = require('./config/configurationManager'); // Assuming this is where you manage your .env variables
 
 debugEnvVars();
 
 async function initialize() {
     try {
         logger.info('Initialization started.');
+        // Retrieve CLIENT_ID from your configuration manager or directly from process.env
+        const CLIENT_ID = configurationManager.getConfig('CLIENT_ID') || process.env.CLIENT_ID;
+        if (!CLIENT_ID) {
+            throw new Error('CLIENT_ID is not defined. Please check your configuration.');
+        }
+
         const discordManager = DiscordManager.getInstance();
         discordManager.setMessageHandler(messageHandler);
+        
+        // Optionally, set the bot ID (CLIENT_ID) in discordManager or elsewhere as needed
+        discordManager.setBotId(CLIENT_ID);
 
+        logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}`);
         // Additional initialization logic if necessary
     } catch (error) {
         logger.error(`Error during initialization: ${error}`);
