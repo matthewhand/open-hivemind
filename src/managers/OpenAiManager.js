@@ -14,13 +14,16 @@ class OpenAiManager extends LlmInterface {
     async ensureBotId() {
         let retries = 0;
         while (!this.botId && retries < this.maxRetries) {
-            logger.warn(`Bot ID not set in OpenAiManager, retrying in ${this.retryDelay / 1000} seconds...`);
+            logger.warn(`Bot ID not set in OpenAiManager, retrying in ${this.retryDelay / 1000} seconds... Retry count: ${retries + 1}`);
             await new Promise(resolve => setTimeout(resolve, this.retryDelay));
             retries++;
         }
         if (!this.botId) {
-            logger.error(`Failed to set Bot ID after ${this.maxRetries} retries.`);
-            throw new Error("Bot ID not set in OpenAiManager after retries");
+            const errMsg = `Failed to set Bot ID after ${this.maxRetries} retries. OpenAI Manager cannot proceed without a Bot ID.`;
+            logger.error(errMsg);
+            throw new Error(errMsg);
+        } else {
+            logger.info(`Bot ID successfully ensured in OpenAiManager: ${this.botId}`);
         }
     }
 
@@ -34,21 +37,19 @@ class OpenAiManager extends LlmInterface {
                 'Authorization': `Bearer ${constants.LLM_API_KEY}`,
             };
             const response = await axios.post(constants.LLM_ENDPOINT_URL, requestBody, { headers });
-            logger.debug(`Received OAI API Response: ${JSON.stringify(response.data, null, 2)}`);
+            logger.info(`OAI API Response received successfully.`);
             return response.data;
         } catch (error) {
-            logger.error(`Error in OAI API request: ${error.message}`, { error });
-            throw error;
+            const errMsg = `Error in OAI API request with bot ID ${this.botId}: ${error.message}`;
+            logger.error(errMsg, { error });
+            throw new Error(errMsg);
         }
     }
 
     buildRequestBody(historyMessages) {
         if (!this.botId) {
             logger.warn("Bot ID is not available at the time of building request body. Attempting to ensure Bot ID is set...");
-            this.ensureBotId().catch(error => {
-                logger.error("Failed to ensure Bot ID is set:", error.message);
-                throw error;
-            });
+            throw new Error("Bot ID must be set before building request body.");
         }
 
         const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
@@ -62,7 +63,7 @@ class OpenAiManager extends LlmInterface {
             content: msg.content
         })));
 
-        return {
+        const requestBody = {
             model: constants.LLM_MODEL,
             messages,
             temperature: constants.LLM_TEMPERATURE,
@@ -71,6 +72,9 @@ class OpenAiManager extends LlmInterface {
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
+
+        logger.debug(`Request body built successfully for OpenAI API: ${JSON.stringify(requestBody)}`);
+        return requestBody;
     }
 
     setBotId(botId) {
