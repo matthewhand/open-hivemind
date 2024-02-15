@@ -1,15 +1,13 @@
-// src/handlers/messageHandler.js
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
 const constants = require('../config/constants');
 
-/**
- * Handles incoming messages by processing them and generating responses.
- * @param {IMessage} originalMessage - The message to handle, which must implement the IMessage interface.
- */
 async function messageHandler(originalMessage) {
-  // Validate the message against the IMessage interface.
+  // Log the original message's author ID for debugging
+  logger.debug(`Original message author ID: ${originalMessage.getAuthorId()}`);
+
+  // Validate the message against the IMessage interface...
   if (!originalMessage.getText || !originalMessage.getChannelId || !originalMessage.getAuthorId) {
     logger.error("Provided message does not conform to IMessage interface.");
     return;
@@ -21,8 +19,8 @@ async function messageHandler(originalMessage) {
     return;
   }
 
-  // Avoid processing messages sent by the bot itself, unless BOT_TO_BOT_MODE is enabled.
-  if (originalMessage.getAuthorId() === constants.CLIENT_ID && !constants.BOT_TO_BOT_MODE) {
+  // Always ignore the bot's own messages
+  if (originalMessage.getAuthorId() === constants.CLIENT_ID) {
     logger.debug("Skipping bot's own messages.");
     return;
   }
@@ -32,6 +30,7 @@ async function messageHandler(originalMessage) {
   let history = [];
   if (lmManager.requiresHistory()) {
     history = await DiscordManager.getInstance().fetchMessages(channelId, 20);
+    history.reverse(); // Reverse the order so the most recent messages are at the bottom
   }
 
   const requestBody = lmManager.buildRequestBody([originalMessage, ...history]);
