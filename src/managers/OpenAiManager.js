@@ -20,6 +20,10 @@ class OpenAiManager extends LlmInterface {
     try {
       const response = await axios.post(url, requestBody, { headers });
       logger.info('Response received from OpenAI API.');
+
+      // Log the full response for debugging
+      logger.debug(`OpenAI API response: ${JSON.stringify(response.data, null, 2)}`);
+
       return response.data;
     } catch (error) {
       const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
@@ -35,12 +39,14 @@ class OpenAiManager extends LlmInterface {
       content: systemMessageContent
     }] : [];
 
+    // Reverse the order of user and assistant messages but keep the system message at the top
     const transformedMessages = historyMessages.map(discordMessage => {
       const content = discordMessage.getText();
       const authorId = discordMessage.getAuthorId();
-      const role = authorId === constants.CLIENT_ID ? 'assistant' : 'user';
+      const isBot = discordMessage.isFromBot();
+      const role = isBot ? 'assistant' : 'user';
       return { role, content };
-    });
+    }).reverse(); // Reverse the order of messages here
 
     const messages = [...systemMessage, ...transformedMessages];
 
@@ -56,9 +62,9 @@ class OpenAiManager extends LlmInterface {
 
     logger.debug(`Request body for OpenAI API constructed: ${JSON.stringify(requestBody, null, 2)}`);
     return requestBody;
-  }
+}
 
-  requiresHistory() {
+requiresHistory() {
     return true;
   }
 }

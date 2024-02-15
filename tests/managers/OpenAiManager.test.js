@@ -1,64 +1,75 @@
-// Mock the DiscordMessage model
-jest.mock('../../src/models/DiscordMessage', () => {
-  return jest.fn().mockImplementation((message) => ({
-    getText: () => message.content,
-    getChannelId: () => message.channelId,
-    getAuthorId: () => message.authorId,
-    isFromBot: () => message.isBot || false,
-  }));
-});
+// Import dependencies
+const OpenAiManager = require('../../src/managers/OpenAiManager');
 
-// Mock the constants if necessary
+// Mocking dependencies
+jest.mock('../../src/models/DiscordMessage');
 jest.mock('../../src/config/constants', () => ({
-  CLIENT_ID: '1234567890', // Example bot ID
+  CLIENT_ID: '1234567890', // Example bot client ID for role differentiation
   LLM_MODEL: "gpt-3.5-turbo",
-  LLM_SYSTEM_PROMPT: "System prompt message",
+  LLM_SYSTEM_PROMPT: "You are a helpful assistant.",
   LLM_MAX_TOKENS: 150,
   LLM_TEMPERATURE: 0.7,
   LLM_TOP_P: 1,
   LLM_FREQUENCY_PENALTY: 0,
   LLM_PRESENCE_PENALTY: 0,
 }));
-const OpenAiManager = require('../../src/managers/OpenAiManager');
+
+// Mock implementation for DiscordMessage
 const DiscordMessage = require('../../src/models/DiscordMessage');
+DiscordMessage.mockImplementation((content, isBot = false) => ({
+  getText: () => content,
+  getChannelId: () => '1234567890',
+  getAuthorId: () => isBot ? '1234567890' : '987654321', // Distinguishing bot vs. user messages
+  isFromBot: () => isBot,
+}));
 
 describe('OpenAiManager buildRequestBody', () => {
   let openAiManager;
 
   beforeEach(() => {
+    // Initialize OpenAiManager before each test
     openAiManager = new OpenAiManager();
   });
 
-  test('correctly structures payload with mixed message history and system prompt', () => {
-    // Prepare your mock messages
+  test('correctly structures payload with mixed message history, including bot and user messages', () => {
+    // Mocked message instances as they would be set up in practice
     const historyMessages = [
-      new DiscordMessage({ content: 'Hello, how are you?', authorId: 'not-bot', channelId: '123', isBot: false }),
-      new DiscordMessage({ content: 'I am fine, thank you!', authorId: 'not-bot', channelId: '123', isBot: false }),
+      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Bot message
+      new DiscordMessage("I am fine, thank you!", false), // User message
+      new DiscordMessage("Hello, how are you?", false), // User message
     ];
-    const userMessage = new DiscordMessage({ content: 'Can you tell me a joke?', authorId: 'not-bot', channelId: '123', isBot: false });
 
-    // Expected payload structure
     const expectedPayload = {
       model: "gpt-3.5-turbo",
       messages: [
-        { role: 'system', content: "System prompt message" },
-        { role: 'user', content: 'Hello, how are you?' },
-        { role: 'user', content: 'I am fine, thank you!' },
-        { role: 'user', content: 'Can you tell me a joke?' },
+        {
+          role: 'system',
+          content: "You are a helpful assistant."
+        },
+        {
+          role: 'user',
+          content: "Hello, how are you?"
+        },
+        {
+          role: 'user',
+          content: "I am fine, thank you!"
+        },
+        {
+          role: 'assistant',
+          content: "Sorry, I encountered an error processing your message."
+        }
       ],
-      max_tokens: 150,
       temperature: 0.7,
+      max_tokens: 150,
       top_p: 1,
       frequency_penalty: 0,
-      presence_penalty: 0,
+      presence_penalty: 0
     };
 
-    // Call the method under test
-    const result = openAiManager.buildRequestBody([...historyMessages, userMessage]);
+    // Call the method under test with the prepared historyMessages
+    const result = openAiManager.buildRequestBody(historyMessages);
 
-    // Assertions
+    // Assertions to verify the method outputs the expected payload
     expect(result).toEqual(expectedPayload);
   });
-
-  // Add more tests as needed...
 });
