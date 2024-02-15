@@ -46,7 +46,7 @@ class OpenAiManager extends LlmInterface {
       const isBot = discordMessage.isFromBot();
       const role = isBot ? 'assistant' : 'user';
       return { role, content };
-    }).reverse(); // Reverse the order of messages here
+    });
 
     const messages = [...systemMessage, ...transformedMessages];
 
