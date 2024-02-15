@@ -1,4 +1,6 @@
 const winston = require('winston');
+require('winston-daily-rotate-file'); // Import the daily rotate file module
+
 const fs = require('fs');
 
 // Create logs directory if it doesn't exist
@@ -19,23 +21,26 @@ const customFormat = winston.format.combine(
   winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
 );
 
+// Configure the daily rotate file transport
+const dailyRotateFileTransport = new winston.transports.DailyRotateFile({
+  filename: `${logsDir}/bot-%DATE%.log`, // The %DATE% placeholder is replaced with the actual date
+  datePattern: 'YYYY-MM-DD', // This is the default pattern, change it according to your needs
+  zippedArchive: true, // Enable compression
+  maxSize: '20m', // Maximum size of the log file
+  maxFiles: '14d' // Keep logs for 14 days
+});
+
 const logger = winston.createLogger({
   level: logLevel,
   format: winston.format.json(),
   transports: [
-    // Console transport for all logs with timestamp
     new winston.transports.Console({
       format: winston.format.combine(
-        winston.format.colorize(), // Optional, to add color to the console output
+        winston.format.colorize(),
         customFormat
       )
     }),
-    // File transport for 'warn' and 'error' logs, including timestamp
-    new winston.transports.File({
-      level: 'warn', // Only logs at 'warn' level and more severe will be logged
-      filename: './logs/bot.log',
-      format: customFormat // Use the custom format for file logging as well
-    })
+    dailyRotateFileTransport // Use the daily rotate file transport for file logging
   ],
 });
 
