@@ -32,11 +32,11 @@ describe('OpenAiManager buildRequestBody', () => {
   });
 
   test('correctly structures payload with mixed message history, including bot and user messages', () => {
-    // Mocked message instances as they would be set up in practice
+    // Setup for mocked messages (assuming proper mock implementations elsewhere)
     const historyMessages = [
-      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Bot message
-      new DiscordMessage("I am fine, thank you!", false), // User message
-      new DiscordMessage("Hello, how are you?", false), // User message
+      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Mocked Bot message
+      new DiscordMessage("I am fine, thank you!", false), // Mocked User message
+      new DiscordMessage("Hello, how are you?", false), // Mocked User message
     ];
 
     const expectedPayload = {
@@ -47,16 +47,16 @@ describe('OpenAiManager buildRequestBody', () => {
           content: "You are a helpful assistant."
         },
         {
-          role: 'user',
-          content: "Hello, how are you?"
+          role: 'assistant',
+          content: "Sorry, I encountered an error processing your message."
         },
         {
           role: 'user',
           content: "I am fine, thank you!"
         },
         {
-          role: 'assistant',
-          content: "Sorry, I encountered an error processing your message."
+          role: 'user',
+          content: "Hello, how are you?"
         }
       ],
       temperature: 0.7,

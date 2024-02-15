@@ -37,7 +37,19 @@ async function messageHandler(originalMessage) {
 
   try {
     const responseContent = await lmManager.sendRequest(requestBody);
-    await DiscordManager.getInstance().sendResponse(channelId, responseContent.choices[0].text);
+    
+    // Assuming response structure is as shown in the debug log
+    const messageToSend = responseContent.choices[0].message.content;
+  
+    // Debug: Log the message content to be sent
+    logger.debug(`Message to be sent to Discord: ${messageToSend}`);
+  
+    if (!messageToSend.trim()) {
+      logger.error(`Received empty response content from OpenAI API for channel ${channelId}.`);
+      return; // Prevent sending an empty message to Discord
+    }
+  
+    await DiscordManager.getInstance().sendResponse(channelId, messageToSend);
     logger.info(`Response sent for message in channel ${channelId}.`);
   } catch (error) {
     logger.error(`Failed to process message: ${error}`, { errorDetail: error });
