@@ -6,29 +6,9 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
-        this.botId = null; // This will be set externally
-        this.retryDelay = 5000; // Delay in milliseconds for retry
-        this.maxRetries = 5; // Maximum number of retries
-    }
-
-    async ensureBotId() {
-        let retries = 0;
-        while (!this.botId && retries < this.maxRetries) {
-            logger.warn(`Bot ID not set in OpenAiManager, retrying in ${this.retryDelay / 1000} seconds... Retry count: ${retries + 1}`);
-            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
-            retries++;
-        }
-        if (!this.botId) {
-            const errMsg = `Failed to set Bot ID after ${this.maxRetries} retries. OpenAI Manager cannot proceed without a Bot ID.`;
-            logger.error(errMsg);
-            throw new Error(errMsg);
-        } else {
-            logger.info(`Bot ID successfully ensured in OpenAiManager: ${this.botId}`);
-        }
     }
 
     async sendRequest(requestBody) {
-        await this.ensureBotId(); // Ensure botId is set before proceeding
 
         try {
             logger.debug(`Sending OAI API Request with bot ID ${this.botId}: ${JSON.stringify(requestBody, null, 2)}`);
@@ -75,11 +55,6 @@ class OpenAiManager extends LlmInterface {
 
         logger.debug(`Request body built successfully for OpenAI API: ${JSON.stringify(requestBody)}`);
         return requestBody;
-    }
-
-    setBotId(botId) {
-        logger.debug(`Setting bot ID in OpenAiManager: ${botId}`);
-        this.botId = botId;
     }
 
     requiresHistory() {
