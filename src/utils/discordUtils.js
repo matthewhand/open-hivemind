@@ -69,7 +69,20 @@ async function sendResponse(client, channelId, messageText) {
     }
 }
 
+/**
+ * Converts a Discord message to a generic message format.
+ * @param {Discord.Message} message - The Discord message to process.
+ * @returns {DiscordMessage} - An instance of DiscordMessage or a similar object that implements the IMessage interface.
+ */
+async function processDiscordMessage(message) {
+    // This is where you transform the Discord message into your generic message format.
+    // For example, using the DiscordMessage class:
+    return new DiscordMessage(message);
+}
+
+// Make sure to export your newly created function
 module.exports = {
+    processDiscordMessage,
     collectSlashCommands,
     registerSlashCommands,
     getBotId,

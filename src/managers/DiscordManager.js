@@ -46,20 +46,18 @@ class DiscordManager {
 
     setupEventHandlers() {
         this.client.on('messageCreate', async (message) => {
-            if (this.messageHandler) {
-                try {
-                    const processedMessage = await discordUtils.processDiscordMessage(message);
+            try {
+                const processedMessage = await discordUtils.processDiscordMessage(message);
+                if (this.messageHandler) {
                     await this.messageHandler(processedMessage);
-                } catch (error) {
-                    logger.error('Error processing message:', error);
+                } else {
+                    logger.warn('No message handler function has been assigned to DiscordManager.');
                 }
-            } else {
-                logger.warn('Message handler not set in DiscordManager.');
+            } catch (error) {
+                logger.error('Error handling messageCreate event:', error);
             }
         });
-    }
-
-    // Delegate fetchMessages and sendResponse to discordUtils
+    }    // Delegate fetchMessages and sendResponse to discordUtils
     async fetchMessages(channelId, limit = 20) {
         return discordUtils.fetchMessages(this.client, channelId, limit);
     }
