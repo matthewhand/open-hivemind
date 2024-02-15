@@ -1,15 +1,18 @@
+// index.js or equivalent initializer
 const logger = require('./utils/logger');
-const { debugEnvVars } = require('./utils/environmentUtils');
-const messageHandler = require('./handlers/messageHandler').messageHandler; // Ensure this is correctly imported
 const DiscordManager = require('./managers/DiscordManager');
+const messageHandler = require('./handlers/messageHandler');
+const { debugEnvVars } = require('./utils/environmentUtils');
 
 debugEnvVars();
 
 async function initialize() {
     try {
         logger.info('Initialization started.');
-        // Pass the messageHandler to the DiscordManager instance during its initialization
-        DiscordManager.getInstance(messageHandler);
+        const discordManager = DiscordManager.getInstance();
+        discordManager.setMessageHandler(messageHandler);
+
+        // Additional initialization logic if necessary
     } catch (error) {
         logger.error(`Error during initialization: ${error}`);
         process.exit(1);

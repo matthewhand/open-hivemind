@@ -3,16 +3,14 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
-const messageHandler = require('../handlers/messageHandler').messageHandler; // Ensure this is correctly imported
 
 class DiscordManager {
     static instance;
     client;
     messageHandler;
 
-    constructor(messageHandlerCallback) {
+    constructor() {
         if (DiscordManager.instance) {
-            logger.debug('Returning existing instance of DiscordManager.');
             return DiscordManager.instance;
         }
         this.client = new Client({
@@ -22,15 +20,19 @@ class DiscordManager {
                 GatewayIntentBits.MessageContent,
             ],
         });
-        this.messageHandler = messageHandlerCallback; // Assigning the passed message handler to the manager
         this.initialize();
         DiscordManager.instance = this;
     }
 
+    setMessageHandler(messageHandlerCallback) {
+        this.messageHandler = messageHandlerCallback; // Dynamically assign the message handler
+        this.setupEventHandlers(); // Ensure event handlers are set up after assigning the message handler
+    }
+
     initialize() {
-        this.client.once('ready', async () => {
+        this.client.once('ready', () => {
             logger.info(`Bot logged in as ${this.client.user.tag} with ID: ${this.client.user.id}`);
-            this.setupEventHandlers();
+            // Delay the setup of event handlers until the message handler is set
         });
 
         const token = configurationManager.getConfig('DISCORD_TOKEN');
@@ -44,38 +46,35 @@ class DiscordManager {
 
     setupEventHandlers() {
         this.client.on('messageCreate', async (message) => {
-            try {
-                // Convert the Discord message to a generic message format before processing
-                const processedMessage = await discordUtils.processDiscordMessage(message);
-                // Pass the processed message to the assigned message handler
-                if (this.messageHandler) {
+            if (this.messageHandler) {
+                try {
+                    const processedMessage = await discordUtils.processDiscordMessage(message);
                     await this.messageHandler(processedMessage);
-                } else {
-                    logger.warn('No message handler function has been assigned to DiscordManager.');
+                } catch (error) {
+                    logger.error('Error processing message:', error);
                 }
-            } catch (error) {
-                logger.error('Error handling messageCreate event:', error);
+            } else {
+                logger.warn('Message handler not set in DiscordManager.');
             }
         });
     }
 
-    // Using discordUtils for fetchMessages and sendResponse
+    // Delegate fetchMessages and sendResponse to discordUtils
     async fetchMessages(channelId, limit = 20) {
-        return await discordUtils.fetchMessages(this.client, channelId, limit);
+        return discordUtils.fetchMessages(this.client, channelId, limit);
     }
 
     async sendResponse(channelId, messageText) {
-        await discordUtils.sendResponse(this.client, channelId, messageText);
+        return discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
-    // Using discordUtils for getBotId
     async getBotId() {
-        return await discordUtils.getBotId(this.client);
+        return discordUtils.getBotId(this.client);
     }
 
-    static getInstance(messageHandlerCallback) {
+    static getInstance() {
         if (!DiscordManager.instance) {
-            new DiscordManager(messageHandlerCallback);
+            DiscordManager.instance = new DiscordManager();
         }
         return DiscordManager.instance;
     }

@@ -5,8 +5,10 @@ const LlmInterface = require('../interfaces/LlmInterface');
 
 async function messageHandler(originalMessage) {
     try {
-        // Ensuring that the message has the necessary methods implemented
-        if (typeof originalMessage.getText !== 'function' || typeof originalMessage.getChannelId !== 'function' || typeof originalMessage.isFromBot !== 'function') {
+        // Verify that the originalMessage implements the necessary methods
+        if (typeof originalMessage.getText !== 'function' || 
+            typeof originalMessage.getChannelId !== 'function' || 
+            typeof originalMessage.isFromBot !== 'function') {
             throw new Error("Message object does not implement required interface methods.");
         }
 
@@ -31,7 +33,7 @@ async function messageHandler(originalMessage) {
 
         const channelId = originalMessage.getChannelId();
         const history = await discordManager.fetchMessages(channelId, 20);
-        if (!history || !history.length) {
+        if (!history || history.length === 0) {
             logger.warn('No message history available for context.');
             await discordManager.sendResponse(channelId, "Sorry, I can't find any relevant history to respond to.");
             return;
@@ -48,6 +50,7 @@ async function messageHandler(originalMessage) {
     } catch (error) {
         logger.error(`Error processing message: ${error.message}`, { errorDetail: error });
         try {
+            // Attempt to recover the channelId for error response, if possible
             const channelIdFallback = originalMessage.getChannelId?.();
             await discordManager.sendResponse(channelIdFallback, 'Sorry, I encountered an error processing your message.');
         } catch (sendError) {
