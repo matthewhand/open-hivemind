@@ -26,7 +26,7 @@ class DiscordManager {
 
     initialize() {
         this.client.once('ready', () => {
-            logger.info(`Bot connected as ${this.client.user.tag}`);
+            logger.info(`Bot connected`);
             this.setupEventHandlers();
         });
 
