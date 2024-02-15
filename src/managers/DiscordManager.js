@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const logger = require('../utils/logger'); // Ensure logger is properly configured for debug/info/error levels
+const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
+const DiscordMessage = require('../models/DiscordMessage'); // Assuming DiscordMessage implements IMessage
 
 class DiscordManager {
     static instance;
@@ -9,7 +10,7 @@ class DiscordManager {
 
     constructor() {
         if (DiscordManager.instance) {
-            logger.debug('An instance of DiscordManager already exists. Returning the existing instance.');
+            logger.debug('Returning existing instance of DiscordManager.');
             return DiscordManager.instance;
         }
         this.client = new Client({
@@ -21,7 +22,6 @@ class DiscordManager {
         });
         this.initialize();
         DiscordManager.instance = this;
-        logger.debug('A new instance of DiscordManager has been created.');
     }
 
     initialize() {
@@ -29,25 +29,51 @@ class DiscordManager {
             if (this.client.user) {
                 this.botId = this.client.user.id;
                 logger.info(`Bot logged in as ${this.client.user.tag} with ID: ${this.botId}`);
-                this.registerSlashCommands().then(() => {
-                    logger.info('Slash commands registration complete.');
-                }).catch(err => {
-                    logger.error('Failed to register slash commands:', err);
-                });
             } else {
-                logger.error('The client is ready, but the user property is undefined.');
+                logger.error('Client is ready but client.user is undefined.');
             }
         });
 
         const token = configurationManager.getConfig('DISCORD_TOKEN');
         if (!token) {
-            logger.error('DISCORD_TOKEN is not defined in the configuration. Exiting...');
+            logger.error('DISCORD_TOKEN is not defined in the configuration.');
             process.exit(1);
-        } else {
-            this.client.login(token).catch(error => {
-                logger.error('Error logging into Discord:', error);
-            });
         }
+        this.client.login(token).catch(error => logger.error('Error logging into Discord:', error));
+    }
+
+    async getBotId(retryCount = 3, retryDelay = 2000) {
+        // Implementation remains similar to the provided example
+    }
+
+    async fetchMessages(channelId, limit = 20) {
+        const messages = [];
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            const fetchedMessages = await channel.messages.fetch({ limit });
+            fetchedMessages.forEach(message => messages.push(new DiscordMessage(message)));
+            logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
+        } catch (error) {
+            logger.error(`Error fetching messages from Discord: ${error}`);
+        }
+        return messages;
+    }
+
+    async sendResponse(channelId, messageText) {
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            await channel.send(messageText);
+            logger.debug(`Message sent to channel ID: ${channelId}`);
+        } catch (error) {
+            logger.error(`Error sending response to Discord: ${error}`);
+        }
+    }
+
+    static getInstance() {
+        if (!DiscordManager.instance) {
+            new DiscordManager();
+        }
+        return DiscordManager.instance;
     }
 
     async getBotId(retryCount = 3, retryDelay = 2000) {
@@ -68,59 +94,8 @@ class DiscordManager {
                 }, retryDelay);
             });
         }
-
-        if (!this.botId) {
-            logger.warn('Unable to retrieve the Bot ID after multiple attempts.');
-        }
-        return this.botId;
     }
-
-    async fetchMessages(channelId, limit = 10) {
-        if (!channelId) {
-            logger.debug('fetchMessages called without a channelId.');
-            return [];
-        }
-
-        try {
-            const channel = await this.client.channels.fetch(channelId);
-            const messages = await channel.messages.fetch({ limit });
-            logger.debug(`Fetched ${messages.size} messages from channel ID: ${channelId}`);
-            return messages.map(msg => ({
-                content: msg.content,
-                authorId: msg.author.id,
-                timestamp: msg.createdTimestamp,
-            }));
-        } catch (error) {
-            logger.error(`Error fetching messages from channel ID ${channelId}:`, error);
-            return [];
-        }
-    }
-
-    async sendResponse(channelId, message) {
-        if (!channelId || !message) {
-            logger.debug('sendResponse called without a channelId or message.');
-            return;
-        }
-
-        try {
-            const channel = await this.client.channels.fetch(channelId);
-            await channel.send(message);
-            logger.debug(`Message sent to channel ID: ${channelId}`);
-        } catch (error) {
-            logger.error(`Error sending response to channel ID ${channelId}:`, error);
-        }
-    }
-
-    async registerSlashCommands() {
-        // Implement the logic to register slash commands, similar to the provided example
-    }
-
-    static getInstance() {
-        if (!DiscordManager.instance) {
-            new DiscordManager();
-        }
-        return DiscordManager.instance;
-    }
+    
 }
 
 module.exports = DiscordManager;

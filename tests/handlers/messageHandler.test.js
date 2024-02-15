@@ -1,66 +1,58 @@
-
-// Import necessary modules and functions
+// tests/handlers/messageHandler.test.js
 const { messageHandler } = require('../../src/handlers/messageHandler');
+const DiscordMessage = require('../../src/models/DiscordMessage');
 const DiscordManager = require('../../src/managers/DiscordManager');
+jest.mock('../../src/managers/DiscordManager');
 
-// Enhanced mocking of the DiscordManager module
-jest.mock('../../src/managers/DiscordManager', () => ({
-  getInstance: jest.fn().mockReturnValue({
-    sendResponse: jest.fn().mockResolvedValueOnce(true),
-    fetchMessages: jest.fn().mockResolvedValueOnce([
-      { content: "User message", author: { id: "user-id" } },
-      // Add more mock messages as needed
-    ]),
-    fetchLastNonBotMessage: jest.fn().mockResolvedValue({
-      content: "Last non-bot message content",
-      author: { id: "another-user-id" },
-    }),
-    getBotId: jest.fn().mockReturnValue('mocked-bot-id'),
-  }),
-}));
-
-// Mock other dependencies as necessary
-jest.mock('../../src/config/constants', () => ({
-  LLM_PROVIDER: 'OpenAI',
-  BOT_TO_BOT_MODE: true, // Example of how you might mock this constant if used
-}));
-
-jest.mock('../../src/managers/OpenAiManager', () => {
-  // Mock the constructor function
-  return jest.fn().mockImplementation(() => ({
-    sendRequest: jest.fn().mockResolvedValue({
-      choices: [{ message: { content: 'Mocked response' } }],
-    }),
-    buildRequestBody: jest.fn().mockReturnValue({}),
-    requiresHistory: jest.fn().mockReturnValue(true),
-  }));
-});
+const OpenAiManager = require('../../src/managers/OpenAiManager');
+jest.mock('../../src/managers/OpenAiManager');
 
 describe('messageHandler', () => {
-  let mockSendResponse;
+    let mockSendResponse;
+    let mockFetchMessages;
 
-  beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    beforeEach(() => {
+        // Reset all mocks
+        jest.clearAllMocks();
 
-    // Setup and retrieve the mocked sendResponse function for easier access
-    mockSendResponse = DiscordManager.getInstance().sendResponse;
+        // Mock the DiscordManager's getInstance method to return specific mocked functions
+        DiscordManager.getInstance.mockReturnValue({
+            sendResponse: mockSendResponse = jest.fn().mockResolvedValueOnce(true),
+            fetchMessages: mockFetchMessages = jest.fn().mockResolvedValueOnce([
+                { content: "User message", author: { id: "user-id" } },
+                // Add more mock messages as needed
+            ]),
+            getBotId: jest.fn().mockReturnValue('mocked-bot-id'),
+        });
+
+        // Mock OpenAiManager's constructor and methods if necessary
+        OpenAiManager.mockImplementation(() => ({
+            sendRequest: jest.fn().mockResolvedValue({
+                choices: [{ message: { content: 'Mocked response' } }],
+            }),
+            buildRequestBody: jest.fn().mockReturnValue({}),
+            requiresHistory: jest.fn().mockReturnValue(true),
+        }));
+    });
+
+    it('responds to user messages correctly', async () => {
+      // Prepare a mock Discord.js message object
+      const mockDiscordJsMessage = {
+          content: 'Hello, world!',
+          channel: { id: 'test-channel-id' },
+          author: { id: 'user-id', bot: false }
+      };
+  
+      // Wrap the mock Discord.js message object in a DiscordMessage instance
+      const userMessage = new DiscordMessage(mockDiscordJsMessage);
+  
+      // Call the messageHandler with the DiscordMessage instance
+      await messageHandler(userMessage);
+  
+      // Assertions to verify that sendResponse was called correctly
+      expect(mockSendResponse).toHaveBeenCalledWith('test-channel-id', 'Mocked response');
+      expect(mockSendResponse).toHaveBeenCalledTimes(1);
+      // Additional assertions as needed...
   });
-
-  test('responds to user messages', async () => {
-    const userMessage = {
-      author: { bot: false },
-      content: 'Hello, world!',
-      channel: { id: 'test-channel' },
-    };
-
-    // Call the messageHandler with the mock message
-    await messageHandler(userMessage);
-
-    // Assert that sendResponse was called correctly
-    expect(mockSendResponse).toHaveBeenCalledTimes(1);
-    expect(mockSendResponse).toHaveBeenCalledWith('test-channel', 'Mocked response');
-  });
-
-  // Add more tests as needed to cover new functionality and edge cases
+    // Additional tests can be added to cover different scenarios and edge cases
 });
