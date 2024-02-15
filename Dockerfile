@@ -2,6 +2,7 @@
 FROM python:3.9-slim-buster AS python-env
 WORKDIR /usr/src/python-env
 RUN apt-get update && apt-get install -y gcc python3-dev
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir psutil requests bs4 opencv-python numpy nltk
 
 # Install Ollama
