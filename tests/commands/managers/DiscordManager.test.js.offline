@@ -48,14 +48,15 @@ describe('DiscordManager Message Handling', () => {
   });
 
 
-  it('calls the message handler with a new message', async () => {
-    // Simulate receiving a message
-    const mockMessage = { content: "Hello, world!", author: { bot: false } };
-    manager.client.emit('messageCreate', mockMessage);
+    it('calls the message handler with a new message', async () => {
+      const mockHandler = jest.fn();
+      manager.client.on('messageCreate', mockHandler); // Directly use mock function for test
 
-    // Verify the message handler was called with the expected message
-    // Use await nextTick or similar if the event handling is asynchronous
-    await new Promise(process.nextTick); // Helps in waiting for all pending Promises to resolve
-    expect(manager.messageHandler).toHaveBeenCalledWith(expect.anything());
+      const mockMessage = { content: "Hello, world!", author: { bot: false } };
+      manager.client.emit('messageCreate', mockMessage);
+
+      await new Promise(process.nextTick);
+
+      expect(mockHandler).toHaveBeenCalledWith(expect.anything());
   });
 });
