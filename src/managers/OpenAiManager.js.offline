@@ -41,26 +41,22 @@ class OpenAiManager extends LlmInterface {
      * @returns {Object} - The constructed request body.
      */
     buildRequestBody(historyMessages) {
-        // Print pre-transformation payload
-        logger.debug(`Pre-transformation historyMessages: ${JSON.stringify(historyMessages, null, 2)}`);
-    
-        const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
+        const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+        const systemMessage = systemMessageContent ? [{
             role: 'system',
-            content: constants.LLM_SYSTEM_PROMPT,
-        } : null;
+            content: systemMessageContent
+        }] : [];
     
-        const messages = systemMessage ? [systemMessage] : [];
-        messages.push(...historyMessages.map(msg => {
-            // Determine the role based on authorId
-            const role = msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user';
-            return {
-                role: role,
-                content: msg.content || '', // Ensure content is always a string
-            };
-        }));
+        const transformedMessages = historyMessages.map(discordMessage => {
+            // Use DiscordMessage class methods for property access
+            const content = discordMessage.getText();
+            const authorId = discordMessage.getAuthorId();
+            const role = authorId === constants.CLIENT_ID ? 'assistant' : 'user';
     
-        // Print out the mapping from pre-transformation to post-transformation
-        logger.debug(`Mapping and transformed messages: ${JSON.stringify(messages, null, 2)}`);
+            return { role, content };
+        });
+    
+        const messages = [...systemMessage, ...transformedMessages];
     
         const requestBody = {
             model: constants.LLM_MODEL,
@@ -72,11 +68,10 @@ class OpenAiManager extends LlmInterface {
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
     
-        // Print out the constructed request body for OpenAI API
         logger.debug(`Request body for OpenAI API constructed: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
-        
+            
     /**
      * Indicates whether the manager requires message history for constructing the request.
      * @returns {boolean} - True if message history is required, false otherwise.

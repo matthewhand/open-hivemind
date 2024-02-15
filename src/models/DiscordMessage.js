@@ -8,23 +8,24 @@ class DiscordMessage extends IMessage {
     }
 
     getText() {
+        // Direct access seems correct based on your description
         return this.data.content;
     }
 
     getChannelId() {
-        return this.data.channel.id;
+        // Adjust if the actual path to channelId is different
+        return this.data.channelId; // Assuming direct access is correct
     }
 
     getAuthorId() {
-        return this.data.author.id;
+        // Adjust if the actual path to authorId is different
+        return this.data.authorId; // Assuming direct access is correct
     }
 
-    // Implement the isFromBot method
     isFromBot() {
+        // Assuming this.data.author might be an object with a 'bot' property
         return this.data.author.bot;
     }
-
-    // Implement any additional methods needed specifically for Discord messages
 }
 
 module.exports = DiscordMessage;
