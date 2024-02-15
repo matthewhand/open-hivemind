@@ -41,22 +41,27 @@ class OpenAiManager extends LlmInterface {
      * @returns {Object} - The constructed request body.
      */
     buildRequestBody(historyMessages) {
+        // Print pre-transformation payload
+        logger.debug(`Pre-transformation historyMessages: ${JSON.stringify(historyMessages, null, 2)}`);
+    
         const systemMessage = constants.LLM_SYSTEM_PROMPT ? {
             role: 'system',
             content: constants.LLM_SYSTEM_PROMPT,
         } : null;
-
-        // Start with the system message if it exists
+    
         const messages = systemMessage ? [systemMessage] : [];
-
-        // Append history messages, defaulting to "user" role and switching to "assistant" if the ID matches the bot's ID
         messages.push(...historyMessages.map(msg => {
+            // Determine the role based on authorId
+            const role = msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user';
             return {
-                role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user',
-                content: msg.content,
+                role: role,
+                content: msg.content || '', // Ensure content is always a string
             };
         }));
-
+    
+        // Print out the mapping from pre-transformation to post-transformation
+        logger.debug(`Mapping and transformed messages: ${JSON.stringify(messages, null, 2)}`);
+    
         const requestBody = {
             model: constants.LLM_MODEL,
             messages,
@@ -66,11 +71,12 @@ class OpenAiManager extends LlmInterface {
             frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
             presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
-
+    
+        // Print out the constructed request body for OpenAI API
         logger.debug(`Request body for OpenAI API constructed: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
-
+        
     /**
      * Indicates whether the manager requires message history for constructing the request.
      * @returns {boolean} - True if message history is required, false otherwise.
