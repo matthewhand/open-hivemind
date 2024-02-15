@@ -11,8 +11,22 @@ class OpenAiManager extends LlmInterface {
         this.maxRetries = 5; // Maximum number of retries
     }
 
+    async ensureBotId() {
+        let retries = 0;
+        while (!this.botId && retries < this.maxRetries) {
+            logger.warn(`Bot ID not set in OpenAiManager, retrying in ${this.retryDelay / 1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+            retries++;
+        }
+        if (!this.botId) {
+            logger.error(`Failed to set Bot ID after ${this.maxRetries} retries.`);
+            throw new Error("Bot ID not set in OpenAiManager after retries");
+        }
+    }
+
     async sendRequest(requestBody) {
-        
+        await this.ensureBotId(); // Ensure botId is set before proceeding
+
         try {
             logger.debug(`Sending OAI API Request with bot ID ${this.botId}: ${JSON.stringify(requestBody, null, 2)}`);
             const headers = {
