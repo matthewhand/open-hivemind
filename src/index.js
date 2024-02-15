@@ -1,7 +1,7 @@
 // index.js or equivalent initializer
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const messageHandler = require('./handlers/messageHandler');
+const { messageHandler } = require('./handlers/messageHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 
 debugEnvVars();

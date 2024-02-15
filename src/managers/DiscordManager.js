@@ -39,6 +39,9 @@ class DiscordManager {
     }
 
     setMessageHandler(messageHandlerCallback) {
+        if (typeof messageHandlerCallback !== 'function') {
+            throw new Error("messageHandlerCallback must be a function");
+        }
         this.messageHandler = messageHandlerCallback;
         this.setupEventHandlers();
     }
