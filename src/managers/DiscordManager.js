@@ -9,7 +9,6 @@ require('dotenv').config(); // Ensure environment variables are loaded
 class DiscordManager {
     static instance;
     client;
-    botId;
 
     constructor() {
         if (DiscordManager.instance) {
@@ -22,8 +21,7 @@ class DiscordManager {
                 GatewayIntentBits.MessageContent,
             ],
         });
-        this.botId = process.env.CLIENT_ID; // Set bot ID from environment variable
-        logger.debug(`Bot ID set to: ${this.botId}`);
+        logger.debug(`Bot initialized with CLIENT_ID: ${process.env.CLIENT_ID}`);
         this.initialize();
         DiscordManager.instance = this;
     }
@@ -31,7 +29,7 @@ class DiscordManager {
     initialize() {
         this.client.once('ready', () => {
             logger.info(`Bot logged in as ${this.client.user.tag}`);
-            // No need to set botId here since it's already set from CLIENT_ID
+            // Initialization actions that depend on the bot being ready
             this.setupEventHandlers();
         });
 
@@ -47,7 +45,7 @@ class DiscordManager {
     setupEventHandlers() {
         this.client.on('messageCreate', async (discordMessage) => {
             try {
-                const processedMessage = new DiscordMessage(discordMessage, this.botId);
+                const processedMessage = new DiscordMessage(discordMessage, process.env.CLIENT_ID);
                 if (this.messageHandler) {
                     await this.messageHandler(processedMessage);
                 } else {
@@ -66,22 +64,6 @@ class DiscordManager {
         this.messageHandler = messageHandlerCallback;
     }
 
-    // The fetchMessages, sendResponse, and getBotId methods remain as previously defined,
-    // ensuring they utilize discordUtils as intended and make use of the statically set botId.
-
-    static getInstance() {
-        if (!DiscordManager.instance) {
-            DiscordManager.instance = new DiscordManager();
-        }
-        return DiscordManager.instance;
-    }
-
-    static getInstance() {
-        if (!DiscordManager.instance) {
-            DiscordManager.instance = new DiscordManager();
-        }
-        return DiscordManager.instance;
-    }
     async fetchMessages(channelId, limit = 20) {
         return discordUtils.fetchMessages(this.client, channelId, limit);
     }
@@ -90,15 +72,14 @@ class DiscordManager {
         return discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
-    async getBotId() {
-        return discordUtils.getBotId(this.client);
-    }
+    // Removing getBotId and setBotId methods as we're directly using process.env.CLIENT_ID now
 
-    setBotId(botId) {
-        this.botId = botId;
-        logger.debug(`Bot ID set to: ${this.botId}`);
+    static getInstance() {
+        if (!DiscordManager.instance) {
+            DiscordManager.instance = new DiscordManager();
+        }
+        return DiscordManager.instance;
     }
-
 }
 
 module.exports = DiscordManager;

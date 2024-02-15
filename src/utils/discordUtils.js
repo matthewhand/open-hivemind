@@ -1,10 +1,10 @@
-// src/utils/discordUtils.js
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 const DiscordMessage = require('../models/DiscordMessage'); // Ensure DiscordMessage implements IMessage interface
+require('dotenv').config(); // Ensure environment variables are loaded for direct CLIENT_ID access if needed
 
 // Collect command definitions from slash command files
 function collectSlashCommands(commandsPath) {
@@ -20,7 +20,8 @@ function collectSlashCommands(commandsPath) {
 }
 
 // Register slash commands with Discord
-async function registerSlashCommands(clientId, token, guildId, commands) {
+async function registerSlashCommands(token, guildId, commands) {
+    const clientId = process.env.CLIENT_ID; // Directly using CLIENT_ID
     const rest = new REST({ version: '9' }).setToken(token);
 
     try {
@@ -30,18 +31,6 @@ async function registerSlashCommands(clientId, token, guildId, commands) {
     } catch (error) {
         logger.error('Failed to register slash commands:', error);
     }
-}
-
-// Get bot ID with retries
-async function getBotId(client, retryCount = 3, retryDelay = 2000) {
-    for (let attempt = 0; attempt < retryCount; attempt++) {
-        if (client.user) {
-            return client.user.id;
-        }
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
-    }
-    logger.warn('Unable to retrieve the Bot ID after multiple attempts.');
-    return null;
 }
 
 // Fetch messages from a Discord channel
@@ -75,17 +64,14 @@ async function sendResponse(client, channelId, messageText) {
  * @returns {DiscordMessage} - An instance of DiscordMessage or a similar object that implements the IMessage interface.
  */
 async function processDiscordMessage(message) {
-    // This is where you transform the Discord message into your generic message format.
-    // For example, using the DiscordMessage class:
     return new DiscordMessage(message);
 }
 
-// Make sure to export your newly created function
 module.exports = {
     processDiscordMessage,
     collectSlashCommands,
     registerSlashCommands,
-    getBotId,
     fetchMessages,
     sendResponse,
+    // Removed getBotId function as it's no longer necessary with direct CLIENT_ID usage
 };
