@@ -2,7 +2,7 @@
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
-const LlmInterface = require('../interfaces/LlmInterface');
+const OpenAiManager = require('../managers/OpenAiManager');
 
 /**
  * Handles incoming messages by processing them and generating responses.
@@ -27,22 +27,22 @@ async function messageHandler(originalMessage) {
         return;
     }
 
-    // Fetch the message history for context.
+    // Fetch the message history for context, if required by the OpenAiManager.
+    const lmManager = new OpenAiManager(); // Instantiate the OpenAiManager
     const channelId = originalMessage.getChannelId();
-    const history = await DiscordManager.getInstance().fetchMessages(channelId, 20); // Assuming fetchMessages returns an array of IMessage instances.
-    if (history.length === 0) {
-        logger.warn("No historical messages found for context.");
-        await DiscordManager.getInstance().sendResponse(channelId, "I'm unable to provide context-based responses without message history.");
-        return;
+    let history = [];
+    if (lmManager.requiresHistory()) {
+        history = await DiscordManager.getInstance().fetchMessages(channelId, 20); // Assuming fetchMessages returns an array of IMessage instances.
     }
 
-    // Prepare the request for the language model.
-    const lmManager = LlmInterface.getManager();
-    const requestBody = lmManager.prepareRequestData(originalMessage, history);
+    // Build the request body with the original message and history.
+    const requestBody = lmManager.buildRequestBody([originalMessage, ...history]);
 
     try {
+        // Send the request to the OpenAI API and wait for the response.
         const responseContent = await lmManager.sendRequest(requestBody);
-        await DiscordManager.getInstance().sendResponse(channelId, responseContent);
+        // Assuming the response structure allows direct usage, modify as needed based on actual API response.
+        await DiscordManager.getInstance().sendResponse(channelId, responseContent.choices[0].text);
         logger.info(`Response sent for message in channel ${channelId}.`);
     } catch (error) {
         logger.error(`Failed to process message: ${error}`, { errorDetail: error });

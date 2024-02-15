@@ -16,7 +16,7 @@ class LlmInterface {
         }
     }
 
-    async prepareRequestData(message, history=[]) {
+    async buildRequestBody(historyMessages) {
         throw new Error("prepareRequestData method must be implemented");
     }
 
