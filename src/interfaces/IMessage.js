@@ -27,6 +27,11 @@ class IMessage {
         throw new Error("getAuthorId method must be implemented by subclasses");
     }
 
+    // Implement the isFromBot method
+    isFromBot() {
+        return false;
+    }
+
     // Any additional methods or properties relevant to your application...
 }
 
