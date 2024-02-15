@@ -33,10 +33,16 @@ async function messageHandler(message) {
 
         // Assuming getManager method of LlmInterface handles lazy loading or initialization of the LM manager
         const lmManager = LlmInterface.getManager(); 
-        const lmRequestBody = lmManager.buildRequestBody(history.map(msg => ({
-            role: msg.author.id === botId ? 'assistant' : 'user',
-            content: msg.content
-        })));
+        const lmRequestBody = lmManager.buildRequestBody(history.map(msg => {
+            if (!msg || !msg.author) {
+                logger.error('Message or author is undefined', { msg });
+                return { role: 'user', content: 'Undefined message content' }; // Fallback or alternative handling
+            }
+            return {
+                role: msg.author.id === botId ? 'assistant' : 'user',
+                content: msg.content
+            };
+        }));       
 
         const response = await lmManager.sendRequest(lmRequestBody);
         const replyText = response.choices?.[0]?.message?.content ?? "I'm not sure how to respond to that.";
