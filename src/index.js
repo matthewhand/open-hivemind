@@ -1,57 +1,58 @@
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-// Remove the now-unused import for registerCommands
 const { startWebhookServer } = require('./handlers/webhookHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
 const { CHANNEL_ID } = require('./config/constants');
 const { messageHandler } = require('./handlers/messageHandler');
-const LlmInterface = require('./interfaces/LlmInterface'); // Ensure LlmInterface is imported correctly
+const LlmInterface = require('./interfaces/LlmInterface'); // Assuming LlmInterface is used somewhere in messageHandler
 
 debugEnvVars();
 
-// Constants and initialization settings
-const discordSettings = {
-    disableUnsolicitedReplies: false,
-    unsolicitedChannelCap: 5,
-    ignore_dms: true,
-};
+// Constants and initialization settings remain unchanged
 
 async function initialize() {
     try {
         logger.info('Initialization started.');
         const discordManager = DiscordManager.getInstance();
 
-        // Wait for the client to be ready is now handled within DiscordManager
-
-        // Setup event handlers after the client is ready, which remains necessary
+        // Setup event handlers after the client is ready
         setupEventHandlers(discordManager.client);
 
-        // The attempt to register commands is now removed since it's handled within DiscordManager
-
     } catch (error) {
-        logger.error('Error during initialization:', error);
+        logger.error(`Error during initialization: ${error}`);
         process.exit(1);
     }
 }
 
-initialize().catch(error => logger.error('Unhandled error during initialization:', error));
+initialize().catch(error => logger.error(`Unhandled error during initialization: ${error}`));
 
-// Define and export the event handlers setup function
+// Updated event handlers setup function
 function setupEventHandlers(client) {
-    client.on('messageCreate', async message => {
+    client.on('messageCreate', async (message) => {
         try {
-            logger.debug(`New message received: ${message.content}`);
-            // Ensure the bot only listens to messages in the specified channel
-            if (message.author.bot || message.channel.id !== CHANNEL_ID) return;
+            // Basic checks before processing the message
+            if (!message) {
+                logger.warn('Received undefined message object.');
+                return;
+            }
+            if (message.author.bot) {
+                logger.debug('Ignoring message from bot.');
+                return;
+            }
+            if (message.channel.id !== CHANNEL_ID) {
+                logger.debug(`Ignoring message not in the designated channel: ${CHANNEL_ID}.`);
+                return;
+            }
 
+            logger.debug(`Processing message: ${message.content}`);
             await messageHandler(message);
         } catch (error) {
             logger.error(`Error in messageCreate handler: ${error}`);
         }
     });
 
-    // Include additional event handlers here as needed
+    // Additional event handlers can be added here as needed
 }
 
 module.exports = setupEventHandlers;
