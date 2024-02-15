@@ -6,12 +6,11 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
-        // Initialization if needed
+        // Additional initialization if needed can be placed here
     }
 
     async sendRequest(requestBody) {
         try {
-            // Enhanced logging for clarity
             logger.debug(`Sending request to OpenAI API with body: ${JSON.stringify(requestBody, null, 2)}`);
             const headers = {
                 'Content-Type': 'application/json',
@@ -28,22 +27,18 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages) {
-        // System message inclusion based on the presence of LLM_SYSTEM_PROMPT
         const systemMessage = constants.LLM_SYSTEM_PROMPT ? [{
             role: 'system',
             content: constants.LLM_SYSTEM_PROMPT
         }] : [];
 
-        // Transforming message history while directly using constants.CLIENT_ID for role assignment
         const transformedMessages = historyMessages.map(msg => ({
             role: msg.authorId === constants.CLIENT_ID ? 'assistant' : 'user',
             content: msg.content
         }));
 
-        // Combining system message with transformed message history
         const messages = [...systemMessage, ...transformedMessages];
 
-        // Assembling the request body
         const requestBody = {
             model: constants.LLM_MODEL,
             messages,
@@ -59,8 +54,7 @@ class OpenAiManager extends LlmInterface {
     }
 
     requiresHistory() {
-        // Returning true to indicate that message history is needed for request building
-        return true;
+        return true; // Indicates that message history is necessary for constructing the request
     }
 }
 

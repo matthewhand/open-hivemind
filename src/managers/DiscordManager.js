@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
 const DiscordMessage = require('../models/DiscordMessage');
+const constants = require('../config/constants'); // Assuming you have this if you're using constants.CLIENT_ID elsewhere
 
 class DiscordManager {
     static instance;
@@ -36,7 +37,7 @@ class DiscordManager {
             process.exit(1);
         } else {
             this.client.login(token).then(() => {
-                logger.info('Bot login attempt successful.');
+                logger.info(`Bot login attempt successful as ${this.client.user.tag}.`);
             }).catch(error => {
                 logger.error('Error logging into Discord:', error);
                 process.exit(1);
@@ -79,16 +80,6 @@ class DiscordManager {
             DiscordManager.instance = new DiscordManager();
         }
         return DiscordManager.instance;
-    }
-
-
-    setBotId(botId) {
-        this.botId = botId;
-        logger.debug(`Bot ID set to: ${this.botId}`);
-    }
-
-    async getBotId() {
-        return this.botId;
     }
 }
 
