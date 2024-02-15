@@ -84,6 +84,11 @@ class DiscordManager {
     async getBotId() {
         return discordUtils.getBotId(this.client);
     }
+    
+    setBotId(botId) {
+        this.botId = botId;
+        logger.debug(`Bot ID set to: ${this.botId}`);
+    }
 
 }
 
