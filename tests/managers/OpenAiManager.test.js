@@ -31,12 +31,13 @@ describe('OpenAiManager buildRequestBody', () => {
     openAiManager = new OpenAiManager();
   });
 
-  test('correctly structures payload with mixed message history, including bot and user messages', () => {
+  test('correctly structures payload ensuring assistant messages follow user messages', () => {
     // Setup for mocked messages (assuming proper mock implementations elsewhere)
     const historyMessages = [
-      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Mocked Bot message
-      new DiscordMessage("I am fine, thank you!", false), // Mocked User message
-      new DiscordMessage("Hello, how are you?", false), // Mocked User message
+      new DiscordMessage("You are Discord bot and the most recent message triggered you to respond.", false), // User message triggering the response
+      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Assistant message
+      new DiscordMessage("I am fine, thank you!", false), // User message
+      new DiscordMessage("Hello, how are you?", false), // Another User message
     ];
 
     const expectedPayload = {
@@ -45,6 +46,11 @@ describe('OpenAiManager buildRequestBody', () => {
         {
           role: 'system',
           content: "You are a helpful assistant."
+        },
+        // Note: The assistant message has been moved after the user message as per the new logic
+        {
+          role: 'user',
+          content: "You are Discord bot and the most recent message triggered you to respond."
         },
         {
           role: 'assistant',

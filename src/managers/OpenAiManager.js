@@ -31,22 +31,22 @@ class OpenAiManager extends LlmInterface {
 
     buildRequestBody(historyMessages) {
         const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-        // Initialize messages array with the system message if it's defined
-        const messages = systemMessageContent ? [{
+        let messages = systemMessageContent ? [{
             role: 'system',
             content: systemMessageContent
         }] : [];
 
-        // Transform each message in history into the expected format
-        const transformedMessages = historyMessages.map(discordMessage => {
-            return {
-                role: discordMessage.isFromBot() ? 'assistant' : 'user',
-                content: discordMessage.getText(),
-            };
-        });
+        let userMessageEncountered = false;
+        const transformedMessages = historyMessages.reduce((acc, message) => {
+            const role = message.isFromBot() ? 'assistant' : 'user';
+            if (role === 'user') userMessageEncountered = true;
+            if (userMessageEncountered || role === 'system') {
+                acc.push({ role, content: message.getText() });
+            }
+            return acc;
+        }, []);
 
-        // Append transformed messages to the request body
-        messages.push(...transformedMessages);
+        messages = [...messages, ...transformedMessages];
 
         return {
             model: constants.LLM_MODEL,
