@@ -71,4 +71,5 @@ class MessageResponseManager {
     }
 }
 
-module.exports = MessageResponseManager;
+const messageResponseManager = new MessageResponseManager();
+module.exports = messageResponseManager;

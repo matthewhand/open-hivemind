@@ -3,7 +3,6 @@ const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
 const messageResponseManager = require('../managers/messageResponseManager'); 
-const constants = require('../config/constants');
 
 // Global flag to prevent concurrent responses
 let isResponding = false;
