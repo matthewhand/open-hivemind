@@ -31,9 +31,14 @@ class MessageResponseManager {
 
     setupConfig() {
         logger.debug('Setting up configuration for MessageResponseManager.');
-        // Configuration setup logic
-        // Consider wrapping in try-catch if there's potential for errors
+        this.interrobangBonus = this.config.interrobangBonus;
+        this.mentionBonus = this.config.mentionBonus;
+        this.botResponsePenalty = this.config.botResponsePenalty;
+        this.timeVsResponseChance = this.config.timeVsResponseChance;
+        this.llmWakewords = this.config.llmWakewords;
+        this.unsolicitedChannelCap = this.config.unsolicitedChannelCap;
     }
+
 
     shouldReplyToMessage(discordMessage) {
         try {
