@@ -4,7 +4,7 @@ const OpenAiManager = require('../../src/managers/OpenAiManager');
 // Mocking necessary modules
 jest.mock('../../src/models/DiscordMessage');
 jest.mock('../../src/config/constants', () => ({
-  CLIENT_ID: '1234567890',  CLIENT_ID: '1234567890',
+  CLIENT_ID: '1234567890',  
   LLM_MODEL: "gpt-3.5-turbo",
   LLM_SYSTEM_PROMPT: "You are a helpful assistant.",
   LLM_MAX_TOKENS: 150,
