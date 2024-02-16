@@ -1,67 +1,74 @@
+// src/managers/messageResponseManager.js
 const configurationManager = require('../config/configurationManager');
 const logger = require('../utils/logger');
-const {
-    getLastReplyTime,
-    incrementReplyCount,
-    calculateDynamicFactor,
-    getReplyCount,
-    resetReplyCount,
-    logReply
-} = require('../utils/messageResponseUtils');
+const messageResponseUtils = require('../utils/messageResponseUtils');
+const constants = require('../config/constants'); // Ensure this import is correct
 
-class messageResponseManager {
+class MessageResponseManager {
     constructor() {
-        this.config = configurationManager.getConfig('deciderConfig') || {};
+        this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
         this.setupConfig();
     }
 
+    defaultConfig() {
+        return {
+            interrobangBonus: 0.2,
+            mentionBonus: 0.4,
+            botResponsePenalty: 0.6,
+            timeVsResponseChance: [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
+            llmWakewords: [],
+            unsolicitedChannelCap: 5,
+        };
+    }
+
     setupConfig() {
-        // Initial configuration setup with defaults
-        this.interrobangBonus = this.config.interrobangBonus || 0.2;
-        this.mentionBonus = this.config.mentionBonus || 0.4;
-        this.botResponsePenalty = this.config.botResponsePenalty || 0.6;
-        this.timeVsResponseChance = this.config.timeVsResponseChance || [[12345, 0.4], [420000, 0.6], [4140000, 0.2]];
-        this.llmWakewords = this.config.llmWakewords || [];
-        this.unsolicitedChannelCap = this.config.unsolicitedChannelCap || 5;
+        this.interrobangBonus = this.config.interrobangBonus;
+        this.mentionBonus = this.config.mentionBonus;
+        this.botResponsePenalty = this.config.botResponsePenalty;
+        this.timeVsResponseChance = this.config.timeVsResponseChance;
+        this.llmWakewords = this.config.llmWakewords;
+        this.unsolicitedChannelCap = this.config.unsolicitedChannelCap;
     }
 
-    shouldReplyToMessage(ourUserId, message) {
-        try {
-            let baseChance = this.calcBaseChanceOfUnsolicitedReply(message);
-            baseChance *= calculateDynamicFactor(message.channel.id);
+    shouldReplyToMessage(message) {
+        let baseChance = this.calcBaseChanceOfUnsolicitedReply(message.channel.id);
+        baseChance += this.calculateBonusForMessageContent(message);
 
-            if (this.isDirectlyMentioned(ourUserId, message)) {
-                baseChance += this.mentionBonus;
-            }
-
-            if (message.author.bot) baseChance = Math.max(0, baseChance - this.botResponsePenalty);
-
-            const decision = Math.random() < baseChance;
-            if (decision) {
-                incrementReplyCount(message.channel.id);
-                if (getReplyCount(message.channel.id) >= this.unsolicitedChannelCap) {
-                    resetReplyCount(message.channel.id);
-                }
-            }
-
-            return decision;
-        } catch (error) {
-            logger.error(`[Error] in shouldReplyToMessage: ${error}`);
-            return false;
+        if (message.mentions.users.has(constants.CLIENT_ID)) {
+            baseChance += this.mentionBonus;
         }
+
+        if (message.author.bot) {
+            baseChance = Math.max(0, baseChance - this.botResponsePenalty);
+        }
+
+        const shouldReply = Math.random() < baseChance;
+        const responseChance = shouldReply ? 1 : baseChance; // Ensure a full chance for direct replies
+        
+        return {
+            shouldReply,
+            responseChance,
+        };
     }
 
-    calcBaseChanceOfUnsolicitedReply(message) {
-        const timeSinceLastSend = getLastReplyTime(message.channel.id);
+    calcBaseChanceOfUnsolicitedReply(channelId) {
+        const timeSinceLastReply = messageResponseUtils.getTimeSinceLastReply(channelId);
         for (let [duration, chance] of this.timeVsResponseChance) {
-            if (timeSinceLastSend <= duration) return chance;
+            if (timeSinceLastReply <= duration) {
+                return chance;
+            }
         }
         return 0;
     }
 
-    isDirectlyMentioned(ourUserId, message) {
-        return message.mentions.users.has(ourUserId);
+    calculateBonusForMessageContent(message) {
+        let bonus = 0;
+        if (message.content.includes('!')) {
+            bonus += this.interrobangBonus;
+        }
+        // Additional content checks can be implemented here
+        return bonus;
     }
 }
 
-module.exports = { messageResponseManager };
+module.exports = MessageResponseManager;

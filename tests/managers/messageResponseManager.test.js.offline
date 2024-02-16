@@ -1,0 +1,33 @@
+// Import the manager and necessary mocks
+const { messageResponseManager } = require('../../src/managers/messageResponseManager');
+jest.mock('../../src/config/configurationManager');
+const configurationManager = require('../../src/config/configurationManager');
+jest.mock('../../src/utils/logger');
+const messageResponseUtils = require('../../src/utils/messageResponseUtils');
+jest.mock('../../src/utils/messageResponseUtils');
+
+describe('messageResponseManager', () => {
+    let manager;
+    beforeEach(() => {
+      manager = new messageResponseManager();
+      jest.spyOn(Math, 'random').mockReturnValue(0.1); // Ensure randomness does not affect tests
+    });
+  
+    test('Direct mention increases reply chance', () => {
+        const ourUserId = 'bot-user-id';
+        const message = {
+          mentions: { users: new Map([[ourUserId, {}]]) },
+          author: { bot: false },
+          channel: { id: 'channel-id' }
+        };
+        // Directly testing the decision to reply
+        const decision = manager.shouldReplyToMessage(ourUserId, message);
+        expect(decision).toBeTruthy(); // Expect the decision to be true when directly mentioned
+      });
+
+        
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+  });
+  
