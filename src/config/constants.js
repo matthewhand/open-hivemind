@@ -25,7 +25,7 @@ module.exports = {
     // LLM Parameters
     LLM_PROVIDER: process.env.LLM_PROVIDER || 'OpenAI', // Default to OpenAI
     LLM_MODEL: process.env.LLM_MODEL || 'gpt-3.5-turbo', // or mistral-7b-instruct, etc
-    LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'You are a helpful assistant.',
+    LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'You are Discord bot and the most recent message triggered you to respond.  Use the chat history and channel topic to assist the User',
     LLM_MAX_CONTENT_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.5'),
     LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '420', 10),
