@@ -35,8 +35,15 @@ class MessageResponseManager {
     }
 
     shouldReplyToMessage(message) {
-        if (!message || !message.channel || !message.channel.id) {
-            logger.error('Invalid message object passed to shouldReplyToMessage.');
+        // Validate message object and its essential properties
+        if (!message || typeof message !== 'object' || !message.channel || !message.channel.id) {
+            logger.debug('Invalid message object or missing channel details. (returning false - 0%)');
+            return { shouldReply: false, responseChance: 0 };
+        }
+
+        // Validate essential constants
+        if (typeof constants.CHANNEL_ID !== 'string' || typeof constants.CLIENT_ID !== 'string') {
+            logger.debug('Invalid or undefined CHANNEL_ID or CLIENT_ID in constants. (returning false - 0%)');
             return { shouldReply: false, responseChance: 0 };
         }
 
