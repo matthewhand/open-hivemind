@@ -40,6 +40,16 @@ class MessageResponseManager {
             return { shouldReply: false, responseChance: 0 };
         }
 
+        // Check if message is in the specified channel or if the bot is mentioned or replied to
+        const isChannelMatch = message.channel.id === constants.CHANNEL_ID;
+        const isMentioned = message.mentions.users.has(constants.CLIENT_ID);
+        const isReply = message.type === 'REPLY';
+
+        if (!isChannelMatch && !isMentioned && !isReply) {
+            logger.debug(`Message in channel ${message.channel.id} ignored.`);
+            return { shouldReply: false, responseChance: 0 };
+        }
+
         let baseChance = this.calcBaseChanceOfUnsolicitedReply(message.channel.id);
         logger.debug(`Base chance of reply before bonuses: ${baseChance}`);
 
