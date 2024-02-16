@@ -37,6 +37,10 @@ class IMessage {
         throw new Error("mentionsUsers method must be implemented by subclasses");
     }
 
+    isFromBot() {
+        throw new Error("isFromBot method must be implemented by subclasses");
+    }
+
 }
 
 module.exports = IMessage;

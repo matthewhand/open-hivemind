@@ -67,6 +67,15 @@ class DiscordMessage extends IMessage {
         return this.message.author.id;
     }
 
+    // Concrete implementation of isFromBot for Discord messages
+    isFromBot() {
+        // Use isBotExplicitlySet if available, otherwise check the message's author.bot flag
+        if (this.isBotExplicitlySet !== null) {
+            return this.isBotExplicitlySet;
+        }
+        return this.message.author.bot;
+    }
+
 }
 
 module.exports = DiscordMessage;
