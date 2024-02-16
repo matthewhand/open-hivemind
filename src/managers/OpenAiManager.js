@@ -30,35 +30,44 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages) {
-        const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-        let messages = systemMessageContent ? [{
-            role: 'system',
-            content: systemMessageContent
-        }] : [];
-
-        let userMessageEncountered = false;
-        const transformedMessages = historyMessages.reduce((acc, message) => {
-            const role = message.isFromBot() ? 'assistant' : 'user';
-            if (role === 'user') userMessageEncountered = true;
-            if (userMessageEncountered || role === 'system') {
-                acc.push({ role, content: message.getText() });
-            }
-            return acc;
-        }, []);
-
-        messages = [...messages, ...transformedMessages];
-
-        return {
-            model: constants.LLM_MODEL,
-            messages,
-            temperature: constants.LLM_TEMPERATURE,
-            max_tokens: constants.LLM_MAX_TOKENS,
-            top_p: constants.LLM_TOP_P,
-            frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
-            presence_penalty: constants.LLM_PRESENCE_PENALTY,
-        };
-    }
-
+      const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+      // Initialize messages array with the system message if it exists
+      let messages = systemMessageContent ? [{
+          role: 'system',
+          content: systemMessageContent
+      }] : [];
+  
+      // Filter out the system message if it's already added
+      let userAndAssistantMessages = historyMessages.filter(message => message.role !== 'system');
+  
+      // Detect the first user message to ensure assistant messages before it are not included
+      const firstUserMessageIndex = userAndAssistantMessages.findIndex(message => message.role === 'user');
+  
+      if (firstUserMessageIndex !== -1) {
+          // Include only messages from the first user message onwards
+          userAndAssistantMessages = userAndAssistantMessages.slice(firstUserMessageIndex);
+      }
+  
+      // Reverse the order of user and assistant messages
+      const reversedMessages = userAndAssistantMessages.reverse().map(message => ({
+          role: message.isFromBot() ? 'assistant' : 'user', // Adjust according to your method to check if the message is from a bot
+          content: message.getText() // Adjust according to your method to get the text of the message
+      }));
+  
+      // Append the reversed messages to the system message if it exists
+      messages = [...messages, ...reversedMessages];
+  
+      return {
+          model: constants.LLM_MODEL,
+          messages,
+          temperature: constants.LLM_TEMPERATURE,
+          max_tokens: constants.LLM_MAX_TOKENS,
+          top_p: constants.LLM_TOP_P,
+          frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+          presence_penalty: constants.LLM_PRESENCE_PENALTY,
+      };
+  }
+  
     requiresHistory() {
         return true;
     }
