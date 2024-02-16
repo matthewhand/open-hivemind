@@ -36,19 +36,6 @@
       "ollama": true,
       "moderation": true,
       "help": true
-    },
-    "userId": "123e4567-e89b-12d3-a456-426614174000",
-    "BOT_TO_BOT_MODE": true,
-    "FOLLOW_UP_ENABLED": true,
-    "FOLLOW_UP_MIN_DELAY": 120000,
-    "FOLLOW_UP_MAX_DELAY": 3600000,
-    "LLM_ENDPOINT_URL": "http://localhost:5000/v1/chat/completions",
-    "LLM_MODEL": "mistral-7b-instruct",
-    "LLM_API_KEY": "0xDEADBEEFCAFE",
-    "LLM_SYSTEM_PROMPT": "You are Discord bot and the most recent message triggered you to respond.  Use the chat history and channel topic to assist the User.",
-    "MAX_CONTENT_LENGTH": 4096,
-    "OLLAMA_ENABLED": "true",
-    "OLLAMA_DEFAULT_MODEL": "orca-mini",
-    "HISTORY_FETCH_LIMIT": 10
+    }
     
   }

@@ -2,7 +2,7 @@
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
-const { messageResponseManager } = require('../managers/messageResponseManager');
+const messageResponseManager = require('../managers/messageResponseManager'); 
 const constants = require('../config/constants');
 
 // Global flag to prevent concurrent responses
@@ -19,9 +19,8 @@ async function messageHandler(originalMessage) {
     const minimumProcessingTime = 10000; // Minimum processing time in milliseconds (e.g., 10 seconds)
 
     logger.debug(`Processing message from author ID: ${originalMessage.getAuthorId()}`);
-    const responseManager = new messageResponseManager();
 
-    const shouldReply = responseManager.shouldReplyToMessage(constants.CLIENT_ID, originalMessage);
+    const shouldReply = messageResponseManager.shouldReplyToMessage(originalMessage); // Adjusted usage
 
     if (!shouldReply) {
         logger.debug("Decision made not to respond to this message based on the response manager's decision.");
