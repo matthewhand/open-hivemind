@@ -20,10 +20,10 @@ class DiscordMessage extends IMessage {
     }
 
 
-    // Check if the message mentions a specific user, defaulting to the bot's client ID
+    // Concrete implementation of mentionsUsers for Discord messages
     mentionsUsers(userId = constants.CLIENT_ID) {
-        // Assuming `this.message.mentions.users` is a Map or similar collection from Discord.js
-        return this.message.mentions && this.message.mentions.users.has(userId);
+        // Check if this.message.mentions.users has the specified userId
+        return this.data.mentions && this.data.mentions.users.has(userId);
     }
 
     // Override or extend isReply method to utilize repliedMessage for additional checks

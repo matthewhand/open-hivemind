@@ -31,6 +31,11 @@ class IMessage {
     isReplyToBot() {
         return false;
     }
+    
+    // New method to check if the message mentions a specific user
+    mentionsUsers(userId) {
+        throw new Error("mentionsUsers method must be implemented by subclasses");
+    }
 
 }
 
