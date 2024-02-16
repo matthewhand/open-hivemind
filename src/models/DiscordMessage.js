@@ -1,9 +1,9 @@
 // src/models/DiscordMessage.js
 const IMessage = require('../interfaces/IMessage');
-const logger = require('../utils/logger'); // Assuming you have a logger utility
+const logger = require('../utils/logger');
 
 class DiscordMessage extends IMessage {
-    constructor(message) {
+    constructor(message, isBot = false) { // Added isBot parameter with default value
         super(message);
         
         if (!message) {
@@ -11,20 +11,16 @@ class DiscordMessage extends IMessage {
             throw new Error('Message parameter is required');
         }
         
-        if (!message.content) {
-            logger.error('DiscordMessage constructor: message object is missing content property.');
-        }
-        
-        if (!message.channel || !message.channel.id) {
-            logger.error('DiscordMessage constructor: message object is missing channel.id property.');
-        }
-        
-        if (!message.author || (!message.author.id && message.author.bot === undefined)) {
-            logger.error('DiscordMessage constructor: message object is missing author.id or author.bot property.');
-        }
-        
         this.message = message; // Store the original Discord message object
+        this.isBot = isBot; // Use the passed isBot parameter
+
         logger.debug('DiscordMessage constructor: message object successfully initialized.');
+    }
+
+    isFromBot() {
+        // Use the isBot property set in the constructor
+        logger.debug(`DiscordMessage.isFromBot: Message is from bot: ${this.isBot}`);
+        return this.isBot;
     }
 
     getText() {
@@ -54,14 +50,6 @@ class DiscordMessage extends IMessage {
         return this.message.author.id;
     }
 
-    isFromBot() {
-        if (this.message.author.bot === undefined) {
-            logger.warn('DiscordMessage.isFromBot: author.bot property is undefined. Assuming message is not from a bot.');
-            return false; // Assume not a bot if bot property is missing
-        }
-        logger.debug(`DiscordMessage.isFromBot: Message is from bot: ${this.message.author.bot}`);
-        return this.message.author.bot;
-    }
 }
 
 module.exports = DiscordMessage;

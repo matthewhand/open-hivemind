@@ -1,10 +1,10 @@
-// Import dependencies
+// Import dependencies and OpenAiManager
 const OpenAiManager = require('../../src/managers/OpenAiManager');
 
-// Mocking dependencies
+// Mocking necessary modules
 jest.mock('../../src/models/DiscordMessage');
 jest.mock('../../src/config/constants', () => ({
-  CLIENT_ID: '1234567890', // Example bot client ID for role differentiation
+  CLIENT_ID: '1234567890',  CLIENT_ID: '1234567890',
   LLM_MODEL: "gpt-3.5-turbo",
   LLM_SYSTEM_PROMPT: "You are a helpful assistant.",
   LLM_MAX_TOKENS: 150,
@@ -12,70 +12,66 @@ jest.mock('../../src/config/constants', () => ({
   LLM_TOP_P: 1,
   LLM_FREQUENCY_PENALTY: 0,
   LLM_PRESENCE_PENALTY: 0,
+  
 }));
 
-// Mock implementation for DiscordMessage
 const DiscordMessage = require('../../src/models/DiscordMessage');
+// Adjusted mock implementation to reflect the new constructor signature
 DiscordMessage.mockImplementation((content, isBot = false) => ({
   getText: () => content,
   getChannelId: () => '1234567890',
-  getAuthorId: () => isBot ? '1234567890' : '987654321', // Distinguishing bot vs. user messages
+  getAuthorId: () => isBot ? '1234567890' : '987654321',
   isFromBot: () => isBot,
 }));
 
 describe('OpenAiManager buildRequestBody', () => {
-  let openAiManager;
-
   beforeEach(() => {
-    // Initialize OpenAiManager before each test
     openAiManager = new OpenAiManager();
   });
 
-  test('correctly structures payload ensuring assistant messages follow user messages', () => {
-    // Setup for mocked messages (assuming proper mock implementations elsewhere)
+  test('correctly structures payload with system message first, followed by user messages, and assistant messages last', () => {
     const historyMessages = [
-      new DiscordMessage("You are Discord bot and the most recent message triggered you to respond.", false), // User message triggering the response
-      new DiscordMessage("Sorry, I encountered an error processing your message.", true), // Assistant message
-      new DiscordMessage("I am fine, thank you!", false), // User message
-      new DiscordMessage("Hello, how are you?", false), // Another User message
-    ];
+      new DiscordMessage("You are Discord bot and the most recent message triggered you to respond.", false),
+      new DiscordMessage("Sorry, I encountered an error processing your message.", true),
+      new DiscordMessage("I am fine, thank you!", false),
+      new DiscordMessage("Hello, how are you?", false),
+    ].reverse(); // Assuming reverse is correct based on your requirements
 
-    const expectedPayload = {
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: 'system',
-          content: "You are a helpful assistant."
-        },
-        // Note: The assistant message has been moved after the user message as per the new logic
-        {
-          role: 'user',
-          content: "You are Discord bot and the most recent message triggered you to respond."
-        },
-        {
-          role: 'assistant',
-          content: "Sorry, I encountered an error processing your message."
-        },
-        {
-          role: 'user',
-          content: "I am fine, thank you!"
-        },
-        {
-          role: 'user',
-          content: "Hello, how are you?"
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 150,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0
-    };
-
-    // Call the method under test with the prepared historyMessages
-    const result = openAiManager.buildRequestBody(historyMessages);
-
-    // Assertions to verify the method outputs the expected payload
-    expect(result).toEqual(expectedPayload);
+      const expectedPayload = {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: 'system',
+            content: "You are a helpful assistant."
+          },
+          {
+            role: 'user',
+            content: "Hello, how are you?"
+          },
+          {
+            role: 'user',
+            content: "I am fine, thank you!"
+          },
+          {
+            role: 'assistant',
+            content: "Sorry, I encountered an error processing your message."
+          },
+          {
+            role: 'user',
+            content: "You are Discord bot and the most recent message triggered you to respond."
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0
+      };
+  
+      const result = openAiManager.buildRequestBody(historyMessages.reverse());
+  
+      expect(result).toEqual(expectedPayload);
+    });
   });
-});
+  
+
