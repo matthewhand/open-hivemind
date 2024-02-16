@@ -5,55 +5,52 @@ const OpenAiManager = require('../managers/OpenAiManager');
 const { messageResponseManager } = require('../managers/messageResponseManager');
 const constants = require('../config/constants');
 
+// Global flag to prevent concurrent responses
 let isResponding = false;
 
 async function messageHandler(originalMessage) {
     if (isResponding) {
-        logger.debug("Skipping new messages until the current processing is completed.");
+        logger.debug("Currently processing a message. Skipping new messages until completed.");
         return;
     }
-
     isResponding = true;
+
+    const startTime = Date.now();
+    const minimumProcessingTime = 10000; // Minimum processing time in milliseconds (e.g., 10 seconds)
+
     logger.debug(`Processing message from author ID: ${originalMessage.getAuthorId()}`);
-
     const responseManager = new messageResponseManager();
-    const shouldRespond = responseManager.shouldReplyToMessage(originalMessage);
 
-    if (!shouldRespond) {
-        logger.debug("Chose not to respond to the message.");
+    const shouldReply = responseManager.shouldReplyToMessage(constants.CLIENT_ID, originalMessage);
+
+    if (!shouldReply) {
+        logger.debug("Decision made not to respond to this message based on the response manager's decision.");
         isResponding = false;
         return;
     }
 
-    await simulateProcessingDelay(shouldRespond.responseChance);
+    logger.debug("Beginning response process.");
+
+    const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
+    const requestBody = new OpenAiManager().buildRequestBody(history);
 
     try {
-        const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
-        const requestBody = new OpenAiManager().buildRequestBody(history);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
+        const elapsedTime = Date.now() - startTime;
+        const delay = Math.max(0, minimumProcessingTime - elapsedTime);
+
+        logger.debug(`Delaying response for ${delay}ms to meet minimum processing time.`);
         
-        if (responseContent && responseContent.choices && responseContent.choices.length > 0) {
+        setTimeout(async () => {
             const messageToSend = responseContent.choices[0].message.content;
             await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), messageToSend);
-            logger.info(`Sent response for message in channel ${originalMessage.getChannelId()}.`);
-        }
+            logger.info(`Response sent for message in channel ${originalMessage.getChannelId()}: "${messageToSend}"`);
+            isResponding = false;
+        }, delay);
     } catch (error) {
-        logger.error(`Error processing message: ${error}`, { errorDetail: error });
-    } finally {
+        logger.error(`Failed to process message: ${error}`, { errorDetail: error });
         isResponding = false;
     }
-}
-
-async function simulateProcessingDelay(responseChance) {
-    const baseDelay = 10000; // Base delay in milliseconds
-    let delay = baseDelay;
-
-    if (responseChance < 1) {
-        delay += 5000; // Additional delay for less certain responses
-    }
-
-    logger.debug(`Delaying response by ${delay / 1000} seconds.`);
-    return new Promise(resolve => setTimeout(resolve, delay));
 }
 
 module.exports = { messageHandler };
