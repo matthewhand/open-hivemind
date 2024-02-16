@@ -45,10 +45,24 @@ class DiscordManager {
         }
     }
 
+    // Inside DiscordManager class
     setupEventHandlers() {
         this.client.on('messageCreate', async (discordMessage) => {
             try {
-                const processedMessage = new DiscordMessage(discordMessage);
+                let repliedMessage = null;
+
+                // Check if the discordMessage is a reply
+                if (discordMessage.reference && discordMessage.reference.messageId) {
+                    // Fetch the replied-to message
+                    repliedMessage = await this.client.channels.cache
+                        .get(discordMessage.channelId)
+                        .messages.fetch(discordMessage.reference.messageId)
+                        .catch(error => logger.error(`Failed to fetch replied-to message: ${error}`));
+                }
+
+                // Construct the processedMessage with the possibly fetched repliedMessage
+                const processedMessage = new DiscordMessage(discordMessage, repliedMessage);
+
                 if (this.messageHandler) {
                     await this.messageHandler(processedMessage);
                 } else {

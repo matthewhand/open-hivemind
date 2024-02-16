@@ -43,8 +43,8 @@ class MessageResponseManager {
             }
 
             const channelId = discordMessage.getChannelId();
-            const isMentioned = discordMessage.mentionsUsers(constants.CLIENT_ID); // Ensure this method exists or is implemented correctly
-            const isReply = discordMessage.isReply(); // Ensure this method exists or is implemented correctly
+            const isMentioned = discordMessage.mentionsUsers();
+            const isReply = discordMessage.isReply();
 
             if (isMentioned || isReply || channelId === constants.CHANNEL_ID) {
                 let baseChance = this.calcBaseChanceOfUnsolicitedReply(channelId);

@@ -27,12 +27,11 @@ class IMessage {
         throw new Error("getAuthorId method must be implemented by subclasses");
     }
 
-    // Implement the isFromBot method
-    isFromBot() {
+    // Override if the IM client supports it
+    isReplyToBot() {
         return false;
     }
 
-    // Any additional methods or properties relevant to your application...
 }
 
 module.exports = IMessage;
