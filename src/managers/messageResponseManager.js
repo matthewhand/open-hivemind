@@ -1,15 +1,20 @@
-// src/managers/messageResponseManager.js
 const configurationManager = require('../config/configurationManager');
 const logger = require('../utils/logger');
 const messageResponseUtils = require('../utils/messageResponseUtils');
-const constants = require('../config/constants'); // Ensure this import is correct
+const constants = require('../config/constants');
+// Ensure DiscordMessage is correctly imported, adjust path as necessary
+const DiscordMessage = require('../models/DiscordMessage'); 
 
 class MessageResponseManager {
     constructor() {
         logger.debug('Initializing MessageResponseManager with default configuration.');
-        this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
-        this.setupConfig();
-        logger.debug(`MessageResponseManager configuration: ${JSON.stringify(this.config)}`);
+        try {
+            this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
+            this.setupConfig();
+            logger.debug(`MessageResponseManager configuration: ${JSON.stringify(this.config)}`);
+        } catch (error) {
+            logger.error(`Error initializing MessageResponseManager: ${error.message}`);
+        }
     }
 
     defaultConfig() {
@@ -26,61 +31,48 @@ class MessageResponseManager {
 
     setupConfig() {
         logger.debug('Setting up configuration for MessageResponseManager.');
-        this.interrobangBonus = this.config.interrobangBonus;
-        this.mentionBonus = this.config.mentionBonus;
-        this.botResponsePenalty = this.config.botResponsePenalty;
-        this.timeVsResponseChance = this.config.timeVsResponseChance;
-        this.llmWakewords = this.config.llmWakewords;
-        this.unsolicitedChannelCap = this.config.unsolicitedChannelCap;
+        // Configuration setup logic
+        // Consider wrapping in try-catch if there's potential for errors
     }
 
-    shouldReplyToMessage(message) {
-        // Validate message object and its essential properties
-        if (!message || typeof message !== 'object' || !message.channel || !message.channel.id) {
-            logger.debug('Invalid message object or missing channel details. (returning false - 0%)');
+    shouldReplyToMessage(discordMessage) {
+        try {
+            if (!(discordMessage instanceof DiscordMessage)) {
+                logger.debug('Invalid message object type. (returning false - 0%)');
+                return { shouldReply: false, responseChance: 0 };
+            }
+
+            const channelId = discordMessage.getChannelId();
+            const isMentioned = discordMessage.mentionsUsers(constants.CLIENT_ID); // Ensure this method exists or is implemented correctly
+            const isReply = discordMessage.isReply(); // Ensure this method exists or is implemented correctly
+
+            if (isMentioned || isReply || channelId === constants.CHANNEL_ID) {
+                let baseChance = this.calcBaseChanceOfUnsolicitedReply(channelId);
+                baseChance += this.calculateBonusForMessageContent(discordMessage.getText());
+
+                if (isMentioned) {
+                    baseChance += this.mentionBonus;
+                    logger.debug(`Increased chance of reply due to direct mention: ${baseChance}`);
+                }
+
+                if (discordMessage.isFromBot()) {
+                    baseChance = Math.max(0, baseChance - this.botResponsePenalty);
+                    logger.debug(`Adjusted chance of reply due to author being a bot: ${baseChance}`);
+                }
+
+                const shouldReply = Math.random() < baseChance;
+                logger.debug(`Decision to reply: ${shouldReply} (chance: ${baseChance})`);
+
+                const responseChance = shouldReply ? 1 : baseChance;
+                return { shouldReply, responseChance };
+            } else {
+                logger.debug(`Message in channel ${channelId} does not meet criteria for reply.`);
+                return { shouldReply: false, responseChance: 0 };
+            }
+        } catch (error) {
+            logger.error(`Error evaluating if should reply to message: ${error.message}`);
             return { shouldReply: false, responseChance: 0 };
         }
-
-        // Validate essential constants
-        if (typeof constants.CHANNEL_ID !== 'string' || typeof constants.CLIENT_ID !== 'string') {
-            logger.debug('Invalid or undefined CHANNEL_ID or CLIENT_ID in constants. (returning false - 0%)');
-            return { shouldReply: false, responseChance: 0 };
-        }
-
-        // Check if message is in the specified channel or if the bot is mentioned or replied to
-        const isChannelMatch = message.channel.id === constants.CHANNEL_ID;
-        const isMentioned = message.mentions.users.has(constants.CLIENT_ID);
-        const isReply = message.type === 'REPLY';
-
-        if (!isChannelMatch && !isMentioned && !isReply) {
-            logger.debug(`Message in channel ${message.channel.id} ignored.`);
-            return { shouldReply: false, responseChance: 0 };
-        }
-
-        let baseChance = this.calcBaseChanceOfUnsolicitedReply(message.channel.id);
-        logger.debug(`Base chance of reply before bonuses: ${baseChance}`);
-
-        baseChance += this.calculateBonusForMessageContent(message);
-        logger.debug(`Base chance of reply after content bonus: ${baseChance}`);
-
-        if (message.mentions.users.has(constants.CLIENT_ID)) {
-            baseChance += this.mentionBonus;
-            logger.debug(`Increased chance of reply due to direct mention: ${baseChance}`);
-        }
-
-        if (message.author.bot) {
-            baseChance = Math.max(0, baseChance - this.botResponsePenalty);
-            logger.debug(`Adjusted chance of reply due to author being a bot: ${baseChance}`);
-        }
-
-        const shouldReply = Math.random() < baseChance;
-        logger.debug(`Decision to reply: ${shouldReply} (chance: ${baseChance})`);
-
-        const responseChance = shouldReply ? 1 : baseChance; // Ensure a full chance for direct replies
-        return {
-            shouldReply,
-            responseChance,
-        };
     }
 
     calcBaseChanceOfUnsolicitedReply(channelId) {
