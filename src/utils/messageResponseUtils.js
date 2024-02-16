@@ -43,8 +43,8 @@ class ReplyManager {
 const replyManagerInstance = new ReplyManager();
 
 module.exports = {
-    getLastReplyTime: channelId => replyManagerInstance.getTimeSinceLastReply(channelId),
-    incrementReplyCount: channelId => replyManagerInstance.logReply(channelId),
+    getTimeSinceLastReply: channelId => replyManagerInstance.getTimeSinceLastReply(channelId),
+    logReply: channelId => replyManagerInstance.logReply(channelId),
     calculateDynamicFactor: channelId => replyManagerInstance.calculateDynamicFactor(channelId),
     getReplyCount: channelId => replyManagerInstance.getReplyCount(channelId),
     resetReplyCount: channelId => replyManagerInstance.resetReplyCount(channelId),
