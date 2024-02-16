@@ -1,59 +1,68 @@
+// src/handlers/messageHandler.js
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
+const { messageResponseManager } = require('../managers/messageResponseManager');
 const constants = require('../config/constants');
 
+// Global flag to prevent concurrent responses
+let isResponding = false;
+
 async function messageHandler(originalMessage) {
+    if (isResponding) {
+        logger.debug("Currently processing a message. Skipping new messages until completed.");
+        return;
+    }
+
     logger.debug(`Original message author ID: ${originalMessage.getAuthorId()}`);
+    // Implement other validation checks as needed
 
-    if (!originalMessage.getText || !originalMessage.getChannelId || !originalMessage.getAuthorId) {
-        logger.error("Provided message does not conform to IMessage interface.");
+    const responseManager = new messageResponseManager();
+    const decisionData = responseManager.shouldReplyToMessage(constants.CLIENT_ID, originalMessage);
+
+    if (!decisionData.shouldReply) {
+        logger.debug("Decision made not to respond to this message.");
         return;
     }
 
-    const messageText = originalMessage.getText();
-    if (!messageText.trim()) {
-        logger.debug("Ignoring blank or whitespace-only messages.");
-        return;
-    }
+    // Simulate processing delay based on decision logic
+    simulateProcessingDelay(decisionData.responseChance, async () => {
+        const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
+        const requestBody = new OpenAiManager().buildRequestBody(history);
 
-    if (originalMessage.getAuthorId() === constants.CLIENT_ID) {
-        logger.debug("Skipping bot's own messages.");
-        return;
-    }
-
-    const lmManager = new OpenAiManager();
-    const channelId = originalMessage.getChannelId();
-    let history = [];
-
-    if (lmManager.requiresHistory()) {
-        history = await DiscordManager.getInstance().fetchMessages(channelId, 21); // Adjust the number based on your needs
-        history.reverse(); // Ensure the most recent messages are at the bottom, if necessary
-
-        logger.debug(`Fetched history for channel ${channelId}: ${history.length} messages`);
-    }
-
-    const requestBody = lmManager.buildRequestBody(history);
-    logger.debug(`Request body for OpenAI API: ${JSON.stringify(requestBody, null, 2)}`);
-
-    try {
-        const responseContent = await lmManager.sendRequest(requestBody);
-        if (!responseContent || !responseContent.choices || !responseContent.choices.length || !responseContent.choices[0].message) {
-            logger.error(`Unexpected response structure from OpenAI API for channel ${channelId}.`);
-            return;
+        try {
+            const responseContent = await new OpenAiManager().sendRequest(requestBody);
+            // Ensure responseContent is structured as expected
+            const messageToSend = responseContent.choices[0].message.content;
+            await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), messageToSend);
+            logger.info(`Response sent for message in channel ${originalMessage.getChannelId()}: "${messageToSend}"`);
+        } catch (error) {
+            logger.error(`Failed to process message: ${error}`, { errorDetail: error });
+        } finally {
+            isResponding = false; // Reset the flag once the response is completed
         }
+    }, decisionData.responseChance);
+}
 
-        const messageToSend = responseContent.choices[0].message.content;
-        if (!messageToSend.trim()) {
-            logger.error(`Received empty response content from OpenAI API for channel ${channelId}.`);
-            return; // Prevent sending an empty message to Discord
-        }
+/**
+ * Simulates processing delay before sending a response.
+ * @param {number} responseChance - Chance of replying, where 1 indicates a direct mention or reply.
+ * @param {Function} callback - The callback to execute after the delay.
+ */
+function simulateProcessingDelay(responseChance, callback) {
+    const baseDelayMs = 10000; // Base delay of 10 seconds
+    let additionalDelayMs = 0;
 
-        await DiscordManager.getInstance().sendResponse(channelId, messageToSend);
-        logger.info(`Response sent for message in channel ${channelId}: "${messageToSend}"`);
-    } catch (error) {
-        logger.error(`Failed to process message for channel ${channelId}: ${error}`, { errorDetail: error });
+    if (responseChance < 1) {
+        // For lower chances of replying, add additional delay
+        additionalDelayMs = 5000; // Additional 5 seconds
     }
+
+    const totalDelayMs = baseDelayMs + additionalDelayMs;
+    logger.debug(`Processing delay set for ${totalDelayMs / 1000} seconds.`);
+    isResponding = true; // Set the flag to prevent new responses until this one completes
+
+    setTimeout(callback, totalDelayMs);
 }
 
 module.exports = { messageHandler };

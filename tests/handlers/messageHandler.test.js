@@ -5,6 +5,13 @@ const DiscordManager = require('../../src/managers/DiscordManager');
 jest.mock('../../src/managers/DiscordManager');
 const OpenAiManager = require('../../src/managers/OpenAiManager');
 jest.mock('../../src/managers/OpenAiManager');
+// Mocking messageResponseManager
+const { messageResponseManager } = require('../../src/managers/messageResponseManager');
+jest.mock('../../src/managers/messageResponseManager', () => ({
+    messageResponseManager: jest.fn().mockImplementation(() => ({
+        shouldReplyToMessage: jest.fn((ourUserId, message) => true),
+    })),
+}));
 
 describe('messageHandler', () => {
     let mockSendResponse;
@@ -16,7 +23,8 @@ describe('messageHandler', () => {
         // Mocking DiscordManager's getInstance to return specific functions
         mockSendResponse = jest.fn();
         mockFetchMessages = jest.fn().mockResolvedValue([
-            { getText: () => "User message", getAuthorId: () => "user-id", getChannelId: () => "test-channel-id" }
+            // Add more detailed mock messages if needed
+            { getText: () => "User message", getAuthorId: () => "user-id", getChannelId: () => "test-channel-id" },
         ]);
 
         DiscordManager.getInstance = jest.fn().mockReturnValue({
@@ -25,14 +33,18 @@ describe('messageHandler', () => {
         });
 
         // Mocking OpenAiManager's response to simulate the OpenAI API response
-        OpenAiManager.prototype.sendRequest = jest.fn().mockResolvedValue({
-            choices: [{
-                message: {
-                    role: "assistant",
-                    content: "Mocked response"
-                }
-            }]
-        });
+        OpenAiManager.mockImplementation(() => ({
+            sendRequest: jest.fn().mockResolvedValue({
+                choices: [{
+                    message: {
+                        role: "assistant",
+                        content: "Mocked response",
+                    },
+                }],
+            }),
+            buildRequestBody: jest.fn().mockReturnValue({}),
+            requiresHistory: jest.fn().mockReturnValue(true),
+        }));
     });
 
     it('responds to user messages correctly', async () => {
