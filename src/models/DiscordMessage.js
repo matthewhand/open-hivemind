@@ -34,29 +34,29 @@ class DiscordMessage extends IMessage {
     
         logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
-    
-
-
     // Concrete implementation of mentionsUsers for Discord messages
     mentionsUsers(userId = constants.CLIENT_ID) {
-        // Check if this.message.mentions.users has the specified userId
-        return this.data.mentions && this.data.mentions.users.has(userId);
+        const doesMentionUser = this.message.mentions.users.has(userId);
+        logger.debug(`mentionsUsers: Checking if message mentions user ID ${userId}: ${doesMentionUser}`);
+        return doesMentionUser;
     }
 
     // Override or extend isReply method to utilize repliedMessage for additional checks
     isReply() {
         const hasReference = Boolean(this.message.reference && this.message.reference.messageId);
-        // Enhanced to consider repliedMessage for a more detailed reply context
         const isReplyToBot = hasReference && this.repliedMessage && this.repliedMessage.author.id === constants.CLIENT_ID;
+        logger.debug(`isReply: Message has reference: ${hasReference}, is reply to bot: ${isReplyToBot}`);
         return hasReference && isReplyToBot;
     }
 
     // Optionally, you might add a method specifically to check if the reply was to the bot,
     // if you need to keep the simple reply check separate.
     isReplyToBot() {
-        return this.isReply(); // This relies on the isReply method's enhanced logic
+        const replyToBot = this.isReply(); // This relies on the isReply method's enhanced logic
+        logger.debug(`isReplyToBot: Checking if reply is specifically to bot: ${replyToBot}`);
+        return replyToBot;
     }
-
+    
     getText() {
         if (!this.message.content) {
             logger.error('DiscordMessage.getText: message content is undefined or null.');
@@ -86,16 +86,7 @@ class DiscordMessage extends IMessage {
 
     // Concrete implementation of isFromBot for Discord messages
     isFromBot() {
-        
-        logger.debug(`Checking if message is from a bot: ${discordMessage.isFromBot()}`);
-        if (discordMessage.isFromBot()) {
-            baseChance = Math.max(0, baseChance - this.botResponsePenalty);
-            logger.debug(`Applied bot response penalty: ${this.botResponsePenalty}, updated base chance: ${baseChance}`);
-        } else {
-            logger.debug("No bot response penalty applied.");
-        }
-
-        // Use isBotExplicitlySet if available, otherwise check the message's author.bot flag
+        // Simplified check for bot message
         if (this.isBotExplicitlySet !== null) {
             return this.isBotExplicitlySet;
         }

@@ -1,33 +1,59 @@
-// Import the manager and necessary mocks
-const { messageResponseManager } = require('../../src/managers/messageResponseManager');
-jest.mock('../../src/config/configurationManager');
-const configurationManager = require('../../src/config/configurationManager');
-jest.mock('../../src/utils/logger');
-const messageResponseUtils = require('../../src/utils/messageResponseUtils');
-jest.mock('../../src/utils/messageResponseUtils');
+// Import the manager instance directly
+const messageResponseManager = require('../../src/managers/messageResponseManager');
 
-describe('messageResponseManager', () => {
-    let manager;
+jest.mock('../../src/config/configurationManager', () => ({
+    getConfig: jest.fn().mockReturnValue({
+        // Mock any specific configuration values needed for the test
+    }),
+}));
+
+// Mocking messageResponseUtils with specific behaviors
+jest.mock('../../src/utils/messageResponseUtils', () => ({
+    getTimeSinceLastReply: jest.fn().mockReturnValue(10000),
+    logReply: jest.fn(),
+    calculateDynamicFactor: jest.fn().mockReturnValue(1),
+    getReplyCount: jest.fn().mockReturnValue(0),
+    resetReplyCount: jest.fn(),
+}));
+
+const MOCK_CLIENT_ID = '1234567890'; // Use an explicit mock value for CLIENT_ID
+
+jest.mock('../../src/models/DiscordMessage', () => {
+    return jest.fn().mockImplementation(() => ({
+        author: { id: '123', bot: false }, // Mock author
+        mentions: { users: new Set([MOCK_CLIENT_ID]) }, // Use the mock CLIENT_ID
+        mentionsUsers: jest.fn().mockReturnValue(true),
+        getChannelId: jest.fn().mockReturnValue('channel-id'),
+        isFromBot: jest.fn().mockReturnValue(false),
+        getText: jest.fn().mockReturnValue('Hi!'),
+        isReply: jest.fn().mockReturnValue(false),
+        // Mock other necessary methods
+    }));
+});
+
+describe('MessageResponseManager', () => {
     beforeEach(() => {
-      manager = new messageResponseManager();
-      jest.spyOn(Math, 'random').mockReturnValue(0.1); // Ensure randomness does not affect tests
+        jest.spyOn(Math, 'random').mockReturnValue(0.5); // Mock randomness to control probabilistic behavior
     });
-  
-    test('Direct mention increases reply chance', () => {
-        const ourUserId = 'bot-user-id';
-        const message = {
-          mentions: { users: new Map([[ourUserId, {}]]) },
-          author: { bot: false },
-          channel: { id: 'channel-id' }
-        };
-        // Directly testing the decision to reply
-        const decision = manager.shouldReplyToMessage(ourUserId, message);
-        expect(decision).toBeTruthy(); // Expect the decision to be true when directly mentioned
-      });
 
+    test('Direct mention increases reply chance', () => {
+        // Initialize a new mock instance of DiscordMessage for each test to ensure clean state
+        const mockDiscordMessage = new DiscordMessage();
         
-    afterEach(() => {
-      jest.restoreAllMocks();
+        // Use the messageResponseManager to decide on replying to the mockDiscordMessage
+        const decision = messageResponseManager.shouldReplyToMessage(mockDiscordMessage);
+
+        // Logging the decision for debugging purposes
+        console.log('Decision:', JSON.stringify(decision));
+
+        // Assert that the decision indicates a reply should be made
+        expect(decision.shouldReply).toBeTruthy();
+        // Optionally, check if the responseChance meets your expected threshold
+        // expect(decision.responseChance).toBeGreaterThan(0); // Example additional assertion
     });
-  });
-  
+
+    afterEach(() => {
+        jest.clearAllMocks(); // Clears usage data while keeping mocks in place
+        jest.restoreAllMocks(); // Restores original implementations
+    });
+});

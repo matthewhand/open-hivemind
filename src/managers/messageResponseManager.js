@@ -1,6 +1,6 @@
 const configurationManager = require('../config/configurationManager');
 const logger = require('../utils/logger');
-const messageResponseUtils = require('../utils/messageResponseUtils');
+const messageResponseUtils = require('../utils/messageResponseUtils.js');
 const constants = require('../config/constants');
 const DiscordMessage = require('../models/DiscordMessage');
 
