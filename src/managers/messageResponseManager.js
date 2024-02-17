@@ -93,7 +93,13 @@ class MessageResponseManager {
     calcBaseChanceOfUnsolicitedReply(channelId) {
         const timeSinceLastReply = messageResponseUtils.getTimeSinceLastReply(channelId);
         logger.debug(`Time since last reply for channel ${channelId}: ${timeSinceLastReply}ms`);
-
+    
+        // If there has been no reply yet (time since last reply is Infinity), set base chance to 1.00
+        if (timeSinceLastReply === Infinity) {
+            logger.debug("No previous replies detected. Setting base chance to 1.00.");
+            return 1.00;
+        }
+    
         let chance = this.timeVsResponseChance.reduce((acc, [duration, chance]) => {
             if (timeSinceLastReply <= duration) {
                 logger.debug(`Matched duration threshold: ${duration}ms with chance: ${chance}`);
@@ -101,11 +107,11 @@ class MessageResponseManager {
             }
             return acc;
         }, 0);
-        
+    
         logger.debug(`Calculated base chance of unsolicited reply based on duration: ${chance}`);
         return chance;
     }
-
+    
     calculateBonusForMessageContent(messageContent) {
         let bonus = 0;
         if (messageContent.includes('!')) {

@@ -6,18 +6,35 @@ const constants = require('../config/constants'); // Ensure this path is correct
 class DiscordMessage extends IMessage {
     constructor(message, repliedMessage = null, isBot = null) {
         super(message);
-
+    
         if (!message) {
             logger.error('DiscordMessage constructor: message parameter is undefined or null.');
             throw new Error('Message parameter is required');
         }
-
+    
+        // Debug information about the message being initialized
+        logger.debug(`DiscordMessage constructor: Initializing with message ID: ${message.id}`);
+    
         this.message = message; // Store the original Discord message object
         this.repliedMessage = repliedMessage; // Store the replied-to message, if any
         this.isBotExplicitlySet = isBot; // Store the explicitly set isBot value, if any
-
+    
+        // Additional debug information regarding optional parameters
+        if (repliedMessage) {
+            logger.debug(`DiscordMessage constructor: repliedMessage parameter provided with ID: ${repliedMessage.id}`);
+        } else {
+            logger.debug('DiscordMessage constructor: No repliedMessage parameter provided.');
+        }
+    
+        if (isBot !== null) {
+            logger.debug(`DiscordMessage constructor: isBotExplicitlySet parameter explicitly set to: ${isBot}`);
+        } else {
+            logger.debug('DiscordMessage constructor: isBotExplicitlySet parameter not provided, defaulting to null.');
+        }
+    
         logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
+    
 
 
     // Concrete implementation of mentionsUsers for Discord messages
@@ -69,6 +86,15 @@ class DiscordMessage extends IMessage {
 
     // Concrete implementation of isFromBot for Discord messages
     isFromBot() {
+        
+        logger.debug(`Checking if message is from a bot: ${discordMessage.isFromBot()}`);
+        if (discordMessage.isFromBot()) {
+            baseChance = Math.max(0, baseChance - this.botResponsePenalty);
+            logger.debug(`Applied bot response penalty: ${this.botResponsePenalty}, updated base chance: ${baseChance}`);
+        } else {
+            logger.debug("No bot response penalty applied.");
+        }
+
         // Use isBotExplicitlySet if available, otherwise check the message's author.bot flag
         if (this.isBotExplicitlySet !== null) {
             return this.isBotExplicitlySet;
