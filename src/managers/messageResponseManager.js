@@ -30,21 +30,31 @@ class MessageResponseManager {
         this.llmWakewords = this.config.llmWakewords;
         this.unsolicitedChannelCap = this.config.unsolicitedChannelCap;
     }
-
     shouldReplyToMessage(discordMessage) {
+        logger.debug("Evaluating if the bot should reply to the message...");
+    
         if (!this.isValidMessage(discordMessage)) {
+            logger.debug("Message is not valid.");
+            return { shouldReply: false, responseChance: 0 };
+        } else {
+            logger.debug("Message is valid.");
+        }
+    
+        if (this.isEligibleForReply(discordMessage)) {
+            logger.debug("Message is eligible for a reply. Calculating base chance...");
+            const baseChance = this.calculateBaseChance(discordMessage);
+            logger.debug(`Base chance calculated: ${baseChance}`);
+    
+            const shouldReply = Math.random() < baseChance;
+            logger.debug(`Random decision: ${shouldReply ? 'Replying' : 'Not replying'} (Random < Base Chance: ${Math.random()} < ${baseChance})`);
+    
+            return { shouldReply, responseChance: shouldReply ? 1 : baseChance };
+        } else {
+            logger.debug("Message is not eligible for a reply.");
             return { shouldReply: false, responseChance: 0 };
         }
-
-        if (this.isEligibleForReply(discordMessage)) {
-            const baseChance = this.calculateBaseChance(discordMessage);
-            const shouldReply = Math.random() < baseChance;
-            return { shouldReply, responseChance: shouldReply ? 1 : baseChance };
-        }
-
-        return { shouldReply: false, responseChance: 0 };
     }
-
+    
     isValidMessage(discordMessage) {
         if (!(discordMessage instanceof DiscordMessage)) {
             logger.debug('Invalid message object type.');
