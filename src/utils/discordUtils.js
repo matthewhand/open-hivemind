@@ -78,6 +78,43 @@ async function sendResponse(client, channelId, messageText) {
     }
 }
 
+
+/**
+ * Splits a message into chunks that are within Discord's character limit.
+ * @param {string} messageText - The content of the message to be sent.
+ * @returns {string[]} An array of message parts, each within the character limit.
+ */
+function splitMessage(messageText, maxLength = 1997) { // Save space for "..."
+    const parts = [];
+    while (messageText.length > 0) {
+        let splitAt = messageText.lastIndexOf(' ', maxLength);
+        if (splitAt === -1) splitAt = maxLength;
+        let part = messageText.substring(0, splitAt).trim();
+        if (parts.length) part = "..." + part; // Add ellipsis to indicate continuation
+        parts.push(part);
+        messageText = messageText.substring(splitAt).trim();
+        if (messageText.length) messageText = messageText + "..."; // Prepare remaining text
+    }
+    return parts;
+}
+
+/**
+ * Sends a response message to a specified Discord channel, handling long messages.
+ * @param {Discord.Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the channel where the message will be sent.
+ * @param {string} messageText - The content of the message to be sent.
+ */
+async function sendResponse(client, channelId, messageText) {
+    const messageParts = splitMessage(messageText);
+    const channel = await client.channels.fetch(channelId);
+    
+    for (const part of messageParts) {
+        await channel.send(part).catch(error => {
+            logger.error(`Error sending part of the response to Discord for channel ID ${channelId}:`, error);
+        });
+    }
+}
+
 /**
  * Processes a Discord message and converts it to a generic format.
  * @param {Discord.Message} message - The Discord message to process.
