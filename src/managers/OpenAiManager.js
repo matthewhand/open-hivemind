@@ -60,11 +60,11 @@ class OpenAiManager extends LlmInterface {
       return {
           model: constants.LLM_MODEL,
           messages,
-          temperature: constants.LLM_TEMPERATURE,
-          max_tokens: constants.LLM_MAX_TOKENS,
-          top_p: constants.LLM_TOP_P,
-          frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
-          presence_penalty: constants.LLM_PRESENCE_PENALTY,
+        //   temperature: constants.LLM_TEMPERATURE,
+        //   max_tokens: constants.LLM_MAX_TOKENS,
+        //   top_p: constants.LLM_TOP_P,
+        //   frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+        //   presence_penalty: constants.LLM_PRESENCE_PENALTY,
       };
   }
   
