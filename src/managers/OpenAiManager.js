@@ -35,38 +35,37 @@ class OpenAiManager extends LlmInterface {
             role: 'system',
             content: systemMessageContent
         }] : [];
-    
-        let userAndAssistantMessages = historyMessages.filter(message => message.role !== 'system');
 
-        // Ensure the sequence properly alternates, starting with 'user'
-        let alternatingMessages = [];
-        let lastRole = 'assistant'; // Start opposite to ensure first message is 'user'
-        userAndAssistantMessages.forEach(message => {
-            if (message.role !== lastRole) {
-                // If alternating, add the message and update lastRole
-                alternatingMessages.push(message);
-                lastRole = message.role;
-            } else {
-                // If not alternating, insert an empty message of the opposite role to maintain alternation
-                let emptyRole = lastRole === 'user' ? 'assistant' : 'user';
-                alternatingMessages.push({ role: emptyRole, content: '' });
-                alternatingMessages.push(message);
-                lastRole = message.role; // Update lastRole as the message role
+        // Directly map historyMessages to the expected format, assuming they are already alternating
+        let userAndAssistantMessages = historyMessages.map(message => ({
+            role: message.isFromBot() ? 'assistant' : 'user', // Adjust based on your method to check message origin
+            content: message.getText() // Adjust based on your method to get message text
+        }));
+
+        // Ensure the sequence starts with a 'user' role if not preceded by a system message
+        if (messages.length === 0 || messages[0].role === 'system') {
+            if (userAndAssistantMessages.length === 0 || userAndAssistantMessages[0].role !== 'user') {
+                userAndAssistantMessages.unshift({ role: 'user', content: '' }); // Prepend an empty user message if needed
             }
-        });
-
-        // Ensure it ends with a 'user' message
-        if (lastRole !== 'user') {
-            alternatingMessages.push({ role: 'user', content: '' }); // Add an empty 'user' message if needed
         }
 
-        // Append the alternating messages to the system message if it exists
-        messages = [...messages, ...alternatingMessages];
-    
+        // Ensure the last message is from a user
+        if (userAndAssistantMessages.length > 0 && userAndAssistantMessages[userAndAssistantMessages.length - 1].role !== 'user') {
+            userAndAssistantMessages.push({ role: 'user', content: '' }); // Append an empty user message if needed
+        }
+
+        // Combine system messages with user and assistant messages
+        messages = [...messages, ...userAndAssistantMessages];
+
         return {
             model: constants.LLM_MODEL,
             messages,
-            // temperature, max_tokens, top_p, frequency_penalty, presence_penalty as needed
+            // Uncomment and adjust the following parameters as necessary
+            // temperature: constants.LLM_TEMPERATURE,
+            // max_tokens: constants.LLM_MAX_TOKENS,
+            // top_p: constants.LLM_TOP_P,
+            // frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
+            // presence_penalty: constants.LLM_PRESENCE_PENALTY,
         };
     }
 
