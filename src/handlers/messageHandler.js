@@ -5,13 +5,20 @@ const messageResponseManager = require('../managers/messageResponseManager');
 const constants = require('../config/constants'); // Ensure this is correctly imported
 
 let isResponding = false;
+let lastResponseTime = null;
 
 async function messageHandler(originalMessage) {
-    if (isResponding) {
+    const timeSinceLastResponse = Date.now() - lastResponseTime;
+    if (isResponding && timeSinceLastResponse < 600000) { // 10 minutes timeout
         logger.debug("Skipping new messages until the current one is processed.");
         return;
+    } else if (timeSinceLastResponse >= 600000) {
+        logger.warn("Resetting isResponding due to timeout.");
+        isResponding = false;
     }
+
     isResponding = true;
+    lastResponseTime = Date.now(); // Update time when starting to respond
 
     try {
         if (!messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply) {
@@ -19,14 +26,10 @@ async function messageHandler(originalMessage) {
             return;
         }
 
-        // Prepare and send the initial response
         const {channelTopic, requestBody} = await prepareRequestBody(originalMessage);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
-
-        // Send the initial response
         await sendResponse(originalMessage, responseContent);
 
-        // Prepare and send the follow-up response if enabled
         if (constants.FOLLOW_UP_ENABLED) {
             await sendFollowUpResponse(originalMessage, channelTopic);
         }
@@ -34,6 +37,7 @@ async function messageHandler(originalMessage) {
         logger.error(`Failed to process message: ${error}`, { errorDetail: error });
     } finally {
         isResponding = false;
+        lastResponseTime = null; // Reset the timestamp after processing
     }
 }
 
@@ -42,17 +46,11 @@ async function prepareRequestBody(originalMessage) {
     const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
     const channelTopic = channel.topic || 'No topic set';
     
-    // Extracting the user ID of the message sender
-    const userId = originalMessage.getAuthorId(); // Correct method call
-
-    // Including the bot's user ID for self-reference
-    const botUserId = constants.CLIENT_ID; // Assuming CLIENT_ID is stored in constants
-
-    // Constructing the system prompt with key-value pairs for channel topic, user ID, and bot user ID
-    const promptSystem = `Prioritise User ID: ${userId}, Bot User ID (your ID): ${botUserId}, Channel Topic: ${channelTopic}`;
-
-    const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
+    const userId = originalMessage.getAuthorId();
+    const botUserId = constants.CLIENT_ID;
     
+    const promptSystem = `Prioritise User ID: ${userId}, Bot User ID (your ID): ${botUserId}, Channel Topic: ${channelTopic}`;
+    const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
     const requestBody = new OpenAiManager().buildRequestBody(history, systemMessageContent);
 
     return {channelTopic, requestBody};
@@ -65,7 +63,6 @@ async function sendResponse(originalMessage, responseContent) {
 }
 
 async function sendFollowUpResponse(originalMessage, channelTopic) {
-    // Calculate follow-up delay
     const followUpDelay = Math.random() * (constants.FOLLOW_UP_MAX_DELAY - constants.FOLLOW_UP_MIN_DELAY) + constants.FOLLOW_UP_MIN_DELAY;
     await new Promise(resolve => setTimeout(resolve, followUpDelay));
 
