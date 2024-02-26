@@ -31,41 +31,47 @@ class OpenAiManager extends LlmInterface {
 
     buildRequestBody(historyMessages) {
         const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-        let messages = systemMessageContent ? [{
-            role: 'system',
-            content: systemMessageContent
-        }] : [];
+        let messages = [];
 
-        // Directly map historyMessages to the expected format, assuming they are already alternating
-        let userAndAssistantMessages = historyMessages.map(message => ({
-            role: message.isFromBot() ? 'assistant' : 'user', // Adjust based on your method to check message origin
-            content: message.getText() // Adjust based on your method to get message text
-        }));
+        // Include system message if it exists
+        if (systemMessageContent) {
+            messages.push({
+                role: 'system',
+                content: systemMessageContent
+            });
+        }
 
-        // Ensure the sequence starts with a 'user' role if not preceded by a system message
-        if (messages.length === 0 || messages[0].role === 'system') {
-            if (userAndAssistantMessages.length === 0 || userAndAssistantMessages[0].role !== 'user') {
-                userAndAssistantMessages.unshift({ role: 'user', content: '' }); // Prepend an empty user message if needed
+        // Ensure historyMessages alternates starting with 'user', even after system message
+        let lastRole = 'system'; // Start with 'system' to ensure the first message is from 'user'
+        historyMessages.forEach((message, index) => {
+            const role = message.isFromBot() ? 'assistant' : 'user';
+            if (role !== lastRole || lastRole === 'system') { // Allow first user message after system
+                messages.push({
+                    role: role,
+                    content: message.getText() // Ensure this method gets the text content of the message
+                });
+                lastRole = role;
+            } else {
+                // Insert an empty message of the opposite role to maintain alternation
+                const emptyRole = lastRole === 'user' ? 'assistant' : 'user';
+                messages.push({ role: emptyRole, content: '' });
+                messages.push({
+                    role: role,
+                    content: message.getText()
+                });
+                lastRole = role;
             }
-        }
+        });
 
-        // Ensure the last message is from a user
-        if (userAndAssistantMessages.length > 0 && userAndAssistantMessages[userAndAssistantMessages.length - 1].role !== 'user') {
-            userAndAssistantMessages.push({ role: 'user', content: '' }); // Append an empty user message if needed
+        // Ensure conversation ends with a 'user' message
+        if (lastRole !== 'user') {
+            messages.push({ role: 'user', content: '' });
         }
-
-        // Combine system messages with user and assistant messages
-        messages = [...messages, ...userAndAssistantMessages];
 
         return {
             model: constants.LLM_MODEL,
             messages,
-            // Uncomment and adjust the following parameters as necessary
-            // temperature: constants.LLM_TEMPERATURE,
-            // max_tokens: constants.LLM_MAX_TOKENS,
-            // top_p: constants.LLM_TOP_P,
-            // frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
-            // presence_penalty: constants.LLM_PRESENCE_PENALTY,
+            // Uncomment and adjust parameters as necessary
         };
     }
 
