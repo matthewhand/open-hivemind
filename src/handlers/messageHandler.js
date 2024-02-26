@@ -43,7 +43,7 @@ async function prepareRequestBody(originalMessage) {
     const channelTopic = channel.topic || 'No topic set';
     
     // Extracting the user ID of the message sender
-    const userId = originalMessage.getUserId(); // Assuming a getUserId method exists
+    const userId = originalMessage.getAuthorId(); // Correct method call
 
     // Including the bot's user ID for self-reference
     const botUserId = constants.CLIENT_ID; // Assuming CLIENT_ID is stored in constants
