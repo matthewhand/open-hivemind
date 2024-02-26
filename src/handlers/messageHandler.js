@@ -1,67 +1,79 @@
-// src/handlers/messageHandler.js
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
-const messageResponseManager = require('../managers/messageResponseManager'); 
+const messageResponseManager = require('../managers/messageResponseManager');
+const constants = require('../config/constants'); // Ensure this is correctly imported
 
-// Global flag to prevent concurrent responses, ensuring one message is processed at a time.
 let isResponding = false;
 
-/**
- * Handles incoming Discord messages, deciding whether to reply based on predetermined criteria.
- * @param {DiscordMessage} originalMessage - The DiscordMessage object representing the message to process.
- */
 async function messageHandler(originalMessage) {
     if (isResponding) {
-        logger.debug("Currently processing a message. Skipping new messages until completed.");
+        logger.debug("Skipping new messages until the current one is processed.");
         return;
     }
     isResponding = true;
 
-    const startTime = Date.now();
-    const minimumProcessingTime = 10000; // 10 seconds minimum to simulate longer processing if needed.
-
-    logger.debug(`Processing message from author ID: ${originalMessage.getAuthorId()}`);
-    let shouldProceedWithReply = false; // Initialize control flag
-
     try {
-        const shouldReply = messageResponseManager.shouldReplyToMessage(originalMessage);
-        if (!shouldReply.shouldReply) {
-            logger.debug("Decision made not to respond to this message.");
-            isResponding = false;
+        if (!messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply) {
+            logger.debug("Chose not to respond.");
             return;
         }
 
-        const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
-        // Fetch channel topic
-        const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
-        const channelTopic = channel.topic || 'No topic set';
-
-        // Pass the channel topic to buildRequestBody
-        const requestBody = new OpenAiManager().buildRequestBody(history, channelTopic);
+        // Prepare and send the initial response
+        const {channelTopic, requestBody} = await prepareRequestBody(originalMessage);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
 
-        shouldProceedWithReply = true; // Set flag to true if all processing succeeds
+        // Send the initial response
+        await sendResponse(originalMessage, responseContent);
 
-        // Calculate delay to ensure a minimum response time
-        const elapsedTime = Date.now() - startTime;
-        const delay = Math.max(0, minimumProcessingTime - elapsedTime);
-        logger.debug(`Delaying response for ${delay}ms to meet minimum processing time.`);
-        
-        setTimeout(async () => {
-            if (shouldProceedWithReply) { // Check the flag before sending the reply
-                const messageToSend = responseContent.choices[0].message.content;
-                await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), messageToSend);
-                logger.info(`Response sent for message in channel ${originalMessage.getChannelId()}: "${messageToSend}"`);
-            }
-            isResponding = false;
-        }, delay);
+        // Prepare and send the follow-up response if enabled
+        if (constants.FOLLOW_UP_ENABLED) {
+            await sendFollowUpResponse(originalMessage, channelTopic);
+        }
     } catch (error) {
         logger.error(`Failed to process message: ${error}`, { errorDetail: error });
-        // No need to explicitly set shouldProceedWithReply to false here since it defaults to false
+    } finally {
         isResponding = false;
     }
 }
 
+async function prepareRequestBody(originalMessage) {
+    const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
+    const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
+    const channelTopic = channel.topic || 'No topic set';
+    const requestBody = new OpenAiManager().buildRequestBody(history, channelTopic);
+
+    return {channelTopic, requestBody};
+}
+
+async function sendResponse(originalMessage, responseContent) {
+    const messageToSend = responseContent.choices[0].message.content;
+    await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), messageToSend);
+    logger.info(`Response sent: "${messageToSend}"`);
+}
+
+async function sendFollowUpResponse(originalMessage, channelTopic) {
+    // Calculate follow-up delay
+    const followUpDelay = Math.random() * (constants.FOLLOW_UP_MAX_DELAY - constants.FOLLOW_UP_MIN_DELAY) + constants.FOLLOW_UP_MIN_DELAY;
+    await new Promise(resolve => setTimeout(resolve, followUpDelay));
+
+    const commandSuggestions = await getCommandSuggestions();
+    const followUpMessageContent = `For more interaction, try: ${commandSuggestions}.`;
+
+    await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), followUpMessageContent);
+    logger.info(`Follow-up message sent: "${followUpMessageContent}"`);
+}
+
+async function getCommandSuggestions() {
+    const commands = require('../commands/inline');
+    const commandDescriptions = Object.values(commands).map(cmd => cmd.description).join('. ');
+    const analysisRequestBody = {
+        prompt: `Given these commands: ${commandDescriptions}, suggest one for further engagement.`,
+        max_tokens: 100,
+    };
+
+    const suggestedCommandResponse = await new OpenAiManager().sendRequest(analysisRequestBody);
+    return suggestedCommandResponse; // Process this as needed to extract the suggested command
+}
 
 module.exports = { messageHandler };
