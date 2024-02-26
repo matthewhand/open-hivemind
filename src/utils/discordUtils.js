@@ -84,19 +84,34 @@ async function sendResponse(client, channelId, messageText) {
  * @param {string} messageText - The content of the message to be sent.
  * @returns {string[]} An array of message parts, each within the character limit.
  */
-function splitMessage(messageText, maxLength = 1997) { // Save space for "..."
+function splitMessage(messageText, maxLength = 1997) {
     const parts = [];
     while (messageText.length > 0) {
-        let splitAt = messageText.lastIndexOf(' ', maxLength);
-        if (splitAt === -1) splitAt = maxLength;
-        let part = messageText.substring(0, splitAt).trim();
-        if (parts.length) part = "..." + part; // Add ellipsis to indicate continuation
-        parts.push(part);
-        messageText = messageText.substring(splitAt).trim();
-        if (messageText.length) messageText = messageText + "..."; // Prepare remaining text
+        if (messageText.length <= maxLength) {
+            // If the remaining message is within the limit, add it without modification
+            parts.push(messageText);
+            break; // Exit the loop as the entire message has been processed
+        } else {
+            // Find a suitable split point
+            let splitAt = messageText.lastIndexOf(' ', maxLength);
+            if (splitAt === -1) splitAt = maxLength; // Fallback in case of a very long word
+
+            // Add ellipsis to indicate continuation except for the first part
+            let part = messageText.substring(0, splitAt).trim();
+            if (parts.length) part = "..." + part; // Add ellipsis at the beginning for continuation
+            parts.push(part);
+
+            // Prepare the remaining text, adding ellipsis at the end for continuation if needed
+            messageText = "..." + messageText.substring(splitAt).trim();
+        }
+    }
+    // Ensure the last part doesn't end with ellipsis
+    if (parts.length > 1) {
+        parts[parts.length - 1] = parts[parts.length - 1].replace(/...\s*$/, '');
     }
     return parts;
 }
+
 
 /**
  * Sends a response message to a specified Discord channel, handling long messages.
