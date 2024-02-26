@@ -29,9 +29,8 @@ class OpenAiManager extends LlmInterface {
         }
     }
 
-    buildRequestBody(historyMessages) {
-        // Start with checking if a system message should be included
-        const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+    buildRequestBody(historyMessages, channelTopic = '') {
+        const systemMessageContent = constants.LLM_SYSTEM_PROMPT + (channelTopic ? ` Channel Topic: ${channelTopic}` : '');
         let messages = systemMessageContent ? [{
             role: 'system',
             content: systemMessageContent

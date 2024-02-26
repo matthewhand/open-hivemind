@@ -33,7 +33,12 @@ async function messageHandler(originalMessage) {
         }
 
         const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
-        const requestBody = new OpenAiManager().buildRequestBody(history);
+        // Fetch channel topic
+        const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
+        const channelTopic = channel.topic || 'No topic set';
+
+        // Pass the channel topic to buildRequestBody
+        const requestBody = new OpenAiManager().buildRequestBody(history, channelTopic);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
 
         shouldProceedWithReply = true; // Set flag to true if all processing succeeds
