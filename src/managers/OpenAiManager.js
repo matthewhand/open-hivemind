@@ -84,6 +84,15 @@ class OpenAiManager extends LlmInterface {
             messages = correctedMessages;
         }
 
+        // Final check to ensure the first message after 'system' is 'user', if not, insert an empty 'user' message
+        if (messages.length > 1 && messages[1].role === 'assistant') {
+            const placeholderUserMessage = {
+                role: 'user',
+                content: '' // Placeholder content, adjust as needed
+            };
+            messages.splice(1, 0, placeholderUserMessage); // Insert the placeholder 'user' message at the correct position
+        }
+
         return {
             model: constants.LLM_MODEL,
             messages,
