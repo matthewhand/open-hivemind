@@ -50,11 +50,23 @@ export default {
 
             const responseObj = {
                 id: crypto.randomUUID(),
-                model: modelToUse,
+                object: "chat.completions",
                 created: Date.now(),
-                response: responseContent  // Return the response directly
+                model: modelToUse,
+                choices: [
+                    {
+                        index: 0,
+                        text: responseContent,
+                        finish_reason: "stopped",
+                    }
+                ],
+                usage: {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0
+                }
             };
-
+            
             console.log('AI processing completed for model:', modelToUse);
 
             return new Response(JSON.stringify(responseObj), { status: 200, headers: { "Content-Type": "application/json" } });

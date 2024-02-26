@@ -62,7 +62,7 @@ class DiscordMessage extends IMessage {
             logger.error('DiscordMessage.getText: message content is undefined or null.');
             return ''; // Return empty string if content is missing
         }
-        logger.debug(`DiscordMessage.getText: Returning message content: ${this.message.content}`);
+        logger.debug(`DiscordMessage.getText: ${this.message.content}`);
         return this.message.content;
     }
 
