@@ -30,44 +30,46 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages) {
-      const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-      // Initialize messages array with the system message if it exists
-      let messages = systemMessageContent ? [{
-          role: 'system',
-          content: systemMessageContent
-      }] : [];
-  
-      // Filter out the system message if it's already added
-      let userAndAssistantMessages = historyMessages.filter(message => message.role !== 'system');
-  
-      // Detect the first user message to ensure assistant messages before it are not included
-      const firstUserMessageIndex = userAndAssistantMessages.findIndex(message => message.role === 'user');
-  
-      if (firstUserMessageIndex !== -1) {
-          // Include only messages from the first user message onwards
-          userAndAssistantMessages = userAndAssistantMessages.slice(firstUserMessageIndex);
-      }
-  
-      // Reverse the order of user and assistant messages
-      const reversedMessages = userAndAssistantMessages.reverse().map(message => ({
-          role: message.isFromBot() ? 'assistant' : 'user', // Adjust according to your method to check if the message is from a bot
-          content: message.getText() // Adjust according to your method to get the text of the message
-      }));
-  
-      // Append the reversed messages to the system message if it exists
-      messages = [...messages, ...reversedMessages];
-  
-      return {
-          model: constants.LLM_MODEL,
-          messages,
-        //   temperature: constants.LLM_TEMPERATURE,
-        //   max_tokens: constants.LLM_MAX_TOKENS,
-        //   top_p: constants.LLM_TOP_P,
-        //   frequency_penalty: constants.LLM_FREQUENCY_PENALTY,
-        //   presence_penalty: constants.LLM_PRESENCE_PENALTY,
-      };
-  }
-  
+        const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+        let messages = systemMessageContent ? [{
+            role: 'system',
+            content: systemMessageContent
+        }] : [];
+    
+        let userAndAssistantMessages = historyMessages.filter(message => message.role !== 'system');
+
+        // Ensure the sequence properly alternates, starting with 'user'
+        let alternatingMessages = [];
+        let lastRole = 'assistant'; // Start opposite to ensure first message is 'user'
+        userAndAssistantMessages.forEach(message => {
+            if (message.role !== lastRole) {
+                // If alternating, add the message and update lastRole
+                alternatingMessages.push(message);
+                lastRole = message.role;
+            } else {
+                // If not alternating, insert an empty message of the opposite role to maintain alternation
+                let emptyRole = lastRole === 'user' ? 'assistant' : 'user';
+                alternatingMessages.push({ role: emptyRole, content: '' });
+                alternatingMessages.push(message);
+                lastRole = message.role; // Update lastRole as the message role
+            }
+        });
+
+        // Ensure it ends with a 'user' message
+        if (lastRole !== 'user') {
+            alternatingMessages.push({ role: 'user', content: '' }); // Add an empty 'user' message if needed
+        }
+
+        // Append the alternating messages to the system message if it exists
+        messages = [...messages, ...alternatingMessages];
+    
+        return {
+            model: constants.LLM_MODEL,
+            messages,
+            // temperature, max_tokens, top_p, frequency_penalty, presence_penalty as needed
+        };
+    }
+
     requiresHistory() {
         return true;
     }
