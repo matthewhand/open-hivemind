@@ -30,42 +30,59 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages) {
+        // Start with checking if a system message should be included
         const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
         let messages = systemMessageContent ? [{
             role: 'system',
             content: systemMessageContent
         }] : [];
 
-        // Enforce starting with 'user' after 'system' by adding an initial 'user' message if necessary
-        if (messages.length > 0) { // If there's a system message
-            messages.push({
-                role: 'user',
-                content: '' // Start with an empty 'user' message to ensure correct alternation
-            });
-        }
+        // Reverse historyMessages to ensure the most recent is processed last
+        historyMessages = historyMessages.reverse();
 
-        let lastRole = messages.length > 0 ? messages[messages.length - 1].role : '';
+        let needsCorrection = false;
+        let lastRole = 'system'; // Assume starting after system message
 
         historyMessages.forEach(message => {
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            if (currentRole === lastRole) {
-                // If same as last role, correct by inserting an empty message of the opposite role
-                const correctionRole = currentRole === 'user' ? 'assistant' : 'user';
+
+            // Check if the current message continues the alternation pattern
+            if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
+                // No correction needed; add the message directly
                 messages.push({
-                    role: correctionRole,
-                    content: ''
+                    role: currentRole,
+                    content: message.getText()
                 });
+            } else {
+                // Alternation needs correction
+                needsCorrection = true;
             }
-            messages.push({
-                role: currentRole,
-                content: message.getText()
-            });
-            lastRole = currentRole;
+            lastRole = currentRole; // Update for next iteration
         });
 
-        // Ensure the sequence ends with a 'user' message, adjusting if necessary
-        if (lastRole !== 'user') {
-            messages.push({ role: 'user', content: '' });
+        // Apply corrections if needed
+        if (needsCorrection) {
+            // Rebuild messages considering corrections for alternation
+            let correctedMessages = [];
+            lastRole = 'system'; // Reset for correction pass
+            messages.forEach(message => {
+                if (message.role !== lastRole || lastRole === 'system') {
+                    correctedMessages.push(message);
+                } else {
+                    // Inject an empty message to maintain alternation
+                    const correctionRole = lastRole === 'user' ? 'assistant' : 'user';
+                    correctedMessages.push({ role: correctionRole, content: '' });
+                    correctedMessages.push(message);
+                }
+                lastRole = message.role;
+            });
+
+            // Ensure ending with 'user' message
+            if (lastRole === 'assistant') {
+                correctedMessages.push({ role: 'user', content: '' });
+            }
+
+            messages = correctedMessages;
         }
 
         return {
