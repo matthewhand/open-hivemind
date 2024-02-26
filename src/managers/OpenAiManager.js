@@ -36,28 +36,31 @@ class OpenAiManager extends LlmInterface {
             content: systemMessageContent
         }] : [];
 
-        // Track the last role to ensure alternation; start as 'user' to force the first non-system message to be 'assistant'
-        let lastRole = 'user';
+        // Enforce starting with 'user' after 'system' by adding an initial 'user' message if necessary
+        if (messages.length > 0) { // If there's a system message
+            messages.push({
+                role: 'user',
+                content: '' // Start with an empty 'user' message to ensure correct alternation
+            });
+        }
+
+        let lastRole = messages.length > 0 ? messages[messages.length - 1].role : '';
 
         historyMessages.forEach(message => {
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            // If the current message continues the alternation pattern, add it directly
-            if (currentRole !== lastRole) {
+            if (currentRole === lastRole) {
+                // If same as last role, correct by inserting an empty message of the opposite role
+                const correctionRole = currentRole === 'user' ? 'assistant' : 'user';
                 messages.push({
-                    role: currentRole,
-                    content: message.getText()
-                });
-                lastRole = currentRole;
-            } else {
-                // If the current message breaks the pattern, insert an empty message to correct the pattern
-                messages.push({
-                    role: currentRole === 'user' ? 'assistant' : 'user', // Switch role for the empty message
+                    role: correctionRole,
                     content: ''
-                }, {
-                    role: currentRole,
-                    content: message.getText()
                 });
             }
+            messages.push({
+                role: currentRole,
+                content: message.getText()
+            });
+            lastRole = currentRole;
         });
 
         // Ensure the sequence ends with a 'user' message, adjusting if necessary
