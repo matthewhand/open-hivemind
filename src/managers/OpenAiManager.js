@@ -31,39 +31,36 @@ class OpenAiManager extends LlmInterface {
 
     buildRequestBody(historyMessages) {
         const systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-        let messages = [];
+        let messages = systemMessageContent ? [{
+            role: 'system',
+            content: systemMessageContent
+        }] : [];
 
-        // Include system message if it exists
-        if (systemMessageContent) {
-            messages.push({
-                role: 'system',
-                content: systemMessageContent
-            });
-        }
+        // Track the last role to ensure alternation; start as 'user' to force the first non-system message to be 'assistant'
+        let lastRole = 'user';
 
-        // Ensure historyMessages alternates starting with 'user', even after system message
-        let lastRole = 'system'; // Start with 'system' to ensure the first message is from 'user'
-        historyMessages.forEach((message, index) => {
-            const role = message.isFromBot() ? 'assistant' : 'user';
-            if (role !== lastRole || lastRole === 'system') { // Allow first user message after system
+        historyMessages.forEach(message => {
+            const currentRole = message.isFromBot() ? 'assistant' : 'user';
+            // If the current message continues the alternation pattern, add it directly
+            if (currentRole !== lastRole) {
                 messages.push({
-                    role: role,
-                    content: message.getText() // Ensure this method gets the text content of the message
-                });
-                lastRole = role;
-            } else {
-                // Insert an empty message of the opposite role to maintain alternation
-                const emptyRole = lastRole === 'user' ? 'assistant' : 'user';
-                messages.push({ role: emptyRole, content: '' });
-                messages.push({
-                    role: role,
+                    role: currentRole,
                     content: message.getText()
                 });
-                lastRole = role;
+                lastRole = currentRole;
+            } else {
+                // If the current message breaks the pattern, insert an empty message to correct the pattern
+                messages.push({
+                    role: currentRole === 'user' ? 'assistant' : 'user', // Switch role for the empty message
+                    content: ''
+                }, {
+                    role: currentRole,
+                    content: message.getText()
+                });
             }
         });
 
-        // Ensure conversation ends with a 'user' message
+        // Ensure the sequence ends with a 'user' message, adjusting if necessary
         if (lastRole !== 'user') {
             messages.push({ role: 'user', content: '' });
         }
@@ -71,7 +68,6 @@ class OpenAiManager extends LlmInterface {
         return {
             model: constants.LLM_MODEL,
             messages,
-            // Uncomment and adjust parameters as necessary
         };
     }
 
