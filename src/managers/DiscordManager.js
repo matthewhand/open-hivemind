@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
 const DiscordMessage = require('../models/DiscordMessage');
-const constants = require('../config/constants'); // Assuming you have this if you're using constants.CLIENT_ID elsewhere
+const constants = require('../config/constants');
 
 class DiscordManager {
     static instance;

@@ -19,18 +19,18 @@ class DiscordMessage extends IMessage {
         this.repliedMessage = repliedMessage; // Store the replied-to message, if any
         this.isBotExplicitlySet = isBot; // Store the explicitly set isBot value, if any
     
-        // Additional debug information regarding optional parameters
-        if (repliedMessage) {
-            logger.debug(`DiscordMessage constructor: repliedMessage parameter provided with ID: ${repliedMessage.id}`);
-        } else {
-            logger.debug('DiscordMessage constructor: No repliedMessage parameter provided.');
-        }
+        // // Additional debug information regarding optional parameters
+        // if (repliedMessage) {
+        //     logger.debug(`DiscordMessage constructor: repliedMessage parameter provided with ID: ${repliedMessage.id}`);
+        // } else {
+        //     logger.debug('DiscordMessage constructor: No repliedMessage parameter provided.');
+        // }
     
-        if (isBot !== null) {
-            logger.debug(`DiscordMessage constructor: isBotExplicitlySet parameter explicitly set to: ${isBot}`);
-        } else {
-            logger.debug('DiscordMessage constructor: isBotExplicitlySet parameter not provided, defaulting to null.');
-        }
+        // if (isBot !== null) {
+        //     logger.debug(`DiscordMessage constructor: isBotExplicitlySet parameter explicitly set to: ${isBot}`);
+        // } else {
+        //     logger.debug('DiscordMessage constructor: isBotExplicitlySet parameter not provided, defaulting to null.');
+        // }
     
         logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
