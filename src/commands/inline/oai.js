@@ -1,8 +1,7 @@
 const Command = require('../../utils/Command');
 const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
-const oaiApi = require('../../managers/oaiApiManager');
-const constants = require('../../config/constants'); // Import constants
+const OpenAiManager = new (require('../managers/OpenAiManager'))(); // Import the OpenAiManager
 
 class OaiCommand extends Command {
     constructor() {
@@ -10,18 +9,29 @@ class OaiCommand extends Command {
     }
 
     async execute(message, args) {
-        // Simplified logic assuming sendLlmRequest handles everything now
         if (!args || args.trim() === '') {
             logger.warn('[oai] No arguments provided to oai command.');
             await message.reply('Error: No arguments provided.');
             return;
         }
 
-        // You can still do additional stuff here if needed before calling sendLlmRequest
-        // For instance, if you need to modify the message or args before sending
         try {
-            // sendLlmRequest now internally handles fetching, trimming, and sending the request
-            await sendLlmRequest(message);
+            // Assuming args is a string containing the model and query separated by a space
+            const [model, ...queryParts] = args.split(' ');
+            const query = queryParts.join(' ');
+
+            // Prepare the historyMessages format if necessary or directly pass the query
+            // This part might need adjustment based on how you plan to use the model argument
+            const requestBody = OpenAiManager.buildRequestBody([{
+                isFromBot: () => false, // Simulate a user message
+                getText: () => query
+            }], `You are a helpful assistant talking to ${message.author.username}.`);
+
+            // Note: Adjust the buildRequestBody method or prepare a suitable method in OpenAiManager if needed
+            const data = await OpenAiManager.sendRequest(requestBody);
+
+            const responseContent = this.processResponse(data);
+            await message.reply(responseContent);
         } catch (error) {
             logger.error(`[oai] Error executing command: ${error.message}`, error);
             await message.reply(getRandomErrorMessage());
