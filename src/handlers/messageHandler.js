@@ -41,7 +41,19 @@ async function prepareRequestBody(originalMessage) {
     const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
     const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
     const channelTopic = channel.topic || 'No topic set';
-    const requestBody = new OpenAiManager().buildRequestBody(history, channelTopic);
+    
+    // Extracting the user ID of the message sender
+    const userId = originalMessage.getUserId(); // Assuming a getUserId method exists
+
+    // Including the bot's user ID for self-reference
+    const botUserId = constants.CLIENT_ID; // Assuming CLIENT_ID is stored in constants
+
+    // Constructing the system prompt with key-value pairs for channel topic, user ID, and bot user ID
+    const promptSystem = `Prioritise User ID: ${userId}, Bot User ID (your ID): ${botUserId}, Channel Topic: ${channelTopic}`;
+
+    const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
+    
+    const requestBody = new OpenAiManager().buildRequestBody(history, systemMessageContent);
 
     return {channelTopic, requestBody};
 }

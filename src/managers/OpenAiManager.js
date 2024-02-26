@@ -29,8 +29,7 @@ class OpenAiManager extends LlmInterface {
         }
     }
 
-    buildRequestBody(historyMessages, channelTopic = '') {
-        const systemMessageContent = constants.LLM_SYSTEM_PROMPT + (channelTopic ? ` Channel Topic: ${channelTopic}` : '');
+    buildRequestBody(historyMessages, systemMessageContent = 'You are a helpful assistant') {
         let messages = systemMessageContent ? [{
             role: 'system',
             content: systemMessageContent
@@ -70,7 +69,7 @@ class OpenAiManager extends LlmInterface {
                 } else {
                     // Inject an empty message to maintain alternation
                     const correctionRole = lastRole === 'user' ? 'assistant' : 'user';
-                    correctedMessages.push({ role: correctionRole, content: '' });
+                    correctedMessages.push({ role: correctionRole, content: ' ' });
                     correctedMessages.push(message);
                 }
                 lastRole = message.role;
@@ -78,7 +77,7 @@ class OpenAiManager extends LlmInterface {
 
             // Ensure ending with 'user' message
             if (lastRole === 'assistant') {
-                correctedMessages.push({ role: 'user', content: '' });
+                correctedMessages.push({ role: 'user', content: ' ' });
             }
 
             messages = correctedMessages;
@@ -88,7 +87,7 @@ class OpenAiManager extends LlmInterface {
         if (messages.length > 1 && messages[1].role === 'assistant') {
             const placeholderUserMessage = {
                 role: 'user',
-                content: '' // Placeholder content, adjust as needed
+                content: ' ' // White space to appease picky endpoints that dont like empty content fields (like LM Studio)
             };
             messages.splice(1, 0, placeholderUserMessage); // Insert the placeholder 'user' message at the correct position
         }
