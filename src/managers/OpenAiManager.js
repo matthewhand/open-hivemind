@@ -98,6 +98,25 @@ class OpenAiManager extends LlmInterface {
         };
     }
 
+        async summarizeText(text) {
+        // Craft a prompt for summarization
+        const systemMessageContent = 'Summarize the following text:';
+        const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
+
+        // Send the request to the OpenAI API
+        return await this.sendRequest(requestBody);
+    }
+
+    buildRequestBodyForSummarization(text, systemMessageContent) {
+        return {
+            model: constants.LLM_MODEL,
+            prompt: `${systemMessageContent}\n\n${text}`,
+            temperature: 0.5,
+            max_tokens: 1024, // Adjust based on your needs
+            stop: null // You can specify stopping conditions if necessary
+        };
+    }
+
     requiresHistory() {
         return true;
     }

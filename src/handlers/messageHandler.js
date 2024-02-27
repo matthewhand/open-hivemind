@@ -43,6 +43,12 @@ async function messageHandler(originalMessage) {
         const channelId = originalMessage.getChannelId();
         let messageToSend = responseContent.choices[0].message.content;
 
+        // Check if message needs summarization
+        if (messageToSend.length > 1000) {
+            logger.info("Message is over 1000 characters. Summarizing.");
+            messageToSend = await summarizeMessage(messageToSend);
+        }
+
         // Send the response to the appropriate channel
         await sendResponse(messageToSend, channelId, startTime); // Pass startTime for delay calculation
 
@@ -58,6 +64,18 @@ async function messageHandler(originalMessage) {
         isResponding = false;
         lastResponseTime = null;
     }
+}
+
+// Function to summarize long messages
+async function summarizeMessage(message) {
+    const summaryPrompt = `Summarize the following message:\n\n${message}`;
+    const requestBody = {
+        prompt: summaryPrompt,
+        max_tokens: 420, // Adjust based on desired summary length
+        temperature: 0.7,
+    };
+    const summaryResponse = await new OpenAiManager().sendRequest(requestBody);
+    return summaryResponse.choices[0].text.trim();
 }
 
 // Adjusted sendResponse function to include dynamic delay calculations based on processing time
