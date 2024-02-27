@@ -111,7 +111,7 @@ async function prepareRequestBody(originalMessage) {
     const botUserId = constants.CLIENT_ID;
     console.log(`prepareRequestBody: User ID: ${userId}, Bot User ID: ${botUserId}`);
 
-    const promptSystem = `Active User: ${userId}, CLIENT_ID: ${botUserId}, Channel Topic: ${channelTopic}`;
+    const promptSystem = `Active User: <!${userId}>, CLIENT_ID: <!${botUserId}>, Channel Topic: ${channelTopic}`;
     console.log(`prepareRequestBody: Prompt System: ${promptSystem}`);
 
     const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
