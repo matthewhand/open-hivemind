@@ -26,8 +26,7 @@ async function messageHandler(originalMessage) {
         const requestBody = await prepareRequestBody(originalMessage); // Ensure await is used
 
         console.log("messageHandler: Sending request to OpenAI.");
-        // Use the new sendRequestWithStateManagement method
-        const responseContent = await openAiManager.sendRequestWithStateManagement(requestBody);
+        const responseContent = await openAiManager.sendRequest(requestBody);
         const channelId = originalMessage.getChannelId();
         let messageToSend = responseContent.choices[0].message.content;
 

@@ -12,19 +12,19 @@ class OpenAiManager extends LlmInterface {
 
     setIsResponding(state) {
         this.isResponding = state;
+        logger.debug(`setIsResponding: State set to ${state}`);
     }
 
     getIsResponding() {
+        logger.debug(`getIsResponding: Returning ${this.isResponding}`);
         return this.isResponding;
     }
 
     buildRequestBody(historyMessages, systemMessageContent = null) {
-        // if (!this.getIsResponding()) {
-        //     throw new Error('Bot is set to not respond.');
-        // }
-
+        logger.debug('Entering buildRequestBody');
         if (systemMessageContent === null) {
             systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+            logger.debug(`buildRequestBody: Using default system message content`);
         }
 
         let messages = systemMessageContent ? [{
@@ -32,27 +32,25 @@ class OpenAiManager extends LlmInterface {
             content: systemMessageContent
         }] : [];
 
-        // Reverse the historyMessages to ensure they are in the correct order (oldest to newest)
-        historyMessages = historyMessages.reverse();
+        historyMessages = historyMessages.reverse(); // Reverse the historyMessages
+        logger.debug(`buildRequestBody: Reversed historyMessages`);
 
         let lastRole = 'system';
 
-        historyMessages.forEach(message => {
+        historyMessages.forEach((message, index) => {
+            logger.debug(`buildRequestBody: Processing message ${index}`);
             const currentRole = message.isFromBot ? 'assistant' : 'user';
 
-            // Ensure there is a switch between user and assistant messages
             if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
                 messages.push({
                     role: currentRole,
                     content: message.getText()
                 });
             } else {
-                // This handles cases where two messages from the same 'role' are consecutive,
-                // which should not happen in a normal conversation flow.
-                // You might need to adjust this logic based on your specific requirements.
+                logger.debug(`buildRequestBody: Adjusting for consecutive messages from the same role`);
                 messages.push({
-                    role: currentRole === 'user' ? 'assistant' : 'user', // Switch roles to simulate a 'correction'
-                    content: '...' // Placeholder text to simulate a message from the opposite role
+                    role: currentRole === 'user' ? 'assistant' : 'user',
+                    content: '...'
                 });
                 messages.push({
                     role: currentRole,
@@ -62,15 +60,15 @@ class OpenAiManager extends LlmInterface {
             lastRole = currentRole;
         });
 
-        // Ensure the conversation starts with a user message if it starts with an assistant message
         if (messages.length > 1 && messages[1].role === 'assistant') {
+            logger.debug(`buildRequestBody: Adjusting for conversation starting with an assistant message`);
             messages.splice(1, 0, { role: 'user', content: '...' });
         }
 
+        logger.debug(`buildRequestBody: Request body built successfully`);
         return {
             model: constants.LLM_MODEL,
             messages,
-            // Include other necessary fields for your request body here
         };
     }
 
@@ -96,23 +94,25 @@ class OpenAiManager extends LlmInterface {
     }
 
     async summarizeTextAsBulletPoints(text) {
+        logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
+        logger.debug('summarizeTextAsBulletPoints: Request body for summarization built');
 
-        // Send the request to the OpenAI API
         const summaryResponse = await this.sendRequest(requestBody);
+        logger.debug('summarizeTextAsBulletPoints: Summary response received');
         return this.processSummaryResponse(summaryResponse.choices[0].text);
     }
 
     processSummaryResponse(summaryText) {
-        // Split the summary into bullet points based on the bullet symbol used (e.g., "-", "*")
+        logger.debug('Entering processSummaryResponse');
         const bulletPoints = summaryText.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
-
-        // Further processing to clean up each bullet point, if necessary, can be done here
+        logger.debug('processSummaryResponse: Processed summary into bullet points');
         return bulletPoints.map(point => point.trim());
     }
 
     buildRequestBodyForSummarization(text, systemMessageContent) {
+        logger.debug('Entering buildRequestBodyForSummarization');
         return {
             model: constants.LLM_MODEL,
             prompt: `${systemMessageContent}\n\n${text}`,
@@ -122,15 +122,17 @@ class OpenAiManager extends LlmInterface {
         };
     }
 
-
     async summarizeText(text) {
+        logger.debug('Entering summarizeText');
         const systemMessageContent = 'Summarize the following text:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
+        logger.debug('summarizeText: Request body for summarization built');
 
         return await this.sendRequest(requestBody);
     }
 
     requiresHistory() {
+        logger.debug('Entering requiresHistory');
         return true;
     }
 }
