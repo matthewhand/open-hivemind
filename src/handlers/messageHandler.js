@@ -29,7 +29,8 @@ async function messageHandler(originalMessage) {
         const {channelTopic, requestBody} = await prepareRequestBody(originalMessage);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
         const channelId = originalMessage.getChannelId();
-        await sendResponse(responseContent, channelId);
+        let messageToSend = responseContent.choices[0].message.content;
+        await sendResponse(messageToSend, channelId);
 
         if (constants.FOLLOW_UP_ENABLED) {
             await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
@@ -57,13 +58,13 @@ async function prepareRequestBody(originalMessage) {
     return {channelTopic, requestBody};
 }
 
-async function sendResponse(responseContent, channelId) {
+async function sendResponse(messageContent, channelId) {
     try {
         logger.debug("sendResponse called");
-        let messageToSend = responseContent; // Assume responseContent is already formatted correctly
 
-        await DiscordManager.getInstance().sendResponse(channelId, messageToSend);
-        logger.info(`Response sent to channel ${channelId}: "${messageToSend}"`);
+        // Directly use the messageContent, which is now a string
+        await DiscordManager.getInstance().sendResponse(channelId, messageContent);
+        logger.info(`Response sent to channel ${channelId}: "${messageContent}"`);
     } catch (error) {
         logger.error(`Failed to send response: ${error.message}`);
         await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I encountered an error processing your request.");
@@ -78,7 +79,7 @@ async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
     const suggestedCommandResponse = await new OpenAiManager().sendRequest(commandSuggestionsPrompt);
     const followUpMessageContent = suggestedCommandResponse.choices[0].text.trim();
 
-    await sendResponse({response: {text: followUpMessageContent}}, originalMessage.getChannelId());
+    await sendResponse(followUpMessageContent, originalMessage.getChannelId());
     logger.info(`LLM-generated follow-up message sent: "${followUpMessageContent}"`);
 }
 
