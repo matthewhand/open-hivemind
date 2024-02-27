@@ -23,7 +23,7 @@ async function messageHandler(originalMessage) {
         }
 
         console.log("messageHandler: Preparing request body.");
-        const requestBody = await prepareRequestBody(originalMessage); // Ensure await is used
+        const requestBody = await prepareRequestBody(originalMessage); 
 
         console.log("messageHandler: Sending request to OpenAI.");
         const responseContent = await openAiManager.sendRequest(requestBody);

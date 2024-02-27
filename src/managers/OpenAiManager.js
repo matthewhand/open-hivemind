@@ -65,11 +65,14 @@ class OpenAiManager extends LlmInterface {
             messages.splice(1, 0, { role: 'user', content: '...' });
         }
 
-        logger.debug(`buildRequestBody: Request body built successfully`);
-        return {
+        logger.info(`OpenAI API request body built successfully`);
+        let requestBody = {
             model: constants.LLM_MODEL,
             messages,
         };
+        const url = constants.LLM_ENDPOINT_URL;
+        logger.debug(`Sending request to OpenAI API: ${url} with body:`, JSON.stringify(requestBody, null, 2));
+        return requestBody;
     }
 
     async sendRequest(requestBody) {
