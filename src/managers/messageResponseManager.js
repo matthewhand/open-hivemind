@@ -68,7 +68,6 @@ class MessageResponseManager {
         return discordMessage.mentionsUsers() || discordMessage.isReply() || channelId === constants.CHANNEL_ID;
     }
 
-
     calculateBaseChance(discordMessage) {
         let baseChance = this.calcBaseChanceOfUnsolicitedReply(discordMessage.getChannelId());
         logger.debug(`Initial base chance based on time since last reply: ${baseChance}`);
@@ -83,9 +82,13 @@ class MessageResponseManager {
         }
 
         if (discordMessage.isFromBot()) {
-            baseChance = Math.max(0, baseChance - this.botResponsePenalty);
+            // Apply a stronger penalty if the message is from a bot to make it less likely to respond
+            baseChance *= (1 - this.botResponsePenalty); // Changed from subtraction to multiplication for a stronger effect
             logger.debug(`Applied bot response penalty: ${this.botResponsePenalty}, updated base chance: ${baseChance}`);
         }
+
+        // Ensure the base chance does not exceed 1 or drop below 0
+        baseChance = Math.min(Math.max(baseChance, 0), 1);
 
         return baseChance;
     }
@@ -93,21 +96,17 @@ class MessageResponseManager {
     calcBaseChanceOfUnsolicitedReply(channelId) {
         const timeSinceLastReply = messageResponseUtils.getTimeSinceLastReply(channelId);
         logger.debug(`Time since last reply for channel ${channelId}: ${timeSinceLastReply}ms`);
-    
-        // If there has been no reply yet (time since last reply is Infinity), set base chance to 1.00
+
         if (timeSinceLastReply === Infinity) {
             logger.debug("No previous replies detected. Setting base chance to 1.00.");
             return 1.00;
         }
-    
-        let chance = this.timeVsResponseChance.reduce((acc, [duration, chance]) => {
-            if (timeSinceLastReply <= duration) {
-                logger.debug(`Matched duration threshold: ${duration}ms with chance: ${chance}`);
-                return chance;
-            }
-            return acc;
-        }, 0);
-    
+
+        // Find the first matching time threshold that is greater than or equal to timeSinceLastReply
+        // and use its corresponding chance
+        const matchedThreshold = this.timeVsResponseChance.find(([duration, _]) => timeSinceLastReply <= duration);
+        const chance = matchedThreshold ? matchedThreshold[1] : 0;
+
         logger.debug(`Calculated base chance of unsolicited reply based on duration: ${chance}`);
         return chance;
     }
