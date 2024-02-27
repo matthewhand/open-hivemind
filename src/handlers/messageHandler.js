@@ -52,6 +52,7 @@ async function messageHandler(originalMessage) {
         logger.error(`Failed to process message: ${error}`, { errorDetail: error });
     } finally {
         // Reset the response status and timestamp after processing
+        logger.debug("Resetting isResponding to false");
         isResponding = false;
         lastResponseTime = null;
     }
