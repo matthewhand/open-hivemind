@@ -11,6 +11,8 @@ let lastResponseTime = null;
 
 // Main handler for processing incoming messages
 async function messageHandler(originalMessage) {
+    const startTime = Date.now(); // Capture the start time of processing
+
     // Calculate the time since the last response
     const timeSinceLastResponse = Date.now() - lastResponseTime;
     // Check if the bot is currently responding or if a timeout has occurred
@@ -42,7 +44,7 @@ async function messageHandler(originalMessage) {
         let messageToSend = responseContent.choices[0].message.content;
 
         // Send the response to the appropriate channel
-        await sendResponse(messageToSend, channelId);
+        await sendResponse(messageToSend, channelId, startTime); // Pass startTime for delay calculation
 
         // Optionally, send a follow-up message based on the original interaction
         if (constants.FOLLOW_UP_ENABLED) {
@@ -55,6 +57,24 @@ async function messageHandler(originalMessage) {
         logger.debug("Resetting isResponding to false");
         isResponding = false;
         lastResponseTime = null;
+    }
+}
+
+// Adjusted sendResponse function to include delay calculations
+async function sendResponse(messageContent, channelId, startTime) {
+    const baseDelay = 5000; // For example, 5 seconds base delay
+    const processingTime = Date.now() - startTime;
+    const totalDelay = Math.max(0, baseDelay - processingTime);
+
+    try {
+        // Apply the calculated delay before sending the message
+        await new Promise(resolve => setTimeout(resolve, totalDelay));
+        await DiscordManager.getInstance().sendResponse(channelId, messageContent);
+        logger.info(`Response sent to channel ${channelId} after delay: ${totalDelay}ms, "${messageContent}"`);
+    } catch (error) {
+        logger.error(`Failed to send response: ${error.message}`);
+        // Send a fallback error message to the channel
+        await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I encountered an error processing your request.");
     }
 }
 
@@ -74,18 +94,6 @@ async function prepareRequestBody(originalMessage) {
     // Build the request body with historical messages and the system prompt
     const requestBody = new OpenAiManager().buildRequestBody(history, systemMessageContent);
     return {channelTopic, requestBody};
-}
-
-// Sends the generated response back to the Discord channel
-async function sendResponse(messageContent, channelId) {
-    try {
-        await DiscordManager.getInstance().sendResponse(channelId, messageContent);
-        logger.info(`Response sent to channel ${channelId}: "${messageContent}"`);
-    } catch (error) {
-        logger.error(`Failed to send response: ${error.message}`);
-        // Send a fallback error message to the channel
-        await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I encountered an error processing your request.");
-    }
 }
 
 // Generates and sends a follow-up message after the initial response
