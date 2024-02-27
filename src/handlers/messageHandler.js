@@ -14,10 +14,10 @@ async function messageHandler(originalMessage) {
     // Calculate the time since the last response
     const timeSinceLastResponse = Date.now() - lastResponseTime;
     // Check if the bot is currently responding or if a timeout has occurred
-    if (isResponding && timeSinceLastResponse < 600000) {
+    if (isResponding && timeSinceLastResponse < 120000) {
         logger.debug("Skipping new messages until the current one is processed.");
         return;
-    } else if (timeSinceLastResponse >= 600000) {
+    } else if (timeSinceLastResponse >= 120000) {
         // Reset response status after timeout
         isResponding = false;
         logger.warn("Resetting isResponding due to timeout.");
