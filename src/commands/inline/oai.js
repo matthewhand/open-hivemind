@@ -1,7 +1,7 @@
 const Command = require('../../utils/Command');
 const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
-const OpenAiManager = new (require('../managers/OpenAiManager'))(); // Import the OpenAiManager
+const OpenAiManager = new (require('../../managers/OpenAiManager'))();
 
 class OaiCommand extends Command {
     constructor() {
