@@ -7,39 +7,47 @@ const constants = require('../config/constants'); // Ensure this constant module
 
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
+    console.log(`messageHandler: Handling message at ${new Date(startTime).toISOString()}`);
 
-    const openAiManager = new OpenAiManager(); 
-    
+    const openAiManager = new OpenAiManager();
+
     if (openAiManager.getIsResponding() && !originalMessage.isDirectMessage() && !originalMessage.isReplyToBot()) {
-        console.log("Currently processing another message. Skipping until free, unless direct/reply.");
+        console.log("messageHandler: Currently processing another message. Skipping until free, unless direct/reply.");
         return;
     }
 
     try {
         if (!messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply) {
-            console.log("Chose not to respond.");
+            console.log("messageHandler: Chose not to respond to this message.");
             return;
         }
 
-        const requestBody = prepareRequestBody(originalMessage);
+        console.log("messageHandler: Preparing request body.");
+        const requestBody = await prepareRequestBody(originalMessage); // Ensure await is used
 
+        console.log("messageHandler: Sending request to OpenAI.");
         // Use the new sendRequestWithStateManagement method
         const responseContent = await openAiManager.sendRequestWithStateManagement(requestBody);
         const channelId = originalMessage.getChannelId();
         let messageToSend = responseContent.choices[0].message.content;
 
+        console.log(`messageHandler: Received response from OpenAI. Message length: ${messageToSend.length}`);
         if (messageToSend.length > 1000) {
-            console.log("Message is over 1000 characters. Summarizing.");
-            messageToSend = await summarizeMessage(messageToSend);
+            console.log("messageHandler: Message is over 1000 characters. Summarizing.");
+            messageToSend = await summarizeMessage(messageToSend); // Assuming summarizeMessage is an async function
         }
 
+        console.log("messageHandler: Sending response message.");
         await sendResponse(messageToSend, channelId, startTime);
 
         if (constants.FOLLOW_UP_ENABLED) {
-            await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
+            console.log("messageHandler: Follow-up enabled. Sending follow-up message.");
+            await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic); // Assuming channelTopic is defined elsewhere, this might be a mistake
         }
     } catch (error) {
-        console.error(`Failed to process message: ${error}`);
+        console.error(`messageHandler: Failed to process message: ${error}`);
+    } finally {
+        console.log(`messageHandler: Processing complete. Elapsed time: ${Date.now() - startTime}ms`);
     }
 }
 
@@ -84,21 +92,36 @@ async function sendResponse(messageContent, channelId, startTime) {
     }
 }
 
-// Prepares the request body for the OpenAI API call
 async function prepareRequestBody(originalMessage) {
+    console.log("prepareRequestBody: Start");
+
     // Fetch recent messages for context and the channel's topic
+    console.log("prepareRequestBody: Fetching message history and channel details.");
     const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
+    console.log(`prepareRequestBody: Fetched ${history.length} messages for context.`);
+    
     const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
+    console.log(`prepareRequestBody: Fetched channel details. Channel ID: ${originalMessage.getChannelId()}`);
+    
     const channelTopic = channel.topic || 'No topic set';
+    console.log(`prepareRequestBody: Channel Topic: ${channelTopic}`);
 
     // Include IDs for priority and context in the prompt
     const userId = originalMessage.getAuthorId();
     const botUserId = constants.CLIENT_ID;
+    console.log(`prepareRequestBody: User ID: ${userId}, Bot User ID: ${botUserId}`);
+
     const promptSystem = `Active User: ${userId}, CLIENT_ID: ${botUserId}, Channel Topic: ${channelTopic}`;
+    console.log(`prepareRequestBody: Prompt System: ${promptSystem}`);
+
     const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
+    console.log(`prepareRequestBody: System Message Content: ${systemMessageContent.substring(0, 50)}...`); // Truncate to avoid excessive logging
 
     // Build the request body with historical messages and the system prompt
+    console.log("prepareRequestBody: Building request body.");
     const requestBody = new OpenAiManager().buildRequestBody(history, systemMessageContent);
+    console.log("prepareRequestBody: Request body prepared.");
+
     return requestBody;
 }
 
