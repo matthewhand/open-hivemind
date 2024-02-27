@@ -19,9 +19,9 @@ class OpenAiManager extends LlmInterface {
     }
 
     buildRequestBody(historyMessages, systemMessageContent = null) {
-        if (!this.getIsResponding()) {
-            throw new Error('Bot is set to not respond.');
-        }
+        // if (!this.getIsResponding()) {
+        //     throw new Error('Bot is set to not respond.');
+        // }
 
         if (systemMessageContent === null) {
             systemMessageContent = constants.LLM_SYSTEM_PROMPT;

@@ -8,7 +8,7 @@ const constants = require('../config/constants'); // Ensure this constant module
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
 
-    const openAiManager = new OpenAiManager(); // Correctly instantiate OpenAiManager
+    const openAiManager = new OpenAiManager(); 
     
     if (openAiManager.getIsResponding() && !originalMessage.isDirectMessage() && !originalMessage.isReplyToBot()) {
         console.log("Currently processing another message. Skipping until free, unless direct/reply.");
