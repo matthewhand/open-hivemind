@@ -6,12 +6,10 @@ export default {
             return new Response('Expected POST', { status: 405 });
         }
 
-        // Extract the Authorization header from the request
         const authHeader = request.headers.get('Authorization');
-        
-        // Compare the Authorization header to the expected API key from environment variables
-        if (!authHeader || authHeader !== `Bearer ${env.LLM_API_KEY}`) {
-            // If the header is missing or does not match, return a 401 Unauthorized response
+
+        // Only check the Authorization header if LLM_API_KEY is defined in the environment variables
+        if (env.LLM_API_KEY && (!authHeader || authHeader !== `Bearer ${env.LLM_API_KEY}`)) {
             return new Response('Unauthorized', { status: 401 });
         }
 
@@ -28,48 +26,43 @@ export default {
             return new Response('Missing or invalid messages in request', { status: 400 });
         }
 
-        // Use the model from the request if provided, otherwise default to '@cf/mistral/mistral-7b-instruct-v0.1'
         const modelToUse = model || '@cf/mistral/mistral-7b-instruct-v0.1';
-
         const ai = new Ai(env.AI);
-
-        const chat = {
-            messages: messages
-        };
+        const chat = { messages: messages };
 
         console.log('Starting AI processing for model:', modelToUse);
 
         try {
-            const aiResponse = await ai.run(modelToUse, chat);  // Use the modelToUse variable here
-            let responseContent = aiResponse; // Assuming aiResponse is the string you want to return
+            const aiResponse = await ai.run(modelToUse, chat);
+            let responseContent = aiResponse;
 
-            // If aiResponse is an object and contains a 'response' field, extract it
             if (aiResponse && typeof aiResponse === 'object' && 'response' in aiResponse) {
                 responseContent = aiResponse.response;
             }
 
             const responseObj = {
                 id: crypto.randomUUID(),
-                object: "chat.completions",
+                object: "chat_completion",
                 created: Date.now(),
                 model: modelToUse,
-                choices: [
-                    {
-                        index: 0,
-                        text: responseContent,
-                        finish_reason: "stopped",
-                    }
-                ],
+                choices: [{
+                    message: {
+                        content: responseContent,
+                    },
+                    index: 0,
+                    logprobs: null,
+                    finish_reason: "stopped"
+                }],
                 usage: {
-                    prompt_tokens: 0,
-                    completion_tokens: 0,
-                    total_tokens: 0
+                    total_tokens: responseContent.length
                 }
             };
             
             console.log('AI processing completed for model:', modelToUse);
-
-            return new Response(JSON.stringify(responseObj), { status: 200, headers: { "Content-Type": "application/json" } });
+            return new Response(JSON.stringify(responseObj), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+            });
         } catch (e) {
             console.error('Error processing request for model:', modelToUse, e);
             return new Response('Error processing request', { status: 500 });
