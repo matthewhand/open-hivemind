@@ -28,10 +28,11 @@ async function messageHandler(originalMessage) {
 
         const {channelTopic, requestBody} = await prepareRequestBody(originalMessage);
         const responseContent = await new OpenAiManager().sendRequest(requestBody);
-        await sendResponse(responseContent, originalMessage.getChannelId());
+        const channelId = originalMessage.getChannelId();
+        await sendResponse(responseContent, channelId);
 
         if (constants.FOLLOW_UP_ENABLED) {
-            await sendFollowUpResponse(originalMessage, channelTopic);
+            await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
         }
     } catch (error) {
         logger.error(`Failed to process message: ${error}`, { errorDetail: error });
@@ -59,47 +60,64 @@ async function prepareRequestBody(originalMessage) {
 
 async function sendResponse(responseContent, channelId = constants.CHANNEL_ID) {
     try {
-        // Check if the necessary properties exist in the responseContent
-        if (!responseContent || !responseContent.choices || responseContent.choices.length === 0 || !responseContent.choices[0].message || !responseContent.choices[0].message.content) {
-            // Log the entire responseContent for debugging
+        logger.debug("sendResponse called");
+
+        let messageToSend = "";
+
+        // Handle response structure with 'choices'
+        if (responseContent.choices && responseContent.choices.length > 0 && responseContent.choices[0].message && responseContent.choices[0].message.content) {
+            messageToSend = responseContent.choices[0].message.content;
+        } 
+        // Handle simpler response structure without 'choices' (cloudflare response payload)
+        else if (responseContent.response && responseContent.response.text) {
+            messageToSend = responseContent.response.text;
+        } else {
             logger.error(`Invalid response structure: ${JSON.stringify(responseContent, null, 2)}`);
             throw new Error('Response content is missing or not in the expected format.');
         }
 
-        // Assuming checks passed, proceed to send the response
-        const messageToSend = responseContent.choices[0].message.content;
-        await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), messageToSend);
-        logger.info(`Response sent: "${messageToSend}"`);
+        await DiscordManager.getInstance().sendResponse(channelId, messageToSend);
+        logger.info(`Response sent to channel ${channelId}: "${messageToSend}"`);
     } catch (error) {
-        // Log the error for debugging
         logger.error(`Failed to send response: ${error.message}`);
-        // Optionally, send a fallback message to the channel indicating an error occurred
-        // This part is optional and can be adjusted based on how you want to handle errors
         await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I encountered an error processing your request.");
     }
 }
 
-async function sendFollowUpResponse(originalMessage, channelTopic) {
+async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
+    // Delay to simulate thinking time or to not overwhelm the user
     const followUpDelay = Math.random() * (constants.FOLLOW_UP_MAX_DELAY - constants.FOLLOW_UP_MIN_DELAY) + constants.FOLLOW_UP_MIN_DELAY;
     await new Promise(resolve => setTimeout(resolve, followUpDelay));
+    
+    // Prepare the prompt for follow-up suggestion
+    const commandSuggestionsPrompt = await prepareFollowUpRequestBody(originalMessage, channelTopic);
+    
+    // Send the request to LLM for a follow-up suggestion
+    const suggestedCommandResponse = await new OpenAiManager().sendRequest(commandSuggestionsPrompt);
+    
+    // Assume the response structure is directly usable or parse as needed
+    const followUpMessageContent = suggestedCommandResponse.choices[0].text.trim();
 
-    const commandSuggestions = await getCommandSuggestions();
-    const followUpMessageContent = `For more interaction, try: ${commandSuggestions}.`;
-
-    await DiscordManager.getInstance().sendResponse(originalMessage.getChannelId(), followUpMessageContent);
-    logger.info(`Follow-up message sent: "${followUpMessageContent}"`);
+    // Use the existing sendResponse function to send the LLM-generated follow-up message
+    await sendResponse({response: {text: followUpMessageContent}}, originalMessage.getChannelId());
+    logger.info(`LLM-generated follow-up message sent: "${followUpMessageContent}"`);
 }
 
-async function getCommandSuggestions() {
-    const commands = require('../commands/inline');
-    const commandDescriptions = Object.values(commands).map(cmd => cmd.description).join('. ');
-    const analysisRequestBody = {
-        prompt: `Given these commands: ${commandDescriptions}, suggest one for further engagement.`,
-        max_tokens: 100,
+async function prepareFollowUpRequestBody(originalMessage, channelTopic) {
+    // Fetch available commands and their descriptions
+    const commands = require('../commands/inline'); // Assuming commands are structured in a way that they can be described
+    const commandDescriptions = Object.values(commands).map(cmd => `Command: ${cmd.name}, Description: ${cmd.description}`).join('; ');
+    
+    // Construct a prompt that asks the LLM to suggest a follow-up action based on the conversation context and available commands
+    const prompt = `Given the channel topic "${channelTopic}" and the following available commands: ${commandDescriptions}, suggest a follow-up action for the user to engage with.`;
+    
+    const requestBody = {
+        prompt: prompt,
+        max_tokens: 420,
+        // Add other parameters as needed to tailor the LLM's response
     };
 
-    const suggestedCommandResponse = await new OpenAiManager().sendRequest(analysisRequestBody);
-    return suggestedCommandResponse; // Process this as needed to extract the suggested command
+    return requestBody;
 }
 
 module.exports = { messageHandler };
