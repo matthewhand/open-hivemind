@@ -60,17 +60,28 @@ async function messageHandler(originalMessage) {
     }
 }
 
-// Adjusted sendResponse function to include delay calculations
+// Adjusted sendResponse function to include dynamic delay calculations based on processing time
 async function sendResponse(messageContent, channelId, startTime) {
-    const baseDelay = 5000; // For example, 5 seconds base delay
-    const processingTime = Date.now() - startTime;
-    const totalDelay = Math.max(0, baseDelay - processingTime);
+    const baseDelayPer100Chars = 500; // Base delay of 500ms per 100 characters in the message
+    const characterCount = messageContent.length;
+    const baseDelay = Math.ceil(characterCount / 100) * baseDelayPer100Chars; // Calculate base delay based on message length
+    
+    const processingTime = Date.now() - startTime; // Calculate how long processing has taken so far
+    let totalDelay = baseDelay - processingTime; // Adjust base delay by subtracting processing time
+
+    const additionalRandomDelay = Math.floor(Math.random() * 11); // Random delay between 0 and 10ms
+    totalDelay += additionalRandomDelay; // Add random delay to the total delay
+
+    // Ensure total delay is not negative
+    if (totalDelay < 0) {
+        totalDelay = 0;
+    }
 
     try {
         // Apply the calculated delay before sending the message
         await new Promise(resolve => setTimeout(resolve, totalDelay));
         await DiscordManager.getInstance().sendResponse(channelId, messageContent);
-        logger.info(`Response sent to channel ${channelId} after delay: ${totalDelay}ms, "${messageContent}"`);
+        logger.info(`Response sent to channel ${channelId} after dynamic delay: ${totalDelay}ms, "${messageContent}"`);
     } catch (error) {
         logger.error(`Failed to send response: ${error.message}`);
         // Send a fallback error message to the channel
