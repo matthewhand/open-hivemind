@@ -5,64 +5,41 @@ const OpenAiManager = require('../managers/OpenAiManager');
 const messageResponseManager = require('../managers/messageResponseManager');
 const constants = require('../config/constants'); // Ensure this constant module exists and is correctly structured
 
-// State variables to manage response status and timing
-let isResponding = false;
-let lastResponseTime = null;
-
-// Main handler for processing incoming messages
 async function messageHandler(originalMessage) {
-    const startTime = Date.now(); // Capture the start time of processing
+    const startTime = Date.now();
 
-    // Calculate the time since the last response
-    const timeSinceLastResponse = Date.now() - lastResponseTime;
-    // Check if the bot is currently responding or if a timeout has occurred
-    if (isResponding && timeSinceLastResponse < 120000) {
-        logger.debug("Skipping new messages until the current one is processed.");
+    const openAiManager = new OpenAiManager(); // Correctly instantiate OpenAiManager
+    
+    if (openAiManager.getIsResponding() && !originalMessage.isDirectMessage() && !originalMessage.isReplyToBot()) {
+        console.log("Currently processing another message. Skipping until free, unless direct/reply.");
         return;
-    } else if (timeSinceLastResponse >= 120000) {
-        // Reset response status after timeout
-        isResponding = false;
-        logger.warn("Resetting isResponding due to timeout.");
     }
 
-    // Mark the bot as responding to a new message
-    isResponding = true;
-    lastResponseTime = Date.now();
-
     try {
-        // Determine if the message warrants a reply
         if (!messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply) {
-            logger.debug("Chose not to respond.");
+            console.log("Chose not to respond.");
             return;
         }
 
-        // Prepare the request body for OpenAI based on the original message
-        const {channelTopic, requestBody} = await prepareRequestBody(originalMessage);
-        // Send the request to OpenAI and wait for the response
-        const responseContent = await new OpenAiManager().sendRequest(requestBody);
+        const requestBody = prepareRequestBody(originalMessage);
+
+        // Use the new sendRequestWithStateManagement method
+        const responseContent = await openAiManager.sendRequestWithStateManagement(requestBody);
         const channelId = originalMessage.getChannelId();
         let messageToSend = responseContent.choices[0].message.content;
 
-        // Check if message needs summarization
         if (messageToSend.length > 1000) {
-            logger.info("Message is over 1000 characters. Summarizing.");
+            console.log("Message is over 1000 characters. Summarizing.");
             messageToSend = await summarizeMessage(messageToSend);
         }
 
-        // Send the response to the appropriate channel
-        await sendResponse(messageToSend, channelId, startTime); // Pass startTime for delay calculation
+        await sendResponse(messageToSend, channelId, startTime);
 
-        // Optionally, send a follow-up message based on the original interaction
         if (constants.FOLLOW_UP_ENABLED) {
             await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
         }
     } catch (error) {
-        logger.error(`Failed to process message: ${error}`, { errorDetail: error });
-    } finally {
-        // Reset the response status and timestamp after processing
-        logger.debug("Resetting isResponding to false");
-        isResponding = false;
-        lastResponseTime = null;
+        console.error(`Failed to process message: ${error}`);
     }
 }
 
@@ -80,14 +57,14 @@ async function summarizeMessage(message) {
 
 // Adjusted sendResponse function to include dynamic delay calculations based on processing time
 async function sendResponse(messageContent, channelId, startTime) {
-    const baseDelayPer100Chars = 500; // Base delay of 500ms per 100 characters in the message
+    const baseDelayPerChars = 500; // Base delay of 500ms per 30 characters in the message
     const characterCount = messageContent.length;
-    const baseDelay = Math.ceil(characterCount / 100) * baseDelayPer100Chars; // Calculate base delay based on message length
+    const baseDelay = Math.ceil(characterCount / 10) * baseDelayPerChars; // Calculate base delay based on message length
     
     const processingTime = Date.now() - startTime; // Calculate how long processing has taken so far
     let totalDelay = baseDelay - processingTime; // Adjust base delay by subtracting processing time
 
-    const additionalRandomDelay = Math.floor(Math.random() * 11); // Random delay between 0 and 10ms
+    const additionalRandomDelay = Math.floor(Math.random() * 10000); // Random delay between 0 and 10s
     totalDelay += additionalRandomDelay; // Add random delay to the total delay
 
     // Ensure total delay is not negative
@@ -117,12 +94,12 @@ async function prepareRequestBody(originalMessage) {
     // Include IDs for priority and context in the prompt
     const userId = originalMessage.getAuthorId();
     const botUserId = constants.CLIENT_ID;
-    const promptSystem = `Prioritise User ID: ${userId}, Bot User ID (your ID): ${botUserId}, Channel Topic: ${channelTopic}`;
+    const promptSystem = `Active User: ${userId}, CLIENT_ID: ${botUserId}, Channel Topic: ${channelTopic}`;
     const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
 
     // Build the request body with historical messages and the system prompt
     const requestBody = new OpenAiManager().buildRequestBody(history, systemMessageContent);
-    return {channelTopic, requestBody};
+    return requestBody;
 }
 
 // Generates and sends a follow-up message after the initial response

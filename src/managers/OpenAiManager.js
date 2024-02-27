@@ -6,7 +6,72 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
+        this.isResponding = false; // Tracks if the bot is currently set to respond
         logger.debug('OpenAiManager initialized');
+    }
+
+    setIsResponding(state) {
+        this.isResponding = state;
+    }
+
+    getIsResponding() {
+        return this.isResponding;
+    }
+
+    buildRequestBody(historyMessages, systemMessageContent = null) {
+        if (!this.getIsResponding()) {
+            throw new Error('Bot is set to not respond.');
+        }
+
+        if (systemMessageContent === null) {
+            systemMessageContent = constants.LLM_SYSTEM_PROMPT;
+        }
+
+        let messages = systemMessageContent ? [{
+            role: 'system',
+            content: systemMessageContent
+        }] : [];
+
+        // Reverse the historyMessages to ensure they are in the correct order (oldest to newest)
+        historyMessages = historyMessages.reverse();
+
+        let lastRole = 'system';
+
+        historyMessages.forEach(message => {
+            const currentRole = message.isFromBot ? 'assistant' : 'user';
+
+            // Ensure there is a switch between user and assistant messages
+            if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
+                messages.push({
+                    role: currentRole,
+                    content: message.getText()
+                });
+            } else {
+                // This handles cases where two messages from the same 'role' are consecutive,
+                // which should not happen in a normal conversation flow.
+                // You might need to adjust this logic based on your specific requirements.
+                messages.push({
+                    role: currentRole === 'user' ? 'assistant' : 'user', // Switch roles to simulate a 'correction'
+                    content: '...' // Placeholder text to simulate a message from the opposite role
+                });
+                messages.push({
+                    role: currentRole,
+                    content: message.getText()
+                });
+            }
+            lastRole = currentRole;
+        });
+
+        // Ensure the conversation starts with a user message if it starts with an assistant message
+        if (messages.length > 1 && messages[1].role === 'assistant') {
+            messages.splice(1, 0, { role: 'user', content: '...' });
+        }
+
+        return {
+            model: constants.LLM_MODEL,
+            messages,
+            // Include other necessary fields for your request body here
+        };
     }
 
     async sendRequest(requestBody) {
@@ -57,61 +122,6 @@ class OpenAiManager extends LlmInterface {
         };
     }
 
-    buildRequestBody(historyMessages, systemMessageContent = 'You are a helpful assistant') {
-        let messages = systemMessageContent ? [{
-            role: 'system',
-            content: systemMessageContent
-        }] : [];
-
-        historyMessages = historyMessages.reverse();
-
-        let needsCorrection = false;
-        let lastRole = 'system';
-
-        historyMessages.forEach(message => {
-            const currentRole = message.isFromBot() ? 'assistant' : 'user';
-
-            if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
-                messages.push({
-                    role: currentRole,
-                    content: message.getText()
-                });
-            } else {
-                needsCorrection = true;
-            }
-            lastRole = currentRole;
-        });
-
-        if (needsCorrection) {
-            let correctedMessages = [];
-            lastRole = 'system';
-            messages.forEach(message => {
-                if (message.role !== lastRole || lastRole === 'system') {
-                    correctedMessages.push(message);
-                } else {
-                    const correctionRole = lastRole === 'user' ? 'assistant' : 'user';
-                    correctedMessages.push({ role: correctionRole, content: '...' });
-                    correctedMessages.push(message);
-                }
-                lastRole = message.role;
-            });
-
-            if (lastRole === 'assistant') {
-                correctedMessages.push({ role: 'user', content: '...' });
-            }
-
-            messages = correctedMessages;
-        }
-
-        if (messages.length > 1 && messages[1].role === 'assistant') {
-            messages.splice(1, 0, { role: 'user', content: '...' });
-        }
-
-        return {
-            model: constants.LLM_MODEL,
-            messages,
-        };
-    }
 
     async summarizeText(text) {
         const systemMessageContent = 'Summarize the following text:';
