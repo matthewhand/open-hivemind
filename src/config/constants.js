@@ -16,6 +16,7 @@ module.exports = {
     FOLLOW_UP_MAX_DELAY: parseInt(process.env.LLM_FOLLOW_UP_MAX_DELAY || '60', 10) * 60 * 1000,
 
     // Default channel
+    CLIENT_ID: process.env.CLIENT_ID,
     CHANNEL_ID: process.env.CHANNEL_ID,
 
     // Remote LLM Settings
