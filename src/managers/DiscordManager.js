@@ -89,6 +89,16 @@ class DiscordManager {
         return discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
+    async startTyping(channelId) {
+        const channel = await this.client.channels.fetch(channelId);
+        channel.startTyping();
+    }
+
+    stopTyping(channelId) {
+        const channel = this.client.channels.cache.get(channelId);
+        if (channel) channel.stopTyping(true);
+    }
+
     static getInstance() {
         if (!DiscordManager.instance) {
             DiscordManager.instance = new DiscordManager();
