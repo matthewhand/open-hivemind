@@ -28,6 +28,7 @@ async function messageHandler(originalMessage) {
         console.log("messageHandler: Sending request to OpenAI.");
         const responseContent = await openAiManager.sendRequest(requestBody);
         const channelId = originalMessage.getChannelId();
+        const channelTopic = "TODO - channel topic. ";
         let messageToSend = responseContent.choices[0].message.content;
 
         console.log(`messageHandler: Received response from OpenAI. Message length: ${messageToSend.length}`);
@@ -41,7 +42,7 @@ async function messageHandler(originalMessage) {
 
         if (constants.FOLLOW_UP_ENABLED) {
             console.log("messageHandler: Follow-up enabled. Sending follow-up message.");
-            await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic); // Assuming channelTopic is defined elsewhere, this might be a mistake
+            await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
         }
     } catch (error) {
         console.error(`messageHandler: Failed to process message: ${error}`);
