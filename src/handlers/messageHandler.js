@@ -71,7 +71,7 @@ async function summarizeMessage(message) {
     const summaryPrompt = `Summarize the following message:\n\n${message}`;
     const requestBody = {
         prompt: summaryPrompt,
-        max_tokens: 420, // Adjust based on desired summary length
+        max_tokens: 123, // Adjust based on desired summary length
         temperature: 0.7,
     };
     const summaryResponse = await new OpenAiManager().sendRequest(requestBody);

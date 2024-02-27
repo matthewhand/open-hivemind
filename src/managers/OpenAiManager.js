@@ -15,12 +15,13 @@ class OpenAiManager extends LlmInterface {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${constants.LLM_API_KEY}`,
         };
-        logger.debug(`Sending request to OpenAI API: ${url} with body: ${JSON.stringify(requestBody, null, 2)}`);
+
+        logger.debug(`Sending request to OpenAI API: ${url} with body:`, requestBody);
 
         try {
             const response = await axios.post(url, requestBody, { headers });
             logger.info('Response received from OpenAI API.');
-            logger.debug(`OpenAI API response: ${JSON.stringify(response.data, null, 2)}`);
+            logger.debug('OpenAI API response:', response.data);
             return response.data;
         } catch (error) {
             const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
@@ -29,45 +30,65 @@ class OpenAiManager extends LlmInterface {
         }
     }
 
+    async summarizeTextAsBulletPoints(text) {
+        const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
+        const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
+
+        // Send the request to the OpenAI API
+        const summaryResponse = await this.sendRequest(requestBody);
+        return this.processSummaryResponse(summaryResponse.choices[0].text);
+    }
+
+    processSummaryResponse(summaryText) {
+        // Split the summary into bullet points based on the bullet symbol used (e.g., "-", "*")
+        const bulletPoints = summaryText.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
+
+        // Further processing to clean up each bullet point, if necessary, can be done here
+        return bulletPoints.map(point => point.trim());
+    }
+
+    buildRequestBodyForSummarization(text, systemMessageContent) {
+        return {
+            model: constants.LLM_MODEL,
+            prompt: `${systemMessageContent}\n\n${text}`,
+            temperature: 0.5,
+            max_tokens: 1024,
+            stop: ["\n\n"]
+        };
+    }
+
     buildRequestBody(historyMessages, systemMessageContent = 'You are a helpful assistant') {
         let messages = systemMessageContent ? [{
             role: 'system',
             content: systemMessageContent
         }] : [];
 
-        // Reverse historyMessages to ensure the most recent is processed last
         historyMessages = historyMessages.reverse();
 
         let needsCorrection = false;
-        let lastRole = 'system'; // Assume starting after system message
+        let lastRole = 'system';
 
         historyMessages.forEach(message => {
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
 
-            // Check if the current message continues the alternation pattern
             if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
-                // No correction needed; add the message directly
                 messages.push({
                     role: currentRole,
                     content: message.getText()
                 });
             } else {
-                // Alternation needs correction
                 needsCorrection = true;
             }
-            lastRole = currentRole; // Update for next iteration
+            lastRole = currentRole;
         });
 
-        // Apply corrections if needed
         if (needsCorrection) {
-            // Rebuild messages considering corrections for alternation
             let correctedMessages = [];
-            lastRole = 'system'; // Reset for correction pass
+            lastRole = 'system';
             messages.forEach(message => {
                 if (message.role !== lastRole || lastRole === 'system') {
                     correctedMessages.push(message);
                 } else {
-                    // Inject an empty message to maintain alternation
                     const correctionRole = lastRole === 'user' ? 'assistant' : 'user';
                     correctedMessages.push({ role: correctionRole, content: '...' });
                     correctedMessages.push(message);
@@ -75,7 +96,6 @@ class OpenAiManager extends LlmInterface {
                 lastRole = message.role;
             });
 
-            // Ensure ending with 'user' message
             if (lastRole === 'assistant') {
                 correctedMessages.push({ role: 'user', content: '...' });
             }
@@ -83,13 +103,8 @@ class OpenAiManager extends LlmInterface {
             messages = correctedMessages;
         }
 
-        // Final check to ensure the first message after 'system' is 'user', if not, insert an empty 'user' message
         if (messages.length > 1 && messages[1].role === 'assistant') {
-            const placeholderUserMessage = {
-                role: 'user',
-                content: '...'
-            };
-            messages.splice(1, 0, placeholderUserMessage); // Insert the placeholder 'user' message at the correct position
+            messages.splice(1, 0, { role: 'user', content: '...' });
         }
 
         return {
@@ -98,23 +113,11 @@ class OpenAiManager extends LlmInterface {
         };
     }
 
-        async summarizeText(text) {
-        // Craft a prompt for summarization
+    async summarizeText(text) {
         const systemMessageContent = 'Summarize the following text:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
 
-        // Send the request to the OpenAI API
         return await this.sendRequest(requestBody);
-    }
-
-    buildRequestBodyForSummarization(text, systemMessageContent) {
-        return {
-            model: constants.LLM_MODEL,
-            prompt: `${systemMessageContent}\n\n${text}`,
-            temperature: 0.5,
-            max_tokens: 1024, // Adjust based on your needs
-            stop: null // You can specify stopping conditions if necessary
-        };
     }
 
     requiresHistory() {
