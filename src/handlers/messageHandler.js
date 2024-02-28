@@ -25,6 +25,12 @@ async function messageHandler(originalMessage) {
         console.log("messageHandler: Preparing request body.");
         const requestBody = await prepareRequestBody(originalMessage); 
 
+        // Before calling this.sendRequest(requestBody) in your code where you prepare the request
+        if (!requestBody.messages || requestBody.messages.length === 0) {
+            logger.error('messageHandler: Request body is empty or invalid.');
+            return; // Skip sending request
+        }
+
         console.log("messageHandler: Sending request to OpenAI.");
         const responseContent = await openAiManager.sendRequest(requestBody);
         const channelId = originalMessage.getChannelId();
@@ -59,6 +65,13 @@ async function summarizeMessage(message) {
         max_tokens: 123, // Adjust based on desired summary length
         temperature: 0.7,
     };
+
+    // Before calling this.sendRequest(requestBody) in your code where you prepare the request
+    if (!requestBody.messages || requestBody.messages.length === 0) {
+        logger.error('summarizeMessage: Request body is empty or invalid.');
+        return; // Skip sending request
+    }
+
     const summaryResponse = await new OpenAiManager().sendRequest(requestBody);
     return summaryResponse.choices[0].text.trim();
 }
@@ -132,8 +145,15 @@ async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
     await new Promise(resolve => setTimeout(resolve, followUpDelay));
 
     // Prepare and send the request for follow-up suggestions
-    const commandSuggestionsPrompt = await prepareFollowUpRequestBody(originalMessage, channelTopic);
-    const suggestedCommandResponse = await new OpenAiManager().sendRequest(commandSuggestionsPrompt);
+    const requestBody = await prepareFollowUpRequestBody(originalMessage, channelTopic);
+
+    // Before calling this.sendRequest(requestBody) in your code where you prepare the request
+    if (!requestBody.messages || requestBody.messages.length === 0) {
+        logger.error('sendLLMGeneratedFollowUpResponse: Request body is empty or invalid.');
+        return; // Skip sending request
+    }
+
+    const suggestedCommandResponse = await new OpenAiManager().sendRequest(requestBody);
     const followUpMessageContent = suggestedCommandResponse.choices[0].text.trim();
 
     // Send the suggested follow-up action as a message

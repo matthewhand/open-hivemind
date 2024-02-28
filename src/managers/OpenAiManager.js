@@ -104,7 +104,12 @@ class OpenAiManager extends LlmInterface {
         logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
-        logger.debug(`summarizeTextAsBulletPoints: Request body for summarization - `, requestBody);
+
+        // Before calling this.sendRequest(requestBody) in your code where you prepare the request
+        if (!requestBody.messages || requestBody.messages.length === 0) {
+            logger.error('summarizeTextAsBulletPoints: Request body is empty or invalid.');
+            return; // Skip sending request
+        }
 
         const summaryResponse = await this.sendRequest(requestBody);
         logger.debug('summarizeTextAsBulletPoints: Summary response received');
@@ -134,6 +139,12 @@ class OpenAiManager extends LlmInterface {
         const systemMessageContent = 'Summarize the following text:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
         logger.debug('summarizeText: Request body for summarization built');
+
+        // Before calling this.sendRequest(requestBody) in your code where you prepare the request
+        if (!requestBody.messages || requestBody.messages.length === 0) {
+            logger.error('summarizeText: Request body is empty or invalid.');
+            return; // Skip sending request
+        }
 
         return await this.sendRequest(requestBody);
     }
