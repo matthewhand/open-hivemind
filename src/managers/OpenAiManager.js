@@ -22,84 +22,65 @@ class OpenAiManager extends LlmInterface {
 
     buildRequestBody(historyMessages, systemMessageContent = null) {
         logger.debug('Entering buildRequestBody');
-        if (systemMessageContent === null) {
-            systemMessageContent = constants.LLM_SYSTEM_PROMPT;
-            logger.debug(`buildRequestBody: Using default system message content`);
-        }
-
-        let messages = systemMessageContent ? [{
+        systemMessageContent = systemMessageContent || constants.LLM_SYSTEM_PROMPT;
+        logger.debug(`buildRequestBody: Using system message content: ${systemMessageContent}`);
+    
+        // Initialize messages array with the system message
+        let messages = [{
             role: 'system',
             content: systemMessageContent
-        }] : [];
-
-        historyMessages = historyMessages.reverse(); // Reverse the historyMessages
-        logger.debug(`buildRequestBody: Reversed historyMessages`);
-
-        let lastRole = 'system';
-
+        }];
+    
+        // Reverse historyMessages for chronological processing
+        historyMessages.reverse();
+        logger.debug('buildRequestBody: History messages reversed for processing');
+    
+        let lastRole = 'system'; // Start with system as the last role
+    
+        if (constants.LLM_PADDING_ENABLE && constants.LLM_PADDING_START_USER) {
+            // Ensure the second message is a user message by adding padding if necessary
+            messages.push({
+                role: 'user',
+                content: constants.LLM_PADDING_CONTENT || '...'
+            });
+            lastRole = 'user';
+        }
+    
         historyMessages.forEach((message, index) => {
-            logger.debug(`buildRequestBody: Processing message ${index}`);
             const currentRole = message.isFromBot ? 'assistant' : 'user';
-        
-            if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
+            logger.debug(`buildRequestBody: Processing message ${index} with role ${currentRole}`);
+    
+            // If padding is enabled and we need to alternate, insert padding message
+            if (constants.LLM_PADDING_ENABLE && lastRole === currentRole) {
                 messages.push({
-                    role: currentRole,
-                    content: message.getText()
+                    role: 'user', // Padding messages are considered user messages
+                    content: constants.LLM_PADDING_CONTENT || '...'
                 });
-            } else {
-                logger.debug(`buildRequestBody: Adjusting for consecutive messages from the same role`);
-                // Use the constant for padding content
-                const paddingContent = constants.LLM_PADDING_CONTENT;
-                messages.push({
-                    role: currentRole === 'user' ? 'assistant' : 'user',
-                    content: paddingContent
-                });
-                messages.push({
-                    role: currentRole,
-                    content: message.getText()
-                });
+                lastRole = 'user'; // Set last role to user after padding
             }
+    
+            messages.push({
+                role: currentRole,
+                content: message.getText()
+            });
             lastRole = currentRole;
         });
-        
-        if (messages.length > 1 && messages[1].role === 'assistant') {
-            logger.debug(`buildRequestBody: Adjusting for conversation starting with an assistant message`);
-            // Use the constant for padding content when inserting at the start
-            const paddingContent = constants.LLM_PADDING_CONTENT;
-            messages.splice(1, 0, { role: 'user', content: paddingContent });
+    
+        // Ensure the conversation ends with a user message if configured
+        if (constants.LLM_PADDING_ENABLE && constants.LLM_PADDING_END_USER && lastRole !== 'user') {
+            messages.push({
+                role: 'user',
+                content: constants.LLM_PADDING_CONTENT || '...'
+            });
         }
-
-        logger.info(`OpenAI API request body built successfully`);
-        let requestBody = {
+    
+        logger.info('OpenAI API request body built successfully');
+        return {
             model: constants.LLM_MODEL,
             messages,
         };
-        const url = constants.LLM_ENDPOINT_URL;
-        logger.debug(`Sending request to OpenAI API: ${url} with body:`, JSON.stringify(requestBody, null, 2));
-        return requestBody;
     }
-
-    async sendRequest(requestBody) {
-        const url = constants.LLM_ENDPOINT_URL;
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${constants.LLM_API_KEY}`,
-        };
-
-        logger.debug(`Sending request to OpenAI API: ${url} with body:`, JSON.stringify(requestBody, null, 2));
-
-        try {
-            const response = await axios.post(url, requestBody, { headers });
-            logger.info('Response received from OpenAI API.');
-            logger.debug('OpenAI API response:', response.data);
-            return response.data;
-        } catch (error) {
-            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
-            logger.error(errMsg, { error });
-            throw new Error(errMsg);
-        }
-    }
-
+    
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';

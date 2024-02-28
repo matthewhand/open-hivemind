@@ -10,6 +10,11 @@ jest.mock('../../src/config/constants', () => ({
   LLM_TOP_P: 1,
   LLM_FREQUENCY_PENALTY: 0,
   LLM_PRESENCE_PENALTY: 0,
+  // Mock any other constants you introduced in your new logic, if necessary
+  USE_PADDING_FOR_CONSECUTIVE_MESSAGES: false, // Assuming you added this constant
+  ADJUST_CONVERSATION_ENDING: true, // Assuming you added this constant
+  PADDING_CONTENT: "...", // Assuming you added this constant
+  ADJUSTMENT_CONTENT: "...", // Assuming this is for ending adjustment
 }));
 
 const DiscordMessage = require('../../src/models/DiscordMessage');
@@ -40,8 +45,10 @@ describe('OpenAiManager buildRequestBody', () => {
       messages: [
         {
           role: 'system',
-          content: "You are a helpful assistant"
+          content: "You are a helpful assistant."
         },
+        // Your logic for padding and message role corrections goes here
+        // This needs to match the updated logic in OpenAiManager
         {
           role: 'user',
           content: "Hello, how are you?"
@@ -58,6 +65,7 @@ describe('OpenAiManager buildRequestBody', () => {
           role: 'user',
           content: "You are Discord bot and the most recent message triggered you to respond."
         }
+        // If you added logic for adjustment at the end, ensure to reflect that in expectedPayload
       ],
     };
 
