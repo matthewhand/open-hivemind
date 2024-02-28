@@ -86,7 +86,7 @@ class OpenAiManager extends LlmInterface {
             'Authorization': `Bearer ${constants.LLM_API_KEY}`,
         };
 
-        logger.debug(`Sending request to OpenAI API: ${url} with body:`, requestBody);
+        logger.debug(`Sending request to OpenAI API: ${url} with body:`, JSON.stringify(requestBody, null, 2));
 
         try {
             const response = await axios.post(url, requestBody, { headers });
