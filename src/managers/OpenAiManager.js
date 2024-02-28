@@ -55,6 +55,15 @@ class OpenAiManager extends LlmInterface {
         let lastRole = 'system';
         let accumulatedContent = ''; // To accumulate content from the same role
     
+        // Ensure the first message after "system" is from a "user"
+        if (historyMessages.length > 0 && historyMessages[0].isFromBot()) {
+            messages.push({
+                role: 'user',
+                content: constants.LLM_PADDING_CONTENT || '...' // Padding content for the user
+            });
+            lastRole = 'user'; // Update lastRole since we just added a user padding message
+        }
+    
         historyMessages.forEach((message, index) => {
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
     
@@ -95,7 +104,7 @@ class OpenAiManager extends LlmInterface {
             messages,
         };
     }
-                
+                    
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
