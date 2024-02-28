@@ -56,7 +56,7 @@ class OpenAiManager extends LlmInterface {
     
         historyMessages.forEach((message, index) => {
             // Assume each message has a way to determine if it's from a bot
-            const currentRole = message.isFromBot ? 'assistant' : 'user';
+            const currentRole = message.isFromBot() ? 'assistant' : 'user';
     
             // If the last message role is the same as the current, insert padding
             if (lastRole === currentRole) {
