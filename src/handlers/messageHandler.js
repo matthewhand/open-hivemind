@@ -29,6 +29,8 @@ async function messageHandler(originalMessage) {
         if (!requestBody.messages || requestBody.messages.length === 0) {
             logger.error('messageHandler: Request body is empty or invalid.');
             return; // Skip sending request
+        } else {
+            logger.debug(`messageHandler: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
         }
 
         console.log("messageHandler: Sending request to OpenAI.");
@@ -70,6 +72,8 @@ async function summarizeMessage(message) {
     if (!requestBody.messages || requestBody.messages.length === 0) {
         logger.error('summarizeMessage: Request body is empty or invalid.');
         return; // Skip sending request
+    } else {
+        logger.debug(`summarizeMessage: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
     }
 
     const summaryResponse = await new OpenAiManager().sendRequest(requestBody);
@@ -151,6 +155,8 @@ async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
     if (!requestBody.messages || requestBody.messages.length === 0) {
         logger.error('sendLLMGeneratedFollowUpResponse: Request body is empty or invalid.');
         return; // Skip sending request
+    } else {
+        logger.debug(`sendLLMGeneratedFollowUpRequest: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
     }
 
     const suggestedCommandResponse = await new OpenAiManager().sendRequest(requestBody);

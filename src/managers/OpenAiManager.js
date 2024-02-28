@@ -109,6 +109,8 @@ class OpenAiManager extends LlmInterface {
         if (!requestBody.messages || requestBody.messages.length === 0) {
             logger.error('summarizeTextAsBulletPoints: Request body is empty or invalid.');
             return; // Skip sending request
+        } else {
+            logger.debug(`summarizeTextAsBulletPoints: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
         }
 
         const summaryResponse = await this.sendRequest(requestBody);
@@ -144,6 +146,8 @@ class OpenAiManager extends LlmInterface {
         if (!requestBody.messages || requestBody.messages.length === 0) {
             logger.error('summarizeText: Request body is empty or invalid.');
             return; // Skip sending request
+        } else {
+            logger.debug(`summarizeText: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
         }
 
         return await this.sendRequest(requestBody);
