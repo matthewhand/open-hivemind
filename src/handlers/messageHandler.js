@@ -82,35 +82,58 @@ async function summarizeMessage(message) {
     return summaryResponse.choices[0].text.trim();
 }
 
-// Adjusted sendResponse function to include dynamic delay calculations based on processing time
+// Adjusted sendResponse function to emulate average human typing speed, split messages, and introduce a minimum delay
 async function sendResponse(messageContent, channelId, startTime) {
-    const baseDelayPerChars = 500; // Base delay of 500ms per 30 characters in the message
-    const characterCount = messageContent.length;
-    const baseDelay = Math.ceil(characterCount / 10) * baseDelayPerChars; // Calculate base delay based on message length
-    
-    const processingTime = Date.now() - startTime; // Calculate how long processing has taken so far
-    let totalDelay = baseDelay - processingTime; // Adjust base delay by subtracting processing time
+    const charsPerSecond = 3.33; // Average typing speed (200 characters per minute / 60)
+    const baseDelayPerChar = 1000 / charsPerSecond; // Delay per character in milliseconds
+    const minDelayForShortMessage = 5000; // Minimum delay for a short message in milliseconds
 
-    const additionalRandomDelay = Math.floor(Math.random() * 10000); // Random delay between 0 and 10s
-    totalDelay += additionalRandomDelay; // Add random delay to the total delay
+    // Function to send message parts with delay
+    async function sendMessagePart(part) {
+        const characterCount = part.length;
+        let totalDelay = characterCount * baseDelayPerChar; // Calculate total delay based on typing speed
 
-    // Ensure total delay is not negative
-    if (totalDelay < 0) {
-        totalDelay = 0;
+        // Apply minimum delay for short messages
+        totalDelay = Math.max(totalDelay, minDelayForShortMessage);
+
+        // Ensure total delay accounts for processing time
+        totalDelay = Math.max(totalDelay - processingTime, 0);
+
+        // Apply the calculated delay before sending the message part
+        await new Promise(resolve => setTimeout(resolve, totalDelay));
+        await DiscordManager.getInstance().sendResponse(channelId, part);
+        logger.info(`Response part sent to channel ${channelId} after delay: ${totalDelay}ms, "${part}"`);
     }
 
     try {
-        // Apply the calculated delay before sending the message
-        await new Promise(resolve => setTimeout(resolve, totalDelay));
-        await DiscordManager.getInstance().sendResponse(channelId, messageContent);
-        logger.info(`Response sent to channel ${channelId} after dynamic delay: ${totalDelay}ms, "${messageContent}"`);
+        // Split the message at the end of the next full-stop or newline with a 50/50 chance
+        let splitIndex = -1;
+        if (Math.random() < 0.5) {
+            const nextFullStop = messageContent.indexOf('. ', processingTime);
+            const nextNewLine = messageContent.indexOf('\n', processingTime);
+            splitIndex = nextFullStop !== -1 ? nextFullStop + 1 : nextNewLine;
+        }
+
+        if (splitIndex !== -1) {
+            // Send the first part of the message
+            const firstPart = messageContent.substring(0, splitIndex + 1);
+            await sendMessagePart(firstPart);
+
+            // Send the remainder of the message recursively
+            const remainingMessage = messageContent.substring(splitIndex + 1);
+            if (remainingMessage.trim().length > 0) {
+                await sendResponse(remainingMessage, channelId, Date.now());
+            }
+        } else {
+            // Send the entire message if no split is required
+            await sendMessagePart(messageContent);
+        }
     } catch (error) {
         logger.error(`Failed to send response: ${error.message}`);
         // Send a fallback error message to the channel
         await DiscordManager.getInstance().sendResponse(channelId, "Sorry, I encountered an error processing your request.");
     }
 }
-
 async function prepareRequestBody(originalMessage) {
     console.log("prepareRequestBody: Start");
 
