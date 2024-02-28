@@ -20,6 +20,27 @@ class OpenAiManager extends LlmInterface {
         return this.isResponding;
     }
 
+    async sendRequest(requestBody) {
+        const url = constants.LLM_ENDPOINT_URL;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${constants.LLM_API_KEY}`,
+        };
+
+        logger.debug(`Sending request to OpenAI API: ${url} with body:`, JSON.stringify(requestBody, null, 2));
+
+        try {
+            const response = await axios.post(url, requestBody, { headers });
+            logger.info('Response received from OpenAI API.');
+            logger.debug('OpenAI API response:', response.data);
+            return response.data;
+        } catch (error) {
+            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
+            logger.error(errMsg, { error });
+            throw new Error(errMsg);
+        }
+    }
+
     buildRequestBody(historyMessages, systemMessageContent = null) {
         logger.debug('Entering buildRequestBody');
         systemMessageContent = systemMessageContent || constants.LLM_SYSTEM_PROMPT;

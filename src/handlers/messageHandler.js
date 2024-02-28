@@ -61,6 +61,7 @@ async function messageHandler(originalMessage) {
 
 // Function to summarize long messages
 async function summarizeMessage(message) {
+    logger.debug(`summarizeMessage: message - ${JSON.stringify(messages, null, 2)}`);
     const summaryPrompt = `Summarize the following message:\n\n${message}`;
     const requestBody = {
         prompt: summaryPrompt,
