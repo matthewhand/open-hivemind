@@ -88,9 +88,10 @@ class DiscordManager {
     * @returns {Promise<DiscordMessage[]>} - A promise that resolves to an array of DiscordMessage instances.
     */
     async fetchMessages(channelId, limit = 20) {
-        return discordUtils.fetchMessages(this.client, channelId, limit);
+        const messages = await discordUtils.fetchMessages(this.client, channelId, limit);
+        return messages.reverse(); // Reverse the order of messages to oldest first (top of list)
     }
-
+    
     async sendResponse(channelId, messageText) {
         return discordUtils.sendResponse(this.client, channelId, messageText);
     }
