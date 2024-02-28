@@ -13,9 +13,9 @@ class MessageResponseManager {
 
     defaultConfig() {
         return {
-            interrobangBonus: 0.2,
+            interrobangBonus: 0.3,
             mentionBonus: 0.4,
-            botResponsePenalty: 0.6,
+            botResponsePenalty: 0.5,
             timeVsResponseChance: [[12345, 0.4], [420000, 0.6], [4140000, 0.2]],
             llmWakewords: [],
             unsolicitedChannelCap: 5,
@@ -113,9 +113,9 @@ class MessageResponseManager {
     
     calculateBonusForMessageContent(messageContent) {
         let bonus = 0;
-        if (messageContent.includes('!')) {
+        if (messageContent.includes('?') || messageContent.includes('!')) {
             bonus += this.interrobangBonus;
-            logger.debug(`Content contains '!', adding interrobang bonus: ${this.interrobangBonus}`);
+            logger.debug(`Content contains '?', adding interrobang bonus: ${this.interrobangBonus}`);
         }
         // Implement additional content checks here, logging as necessary
         return bonus;
