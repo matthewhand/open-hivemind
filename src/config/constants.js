@@ -29,6 +29,7 @@ module.exports = {
     LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Contribute to the provided message history.',
 
     // TODO - LLM Parameters (advanced)
+    LLM_PADDING_CONTENT: "",
     LLM_MAX_CONTENT_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.5'),
     LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '420', 10),

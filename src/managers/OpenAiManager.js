@@ -40,7 +40,7 @@ class OpenAiManager extends LlmInterface {
         historyMessages.forEach((message, index) => {
             logger.debug(`buildRequestBody: Processing message ${index}`);
             const currentRole = message.isFromBot ? 'assistant' : 'user';
-
+        
             if (lastRole === 'user' && currentRole === 'assistant' || lastRole === 'assistant' && currentRole === 'user' || lastRole === 'system') {
                 messages.push({
                     role: currentRole,
@@ -48,9 +48,11 @@ class OpenAiManager extends LlmInterface {
                 });
             } else {
                 logger.debug(`buildRequestBody: Adjusting for consecutive messages from the same role`);
+                // Use the constant for padding content
+                const paddingContent = constants.LLM_PADDING_CONTENT;
                 messages.push({
                     role: currentRole === 'user' ? 'assistant' : 'user',
-                    content: '...'
+                    content: paddingContent
                 });
                 messages.push({
                     role: currentRole,
@@ -59,10 +61,12 @@ class OpenAiManager extends LlmInterface {
             }
             lastRole = currentRole;
         });
-
+        
         if (messages.length > 1 && messages[1].role === 'assistant') {
             logger.debug(`buildRequestBody: Adjusting for conversation starting with an assistant message`);
-            messages.splice(1, 0, { role: 'user', content: '...' });
+            // Use the constant for padding content when inserting at the start
+            const paddingContent = constants.LLM_PADDING_CONTENT;
+            messages.splice(1, 0, { role: 'user', content: paddingContent });
         }
 
         logger.info(`OpenAI API request body built successfully`);
