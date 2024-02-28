@@ -86,11 +86,21 @@ class DiscordMessage extends IMessage {
 
     // Concrete implementation of isFromBot for Discord messages
     isFromBot() {
-        // Simplified check for bot message
+        let isFromBot;
         if (this.isBotExplicitlySet !== null) {
-            return this.isBotExplicitlySet;
+            // If isBotExplicitlySet is explicitly defined, use its value
+            isFromBot = this.isBotExplicitlySet;
+            logger.debug(`isFromBot: Explicitly set to ${isFromBot}.`);
+        } else {
+            // Otherwise, derive the value from the message's author.bot flag
+            isFromBot = this.message.author.bot;
+            logger.debug(`isFromBot: Derived from message author's bot flag as ${isFromBot}.`);
         }
-        return this.message.author.bot;
+
+        // Debugging the final decision on whether the message is from a bot
+        logger.debug(`isFromBot: Final determination for message ID ${this.message.id} is ${isFromBot}.`);
+
+        return isFromBot;
     }
 
 }

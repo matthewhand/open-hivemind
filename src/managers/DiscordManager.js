@@ -81,6 +81,12 @@ class DiscordManager {
         this.messageHandler = messageHandlerCallback;
     }
 
+    /**
+     * Fetches messages from a specified Discord channel and returns them as DiscordMessage instances.
+    * @param {string} channelId - The ID of the channel from which messages are fetched.
+    * @param {number} [limit=20] - The maximum number of messages to fetch.
+    * @returns {Promise<DiscordMessage[]>} - A promise that resolves to an array of DiscordMessage instances.
+    */
     async fetchMessages(channelId, limit = 20) {
         return discordUtils.fetchMessages(this.client, channelId, limit);
     }

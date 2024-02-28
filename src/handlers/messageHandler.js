@@ -61,13 +61,14 @@ async function messageHandler(originalMessage) {
 
 // Function to summarize long messages
 async function summarizeMessage(message) {
-    logger.debug(`summarizeMessage: message - ${JSON.stringify(messages, null, 2)}`);
     const summaryPrompt = `Summarize the following message:\n\n${message}`;
     const requestBody = {
         prompt: summaryPrompt,
         max_tokens: 123, // Adjust based on desired summary length
         temperature: 0.7,
     };
+
+    logger.debug(`summarizeMessage: message - ${JSON.stringify(message, null, 2)}`);
 
     // Before calling this.sendRequest(requestBody) in your code where you prepare the request
     if (!requestBody.messages || requestBody.messages.length === 0) {
@@ -115,8 +116,7 @@ async function prepareRequestBody(originalMessage) {
 
     // Fetch recent messages for context and the channel's topic
     console.log("prepareRequestBody: Fetching message history and channel details.");
-    const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
-    console.log(`prepareRequestBody: Fetched ${history.length} messages for context.`);
+    // TODO use generic manager not specific Discord
     
     const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
     console.log(`prepareRequestBody: Fetched channel details. Channel ID: ${originalMessage.getChannelId()}`);
@@ -124,12 +124,15 @@ async function prepareRequestBody(originalMessage) {
     const channelTopic = channel.topic || 'No topic set';
     console.log(`prepareRequestBody: Channel Topic: ${channelTopic}`);
 
+    const history = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
+    console.log(`prepareRequestBody: Fetched ${history.length} messages for context.`);
+
     // Include IDs for priority and context in the prompt
     const userId = originalMessage.getAuthorId();
     const botUserId = constants.CLIENT_ID;
     console.log(`prepareRequestBody: User ID: ${userId}, Bot User ID: ${botUserId}`);
 
-    const promptSystem = `Active User: <!${userId}>, CLIENT_ID: <!${botUserId}>, Channel Topic: ${channelTopic}`;
+    const promptSystem = `USER: <!${userId}>, ASSISTANT: <!${botUserId}>, Channel Topic: ${channelTopic}`;
     console.log(`prepareRequestBody: Prompt System: ${promptSystem}`);
 
     const systemMessageContent = constants.LLM_SYSTEM_PROMPT + promptSystem;
