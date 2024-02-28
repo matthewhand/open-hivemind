@@ -59,7 +59,7 @@ class OpenAiManager extends LlmInterface {
         let lastRole = 'system'; // Initialize lastRole as 'system'
     
         // Check if the first real message needs to be from a user according to the configuration
-        if (constants.LLM_PADDING_START_WITH_USER && historyMessages.length > 0 && historyMessages[0].isFromBot) {
+        if (constants.LLM_PADDING_START_WITH_USER && historyMessages.length > 0 && historyMessages[0].isFromBot()) {
             messages.push({
                 role: 'user',
                 content: constants.LLM_PADDING_CONTENT || '...'
@@ -67,7 +67,7 @@ class OpenAiManager extends LlmInterface {
         }
     
         historyMessages.forEach((message, index) => {
-            const currentRole = message.isFromBot ? 'assistant' : 'user';
+            const currentRole = message.isFromBot() ? 'assistant' : 'user';
             logger.debug(`buildRequestBody: Processing message ${index} with role ${currentRole}`);
     
             if (lastRole === currentRole) {
