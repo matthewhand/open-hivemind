@@ -52,46 +52,33 @@ class OpenAiManager extends LlmInterface {
             content: systemMessageContent
         }];
     
-        // Reverse historyMessages for chronological order
-        historyMessages.reverse();
-        logger.debug('buildRequestBody: History messages reversed for processing');
-    
-        let lastRole = 'system'; // Initialize lastRole as 'system'
-    
-        // Check if the first real message needs to be from a user according to the configuration
-        if (constants.LLM_PADDING_START_WITH_USER && historyMessages.length > 0 && historyMessages[0].isFromBot()) {
-            messages.push({
-                role: 'user',
-                content: constants.LLM_PADDING_CONTENT || '...'
-            });
-        }
+        let lastRole = 'system'; // The last message role starts as 'system'
     
         historyMessages.forEach((message, index) => {
-            const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            logger.debug(`buildRequestBody: Processing message ${index} with role ${currentRole}`);
+            // Assume each message has a way to determine if it's from a bot
+            const currentRole = message.isFromBot ? 'assistant' : 'user';
     
+            // If the last message role is the same as the current, insert padding
             if (lastRole === currentRole) {
-                // Insert padding if consecutive messages are from the same role, following the system message
-                if (constants.LLM_PADDING_ALTERNATION) {
-                    messages.push({
-                        role: 'user',
-                        content: constants.LLM_PADDING_CONTENT || '...'
-                    });
-                }
+                messages.push({
+                    role: currentRole === 'user' ? 'assistant' : 'user', // Alternate the role for padding
+                    content: constants.LLM_PADDING_CONTENT || '...' // Use a default padding content
+                });
             }
     
             messages.push({
                 role: currentRole,
                 content: message.getText()
             });
-            lastRole = currentRole;
+    
+            lastRole = currentRole; // Update the lastRole to the current message's role
         });
     
-        // Ensure the conversation ends with a user message if required by configuration
-        if (constants.LLM_PADDING_END_WITH_USER && lastRole === 'assistant') {
+        // Ensure the conversation ends with a user message if the last message was from the assistant
+        if (lastRole === 'assistant') {
             messages.push({
                 role: 'user',
-                content: constants.LLM_PADDING_CONTENT || '...'
+                content: constants.LLM_PADDING_CONTENT || '...' // Ensure final message is from the user
             });
         }
     
@@ -101,7 +88,7 @@ class OpenAiManager extends LlmInterface {
             messages,
         };
     }
-        
+            
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
