@@ -100,7 +100,7 @@ class OpenAiManager extends LlmInterface {
         logger.debug('Entering summarizeTextAsBulletPoints');
         const systemMessageContent = 'Please summarize the following text as a list of bullet points:';
         const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
-        logger.debug('summarizeTextAsBulletPoints: Request body for summarization built');
+        logger.debug(`summarizeTextAsBulletPoints: Request body for summarization - `, requestBody);
 
         const summaryResponse = await this.sendRequest(requestBody);
         logger.debug('summarizeTextAsBulletPoints: Summary response received');
