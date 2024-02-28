@@ -24,62 +24,50 @@ class OpenAiManager extends LlmInterface {
         logger.debug('Entering buildRequestBody');
         systemMessageContent = systemMessageContent || constants.LLM_SYSTEM_PROMPT;
         logger.debug(`buildRequestBody: Using system message content: ${systemMessageContent}`);
-    
-        // Initialize messages array with the system message
+
         let messages = [{
             role: 'system',
             content: systemMessageContent
         }];
-    
-        // Reverse historyMessages for chronological processing
+
         historyMessages.reverse();
         logger.debug('buildRequestBody: History messages reversed for processing');
-    
-        let lastRole = 'system'; // Start with system as the last role
-    
-        if (constants.LLM_PADDING_ENABLE && constants.LLM_PADDING_START_USER) {
-            // Ensure the second message is a user message by adding padding if necessary
-            messages.push({
-                role: 'user',
-                content: constants.LLM_PADDING_CONTENT || '...'
-            });
-            lastRole = 'user';
-        }
-    
+
+        let lastRole = 'user'; // Default to user to ensure the first message after system is user
+
         historyMessages.forEach((message, index) => {
             const currentRole = message.isFromBot ? 'assistant' : 'user';
             logger.debug(`buildRequestBody: Processing message ${index} with role ${currentRole}`);
-    
-            // If padding is enabled and we need to alternate, insert padding message
-            if (constants.LLM_PADDING_ENABLE && lastRole === currentRole) {
+
+            if (constants.LLM_PADDING_ALTERNATION && lastRole === currentRole) {
+                // Insert padding if consecutive messages are from the same role
                 messages.push({
-                    role: 'user', // Padding messages are considered user messages
+                    role: 'user',
                     content: constants.LLM_PADDING_CONTENT || '...'
                 });
-                lastRole = 'user'; // Set last role to user after padding
             }
-    
+
             messages.push({
                 role: currentRole,
                 content: message.getText()
             });
             lastRole = currentRole;
         });
-    
-        // Ensure the conversation ends with a user message if configured
-        if (constants.LLM_PADDING_ENABLE && constants.LLM_PADDING_END_USER && lastRole !== 'user') {
+
+        // Ensure the last message is from a user, if required by configuration
+        if (constants.LLM_PADDING_END_WITH_USER && lastRole === 'assistant') {
             messages.push({
                 role: 'user',
                 content: constants.LLM_PADDING_CONTENT || '...'
             });
         }
-    
+
         logger.info('OpenAI API request body built successfully');
         return {
             model: constants.LLM_MODEL,
             messages,
         };
-    }
+    }    
     
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
