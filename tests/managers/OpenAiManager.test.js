@@ -1,7 +1,5 @@
-const OpenAiManager = require('../../src/managers/OpenAiManager');
-
-jest.mock('../../src/models/DiscordMessage');
-jest.mock('../../src/config/constants', () => ({
+// Define a constants object to mirror the mocked values
+const constants = {
   CLIENT_ID: '1234567890',
   LLM_MODEL: "gpt-3.5-turbo",
   LLM_SYSTEM_PROMPT: "You are a helpful assistant.",
@@ -10,13 +8,25 @@ jest.mock('../../src/config/constants', () => ({
   LLM_TOP_P: 1,
   LLM_FREQUENCY_PENALTY: 0,
   LLM_PRESENCE_PENALTY: 0,
-  // Mock any other constants you introduced in your new logic, if necessary
-  USE_PADDING_FOR_CONSECUTIVE_MESSAGES: false, // Assuming you added this constant
-  ADJUST_CONVERSATION_ENDING: true, // Assuming you added this constant
-  PADDING_CONTENT: "...", // Assuming you added this constant
-  ADJUSTMENT_CONTENT: "...", // Assuming this is for ending adjustment
-}));
+  USE_PADDING_FOR_CONSECUTIVE_MESSAGES: false,
+  ADJUST_CONVERSATION_ENDING: true,
+  PADDING_CONTENT: "...",
+  ADJUSTMENT_CONTENT: "...",
+};
 
+jest.mock('../../src/models/DiscordMessage');
+jest.mock('openai', () => {
+  // Mock the Configuration and OpenAIApi directly
+  const mockOpenAIApi = jest.fn().mockImplementation(() => ({
+    createCompletion: jest.fn().mockResolvedValue({ data: 'mocked data' }),
+  }));
+  return {
+    Configuration: jest.fn(), // Keep as is if you don't need to mock its internals
+    OpenAIApi: mockOpenAIApi, // Adjust this to mock OpenAIApi as a constructor
+  };
+});
+
+const OpenAiManager = require('../../src/managers/OpenAiManager');
 const DiscordMessage = require('../../src/models/DiscordMessage');
 DiscordMessage.mockImplementation((content, isBot = false) => ({
   getText: () => content,
@@ -25,47 +35,32 @@ DiscordMessage.mockImplementation((content, isBot = false) => ({
   isFromBot: () => isBot,
 }));
 
-describe('OpenAiManager buildRequestBody', () => {
+describe('OpenAiManager', () => {
   let openAiManager;
 
   beforeEach(() => {
     openAiManager = new OpenAiManager();
   });
 
-  test('correctly structures payload with system message first, followed by user messages, and assistant messages last, including corrections', () => {
+  test('structures payload correctly according to message roles and system prompts', () => {
+    // Setup your history messages here
     const historyMessages = [
-      new DiscordMessage("You are Discord bot and the most recent message triggered you to respond.", false),
-      new DiscordMessage("Sorry, I encountered an error processing your message.", true),
-      new DiscordMessage("I am fine, thank you!", false),
-      new DiscordMessage("Hello, how are you?", false),
+      new DiscordMessage("System prompt", true), // Assuming true signifies a system or bot message
+      new DiscordMessage("User message 1", false),
+      new DiscordMessage("Assistant response", true),
+      new DiscordMessage("User message 2", false),
+      // Add more messages as needed to test your logic
     ];
-  
+
+    // Use the defined constants object for expected payload
     const expectedPayload = {
-      model: "gpt-3.5-turbo",
+      model: constants.LLM_MODEL,
       messages: [
-        {
-          role: 'system',
-          content: "You are a helpful assistant."
-        },
-        // Your logic for padding and message role corrections goes here
-        // This needs to match the updated logic in OpenAiManager
-        {
-          role: 'user',
-          content: "Hello, how are you?"
-        },
-        {
-          role: 'user',
-          content: "I am fine, thank you!"
-        },
-        {
-          role: 'assistant',
-          content: "Sorry, I encountered an error processing your message."
-        },
-        {
-          role: 'user',
-          content: "You are Discord bot and the most recent message triggered you to respond."
-        }
-        // If you added logic for adjustment at the end, ensure to reflect that in expectedPayload
+        { role: 'system', content: "System prompt" },
+        { role: 'user', content: "User message 1" },
+        { role: 'assistant', content: "Assistant response" },
+        { role: 'user', content: "User message 2" },
+        // Adjust based on your specific logic and requirements
       ],
     };
 

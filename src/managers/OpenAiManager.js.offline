@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { Configuration, OpenAIApi } = require('openai');
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 const LlmInterface = require('../interfaces/LlmInterface');
@@ -6,7 +6,11 @@ const LlmInterface = require('../interfaces/LlmInterface');
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
-        this.isResponding = false; // Tracks if the bot is currently set to respond
+        this.isResponding = false;
+        this.configuration = new Configuration({
+            apiKey: constants.LLM_API_KEY,
+        });
+        this.openai = new OpenAIApi(this.configuration);
         logger.debug('OpenAiManager initialized');
     }
 
@@ -21,17 +25,10 @@ class OpenAiManager extends LlmInterface {
     }
 
     async sendRequest(requestBody) {
-        const url = constants.LLM_ENDPOINT_URL;
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${constants.LLM_API_KEY}`,
-        };
-
-        logger.debug(`Sending request to OpenAI API: ${url}`)
-
+        logger.debug('Sending request to OpenAI API');
         try {
             logger.debug(`Final request body being sent: ${JSON.stringify(requestBody, null, 2)}`);
-            const response = await axios.post(url, requestBody, { headers });
+            const response = await this.openai.createCompletion(requestBody);
             logger.info('Response received from OpenAI API.');
             logger.debug('OpenAI API response:', response.data);
             return response.data;
