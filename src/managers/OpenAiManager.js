@@ -1,5 +1,13 @@
 // Updated import statement
-const OpenAI = require("openai");
+const { Configuration, OpenAIApi } = require('openai');
+
+// Ensure that the environment variable is being read correctly
+const customEndpoint = process.env.LLM_ENDPOINT_URL;
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+  apiEndpoint: customEndpoint, // Use the custom API endpoint URL from the environment variable
+});
 
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
@@ -10,10 +18,8 @@ class OpenAiManager extends LlmInterface {
         super();
         this.isResponding = false;
         // Updated OpenAI client instantiation with apiEndpoint
-        this.openai = new OpenAI({
-            apiKey: constants.LLM_API_KEY,
-            apiEndpoint: constants.LLM_ENDPOINT_URL, // Use your custom API endpoint URL here
-        });
+        this.openai = new OpenAIApi(configuration);
+
         logger.debug('OpenAiManager initialized with custom API endpoint');
     }
     
