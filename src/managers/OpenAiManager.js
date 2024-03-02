@@ -9,11 +9,12 @@ class OpenAiManager extends LlmInterface {
     constructor() {
         super();
         this.isResponding = false;
-        // Updated OpenAI client instantiation
+        // Updated OpenAI client instantiation with apiEndpoint
         this.openai = new OpenAI({
             apiKey: constants.LLM_API_KEY,
+            apiEndpoint: constants.LLM_ENDPOINT_URL, // Use your custom API endpoint URL here
         });
-        logger.debug('OpenAiManager initialized');
+        logger.debug('OpenAiManager initialized with custom API endpoint');
     }
     
     setIsResponding(state) {
