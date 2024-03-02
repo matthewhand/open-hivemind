@@ -1,4 +1,6 @@
-const { Configuration, OpenAIApi } = require('openai');
+// Updated import statement
+const OpenAI = require("openai");
+
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 const LlmInterface = require('../interfaces/LlmInterface');
@@ -7,13 +9,13 @@ class OpenAiManager extends LlmInterface {
     constructor() {
         super();
         this.isResponding = false;
-        this.configuration = new Configuration({
+        // Updated OpenAI client instantiation
+        this.openai = new OpenAI({
             apiKey: constants.LLM_API_KEY,
         });
-        this.openai = new OpenAIApi(this.configuration);
         logger.debug('OpenAiManager initialized');
     }
-
+    
     setIsResponding(state) {
         this.isResponding = state;
         logger.debug(`setIsResponding: State set to ${state}`);
