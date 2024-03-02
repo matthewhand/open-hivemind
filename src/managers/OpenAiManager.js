@@ -29,8 +29,8 @@ class OpenAiManager extends LlmInterface {
     async sendRequest(requestBody) {
         logger.debug('Sending request to OpenAI API');
         try {
-            logger.debug(`Final request body being sent: ${JSON.stringify(requestBody, null, 2)}`);
-            const response = await this.openai.createCompletion(requestBody);
+            // Assuming requestBody already contains the structured data for the API call
+            const response = await this.openai.completions.create(requestBody);
             logger.info('Response received from OpenAI API.');
             logger.debug('OpenAI API response:', response.data);
             return response.data;
@@ -39,7 +39,7 @@ class OpenAiManager extends LlmInterface {
             logger.error(errMsg, { error });
             throw new Error(errMsg);
         }
-    }
+    }    
 
     buildRequestBody(historyMessages, systemMessageContent = null) {
         logger.debug('Entering buildRequestBody');
