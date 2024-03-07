@@ -34,7 +34,7 @@ module.exports = {
     // Message structuring and processing adjustments
     LLM_PADDING_USE: process.env.LLM_PADDING_USE === 'true', // Controls if padding is used for consecutive messages
     LLM_PADDING_ADJUST_END: process.env.LLM_PADDING_ADJUST_END !== 'false', // Controls if conversation ending is adjusted to avoid ending with an assistant's message
-    LLM_PADDING_TEXT: process.env.LLM_PADDING_TEXT || "...", // Content used for padding between consecutive messages from the same role
+    LLM_PADDING_CONTENT: process.env.LLM_PADDING_CONTENT || "...", // Content used for padding between consecutive messages from the same role
     LLM_PADDING_END_ADJUST_TEXT: process.env.LLM_PADDING_END_ADJUST_TEXT || "...", // Content used to adjust conversation endings
 
     // Ensure to prefix all padding related constants with LLM_PADDING_ for clarity and consistency

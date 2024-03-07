@@ -1,23 +1,54 @@
-// Updated import statement
 const OpenAI = require("openai");
-
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 const LlmInterface = require('../interfaces/LlmInterface');
+
+// Custom replacer function for redacting sensitive information
+function redactSensitiveInfo(key, value) {
+    if (typeof value === 'string' && key === 'apiKey') {
+        return `${value.substring(0, 5)}*********${value.slice(-2)}`;
+    }
+    return value;
+}
 
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
         this.isResponding = false;
-        // Updated OpenAI client instantiation with apiEndpoint
+
+        logger.debug(`Initializing OpenAiManager with API key: ${constants.LLM_API_KEY.substring(0, 5)}... and API endpoint: ${constants.LLM_ENDPOINT_URL}`);
+
         this.openai = new OpenAI({
             apiKey: constants.LLM_API_KEY,
-            apiEndpoint: constants.LLM_ENDPOINT_URL
+            baseURL: constants.LLM_ENDPOINT_URL
         });
 
-        logger.debug('OpenAiManager initialized with custom API endpoint');
+        // Use redactSensitiveInfo to safely log the apiKey part
+        logger.debug(`OpenAiManager initialized with custom API endpoint. apiKey: ${JSON.stringify({apiKey: constants.LLM_API_KEY}, redactSensitiveInfo, 2)}`);
     }
-    
+
+    // Update all relevant debug logging to include redaction
+    async sendRequest(requestBody) {
+        // Log the requestBody with redaction
+        logger.debug(`Preparing to send request to OpenAI API with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
+
+        try {
+            const response = await this.openai.completions.create(requestBody);
+            logger.info('Response received from OpenAI API.');
+
+            // Redact sensitive info from the response if necessary
+            logger.debug(`OpenAI API response data: ${JSON.stringify(response.data, redactSensitiveInfo, 2)}`);
+            return response.data;
+        } catch (error) {
+            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
+            logger.error(errMsg);
+            // Optionally, log the error stack for more detailed debugging
+            logger.debug(`Error stack: ${error.stack}`);
+            throw new Error(errMsg);
+        }
+    }
+
+ 
     setIsResponding(state) {
         this.isResponding = state;
         logger.debug(`setIsResponding: State set to ${state}`);
@@ -28,83 +59,65 @@ class OpenAiManager extends LlmInterface {
         return this.isResponding;
     }
 
-    async sendRequest(requestBody) {
-        logger.debug('Sending request to OpenAI API');
-        try {
-            // Assuming requestBody already contains the structured data for the API call
-            const response = await this.openai.completions.create(requestBody);
-            logger.info('Response received from OpenAI API.');
-            logger.debug('OpenAI API response:', response.data);
-            return response.data;
-        } catch (error) {
-            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
-            logger.error(errMsg, { error });
-            throw new Error(errMsg);
-        }
-    }    
-
     buildRequestBody(historyMessages, systemMessageContent = null) {
-        logger.debug('Entering buildRequestBody');
+        logger.debug('Building request body for OpenAI API call.');
+        
         systemMessageContent = systemMessageContent || constants.LLM_SYSTEM_PROMPT;
-        logger.debug(`buildRequestBody: Using system message content: ${systemMessageContent}`);
-    
+        logger.debug(`Using system message content: '${systemMessageContent}'`);
+
         let messages = [{
             role: 'system',
             content: systemMessageContent
         }];
-    
+        
         let lastRole = 'system';
-        let accumulatedContent = ''; // To accumulate content from the same role
-    
-        // Ensure the first message after "system" is from a "user"
-        if (historyMessages.length > 0 && historyMessages[0].isFromBot()) {
-            messages.push({
-                role: 'user',
-                content: constants.LLM_PADDING_CONTENT || '...' // Padding content for the user
-            });
-            lastRole = 'user'; // Update lastRole since we just added a user padding message
-        }
-    
+        let accumulatedContent = '';
+        
+        // Log initial state before processing history messages
+        logger.debug(`Initial messages array: ${JSON.stringify(messages, null, 2)}`);
+        
         historyMessages.forEach((message, index) => {
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-    
-            // If the last message role is not the same as the current, push the accumulated content (if any) and reset
+            
             if (lastRole !== currentRole && accumulatedContent) {
                 messages.push({
                     role: lastRole,
-                    content: accumulatedContent.trim() // Trim any leading/trailing newline characters
+                    content: accumulatedContent.trim()
                 });
-                accumulatedContent = ''; // Reset accumulated content
+                logger.debug(`Pushed accumulated content for role: ${lastRole}, content: '${accumulatedContent.trim()}'`);
+                accumulatedContent = '';
             }
-    
-            // Accumulate content with a newline if not the first addition
+
             accumulatedContent += (accumulatedContent ? '\n' : '') + message.getText();
-    
-            lastRole = currentRole; // Update the lastRole for the next iteration
+            lastRole = currentRole;
         });
-    
-        // After the loop, add any remaining accumulated content
+
         if (accumulatedContent) {
             messages.push({
                 role: lastRole,
                 content: accumulatedContent.trim()
             });
+            logger.debug(`Final push for accumulated content for role: ${lastRole}, content: '${accumulatedContent.trim()}'`);
         }
-    
-        // Ensure the conversation ends with a user message if the last message was from the assistant
+
         if (lastRole === 'assistant') {
             messages.push({
                 role: 'user',
                 content: constants.LLM_PADDING_CONTENT || '...'
             });
+            logger.debug("Added user role message at the end to ensure conversation ends with a user message.");
         }
-    
-        logger.info('OpenAI API request body built successfully');
-        return {
+        
+        const requestBody = {
             model: constants.LLM_MODEL,
             messages,
         };
+
+        logger.info('Request body for OpenAI API call built successfully.');
+        logger.debug(`Request body: ${JSON.stringify(requestBody, null, 2)}`);
+        return requestBody;
     }
+    
                     
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
