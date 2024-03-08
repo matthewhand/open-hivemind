@@ -27,28 +27,37 @@ class OpenAiManager extends LlmInterface {
         logger.debug(`OpenAiManager initialized with custom API endpoint. apiKey: ${JSON.stringify({apiKey: constants.LLM_API_KEY}, redactSensitiveInfo, 2)}`);
     }
 
-    // Update all relevant debug logging to include redaction
     async sendRequest(requestBody) {
-        // Log the requestBody with redaction
-        logger.debug(`Preparing to send request to OpenAI API with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
-
+        logger.debug(`Sending request with body: ${JSON.stringify(requestBody)}`);
+    
         try {
             const response = await this.openai.completions.create(requestBody);
-            logger.info('Response received from OpenAI API.');
-
-            // Redact sensitive info from the response if necessary
-            logger.debug(`OpenAI API response data: ${JSON.stringify(response.data, redactSensitiveInfo, 2)}`);
-            return response.data;
+    
+            // Assuming the response always includes a JSON body
+            const responseData = response.data;
+            logger.debug(`Raw API response: ${JSON.stringify(responseData)}`);
+    
+            // Initialize an empty array for the transformed response
+            let transformedResponse = [];
+    
+            if (responseData.choices && Array.isArray(responseData.choices)) {
+                // Map 'choices' to their 'text' content if present
+                transformedResponse = responseData.choices.map(choice => choice.message?.content || 'No content found.');
+            } else {
+                // Provide a default message if 'choices' are not present or response is unexpected
+                logger.error('Unexpected response format or no choices found.');
+                transformedResponse = ['The response format is not recognized or does not contain expected data.'];
+            }
+    
+            logger.info('Response received and processed.');
+            return transformedResponse; // Return the array of transformed responses or default message
         } catch (error) {
-            const errMsg = `Failed to send request to OpenAI API: ${error.message}`;
-            logger.error(errMsg);
-            // Optionally, log the error stack for more detailed debugging
-            logger.debug(`Error stack: ${error.stack}`);
-            throw new Error(errMsg);
+            logger.error(`Failed to send request: ${error.message}`);
+            // Return a default error message in the same structured response format
+            return ['An error occurred while processing the request.'];
         }
     }
-
- 
+        
     setIsResponding(state) {
         this.isResponding = state;
         logger.debug(`setIsResponding: State set to ${state}`);

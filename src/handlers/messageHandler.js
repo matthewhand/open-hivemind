@@ -29,7 +29,8 @@ async function messageHandler(originalMessage) {
         }
 
         const responseContent = await openAiManager.sendRequest(requestBody);
-        let messageToSend = responseContent.choices[0].message.content;
+        // let messageToSend = responseContent.choices[0].message.content;
+        let messageToSend = responseContent[0];
 
         if (messageToSend.length > 1000) {
             logger.info("Message exceeds 1000 characters. Summarizing.");
@@ -57,7 +58,8 @@ async function summarizeMessage(message) {
         temperature: 0.7,
     };
     const summaryResponse = await new OpenAiManager().sendRequest(requestBody);
-    return summaryResponse.choices[0].text.trim();
+    // Ensure response is handled as an array and safely extract the summary text
+    return summaryResponse[0].trim(); // Assumes the first element contains the summary
 }
 
 async function sendResponse(messageContent, channelId, startTime) {
@@ -100,7 +102,8 @@ async function prepareRequestBody(originalMessage) {
 async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
     const requestBody = await prepareFollowUpRequestBody(originalMessage, channelTopic);
     const suggestedCommandResponse = await new OpenAiManager().sendRequest(requestBody);
-    await sendResponse(suggestedCommandResponse.choices[0].text.trim(), originalMessage.getChannelId(), Date.now());
+    // Handle the response as an array and safely extract the suggested command text
+    await sendResponse(suggestedCommandResponse[0].trim(), originalMessage.getChannelId(), Date.now());
 }
 
 async function prepareFollowUpRequestBody(originalMessage, channelTopic) {
