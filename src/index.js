@@ -5,6 +5,7 @@ const DiscordManager = require('./managers/DiscordManager');
 const messageHandler = require('./handlers/messageHandler').messageHandler;
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
+const { startWebhookServer } = require('./handlers/webhookHandler');
 
 // Assuming debugEnvVars is a function that logs environment variables for debugging
 // Ensure this function respects privacy and security by not logging sensitive info
@@ -28,7 +29,10 @@ async function initialize() {
         discordManager.setMessageHandler(messageHandler);
         
         logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}`);
-        // Additional initialization logic if necessary
+        
+        // At the end of the initialize function or after the bot has logged in
+        startWebhookServer(process.env.WEB_SERVER_PORT || 3001);
+
     } catch (error) {
         logger.error(`Error during initialization: ${error}`);
         process.exit(1);

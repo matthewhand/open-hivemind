@@ -98,7 +98,7 @@ const startWebhookServer = (port) => {
 client.once('ready', () => {
     console.log('Logged in as', client.user.tag);
 
-    const port = process.env.WEBHOOK_PORT || 3001;
+    const port = process.env.WEB_SERVER_PORT || 3001;
     startWebhookServer(port);
 });
 
