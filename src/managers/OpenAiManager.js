@@ -28,36 +28,43 @@ class OpenAiManager extends LlmInterface {
     }
 
     async sendRequest(requestBody) {
-        logger.debug(`Sending request with body: ${JSON.stringify(requestBody)}`);
+        logger.debug(`Sending request with body: ${JSON.stringify(requestBody, null, 2)}`);
     
         try {
             const response = await this.openai.completions.create(requestBody);
+            logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
     
-            // Assuming the response always includes a JSON body
-            const responseData = response.data;
-            logger.debug(`Raw API response: ${JSON.stringify(responseData)}`);
-    
-            // Initialize an empty array for the transformed response
-            let transformedResponse = [];
-    
-            if (responseData.choices && Array.isArray(responseData.choices)) {
-                // Map 'choices' to their 'text' content if present
-                transformedResponse = responseData.choices.map(choice => choice.message?.content || 'No content found.');
+            // Generalize the response structure check
+            let choicesArray;
+            if (response.choices) {
+                choicesArray = response.choices;
+            } else if (response.data && Array.isArray(response.data.choices)) { // TODO update cloudflare worker endpoint
+                choicesArray = response.data.choices;
             } else {
-                // Provide a default message if 'choices' are not present or response is unexpected
-                logger.error('Unexpected response format or no choices found.');
-                transformedResponse = ['The response format is not recognized or does not contain expected data.'];
+                logger.error('API response does not conform to expected structure.');
+                return [];
             }
     
-            logger.info('Response received and processed.');
-            return transformedResponse; // Return the array of transformed responses or default message
+            let processedResponses = choicesArray.map((choice, index) => {
+                // Adapt to the structure of 'message' based on your API's response
+                const messageContent = choice.message?.content || choice.content;
+                if (!messageContent) {
+                    return `Error: Missing content at choice index ${index}.`;
+                }
+                return messageContent;
+            });
+    
+            logger.info('Response processed successfully.');
+            logger.debug(`Processed response data: ${JSON.stringify(processedResponses, null, 2)}`);
+    
+            return processedResponses;
         } catch (error) {
             logger.error(`Failed to send request: ${error.message}`);
-            // Return a default error message in the same structured response format
-            return ['An error occurred while processing the request.'];
+            logger.debug(`Error stack: ${error.stack}`);
+            throw error;
         }
     }
-        
+                
     setIsResponding(state) {
         this.isResponding = state;
         logger.debug(`setIsResponding: State set to ${state}`);
@@ -126,7 +133,6 @@ class OpenAiManager extends LlmInterface {
         logger.debug(`Request body: ${JSON.stringify(requestBody, null, 2)}`);
         return requestBody;
     }
-    
                     
     async summarizeTextAsBulletPoints(text) {
         logger.debug('Entering summarizeTextAsBulletPoints');
