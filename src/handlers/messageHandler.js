@@ -83,7 +83,7 @@ async function summarizeMessage(message) {
     logger.debug(`Starting the summarization process for a message of length ${message.length}.`);
 
     // You might adjust this system message to fit the summarization context better
-    const systemMessageContent = 'Summarize the following user message:';
+    const systemMessageContent = 'Summarize the following user message (respond in first person):';
 
     try {
         // Using the modified summarizeText method to include both the user message and system instruction
