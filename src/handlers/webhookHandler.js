@@ -105,7 +105,7 @@ const startWebhookServer = (port) => {
     
         try {
             // Use summarizeText to process the message with OpenAI
-            const systemMessage = "Please summarise the incoming message, and transform into an upbeat comedic message to be shared in public chat forum.";
+            const systemMessage = "Please summarise the incoming message from your external augmentations, translate into an upbeat comedic message, to be shared in public chat forum.";
             const summarizedTexts = await openAiManager.summarizeText(message, systemMessage);
     
             // Assuming we only care about the first summary
