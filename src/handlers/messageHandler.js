@@ -162,7 +162,7 @@ async function handleFollowUp(originalMessage) {
             const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
             logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
 
-            const prompt = `Channel topic "${channelTopic}" with commands: ${commandDescriptions}. Suggest a follow-up action.`;
+            const prompt = `Inform user about a relevant command based on the discussion and topic, "${channelTopic}" from the built in commands: ${commandDescriptions}. Suggest one command to user.`;
             
             // Building the request body for the follow-up action using the compiled prompt
             const requestBody = {
