@@ -80,19 +80,32 @@ async function shouldProcessMessage(originalMessage, openAiManager) {
 
 async function summarizeMessage(message) {
     const openAiManager = OpenAiManager.getInstance();
-    logger.debug(`Starting summarization process for message of length ${message.length}.`);
+    logger.debug(`Starting the summarization process for a message of length ${message.length}.`);
+
+    // Building a single user message as history for summarization context
+    const userMessage = {
+        role: 'user',
+        content: message
+    };
+
+    // You might adjust this system message to fit the summarization context better
+    const systemMessageContent = 'Summarize the following user message:';
+
     try {
-        const summaryResponse = await openAiManager.summarizeText(message);
+        // Using the modified summarizeText method to include both the user message and system instruction
+        const summaryResponse = await openAiManager.summarizeText([userMessage], systemMessageContent);
+        
         if (summaryResponse && summaryResponse.length > 0) {
-            logger.debug(`Successfully summarized message. Summary: ${summaryResponse[0]}`);
-            return summaryResponse[0].trim();
+            const summary = summaryResponse[0].trim();
+            logger.debug(`Summarization successful. Summary: ${summary.substring(0, 100)}...`); // Log the first 100 chars
+            return summary;
         } else {
             logger.warn('Summarization response was empty or undefined.');
-            return 'Failed to summarize the message due to an empty response.';
+            return 'Unable to summarize the message due to an empty response from the summarization process.';
         }
     } catch (error) {
         logger.error(`Summarization process failed with error: ${error}`);
-        return 'Failed to summarize the message due to an error.';
+        return 'Failed to summarize the message due to an error in the summarization process.';
     }
 }
 
