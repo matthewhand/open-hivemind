@@ -14,17 +14,24 @@ function redactSensitiveInfo(key, value) {
 class OpenAiManager extends LlmInterface {
     constructor() {
         super();
+        if (OpenAiManager.instance) {
+            return OpenAiManager.instance; // Return the existing instance if it exists
+        }
         this.isResponding = false;
-
-        logger.debug(`Initializing OpenAiManager with API key: ${constants.LLM_API_KEY.substring(0, 5)}... and API endpoint: ${constants.LLM_ENDPOINT_URL}`);
-
         this.openai = new OpenAI({
             apiKey: constants.LLM_API_KEY,
             baseURL: constants.LLM_ENDPOINT_URL
         });
+        OpenAiManager.instance = this; // Assign this new instance to the static instance property
 
-        // Use redactSensitiveInfo to safely log the apiKey part
+        logger.debug(`Initializing OpenAiManager with API key: ${constants.LLM_API_KEY.substring(0, 5)}... and API endpoint: ${constants.LLM_ENDPOINT_URL}`);
         logger.debug(`OpenAiManager initialized with custom API endpoint. apiKey: ${JSON.stringify({apiKey: constants.LLM_API_KEY}, redactSensitiveInfo, 2)}`);
+    }
+    static getInstance() {
+        if (!OpenAiManager.instance) {
+            OpenAiManager.instance = new OpenAiManager();
+        }
+        return OpenAiManager.instance;
     }
 
     async sendRequest(requestBody) {

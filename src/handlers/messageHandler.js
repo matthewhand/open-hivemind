@@ -6,7 +6,7 @@ const constants = require('../config/constants');
 
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
-    const openAiManager = new OpenAiManager();
+    const openAiManager = OpenAiManager.getInstance();
 
     logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
 
@@ -78,14 +78,21 @@ async function messageHandler(originalMessage) {
 }
 
 async function summarizeMessage(message) {
-    const requestBody = {
-        prompt: `Summarize the following message:\n\n${message}`,
-        max_tokens: 123,
-        temperature: 0.7,
-    };
-    const summaryResponse = await new OpenAiManager().sendRequest(requestBody);
-    // Ensure response is handled as an array and safely extract the summary text
-    return summaryResponse[0].trim(); // Assumes the first element contains the summary
+    const openAiManager = OpenAiManager.getInstance();
+
+    // This approach uses the 'summarizeText' method directly, which you should have in your OpenAiManager
+    // Ensure the 'summarizeText' method is adapted if necessary to match your specific summarization needs
+    const summaryResponse = await openAiManager.summarizeText(message);
+    
+    // Process the summary response appropriately based on how the 'summarizeText' method formats its output
+    // This is a simplified example; adapt the handling based on your actual response structure
+    if (summaryResponse && summaryResponse.length > 0) {
+        // Assuming the first element of the response contains the summary
+        return summaryResponse[0].trim();
+    } else {
+        logger.error('Summarization failed or returned empty response.');
+        return 'Failed to summarize the message.';
+    }
 }
 
 async function sendResponse(messageContent, channelId, startTime) {
