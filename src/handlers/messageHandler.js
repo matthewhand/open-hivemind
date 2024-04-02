@@ -9,14 +9,8 @@ async function messageHandler(originalMessage) {
     const openAiManager = new OpenAiManager();
 
     logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
-    if (openAiManager.getIsResponding()) {
-        logger.info("Currently processing another request. Skipping message.");
-        return;
-    }
 
     try {
-        openAiManager.setIsResponding(true); // Mark as responding
-
         // // Ensure originalMessage has necessary methods
         // if (typeof originalMessage.mentionsUser !== 'function' || 
         //     typeof originalMessage.isReplyToBot !== 'function') {
@@ -24,9 +18,17 @@ async function messageHandler(originalMessage) {
         //     return;
         // }
 
-        if (!originalMessage.isDirectionMention() && !originalMessage.isReplyToBot()) {
-            logger.info("Skipping non-direct/non-reply message.");
+        if (openAiManager.getIsResponding()) {
+            logger.info("Currently processing another request...")
+
+            if (!originalMessage.isDirectionMention() && !originalMessage.isReplyToBot()) {
+                logger.info("... Skipping message.");
+                return;
+            }
+
+            logger.info("... considering response due to being a direct/reply message.");
             return;
+
         }
 
         const shouldReply = messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply;
@@ -41,6 +43,8 @@ async function messageHandler(originalMessage) {
             logger.error('Request body is empty or invalid.');
             return;
         }
+
+        openAiManager.setIsResponding(true); // Mark as responding
 
         logger.debug(`Sending request to OpenAI: ${JSON.stringify(requestBody)}`);
         const responseContent = await openAiManager.sendRequest(requestBody);
