@@ -155,8 +155,7 @@ class OpenAiManager {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.5,
-            max_tokens: 420,
-            stop: ["\n\n"]
+            max_tokens: 420
         };
     
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
