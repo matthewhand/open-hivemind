@@ -2,6 +2,7 @@ const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { predictionImageMap } = require('../utils/handleImageMessage');
+const constants = require('./config/constants'); // Adjust path as necessary
 const DiscordManager = require('./managers/DiscordManager');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -96,16 +97,18 @@ const startWebhookServer = (port) => {
     });
 
     app.post('/receive-message', async (req, res) => {
-        // Assuming req.body.message contains the message text
-        const { message } = req.body;
+        const { message } = req.body; // Assuming the body directly contains the message text
     
         try {
-            // Use the channel ID from your constants
-            const channel = await client.channels.fetch(constants.CHANNEL_ID);
-            
+            // Use DiscordManager to get the existing client instance
+            const discordManager = DiscordManager.getInstance();
+    
+            // Use the channel ID from your constants to send the message
+            const channel = await discordManager.client.channels.fetch(constants.CHANNEL_ID);
+    
             // Send the message to the specified channel
             await channel.send(message);
-            
+    
             res.status(200).send("Message posted successfully.");
         } catch (error) {
             console.error('Error posting the received message:', error);
