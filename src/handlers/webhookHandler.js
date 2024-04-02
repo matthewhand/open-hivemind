@@ -2,8 +2,9 @@ const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { predictionImageMap } = require('../utils/handleImageMessage');
-const constants = require('../config/constants');
+const OpenAiManager = require('../managers/OpenAiManager');
 const DiscordManager = require('../managers/DiscordManager');
+
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -97,25 +98,31 @@ const startWebhookServer = (port) => {
     });
 
     app.post('/receive-message', async (req, res) => {
-        const { message } = req.body; // Assuming the body directly contains the message text
+        const { message } = req.body; // Assume the incoming payload has a 'message' field
+    
+        // Get an instance of OpenAiManager
+        const openAiManager = OpenAiManager.getInstance();
     
         try {
-            // Use DiscordManager to get the existing client instance
+            // Use summarizeText to process the message with OpenAI
+            const systemMessage = "Please summarise the incoming message, and transform into an upbeat comedic message to be shared in public chat forum.";
+            const summarizedTexts = await openAiManager.summarizeText(message, systemMessage);
+    
+            // Assuming we only care about the first summary
+            // const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : "Could not summarize the message.";
+            const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : "";
+    
+            // Get an instance of DiscordManager and send the summarized message to a specific channel
             const discordManager = DiscordManager.getInstance();
+            await discordManager.sendResponse(process.env.CHANNEL_ID, summarizedMessage);
     
-            // Use the channel ID from your constants to send the message
-            const channel = await discordManager.client.channels.fetch(constants.CHANNEL_ID);
-    
-            // Send the message to the specified channel
-            await channel.send(message);
-    
-            res.status(200).send("Message posted successfully.");
+            res.status(200).send({ message: "Message summarized and sent to Discord." });
         } catch (error) {
-            console.error('Error posting the received message:', error);
-            res.status(500).send({ error: 'Failed to post the received message' });
+            console.error('Failed to summarize or send the message:', error);
+            res.status(500).send({ error: 'Failed to summarize or send the message' });
         }
     });
-
+    
 };
 
 client.once('ready', () => {

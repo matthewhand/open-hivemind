@@ -142,7 +142,7 @@ class OpenAiManager {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.5,
-            max_tokens: 200,
+            max_tokens: 420,
             stop: ["\n", " END"]
         };
     

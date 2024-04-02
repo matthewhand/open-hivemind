@@ -130,7 +130,7 @@ async function summarizeMessage(message) {
 async function sendResponse(messageContent, channelId, startTime) {
     // First, trigger the typing indicator
     await DiscordManager.getInstance().startTyping(channelId);
-    logger.debug(`Bot is typing in channel ID: ${channelId}`);
+    logger.debug(`Bot is sending response in channel ID: ${channelId}`);
 
     // Define the delay logic as before, but include the typing indicator timing
     async function sendMessagePart(part, delayStartTime) {
