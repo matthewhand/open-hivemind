@@ -99,9 +99,12 @@ class DiscordManager {
 
     async startTyping(channelId) {
         const channel = await this.client.channels.fetch(channelId);
-        channel.startTyping();
+        if (channel.isText()) { // Check if the channel is a text channel (not voice)
+            channel.startTyping();
+        } else {
+            logger.warn(`Channel ${channelId} does not support typing indicators.`);
+        }
     }
-
     stopTyping(channelId) {
         const channel = this.client.channels.cache.get(channelId);
         if (channel) channel.stopTyping(true);
