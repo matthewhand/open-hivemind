@@ -122,7 +122,7 @@ class DiscordManager {
     
     stopTyping(channelId) {
         const channel = this.client.channels.cache.get(channelId);
-        if (channel) channel.stopTyping(true);
+        // if (channel) channel.stopTyping(true);
     }
 
     static getInstance() {
