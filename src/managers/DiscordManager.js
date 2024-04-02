@@ -98,13 +98,28 @@ class DiscordManager {
     }
 
     async startTyping(channelId) {
-        const channel = await this.client.channels.fetch(channelId);
-        if (channel.isText()) { // Check if the channel is a text channel (not voice)
-            channel.startTyping();
-        } else {
-            logger.warn(`Channel ${channelId} does not support typing indicators.`);
+        try {
+            const channel = await this.client.channels.fetch(channelId)
+                .then(channel => {
+                    logger.debug(`Start typing in channel ${channel.name} (${channelId})`);
+                    return channel; // Make sure to return the channel for further processing
+                })
+                .catch(error => {
+                    logger.error(`Failed to fetch channel: ${error}`);
+                    throw error; // Re-throw the error to be caught by the outer try/catch
+                });
+    
+            if (channel && channel.isText()) { // Check if the channel is a text channel (not voice)
+                channel.startTyping();
+            } else {
+                logger.warn(`Channel ${channelId} does not support typing indicators.`);
+            }
+        } catch (error) {
+            // Handle any errors that were thrown in the try block or re-thrown by the .catch()
+            logger.error(`Error in startTyping: ${error}`);
         }
     }
+    
     stopTyping(channelId) {
         const channel = this.client.channels.cache.get(channelId);
         if (channel) channel.stopTyping(true);
