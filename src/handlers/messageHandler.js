@@ -128,6 +128,8 @@ async function sendResponse(messageContent, channelId, startTime) {
 }
 
 async function prepareRequestBody(originalMessage) {
+    const openAiManager = OpenAiManager.getInstance();
+
     const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
     const channelTopic = channel.topic || 'General conversation';
     const historyMessages = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
@@ -136,6 +138,8 @@ async function prepareRequestBody(originalMessage) {
 }
 
 async function handleFollowUp(originalMessage) {
+    const openAiManager = OpenAiManager.getInstance();
+
     logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
 
     const channelTopic = await fetchChannelTopic(originalMessage.getChannelId());
