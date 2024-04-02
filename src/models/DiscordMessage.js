@@ -34,11 +34,23 @@ class DiscordMessage extends IMessage {
     
         logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
-    // Concrete implementation of mentionsUsers for Discord messages
-    mentionsUsers(userId = constants.CLIENT_ID) {
-        const doesMentionUser = this.message.mentions.users.has(userId);
-        logger.debug(`mentionsUsers: Checking if message mentions user ID ${userId}: ${doesMentionUser}`);
+    // Update mentionsUsers to handle an array of user IDs or a single userID
+    mentionsUsers(userIds = [constants.CLIENT_ID]) {
+        // Ensure userIds is always an array for consistency
+        if (!Array.isArray(userIds)) {
+            userIds = [userIds];
+        }
+
+        const doesMentionUser = userIds.some(userId => this.message.mentions.users.has(userId));
+        logger.debug(`mentionsUsers: Checking if message mentions any user ID in [${userIds.join(", ")}]: ${doesMentionUser}`);
         return doesMentionUser;
+    }
+
+    // Implement isDirectionMention to check for mentions that imply direct interaction
+    isDirectionMention() {
+        // Assuming direct interaction is determined by the bot being the only mention
+        const mentions = this.message.mentions.users;
+        return mentions.size === 1 && mentions.has(constants.CLIENT_ID);
     }
 
     // Override or extend isReply method to utilize repliedMessage for additional checks

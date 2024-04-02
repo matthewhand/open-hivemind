@@ -1,4 +1,3 @@
-// Import necessary modules and managers
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
@@ -7,30 +6,52 @@ const constants = require('../config/constants');
 
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
-    logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
-
     const openAiManager = new OpenAiManager();
-    if (openAiManager.getIsResponding() && !originalMessage.isDirectMessage() && !originalMessage.isReplyToBot()) {
-        logger.info("Currently busy. Skipping non-direct/non-reply message.");
+
+    logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
+    if (openAiManager.getIsResponding()) {
+        logger.info("Currently processing another request. Skipping message.");
         return;
     }
 
     try {
+        openAiManager.setIsResponding(true); // Mark as responding
+
+        // // Ensure originalMessage has necessary methods
+        // if (typeof originalMessage.mentionsUser !== 'function' || 
+        //     typeof originalMessage.isReplyToBot !== 'function') {
+        //     logger.error("originalMessage does not have expected methods.");
+        //     return;
+        // }
+
+        if (!originalMessage.isDirectionMention() && !originalMessage.isReplyToBot()) {
+            logger.info("Skipping non-direct/non-reply message.");
+            return;
+        }
+
         const shouldReply = messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply;
         if (!shouldReply) {
             logger.info("Chose not to respond to this message.");
             return;
         }
 
+        logger.debug("Preparing request body for OpenAI API.");
         const requestBody = await prepareRequestBody(originalMessage);
-        if (!requestBody.messages || requestBody.messages.length === 0) {
+        if (!requestBody || !requestBody.messages || requestBody.messages.length === 0) {
             logger.error('Request body is empty or invalid.');
             return;
         }
 
+        logger.debug(`Sending request to OpenAI: ${JSON.stringify(requestBody)}`);
         const responseContent = await openAiManager.sendRequest(requestBody);
-        // let messageToSend = responseContent.choices[0].message.content;
+
+        if (!responseContent || responseContent.length === 0) {
+            logger.error("Received empty or invalid response from OpenAI.");
+            return;
+        }
+
         let messageToSend = responseContent[0];
+        logger.debug(`Response from OpenAI: ${messageToSend}`);
 
         if (messageToSend.length > 1000) {
             logger.info("Message exceeds 1000 characters. Summarizing.");
@@ -41,12 +62,13 @@ async function messageHandler(originalMessage) {
 
         if (constants.FOLLOW_UP_ENABLED) {
             logger.info("Follow-up enabled. Processing follow-up message.");
-            const channelTopic = "Determine dynamically"; // Placeholder for actual logic to determine channel topic
+            const channelTopic = await DiscordManager.getInstance().getChannelTopic(originalMessage.getChannelId());
             await sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic);
         }
     } catch (error) {
         logger.error(`Failed to process message: ${error}`);
     } finally {
+        openAiManager.setIsResponding(false); // Reset responding status
         logger.info(`Processing complete. Elapsed time: ${Date.now() - startTime}ms`);
     }
 }
@@ -100,17 +122,45 @@ async function prepareRequestBody(originalMessage) {
 }
 
 async function sendLLMGeneratedFollowUpResponse(originalMessage, channelTopic) {
-    const requestBody = await prepareFollowUpRequestBody(originalMessage, channelTopic);
-    const suggestedCommandResponse = await new OpenAiManager().sendRequest(requestBody);
-    // Handle the response as an array and safely extract the suggested command text
-    await sendResponse(suggestedCommandResponse[0].trim(), originalMessage.getChannelId(), Date.now());
+    try {
+        logger.debug(`Preparing follow-up request body. Channel Topic: ${channelTopic}`);
+        const requestBody = await prepareFollowUpRequestBody(originalMessage, channelTopic);
+        logger.debug(`Follow-up request body prepared: ${JSON.stringify(requestBody)}`);
+
+        const suggestedCommandResponse = await new OpenAiManager().sendRequest(requestBody);
+        logger.debug(`Received follow-up response: ${JSON.stringify(suggestedCommandResponse)}`);
+
+        if (!suggestedCommandResponse || suggestedCommandResponse.length === 0) {
+            logger.error('Follow-up response is empty or invalid.');
+            return;
+        }
+
+        await sendResponse(suggestedCommandResponse[0].trim(), originalMessage.getChannelId(), Date.now());
+    } catch (error) {
+        logger.error(`Failed to send LLM generated follow-up response: ${error}`);
+        if (error instanceof Error) {
+            logger.debug(`Error stack: ${error.stack}`);
+        }
+    }
 }
 
 async function prepareFollowUpRequestBody(originalMessage, channelTopic) {
-    const commands = require('../commands/inline'); // Load commands dynamically
-    const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
-    const prompt = `Channel topic "${channelTopic}" with commands: ${commandDescriptions}, suggest a follow-up action.`;
-    return { prompt, max_tokens: 420 };
+    try {
+        const commands = require('../commands/inline'); // Load commands dynamically
+        logger.debug('Commands loaded for follow-up.');
+
+        const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
+        logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
+
+        const prompt = `Channel topic "${channelTopic}" with commands: ${commandDescriptions}, suggest a follow-up action.`;
+        return { prompt, max_tokens: 420 };
+    } catch (error) {
+        logger.error(`Error preparing follow-up request body: ${error}`);
+        if (error instanceof Error) {
+            logger.debug(`Error stack: ${error.stack}`);
+        }
+        return {}; // Return an empty object to prevent further processing
+    }
 }
 
 module.exports = { messageHandler };

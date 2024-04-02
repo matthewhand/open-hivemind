@@ -64,6 +64,7 @@ class DiscordManager {
                 const processedMessage = new DiscordMessage(discordMessage, repliedMessage);
 
                 if (this.messageHandler) {
+                    console.log(Object.getOwnPropertyNames(processedMessage.__proto__));
                     await this.messageHandler(processedMessage);
                 } else {
                     logger.warn('Message handler not set in DiscordManager.');
@@ -116,6 +117,26 @@ class DiscordManager {
     async getBotId() {
         return constants.CLIENT_ID;
     }
+
+    /**
+     * Fetches the topic of a specified channel.
+     * @param {string} channelId - The ID of the channel for which to fetch the topic.
+     * @returns {Promise<string>} The topic of the channel or 'No topic set' if not available.
+     */
+    async getChannelTopic(channelId) {
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel.isText()) {
+                logger.warn(`Channel ${channelId} is not a text channel.`);
+                return 'No topic set'; // Adjust based on your handling of non-text channels
+            }
+            return channel.topic || 'No topic set';
+        } catch (error) {
+            logger.error(`Error fetching channel topic for channel ID ${channelId}: ${error}`);
+            return 'No topic set'; // Fallback topic in case of an error
+        }
+    }
+
 }
 
 module.exports = DiscordManager;
