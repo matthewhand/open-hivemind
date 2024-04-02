@@ -1,6 +1,7 @@
 const OpenAI = require("openai");
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
+const IMessage = require('../interfaces/IMessage'); // Make sure this path is correct
 
 // Custom replacer function for redacting sensitive information in logs
 function redactSensitiveInfo(key, value) {
@@ -33,11 +34,6 @@ class OpenAiManager {
     buildRequestBody(historyMessages = [], systemMessageContent = 'Assist User with their query.') {
         logger.debug('Building request body for OpenAI API call.');
 
-        // Check if each message in historyMessages is an instance of IMessage (or subclass)
-        if (historyMessages.some(message => !(message instanceof IMessage))) {
-            throw new Error("All history messages must be instances of IMessage or its subclasses.");
-        }
-
         let messages = [{
             role: 'system',
             content: systemMessageContent,
@@ -47,7 +43,10 @@ class OpenAiManager {
         let accumulatedContent = '';
 
         historyMessages.forEach((message) => {
-            // Directly use getText(), getChannelId(), etc., assuming message is guaranteed to be IMessage or subclass
+            if (!(message instanceof IMessage)) {
+                throw new Error("All history messages must be instances of IMessage or its subclasses.");
+            }
+
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
             const messageContent = message.getText();
 
