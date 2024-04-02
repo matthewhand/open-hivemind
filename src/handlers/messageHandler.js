@@ -9,21 +9,23 @@ const { commandHandler } = require('./commandHandler');
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
     const openAiManager = OpenAiManager.getInstance();
-    const messageText = originalMessage.content.trim();
+
+    // Use optional chaining and provide a default empty string to safely call .trim()
+    const messageText = originalMessage.content?.trim() || "";
 
     // Detect if the message starts with '!' indicating a command
     if (messageText.startsWith('!')) {
-        // Extract command name and any following text as arguments
         const [commandName, ...args] = messageText.slice(1).split(/\s+/);
-        const command = commands[commandName.toLowerCase()];
+        if (commandName) { // Ensure commandName is not undefined or empty
+            const command = commands[commandName.toLowerCase()];
 
-        // If the command exists, execute the command handler and stop further processing
-        if (command) {
-            logger.info(`Executing command: ${commandName}`);
-            return await commandHandler(originalMessage, command, args.join(' ')); // Assuming commandHandler supports these parameters
-        } else {
-            // Optionally, send a message back to the channel to indicate an unknown command
-            return await originalMessage.reply(`Unknown command: ${commandName}`);
+            if (command) {
+                logger.info(`Executing command: ${commandName}`);
+                return await commandHandler(originalMessage, command, args.join(' '));
+            } else {
+                // Handle unknown command
+                return await originalMessage.reply(`Unknown command: ${commandName}`);
+            }
         }
     }
 
