@@ -30,6 +30,29 @@ class OpenAiManager {
         return OpenAiManager.instance;
     }
 
+    buildRequestBody(historyMessages, systemMessageContent) {
+        logger.debug('Building request body for OpenAI API call.');
+
+        let messages = historyMessages.map(msg => ({
+            role: msg.isFromBot ? 'assistant' : 'user',
+            content: msg.getText()
+        }));
+
+        // Prepend the system message if provided
+        if (systemMessageContent) {
+            messages.unshift({
+                role: 'system',
+                content: systemMessageContent
+            });
+        }
+
+        logger.debug(`Request body built with ${messages.length} messages.`);
+        return {
+            model: constants.LLM_MODEL,
+            messages: messages,
+        };
+    }
+
     async sendRequest(requestBody) {
         logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
         try {
