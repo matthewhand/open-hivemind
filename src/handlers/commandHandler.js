@@ -3,7 +3,10 @@ const { aliases } = require('../config/aliases');
 const commands = require('../commands/inline');
 const logger = require('../utils/logger');
 const { parseCommand } = require('../utils/commandParser');
-const { extractCommandContent } = require('../utils/commandUtils'); // Ensure this path matches your project structure
+
+function extractCommandContent(message) {
+    return message.content.trim();
+}
 
 async function commandHandler(message) {
     try {
