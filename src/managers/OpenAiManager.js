@@ -43,38 +43,38 @@ class OpenAiManager {
         let accumulatedContent = '';
     
         historyMessages.forEach((message, index) => {
-            // Ensure that the message is an instance of the expected IMessage interface
+            // Ensure the message is an instance of IMessage or similar for correct interface
             if (!(message instanceof IMessage)) {
                 throw new Error("All history messages must be instances of IMessage or its subclasses.");
             }
     
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
     
-            // Handling the first message after the system message(s) to ensure it's from a "user"
+            // If last role was 'system' and the current role is 'assistant', insert a placeholder user message
             if (lastRole === 'system' && currentRole === 'assistant') {
-                // Artificially insert a "user" placeholder message if the first role isn't "user"
                 messages.push({
                     role: 'user',
-                    content: '.', // Placeholder content indicating user interaction
+                    content: '...', // Placeholder user content
                 });
-                lastRole = 'user'; // Update the lastRole to ensure proper alternation moving forward
             }
     
-            // If the role has changed from the last message, push a new message with the accumulated content
-            if (lastRole !== currentRole && accumulatedContent) {
-                messages.push({
-                    role: lastRole,
-                    content: accumulatedContent.trim(),
-                });
-                accumulatedContent = '';
+            if (lastRole !== currentRole) {
+                // When role changes, push accumulated content for the last role and reset accumulator
+                if (accumulatedContent) {
+                    messages.push({
+                        role: lastRole,
+                        content: accumulatedContent.trim(),
+                    });
+                    accumulatedContent = '';
+                }
+                lastRole = currentRole;
             }
     
-            // Accumulate content from messages of the same role or if it's the first iteration
+            // Accumulate content from consecutive messages of the same role
             accumulatedContent += (accumulatedContent ? '\n' : '') + message.getText();
-            lastRole = currentRole;
         });
     
-        // After iterating through all messages, check for any remaining accumulated content
+        // After iterating, if there's any remaining content, push it as the last message
         if (accumulatedContent) {
             messages.push({
                 role: lastRole,
@@ -82,11 +82,11 @@ class OpenAiManager {
             });
         }
     
-        // Ensure the conversation ends with a "user" message
+        // Always ensure the conversation ends with a 'user' role message
         if (lastRole === 'assistant') {
             messages.push({
                 role: 'user',
-                content: '.', // Placeholder content to ensure alternation pattern is maintained
+                content: '...', // Placeholder content for a final 'user' message
             });
         }
     
@@ -100,7 +100,7 @@ class OpenAiManager {
     
         return requestBody;
     }
-                    
+                        
     async sendRequest(requestBody) {
         logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
