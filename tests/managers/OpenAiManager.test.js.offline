@@ -16,15 +16,29 @@ const constants = {
 
 jest.mock('../../src/models/DiscordMessage');
 jest.mock('openai', () => {
-  // Mock the Configuration and OpenAIApi directly
-  const mockOpenAIApi = jest.fn().mockImplementation(() => ({
-    createCompletion: jest.fn().mockResolvedValue({ data: 'mocked data' }),
-  }));
+  const mockCompletionsCreate = jest.fn().mockResolvedValue({
+    data: {
+      choices: [{ text: 'mocked response' }]
+    }
+  });
+
+  // Mocking as if OpenAI is a default export
+  const MockOpenAI = class {
+    constructor({ apiKey, baseURL }) {
+      this.apiKey = apiKey;
+      this.baseURL = baseURL;
+    }
+
+    completions = {
+      create: mockCompletionsCreate
+    };
+  };
+
   return {
-    Configuration: jest.fn(), // Keep as is if you don't need to mock its internals
-    OpenAIApi: mockOpenAIApi, // Adjust this to mock OpenAIApi as a constructor
+    default: MockOpenAI, // Simulate default export
   };
 });
+
 
 const OpenAiManager = require('../../src/managers/OpenAiManager');
 const DiscordMessage = require('../../src/models/DiscordMessage');
@@ -35,6 +49,7 @@ DiscordMessage.mockImplementation((content, isBot = false) => ({
   isFromBot: () => isBot,
 }));
 
+
 describe('OpenAiManager', () => {
   let openAiManager;
 
@@ -42,30 +57,33 @@ describe('OpenAiManager', () => {
     openAiManager = new OpenAiManager();
   });
 
-  test('structures payload correctly according to message roles and system prompts', () => {
-    // Setup your history messages here
+  test('structures payload correctly for alternating roles after system messages', () => {
+    // Setup your history messages to include a case where the first role after "system" should be "user"
     const historyMessages = [
-      new DiscordMessage("System prompt", true), // Assuming true signifies a system or bot message
+      new DiscordMessage("System prompt", true), // True signifies a bot message, potentially used for system messages
+      new DiscordMessage("Assistant message without user reply", true),
       new DiscordMessage("User message 1", false),
       new DiscordMessage("Assistant response", true),
       new DiscordMessage("User message 2", false),
-      // Add more messages as needed to test your logic
     ];
 
-    // Use the defined constants object for expected payload
     const expectedPayload = {
       model: constants.LLM_MODEL,
       messages: [
-        { role: 'system', content: "System prompt" },
+        { role: 'system', content: constants.LLM_SYSTEM_PROMPT },
+        // Expecting a placeholder "user" message if the first message after "system" is not from "user"
+        { role: 'user', content: "." }, // Placeholder user message
+        { role: 'assistant', content: "Assistant message without user reply" },
         { role: 'user', content: "User message 1" },
         { role: 'assistant', content: "Assistant response" },
         { role: 'user', content: "User message 2" },
-        // Adjust based on your specific logic and requirements
       ],
     };
 
-    const result = openAiManager.buildRequestBody(historyMessages);
+    const result = openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT);
 
     expect(result).toEqual(expectedPayload);
   });
+
+  // Add more tests as needed to cover various edge cases and scenarios
 });
