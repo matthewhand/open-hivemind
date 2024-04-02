@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
 const messageResponseManager = require('../managers/messageResponseManager');
 const constants = require('../config/constants');
+const commands = require('../commands/inline'); // Assuming this is the path to your commands
 
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
@@ -83,7 +84,7 @@ async function summarizeMessage(message) {
     logger.debug(`Starting the summarization process for a message of length ${message.length}.`);
 
     // You might adjust this system message to fit the summarization context better
-    const systemMessageContent = 'Summarize the following user message (respond in first person):';
+    const systemMessageContent = 'Respond as a discord bot, summarising the following:';
 
     try {
         // Using the modified summarizeText method to include both the user message and system instruction
@@ -144,8 +145,6 @@ async function prepareRequestBody(originalMessage) {
     return openAiManager.buildRequestBody(historyMessages, `Channel Topic: ${channelTopic}`);
 }
 
-const commands = require('../commands/inline'); // Assuming this is the path to your commands
-
 async function handleFollowUp(originalMessage) {
     const openAiManager = OpenAiManager.getInstance();
     logger.debug(`Preparing follow-up for message ID: ${originalMessage.id}`);
@@ -154,7 +153,7 @@ async function handleFollowUp(originalMessage) {
     const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
 
     // Construct a dynamic prompt that incorporates the channel's topic and any relevant context
-    const prompt = `Given the channel topic "${channelTopic}" and the recent conversation, suggest a helpful follow-up command or question to engage the user further. Use the built-in commands: ${Object.values(commands).map(cmd => cmd.name).join(', ')}.`;
+    const prompt = `Demonstrate how to use one of the following built-in commands: "${Object.values(commands).map(cmd => cmd.name).join(', ')}"...  Related to either the user's message, "${originalMessage.getText}" or channel topic, "${channelTopic}".`;
 
     try {
         // Generate a follow-up action using OpenAI based on the constructed prompt
