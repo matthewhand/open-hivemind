@@ -102,7 +102,7 @@ async function sendResponse(messageContent, channelId, startTime) {
     async function sendMessagePart(part, delayStartTime) {
         const processingTime = Date.now() - delayStartTime;
         // Calculate delay to simulate typing speed and prevent instant response
-        const delay = Math.max((part.length / 3.33) * 1000 - processingTime, 500 - processingTime, 0);
+        const delay = Math.max((part.length / 6.66) * 1000 - processingTime, 250 - processingTime, 0);
         
         logger.debug(`Delaying message part send by ${delay}ms. Message part: "${part.substring(0, 50)}..."`);
         await new Promise(resolve => setTimeout(resolve, delay));
