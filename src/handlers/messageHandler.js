@@ -11,18 +11,19 @@ async function messageHandler(originalMessage) {
     const openAiManager = OpenAiManager.getInstance();
     const messageText = originalMessage.content.trim();
 
-    // Step 1: Check if it's a command
+    // Detect if the message starts with '!' indicating a command
     if (messageText.startsWith('!')) {
-        const commandName = messageText.split(' ')[0].substring(1).toLowerCase(); // Extract command name
+        // Extract command name and any following text as arguments
+        const [commandName, ...args] = messageText.slice(1).split(/\s+/);
+        const command = commands[commandName.toLowerCase()];
 
-        // Step 2 & 3: Validate the command
-        if (commands[commandName]) {
+        // If the command exists, execute the command handler and stop further processing
+        if (command) {
             logger.info(`Executing command: ${commandName}`);
-            return commandHandler(originalMessage, commands[commandName]);
+            return await commandHandler(originalMessage, command, args.join(' ')); // Assuming commandHandler supports these parameters
         } else {
-            logger.info(`Unknown command: ${commandName}`);
-            // Optional: send a message back to the user indicating the command is unknown
-            return; // Early return to skip normal message handling
+            // Optionally, send a message back to the channel to indicate an unknown command
+            return await originalMessage.reply(`Unknown command: ${commandName}`);
         }
     }
 
