@@ -171,7 +171,7 @@ async function handleFollowUp(originalMessage) {
     const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
 
     // Construct a dynamic prompt that incorporates the channel's topic and any relevant context
-    const prompt = `Demonstrate how to use one of the following built-in commands: "${Object.values(commands).map(cmd => cmd.name).join(', ')}"...  Related to either the user's message, "${originalMessage.getText}" or channel topic, "${channelTopic}".`;
+    const prompt = `Demonstrate one of the following built-in commands: "${Object.values(commands).map(cmd => '!' + cmd.name).join(', ')}"... relating the arguments to either the user's message, "${originalMessage.getText()}" or channel topic, "${channelTopic}".`;
 
     try {
         // Generate a follow-up action using OpenAI based on the constructed prompt
