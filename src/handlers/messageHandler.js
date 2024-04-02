@@ -82,18 +82,12 @@ async function summarizeMessage(message) {
     const openAiManager = OpenAiManager.getInstance();
     logger.debug(`Starting the summarization process for a message of length ${message.length}.`);
 
-    // Building a single user message as history for summarization context
-    const userMessage = {
-        role: 'user',
-        content: message
-    };
-
     // You might adjust this system message to fit the summarization context better
     const systemMessageContent = 'Summarize the following user message:';
 
     try {
         // Using the modified summarizeText method to include both the user message and system instruction
-        const summaryResponse = await openAiManager.summarizeText([userMessage], systemMessageContent);
+        const summaryResponse = await openAiManager.summarizeText(message, systemMessageContent);
         
         if (summaryResponse && summaryResponse.length > 0) {
             const summary = summaryResponse[0].trim();
