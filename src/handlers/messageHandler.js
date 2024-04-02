@@ -3,14 +3,31 @@ const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
 const messageResponseManager = require('../managers/messageResponseManager');
 const constants = require('../config/constants');
-const commands = require('../commands/inline'); // Assuming this is the path to your commands
+const commands = require('../commands/inline');
+const { commandHandler } = require('./commandHandler');
 
 async function messageHandler(originalMessage) {
     const startTime = Date.now();
     const openAiManager = OpenAiManager.getInstance();
+    const messageText = originalMessage.content.trim();
 
+    // Step 1: Check if it's a command
+    if (messageText.startsWith('!')) {
+        const commandName = messageText.split(' ')[0].substring(1).toLowerCase(); // Extract command name
+
+        // Step 2 & 3: Validate the command
+        if (commands[commandName]) {
+            logger.info(`Executing command: ${commandName}`);
+            return commandHandler(originalMessage, commands[commandName]);
+        } else {
+            logger.info(`Unknown command: ${commandName}`);
+            // Optional: send a message back to the user indicating the command is unknown
+            return; // Early return to skip normal message handling
+        }
+    }
+
+    // Proceed with normal message handling if not a command
     logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
-
     // Check if we should proceed with processing this message
     if (!await shouldProcessMessage(originalMessage, openAiManager)) {
         return; // Early return if we decide not to process this message
