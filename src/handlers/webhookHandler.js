@@ -2,8 +2,8 @@ const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { predictionImageMap } = require('../utils/handleImageMessage');
-const constants = require('./config/constants'); // Adjust path as necessary
-const DiscordManager = require('./managers/DiscordManager');
+const constants = require('../config/constants');
+const DiscordManager = require('../managers/DiscordManager');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
