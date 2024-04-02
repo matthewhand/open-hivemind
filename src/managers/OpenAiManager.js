@@ -156,7 +156,7 @@ class OpenAiManager {
             messages: messages,
             temperature: 0.5,
             max_tokens: 420,
-            stop: ["\n", " END"]
+            stop: ["\n\n"]
         };
     
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
