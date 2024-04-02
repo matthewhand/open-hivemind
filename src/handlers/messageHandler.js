@@ -137,19 +137,52 @@ async function prepareRequestBody(originalMessage) {
     return openAiManager.buildRequestBody(historyMessages, `Channel Topic: ${channelTopic}`);
 }
 
+const commands = require('../commands/inline'); // Assuming this is the path to your commands
+
 async function handleFollowUp(originalMessage) {
     const openAiManager = OpenAiManager.getInstance();
-
     logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
 
-    const channelTopic = await fetchChannelTopic(originalMessage.getChannelId());
-    const suggestedCommandResponse = await openAiManager.generateFollowUp(channelTopic);
+    // Fetching channel topic or using a default one if not available
+    const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
 
-    if (suggestedCommandResponse) {
-        await sendResponse(suggestedCommandResponse, originalMessage.getChannelId(), Date.now());
-    } else {
-        logger.warn(`No follow-up action suggested for message ID: ${originalMessage.id}`);
-    }
+    // Delay the follow-up message to simulate a more natural interaction
+    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay, adjust as necessary
+    setTimeout(async () => {
+        try {
+            // Dynamically load command descriptions and compile them into a prompt
+            logger.debug('Commands loaded for follow-up.');
+            const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
+            logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
+
+            const prompt = `Channel topic "${channelTopic}" with commands: ${commandDescriptions}. Suggest a follow-up action.`;
+            
+            // Building the request body for the follow-up action using the compiled prompt
+            const requestBody = {
+                model: constants.LLM_MODEL,
+                prompt: prompt,
+                max_tokens: 420,
+                stop: ["\n", " END"],
+            };
+
+            // Sending the request to OpenAI and handling the response
+            const responseContent = await openAiManager.sendRequest(requestBody);
+            if (!responseContent || responseContent.length === 0) {
+                logger.error("Received empty or invalid response from OpenAI for follow-up.");
+                return;
+            }
+
+            // Sending the follow-up response back to the user
+            const followUpMessage = responseContent[0].trim();
+            if (followUpMessage) {
+                await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
+            } else {
+                logger.warn(`No follow-up action suggested for message ID: ${originalMessage.id}`);
+            }
+        } catch (error) {
+            logger.error(`Error during follow-up handling: ${error}`);
+        }
+    }, followUpDelay);
 }
 
 async function fetchChannelTopic(channelId) {
