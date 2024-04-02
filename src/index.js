@@ -31,7 +31,8 @@ async function initialize() {
         logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}`);
         
         // At the end of the initialize function or after the bot has logged in
-        startWebhookServer(process.env.WEB_SERVER_PORT || 3000);
+        // startWebhookServer(process.env.WEB_SERVER_PORT || 3000);
+        startWebhookServer(process.env.WEBHOOK_SERVER_PORT || 3000);
 
     } catch (error) {
         logger.error(`Error during initialization: ${error}`);
