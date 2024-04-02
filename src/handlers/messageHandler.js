@@ -80,18 +80,22 @@ async function messageHandler(originalMessage) {
 async function summarizeMessage(message) {
     const openAiManager = OpenAiManager.getInstance();
 
-    // This approach uses the 'summarizeText' method directly, which you should have in your OpenAiManager
-    // Ensure the 'summarizeText' method is adapted if necessary to match your specific summarization needs
-    const summaryResponse = await openAiManager.summarizeText(message);
-    
-    // Process the summary response appropriately based on how the 'summarizeText' method formats its output
-    // This is a simplified example; adapt the handling based on your actual response structure
-    if (summaryResponse && summaryResponse.length > 0) {
-        // Assuming the first element of the response contains the summary
-        return summaryResponse[0].trim();
-    } else {
-        logger.error('Summarization failed or returned empty response.');
-        return 'Failed to summarize the message.';
+    logger.debug(`Starting summarization process for message of length ${message.length}.`);
+
+    try {
+        const summaryResponse = await openAiManager.summarizeText(message);
+        logger.debug(`Summarization response: ${JSON.stringify(summaryResponse)}`);
+
+        if (summaryResponse && summaryResponse.length > 0) {
+            logger.debug(`Successfully summarized message. Summary: ${summaryResponse[0]}`);
+            return summaryResponse[0].trim();
+        } else {
+            logger.warn('Summarization response was empty or undefined.');
+            return 'Failed to summarize the message due to an empty response.';
+        }
+    } catch (error) {
+        logger.error(`Summarization process failed with error: ${error}`);
+        return 'Failed to summarize the message due to an error.';
     }
 }
 
@@ -99,27 +103,38 @@ async function sendResponse(messageContent, channelId, startTime) {
     // Function to handle message splitting and sending with appropriate delays
     async function sendMessagePart(part, delayStartTime) {
         const processingTime = Date.now() - delayStartTime;
-        const delay = Math.max((part.length / 3.33) * 1000 - processingTime, 5000 - processingTime, 0);
+        const delay = Math.max((part.length / 3.33) * 1000 - processingTime, 500 - processingTime, 0);
+        logger.debug(`Preparing to send message part with delay of ${delay}ms: "${part}"`);
         await new Promise(resolve => setTimeout(resolve, delay));
-        await DiscordManager.getInstance().sendResponse(channelId, part);
-        logger.info(`Message part sent with delay ${delay}ms: "${part}"`);
+        logger.debug(`Sending message part: "${part}" to channel ID: ${channelId} after delay.`);
+        try {
+            await DiscordManager.getInstance().sendResponse(channelId, part);
+            logger.info(`Message part sent successfully with delay ${delay}ms: "${part}"`);
+        } catch (error) {
+            logger.error(`Failed to send message part: "${part}" to channel ID: ${channelId}. Error: ${error}`);
+        }
     }
 
     // Optionally split message and send parts recursively
     const splitChance = 0.5;
     if (Math.random() < splitChance) {
+        logger.debug(`Splitting message: ${messageContent}`);
         const splitIndex = Math.max(messageContent.indexOf('. ') + 1, messageContent.indexOf('\n') + 1);
         if (splitIndex > 0) {
             const firstPart = messageContent.substring(0, splitIndex);
+            logger.debug(`First part identified for split message: "${firstPart}"`);
             await sendMessagePart(firstPart, startTime);
             const remainingMessage = messageContent.substring(splitIndex).trim();
             if (remainingMessage) {
+                logger.debug(`Sending remaining part of split message: "${remainingMessage}"`);
                 await sendResponse(remainingMessage, channelId, Date.now());
             }
         } else {
+            logger.debug(`Split index not found. Sending message as is: "${messageContent}"`);
             await sendMessagePart(messageContent, startTime);
         }
     } else {
+        logger.debug(`Sending message without splitting: "${messageContent}"`);
         await sendMessagePart(messageContent, startTime);
     }
 }

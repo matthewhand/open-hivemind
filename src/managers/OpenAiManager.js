@@ -178,20 +178,29 @@ class OpenAiManager extends LlmInterface {
     }
 
     async summarizeText(text) {
-        logger.debug('Entering summarizeText');
-        const systemMessageContent = 'Summarize the following text:';
-        const requestBody = this.buildRequestBodyForSummarization(text, systemMessageContent);
-        logger.debug('summarizeText: Request body for summarization built');
-
-        // Before calling this.sendRequest(requestBody) in your code where you prepare the request
-        if (!requestBody.messages || requestBody.messages.length === 0) {
-            logger.error('summarizeText: Request body is empty or invalid.');
-            return; // Skip sending request
-        } else {
-            logger.debug(`summarizeText: Request body is - ${JSON.stringify(requestBody.messages, null, 2)}`);
+        logger.debug('Starting text summarization.');
+    
+        const requestBody = {
+            model: constants.LLM_MODEL,
+            prompt: `Summarize the following text: ${text}`,
+            temperature: 0.5,
+            max_tokens: 200, // Adjust based on your requirements
+            stop: ["\n", " END"],
+        };
+    
+        try {
+            const response = await this.sendRequest({ ...requestBody });
+            logger.debug(`Received summarization response: ${JSON.stringify(response)}`);
+    
+            if (!response || response.length === 0) {
+                logger.warn('Empty response from summarization request.');
+                return [];
+            }
+            return response;
+        } catch (error) {
+            logger.error(`Error during text summarization: ${error.message}`);
+            throw new Error('Summarization failed.');
         }
-
-        return await this.sendRequest(requestBody);
     }
 
     requiresHistory() {
