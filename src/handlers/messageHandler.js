@@ -51,6 +51,9 @@ async function messageHandler(originalMessage) {
             return;
         }
 
+        // For non-command messages, show the bot is "typing" before processing
+        await DiscordManager.getInstance().startTyping(originalMessage.getChannelId());
+
         // Marking as responding to prevent processing of new incoming messages
         openAiManager.setIsResponding(true);
 
@@ -125,28 +128,34 @@ async function summarizeMessage(message) {
 }
 
 async function sendResponse(messageContent, channelId, startTime) {
-    logger.debug(`Preparing to send response. Channel ID: ${channelId}, Message Content Length: ${messageContent.length}`);
+    // First, trigger the typing indicator
+    await DiscordManager.getInstance().startTyping(channelId);
+    logger.debug(`Bot is typing in channel ID: ${channelId}`);
 
+    // Define the delay logic as before, but include the typing indicator timing
     async function sendMessagePart(part, delayStartTime) {
         const processingTime = Date.now() - delayStartTime;
-        // Calculate delay to simulate typing speed and prevent instant response
-        const delay = Math.max((part.length / 6.66) * 1000 - processingTime, 250 - processingTime, 0);
+        // Ensure a minimum delay of 3000ms to simulate typing speed
+        const delay = Math.max((part.length / 7.29) * 1000 - processingTime, 3000 - processingTime, 0);
         
-        logger.debug(`Delaying message part send by ${delay}ms. Message part: "${part.substring(0, 50)}..."`);
+        // Wait for the calculated delay before sending the message part
         await new Promise(resolve => setTimeout(resolve, delay));
-        
         try {
+            // Once the delay is complete, send the message
             await DiscordManager.getInstance().sendResponse(channelId, part);
             logger.info(`Message part sent. Channel ID: ${channelId}, Part Length: ${part.length}`);
         } catch (error) {
             logger.error(`Error sending message part. Channel ID: ${channelId}, Error: ${error}`);
+        } finally {
+            // After sending the message part, stop the typing indicator
+            DiscordManager.getInstance().stopTyping(channelId);
         }
     }
 
-    // Splitting the message if it's too long, or if we decide to chunk it for any reason
-    const splitChance = 0.5; // This is arbitrary, adjust as needed
-    if (Math.random() < splitChance && messageContent.length > 1900) { // Discord's max message length is 2000 characters
-        const parts = messageContent.match(/.{1,1900}(\s|$)/g) || [messageContent]; // Split by space if possible
+    // Rest of your split message logic remains the same
+    const splitChance = 0.5;
+    if (Math.random() < splitChance && messageContent.length > 1900) {
+        const parts = messageContent.match(/.{1,1900}(\s|$)/g) || [messageContent];
         for (const part of parts) {
             await sendMessagePart(part, startTime);
         }
