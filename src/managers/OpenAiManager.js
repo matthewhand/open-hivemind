@@ -54,17 +54,40 @@ class OpenAiManager {
     }
 
     async sendRequest(requestBody) {
-        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
+        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Received response from OpenAI: ${JSON.stringify(response.data, null, 2)}`);
-            return response.data.choices.map(choice => choice.text.trim());
+            logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
+    
+            // Attempt to extract the choices array from the response
+            let choicesArray = response.choices || (response.data && response.data.choices);
+            if (!choicesArray) {
+                // Log an error if the expected response structure is not found
+                logger.error('API response does not conform to expected structure. Response: ' + JSON.stringify(response, null, 2));
+                return [];
+            }
+    
+            // Map over each choice to extract the message content
+            let processedResponses = choicesArray.map((choice, index) => {
+                const messageContent = choice.message?.content || choice.content;
+                if (!messageContent) {
+                    logger.error(`Error: Missing content at choice index ${index}.`);
+                    return `Error: Missing content at choice index ${index}.`;
+                }
+                return messageContent.trim();
+            });
+    
+            logger.info('Response processed successfully.');
+            logger.debug(`Processed response data: ${JSON.stringify(processedResponses, null, 2)}`);
+    
+            return processedResponses;
         } catch (error) {
+            // Log and rethrow error for the caller to handle
             logger.error(`Error in sendRequest: ${error.message}`);
-            throw error; // Rethrow the error for caller to handle
+            throw error;
         }
     }
-
+    
     async summarizeText(text) {
         const prompt = `Summarize the following text:\n\n${text}`;
         const requestBody = {
