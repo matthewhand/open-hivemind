@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"  # Adjust the port mapping as per your application's requirement
+      - "3010:3010"  # Adjust the port mapping as per your application's requirement
     env_file:
       - .env
     volumes:
