@@ -148,48 +148,30 @@ const commands = require('../commands/inline'); // Assuming this is the path to 
 
 async function handleFollowUp(originalMessage) {
     const openAiManager = OpenAiManager.getInstance();
-    logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
+    logger.debug(`Preparing follow-up for message ID: ${originalMessage.id}`);
 
-    // Fetching channel topic or using a default one if not available
+    // Fetch the channel topic or use a default value if not set
     const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
 
-    // Delay the follow-up message to simulate a more natural interaction
-    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay, adjust as necessary
-    setTimeout(async () => {
-        try {
-            // Dynamically load command descriptions and compile them into a prompt
-            logger.debug('Commands loaded for follow-up.');
-            const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
-            logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
+    // Construct a dynamic prompt that incorporates the channel's topic and any relevant context
+    const prompt = `Given the channel topic "${channelTopic}" and the recent conversation, suggest a helpful follow-up command or question to engage the user further. Use the built-in commands: ${Object.values(commands).map(cmd => cmd.name).join(', ')}.`;
 
-            const prompt = `Inform user about a relevant command based on the discussion and topic, "${channelTopic}" from the built in commands: ${commandDescriptions}. Suggest one command to user.`;
-            
-            // Building the request body for the follow-up action using the compiled prompt
-            const requestBody = {
-                model: constants.LLM_MODEL,
-                prompt: prompt,
-                max_tokens: 420,
-                stop: ["\n", " END"],
-            };
+    try {
+        // Generate a follow-up action using OpenAI based on the constructed prompt
+        const summaryResponse = await openAiManager.summarizeText(prompt, "Provide a follow-up command suggestion:");
+        
+        if (summaryResponse && summaryResponse.length > 0) {
+            const followUpAction = summaryResponse[0].trim();
+            logger.debug(`Follow-up command suggestion generated successfully. Action: ${followUpAction.substring(0, 100)}...`);
 
-            // Sending the request to OpenAI and handling the response
-            const responseContent = await openAiManager.sendRequest(requestBody);
-            if (!responseContent || responseContent.length === 0) {
-                logger.error("Received empty or invalid response from OpenAI for follow-up.");
-                return;
-            }
-
-            // Sending the follow-up response back to the user
-            const followUpMessage = responseContent[0].trim();
-            if (followUpMessage) {
-                await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
-            } else {
-                logger.warn(`No follow-up action suggested for message ID: ${originalMessage.id}`);
-            }
-        } catch (error) {
-            logger.error(`Error during follow-up handling: ${error}`);
+            // Send the follow-up action as a response in the channel
+            await sendResponse(followUpAction, originalMessage.getChannelId(), Date.now());
+        } else {
+            logger.warn('Follow-up command suggestion generation resulted in an empty or undefined response.');
         }
-    }, followUpDelay);
+    } catch (error) {
+        logger.error(`Error during follow-up generation: ${error}`);
+    }
 }
 
 async function fetchChannelTopic(channelId) {
