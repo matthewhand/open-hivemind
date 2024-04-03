@@ -127,41 +127,54 @@ async function summarizeMessage(message) {
     }
 }
 
+// Detects if the message contains code blocks
+function detectCodeBlocks(messageContent) {
+    const codeBlockRegex = /```[\s\S]*?```/g;
+    return codeBlockRegex.test(messageContent);
+}
+
+// Calculates the delay based on message part length
+function calculateMessageDelay(partLength, processingTime) {
+    return Math.max((partLength / 4.20) * 1000 - processingTime, 3000 - processingTime, 0);
+}
+
+// Sends a message part with a delay and handles typing indicators
+async function sendMessagePart(part, channelId, delayStartTime) {
+    const processingTime = Date.now() - delayStartTime;
+    const delay = calculateMessageDelay(part.length, processingTime);
+
+    // Wait for the calculated delay before sending the message part
+    await new Promise(resolve => setTimeout(resolve, delay));
+    try {
+        // Once the delay is complete, send the message
+        await DiscordManager.getInstance().sendResponse(channelId, part);
+        logger.info(`Message part sent. Channel ID: ${channelId}, Part Length: ${part.length}`);
+    } catch (error) {
+        logger.error(`Error sending message part. Channel ID: ${channelId}, Error: ${error}`);
+    } finally {
+        // After sending the message part, stop the typing indicator
+        DiscordManager.getInstance().stopTyping(channelId);
+    }
+}
+
+// Main function to send response with consideration for code blocks
 async function sendResponse(messageContent, channelId, startTime) {
     // First, trigger the typing indicator
     await DiscordManager.getInstance().startTyping(channelId);
     logger.debug(`Bot is sending response in channel ID: ${channelId}`);
 
-    // Define the delay logic as before, but include the typing indicator timing
-    async function sendMessagePart(part, delayStartTime) {
-        const processingTime = Date.now() - delayStartTime;
-        // Ensure a minimum delay of 3000ms to simulate typing speed
-        const delay = Math.max((part.length / 7.29) * 1000 - processingTime, 3000 - processingTime, 0);
-        
-        // Wait for the calculated delay before sending the message part
-        await new Promise(resolve => setTimeout(resolve, delay));
-        try {
-            // Once the delay is complete, send the message
-            await DiscordManager.getInstance().sendResponse(channelId, part);
-            logger.info(`Message part sent. Channel ID: ${channelId}, Part Length: ${part.length}`);
-        } catch (error) {
-            logger.error(`Error sending message part. Channel ID: ${channelId}, Error: ${error}`);
-        } finally {
-            // After sending the message part, stop the typing indicator
-            DiscordManager.getInstance().stopTyping(channelId);
-        }
-    }
+    const containsCodeBlock = detectCodeBlocks(messageContent);
+    const splitChance = containsCodeBlock ? 0 : 0.9; // Disable splitting if a code block is detected
 
-    // Rest of your split message logic remains the same
-    const splitChance = 0.9;
     if (Math.random() < splitChance && messageContent.length > 420) {
         const parts = messageContent.match(/.{1,1900}(\s|$)/g) || [messageContent];
         for (const part of parts) {
-            await sendMessagePart(part, startTime);
+            await sendMessagePart(part, channelId, startTime);
         }
     } else {
-        await sendMessagePart(messageContent, startTime);
+        await sendMessagePart(messageContent, channelId, startTime);
     }
+}
 }
 
 async function prepareRequestBody(originalMessage) {
