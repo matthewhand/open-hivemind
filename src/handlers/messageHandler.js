@@ -199,11 +199,11 @@ async function handleFollowUp(originalMessage) {
     const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
 
     // Construct a dynamic prompt that incorporates the channel's topic and any relevant context
-    const prompt = `Demonstrate usage of the following built-in commands (\`!cmd args\`): ${Object.values(commands).map(cmd => `!${cmd.name} - ${cmd.description}`).join('; ')}... choose one function that best relates to either the user's message, "${originalMessage.getText()}" or channel topic, "${channelTopic}".`;
+    const prompt = `Built-in commands (\`!cmd args\`): ${Object.values(commands).map(cmd => `!${cmd.name} - ${cmd.description}`).join('; ')}... choose one function that best relates to either the user's message, "${originalMessage.getText()}" and/or channel topic, "${channelTopic}".`;
 
     try {
         // Generate a follow-up action using OpenAI based on the constructed prompt
-        const summaryResponse = await openAiManager.summarizeText(prompt, "Provide a follow-up command suggestion:");
+        const summaryResponse = await openAiManager.summarizeText(prompt, "Suggest and demonstrate a command relevant to the discussion:");
         
         if (summaryResponse && summaryResponse.length > 0) {
             const followUpAction = summaryResponse[0].trim();
