@@ -135,7 +135,11 @@ function detectCodeBlocks(messageContent) {
 
 // Calculates the delay based on message part length
 function calculateMessageDelay(partLength, processingTime) {
-    return Math.max((partLength / 4.20) * 1337 - processingTime, 5000 - processingTime, 0);
+    let delay = Math.max((partLength / 4.20) * 1337 - processingTime, 5000 - processingTime, 0);
+    if (delay < 5000) {
+        delay = 5000;
+    }
+    return delay;
 }
 
 // Sends a message part with a delay and handles typing indicators
