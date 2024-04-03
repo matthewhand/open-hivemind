@@ -13,22 +13,23 @@ async function messageHandler(originalMessage) {
     // Use optional chaining and provide a default empty string to safely call .trim()
     const messageText = originalMessage.content?.trim() || "";
 
-    // Detect if the message starts with '!' indicating a command
+    // Enhanced logging for command detection
     if (messageText.startsWith('!')) {
+        logger.debug(`Command detected in message: "${messageText}"`);
         const [commandName, ...args] = messageText.slice(1).split(/\s+/);
-        if (commandName) { // Ensure commandName is not undefined or empty
+        if (commandName) {
+            logger.debug(`Command name extracted: "${commandName}", Arguments: "${args.join(' ')}"`);
             const command = commands[commandName.toLowerCase()];
 
             if (command) {
-                logger.info(`Executing command: ${commandName}`);
-                return await commandHandler(originalMessage.getText(), command, args.join(' '));
+                logger.info(`Executing command: "${commandName}" with arguments: "${args.join(' ')}"`);
+                return await commandHandler(originalMessage, command, args.join(' '));
             } else {
-                // Handle unknown command
-                return await originalMessage.reply(`Unknown command: ${commandName}`);
+                logger.warn(`Unknown command: "${commandName}". Replying with unknown command message.`);
+                return await originalMessage.reply(`Unknown command: "${commandName}"`);
             }
         }
     }
-
     // Proceed with normal message handling if not a command
     logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
     // Check if we should proceed with processing this message
