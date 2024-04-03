@@ -32,11 +32,14 @@ class OpenAiManager {
     }
 
     buildRequestBody(historyMessages = [], systemMessageContent = 'Assist User with their query.') {
+        // Prepend or append the LLM_SYSTEM_PROMPT to the system message content
+        const fullSystemMessageContent = `${constants.LLM_SYSTEM_PROMPT}\n${systemMessageContent}`;
+
         logger.debug('Building request body for OpenAI API call.');
-    
+
         let messages = [{
             role: 'system',
-            content: systemMessageContent,
+            content: fullSystemMessageContent, // Use the combined content here
         }];
     
         let lastRole = 'system';
