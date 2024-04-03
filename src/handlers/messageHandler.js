@@ -153,8 +153,8 @@ async function sendResponse(messageContent, channelId, startTime) {
     }
 
     // Rest of your split message logic remains the same
-    const splitChance = 0.5;
-    if (Math.random() < splitChance && messageContent.length > 1900) {
+    const splitChance = 0.9;
+    if (Math.random() < splitChance && messageContent.length > 420) {
         const parts = messageContent.match(/.{1,1900}(\s|$)/g) || [messageContent];
         for (const part of parts) {
             await sendMessagePart(part, startTime);
