@@ -175,7 +175,6 @@ async function sendResponse(messageContent, channelId, startTime) {
         await sendMessagePart(messageContent, channelId, startTime);
     }
 }
-}
 
 async function prepareRequestBody(originalMessage) {
     const openAiManager = OpenAiManager.getInstance();
