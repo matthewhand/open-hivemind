@@ -1,11 +1,11 @@
 const Command = require('../../utils/Command');
 const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
-const OpenAiManager = new (require('../../managers/OpenAiManager'))();
+const OpenAiManager = require('../../managers/OpenAiManager').getInstance();
 
 class OaiCommand extends Command {
     constructor() {
-        super('oai', 'Interact with OpenAI models. Usage: !oai:[model] [query]');
+        super('oai', 'Interact with OpenAI models. Usage: !oai:[model] [query]. Defaults to gpt-3.5-turbo if no model specified.');
     }
 
     async execute(message, args) {
@@ -15,21 +15,30 @@ class OaiCommand extends Command {
             return;
         }
 
+        // Splitting arguments and establishing a default model
+        const defaultModel = 'gpt-3.5-turbo';
+        const parts = args.split(' ');
+        let model = defaultModel, query;
+
+        // If the first part of the command contains a model specifier (indicated by a colon)
+        if (parts[0].includes(':')) {
+            [model, ...parts] = parts[0].split(':');
+            query = parts.join(' ') + ' ' + parts.slice(1).join(' ');
+        } else {
+            query = parts.join(' ');
+        }
+
         try {
-            // Assuming args is a string containing the model and query separated by a space
-            const [model, ...queryParts] = args.split(' ');
-            const query = queryParts.join(' ');
+            const requestBody = OpenAiManager.buildRequestBody({
+                model: model || defaultModel, // Use specified model or default
+                messages: [{
+                    isFromBot: () => false, // Simulate a user message
+                    getText: () => query.trim()
+                }],
+                context: `You are a helpful assistant talking to ${message.author.username}.`,
+            });
 
-            // Prepare the historyMessages format if necessary or directly pass the query
-            // This part might need adjustment based on how you plan to use the model argument
-            const requestBody = OpenAiManager.buildRequestBody([{
-                isFromBot: () => false, // Simulate a user message
-                getText: () => query
-            }], `You are a helpful assistant talking to ${message.author.username}.`);
-
-            // Note: Adjust the buildRequestBody method or prepare a suitable method in OpenAiManager if needed
             const data = await OpenAiManager.sendRequest(requestBody);
-
             const responseContent = this.processResponse(data);
             await message.reply(responseContent);
         } catch (error) {
@@ -44,10 +53,7 @@ class OaiCommand extends Command {
             return 'No meaningful response from the server.';
         }
 
-        let content = data.choices[0].message.content.trim();
-        if (/^<@\w+>: /.test(content)) {
-            content = content.replace(/^<@\w+>: /, '');
-        }
+        const content = data.choices[0].message.content.trim().replace(/^<@\w+>: /, '');
 
         if (content === '') {
             logger.warn('[oai] Response content is empty after processing.');

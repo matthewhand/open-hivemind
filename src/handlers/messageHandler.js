@@ -1,231 +1,85 @@
-const DiscordManager = require('../managers/DiscordManager');
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
-const messageResponseManager = require('../managers/messageResponseManager');
-const constants = require('../config/constants');
+const {
+  sendResponse,
+  processCommand,
+  summarizeMessage,
+  handleFollowUp,
+  shouldProcessMessage
+} = require('../utils/messageHandlerUtils');
 const commands = require('../commands/inline');
-const { commandHandler } = require('./commandHandler');
+const constants = require('../config/constants');
 
-async function messageHandler(originalMessage) {
+/**
+ * Handles incoming messages, processing commands and interacting with the OpenAI API as necessary.
+ * 
+ * This function is designed to be called with a generic message object that conforms to the IMessage interface,
+ * and an optional array of history messages for context, allowing it to operate independently of the specific
+ * messaging platform (e.g., Discord).
+ * 
+ * @param {IMessage} originalMessage - The message object received, conforming to the IMessage interface.
+ * @param {IMessage[]} historyMessages - Optional. An array of message objects representing the recent message history for context.
+ * @returns {Promise<void>} A promise that resolves when the message has been processed.
+ */
+async function messageHandler(originalMessage, historyMessages = []) {
     const startTime = Date.now();
     const openAiManager = OpenAiManager.getInstance();
 
-    // Use optional chaining and provide a default empty string to safely call .trim()
-    const messageText = originalMessage.content?.trim() || "";
-
-    // Enhanced logging for command detection
-    if (messageText.startsWith('!')) {
-        logger.debug(`Command detected in message: "${messageText}"`);
-        const [commandName, ...args] = messageText.slice(1).split(/\s+/);
-        if (commandName) {
-            logger.debug(`Command name extracted: "${commandName}", Arguments: "${args.join(' ')}"`);
-            const command = commands[commandName.toLowerCase()];
-
-            if (command) {
-                logger.info(`Executing command: "${commandName}" with arguments: "${args.join(' ')}"`);
-                return await commandHandler(originalMessage, command, args.join(' '));
-            } else {
-                logger.warn(`Unknown command: "${commandName}". Replying with unknown command message.`);
-                return await originalMessage.reply(`Unknown command: "${commandName}"`);
-            }
-        }
+    // Validate originalMessage conforms to IMessage interface
+    if (typeof originalMessage.getText !== 'function' || typeof originalMessage.getChannelId !== 'function') {
+        logger.error(`[messageHandler] The provided message does not implement the required methods of IMessage: ${JSON.stringify(originalMessage)}`);
+        return;
     }
-    // Proceed with normal message handling if not a command
-    logger.info(`Handling message at ${new Date(startTime).toISOString()}`);
-    // Check if we should proceed with processing this message
+
+    const content = originalMessage.getText();
+    const channelId = originalMessage.getChannelId();
+
+    // Log the handling process
+    logger.debug(`[messageHandler] Handling message at ${new Date(startTime).toISOString()}: "${content}" with channelId: ${channelId}`);
+
+    // Process any commands in the message
+    if (await processCommand(originalMessage, commands)) {
+        logger.debug("[messageHandler] Command processed.");
+        return;
+    }
+
+    // Check if the message should be processed further
     if (!await shouldProcessMessage(originalMessage, openAiManager)) {
-        return; // Early return if we decide not to process this message
-    }
-
-    // Check if the bot should reply to this message
-    const shouldReply = messageResponseManager.shouldReplyToMessage(originalMessage).shouldReply;
-    if (!shouldReply) {
-        logger.info("Chose not to respond to this message.");
+        logger.debug("[messageHandler] Message processing skipped.");
         return;
     }
 
     try {
-        // Preparing request for OpenAI
-        const requestBody = await prepareRequestBody(originalMessage);
-        if (!requestBody || !requestBody.messages || requestBody.messages.length === 0) {
-            logger.error('Request body is empty or invalid.');
+        // Prepare the request body for the OpenAI API call
+        const openAiManager = OpenAiManager.getInstance();
+        const requestBody = openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT);
+        if (!requestBody) {
+            logger.error('[messageHandler] Request body is empty or invalid.');
             return;
         }
 
-        // For non-command messages, show the bot is "typing" before processing
-        await DiscordManager.getInstance().startTyping(originalMessage.getChannelId());
-
-        // Marking as responding to prevent processing of new incoming messages
         openAiManager.setIsResponding(true);
 
-        // Sending the request to OpenAI and handling the response
+        // Send the request to the OpenAI API
         const responseContent = await openAiManager.sendRequest(requestBody);
-        if (!responseContent || responseContent.length === 0) {
-            logger.error("Received empty or invalid response from OpenAI.");
-            return;
-        }
+        logger.debug(`[messageHandler] Received response from OpenAI.`);
 
-        // Handling message content length for summarization
-        let messageToSend = responseContent[0];
-        if (messageToSend.length > 1000) {
-            logger.info("Message exceeds 1000 characters. Summarizing.");
-            messageToSend = await summarizeMessage(messageToSend);
-        }
+        // Summarize the response and send it
+        let messageToSend = await summarizeMessage(responseContent);
+        logger.debug(`[messageHandler] Summarized message ready to send: ${messageToSend}`);
 
-        // Sending the response back to the user
-        await sendResponse(messageToSend, originalMessage.getChannelId(), startTime);
+        await sendResponse(channelId, messageToSend).catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
 
-        // Handling follow-up messages if enabled
-        if (constants.FOLLOW_UP_ENABLED) {
-            await handleFollowUp(originalMessage);
+        // Handle any follow-up actions
+        if (await handleFollowUp(originalMessage)) {
+            logger.debug("[messageHandler] Follow-up action completed.");
         }
     } catch (error) {
-        logger.error(`Failed to process message: ${error}`);
+        logger.error(`[messageHandler] Failed to process message: ${error}`);
     } finally {
-        // Resetting the bot's status to ready for new messages
         openAiManager.setIsResponding(false);
-        logger.info(`Processing complete. Elapsed time: ${Date.now() - startTime}ms`);
-    }
-}
-
-async function shouldProcessMessage(originalMessage, openAiManager) {
-    // Check if the bot is currently processing another request and decide based on message type
-    if (openAiManager.getIsResponding()) {
-        logger.info("Currently processing another request...");
-
-        if (!originalMessage.isDirectionMention() && !originalMessage.isReplyToBot()) {
-            logger.info("... Skipping message.");
-            return false;
-        }
-
-        logger.info("... considering response due to being a direct/reply message.");
-    }
-    return true;
-}
-
-async function summarizeMessage(message) {
-    const openAiManager = OpenAiManager.getInstance();
-    logger.debug(`Starting the summarization process for a message of length ${message.length}.`);
-
-    // You might adjust this system message to fit the summarization context better
-    const systemMessageContent = 'Respond as a discord bot, summarising the following:';
-
-    try {
-        // Using the modified summarizeText method to include both the user message and system instruction
-        const summaryResponse = await openAiManager.summarizeText(message, systemMessageContent);
-        
-        if (summaryResponse && summaryResponse.length > 0) {
-            const summary = summaryResponse[0].trim();
-            logger.debug(`Summarization successful. Summary: ${summary.substring(0, 100)}...`); // Log the first 100 chars
-            return summary;
-        } else {
-            logger.warn('Summarization response was empty or undefined.');
-            return 'Unable to summarize the message due to an empty response from the summarization process.';
-        }
-    } catch (error) {
-        logger.error(`Summarization process failed with error: ${error}`);
-        return 'Failed to summarize the message due to an error in the summarization process.';
-    }
-}
-
-// Detects if the message contains code blocks
-function detectCodeBlocks(messageContent) {
-    const codeBlockRegex = /```[\s\S]*?```/g;
-    return codeBlockRegex.test(messageContent);
-}
-
-// Calculates the delay based on message part length
-function calculateMessageDelay(partLength, processingTime) {
-    let delay = Math.max((partLength / 4.20) * 1337 - processingTime, 5000 - processingTime, 0);
-    if (delay < 5000) {
-        delay = 5000;
-    }
-    return delay;
-}
-
-// Sends a message part with a delay and handles typing indicators
-async function sendMessagePart(part, channelId, delayStartTime) {
-    const processingTime = Date.now() - delayStartTime;
-    const delay = calculateMessageDelay(part.length, processingTime);
-
-    // Wait for the calculated delay before sending the message part
-    await new Promise(resolve => setTimeout(resolve, delay));
-    try {
-        // Once the delay is complete, send the message
-        await DiscordManager.getInstance().sendResponse(channelId, part);
-        logger.info(`Message part sent. Channel ID: ${channelId}, Part Length: ${part.length}`);
-    } catch (error) {
-        logger.error(`Error sending message part. Channel ID: ${channelId}, Error: ${error}`);
-    } finally {
-        // After sending the message part, stop the typing indicator
-        DiscordManager.getInstance().stopTyping(channelId);
-    }
-}
-
-// Main function to send response with consideration for code blocks
-async function sendResponse(messageContent, channelId, startTime) {
-    // First, trigger the typing indicator
-    await DiscordManager.getInstance().startTyping(channelId);
-    logger.debug(`Bot is sending response in channel ID: ${channelId}`);
-
-    const containsCodeBlock = detectCodeBlocks(messageContent);
-    const splitChance = containsCodeBlock ? 0 : 0.9; // Disable splitting if a code block is detected
-
-    if (Math.random() < splitChance && messageContent.length > 420) {
-        const parts = messageContent.match(/.{1,1900}(\s|$)/g) || [messageContent];
-        for (const part of parts) {
-            await sendMessagePart(part, channelId, startTime);
-        }
-    } else {
-        await sendMessagePart(messageContent, channelId, startTime);
-    }
-}
-
-async function prepareRequestBody(originalMessage) {
-    const openAiManager = OpenAiManager.getInstance();
-
-    const channel = await DiscordManager.getInstance().client.channels.fetch(originalMessage.getChannelId());
-    const channelTopic = channel.topic || 'General conversation';
-    const historyMessages = await DiscordManager.getInstance().fetchMessages(originalMessage.getChannelId(), 20);
-    
-    return openAiManager.buildRequestBody(historyMessages, `Channel Topic: ${channelTopic}`);
-}
-
-async function handleFollowUp(originalMessage) {
-    const openAiManager = OpenAiManager.getInstance();
-    logger.debug(`Preparing follow-up for message ID: ${originalMessage.id}`);
-
-    // Fetch the channel topic or use a default value if not set
-    const channelTopic = await fetchChannelTopic(originalMessage.getChannelId()) || "General conversation";
-
-    // Construct a dynamic prompt that incorporates the channel's topic and any relevant context
-    const prompt = `Built-in commands (\`!cmd args\`): ${Object.values(commands).map(cmd => `!${cmd.name} - ${cmd.description}`).join('; ')}... choose one function that best relates to either the user's message, "${originalMessage.getText()}" and/or channel topic, "${channelTopic}".`;
-
-    try {
-        // Generate a follow-up action using OpenAI based on the constructed prompt
-        const summaryResponse = await openAiManager.summarizeText(prompt, "Suggest and demonstrate a command relevant to the discussion:");
-        
-        if (summaryResponse && summaryResponse.length > 0) {
-            const followUpAction = summaryResponse[0].trim();
-            logger.debug(`Follow-up command suggestion generated successfully. Action: ${followUpAction.substring(0, 100)}...`);
-
-            // Send the follow-up action as a response in the channel
-            await sendResponse(followUpAction, originalMessage.getChannelId(), Date.now());
-        } else {
-            logger.warn('Follow-up command suggestion generation resulted in an empty or undefined response.');
-        }
-    } catch (error) {
-        logger.error(`Error during follow-up generation: ${error}`);
-    }
-}
-
-async function fetchChannelTopic(channelId) {
-    try {
-        const channel = await DiscordManager.getInstance().client.channels.fetch(channelId);
-        return channel.topic || 'No specific topic';
-    } catch (error) {
-        logger.error(`Failed to fetch channel topic for channel ID: ${channelId}, Error: ${error}`);
-        return 'No specific topic';
+        const elapsedTime = Date.now() - startTime;
+        logger.info(`[messageHandler] Message handling complete. Elapsed time: ${elapsedTime}ms`);
     }
 }
 

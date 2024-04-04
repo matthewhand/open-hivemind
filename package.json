@@ -4,12 +4,10 @@
   "description": "A Discord bot to communicate with LLMs and execute Python code",
   "main": "src/index.js",
   "scripts": {
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .js",
     "validate": "npm-run-all --parallel lint test",
     "start": "node src/index.js",
-    "test": "jest",
-    "lint": "eslint . --ext .js",
-    "validate": "npm-run-all --parallel lint test"
+    "test": "jest"
   },
   "dependencies": {
     "@discordjs/rest": "^2.2.0",
@@ -22,6 +20,7 @@
     "node-fetch": "^2.6.1",
     "ollama-node": "^0.1.27",
     "openai": "^4.28.4",
+    "typeforce": "^1.18.0",
     "uuid": "^9.0.1",
     "uuidv4": "^6.2.13",
     "winston": "^3.11.0",

@@ -1,67 +1,96 @@
-// Import dependencies and mock as needed
 const { messageHandler } = require('../../src/handlers/messageHandler');
-jest.mock('../../src/models/DiscordMessage');
-const DiscordManager = require('../../src/managers/DiscordManager');
-jest.mock('../../src/managers/DiscordManager');
 const OpenAiManager = require('../../src/managers/OpenAiManager');
-jest.mock('../../src/managers/OpenAiManager');
-// Mocking messageResponseManager
-const { messageResponseManager } = require('../../src/managers/messageResponseManager');
-jest.mock('../../src/managers/messageResponseManager', () => ({
-    messageResponseManager: jest.fn().mockImplementation(() => ({
-        shouldReplyToMessage: jest.fn((ourUserId, message) => true),
-    })),
+
+// Mocking DiscordManager to avoid actual Discord interactions
+jest.mock('../../src/managers/DiscordManager', () => ({
+  getInstance: jest.fn().mockReturnValue({
+    client: {
+      login: jest.fn().mockResolvedValue(true),
+      // Additional client methods if necessary
+    },
+  }),
 }));
 
-describe('messageHandler', () => {
-    let mockSendResponse;
-    let mockFetchMessages;
+// Mocking configurationManager to provide test configurations
+jest.mock('../../src/config/configurationManager', () => ({
+  getConfig: jest.fn().mockImplementation((key) => {
+    switch (key) {
+      case 'DISCORD_TOKEN':
+        return 'test-token';
+      // Add more configuration keys as needed
+      default:
+        return null;
+    }
+  }),
+}));
 
-    beforeEach(() => {
-        jest.clearAllMocks(); // Reset mocks before each test
+// Mocking discord.js Client, Channels, and Users
+jest.mock('discord.js', () => ({
+  Client: jest.fn().mockReturnValue({
+    login: jest.fn().mockResolvedValue(true),
+    channels: {
+      fetch: jest.fn().mockResolvedValue({
+        messages: {
+          fetch: jest.fn().mockResolvedValue({
+            array: () => [{ id: '123', content: 'Mock message', reply: jest.fn() }],
+          }),
+        },
+        send: jest.fn().mockResolvedValue({ id: '456', content: 'Mock sent message' }),
+      }),
+    },
+    users: {
+      fetch: jest.fn().mockResolvedValue({ id: 'user123', username: 'MockUser' }),
+    },
+  }),
+  GatewayIntentBits: {},
+  TextChannel: jest.fn(),
+  DMChannel: jest.fn(),
+  NewsChannel: jest.fn(),
+}));
 
-        // Mocking DiscordManager's getInstance to return specific functions
-        mockSendResponse = jest.fn();
-        mockFetchMessages = jest.fn().mockResolvedValue([
-            // Add more detailed mock messages if needed
-            { getText: () => "User message", getAuthorId: () => "user-id", getChannelId: () => "test-channel-id" },
-        ]);
+// Mocking OpenAiManager
+jest.mock('../../src/managers/OpenAiManager', () => ({
+  getInstance: jest.fn().mockReturnValue({
+    sendRequest: jest.fn(),
+    getIsResponding: jest.fn().mockReturnValue(false),
+    setIsResponding: jest.fn(),
+  }),
+}));
 
-        DiscordManager.getInstance = jest.fn().mockReturnValue({
-            sendResponse: mockSendResponse,
-            fetchMessages: mockFetchMessages,
-        });
+// Define a utility function to create mock messages
+const createMockMessage = ({ content = '', channelId = 'defaultChannelId', authorId = 'defaultAuthorId' } = {}) => ({
+  content,
+  reply: jest.fn(),
+  channelId,
+  author: { id: authorId, username: 'MockUser' },
+});
 
-        // Mocking OpenAiManager's response to simulate the OpenAI API response
-        OpenAiManager.mockImplementation(() => ({
-            sendRequest: jest.fn().mockResolvedValue({
-                choices: [{
-                    message: {
-                        role: "assistant",
-                        content: "Mocked response",
-                    },
-                }],
-            }),
-            buildRequestBody: jest.fn().mockReturnValue({}),
-            requiresHistory: jest.fn().mockReturnValue(true),
-        }));
-    });
+describe('messageHandler robustness', () => {
+  beforeEach(() => {
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+  });
 
-    it('responds to user messages correctly', async () => {
-        // Mocked message input to messageHandler
-        const mockDiscordMessage = {
-            getText: () => 'Hello, world!',
-            getChannelId: () => 'test-channel-id',
-            getAuthorId: () => 'user-id',
-        };
+  it('processes message correctly with successful OpenAiManager response', async () => {
+    const testResponse = "This is a test response from OpenAI.";
+    OpenAiManager.getInstance().sendRequest.mockResolvedValue([testResponse]);
 
-        // Call the messageHandler with the mocked DiscordMessage
-        await messageHandler(mockDiscordMessage);
+    const mockMessage = createMockMessage({ content: 'Test message' });
 
-        // Assertions to verify correct behavior
-        expect(mockSendResponse).toHaveBeenCalledWith('test-channel-id', 'Mocked response');
-        expect(mockSendResponse).toHaveBeenCalledTimes(1);
-    });
+    await messageHandler(mockMessage);
 
-    // Additional tests to cover various scenarios and edge cases...
+    expect(OpenAiManager.getInstance().sendRequest).toHaveBeenCalledTimes(1);
+    expect(mockMessage.reply).toHaveBeenCalledWith(testResponse);
+  });
+
+  it('handles failure from OpenAiManager gracefully', async () => {
+    OpenAiManager.getInstance().sendRequest.mockRejectedValue(new Error("Failed to fetch"));
+
+    const mockMessage = createMockMessage({ content: 'Test failure scenario' });
+
+    await messageHandler(mockMessage);
+
+    expect(OpenAiManager.getInstance().sendRequest).toHaveBeenCalledTimes(1);
+    expect(mockMessage.reply).toHaveBeenCalledWith(expect.stringContaining("Error"));
+  });
 });

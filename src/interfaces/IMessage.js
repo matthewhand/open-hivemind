@@ -41,6 +41,7 @@ class IMessage {
         throw new Error("isFromBot method must be implemented by subclasses");
     }
 
+
 }
 
 module.exports = IMessage;

@@ -1,38 +1,47 @@
-// handlers/commandHandler.js
+const { parseCommand } = require('../utils/commandParser');
 const { aliases } = require('../config/aliases');
 const commands = require('../commands/inline');
 const logger = require('../utils/logger');
-const { parseCommand } = require('../utils/commandParser');
+const typeforce = require('typeforce');
 
-function extractCommandContent(message) {
-    return message.content.trim();
-}
+// Define a type for the expected structure of a Discord message
+const DiscordMessage = {
+  content: 'String',
+  // Add more properties as needed, depending on what your commands use
+};
 
 async function commandHandler(message) {
     try {
-        // Use the utility function to extract command content
-        const commandContent = extractCommandContent(message);
+        // Ensure the message object has the expected structure
+        typeforce(DiscordMessage, message);
+        const commandContent = message.content.trim();
+        
         const resolvedCommand = parseCommand(commandContent);
-        logger.info(`Resolved command: ${JSON.stringify(resolvedCommand)}`);
+        if (!resolvedCommand) {
+            message.reply('No command found in the message.');
+            return;
+        }
 
-        if (resolvedCommand) {
-            const { commandName, action, args } = resolvedCommand;
-            const resolvedAlias = aliases[commandName] || commandName;
-            const command = commands[resolvedAlias];
+        // Check for valid command structure
+        typeforce({
+            commandName: 'String',
+            action: 'String',
+            args: 'String',
+        }, resolvedCommand);
 
-            if (command) {
-                logger.info(`Executing command: ${commandName} with action: ${action}, args: ${args}`);
-                await command.execute(message, args, action);
-            } else {
-                logger.warn(`Unknown command: ${commandName}`);
-                message.reply(`Unknown command: ${commandName}`);
-            }
+        const { commandName, action, args } = resolvedCommand;
+        const resolvedAlias = aliases[commandName] || commandName;
+        const command = commands[resolvedAlias];
+
+        if (command) {
+            logger.info(`Executing command: ${commandName} with action: ${action}, args: ${args}`);
+            await command.execute(message, args, action);
         } else {
-            logger.warn('No command found in the message');
-            message.reply('No command found in the message');
+            logger.warn(`Unknown command: ${commandName}`);
+            message.reply(`Unknown command: '${commandName}'. Try '!help' for a list of commands.`);
         }
     } catch (error) {
-        logger.error(`Error while handling command: ${error}`, error);
+        logger.error(`Error while handling command: ${message.content}`, error);
         message.reply('An error occurred while processing your command.');
     }
 }

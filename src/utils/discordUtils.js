@@ -50,34 +50,75 @@ async function registerSlashCommands(token, guildId, commands) {
  * @returns {Promise<DiscordMessage[]>} An array of messages in a generic format.
  */
 async function fetchMessages(client, channelId, limit = 20) {
+    // Check if the client is defined
+    if (!client) {
+        logger.error(`fetchMessages was called with an undefined or null client.`);
+        return [];
+    }
+
+    // Check if the client's channels collection is accessible
+    if (!client.channels) {
+        logger.error(`fetchMessages was called on a client with an undefined or null channels collection.`);
+        return [];
+    }
+
     try {
+        // Attempt to fetch the channel by ID
         const channel = await client.channels.fetch(channelId);
+        
+        // Check if a valid channel was returned
+        if (!channel) {
+            logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
+            return [];
+        }
+
+        // Fetch messages from the channel
         const fetchedMessages = await channel.messages.fetch({ limit });
         const messages = fetchedMessages.map(message => new DiscordMessage(message));
         logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
         return messages;
     } catch (error) {
+        // Log any errors encountered during the fetch operation
         logger.error(`Error fetching messages from Discord for channel ID ${channelId}:`, error);
         return [];
     }
 }
 
 /**
- * Sends a response message to a specified Discord channel.
+ * Sends a response message to a specified Discord channel, handling long messages.
  * @param {Discord.Client} client - The Discord client instance.
  * @param {string} channelId - The ID of the channel where the message will be sent.
  * @param {string} messageText - The content of the message to be sent.
  */
+
 async function sendResponse(client, channelId, messageText) {
+    // Ensure channelId is valid
+    if (!channelId) {
+        logger.error(`sendResponse was called with an undefined or null channelId.`);
+        return;
+    }
+
+    // Attempt to fetch the channel and send the message
     try {
         const channel = await client.channels.fetch(channelId);
-        await channel.send(messageText);
-        logger.debug(`Message sent to channel ID: ${channelId} with content: "${messageText}"`);
+        if (!channel) {
+            logger.error(`Failed to fetch channel with ID: ${channelId}`);
+            return;
+        }
+
+        // Splitting messageText to handle Discord character limit, if necessary
+        const MAX_LENGTH = 2000; // Discord's max message length
+        const messageParts = messageText.length > MAX_LENGTH ? 
+            [messageText.slice(0, MAX_LENGTH - 1) + '…'] : [messageText];
+
+        for (const part of messageParts) {
+            await channel.send(part);
+            logger.debug(`Message sent to channel ID: ${channelId}`);
+        }
     } catch (error) {
-        logger.error(`Error sending response to Discord for channel ID ${channelId}:`, error);
+        logger.error(`Error sending message to channel ID ${channelId}: ${error}`);
     }
 }
-
 
 /**
  * Splits a message into chunks that are within Discord's character limit.
@@ -112,24 +153,6 @@ function splitMessage(messageText, maxLength = 1997) {
     return parts;
 }
 
-
-/**
- * Sends a response message to a specified Discord channel, handling long messages.
- * @param {Discord.Client} client - The Discord client instance.
- * @param {string} channelId - The ID of the channel where the message will be sent.
- * @param {string} messageText - The content of the message to be sent.
- */
-async function sendResponse(client, channelId, messageText) {
-    const messageParts = splitMessage(messageText);
-    const channel = await client.channels.fetch(channelId);
-    
-    for (const part of messageParts) {
-        await channel.send(part).catch(error => {
-            logger.error(`Error sending part of the response to Discord for channel ID ${channelId}:`, error);
-        });
-    }
-}
-
 /**
  * Processes a Discord message and converts it to a generic format.
  * @param {Discord.Message} message - The Discord message to process.
@@ -139,10 +162,48 @@ async function processDiscordMessage(message) {
     return new DiscordMessage(message);
 }
 
+async function fetchChannelContext(client, channelId) {
+    // Check if the client is defined
+    if (!client) {
+        logger.error(`fetchChannelContext was called with an undefined or null client.`);
+        return { channelTopic: "Error: Invalid client", historyMessages: [] };
+    }
+
+    // Check if the client's channels collection is accessible
+    if (!client.channels) {
+        logger.error(`fetchChannelContext was called on a client with an undefined or null channels collection.`);
+        return { channelTopic: "Error: Invalid channels collection", historyMessages: [] };
+    }
+
+    try {
+        // Attempt to fetch the channel by ID
+        const channel = await client.channels.fetch(channelId);
+        
+        // Check if a valid channel was returned
+        if (!channel) {
+            logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
+            return { channelTopic: "Error: Channel not found", historyMessages: [] };
+        }
+
+        // Fetch messages from the channel
+        const fetchedMessages = await channel.messages.fetch({ limit: 20 });
+        const historyMessages = fetchedMessages.map(message => new DiscordMessage(message));
+        const channelTopic = channel.topic || "General discussion";
+
+        logger.debug(`Fetched context for channel ID: ${channelId}`);
+        return { channelTopic, historyMessages };
+    } catch (error) {
+        // Log any errors encountered during the fetch operation
+        logger.error(`Error fetching channel context for channel ID ${channelId}:`, error);
+        return { channelTopic: "Error: Fetching context failed", historyMessages: [] };
+    }
+}
+
 module.exports = {
     processDiscordMessage,
     collectSlashCommands,
     registerSlashCommands,
     fetchMessages,
     sendResponse,
+    fetchChannelContext,
 };
