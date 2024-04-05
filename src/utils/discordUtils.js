@@ -92,11 +92,20 @@ async function fetchMessages(client, channelId, limit = 20) {
  */
 
 async function sendResponse(client, channelId, messageText) {
+    // Ensure messageText is valid
+    if (!messageText) {
+        logger.error(`sendResponse was called with an undefined or null messageText.`);
+        return;
+    }
+
     // Ensure channelId is valid
     if (!channelId) {
         logger.error(`sendResponse was called with an undefined or null channelId.`);
         return;
     }
+
+    logger.debug(`[discordUtils] Summarized message ready to send: ${messageText}`);
+    logger.debug(`[discordUtils] Sending message to channel: ${channelId}`);
 
     // Attempt to fetch the channel and send the message
     try {

@@ -100,6 +100,8 @@ class DiscordManager {
      * @returns {Promise<void>}
      */
     async sendResponse(channelId, messageText) {
+        logger.debug(`[DiscordManager] Summarized message ready to send: ${messageText}`);
+        logger.debug(`[DiscordManager] Sending message to channel: ${channelId}`);
         return discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
@@ -133,9 +135,6 @@ class DiscordManager {
      * @throws {Error} Throws a deprecation error.
      */
     async fetchChannelContext(channelId) {
-        // Option 1: Throw an explicit deprecation error
-        throw new Error("fetchChannelContext is deprecated. Please use discordUtils.fetchChannelContext instead.");
-
         // Option 2: Log a deprecation warning and mimic a failure
         logger.warn("fetchChannelContext is deprecated and will be removed in future versions. Please use discordUtils.fetchChannelContext instead.");
         // Simulate a failed operation without breaking existing code that might not check for errors properly
