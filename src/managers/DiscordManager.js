@@ -52,27 +52,36 @@ class DiscordManager {
      */
     setupEventHandlers() {
         this.client.on('messageCreate', async (discordMessage) => {
+            logger.debug(`[DiscordManager] Received messageCreate event with message ID: ${discordMessage.id}`);
+    
             try {
                 const processedMessage = new DiscordMessage(discordMessage);
-                
+                logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.message.id}, Content: "${processedMessage.getText().substring(0, 50)}..."`); // Log first 50 chars of the message
+    
                 if (this.shouldFetchContext(processedMessage)) {
+                    logger.debug(`[DiscordManager] Fetching context for message ID: ${processedMessage.message.id}`);
                     const { channelTopic, historyMessages } = await discordUtils.fetchChannelContext(this.client, processedMessage.getChannelId());
                     processedMessage.channelTopic = channelTopic;
                     processedMessage.historyMessages = historyMessages;
+                    logger.debug(`[DiscordManager] Context fetched for message ID: ${processedMessage.message.id}. Channel Topic: ${channelTopic}, History Messages Count: ${historyMessages.length}`);
+                } else {
+                    logger.debug(`[DiscordManager] Context fetch skipped for message ID: ${processedMessage.message.id}`);
                 }
     
                 if (this.messageHandler) {
+                    logger.debug(`[DiscordManager] Passing processed message ID: ${processedMessage.message.id} to the message handler`);
                     // Pass the processed message and its history to the message handler
                     await this.messageHandler(processedMessage, processedMessage.historyMessages);
+                    logger.debug(`[DiscordManager] Message handler processed message ID: ${processedMessage.message.id}`);
                 } else {
-                    logger.warn('Message handler not set in DiscordManager.');
+                    logger.warn('[DiscordManager] Message handler not set in DiscordManager.');
                 }
             } catch (error) {
-                logger.error(`Error processing message: ${error}`, { errorDetail: error });
+                logger.error(`[DiscordManager] Error processing message ID: ${discordMessage.id}: ${error}`, { errorDetail: error });
             }
         });
     }
-    
+            
     /**
      * Registers a callback function to handle messages.
      * @param {Function} messageHandlerCallback - The callback function to handle messages.
@@ -128,17 +137,23 @@ class DiscordManager {
 
 
     /**
-     * Previously used to fetch channel context directly within DiscordManager.
-     * This function is now deprecated.
-     * @deprecated Since version [next_version]. Use discordUtils.fetchChannelContext instead.
+     * Fetches channel context using the utility function from discordUtils.
+     * This method acts as a pass-through to centralize the fetching logic.
+     * 
      * @param {string} channelId - The ID of the channel.
-     * @throws {Error} Throws a deprecation error.
+     * @returns {Promise<Object>} A promise that resolves to the channel context, including topic and historyMessages.
      */
     async fetchChannelContext(channelId) {
-        // Option 2: Log a deprecation warning and mimic a failure
-        logger.warn("fetchChannelContext is deprecated and will be removed in future versions. Please use discordUtils.fetchChannelContext instead.");
-        // Simulate a failed operation without breaking existing code that might not check for errors properly
-        return Promise.reject(new Error("fetchChannelContext is deprecated."));
+        logger.debug(`Fetching context for channel ID: ${channelId} using discordUtils.`);
+        return discordUtils.fetchChannelContext(this.client, channelId)
+            .then(context => {
+                logger.debug(`Context fetched for channel ID: ${channelId}.`);
+                return context;
+            })
+            .catch(error => {
+                logger.error(`Error fetching context for channel ID: ${channelId}:`, error);
+                throw error; // Rethrow error to be handled by the caller
+            });
     }
 
     /**
