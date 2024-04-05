@@ -75,7 +75,12 @@ async function handleFollowUp(originalMessage) {
         // Example logic for deciding which follow-ups or command suggestions to make
         const followUpSuggestions = generateFollowUpSuggestions(originalMessage.content);
         const followUpMessage = `Here are some commands you might find useful:\n${followUpSuggestions}`;
-        
+
+        if (!followUpMessage) {
+            logger.debug('[handleFollowUp] No follow-up suggestions generated.');
+            return false;
+        }
+
         // Send the follow-up suggestion message back to the user
         await originalMessage.channel.send(followUpMessage);
         logger.info("Follow-up suggestions sent successfully.");

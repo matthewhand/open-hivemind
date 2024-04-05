@@ -35,7 +35,7 @@ class DiscordMessage extends IMessage {
         //     logger.debug('DiscordMessage constructor: isBotExplicitlySet parameter not provided, defaulting to null.');
         // }
     
-        logger.debug('DiscordMessage constructor: message object successfully initialized.');
+        // logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
     // Update mentionsUsers to handle an array of user IDs or a single userID
     mentionsUsers(userIds = [constants.CLIENT_ID]) {
