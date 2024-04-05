@@ -47,7 +47,7 @@ async function summarizeMessage(messageContent) {
         return messageContent; // Return original message if it's short enough
     } else {
         // Craft a system message for the LLM that specifies the need for a concise summary
-        const systemMessageContent = "Summarize the following text concisely, without adding any additional comments, questions, or any wording that doesn't directly contribute to the summary. Aim to maintain the illusion of the bot's character role-playing:";
+        const systemMessageContent = "Concisely and succinctly summarize the following text concisely, without adding any additional comments, questions, or any wording that doesn't directly contribute to the summary. Aim to maintain the illusion of the bot's character role-playing:";
         try {
             const openAiManager = OpenAiManager.getInstance();
             const summarizedTexts = await openAiManager.summarizeText(messageContent, systemMessageContent);
