@@ -2,7 +2,7 @@ const DiscordManager = require('../managers/DiscordManager');
 const OpenAiManager = require('../managers/OpenAiManager');
 const logger = require('./logger');
 const commands = require('../commands/inline'); // Adjust based on your actual command structure
-const { listAllAliases, getAliasDescription } = require('./aliasUtils');
+const { listAllAliases } = require('./aliasUtils');
 
 
 /**
