@@ -112,19 +112,29 @@ class DiscordManager {
         const MAX_LENGTH = 2000; // Discord's max message length
         let messageParts = [];
 
+        messageText = String(messageText);
+    
         // Check for code blocks to avoid splitting them
         if (messageText.match(/```[\s\S]*?```/)) {
             messageParts = [messageText]; // Keep code blocks intact
         } else {
+            // Split message without breaking words
             while (messageText.length) {
-                let splitIndex = messageText.lastIndexOf('\n', MAX_LENGTH);
-                splitIndex = splitIndex > 0 ? splitIndex : MAX_LENGTH;
-                let part = messageText.substring(0, splitIndex).trim();
-                messageParts.push(part);
-                messageText = messageText.substring(splitIndex).trim();
+                if (messageText.length <= MAX_LENGTH) {
+                    messageParts.push(messageText);
+                    break; // The remainder of the message is within the limit
+                } else {
+                    // Find last newline before the limit
+                    let lastIndex = messageText.substring(0, MAX_LENGTH).lastIndexOf('\n');
+                    // If no newline is found, use the maximum length
+                    lastIndex = lastIndex > 0 ? lastIndex : MAX_LENGTH;
+                    messageParts.push(messageText.substring(0, lastIndex));
+                    // Remove the processed part from the messageText
+                    messageText = messageText.substring(lastIndex).trim();
+                }
             }
         }
-
+    
         // Send each part as a separate message
         for (const part of messageParts) {
             try {
@@ -136,7 +146,7 @@ class DiscordManager {
             }
         }
     }
-
+    
     /**
      * Determines if the channel context should be fetched based on the message.
      * @param {DiscordMessage} processedMessage - The message to evaluate.
