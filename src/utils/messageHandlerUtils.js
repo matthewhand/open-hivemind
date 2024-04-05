@@ -4,46 +4,22 @@ const logger = require('./logger');
 const commands = require('../commands/inline'); // Adjust based on your actual command structure
 const { listAllAliases, getAliasDescription } = require('./aliasUtils');
 
-// Checks if the message contains code blocks to avoid splitting them
-function containsCodeBlocks(messageContent) {
-    logger.debug(`Checking for code blocks in message.`);
-    return /```[\s\S]*?```/.test(messageContent);
-}
 
-// Splits the message into manageable parts if necessary, excluding code blocks
-function splitMessage(messageContent) {
-    logger.debug(`Splitting message content for Discord's length limit.`);
-    const MAX_LENGTH = 1900; // Slightly under Discord's limit for safety
-    let parts = [];
-    if (containsCodeBlocks(messageContent)) {
-        parts.push(messageContent); // Keep code blocks intact
-    } else {
-        let currentPart = '';
-        messageContent.split('\n').forEach(line => {
-            if ((currentPart + '\n' + line).length > MAX_LENGTH) {
-                parts.push(currentPart);
-                currentPart = line;
-            } else {
-                currentPart += (currentPart ? '\n' : '') + line;
-            }
-        });
-        if (currentPart) parts.push(currentPart); // Include the last part if present
-    }
-    return parts.filter(part => part.length); // Filter out any empty strings
-}
-
-// Sends individual parts of a message using DiscordManager
-async function sendResponse(messageContent, channelId) {
-    const messageParts = splitMessage(messageContent);
-    logger.debug(`Sending message parts to channel ID: ${channelId}`);
-    for (const part of messageParts) {
-        try {
-            // Use DiscordManager's sendResponse method
-            await DiscordManager.getInstance().sendResponse(channelId, part);
-            logger.debug(`Message part sent to channel ID: ${channelId}`);
-        } catch (error) {
-            logger.error(`Failed to send message part to channel ID: ${channelId}: ${error}`);
-        }
+/**
+ * Sends a message to a specified Discord channel. This function delegates the responsibility
+ * of message handling, including any necessary splitting, to the DiscordManager.
+ * 
+ * @param {string} channelId - The ID of the Discord channel where the message will be sent.
+ * @param {string} messageContent - The content of the message to be sent.
+ */
+async function sendResponse(channelId, messageContent) {
+    try {
+        // Directly use DiscordManager's sendResponse method to send the message
+        await DiscordManager.getInstance().sendResponse(channelId, messageContent);
+        logger.debug(`[messageHandlerUtils] Message sent to channel ID: ${channelId}`);
+    } catch (error) {
+        // Log any errors encountered during the message sending process
+        logger.error(`[messageHandlerUtils] Failed to send message to channel ID: ${channelId}: ${error}`);
     }
 }
 

@@ -67,7 +67,6 @@ async function messageHandler(originalMessage, historyMessages = []) {
         // Summarize the response and send it
         let messageToSend = await summarizeMessage(responseContent);
         logger.debug(`[messageHandler] Summarized message ready to send: ${messageToSend}`);
-
         logger.debug(`[messageHandler] Sending message to channel: ${channelId}`);
         await sendResponse(channelId, messageToSend).catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
 

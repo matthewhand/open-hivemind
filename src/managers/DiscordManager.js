@@ -109,9 +109,32 @@ class DiscordManager {
      * @returns {Promise<void>}
      */
     async sendResponse(channelId, messageText) {
-        logger.debug(`[DiscordManager] Summarized message ready to send: ${messageText}`);
-        logger.debug(`[DiscordManager] Sending message to channel: ${channelId}`);
-        return discordUtils.sendResponse(this.client, channelId, messageText);
+        const MAX_LENGTH = 2000; // Discord's max message length
+        let messageParts = [];
+
+        // Check for code blocks to avoid splitting them
+        if (messageText.match(/```[\s\S]*?```/)) {
+            messageParts = [messageText]; // Keep code blocks intact
+        } else {
+            while (messageText.length) {
+                let splitIndex = messageText.lastIndexOf('\n', MAX_LENGTH);
+                splitIndex = splitIndex > 0 ? splitIndex : MAX_LENGTH;
+                let part = messageText.substring(0, splitIndex).trim();
+                messageParts.push(part);
+                messageText = messageText.substring(splitIndex).trim();
+            }
+        }
+
+        // Send each part as a separate message
+        for (const part of messageParts) {
+            try {
+                const channel = await this.client.channels.fetch(channelId);
+                await channel.send(part);
+                logger.debug(`[DiscordManager] Message part sent to channel ID: ${channelId}`);
+            } catch (error) {
+                logger.error(`[DiscordManager] Failed to send message part to channel ID: ${channelId}: ${error}`);
+            }
+        }
     }
 
     /**
