@@ -95,7 +95,7 @@ class OpenAiManager {
     
         const requestBody = {
             model: constants.LLM_MODEL,
-            max_tokens: 200, // TODO configure as const/envvar
+            max_tokens: 128, // TODO configure as const/envvar
             messages,
         };
     
