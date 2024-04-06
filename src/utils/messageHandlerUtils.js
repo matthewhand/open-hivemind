@@ -44,40 +44,33 @@ async function summarizeMessage(initialMessageContent) {
     const maxAttempts = 3;
     let attempt = 0;
     let finishReason = '';
-    let currentMessageContent = initialMessageContent; // Start with the initial message content
+    let currentMessageContent = initialMessageContent;
     let summary = '';
-    let response = [];
     const openAiManager = OpenAiManager.getInstance();
 
     while (attempt < maxAttempts && finishReason !== 'stop') {
         attempt++;
-        logger.debug(`[summarizeMessage] Attempting summarization, attempt ${attempt}`);
-        logger.debug(`[summarizeMessage] Sending request with messageContent: ${JSON.stringify(currentMessageContent, null, 4)}`);
+        logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
 
-        response = await openAiManager.summarizeText(currentMessageContent);
+        try {
+            const response = await openAiManager.summarizeText(currentMessageContent);
+            summary = response.summary;
+            finishReason = response.finishReason;
 
-        if (response.length > 0) {
-            summary = response[0];
-            currentMessageContent = summary; // Update the content for the next iteration with the latest summary
-
-            let currentSummaryLength = summary.length;
-            logger.debug(`[summarizeMessage] Summary length after attempt ${attempt}: ${currentSummaryLength}`);
-
-            if (currentSummaryLength < 1000 || summary.endsWith('...')) {
-                finishReason = 'length'; // Indicate potential for further summarization
-                logger.debug(`[summarizeMessage] Summarization attempt ${attempt} potentially incomplete. Retrying with updated summary...`);
-            } else {
-                finishReason = 'stop'; // Consider summarization complete
-                logger.debug('[summarizeMessage] Summarization deemed complete.');
+            logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${finishReason}, summary length=${summary.length}`);
+            
+            if (finishReason !== 'stop') {
+                currentMessageContent = summary; // Use the latest summary as the input for the next attempt
+                logger.debug(`[summarizeMessage] Retrying with updated content.`);
             }
-        } else {
-            logger.error('[summarizeMessage] Failed to get a valid response from summarization request');
-            break; // Exit loop if the response is not valid
+        } catch (error) {
+            logger.error(`[summarizeMessage] Attempt ${attempt} failed: ${error.message}`);
+            break;
         }
     }
 
-    logger.debug(`Final summary (attempt ${attempt}): ${summary.substring(0, 100)}...`); // Log a portion of the final summary for brevity
-    return summary; // Return the last summary attempt if all retries are exhausted or a valid summary is obtained
+    logger.debug(`Final summary: ${summary.substring(0, 100)}...`);
+    return summary;
 }
 
 // Determines whether the message should be processed
