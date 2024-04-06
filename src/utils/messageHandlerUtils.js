@@ -53,11 +53,8 @@ async function summarizeMessage(initialMessageContent) {
         logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
 
         try {
-            // Receive structured responses with summary and finishReason
-            const responses = await openAiManager.sendRequest({ messages: [{ content: currentMessageContent }] });
-
-            // Assume the first response is the most relevant
-            const { summary, finishReason: currentFinishReason } = responses[0] || { summary: '', finishReason: 'error' };
+            // Directly call summarizeText as it now handles the formatting and sending of the request
+            const { summary, finishReason: currentFinishReason } = await openAiManager.summarizeText(currentMessageContent);
 
             logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${currentFinishReason}, summary length=${summary.length}`);
 
@@ -69,15 +66,17 @@ async function summarizeMessage(initialMessageContent) {
                 // If finish reason is 'stop', use the current summary as the final summary
                 finalSummary = summary;
                 finishReason = currentFinishReason;
+                logger.debug('[summarizeMessage] Summarization deemed complete.');
+                break; // Exit the loop since we have a conclusive summary
             }
         } catch (error) {
             logger.error(`[summarizeMessage] Attempt ${attempt} failed: ${error.message}`);
-            break;
+            break; // Exit the loop on failure to prevent further attempts
         }
     }
 
     logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for log)`);
-    return finalSummary; // Return the final summary after all attempts
+    return finalSummary; // Return the final summary after all attempts or on conclusive summary
 }
 
 // Determines whether the message should be processed

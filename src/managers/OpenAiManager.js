@@ -108,21 +108,25 @@ class OpenAiManager {
     async sendRequest(requestBody) {
         logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
-            const response = await this.openai.completions.create(requestBody);
+            const response = await this.openai.createCompletion(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
             
+            // Ensure there's a valid response with choices
             if (!response.choices || response.choices.length === 0) {
                 logger.error('No choices were returned in the API response.');
-                return [{ summary: '', finishReason: 'error' }];
+                // Instead of returning an array with an object, return a simple object to keep things consistent
+                return { summary: '', finishReason: 'error' };
             }
             
-            return response.choices.map(choice => ({
-                summary: choice.message?.content || choice.content || '',
-                finishReason: choice.finish_reason || 'unknown'
-            }));
+            // Assuming we are interested in the first choice only for simplicity
+            const firstChoice = response.choices[0];
+            return {
+                summary: firstChoice.message?.content || firstChoice.content || '',
+                finishReason: firstChoice.finish_reason || 'unknown'
+            };
         } catch (error) {
             logger.error(`Error in sendRequest: ${error.message}`);
-            throw error; // Propagate the error for handling elsewhere
+            throw error; // It's generally a good idea to let the caller handle the exception
         }
     }
             
