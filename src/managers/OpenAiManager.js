@@ -108,7 +108,7 @@ class OpenAiManager {
     async sendRequest(requestBody) {
         logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
-            const response = await this.openai.createCompletion(requestBody);
+            const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
             
             // Ensure there's a valid response with choices
