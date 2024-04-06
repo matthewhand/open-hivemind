@@ -95,7 +95,7 @@ class OpenAiManager {
     
         const requestBody = {
             model: constants.LLM_MODEL,
-            max_tokens: 128, // TODO configure as const/envvar
+            max_tokens: 420, // TODO configure as const/envvar
             messages,
         };
     
@@ -158,8 +158,8 @@ class OpenAiManager {
         const requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
-            temperature: 0.5,
-            max_tokens: 420
+            temperature: 0.7,
+            max_tokens: 69
         };
         
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
