@@ -13,6 +13,14 @@ const { listAllAliases } = require('./aliasUtils');
  * @param {string} messageContent - The content of the message to be sent.
  */
 async function sendResponse(channelId, messageContent) {
+    if (typeof channelId !== 'string') {
+        throw new TypeError('channelId must be a string');
+    }
+
+    if (typeof messageContent !== 'string' && typeof messageContent !== 'number') {
+        throw new TypeError('messageContent must be a string or a number');
+    }
+
     try {
         // Directly use DiscordManager's sendResponse method to send the message
         await DiscordManager.getInstance().sendResponse(channelId, messageContent);

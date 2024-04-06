@@ -108,44 +108,61 @@ class DiscordManager {
      * @param {string} messageText - The text of the message to be sent.
      * @returns {Promise<void>}
      */
-    async sendResponse(channelId, messageText) {
-        const MAX_LENGTH = 2000; // Discord's max message length
-        let messageParts = [];
+/**
+ * Sends a message to a specified channel.
+ * @param {string} channelId - The ID of the channel to send the message to.
+ * @param {string} messageText - The text of the message to be sent.
+ * @returns {Promise<void>}
+ */
+async sendResponse(channelId, messageText) {
+    const MAX_LENGTH = 2000; // Discord's max message length
+    let messageParts = [];
 
-        messageText = String(messageText);
-    
-        // Check for code blocks to avoid splitting them
-        if (messageText.match(/```[\s\S]*?```/)) {
-            messageParts = [messageText]; // Keep code blocks intact
-        } else {
-            // Split message without breaking words
-            while (messageText.length) {
-                if (messageText.length <= MAX_LENGTH) {
-                    messageParts.push(messageText);
-                    break; // The remainder of the message is within the limit
-                } else {
-                    // Find last newline before the limit
-                    let lastIndex = messageText.substring(0, MAX_LENGTH).lastIndexOf('\n');
-                    // If no newline is found, use the maximum length
-                    lastIndex = lastIndex > 0 ? lastIndex : MAX_LENGTH;
-                    messageParts.push(messageText.substring(0, lastIndex));
-                    // Remove the processed part from the messageText
-                    messageText = messageText.substring(lastIndex).trim();
-                }
-            }
-        }
-    
-        // Send each part as a separate message
-        for (const part of messageParts) {
-            try {
-                const channel = await this.client.channels.fetch(channelId);
-                await channel.send(part);
-                logger.debug(`[DiscordManager] Message part sent to channel ID: ${channelId}`);
-            } catch (error) {
-                logger.error(`[DiscordManager] Failed to send message part to channel ID: ${channelId}: ${error}`);
+    logger.debug(`[sendResponse] Original messageText: ${messageText}`);
+
+    messageText = String(messageText);
+
+    // Check for code blocks to avoid splitting them
+    if (messageText.match(/```[\s\S]*?```/)) {
+        logger.debug('[sendResponse] Message contains code block. Keeping intact.');
+        messageParts = [messageText]; // Keep code blocks intact
+    } else {
+        logger.debug('[sendResponse] Splitting message.');
+        // Split message without breaking words
+        while (messageText.length) {
+            if (messageText.length <= MAX_LENGTH) {
+                logger.debug('[sendResponse] Adding remaining part of message.');
+                messageParts.push(messageText);
+                break; // The remainder of the message is within the limit
+            } else {
+                // Find last newline before the limit
+                let lastIndex = messageText.substring(0, MAX_LENGTH).lastIndexOf('\n');
+                logger.debug(`[sendResponse] Last index of newline: ${lastIndex}`);
+
+                // If no newline is found, use the maximum length
+                lastIndex = lastIndex > 0 ? lastIndex : MAX_LENGTH;
+                messageParts.push(messageText.substring(0, lastIndex));
+                // Remove the processed part from the messageText
+                messageText = messageText.substring(lastIndex).trim();
+
+                logger.debug(`[sendResponse] Message split. Remaining length: ${messageText.length}`);
             }
         }
     }
+
+    logger.debug(`[sendResponse] Number of message parts: ${messageParts.length}`);
+
+    // Send each part as a separate message
+    for (const part of messageParts) {
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            await channel.send(part);
+            logger.debug(`[DiscordManager] Message part sent to channel ID: ${channelId}`);
+        } catch (error) {
+            logger.error(`[DiscordManager] Failed to send message part to channel ID: ${channelId}: ${error}`);
+        }
+    }
+}
     
     /**
      * Determines if the channel context should be fetched based on the message.
