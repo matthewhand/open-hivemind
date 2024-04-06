@@ -40,10 +40,11 @@ async function processCommand(originalMessage) {
     }
 }
 
-async function summarizeMessage(messageContent) {
+async function summarizeMessage(initialMessageContent) {
     const maxAttempts = 3;
     let attempt = 0;
     let finishReason = '';
+    let currentMessageContent = initialMessageContent; // Start with the initial message content
     let summary = '';
     let response = [];
     const openAiManager = OpenAiManager.getInstance();
@@ -51,26 +52,22 @@ async function summarizeMessage(messageContent) {
     while (attempt < maxAttempts && finishReason !== 'stop') {
         attempt++;
         logger.debug(`[summarizeMessage] Attempting summarization, attempt ${attempt}`);
-        logger.debug(`[summarizeMessage] Sending request with messageContent: ${JSON.stringify(messageContent, null, 4)}`);
-        
-        // Use the revised summarizeText method. Assume it's part of an instance of a class managing OpenAI requests.
-        response = await openAiManager.summarizeText(messageContent);
+        logger.debug(`[summarizeMessage] Sending request with messageContent: ${JSON.stringify(currentMessageContent, null, 4)}`);
+
+        response = await openAiManager.summarizeText(currentMessageContent); // Use current content for summarization
 
         if (response.length > 0) {
             summary = response[0];
-            // Assume your OpenAI response parsing logic sets 'finish_reason' as part of the summary or within a debug message.
-            // Here, we'll need to manually check if the summary meets our requirements or if we should infer 'finish_reason'.
-            // Since we don't have 'finish_reason' directly, let's decide based on the length of the summary or other criteria.
+            currentMessageContent = summary; // Update the content for the next iteration with the latest summary
 
-            // Example check - you might want to adjust this based on actual response structure or other logic
             let currentSummaryLength = summary.length;
             logger.debug(`[summarizeMessage] Summary length after attempt ${attempt}: ${currentSummaryLength}`);
 
-            if (currentSummaryLength < 1000 || summary.endsWith('...')) { // Example condition to retry
-                finishReason = 'length'; // Simulating a finish reason for the purpose of this loop
-                logger.debug(`[summarizeMessage] Summarization attempt ${attempt} potentially incomplete. Retrying...`);
+            if (currentSummaryLength < 1000 || summary.endsWith('...')) {
+                finishReason = 'length'; // Indicate potential for further summarization
+                logger.debug(`[summarizeMessage] Summarization attempt ${attempt} potentially incomplete. Retrying with updated summary...`);
             } else {
-                finishReason = 'stop'; // Assuming the summary is sufficient
+                finishReason = 'stop'; // Consider summarization complete
                 logger.debug('[summarizeMessage] Summarization deemed complete.');
             }
         } else {
@@ -79,8 +76,7 @@ async function summarizeMessage(messageContent) {
         }
     }
 
-    // Log final summary attempt's details
-    logger.debug(`Final summary (attempt ${attempt}): ${summary.substring(0, 100)}...`); // Log the first 100 characters for brevity
+    logger.debug(`Final summary (attempt ${attempt}): ${summary.substring(0, 100)}...`); // Log a portion of the final summary for brevity
     return summary; // Return the last summary attempt if all retries are exhausted or a valid summary is obtained
 }
 
