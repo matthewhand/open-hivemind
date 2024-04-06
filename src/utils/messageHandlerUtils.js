@@ -46,11 +46,12 @@ async function summarizeMessage(messageContent) {
     let finishReason = '';
     let summary = '';
     let response = [];
-    const openAiManager = OpenAiManager.getInstance(); // Ensure you have an instance of your OpenAiManager.
+    const openAiManager = OpenAiManager.getInstance();
 
     while (attempt < maxAttempts && finishReason !== 'stop') {
         attempt++;
         logger.debug(`[summarizeMessage] Attempting summarization, attempt ${attempt}`);
+        logger.debug(`[summarizeMessage] Sending request with messageContent: ${JSON.stringify(messageContent, null, 4)}`);
         
         // Use the revised summarizeText method. Assume it's part of an instance of a class managing OpenAI requests.
         response = await openAiManager.summarizeText(messageContent);
