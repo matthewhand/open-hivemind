@@ -65,9 +65,10 @@ async function messageHandler(originalMessage, historyMessages = []) {
         logger.debug(`[messageHandler] Received response from OpenAI.`);
 
         // Summarize the response and send it
-        let messageToSend = await summarizeMessage(responseContent);
-        logger.debug(`[messageHandler] Summarized message ready to send: ${messageToSend}`);
-        logger.debug(`[messageHandler] Sending message to channel: ${channelId}`);
+        // let messageToSend = await summarizeMessage(responseContent);
+        // logger.debug(`[messageHandler] Summarized message ready to send: ${messageToSend}`);
+        // logger.debug(`[messageHandler] Sending message to channel: ${channelId}`);
+        let messageToSend = responseContent;
         await sendResponse(channelId, messageToSend).catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
 
         // Handle any follow-up actions
