@@ -140,7 +140,7 @@ class OpenAiManager {
         }
     }
     
-    async summarizeText(userMessage, systemMessageContent = 'A brief version of the following (and only that):') {
+    async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (dont apologise):') {
         logger.debug('Starting the text summarization process.');
         
         // Constructing the request body with a conversational structure
