@@ -50,10 +50,10 @@ async function summarizeMessage(messageContent) {
 
     while (attempt < maxAttempts && finishReason !== 'stop') {
         attempt++;
-        logger.debug(`Attempting summarization, attempt ${attempt}`);
+        logger.debug(`[summarizeMessage] Attempting summarization, attempt ${attempt}`);
         
         // Use the revised summarizeText method. Assume it's part of an instance of a class managing OpenAI requests.
-        response = await openAiManager.summarizeText(messageContent, 'A brief version of the following (and only that):');
+        response = await openAiManager.summarizeText(messageContent);
 
         if (response.length > 0) {
             summary = response[0];
@@ -63,17 +63,17 @@ async function summarizeMessage(messageContent) {
 
             // Example check - you might want to adjust this based on actual response structure or other logic
             let currentSummaryLength = summary.length;
-            logger.debug(`Summary length after attempt ${attempt}: ${currentSummaryLength}`);
+            logger.debug(`[summarizeMessage] Summary length after attempt ${attempt}: ${currentSummaryLength}`);
 
             if (currentSummaryLength < 1000 || summary.endsWith('...')) { // Example condition to retry
                 finishReason = 'length'; // Simulating a finish reason for the purpose of this loop
-                logger.debug(`Summarization attempt ${attempt} potentially incomplete. Retrying...`);
+                logger.debug(`[summarizeMessage] Summarization attempt ${attempt} potentially incomplete. Retrying...`);
             } else {
                 finishReason = 'stop'; // Assuming the summary is sufficient
-                logger.debug('Summarization deemed complete.');
+                logger.debug('[summarizeMessage] Summarization deemed complete.');
             }
         } else {
-            logger.error('Failed to get a valid response from summarization request');
+            logger.error('[summarizeMessage] Failed to get a valid response from summarization request');
             break; // Exit loop if the response is not valid
         }
     }
