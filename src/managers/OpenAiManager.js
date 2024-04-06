@@ -140,9 +140,9 @@ class OpenAiManager {
         }
     }
     
-    async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (dont apologise):') {
+    async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):') {
         logger.debug('Starting the text summarization process.');
-        
+    
         // Constructing the request body with a conversational structure
         let messages = [
             {
@@ -154,44 +154,44 @@ class OpenAiManager {
                 content: userMessage
             }
         ];
-        
+    
         const requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.7,
             max_tokens: 69
         };
-        
+    
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
-        
+    
             let choicesArray = response.choices || (response.data && response.data.choices);
-            if (!choicesArray) {
-                logger.error('API response does not conform to expected structure. Response: ' + JSON.stringify(response, null, 2));
-                return [];
+            if (!choicesArray || choicesArray.length === 0) {
+                logger.error('API response does not conform to expected structure, or no choices were returned. Response: ' + JSON.stringify(response, null, 2));
+                return ''; // Return an empty string to indicate failure
             }
-        
-            let processedResponses = choicesArray.map((choice, index) => {
-                const messageContent = choice.message?.content || choice.content;
-                if (!messageContent) {
-                    logger.error(`Error: Missing content at choice index ${index}.`);
-                    return `Error: Missing content at choice index ${index}.`;
-                }
-                return messageContent.trim();
-            });
-        
+    
+            // Assuming the first choice contains the summary we're interested in
+            const firstChoice = choicesArray[0];
+            const summary = firstChoice.message?.content || firstChoice.content || '';
+    
+            if (!summary) {
+                logger.error('Error: Missing content in the first choice.');
+                return ''; // Return an empty string to indicate failure
+            }
+    
             logger.info('Summarization processed successfully.');
-            logger.debug(`Summarized text: ${processedResponses[0]}`);
-        
-            return processedResponses;
+            logger.debug(`Summarized text: ${summary}`);
+    
+            return summary; // Return the first summary directly
         } catch (error) {
             logger.error(`Error in text summarization: ${error.message}`);
-            throw error;
+            throw error; // Propagate error for external handling
         }
     }
-       
+           
     setIsResponding(isResponding) {
         this.isResponding = isResponding;
         logger.debug(`Set isResponding to ${isResponding}`);

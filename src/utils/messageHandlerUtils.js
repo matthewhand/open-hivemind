@@ -54,7 +54,7 @@ async function summarizeMessage(initialMessageContent) {
         logger.debug(`[summarizeMessage] Attempting summarization, attempt ${attempt}`);
         logger.debug(`[summarizeMessage] Sending request with messageContent: ${JSON.stringify(currentMessageContent, null, 4)}`);
 
-        response = await openAiManager.summarizeText(currentMessageContent); // Use current content for summarization
+        response = await openAiManager.summarizeText(currentMessageContent);
 
         if (response.length > 0) {
             summary = response[0];
