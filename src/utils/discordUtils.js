@@ -196,7 +196,7 @@ async function fetchChannelContext(client, channelId) {
 
         // Fetch messages from the channel
         const fetchedMessages = await channel.messages.fetch({ limit: 20 });
-        const historyMessages = fetchedMessages.map(message => new DiscordMessage(message));
+        const historyMessages = fetchedMessages.map(message => new DiscordMessage(message)).reverse(); // Reverse order to make it LLM friendly
         const channelTopic = channel.topic || "General discussion";
 
         logger.debug(`Fetched context for channel ID: ${channelId}`);
