@@ -53,30 +53,33 @@ async function summarizeMessage(initialMessageContent) {
         logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
 
         try {
-            // Directly call summarizeText as it now handles the formatting and sending of the request
-            const { summary, finishReason: currentFinishReason } = await openAiManager.summarizeText(currentMessageContent);
+            const response = await openAiManager.summarizeText(currentMessageContent);
+
+            // Ensure the structure matches expected { summary, finishReason }
+            if(typeof response !== 'object' || !response.summary) {
+                throw new Error('Unexpected response structure from summarizeText');
+            }
+
+            const { summary, finishReason: currentFinishReason } = response;
 
             logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${currentFinishReason}, summary length=${summary.length}`);
 
             if (currentFinishReason !== 'stop') {
-                // Update the content with the latest summary for the next attempt
-                currentMessageContent = summary;
+                currentMessageContent = summary; // Prepare for next iteration
                 logger.debug(`[summarizeMessage] Retrying with updated content.`);
             } else {
-                // If finish reason is 'stop', use the current summary as the final summary
-                finalSummary = summary;
-                finishReason = currentFinishReason;
+                finalSummary = summary; // Conclusive summary found
                 logger.debug('[summarizeMessage] Summarization deemed complete.');
                 break; // Exit the loop since we have a conclusive summary
             }
         } catch (error) {
             logger.error(`[summarizeMessage] Attempt ${attempt} failed: ${error.message}`);
-            break; // Exit the loop on failure to prevent further attempts
+            break; // Exit the loop on error
         }
     }
 
-    logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for log)`);
-    return finalSummary; // Return the final summary after all attempts or on conclusive summary
+    logger.debug(`Final summary (trimmed for log): ${finalSummary.substring(0, 100)}...`);
+    return finalSummary; // Return the final summary after all attempts
 }
 
 // Determines whether the message should be processed
