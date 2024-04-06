@@ -43,43 +43,41 @@ async function processCommand(originalMessage) {
 async function summarizeMessage(initialMessageContent) {
     const maxAttempts = 3;
     let attempt = 0;
-    let currentMessageContent = initialMessageContent;
-    let finalSummary = '';
-    let finishReason = '';
+    let currentMessageContent = initialMessageContent; // Ensure this is a string.
+    let finalSummary = currentMessageContent; // Initialize with the initial content.
+    let detailedResponse;
+
     const openAiManager = OpenAiManager.getInstance();
 
-    while (attempt < maxAttempts && finishReason !== 'stop') {
+    while (attempt < maxAttempts) {
         attempt++;
         logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
-
+        
         try {
-            const response = await openAiManager.summarizeText(currentMessageContent);
+            // Call OpenAiManager's summarizeText method with the current content as a string.
+            detailedResponse = await openAiManager.summarizeText(currentMessageContent);
+            const { summary, finishReason } = detailedResponse;
 
-            // Ensure the structure matches expected { summary, finishReason }
-            if(typeof response !== 'object' || !response.summary) {
-                throw new Error('Unexpected response structure from summarizeText');
-            }
+            logger.debug(`[summarizeMessage] Attempt ${attempt}: Summary length=${summary.length}, finishReason=${finishReason}`);
 
-            const { summary, finishReason: currentFinishReason } = response;
-
-            logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${currentFinishReason}, summary length=${summary.length}`);
-
-            if (currentFinishReason !== 'stop') {
-                currentMessageContent = summary; // Prepare for next iteration
-                logger.debug(`[summarizeMessage] Retrying with updated content.`);
+            if (finishReason !== 'stop' && attempt < maxAttempts) {
+                // If summarization isn't deemed complete, and we haven't exhausted our attempts, prepare for another iteration.
+                currentMessageContent = summary;
+                logger.debug(`[summarizeMessage] Content updated for next summarization attempt.`);
             } else {
-                finalSummary = summary; // Conclusive summary found
-                logger.debug('[summarizeMessage] Summarization deemed complete.');
-                break; // Exit the loop since we have a conclusive summary
+                // Summarization complete or attempts exhausted; set final summary.
+                finalSummary = summary;
+                logger.debug(`[summarizeMessage] Final summarization complete or attempts exhausted.`);
+                break; // Exit loop as we've reached a conclusive end.
             }
         } catch (error) {
-            logger.error(`[summarizeMessage] Attempt ${attempt} failed: ${error.message}`);
-            break; // Exit the loop on error
+            logger.error(`[summarizeMessage] Error during summarization attempt ${attempt}: ${error}`);
+            break; // Exit loop on error.
         }
     }
 
-    logger.debug(`Final summary (trimmed for log): ${finalSummary.substring(0, 100)}...`);
-    return finalSummary; // Return the final summary after all attempts
+    logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for brevity)`);
+    return finalSummary; // Return the summary obtained from the final successful attempt.
 }
 
 // Determines whether the message should be processed
