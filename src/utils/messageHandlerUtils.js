@@ -43,9 +43,9 @@ async function processCommand(originalMessage) {
 async function summarizeMessage(initialMessageContent) {
     const maxAttempts = 3;
     let attempt = 0;
-    let finishReason = '';
     let currentMessageContent = initialMessageContent;
-    let summary = '';
+    let finalSummary = '';
+    let finishReason = '';
     const openAiManager = OpenAiManager.getInstance();
 
     while (attempt < maxAttempts && finishReason !== 'stop') {
@@ -53,15 +53,22 @@ async function summarizeMessage(initialMessageContent) {
         logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
 
         try {
-            const response = await openAiManager.summarizeText(currentMessageContent);
-            summary = response.summary;
-            finishReason = response.finishReason;
+            // Receive structured responses with summary and finishReason
+            const responses = await openAiManager.sendRequest({ messages: [{ content: currentMessageContent }] });
 
-            logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${finishReason}, summary length=${summary.length}`);
-            
-            if (finishReason !== 'stop') {
-                currentMessageContent = summary; // Use the latest summary as the input for the next attempt
+            // Assume the first response is the most relevant
+            const { summary, finishReason: currentFinishReason } = responses[0] || { summary: '', finishReason: 'error' };
+
+            logger.debug(`[summarizeMessage] Attempt ${attempt}: finishReason=${currentFinishReason}, summary length=${summary.length}`);
+
+            if (currentFinishReason !== 'stop') {
+                // Update the content with the latest summary for the next attempt
+                currentMessageContent = summary;
                 logger.debug(`[summarizeMessage] Retrying with updated content.`);
+            } else {
+                // If finish reason is 'stop', use the current summary as the final summary
+                finalSummary = summary;
+                finishReason = currentFinishReason;
             }
         } catch (error) {
             logger.error(`[summarizeMessage] Attempt ${attempt} failed: ${error.message}`);
@@ -69,8 +76,8 @@ async function summarizeMessage(initialMessageContent) {
         }
     }
 
-    logger.debug(`Final summary: ${summary.substring(0, 100)}...`);
-    return summary;
+    logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for log)`);
+    return finalSummary; // Return the final summary after all attempts
 }
 
 // Determines whether the message should be processed

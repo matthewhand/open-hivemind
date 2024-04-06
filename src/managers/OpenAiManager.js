@@ -110,36 +110,22 @@ class OpenAiManager {
         try {
             const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
-    
-            // Attempt to extract the choices array from the response
-            let choicesArray = response.choices || (response.data && response.data.choices);
-            if (!choicesArray) {
-                // Log an error if the expected response structure is not found
-                logger.error('API response does not conform to expected structure. Response: ' + JSON.stringify(response, null, 2));
-                return [];
+            
+            if (!response.choices || response.choices.length === 0) {
+                logger.error('No choices were returned in the API response.');
+                return [{ summary: '', finishReason: 'error' }];
             }
-    
-            // Map over each choice to extract the message content
-            let processedResponses = choicesArray.map((choice, index) => {
-                const messageContent = choice.message?.content || choice.content;
-                if (!messageContent) {
-                    logger.error(`Error: Missing content at choice index ${index}.`);
-                    return `Error: Missing content at choice index ${index}.`;
-                }
-                return messageContent.trim();
-            });
-    
-            logger.info('Response processed successfully.');
-            logger.debug(`Processed response data: ${JSON.stringify(processedResponses, null, 2)}`);
-    
-            return processedResponses;
+            
+            return response.choices.map(choice => ({
+                summary: choice.message?.content || choice.content || '',
+                finishReason: choice.finish_reason || 'unknown'
+            }));
         } catch (error) {
-            // Log and rethrow error for the caller to handle
             logger.error(`Error in sendRequest: ${error.message}`);
-            throw error;
+            throw error; // Propagate the error for handling elsewhere
         }
     }
-    
+            
     async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):') {
         logger.debug('Starting the text summarization process.');
 
