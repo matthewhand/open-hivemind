@@ -42,21 +42,37 @@ async function processCommand(originalMessage) {
 
 // Summarizes long messages
 async function summarizeMessage(messageContent) {
-    // Check if message exceeds the 1000-character threshold for summarization
-    if (messageContent.length <= 1000) {
-        return messageContent; // Return original message if it's short enough
-    } else {
-        // Craft a system message for the LLM that specifies the need for a concise summary
-        const systemMessageContent = "Concisely and succinctly summarize the following text concisely, without adding any additional comments, questions, or any wording that doesn't directly contribute to the summary. Aim to maintain the illusion of the bot's character role-playing:";
-        try {
-            const openAiManager = OpenAiManager.getInstance();
-            const summarizedTexts = await openAiManager.summarizeText(messageContent, systemMessageContent);
-            return summarizedTexts.length > 0 ? summarizedTexts[0] : "Could not summarize the message.";
-        } catch (error) {
-            logger.error(`Error summarizing message: ${error}`);
-            return "An error occurred while summarizing the message."; // Fallback error message
+    const maxAttempts = 3;
+    let attempt = 0;
+    let finishReason = '';
+    let summary = '';
+    let response = null;
+
+    while (attempt < maxAttempts && finishReason !== 'stop') {
+        attempt++;
+        logger.debug(`Attempting summarization, attempt ${attempt}`);
+
+        // Assuming `makeSummarizationRequest` sends a request to OpenAI and returns the response
+        response = await makeSummarizationRequest(messageContent);
+
+        if (response && response.choices && response.choices.length > 0) {
+            summary = response.choices[0].text.trim();
+            finishReason = response.choices[0].finish_reason;
+
+            if (finishReason === 'stop') {
+                logger.debug('Summarization finished successfully.');
+                return summary; // Return the summary if finish_reason is 'stop'
+            } else {
+                logger.debug(`Summarization attempt ${attempt} finished with reason: ${finishReason}. Retrying...`);
+            }
+        } else {
+            logger.error('Failed to get a valid response from summarization request');
+            break; // Exit loop if the response is not valid
         }
     }
+
+    // Return the last summary attempt if all retries are exhausted or a valid summary is obtained
+    return summary;
 }
 
 // Determines whether the message should be processed

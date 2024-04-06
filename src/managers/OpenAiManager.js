@@ -140,9 +140,9 @@ class OpenAiManager {
         }
     }
     
-    async summarizeText(userMessage, systemMessageContent = 'Please summarize the following text:') {
+    async summarizeText(userMessage, systemMessageContent = 'A brief version of the following (and only that):') {
         logger.debug('Starting the text summarization process.');
-    
+        
         // Constructing the request body with a conversational structure
         let messages = [
             {
@@ -154,25 +154,25 @@ class OpenAiManager {
                 content: userMessage
             }
         ];
-    
+        
         const requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.5,
             max_tokens: 420
         };
-    
+        
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
-    
+        
             let choicesArray = response.choices || (response.data && response.data.choices);
             if (!choicesArray) {
                 logger.error('API response does not conform to expected structure. Response: ' + JSON.stringify(response, null, 2));
                 return [];
             }
-    
+        
             let processedResponses = choicesArray.map((choice, index) => {
                 const messageContent = choice.message?.content || choice.content;
                 if (!messageContent) {
@@ -181,17 +181,17 @@ class OpenAiManager {
                 }
                 return messageContent.trim();
             });
-    
+        
             logger.info('Summarization processed successfully.');
             logger.debug(`Summarized text: ${processedResponses[0]}`);
-    
+        
             return processedResponses;
         } catch (error) {
             logger.error(`Error in text summarization: ${error.message}`);
             throw error;
         }
     }
-   
+       
     setIsResponding(isResponding) {
         this.isResponding = isResponding;
         logger.debug(`Set isResponding to ${isResponding}`);
