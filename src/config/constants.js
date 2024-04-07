@@ -45,7 +45,7 @@ module.exports = {
     LLM_RESPONSE_MAX_TOKENS: process.env.LLM_RESPONSE_MAX_TOKENS || '69', // Summarise if greater
     LLM_RESPONSE_MIN_TOKENS: process.env.LLM_RESPONSE_MIN_TOKENS || '1', // Summarise if greater
     LLM_ALWAYS_SUMMARISE: process.env.LLM_ALWAYS_SUMMARISE || 'false', // for endpoints that dont return a value for completion_tokens
-    LLM_SUMMARY_SYSTEM_PROMPT: process.env.LLM_SUMMARY_SYSTEM_PROMPT || 'Summarise this message without losing perspective or intent (and only respond with the summarised message, nothing else): ',
+    LLM_SUMMARY_SYSTEM_PROMPT: process.env.LLM_SUMMARY_SYSTEM_PROMPT || 'Summarise the message without losing the first person perspective (and only this): ',
 
     // Other constants...
 };
