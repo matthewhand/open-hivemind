@@ -53,7 +53,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
         }
 
         logger.debug(`[messageHandler] Received response from OpenAI.`);
-        let messageContent = llmResponse.getSummary() || "Sorry, I couldn't process your request.";
+        let messageContent = llmResponse.getContent() || "Sorry, I couldn't process your request.";
 
         await sendResponse(channelId, messageContent)
             .catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
