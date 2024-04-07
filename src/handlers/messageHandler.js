@@ -105,6 +105,7 @@ function shouldSummarize(llmResponse) {
  */
 async function waitForQuietTypingWindow(channelId) {
     let isQuiet = false;
+    const discordManager = DiscordManager.getInstance();
     while (!isQuiet) {
         const lastTypingTime = discordManager.getLastTypingTimestamp(channelId);
         const timeSinceLastTyping = Date.now() - lastTypingTime;
