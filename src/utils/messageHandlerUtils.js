@@ -77,7 +77,7 @@ async function summarizeMessage(initialMessageContent, targetSize = constants.LL
 
             logger.debug(`[summarizeMessage] Attempt ${attempt}: Summary length=${summary.length}, finishReason=${finishReason}`);
 
-            if (finishReason !== 'stop' && attempt < maxAttempts) {
+            if ((finishReason !== 'stop' && finishReason !== 'length') && attempt < maxAttempts) { // oai=stop, together.xyz=length
                 currentMessageContent = summary;
                 logger.debug(`[summarizeMessage] Content updated for next summarization attempt.`);
             } else {
@@ -85,7 +85,7 @@ async function summarizeMessage(initialMessageContent, targetSize = constants.LL
                 logger.debug(`[summarizeMessage] Final summarization complete or attempts exhausted.`);
                 break;
             }
-        } catch (error) {
+                    } catch (error) {
             logger.error(`[summarizeMessage] Error during summarization attempt ${attempt}: ${error}`);
             break;
         }
