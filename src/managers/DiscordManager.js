@@ -211,30 +211,34 @@ async sendResponse(channelId, messageText) {
             });
     }
 
-    /**
-     * Initiates typing in a specified channel.
+     /**
+     * Initiates typing in a specified channel. Ensures that the channel supports typing before attempting to start.
      * @param {string} channelId - The ID of the channel to start typing in.
      */
-    startTyping(channelId) {
-        const channel = this.client.channels.cache.get(channelId);
-        if (channel) {
-            channel.startTyping();
-        } else {
-            logger.error(`Channel with ID ${channelId} not found.`);
+     async startTyping(channelId) {
+        try {
+            // Fetch the channel using the discord.js fetch method to ensure it's up-to-date
+            const channel = await this.client.channels.fetch(channelId);
+            // Check if the channel exists and supports typing
+            if (channel && channel.type === 'GUILD_TEXT') { // Ensure the channel is a text channel
+                await channel.sendTyping(); // Recommended method as of discord.js v13 and above
+            } else {
+                logger.error(`Channel with ID ${channelId} not found or does not support typing.`);
+            }
+        } catch (error) {
+            logger.error(`Failed to start typing in channel with ID ${channelId}: ${error}`);
         }
     }
 
     /**
-     * Stops typing in a specified channel.
+     * Previously used to stop typing in a specified channel directly within DiscordManager.
+     * This function is now deprecated in discord.js v13 and above since typing automatically stops after a period of time.
+     * @deprecated Since version discord.js v13. Use startTyping instead which auto stops.
      * @param {string} channelId - The ID of the channel to stop typing in.
      */
     stopTyping(channelId) {
-        const channel = this.client.channels.cache.get(channelId);
-        if (channel) {
-            channel.stopTyping(true);
-        } else {
-            logger.error(`Channel with ID ${channelId} not found.`);
-        }
+        // Since discord.js v13, there's no need to manually stop typing. Typing indicator automatically stops.
+        logger.warn(`stopTyping is deprecated. Typing automatically stops.`);
     }
 
     /**
