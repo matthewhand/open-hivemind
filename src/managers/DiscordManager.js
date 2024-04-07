@@ -71,15 +71,8 @@ class DiscordManager {
                 // Use getMessageId method for consistent ID retrieval
                 logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.getMessageId()}, Content: "${processedMessage.getText().substring(0, 50)}..."`); // Log first 50 chars of the message
         
-                if (this.shouldFetchContext(processedMessage)) {
-                    logger.debug(`[DiscordManager] Fetching context for message ID: ${processedMessage.getMessageId()}`);
-                    const { channelTopic, historyMessages } = await discordUtils.fetchChannelContext(this.client, processedMessage.getChannelId());
-                    processedMessage.channelTopic = channelTopic;
-                    processedMessage.historyMessages = historyMessages;
-                    logger.debug(`[DiscordManager] Context fetched for message ID: ${processedMessage.getMessageId()}. Channel Topic: ${channelTopic}, History Messages Count: ${historyMessages.length}`);
-                } else {
-                    logger.debug(`[DiscordManager] Context fetch skipped for message ID: ${processedMessage.getMessageId()}`);
-                }
+                const { channelTopic, historyMessages } = await discordUtils.fetchChannelContext(this.client, processedMessage.getChannelId());
+                logger.debug(`[DiscordManager] Context fetched for message ID: ${processedMessage.getMessageId()}. Channel Topic: ${channelTopic}, History Messages Count: ${historyMessages.length}`);
         
                 if (this.messageHandler) {
                     logger.debug(`[DiscordManager] Passing processed message ID: ${processedMessage.getMessageId()} to the message handler`);
@@ -115,6 +108,12 @@ class DiscordManager {
         return discordUtils.fetchMessages(this.client, channelId);
     }
 
+/**
+ * Sends a message to a specified channel.
+ * @param {string} channelId - The ID of the channel to send the message to.
+ * @param {string} messageText - The text of the message to be sent.
+ * @returns {Promise<void>}
+ */
 /**
  * Sends a message to a specified channel.
  * @param {string} channelId - The ID of the channel to send the message to.
@@ -159,24 +158,34 @@ async sendResponse(channelId, messageText) {
 
     logger.debug(`[sendResponse] Split into ${messageParts.length} parts due to length.`);
 
-    // Send each part as a separate message
-    for (const part of messageParts) {
-        try {
-            const channel = await this.client.channels.fetch(channelId);
-            await channel.send(part);
-            logger.debug(`[DiscordManager] Successfully sent a message part to channelId: ${channelId}`);
-        } catch (error) {
-            logger.error(`[DiscordManager] Failed to send message part to channelId: ${channelId}. Error: ${error}`);
+    // Attempt to fetch the channel and send the message
+    try {
+        const channel = await this.client.channels.fetch(channelId);
+        if (!channel) {
+            logger.error(`Failed to fetch channel with ID: ${channelId}`);
+            return;
         }
+        
+        // Check if the channel type supports sending messages
+        if (['GUILD_TEXT', 'DM'].includes(channel.type)) {
+            // Send each part as a separate message
+            for (const part of messageParts) {
+                await channel.send(part);
+                logger.debug(`[DiscordManager] Successfully sent a message part to channelId: ${channelId}`);
+            }
+        } else {
+            logger.error(`Channel with ID ${channelId} does not support sending messages.`);
+        }
+    } catch (error) {
+        logger.error(`[DiscordManager] Failed to send message to channelId: ${channelId}. Error: ${error}`);
     }
 }
     
     /**
      * Determines if the channel context should be fetched based on the message.
-     * @param {DiscordMessage} processedMessage - The message to evaluate.
      * @returns {boolean} True if the context should be fetched, otherwise false.
      */
-    shouldFetchContext(processedMessage) {
+    shouldFetchContext() {
         // Implement logic to decide whether to fetch context based on the message characteristics
         return true;
     }
