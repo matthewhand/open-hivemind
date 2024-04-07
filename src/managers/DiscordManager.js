@@ -182,15 +182,6 @@ async sendResponse(channelId, messageText) {
 }
     
     /**
-     * Determines if the channel context should be fetched based on the message.
-     * @returns {boolean} True if the context should be fetched, otherwise false.
-     */
-    shouldFetchContext() {
-        // Implement logic to decide whether to fetch context based on the message characteristics
-        return true;
-    }
-
-    /**
      * Retrieves a singleton instance of DiscordManager.
      * @returns {DiscordManager} The singleton instance.
      */
