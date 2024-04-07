@@ -54,7 +54,11 @@ class DiscordManager {
      */
     setupEventHandlers() {
         this.client.on('typingStart', (channel) => {
-            // Update the last typing timestamp for the channel
+            if (!channel) {
+                logger.error('[DiscordManager] TypingStart event received without a channel object.');
+                return;
+            }
+            logger.debug(`[DiscordManager] Typing started in channel ID: ${channel.id}`);
             this.typingTimestamps.set(channel.id, Date.now());
         });
 
