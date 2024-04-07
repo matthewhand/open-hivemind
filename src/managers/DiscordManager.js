@@ -8,8 +8,10 @@ const DiscordMessage = require('../models/DiscordMessage');
  * Manages interactions with the Discord API, including message handling and channel operations.
  */
 class DiscordManager {
-    static instance;
+    static instance; //
     client;
+    typingTimestamps = new Map(); // Maps channel IDs to the last typing timestamp
+
 
     constructor() {
         if (DiscordManager.instance) {
@@ -51,6 +53,11 @@ class DiscordManager {
      * Sets up the event handlers for incoming Discord events.
      */
     setupEventHandlers() {
+        this.client.on('typingStart', (channel) => {
+            // Update the last typing timestamp for the channel
+            this.typingTimestamps.set(channel.id, Date.now());
+        });
+
         this.client.on('messageCreate', async (discordMessage) => {
             logger.debug(`[DiscordManager] Received messageCreate event with message ID: ${discordMessage.id}`);
     
@@ -101,19 +108,7 @@ class DiscordManager {
     async fetchMessages(channelId) {
         return discordUtils.fetchMessages(this.client, channelId);
     }
-    
-    /**
-     * Sends a message to a specified channel.
-     * @param {string} channelId - The ID of the channel to send the message to.
-     * @param {string} messageText - The text of the message to be sent.
-     * @returns {Promise<void>}
-     */
-/**
- * Sends a message to a specified channel.
- * @param {string} channelId - The ID of the channel to send the message to.
- * @param {string} messageText - The text of the message to be sent.
- * @returns {Promise<void>}
- */
+
 /**
  * Sends a message to a specified channel.
  * @param {string} channelId - The ID of the channel to send the message to.
@@ -213,25 +208,39 @@ async sendResponse(channelId, messageText) {
     }
 
     /**
-     * Previously used to initiate typing in a channel directly within DiscordManager.
-     * This function is now deprecated.
-     * @deprecated Since version [next_version]. Handle typing indicators externally.
+     * Initiates typing in a specified channel.
      * @param {string} channelId - The ID of the channel to start typing in.
-     * @throws {Error} Throws a deprecation error.
      */
-    async startTyping(channelId) {
-        throw new Error("startTyping is deprecated and should not be used. Handle typing indicators externally.");
+    startTyping(channelId) {
+        const channel = this.client.channels.cache.get(channelId);
+        if (channel) {
+            channel.startTyping();
+        } else {
+            logger.error(`Channel with ID ${channelId} not found.`);
+        }
     }
 
     /**
-     * Previously used to stop typing in a channel directly within DiscordManager.
-     * This function is now deprecated.
-     * @deprecated Since version [next_version]. Handle typing indicators externally.
+     * Stops typing in a specified channel.
      * @param {string} channelId - The ID of the channel to stop typing in.
-     * @throws {Error} Throws a deprecation error.
      */
     stopTyping(channelId) {
-        throw new Error("stopTyping is deprecated and should not be used. Handle typing indicators externally.");
+        const channel = this.client.channels.cache.get(channelId);
+        if (channel) {
+            channel.stopTyping(true);
+        } else {
+            logger.error(`Channel with ID ${channelId} not found.`);
+        }
+    }
+
+    /**
+     * Gets the timestamp of the last typing event in a channel.
+     * If not set, returns the current timestamp.
+     * @param {string} channelId The ID of the channel to check.
+     * @returns {number} The Unix timestamp of the last typing event or the current timestamp if no data is available.
+     */
+    getLastTypingTimestamp(channelId) {
+        return this.typingTimestamps.get(channelId) || Date.now();
     }
 
 
