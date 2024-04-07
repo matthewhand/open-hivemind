@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
-const LLMResponse = require('../interfaces/LLMResponse'); // Make sure the path is correct
+const LLMResponse = require('../interfaces/LLMResponse');
 const {
   sendResponse,
   processCommand,
@@ -13,7 +13,11 @@ const constants = require('../config/constants');
 const rateLimiter = require('../utils/rateLimiter');
 
 /**
- * Handles incoming messages and processes them accordingly.
+ * Handles incoming messages and processes them accordingly. It ensures messages conform to 
+ * expected structures, adheres to rate limits, and simulates a typing delay for enhanced interaction realism.
+ * Messages are then processed for commands or responses from OpenAI, with the latter potentially being summarized
+ * based on length before being sent back. Follow-up actions may also be triggered as needed.
+ * 
  * @param {IMessage} originalMessage - The original message object.
  * @param {Array} historyMessages - An array of historical messages for context.
  */
@@ -23,14 +27,9 @@ async function messageHandler(originalMessage, historyMessages = []) {
 
     if (typeof originalMessage.getText !== 'function' || 
         typeof originalMessage.getChannelId !== 'function') {
-        logger.error(`[messageHandler] The provided message does not implement the required methods of IMessage: ${JSON.stringify(originalMessage)}`);
+        logger.error(`[messageHandler] Provided message lacks required methods.`);
         return;
     }
-
-    const content = originalMessage.getText();
-    const channelId = originalMessage.getChannelId();
-
-    logger.debug(`[messageHandler] Handling message at ${new Date(startTime).toISOString()}: "${content}" with channelId: ${channelId}`);
 
     if (await processCommand(originalMessage, commands)) {
         logger.debug("[messageHandler] Command processed.");
@@ -42,44 +41,43 @@ async function messageHandler(originalMessage, historyMessages = []) {
         return;
     }
 
-    // Check rate limits before proceeding
     if (!rateLimiter.canSendMessage()) {
-        logger.warn('[messageHandler] Message rate limit exceeded. Please wait before sending more messages.');
-        return; // Exit if the rate limit has been exceeded
+        logger.warn('[messageHandler] Exceeded message rate limit.');
+        return;
     }
 
-    try {
-        const requestBody = openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT);
-        openAiManager.setIsResponding(true);
+    // Initiate OpenAI request
+    const fetchResponsePromise = openAiManager.sendRequest(openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT));
+    openAiManager.setIsResponding(true);
 
-        /** @type {LLMResponse} */
-        const llmResponse = await openAiManager.sendRequest(requestBody);
-        if (!(llmResponse instanceof LLMResponse)) {
-            logger.error(`[messageHandler] The response from OpenAiManager.sendRequest is not an instance of LLMResponse.`);
-            return;
-        }
-
-        logger.debug(`[messageHandler] Received response from OpenAI.`);
-        let messageContent = llmResponse.getContent();
-
-        // Check if the response exceeds the max token limit and if summarization is needed
-        if (constants.LLM_ALWAYS_SUMMARISE || (llmResponse.getCompletionTokens() > constants.LLM_RESPONSE_MAX_TOKENS)) {
-            logger.debug("[messageHandler] Response exceeds max token limit, summarizing...");
-            messageContent = await summarizeMessage(messageContent);
-        }
+    // Introduce an artificial delay
+    const artificialDelayPromise = new Promise(resolve => setTimeout(resolve, Math.random() * (constants.BOT_TYPING_DELAY_MAX_MS - constants.BOT_TYPING_DELAY_MIN_MS) + constants.BOT_TYPING_DELAY_MIN_MS));
     
-        await sendResponse(channelId, messageContent)
-            .catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
+    // Await OpenAI response; delay does not block OpenAI request
+    const [llmResponse] = await Promise.all([fetchResponsePromise, artificialDelayPromise]);
 
-        if (await handleFollowUp(originalMessage)) {
-            logger.debug("[messageHandler] Follow-up action completed.");
-        }
-    } catch (error) {
-        logger.error(`[messageHandler] Failed to process message: ${error}`);
-    } finally {
+    if (!(llmResponse instanceof LLMResponse)) {
+        logger.error(`[messageHandler] Invalid LLMResponse received.`);
         openAiManager.setIsResponding(false);
-        logger.info(`[messageHandler] Message handling complete. Elapsed time: ${Date.now() - startTime}ms`);
+        return;
     }
+
+    logger.debug('[messageHandler] Response and typing delay complete.');
+    let messageContent = llmResponse.getContent();
+
+    if (constants.LLM_ALWAYS_SUMMARISE || (llmResponse.getCompletionTokens() > constants.LLM_RESPONSE_MAX_TOKENS)) {
+        messageContent = await summarizeMessage(messageContent);
+    }
+
+    rateLimiter.addMessageTimestamp();
+    await sendResponse(originalMessage.getChannelId(), messageContent).catch(error => logger.error(`[messageHandler] Response send failure: ${error}`));
+
+    if (await handleFollowUp(originalMessage)) {
+        logger.debug('[messageHandler] Completed follow-up.');
+    }
+
+    openAiManager.setIsResponding(false);
+    logger.info(`[messageHandler] Processing completed in ${Date.now() - startTime}ms.`);
 }
 
 module.exports = { messageHandler };
