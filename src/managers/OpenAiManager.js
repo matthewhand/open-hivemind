@@ -126,8 +126,10 @@ class OpenAiManager {
                 finishReason: firstChoice.finish_reason || 'unknown'
             };
         } catch (error) {
-            logger.error(`Error in sendRequest: ${error.message}`);
+            logger.error(`[OpenAiManager] Error in sendRequest: ${error.message}`);
+            logger.error(`[OpenAiManager] Stack Trace: ${error.stack}`);
             throw error; // It's generally a good idea to let the caller handle the exception
+
         }
     }
             
