@@ -152,7 +152,7 @@ class OpenAiManager {
             max_tokens: 69
         };
 
-        logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
+        logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 3)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
