@@ -56,7 +56,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
         let messageContent = llmResponse.getContent();
 
         // Check if the response exceeds the max token limit and if summarization is needed
-        if (llmResponse.getUsage().total_tokens > constants.LLM_RESPONSE_MAX_TOKENS) {
+        if (llmResponse.getCompletionTokens() > constants.LLM_RESPONSE_MAX_TOKENS) {
             logger.debug("[messageHandler] Response exceeds max token limit, summarizing...");
             messageContent = await summarizeMessage(messageContent);
         }

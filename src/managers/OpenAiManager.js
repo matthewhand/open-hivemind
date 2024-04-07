@@ -121,7 +121,7 @@ class OpenAiManager {
             
             const firstChoice = response.choices[0];
             // Create and return an instance of LLMResponse
-            return new LLMResponse(firstChoice.message?.content || "", firstChoice.finish_reason || "unknown");
+            return new LLMResponse(firstChoice.message?.content || "", firstChoice.finish_reason || "unknown", response.usage.completion_tokens);
         } catch (error) {
             handleError(error);
             return new LLMResponse("", "error"); // Ensure a consistent return type

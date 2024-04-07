@@ -4,9 +4,10 @@ class LLMResponse {
      * @param {string} content - The response content from the LLM.
      * @param {string} finish_reason - The reason provided by the LLM for finishing the response.
      */
-    constructor(content, finish_reason) {
+    constructor(content, finish_reason, completion_tokens) {
         this.content = content;
         this.finish_reason = finish_reason;
+        this.completion_tokens = completion_tokens;
     }
 
     /**
@@ -23,6 +24,10 @@ class LLMResponse {
      */
     getFinishReason() {
         return this.finish_reason;
+    }
+
+    getCompletionTokens() {
+        return this.completion_tokens;
     }
 }
 
