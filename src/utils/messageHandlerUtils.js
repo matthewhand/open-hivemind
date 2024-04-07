@@ -72,7 +72,7 @@ async function summarizeMessage(initialMessageContent, targetSize = constants.LL
         
         try {
             // Adjust the call to OpenAiManager's summarizeText method to include the targetSize.
-            detailedResponse = await openAiManager.summarizeText(currentMessageContent, undefined, targetSize);
+            detailedResponse = await openAiManager.summarizeText(currentMessageContent, constants.LLM_SUMMARY_SYSTEM_PROMPT, targetSize);
             const { summary, finishReason } = detailedResponse;
 
             logger.debug(`[summarizeMessage] Attempt ${attempt}: Summary length=${summary.length}, finishReason=${finishReason}`);
