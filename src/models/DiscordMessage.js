@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 const constants = require('../config/constants'); // Ensure this path is correct
 
 class DiscordMessage extends IMessage {
-    constructor(message, repliedMessage = null, isBot = null, channelTopic = "General discussion", historyMessages = []) {
+    constructor(message, repliedMessage = null, isBot = null) {
         super(message);
     
         if (!message) {
@@ -18,9 +18,6 @@ class DiscordMessage extends IMessage {
         this.message = message; // Store the original Discord message object
         this.repliedMessage = repliedMessage; // Store the replied-to message, if any
         this.isBotExplicitlySet = isBot; // Store the explicitly set isBot value, if any
-        this.channelTopic = channelTopic;
-        this.historyMessages = historyMessages;
-
     
         // // Additional debug information regarding optional parameters
         // if (repliedMessage) {
@@ -123,7 +120,6 @@ class DiscordMessage extends IMessage {
 
         return isFromBot;
     }
-
 
 }
 

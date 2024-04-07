@@ -23,74 +23,59 @@ const LLMResponse = require('../interfaces/LLMResponse');
  * @param {Array} historyMessages - An array containing the history of messages for context.
  */
 async function messageHandler(originalMessage, historyMessages = []) {
-    // Record the start time for processing diagnostics
     const startTime = Date.now();
-    // Singleton instances of the OpenAI manager and Discord manager for API interactions
     const openAiManager = OpenAiManager.getInstance();
-    // Extract the channel ID from the original message for later use
-    const channelId = originalMessage.channel.id;
+    const channelId = originalMessage.getChannelId();
 
-    // Validate the message to ensure it meets the requirements for processing
+    logger.debug(`[messageHandler] Starting processing for message: ${originalMessage.getText().substring(0, 50)}...`);
+
     if (!originalMessageValid(originalMessage)) {
         logger.error(`[messageHandler] Invalid message format.`);
-        return; // Exit if the message does not have the required structure or methods
+        return;
     }
 
-    // Attempt to process any commands in the message, exiting early if a command is successfully executed
     if (await processCommand(originalMessage, commands)) {
-        logger.debug("[messageHandler] Command processed.");
-        return; // Command has been processed, no further action required
+        logger.debug("[messageHandler] Command processed, exiting early.");
+        return;
     }
 
-    // Check if the message should be further processed or skipped (e.g., bot messages)
     if (!await shouldProcessMessage(originalMessage, openAiManager)) {
-        logger.debug("[messageHandler] Message processing skipped.");
-        return; // Criteria for processing not met, skip this message
+        logger.debug("[messageHandler] Message processing criteria not met, skipping.");
+        return;
     }
 
-    // Enforce rate limits to prevent spam or abuse
     if (!rateLimiter.canSendMessage()) {
-        logger.warn('[messageHandler] Exceeded message rate limit.');
-        return; // Exit handling if rate limits are exceeded
+        logger.warn('[messageHandler] Rate limit exceeded, message skipped.');
+        return;
     }
 
-    // Initiate the request to OpenAI for processing the message without waiting here
+    logger.debug("[messageHandler] Sending request to OpenAI.");
     const aiResponsePromise = openAiManager.sendRequest(openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT));
-    // Indicate the bot is now busy responding to a request
     openAiManager.setIsResponding(true);
 
-    // A sophisticated delay mechanism waits for a suitable window to simulate typing
     await waitForQuietTypingWindow(channelId);
-
-    // Simulates bot typing in the channel to provide a natural interaction feel
     DiscordManager.startTyping(channelId);
-    // A brief pause to simulate the bot "thinking" before sending the message
     await delay(getRandomDelay(constants.BOT_PRE_TYPING_DELAY_MIN_MS, constants.BOT_PRE_TYPING_DELAY_MAX_MS));
 
-    // Wait for the AI's response that was requested earlier
-    const llmResponse = await aiResponsePromise; 
-    let messageContent = llmResponse instanceof LLMResponse ? llmResponse.getContent() : "Sorry, I didn't get that.";
+    const llmResponse = await aiResponsePromise;
+    let messageContent = llmResponse.getContent() || "Sorry, I didn't get that.";
+    logger.debug(`[messageHandler] Received response from OpenAI: ${messageContent.substring(0, 50)}...`);
 
-    // Optionally summarize the message content based on certain criteria
     if (shouldSummarize(llmResponse)) {
         messageContent = await summarizeMessage(messageContent);
+        logger.debug("[messageHandler] Message summarized.");
     }
 
-    // Sends the processed or summarized message content as a response
     await sendResponse(channelId, messageContent);
-    // Stops the typing indicator once the message is ready to be sent
     DiscordManager.stopTyping(channelId);
 
-    // Perform any follow-up actions necessary after sending the message
     if (await handleFollowUp(originalMessage)) {
-        logger.debug('[messageHandler] Follow-up action completed.');
+        logger.debug('[messageHandler] Completed follow-up actions.');
     }
 
-    // Update rate limiting tracking and reset the responding status
     rateLimiter.addMessageTimestamp();
     openAiManager.setIsResponding(false);
-    // Log the completion of message processing, including how long it took
-    logger.info(`[messageHandler] Message handling complete. Processing time: ${Date.now() - startTime}ms.`);
+    logger.info(`[messageHandler] Completed in ${Date.now() - startTime}ms.`);
 }
 
 /**

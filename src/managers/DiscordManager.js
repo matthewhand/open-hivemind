@@ -63,6 +63,7 @@ class DiscordManager {
         });
 
         this.client.on('messageCreate', async (discordMessage) => {
+            logger.info(`[DiscordManager] Received messageCreate`);
             logger.debug(`[DiscordManager] Received messageCreate event with message ID: ${discordMessage.id}`);
         
             try {
