@@ -43,6 +43,7 @@ module.exports = {
     LLM_PADDING_END_WITH_USER: process.env.LLM_PADDING_END_WITH_USER !== 'false', // Controls if the conversation should end with a user message
 
     LLM_RESPONSE_MAX_TOKENS: process.env.LLM_RESPONSE_MAX_TOKENS || '69', // Summarise if greater
+    LLM_RESPONSE_MIN_TOKENS: process.env.LLM_RESPONSE_MIN_TOKENS || '1', // Summarise if greater
     LLM_ALWAYS_SUMMARISE: process.env.LLM_ALWAYS_SUMMARISE || 'false', // for endpoints that dont return a value for completion_tokens
 
     // Other constants...

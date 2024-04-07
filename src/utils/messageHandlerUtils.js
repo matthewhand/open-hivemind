@@ -1,8 +1,10 @@
 const DiscordManager = require('../managers/DiscordManager');
 const OpenAiManager = require('../managers/OpenAiManager');
 const logger = require('./logger');
-const commands = require('../commands/inline'); // Adjust based on your actual command structure
+const commands = require('../commands/inline');
+
 const { listAllAliases } = require('./aliasUtils');
+const constants = require('../config/constants');
 
 
 /**
@@ -48,7 +50,14 @@ async function processCommand(originalMessage) {
     }
 }
 
-async function summarizeMessage(initialMessageContent) {
+/**
+ * Summarizes a message content to a specified target size.
+ * 
+ * @param {string} initialMessageContent - The initial content of the message to be summarized.
+ * @param {number} [targetSize=constants.LLM_RESPONSE_MAX_TOKENS] - The target size for the summary in tokens. Defaults to the max token limit from constants.
+ * @returns {Promise<string>} The summarized message content.
+ */
+async function summarizeMessage(initialMessageContent, targetSize = constants.LLM_RESPONSE_MAX_TOKENS) {
     const maxAttempts = 3;
     let attempt = 0;
     let currentMessageContent = initialMessageContent; // Ensure this is a string.
@@ -59,30 +68,32 @@ async function summarizeMessage(initialMessageContent) {
 
     while (attempt < maxAttempts) {
         attempt++;
-        logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content.`);
+        logger.debug(`[summarizeMessage] Attempt ${attempt}: Summarizing content to target size of ${targetSize} tokens.`);
         
         try {
-            // Call OpenAiManager's summarizeText method with the current content as a string.
-            detailedResponse = await openAiManager.summarizeText(currentMessageContent);
+            // Adjust the call to OpenAiManager's summarizeText method to include the targetSize.
+            detailedResponse = await openAiManager.summarizeText(currentMessageContent, undefined, targetSize);
             const { summary, finishReason } = detailedResponse;
 
             logger.debug(`[summarizeMessage] Attempt ${attempt}: Summary length=${summary.length}, finishReason=${finishReason}`);
 
             if (finishReason !== 'stop' && attempt < maxAttempts) {
-                // If summarization isn't deemed complete, and we haven't exhausted our attempts, prepare for another iteration.
                 currentMessageContent = summary;
                 logger.debug(`[summarizeMessage] Content updated for next summarization attempt.`);
             } else {
-                // Summarization complete or attempts exhausted; set final summary.
                 finalSummary = summary;
                 logger.debug(`[summarizeMessage] Final summarization complete or attempts exhausted.`);
-                break; // Exit loop as we've reached a conclusive end.
+                break;
             }
         } catch (error) {
             logger.error(`[summarizeMessage] Error during summarization attempt ${attempt}: ${error}`);
-            break; // Exit loop on error.
+            break;
         }
     }
+
+    logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for brevity)`);
+    return finalSummary;
+}
 
     logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for brevity)`);
     return finalSummary; // Return the summary obtained from the final successful attempt.

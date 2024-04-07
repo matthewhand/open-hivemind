@@ -131,9 +131,9 @@ class OpenAiManager {
         }
     }
                 
-    async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):') {
+    async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):', maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         logger.debug('Starting the text summarization process.');
-
+    
         let messages = [
             {
                 role: 'system',
@@ -144,33 +144,33 @@ class OpenAiManager {
                 content: userMessage
             }
         ];
-
+    
         const requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.7,
-            max_tokens: 69
+            max_tokens: maxTokens // Use the dynamic max_tokens value
         };
-
+    
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 3)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
             logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
-
+    
             if (!response.choices || response.choices.length === 0) {
                 logger.error('No choices were returned in the API response.');
                 return { summary: '', finishReason: 'error' };
             }
-
+    
             const firstChoice = response.choices[0];
             const summary = firstChoice.message?.content || firstChoice.content || '';
             const finishReason = firstChoice.finish_reason;
-
+    
             if (!summary) {
                 logger.error('Error: Missing content in the first choice.');
                 return { summary: '', finishReason: 'error' };
             }
-
+    
             logger.info('Summarization processed successfully.');
             logger.debug(`Summarized text: ${summary}`);
             
@@ -180,7 +180,7 @@ class OpenAiManager {
             throw error;
         }
     }
-
+    
     setIsResponding(isResponding) {
         this.isResponding = isResponding;
         logger.debug(`Set isResponding to ${isResponding}`);
