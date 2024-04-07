@@ -167,15 +167,15 @@ async sendResponse(channelId, messageText) {
         }
         
         // Check if the channel type supports sending messages
-        if (['GUILD_TEXT', 'DM'].includes(channel.type)) {
+        // if (['GUILD_TEXT', 'DM'].includes(channel.type)) {
             // Send each part as a separate message
             for (const part of messageParts) {
                 await channel.send(part);
                 logger.debug(`[DiscordManager] Successfully sent a message part to channelId: ${channelId}`);
             }
-        } else {
-            logger.error(`Channel with ID ${channelId} does not support sending messages.`);
-        }
+        // } else {
+            // logger.error(`Channel with ID ${channelId} does not support sending messages.`);
+        // }
     } catch (error) {
         logger.error(`[DiscordManager] Failed to send message to channelId: ${channelId}. Error: ${error}`);
     }
