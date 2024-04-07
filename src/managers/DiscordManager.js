@@ -230,7 +230,11 @@ async sendResponse(channelId, messageText) {
             // Fetch the channel using the discord.js fetch method to ensure it's up-to-date
             const channel = await this.client.channels.fetch(channelId);
             // Check if the channel exists and supports typing
-            if (channel && channel.type === 'GUILD_TEXT') { // Ensure the channel is a text channel
+            if (!channel) {
+                 logger.error(`Channel with ID ${channelId} not found.`);
+            }
+
+            if (channel.type === 'GUILD_TEXT') { // Ensure the channel is a text channel
                 await channel.sendTyping(); // Recommended method as of discord.js v13 and above
             } else {
                 logger.error(`Channel with ID ${channelId} not found or does not support typing.`);
