@@ -10,6 +10,7 @@ const {
 } = require('../utils/messageHandlerUtils');
 const commands = require('../commands/inline');
 const constants = require('../config/constants');
+const rateLimiter = require('../utils/rateLimiter');
 
 /**
  * Handles incoming messages and processes them accordingly.
@@ -39,6 +40,12 @@ async function messageHandler(originalMessage, historyMessages = []) {
     if (!await shouldProcessMessage(originalMessage, openAiManager)) {
         logger.debug("[messageHandler] Message processing skipped.");
         return;
+    }
+
+    // Check rate limits before proceeding
+    if (!rateLimiter.canSendMessage()) {
+        logger.warn('[messageHandler] Message rate limit exceeded. Please wait before sending more messages.');
+        return; // Exit if the rate limit has been exceeded
     }
 
     try {

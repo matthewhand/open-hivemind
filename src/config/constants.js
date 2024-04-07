@@ -47,5 +47,9 @@ module.exports = {
     LLM_ALWAYS_SUMMARISE: process.env.LLM_ALWAYS_SUMMARISE || 'false', // for endpoints that dont return a value for completion_tokens
     LLM_SUMMARY_SYSTEM_PROMPT: process.env.LLM_SUMMARY_SYSTEM_PROMPT || 'Summarise the message without losing the first person perspective (and only this): ',
 
+    // Add to constants.js
+    LLM_MESSAGE_LIMIT_PER_HOUR: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '6', 10),
+    LLM_MESSAGE_LIMIT_PER_DAY: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '250', 10),
+
     // Other constants...
 };
