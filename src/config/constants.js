@@ -42,5 +42,7 @@ module.exports = {
     LLM_PADDING_ALTERNATION: process.env.LLM_PADDING_ALTERNATION !== 'false', // Controls if there should be an alternation between user and assistant messages
     LLM_PADDING_END_WITH_USER: process.env.LLM_PADDING_END_WITH_USER !== 'false', // Controls if the conversation should end with a user message
 
+    LLM_RESPONSE_MAX_TOKENS: process.env.LLM_RESPONSE_MAX_TOKENS || '69', // Summarise if greater
+
     // Other constants...
 };

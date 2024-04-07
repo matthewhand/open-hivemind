@@ -109,10 +109,10 @@ class OpenAiManager {
     }
                         
     async sendRequest(requestBody) {
-        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
+        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 2)}`);
+            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
             
             if (!response.choices || response.choices.length === 0) {
                 logger.error('No choices were returned in the API response.');

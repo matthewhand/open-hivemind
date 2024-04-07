@@ -53,8 +53,14 @@ async function messageHandler(originalMessage, historyMessages = []) {
         }
 
         logger.debug(`[messageHandler] Received response from OpenAI.`);
-        let messageContent = llmResponse.getContent() || "Sorry, I couldn't process your request.";
+        let messageContent = llmResponse.getSummary();
 
+        // Check if the response exceeds the max token limit and if summarization is needed
+        if (llmResponse.getUsage().total_tokens > LLM_RESPONSE_MAX_TOKENS) {
+            logger.debug("[messageHandler] Response exceeds max token limit, summarizing...");
+            messageContent = await summarizeMessage(messageContent);
+        }
+    
         await sendResponse(channelId, messageContent)
             .catch(error => logger.error(`[messageHandler] Failed to send response: ${error}`));
 
