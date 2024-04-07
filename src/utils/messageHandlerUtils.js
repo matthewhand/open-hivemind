@@ -95,10 +95,6 @@ async function summarizeMessage(initialMessageContent, targetSize = constants.LL
     return finalSummary;
 }
 
-    logger.debug(`Final summary: ${finalSummary.substring(0, 100)}... (trimmed for brevity)`);
-    return finalSummary; // Return the summary obtained from the final successful attempt.
-}
-
 // Determines whether the message should be processed
 function shouldProcessMessage(originalMessage, openAiManager) {
     // Check if the message is from the bot itself
