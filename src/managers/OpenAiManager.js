@@ -2,7 +2,8 @@ const OpenAI = require("openai");
 const logger = require('../utils/logger');
 const handleError = require('../utils/handleError');
 const constants = require('../config/constants');
-const IMessage = require('../interfaces/IMessage'); // Make sure this path is correct
+const IMessage = require('../interfaces/IMessage');
+const LLMResponse = require('../interfaces/LLMResponse'); 
 
 // Custom replacer function for redacting sensitive information in logs
 function redactSensitiveInfo(key, value) {
@@ -108,32 +109,28 @@ class OpenAiManager {
     }
                         
     async sendRequest(requestBody) {
-        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, null, 2)}`);
+        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
         try {
             const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
+            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 2)}`);
             
-            // Ensure there's a valid response with choices
             if (!response.choices || response.choices.length === 0) {
                 logger.error('No choices were returned in the API response.');
-                // Instead of returning an array with an object, return a simple object to keep things consistent
-                return { summary: '', finishReason: 'error' };
+                return new LLMResponse("", "error");
             }
             
-            // Assuming we are interested in the first choice only for simplicity
             const firstChoice = response.choices[0];
-            return {
-                summary: firstChoice.message?.content || firstChoice.content || '',
-                finishReason: firstChoice.finish_reason || 'unknown'
-            };
+            // Create and return an instance of LLMResponse
+            return new LLMResponse(firstChoice.message?.content || "", firstChoice.finish_reason || "unknown");
         } catch (error) {
             handleError(error);
+            return new LLMResponse("", "error"); // Ensure a consistent return type
         } finally {
-            this.isResponding = false; // Reset the flag after processing is complete or fails.
+            this.isResponding = false;
             logger.debug('Set isResponding to false');
-        }    
+        }
     }
-            
+                
     async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):') {
         logger.debug('Starting the text summarization process.');
 
