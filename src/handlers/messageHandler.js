@@ -25,6 +25,7 @@ const LLMResponse = require('../interfaces/LLMResponse');
 async function messageHandler(originalMessage, historyMessages = []) {
     const startTime = Date.now();
     const openAiManager = OpenAiManager.getInstance();
+    const discordManager = DiscordManager.getInstance();
     const channelId = originalMessage.getChannelId();
 
     logger.debug(`[messageHandler] Starting processing for message: ${originalMessage.getText().substring(0, 50)}...`);
@@ -54,7 +55,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
     openAiManager.setIsResponding(true);
 
     await waitForQuietTypingWindow(channelId);
-    DiscordManager.startTyping(channelId);
+    discordManager.startTyping(channelId);
     await delay(getRandomDelay(constants.BOT_PRE_TYPING_DELAY_MIN_MS, constants.BOT_PRE_TYPING_DELAY_MAX_MS));
 
     const llmResponse = await aiResponsePromise;
@@ -67,7 +68,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
     }
 
     await sendResponse(channelId, messageContent);
-    DiscordManager.stopTyping(channelId);
+    discordManager.stopTyping(channelId);
 
     if (await handleFollowUp(originalMessage)) {
         logger.debug('[messageHandler] Completed follow-up actions.');
@@ -105,7 +106,7 @@ function shouldSummarize(llmResponse) {
 async function waitForQuietTypingWindow(channelId) {
     let isQuiet = false;
     while (!isQuiet) {
-        const lastTypingTime = DiscordManager.getLastTypingTimestamp(channelId);
+        const lastTypingTime = discordManager.getLastTypingTimestamp(channelId);
         const timeSinceLastTyping = Date.now() - lastTypingTime;
         
         if (timeSinceLastTyping < constants.TYPING_QUIET_WINDOW_MS) {

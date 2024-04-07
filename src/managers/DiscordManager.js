@@ -192,7 +192,6 @@ async sendResponse(channelId, messageText) {
         return DiscordManager.instance;
     }
 
-
     /**
      * Fetches channel context using the utility function from discordUtils.
      * This method acts as a pass-through to centralize the fetching logic.
@@ -252,7 +251,6 @@ async sendResponse(channelId, messageText) {
     getLastTypingTimestamp(channelId) {
         return this.typingTimestamps.get(channelId) || Date.now();
     }
-
 
 }
 
