@@ -1,5 +1,6 @@
 const OpenAI = require("openai");
 const logger = require('../utils/logger');
+const handleError = require('../utils/handleError');
 const constants = require('../config/constants');
 const IMessage = require('../interfaces/IMessage'); // Make sure this path is correct
 
@@ -126,11 +127,11 @@ class OpenAiManager {
                 finishReason: firstChoice.finish_reason || 'unknown'
             };
         } catch (error) {
-            logger.error(`[OpenAiManager] Error in sendRequest: ${error.message}`);
-            logger.error(`[OpenAiManager] Stack Trace: ${error.stack}`);
-            throw error; // It's generally a good idea to let the caller handle the exception
-
-        }
+            handleError(error);
+        } finally {
+            this.isResponding = false; // Reset the flag after processing is complete or fails.
+            logger.debug('Set isResponding to false');
+        }    
     }
             
     async summarizeText(userMessage, systemMessageContent = 'Generate a brief version (don’t apologize):') {
