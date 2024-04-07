@@ -37,6 +37,12 @@ class DiscordMessage extends IMessage {
     
         // logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
+
+    // Override getMessageId in subclasses
+    getMessageId() {
+        return this.data.id;
+    }
+
     // Update mentionsUsers to handle an array of user IDs or a single userID
     mentionsUsers(userIds = [constants.CLIENT_ID]) {
         // Ensure userIds is always an array for consistency

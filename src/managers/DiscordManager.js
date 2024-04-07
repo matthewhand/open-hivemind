@@ -64,26 +64,27 @@ class DiscordManager {
 
         this.client.on('messageCreate', async (discordMessage) => {
             logger.debug(`[DiscordManager] Received messageCreate event with message ID: ${discordMessage.id}`);
-    
+        
             try {
                 const processedMessage = new DiscordMessage(discordMessage);
-                logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.message.id}, Content: "${processedMessage.getText().substring(0, 50)}..."`); // Log first 50 chars of the message
-    
+                // Use getMessageId method for consistent ID retrieval
+                logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.getMessageId()}, Content: "${processedMessage.getText().substring(0, 50)}..."`); // Log first 50 chars of the message
+        
                 if (this.shouldFetchContext(processedMessage)) {
-                    logger.debug(`[DiscordManager] Fetching context for message ID: ${processedMessage.message.id}`);
+                    logger.debug(`[DiscordManager] Fetching context for message ID: ${processedMessage.getMessageId()}`);
                     const { channelTopic, historyMessages } = await discordUtils.fetchChannelContext(this.client, processedMessage.getChannelId());
                     processedMessage.channelTopic = channelTopic;
                     processedMessage.historyMessages = historyMessages;
-                    logger.debug(`[DiscordManager] Context fetched for message ID: ${processedMessage.message.id}. Channel Topic: ${channelTopic}, History Messages Count: ${historyMessages.length}`);
+                    logger.debug(`[DiscordManager] Context fetched for message ID: ${processedMessage.getMessageId()}. Channel Topic: ${channelTopic}, History Messages Count: ${historyMessages.length}`);
                 } else {
-                    logger.debug(`[DiscordManager] Context fetch skipped for message ID: ${processedMessage.message.id}`);
+                    logger.debug(`[DiscordManager] Context fetch skipped for message ID: ${processedMessage.getMessageId()}`);
                 }
-    
+        
                 if (this.messageHandler) {
-                    logger.debug(`[DiscordManager] Passing processed message ID: ${processedMessage.message.id} to the message handler`);
+                    logger.debug(`[DiscordManager] Passing processed message ID: ${processedMessage.getMessageId()} to the message handler`);
                     // Pass the processed message and its history to the message handler
                     await this.messageHandler(processedMessage, processedMessage.historyMessages);
-                    logger.debug(`[DiscordManager] Message handler processed message ID: ${processedMessage.message.id}`);
+                    logger.debug(`[DiscordManager] Message handler processed message ID: ${processedMessage.getMessageId()}`);
                 } else {
                     logger.warn('[DiscordManager] Message handler not set in DiscordManager.');
                 }
@@ -91,7 +92,7 @@ class DiscordManager {
                 logger.error(`[DiscordManager] Error processing message ID: ${discordMessage.id}: ${error}`, { errorDetail: error });
             }
         });
-    }
+            }
             
     /**
      * Registers a callback function to handle messages.

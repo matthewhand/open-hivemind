@@ -12,6 +12,11 @@ class IMessage {
         this.data = data; // Original message data
     }
 
+    // Add this method to the IMessage class
+    getMessageId() {
+        throw new Error("getMessageId method must be implemented by subclasses");
+    }
+
     // Returns the text content of the message
     getText() {
         throw new Error("getText method must be implemented by subclasses");
