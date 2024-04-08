@@ -132,6 +132,24 @@ class DiscordManager {
     getLastTypingTimestamp(channelId) {
         return this.typingTimestamps.get(channelId) || Date.now();
     }
+
+    /**
+     * Signals that the bot is typing in a specific channel. This visual cue can make interactions
+     * feel more dynamic and responsive.
+     *
+     * @param {string} channelId - The ID of the channel where the bot appears to start typing.
+     */
+    async startTyping(channelId) {
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            if (channel.isText()) { // Ensure the channel supports typing
+                await channel.sendTyping();
+                logger.debug(`[DiscordManager] Started typing in channel ID: ${channelId}`);
+            }
+        } catch (error) {
+            logger.error(`[DiscordManager] Failed to start typing in channel ID: ${channelId}: ${error}`);
+        }
+    }
 }
 
 module.exports = DiscordManager;
