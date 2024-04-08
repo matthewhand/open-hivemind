@@ -57,10 +57,6 @@ class DiscordManager {
      */
     setupEventHandlers() {
         this.client.on('typingStart', (channel) => {
-            if (!channel) {
-                logger.error('[DiscordManager] TypingStart event received without a channel object.');
-                return;
-            }
             this.typingTimestamps.set(channel.id, Date.now());
         });
 
@@ -68,9 +64,19 @@ class DiscordManager {
             try {
                 const processedMessage = new DiscordMessage(discordMessage);
                 logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.getMessageId()}`);
-                
-                // Implementation of message processing and event handling logic here...
-                
+
+                // Directly utilize fetchChannel and fetchMessages from discordUtils to get channel context
+                const channel = await discordUtils.fetchChannel(this.client, processedMessage.getChannelId());
+                const historyMessages = await this.fetchMessages(processedMessage.getChannelId());
+
+                if (channel && historyMessages) {
+                    // Optionally perform further operations with the fetched channel and messages
+                    logger.info(`Channel topic: ${channel.topic || "No topic"}. History messages count: ${historyMessages.length}`);
+                }
+
+                if (this.messageHandler) {
+                    await this.messageHandler(processedMessage, historyMessages, channel);
+                }
             } catch (error) {
                 logger.error(`[DiscordManager] Error processing message: ${error}`, { errorDetail: error });
             }
