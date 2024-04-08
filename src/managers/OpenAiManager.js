@@ -41,7 +41,11 @@ class OpenAiManager {
 
         let messages = [{
             role: 'system',
-            content: fullSystemMessageContent, // Use the combined content here
+            content: fullSystemMessageContent, 
+        },
+        {
+            role: 'user',
+            content: historyMessages
         }];
     
         let lastRole = 'system';
