@@ -171,17 +171,17 @@ async function processDiscordMessage(message) {
     return new DiscordMessage(message);
 }
 
-async function fetchChannelContext(client, channelId) {
+async function fetchMessages(client, channelId, limit = 20) {
     // Check if the client is defined
     if (!client) {
-        logger.error(`fetchChannelContext was called with an undefined or null client.`);
-        return { channelTopic: "Error: Invalid client", historyMessages: [] };
+        logger.error(`fetchMessages was called with an undefined or null client.`);
+        return [];
     }
 
     // Check if the client's channels collection is accessible
     if (!client.channels) {
-        logger.error(`fetchChannelContext was called on a client with an undefined or null channels collection.`);
-        return { channelTopic: "Error: Invalid channels collection", historyMessages: [] };
+        logger.error(`fetchMessages was called on a client with an undefined or null channels collection.`);
+        return [];
     }
 
     try {
@@ -191,20 +191,36 @@ async function fetchChannelContext(client, channelId) {
         // Check if a valid channel was returned
         if (!channel) {
             logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
-            return { channelTopic: "Error: Channel not found", historyMessages: [] };
+            return [];
         }
 
         // Fetch messages from the channel
-        const fetchedMessages = await channel.messages.fetch({ limit: 20 });
-        const historyMessages = fetchedMessages.map(message => new DiscordMessage(message)).reverse(); // Reverse order to make it LLM friendly
-        const channelTopic = channel.topic || "General discussion";
+        const fetchedMessages = await channel.messages.fetch({ limit });
+        const messages = [];
 
-        logger.debug(`Fetched context for channel ID: ${channelId}`);
-        return { channelTopic, historyMessages };
+        // Process each fetched message
+        for (const message of fetchedMessages.values()) {
+            let processedContent = message.content;
+
+            // If the message content is structured complexly, extract the nested content
+            if (typeof message.content === 'object' && message.content.data && message.content.data.content) {
+                processedContent = message.content.data.content;
+            } else if (typeof message.content === 'object' && Array.isArray(message.content) && message.content.length > 0) {
+                // Handle case where content is an array of objects, e.g., when mistakenly structured
+                processedContent = message.content.map(m => m.data ? m.data.content : "").join("\n");
+            }
+
+            // Use the extracted or original content to create a DiscordMessage instance
+            const discordMessage = new DiscordMessage({ ...message, content: processedContent });
+            messages.push(discordMessage);
+        }
+
+        logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
+        return messages;
     } catch (error) {
         // Log any errors encountered during the fetch operation
-        logger.error(`Error fetching channel context for channel ID ${channelId}:`, error);
-        return { channelTopic: "Error: Fetching context failed", historyMessages: [] };
+        logger.error(`Error fetching messages from Discord for channel ID ${channelId}:`, error);
+        return [];
     }
 }
 
