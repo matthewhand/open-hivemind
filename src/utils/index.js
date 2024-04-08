@@ -1,7 +1,7 @@
 // utils/index.js
 const aliasUtils = require('./aliasUtils');
 const common = require('./common');
-const handleError = require('./handleError');
+const { handleError } = require('../utils/handleError');
 const handleImageMessage = require('./handleImageMessage');
 // const initializeFetch = require('./initializeFetch'); // Remove or comment out this line
 const logger = require('./logger');

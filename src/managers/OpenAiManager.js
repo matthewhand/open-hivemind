@@ -1,6 +1,6 @@
 const OpenAI = require("openai");
 const logger = require('../utils/logger');
-const handleError = require('../utils/handleError');
+const { handleError } = require('../utils/handleError');
 const constants = require('../config/constants');
 const IMessage = require('../interfaces/IMessage');
 const LLMResponse = require('../interfaces/LLMResponse'); 
