@@ -149,7 +149,7 @@ class OpenAiManager {
             model: constants.LLM_MODEL,
             messages: messages,
             temperature: 0.7,
-            max_tokens: maxTokens // Use the dynamic max_tokens value
+            max_tokens: parseInt(maxTokens, 10)
         };
     
         logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 3)}`);
