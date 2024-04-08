@@ -74,7 +74,25 @@ async function fetchMessages(client, channelId, limit = 20) {
 
         // Fetch messages from the channel
         const fetchedMessages = await channel.messages.fetch({ limit });
-        const messages = fetchedMessages.map(message => new DiscordMessage(message));
+        const messages = [];
+
+        // Process each fetched message
+        for (const message of fetchedMessages.values()) {
+            let processedContent = message.content;
+
+            // If the message content is structured complexly, extract the nested content
+            if (typeof message.content === 'object' && message.content.data && message.content.data.content) {
+                processedContent = message.content.data.content;
+            } else if (typeof message.content === 'object' && Array.isArray(message.content) && message.content.length > 0) {
+                // Handle case where content is an array of objects, e.g., when mistakenly structured
+                processedContent = message.content.map(m => m.data ? m.data.content : "").join("\n");
+            }
+
+            // Use the extracted or original content to create a DiscordMessage instance
+            const discordMessage = new DiscordMessage({ ...message, content: processedContent });
+            messages.push(discordMessage);
+        }
+
         logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
         return messages;
     } catch (error) {
@@ -171,17 +189,17 @@ async function processDiscordMessage(message) {
     return new DiscordMessage(message);
 }
 
-async function fetchMessages(client, channelId, limit = 20) {
+async function fetchChannelContext(client, channelId) {
     // Check if the client is defined
     if (!client) {
-        logger.error(`fetchMessages was called with an undefined or null client.`);
-        return [];
+        logger.error(`fetchChannelContext was called with an undefined or null client.`);
+        return { channelTopic: "Error: Invalid client", historyMessages: [] };
     }
 
     // Check if the client's channels collection is accessible
     if (!client.channels) {
-        logger.error(`fetchMessages was called on a client with an undefined or null channels collection.`);
-        return [];
+        logger.error(`fetchChannelContext was called on a client with an undefined or null channels collection.`);
+        return { channelTopic: "Error: Invalid channels collection", historyMessages: [] };
     }
 
     try {
@@ -191,12 +209,12 @@ async function fetchMessages(client, channelId, limit = 20) {
         // Check if a valid channel was returned
         if (!channel) {
             logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
-            return [];
+            return { channelTopic: "Error: Channel not found", historyMessages: [] };
         }
 
         // Fetch messages from the channel
-        const fetchedMessages = await channel.messages.fetch({ limit });
-        const messages = [];
+        const fetchedMessages = await channel.messages.fetch({ limit: 20 });
+        const historyMessages = [];
 
         // Process each fetched message
         for (const message of fetchedMessages.values()) {
@@ -212,15 +230,19 @@ async function fetchMessages(client, channelId, limit = 20) {
 
             // Use the extracted or original content to create a DiscordMessage instance
             const discordMessage = new DiscordMessage({ ...message, content: processedContent });
-            messages.push(discordMessage);
+            historyMessages.push(discordMessage);
         }
 
-        logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
-        return messages;
+        // Reverse order to make it LLM friendly
+        const reversedHistoryMessages = historyMessages.reverse();
+        const channelTopic = channel.topic || "General discussion";
+
+        logger.debug(`Fetched context for channel ID: ${channelId}`);
+        return { channelTopic, historyMessages: reversedHistoryMessages };
     } catch (error) {
         // Log any errors encountered during the fetch operation
-        logger.error(`Error fetching messages from Discord for channel ID ${channelId}:`, error);
-        return [];
+        logger.error(`Error fetching channel context for channel ID ${channelId}:`, error);
+        return { channelTopic: "Error: Fetching context failed", historyMessages: [] };
     }
 }
 
