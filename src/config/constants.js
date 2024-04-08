@@ -45,7 +45,7 @@ module.exports = {
     LLM_RESPONSE_MAX_TOKENS: process.env.LLM_RESPONSE_MAX_TOKENS || '69', // Summarise if greater
     LLM_RESPONSE_MIN_TOKENS: process.env.LLM_RESPONSE_MIN_TOKENS || '1', // Summarise if greater
     LLM_ALWAYS_SUMMARISE: process.env.LLM_ALWAYS_SUMMARISE || 'false', // for endpoints that dont return a value for completion_tokens
-    LLM_SUMMARY_SYSTEM_PROMPT: process.env.LLM_SUMMARY_SYSTEM_PROMPT || 'Repeat this message only substitute a couple of words with emojis.',
+    LLM_SUMMARY_SYSTEM_PROMPT: process.env.LLM_SUMMARY_SYSTEM_PROMPT || 'User provides you a message for you to shorten and mix with emojis (think Discord experience).',
 
     LLM_MESSAGE_LIMIT_PER_HOUR: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '6', 10),
     LLM_MESSAGE_LIMIT_PER_DAY: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '250', 10),
