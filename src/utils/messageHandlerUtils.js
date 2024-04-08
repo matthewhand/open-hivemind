@@ -122,6 +122,8 @@ function shouldProcessMessage(originalMessage, openAiManager) {
 
 // This function could be expanded or refined based on the specifics of how your bot interacts with users
 async function handleFollowUp(originalMessage) {
+    logger.debug('[handleFollowUp] Starting follow-up handling.');
+
     try {
         // Example logic for deciding which follow-ups or command suggestions to make
         const followUpSuggestions = generateFollowUpSuggestions(originalMessage.getText());

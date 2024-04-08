@@ -30,29 +30,39 @@ class MessageResponseManager {
         this.llmWakewords = this.config.llmWakewords;
         this.unsolicitedChannelCap = this.config.unsolicitedChannelCap;
     }
+    
     shouldReplyToMessage(discordMessage) {
         logger.debug("Evaluating if the bot should reply to the message...");
-    
+
         if (!this.isValidMessage(discordMessage)) {
             logger.debug("Message is not valid.");
             return { shouldReply: false, responseChance: 0 };
         } else {
             logger.debug("Message is valid.");
         }
-    
-        if (this.isEligibleForReply(discordMessage)) {
-            logger.debug("Message is eligible for a reply. Calculating base chance...");
-            const baseChance = this.calculateBaseChance(discordMessage);
-            logger.debug(`Base chance calculated: ${baseChance}`);
-    
-            const shouldReply = Math.random() < baseChance;
-            logger.debug(`Random decision: ${shouldReply ? 'Replying' : 'Not replying'} (Random < Base Chance: ${Math.random()} < ${baseChance})`);
-    
-            return { shouldReply, responseChance: shouldReply ? 1 : baseChance };
-        } else {
-            logger.debug("Message is not eligible for a reply.");
+
+        // Check if the message is from a bot and suppress the response if so
+        if (discordMessage.isFromBot()) {
+            logger.debug("Suppressing response to a message from a bot.");
             return { shouldReply: false, responseChance: 0 };
         }
+
+        // Optionally, you could reintroduce the check for user mentions or other criteria here
+        // For example, only reply to messages that mention the bot or are direct replies
+        if (!this.isEligibleForReply(discordMessage)) {
+            logger.debug("Message is not eligible for a reply based on custom criteria.");
+            return { shouldReply: false, responseChance: 0 };
+        }
+
+        // If the message passes all checks, proceed to calculate the base chance of replying
+        const baseChance = this.calculateBaseChance(discordMessage);
+        logger.debug(`Base chance calculated: ${baseChance}`);
+
+        const shouldReply = Math.random() < baseChance;
+        logger.debug(`Random decision: ${shouldReply ? 'Replying' : 'Not replying'} (Random < Base Chance: ${Math.random()} < ${baseChance})`);
+
+        // Return the decision without applying additional bonuses or penalties
+        return { shouldReply, responseChance: shouldReply ? 1 : baseChance };
     }
     
     isValidMessage(discordMessage) {
