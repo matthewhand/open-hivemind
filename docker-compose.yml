@@ -6,11 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3010:3010"  # Adjust the port mapping as per your application's requirement
+      - "3011:3010"  # Adjust the port mapping as per your application's requirement
     env_file:
       - .env
     volumes:
       - ./src:/usr/src/app
       - /usr/src/app/node_modules  # Persist node_modules volume
       - ./src/config/config.json:/config.json  # Map config.json to /config.json in the container
-    restart: always
+    restart: unless-stopped
