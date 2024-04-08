@@ -123,6 +123,15 @@ class DiscordManager {
         }
         return DiscordManager.instance;
     }
+    
+    /**
+     * Retrieves the last typing timestamp for a specified channel.
+     * @param {string} channelId - The ID of the channel to query.
+     * @returns {number} The timestamp of the last typing event, or the current time if none is recorded.
+     */
+    getLastTypingTimestamp(channelId) {
+        return this.typingTimestamps.get(channelId) || Date.now();
+    }
 }
 
 module.exports = DiscordManager;
