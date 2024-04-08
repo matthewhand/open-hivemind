@@ -77,7 +77,7 @@ class DiscordManager {
                 if (this.messageHandler) {
                     logger.debug(`[DiscordManager] Passing processed message ID: ${processedMessage.getMessageId()} to the message handler`);
                     // Pass the processed message and its history to the message handler
-                    await this.messageHandler(processedMessage, processedMessage.historyMessages);
+                    await this.messageHandler(processedMessage, historyMessages);
                     logger.debug(`[DiscordManager] Message handler processed message ID: ${processedMessage.getMessageId()}`);
                 } else {
                     logger.warn('[DiscordManager] Message handler not set in DiscordManager.');
