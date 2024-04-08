@@ -18,7 +18,12 @@ class DiscordMessage extends IMessage {
         this.message = message; // Store the original Discord message object
         this.repliedMessage = repliedMessage; // Store the replied-to message, if any
         this.isBotExplicitlySet = isBot; // Store the explicitly set isBot value, if any
-    
+
+        if (!this.message.content) {
+            logger.error('[DiscordMessage]: message content is undefined or null.');
+            throw new Error('Message content is required');
+        }
+
         // // Additional debug information regarding optional parameters
         // if (repliedMessage) {
         //     logger.debug(`DiscordMessage constructor: repliedMessage parameter provided with ID: ${repliedMessage.id}`);
