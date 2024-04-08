@@ -12,21 +12,29 @@ const constants = require('../config/constants');
  * of message handling, including any necessary splitting, to the DiscordManager.
  * 
  * @param {string} channelId - The ID of the Discord channel where the message will be sent.
- * @param {string} messageContent - The content of the message to be sent.
+ * @param {string|number} messageContent - The content of the message to be sent.
  */
 async function sendResponse(channelId, messageContent) {
+    logger.debug(`[messageHandlerUtils] Preparing to send response. Channel ID: ${channelId}, Content: ${messageContent}`);
+
     if (typeof channelId !== 'string') {
+        logger.error('[messageHandlerUtils] Invalid channelId type. Expected string.');
         throw new TypeError('channelId must be a string');
     }
 
     if (typeof messageContent !== 'string' && typeof messageContent !== 'number') {
+        logger.error('[messageHandlerUtils] Invalid messageContent type. Expected string or number.');
         throw new TypeError('messageContent must be a string or a number');
     }
+
+    // Convert number to string if necessary
+    messageContent = messageContent.toString();
+    logger.debug(`[messageHandlerUtils] Sending message. Channel ID: ${channelId}, Content: ${messageContent}`);
 
     try {
         // Directly use DiscordManager's sendResponse method to send the message
         await DiscordManager.getInstance().sendResponse(channelId, messageContent);
-        logger.debug(`[messageHandlerUtils] Message sent to channel ID: ${channelId}`);
+        logger.debug(`[messageHandlerUtils] Message successfully sent to channel ID: ${channelId}. Content: ${messageContent}`);
     } catch (error) {
         // Log any errors encountered during the message sending process
         logger.error(`[messageHandlerUtils] Failed to send message to channel ID: ${channelId}: ${error}`);
