@@ -3,7 +3,19 @@ const IMessage = require('../interfaces/IMessage');
 const logger = require('../utils/logger');
 const constants = require('../config/constants'); // Ensure this path is correct
 
+/**
+ * Represents a Discord message, extending a generic message interface.
+ * This class encapsulates the properties and behaviors of a Discord message,
+ * providing methods to access its content, channel ID, author ID, and more,
+ * with added error handling and logging for robustness.
+ */
 class DiscordMessage extends IMessage {
+    /**
+     * Constructs an instance of DiscordMessage.
+     * @param {Object} message - The raw message object from Discord.
+     * @param {Object|null} repliedMessage - The message this message is replying to, if any.
+     * @param {boolean|null} isBot - Indicates explicitly if the message is from a bot.
+     */
     constructor(message, repliedMessage = null, isBot = null) {
         super(message);
     
@@ -12,42 +24,32 @@ class DiscordMessage extends IMessage {
             throw new Error('Message parameter is required');
         }
     
-        // Debug information about the message being initialized
         logger.debug(`DiscordMessage constructor: Initializing with message ID: ${message.id}`);
     
-        this.message = message; // Store the original Discord message object
-        this.repliedMessage = repliedMessage; // Store the replied-to message, if any
-        this.isBotExplicitlySet = isBot; // Store the explicitly set isBot value, if any
+        this.message = message;
+        this.repliedMessage = repliedMessage;
+        this.isBotExplicitlySet = isBot;
 
         if (!this.message.content) {
             logger.error('[DiscordMessage]: message content is undefined or null.');
             throw new Error('Message content is required');
         }
-
-        // // Additional debug information regarding optional parameters
-        // if (repliedMessage) {
-        //     logger.debug(`DiscordMessage constructor: repliedMessage parameter provided with ID: ${repliedMessage.id}`);
-        // } else {
-        //     logger.debug('DiscordMessage constructor: No repliedMessage parameter provided.');
-        // }
-    
-        // if (isBot !== null) {
-        //     logger.debug(`DiscordMessage constructor: isBotExplicitlySet parameter explicitly set to: ${isBot}`);
-        // } else {
-        //     logger.debug('DiscordMessage constructor: isBotExplicitlySet parameter not provided, defaulting to null.');
-        // }
-    
-        // logger.debug('DiscordMessage constructor: message object successfully initialized.');
     }
 
-    // Override getMessageId in subclasses
+    /**
+     * Retrieves the message ID.
+     * @returns {string} The message ID.
+     */
     getMessageId() {
-        return this.data.id;
+        return this.message.id;
     }
 
-    // Update mentionsUsers to handle an array of user IDs or a single userID
+    /**
+     * Checks if the message mentions specific users.
+     * @param {string|string[]} userIds - A single user ID or an array of user IDs to check for mentions.
+     * @returns {boolean} True if any of the specified users are mentioned in the message.
+     */
     mentionsUsers(userIds = [constants.CLIENT_ID]) {
-        // Ensure userIds is always an array for consistency
         if (!Array.isArray(userIds)) {
             userIds = [userIds];
         }
@@ -57,14 +59,19 @@ class DiscordMessage extends IMessage {
         return doesMentionUser;
     }
 
-    // Implement isDirectionMention to check for mentions that imply direct interaction
+    /**
+     * Checks if the message is a direct mention.
+     * @returns {boolean} True if the bot is the only user mentioned in the message.
+     */
     isDirectionMention() {
-        // Assuming direct interaction is determined by the bot being the only mention
         const mentions = this.message.mentions.users;
         return mentions.size === 1 && mentions.has(constants.CLIENT_ID);
     }
 
-    // Override or extend isReply method to utilize repliedMessage for additional checks
+    /**
+     * Determines if the message is a reply to another message.
+     * @returns {boolean} True if the message is a reply and specifically to the bot.
+     */
     isReply() {
         const hasReference = Boolean(this.message.reference && this.message.reference.messageId);
         const isReplyToBot = hasReference && this.repliedMessage && this.repliedMessage.author.id === constants.CLIENT_ID;
@@ -72,32 +79,35 @@ class DiscordMessage extends IMessage {
         return hasReference && isReplyToBot;
     }
 
-    // Optionally, you might add a method specifically to check if the reply was to the bot,
-    // if you need to keep the simple reply check separate.
-    isReplyToBot() {
-        const replyToBot = this.isReply(); // This relies on the isReply method's enhanced logic
-        logger.debug(`isReplyToBot: Checking if reply is specifically to bot: ${replyToBot}`);
-        return replyToBot;
-    }
-    
+    /**
+     * Retrieves the textual content of the message.
+     * @returns {string} The message content, or an empty string if undefined or null.
+     */
     getText() {
         if (!this.message.content) {
             logger.error('DiscordMessage.getText: message content is undefined or null.');
             return ''; // Return empty string if content is missing
         }
-        logger.debug(`DiscordMessage.getText: ${this.message.content}`);
         return this.message.content;
     }
 
+    /**
+     * Retrieves the ID of the channel the message was sent in.
+     * @returns {string} The channel ID, or an empty string if undefined or null.
+     */
     getChannelId() {
         if (!this.message.channel || !this.message.channel.id) {
             logger.error('DiscordMessage.getChannelId: channel.id is undefined or null.');
-            return ''; // Return empty string if channelId is missing
+            return '';            // Return empty string if channelId is missing
         }
         logger.debug(`DiscordMessage.getChannelId: Returning channel ID: ${this.message.channel.id}`);
         return this.message.channel.id;
     }
 
+    /**
+     * Retrieves the ID of the author of the message.
+     * @returns {string} The author ID, or an empty string if undefined or null.
+     */
     getAuthorId() {
         if (!this.message.author || !this.message.author.id) {
             logger.error('DiscordMessage.getAuthorId: author.id is undefined or null.');
@@ -107,7 +117,11 @@ class DiscordMessage extends IMessage {
         return this.message.author.id;
     }
 
-    // Concrete implementation of isFromBot for Discord messages
+    /**
+     * Determines if the message was sent by a bot.
+     * This can be explicitly set or derived from the message's author.bot flag.
+     * @returns {boolean} True if the message is from a bot, false otherwise.
+     */
     isFromBot() {
         let isFromBot;
         if (this.isBotExplicitlySet !== null) {
@@ -125,7 +139,6 @@ class DiscordMessage extends IMessage {
 
         return isFromBot;
     }
-
 }
 
 module.exports = DiscordMessage;

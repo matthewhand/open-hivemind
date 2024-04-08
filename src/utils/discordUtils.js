@@ -50,82 +50,77 @@ async function registerSlashCommands(token, guildId, commands) {
  * @returns {Promise<DiscordMessage[]>} An array of messages in a generic format.
  */
 async function fetchMessages(client, channelId, limit = 20) {
-    // Check if the client is defined
     if (!client) {
         logger.error(`fetchMessages was called with an undefined or null client.`);
         return [];
     }
 
-    // Check if the client's channels collection is accessible
     if (!client.channels) {
         logger.error(`fetchMessages was called on a client with an undefined or null channels collection.`);
         return [];
     }
 
     try {
-        // Attempt to fetch the channel by ID
         const channel = await client.channels.fetch(channelId);
-        
-        // Check if a valid channel was returned
         if (!channel) {
             logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
             return [];
         }
 
-        // Fetch messages from the channel
         const fetchedMessages = await channel.messages.fetch({ limit });
-        const messages = [];
-
-        // Process each fetched message
-        for (const message of fetchedMessages.values()) {
-            let processedContent = message.content;
-
-            // If the message content is structured complexly, extract the nested content
-            if (typeof message.content === 'object' && message.content.data && message.content.data.content) {
-                processedContent = message.content.data.content;
-            } else if (typeof message.content === 'object' && Array.isArray(message.content) && message.content.length > 0) {
-                // Handle case where content is an array of objects, e.g., when mistakenly structured
-                processedContent = message.content.map(m => m.data ? m.data.content : "").join("\n");
-            }
-
-            // Use the extracted or original content to create a DiscordMessage instance
-            const discordMessage = new DiscordMessage({ ...message, content: processedContent });
-            messages.push(discordMessage);
-        }
-
-        logger.debug(`Fetched ${messages.length} messages from channel ID: ${channelId}`);
-        return messages;
+        return fetchedMessages.map(message => new DiscordMessage(message));
     } catch (error) {
-        // Log any errors encountered during the fetch operation
         logger.error(`Error fetching messages from Discord for channel ID ${channelId}:`, error);
         return [];
     }
 }
 
 /**
- * Sends a response message to a specified Discord channel, handling long messages.
+ * Splits a message into chunks that are within Discord's character limit,
+ * appending an ellipsis to indicate continuation where necessary.
+ * @param {string} messageText - The content of the message to be split.
+ * @param {number} [maxLength=1997] - The maximum length of each message part.
+ * @returns {string[]} An array of message parts, each within the character limit.
+ */
+function splitMessage(messageText, maxLength = 1997) {
+    const parts = [];
+    while (messageText.length) {
+        let part = messageText;
+        if (messageText.length > maxLength) {
+            part = messageText.slice(0, maxLength).trimEnd();
+            const lastSpace = part.lastIndexOf(' ');
+            if (lastSpace > -1 && lastSpace < maxLength - 1) {
+                part = part.slice(0, lastSpace);
+            }
+            part += '...';
+        }
+        parts.push(part);
+        messageText = messageText.slice(part.length).trimStart();
+        if (parts.length > 1 && messageText) {
+            messageText = '...' + messageText;
+        }
+    }
+    return parts;
+}
+
+/**
+ * Sends a response message to a specified Discord channel,
+ * automatically handling messages that exceed Discord's character limit.
  * @param {Discord.Client} client - The Discord client instance.
  * @param {string} channelId - The ID of the channel where the message will be sent.
  * @param {string} messageText - The content of the message to be sent.
  */
-
 async function sendResponse(client, channelId, messageText) {
-    // Ensure messageText is valid
     if (!messageText) {
-        logger.error(`sendResponse was called with an undefined or null messageText.`);
+        logger.error('sendResponse was called with an undefined or null messageText.');
         return;
     }
 
-    // Ensure channelId is valid
     if (!channelId) {
-        logger.error(`sendResponse was called with an undefined or null channelId.`);
+        logger.error('sendResponse was called with an undefined or null channelId.');
         return;
     }
 
-    logger.debug(`[discordUtils] Summarized message ready to send: ${messageText}`);
-    logger.debug(`[discordUtils] Sending message to channel: ${channelId}`);
-
-    // Attempt to fetch the channel and send the message
     try {
         const channel = await client.channels.fetch(channelId);
         if (!channel) {
@@ -133,124 +128,51 @@ async function sendResponse(client, channelId, messageText) {
             return;
         }
 
-        // Splitting messageText to handle Discord character limit, if necessary
-        const MAX_LENGTH = 2000; // Discord's max message length
-        const messageParts = messageText.length > MAX_LENGTH ? 
-            [messageText.slice(0, MAX_LENGTH - 1) + '…'] : [messageText];
+        const messageParts = splitMessage(messageText);
 
         for (const part of messageParts) {
             await channel.send(part);
             logger.debug(`Message sent to channel ID: ${channelId}`);
         }
     } catch (error) {
-        logger.error(`Error sending message to channel ID ${channelId}: ${error}`);
+        logger.error(`Error sending message to channel ID ${channelId}:`, error);
     }
 }
 
 /**
- * Splits a message into chunks that are within Discord's character limit.
- * @param {string} messageText - The content of the message to be sent.
- * @returns {string[]} An array of message parts, each within the character limit.
+ * Fetches a Discord channel by its ID.
+ * This function abstracts the API call to fetch a channel, providing a simplified
+ * interface for other utilities to access channel details. It ensures that errors
+ * are handled gracefully and logs meaningful information for debugging.
+ * 
+ * @param {Discord.Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the channel to be fetched.
+ * @returns {Promise<Discord.Channel|null>} The fetched channel object or null if an error occurs.
  */
-function splitMessage(messageText, maxLength = 1997) {
-    const parts = [];
-    while (messageText.length > 0) {
-        if (messageText.length <= maxLength) {
-            // If the remaining message is within the limit, add it without modification
-            parts.push(messageText);
-            break; // Exit the loop as the entire message has been processed
-        } else {
-            // Find a suitable split point
-            let splitAt = messageText.lastIndexOf(' ', maxLength);
-            if (splitAt === -1) splitAt = maxLength; // Fallback in case of a very long word
-
-            // Add ellipsis to indicate continuation except for the first part
-            let part = messageText.substring(0, splitAt).trim();
-            if (parts.length) part = "..." + part; // Add ellipsis at the beginning for continuation
-            parts.push(part);
-
-            // Prepare the remaining text, adding ellipsis at the end for continuation if needed
-            messageText = "..." + messageText.substring(splitAt).trim();
-        }
-    }
-    // Ensure the last part doesn't end with ellipsis
-    if (parts.length > 1) {
-        parts[parts.length - 1] = parts[parts.length - 1].replace(/...\s*$/, '');
-    }
-    return parts;
-}
-
-/**
- * Processes a Discord message and converts it to a generic format.
- * @param {Discord.Message} message - The Discord message to process.
- * @returns {Promise<DiscordMessage>} A promise that resolves to an instance of DiscordMessage.
- */
-async function processDiscordMessage(message) {
-    return new DiscordMessage(message);
-}
-
-async function fetchChannelContext(client, channelId) {
-    // Check if the client is defined
+async function fetchChannel(client, channelId) {
     if (!client) {
-        logger.error(`fetchChannelContext was called with an undefined or null client.`);
-        return { channelTopic: "Error: Invalid client", historyMessages: [] };
-    }
-
-    // Check if the client's channels collection is accessible
-    if (!client.channels) {
-        logger.error(`fetchChannelContext was called on a client with an undefined or null channels collection.`);
-        return { channelTopic: "Error: Invalid channels collection", historyMessages: [] };
+        logger.error('fetchChannel was called with an undefined or null client.');
+        return null;
     }
 
     try {
-        // Attempt to fetch the channel by ID
         const channel = await client.channels.fetch(channelId);
-        
-        // Check if a valid channel was returned
         if (!channel) {
-            logger.error(`Channel with ID ${channelId} could not be fetched or does not exist.`);
-            return { channelTopic: "Error: Channel not found", historyMessages: [] };
+            logger.error(`Failed to fetch channel with ID: ${channelId}. Channel does not exist or cannot be accessed.`);
+            return null;
         }
-
-        // Fetch messages from the channel
-        const fetchedMessages = await channel.messages.fetch({ limit: 20 });
-        const historyMessages = [];
-
-        // Process each fetched message
-        for (const message of fetchedMessages.values()) {
-            let processedContent = message.content;
-
-            // If the message content is structured complexly, extract the nested content
-            if (typeof message.content === 'object' && message.content.data && message.content.data.content) {
-                processedContent = message.content.data.content;
-            } else if (typeof message.content === 'object' && Array.isArray(message.content) && message.content.length > 0) {
-                // Handle case where content is an array of objects, e.g., when mistakenly structured
-                processedContent = message.content.map(m => m.data ? m.data.content : "").join("\n");
-            }
-
-            // Use the extracted or original content to create a DiscordMessage instance
-            const discordMessage = new DiscordMessage({ ...message, content: processedContent });
-            historyMessages.push(discordMessage);
-        }
-
-        // Reverse order to make it LLM friendly
-        const reversedHistoryMessages = historyMessages.reverse();
-        const channelTopic = channel.topic || "General discussion";
-
-        logger.debug(`Fetched context for channel ID: ${channelId}`);
-        return { channelTopic, historyMessages: reversedHistoryMessages };
+        logger.debug(`Channel with ID: ${channelId} fetched successfully.`);
+        return channel;
     } catch (error) {
-        // Log any errors encountered during the fetch operation
-        logger.error(`Error fetching channel context for channel ID ${channelId}:`, error);
-        return { channelTopic: "Error: Fetching context failed", historyMessages: [] };
+        logger.error(`Error fetching channel with ID: ${channelId}:`, error);
+        return null;
     }
 }
 
 module.exports = {
-    processDiscordMessage,
     collectSlashCommands,
     registerSlashCommands,
     fetchMessages,
     sendResponse,
-    fetchChannelContext,
+    fetchChannel,
 };
