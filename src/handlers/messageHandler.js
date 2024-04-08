@@ -7,7 +7,8 @@ const {
   processCommand,
   summarizeMessage,
   handleFollowUp,
-  shouldProcessMessage
+  shouldProcessMessage,
+  shouldSummarize
 } = require('../utils/messageHandlerUtils');
 const commands = require('../commands/inline');
 const constants = require('../config/constants');
@@ -87,15 +88,6 @@ async function messageHandler(originalMessage, historyMessages = []) {
 function originalMessageValid(originalMessage) {
     return typeof originalMessage.getText === 'function' &&
            typeof originalMessage.getChannelId === 'function';
-}
-
-/**
- * Determines whether the response from OpenAI should be summarized based on predefined criteria.
- * @param {LLMResponse} llmResponse - The response object from OpenAI.
- * @return {boolean} True if summarization is needed, false otherwise.
- */
-function shouldSummarize(llmResponse) {
-    return constants.LLM_ALWAYS_SUMMARISE || (llmResponse.getCompletionTokens() > constants.LLM_RESPONSE_MAX_TOKENS);
 }
 
 /**

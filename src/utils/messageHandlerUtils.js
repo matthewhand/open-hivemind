@@ -152,6 +152,14 @@ function generateFollowUpSuggestions(messageContent) {
     return allAliasesWithDescriptions; // Customize this to make more context-aware suggestions
 }
 
+/**
+ * Determines whether the response from OpenAI should be summarized based on predefined criteria.
+ * @param {LLMResponse} llmResponse - The response object from OpenAI.
+ * @return {boolean} True if summarization is needed, false otherwise.
+ */
+function shouldSummarize(llmResponse) {
+    return constants.LLM_ALWAYS_SUMMARISE || (llmResponse.finish_reason === "length") || (llmResponse.getCompletionTokens() >= constants.LLM_RESPONSE_MAX_TOKENS);
+}
 
 module.exports = {
     sendResponse,
@@ -159,5 +167,6 @@ module.exports = {
     summarizeMessage,
     handleFollowUp,
     shouldProcessMessage,
+    shouldSummarize,
 };
 
