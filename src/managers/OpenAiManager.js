@@ -145,7 +145,7 @@ class OpenAiManager {
         const requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
-            temperature: 0.7,
+            temperature: 0.2,
             max_tokens: parseInt(maxTokens, 10)
         };
     
