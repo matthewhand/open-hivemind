@@ -101,9 +101,9 @@ class DiscordManager {
      */
     async fetchMessages(channelId) {
         const messages = await discordUtils.fetchMessages(this.client, channelId);
-        return messages.reverse();
+        return messages.reverse(); // So the last message is at the bottom
     }
-    
+
     /**
      * Sends a response message to a specified channel, splitting it if it exceeds Discord's character limit.
      * @param {string} channelId - The ID of the channel to send the message to.
