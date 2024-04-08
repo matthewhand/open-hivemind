@@ -124,7 +124,7 @@ function shouldProcessMessage(originalMessage, openAiManager) {
 async function handleFollowUp(originalMessage) {
     try {
         // Example logic for deciding which follow-ups or command suggestions to make
-        const followUpSuggestions = generateFollowUpSuggestions(originalMessage.content);
+        const followUpSuggestions = generateFollowUpSuggestions(originalMessage.getText());
         const followUpMessage = `Here are some commands you might find useful:\n${followUpSuggestions}`;
 
         if (!followUpMessage) {
