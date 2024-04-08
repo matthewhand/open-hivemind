@@ -68,7 +68,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
     }
 
     await sendResponse(channelId, messageContent);
-    discordManager.stopTyping(channelId);
+    // discordManager.stopTyping(channelId);
 
     if (await handleFollowUp(originalMessage)) {
         logger.debug('[messageHandler] Completed follow-up actions.');
