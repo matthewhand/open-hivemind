@@ -142,9 +142,12 @@ class DiscordManager {
     async startTyping(channelId) {
         try {
             const channel = await this.client.channels.fetch(channelId);
-            if (channel.isText()) { // Ensure the channel supports typing
+            // Adjust the check to use the 'type' property for discord.js v12 and above
+            if (channel.type === 'GUILD_TEXT' || channel.type === 'DM') {
                 await channel.sendTyping();
                 logger.debug(`[DiscordManager] Started typing in channel ID: ${channelId}`);
+            } else {
+                logger.debug(`[DiscordManager] Channel ID: ${channelId} does not support typing.`);
             }
         } catch (error) {
             logger.error(`[DiscordManager] Failed to start typing in channel ID: ${channelId}: ${error}`);
