@@ -100,9 +100,10 @@ class DiscordManager {
      * @returns {Promise<Array<DiscordMessage>>} A promise that resolves to an array of DiscordMessage instances.
      */
     async fetchMessages(channelId) {
-        return discordUtils.fetchMessages(this.client, channelId);
+        const messages = await discordUtils.fetchMessages(this.client, channelId);
+        return messages.reverse();
     }
-
+    
     /**
      * Sends a response message to a specified channel, splitting it if it exceeds Discord's character limit.
      * @param {string} channelId - The ID of the channel to send the message to.
