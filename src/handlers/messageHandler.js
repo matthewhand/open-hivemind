@@ -13,7 +13,8 @@ const {
 const commands = require('../commands/inline');
 const constants = require('../config/constants');
 const rateLimiter = require('../utils/rateLimiter');
-const LLMResponse = require('../interfaces/LLMResponse');
+// const LLMResponse = require('../interfaces/LLMResponse');
+const MessageResponseManager = require('../managers/MessageResponseManager').getInstance();
 
 /**
  * Main handler for incoming Discord messages. It orchestrates the process of validating messages,
@@ -51,6 +52,13 @@ async function messageHandler(originalMessage, historyMessages = []) {
         return;
     }
 
+    // Consult MessageResponseManager before proceeding with OpenAI request
+    const decision = await MessageResponseManager.shouldReplyToMessage(originalMessage);
+    if (!decision.shouldReply) {
+        logger.debug("[messageHandler] MessageResponseManager decided not to reply.");
+        return;
+    }
+
     logger.debug("[messageHandler] Sending request to OpenAI.");
     const aiResponsePromise = openAiManager.sendRequest(openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT));
     openAiManager.setIsResponding(true);
@@ -68,12 +76,8 @@ async function messageHandler(originalMessage, historyMessages = []) {
         logger.debug("[messageHandler] Message summarized.");
     }
 
-    await sendResponse(channelId, messageContent);
-    // discordManager.stopTyping(channelId);
-
-    if (await handleFollowUp(originalMessage)) {
-        logger.debug('[messageHandler] Completed follow-up actions.');
-    }
+    // Adjust sending logic to use MessageResponseManager for scheduling the response
+    MessageResponseManager.manageResponse(originalMessage, messageContent, llmResponse);
 
     rateLimiter.addMessageTimestamp();
     openAiManager.setIsResponding(false);
