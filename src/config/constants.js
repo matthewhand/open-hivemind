@@ -28,8 +28,8 @@ module.exports = {
     LLM_PRESENCE_PENALTY: parseFloat(process.env.LLM_PRESENCE_PENALTY || '0.05'),
     
     // Local LLM settings
-    OLLAMA_ENABLED: process.env.LLM_OLLAMA_ENABLED !== 'false',
-    OLLAMA_DEFAULT_MODEL: process.env.LLM_OLLAMA_DEFAULT_MODEL || 'orca-mini',
+    // OLLAMA_ENABLED: process.env.LLM_OLLAMA_ENABLED !== 'false',
+    // OLLAMA_DEFAULT_MODEL: process.env.LLM_OLLAMA_DEFAULT_MODEL || 'orca-mini',
 
     // Message structuring and processing adjustments
     LLM_PADDING_USE: process.env.LLM_PADDING_USE === 'true', // Controls if padding is used for consecutive messages
