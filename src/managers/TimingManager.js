@@ -11,11 +11,30 @@ class TimingManager {
      * @param {number} options.decayRate The rate at which the delay decreases over time.
      */
     constructor({ maxDelay = 10000, minDelay = 1000, decayRate = -0.5 } = {}) {
+
+        if (TimingManager.instance) {
+            return TimingManager.instance;
+        }
+
         this.maxDelay = maxDelay;
         this.minDelay = minDelay;
         this.decayRate = decayRate;
         this.channelsTimingInfo = {}; // Object to store timing information for each channel.
+
+        TimingManager.instance = this;
     }
+    
+    /**
+     * Returns the singleton instance of TimingManager.
+     * @returns {TimingManager} The singleton instance.
+     */
+    static getInstance() {
+        if (!TimingManager.instance) {
+            TimingManager.instance = new TimingManager({});
+        }
+        return TimingManager.instance;
+    }
+
 
     /**
      * Logs the arrival of an incoming message for a specific channel. This information is
