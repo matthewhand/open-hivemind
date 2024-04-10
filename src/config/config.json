@@ -1,28 +1,15 @@
 {
-    "deciderConfig": {
+    "discordSettings": {
+      "unsolicitedChannelCap": 2
+    },
+    "messageResponse": {
       "interrobangBonus": 0.2,
       "mentionBonus": 0.4,
-      "familiarBonus": 0.6,
       "botResponsePenalty": 0.8,
-      "timeVsResponseChance": [
-        [
-          12345,
-          0.4
-        ],
-        [
-          420000,
-          0.6
-        ],
-        [
-          4140000,
-          0.2
-        ]
-      ],
-      "llmWakewords": [
-        "!help"
-      ]
-    },
-    "discordSettings": {
+      "maxDelay": 10000,
+      "minDelay": 1000,
+      "decayRate": -0.5,
+      "llmWakewords": "!help,!ping,!echo", 
       "unsolicitedChannelCap": 2
     },
     "enabledModules": {
@@ -36,6 +23,5 @@
       "ollama": true,
       "moderation": true,
       "help": true
-    }
-    
+    }    
   }

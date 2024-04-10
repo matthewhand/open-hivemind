@@ -10,6 +10,9 @@ const OpenAiManager = require('./OpenAiManager');
  */
 class MessageResponseManager {
     static instance;
+    config;
+    timingManager;
+    openAiManager;
 
     /**
      * Initializes a new instance of the MessageResponseManager.
@@ -17,7 +20,11 @@ class MessageResponseManager {
     constructor() {
         logger.debug('Initializing MessageResponseManager with configuration.');
         this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
-        this.config.llmWakewords = this.getWakeWords();
+
+        // Ensure llmWakewords is always an array, even if incorrectly configured
+        if (typeof this.config.llmWakewords === 'string') {
+            this.config.llmWakewords = this.config.llmWakewords.split(',').map(word => word.trim());
+        }
 
         this.timingManager = TimingManager.getInstance();
         this.openAiManager = OpenAiManager.getInstance();
@@ -34,20 +41,40 @@ class MessageResponseManager {
         return this.instance;
     }
 
-    /**
-     * Provides default configuration values for the message response manager.
-     * @returns {Object} The default configuration settings.
-     */
     defaultConfig() {
         return {
-            interrobangBonus: 0.3,  // Bonus chance of replying when the message contains '?' or '!'
-            mentionBonus: 0.4,      // Bonus chance of replying when the bot is directly mentioned
-            botResponsePenalty: 0.5, // Penalty applied to prevent replying to bots
-            maxDelay: 10000,        // Maximum delay in milliseconds before sending a response
-            minDelay: 1000,         // Minimum delay in milliseconds before sending a response
-            decayRate: -0.5,        // Rate at which the delay decreases over time
-            llmWakewords: '!ping',  // Default wake words
+            interrobangBonus: 0.2,
+            mentionBonus: 0.4,
+            botResponsePenalty: 0.8,
+            maxDelay: 10000,
+            minDelay: 1000,
+            decayRate: -0.5,
+            llmWakewords: ['!help', '!ping', '!echo'], // Default wakewords as an array
+            unsolicitedChannelCap: 2
         };
+    }
+ 
+    /**
+     * Loads and returns the configuration for the message response manager.
+     * @returns {Object} The configuration settings.
+     */
+    loadConfig() {
+        const defaultConfig = {
+            interrobangBonus: 0.3,
+            mentionBonus: 0.4,
+            botResponsePenalty: 0.5,
+            maxDelay: 10000,
+            minDelay: 1000,
+            decayRate: -0.5,
+            llmWakewords: '!ping', // Default wake words
+        };
+
+        const fileConfig = configurationManager.getConfig('messageResponse') || {};
+        fileConfig.llmWakewords = configurationManager.getConfig('LLM_WAKE_WORDS') ?
+                                  configurationManager.getConfig('LLM_WAKE_WORDS').split(',').map(word => word.trim()) :
+                                  defaultConfig.llmWakewords.split(',');
+
+        return { ...defaultConfig, ...fileConfig };
     }
 
     /**
@@ -105,12 +132,12 @@ class MessageResponseManager {
      * @returns {boolean} - True if the message is eligible for a reply, otherwise false.
      */
     isEligibleForReply(discordMessage) {
-        const messageText = discordMessage.getText().toLowerCase();
+        const messageText = discordMessage.getText().trim().toLowerCase();
         const isWakewordPresent = this.config.llmWakewords.some(word => messageText.startsWith(word));
         logger.debug(`Message "${messageText}" wakeword check: ${isWakewordPresent}`);
 
         const mentionsUsers = discordMessage.mentionsUsers();
-        logger.debug(`Message mentions users: ${mentionsUsers}`);
+        logger.debug(`Mentions users: ${mentionsUsers}`);
 
         return isWakewordPresent || mentionsUsers;
     }
