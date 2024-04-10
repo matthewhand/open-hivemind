@@ -17,6 +17,7 @@ class MessageResponseManager {
     constructor() {
         logger.debug('Initializing MessageResponseManager with configuration.');
         this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
+        this.config.llmWakewords = this.getWakeWords();
 
         this.timingManager = TimingManager.getInstance();
         this.openAiManager = OpenAiManager.getInstance();
@@ -45,7 +46,7 @@ class MessageResponseManager {
             maxDelay: 10000,        // Maximum delay in milliseconds before sending a response
             minDelay: 1000,         // Minimum delay in milliseconds before sending a response
             decayRate: -0.5,        // Rate at which the delay decreases over time
-            llmWakewords: configurationManager.getConfig('LLM_WAKE_WORDS').split(',').map(word => word.trim()) || ['!ping'],  // Wake words that trigger a response
+            llmWakewords: '!ping',  // Default wake words
         };
     }
 
