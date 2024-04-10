@@ -5,8 +5,9 @@ const DiscordMessage = require('../models/DiscordMessage');
 const OpenAiManager = require('./OpenAiManager');
 
 /**
- * Manages the bot's responses to Discord messages, incorporating dynamic response timing
- * for a more natural interaction experience and using OpenAI for content generation.
+ * Manages the bot's responses to Discord messages by determining if and when responses should be sent,
+ * and leveraging OpenAI for generating response content. This manager orchestrates the timing of responses
+ * to simulate more natural interactions.
  */
 class MessageResponseManager {
     static instance;
@@ -15,23 +16,18 @@ class MessageResponseManager {
     openAiManager;
 
     /**
-     * Initializes a new instance of the MessageResponseManager.
+     * Private constructor to initialize the MessageResponseManager with configurations from the config manager.
      */
     constructor() {
         logger.debug('Initializing MessageResponseManager with configuration.');
-        this.config = configurationManager.getConfig('messageResponse') || this.defaultConfig();
-
-        // Ensure llmWakewords is always an array, even if incorrectly configured
-        if (typeof this.config.llmWakewords === 'string') {
-            this.config.llmWakewords = this.config.llmWakewords.split(',').map(word => word.trim());
-        }
+        this.config = this.loadConfig();
 
         this.timingManager = TimingManager.getInstance();
         this.openAiManager = OpenAiManager.getInstance();
     }
 
     /**
-     * Retrieves the singleton instance of the MessageResponseManager.
+     * Singleton pattern implementation to get the instance of MessageResponseManager.
      * @returns {MessageResponseManager} The singleton instance.
      */
     static getInstance() {
@@ -41,45 +37,31 @@ class MessageResponseManager {
         return this.instance;
     }
 
-    defaultConfig() {
-        return {
-            interrobangBonus: 0.2,
-            mentionBonus: 0.4,
-            botResponsePenalty: 0.8,
-            maxDelay: 10000,
-            minDelay: 1000,
-            decayRate: -0.5,
-            llmWakewords: ['!help', '!ping', '!echo'], // Default wakewords as an array
-            unsolicitedChannelCap: 2
-        };
-    }
- 
     /**
-     * Loads and returns the configuration for the message response manager.
-     * @returns {Object} The configuration settings.
+     * Loads the configuration for message responses, applying defaults where necessary.
+     * @returns {Object} The configuration settings for message responses.
      */
     loadConfig() {
-        const defaultConfig = {
+        const defaults = {
             interrobangBonus: 0.3,
             mentionBonus: 0.4,
             botResponsePenalty: 0.5,
             maxDelay: 10000,
             minDelay: 1000,
             decayRate: -0.5,
-            llmWakewords: '!ping', // Default wake words
+            llmWakewords: ['!help', '!ping', '!echo'],
+            unsolicitedChannelCap: 2
         };
-
-        const fileConfig = configurationManager.getConfig('messageResponse') || {};
-        fileConfig.llmWakewords = configurationManager.getConfig('LLM_WAKE_WORDS') ?
-                                  configurationManager.getConfig('LLM_WAKE_WORDS').split(',').map(word => word.trim()) :
-                                  defaultConfig.llmWakewords.split(',');
-
-        return { ...defaultConfig, ...fileConfig };
+        
+        const config = configurationManager.getConfig('messageResponse') || {};
+        config.llmWakewords = config.llmWakewords ? config.llmWakewords.split(',').map(s => s.trim()) : defaults.llmWakewords;
+        
+        return { ...defaults, ...config };
     }
 
     /**
-     * Manages the decision to respond to a message and schedules the response using the TimingManager.
-     * @param {DiscordMessage} discordMessage - The received message to manage a response for.
+     * Decides whether to respond to a particular message and schedules the response.
+     * @param {DiscordMessage} discordMessage The message to potentially respond to.
      */
     async manageResponse(discordMessage) {
         if (!this.isValidMessage(discordMessage) || discordMessage.isFromBot()) {
@@ -93,96 +75,91 @@ class MessageResponseManager {
             return;
         }
 
-        const responseContent = await this.generateResponseContent(discordMessage);
-        this.timingManager.scheduleMessage(discordMessage.channel.id, responseContent, decision.responseDelay);
+        this.timingManager.scheduleMessage(discordMessage.channel.id, decision.responseContent, decision.responseDelay);
     }
 
     /**
-     * Evaluates if a message meets the defined criteria for the bot to generate a reply.
-     * This can include checks for direct mentions, specific channel IDs, message content triggers,
-     * or other custom criteria defined for interaction.
-     * @param {DiscordMessage} discordMessage - The Discord message object to evaluate.
-     * @returns {Promise<{shouldReply: boolean, responseDelay: number}>} - Decision and delay before sending the reply.
+     * Evaluates whether the bot should reply to a given message based on content triggers and other criteria.
+     * @param {DiscordMessage} discordMessage The message to evaluate.
+     * @returns {Promise<{shouldReply: boolean, responseContent: string, responseDelay: number}>} Decision on replying.
      */
     async shouldReplyToMessage(discordMessage) {
         logger.debug("Evaluating if the bot should reply to the message...");
 
         if (this.isEligibleForReply(discordMessage)) {
             const baseChance = this.calculateBaseChance(discordMessage);
-            logger.debug(`Base chance calculated: ${baseChance}`);
-
+            const shouldReply = Math.random() < baseChance;
+            const responseContent = shouldReply ? await this.generateResponseContent(discordMessage) : "";
             const responseDelay = this.calculateDelay(discordMessage);
-            logger.debug(`Response delay calculated: ${responseDelay}ms`);
 
-            const randomChance = Math.random();
-            const shouldReply = randomChance < baseChance;
-            logger.debug(`Random chance: ${randomChance}, should reply: ${shouldReply}`);
-
-            return { shouldReply, responseDelay };
+            logger.debug(`Decision to reply: ${shouldReply}, Response delay: ${responseDelay}ms`);
+            return { shouldReply, responseContent, responseDelay };
         }
 
-        logger.debug("Message does not meet reply criteria.");
-        return { shouldReply: false, responseDelay: 0 };
+        return { shouldReply: false, responseContent: "", responseDelay: 0 };
     }
 
     /**
-     * Checks if the message content includes any of the wakewords defined in the configuration,
-     * or if the bot is directly mentioned.
-     * @param {DiscordMessage} discordMessage - The message to check.
-     * @returns {boolean} - True if the message is eligible for a reply, otherwise false.
+     * Determines if a message meets the criteria for triggering a bot response.
+     * @param {DiscordMessage} discordMessage The message to check.
+     * @returns {boolean} True if the message triggers a response, otherwise false.
      */
     isEligibleForReply(discordMessage) {
-        const messageText = discordMessage.getText().trim().toLowerCase();
+        const messageText = discordMessage.getText().toLowerCase();
         const isWakewordPresent = this.config.llmWakewords.some(word => messageText.startsWith(word));
-        logger.debug(`Message "${messageText}" wakeword check: ${isWakewordPresent}`);
-
         const mentionsUsers = discordMessage.mentionsUsers();
-        logger.debug(`Mentions users: ${mentionsUsers}`);
 
+        logger.debug(`Wakeword present: ${isWakewordPresent}, Mentions users: ${mentionsUsers}`);
         return isWakewordPresent || mentionsUsers;
     }
 
     /**
-     * Calculates the base chance of replying based on the message content.
-     * @param {DiscordMessage} discordMessage - The message to evaluate.
-     * @returns {number} - The calculated base chance of replying.
+     * Computes the base chance of the bot deciding to reply based on the message's content.
+     * @param {DiscordMessage} discordMessage The message to evaluate.
+     * @returns {number} The probability of replying.
      */
     calculateBaseChance(discordMessage) {
-        let baseChance = this.config.interrobangBonus * (discordMessage.getText().includes('?') ? 1 : 0) +
-                         this.config.mentionBonus * (discordMessage.mentionsUsers() ? 1 : 0);
-    
-        return Math.min(baseChance, 1);  // Ensure the base chance does not exceed 100%
+        const text = discordMessage.getText();
+        let chance = this.config.interrobangBonus * (text.includes('?') ? 1 : 0) + 
+                     this.config.mentionBonus * (discordMessage.mentionsUsers() ? 1 : 0);
+
+        logger.debug(`Base chance of replying: ${chance}`);
+        return Math.min(chance, 1); // Ensuring the chance does not exceed 100%
     }
-        
+
     /**
-     * Calculates the delay before sending a message based on the message content.
-     * @param {DiscordMessage} discordMessage - The message to evaluate.
-     * @returns {number} - The calculated delay in milliseconds.
+     * Calculates the delay before sending a message, aiming to mimic human response times.
+     * @param {DiscordMessage} discordMessage The message to evaluate.
+     * @returns {number} The delay in milliseconds before sending the response.
      */
     calculateDelay(discordMessage) {
-        const hasQuestionMark = discordMessage.getText().includes('?');
-        const delay = hasQuestionMark ? 500 : 2000;
-        logger.debug(`Message delay calculation: ${delay}ms (Question mark present: ${hasQuestionMark})`);
+        const hasQuestion = discordMessage.getText().includes('?');
+        const delay = hasQuestion ? 500 : 2000;
+        logger.debug(`Calculated response delay: ${delay}ms for message: ${hasQuestion ? 'with' : 'without'} a question mark.`);
         return delay;
     }
 
     /**
-     * Generates a response based on the content of the message using OpenAI's GPT model.
-     * @param {DiscordMessage} discordMessage - The message to respond to.
-     * @returns {Promise<string>} - The generated response.
+     * Generates a response using the OpenAI model based on the message's content.
+     * @param {DiscordMessage} discordMessage The message needing a response.
+     * @returns {Promise<string>} The generated response content.
      */
     async generateResponseContent(discordMessage) {
-        const prompt = discordMessage.getText();
-        logger.debug(`Generating response for prompt: ${prompt}`);
-        const response = await this.openAiManager.generateResponse(prompt);
-        logger.debug(`Generated response: ${response}`);
-        return response || "Sorry, I couldn't come up with a response.";
+        logger.debug(`Generating response for message: ${discordMessage.getText().substring(0, 50)}...`);
+        try {
+            const response = await this.openAiManager.generateResponse(discordMessage.getText());
+            logger.debug(`Response generated: ${response.substring(0, 50)}...`);
+            return response;
+        } catch (error) {
+            logger.error(`Error generating response: ${error}`);
+            return "Sorry, I couldn't come up with a response.";
+        }
     }
 
     /**
-     * Validates that the provided message object is an instance of DiscordMessage.
-     * @param {DiscordMessage} discordMessage - The message to validate.
-     * @returns {boolean} True if the message is a valid DiscordMessage, false otherwise.
+     * Checks if the provided message is a valid DiscordMessage instance.
+     * @param {DiscordMessage} discordMessage The message to validate.
+     * @returns {boolean} True if valid, false otherwise.
      */
     isValidMessage(discordMessage) {
         const isValid = discordMessage instanceof DiscordMessage;
