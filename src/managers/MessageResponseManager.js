@@ -148,12 +148,12 @@ class MessageResponseManager {
      * @returns {number} - The calculated base chance of replying.
      */
     calculateBaseChance(discordMessage) {
-        const hasQuestionMark = discordMessage.getText().includes('?');
-        const baseChance = hasQuestionMark ? 0.7 : 0.2;
-        logger.debug(`Message base chance calculation: ${baseChance} (Question mark present: ${hasQuestionMark})`);
-        return baseChance;
+        let baseChance = this.config.interrobangBonus * (discordMessage.getText().includes('?') ? 1 : 0) +
+                         this.config.mentionBonus * (discordMessage.mentionsUsers() ? 1 : 0);
+    
+        return Math.min(baseChance, 1);  // Ensure the base chance does not exceed 100%
     }
-
+        
     /**
      * Calculates the delay before sending a message based on the message content.
      * @param {DiscordMessage} discordMessage - The message to evaluate.
