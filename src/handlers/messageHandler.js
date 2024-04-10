@@ -1,11 +1,7 @@
 const logger = require('../utils/logger');
 const OpenAiManager = require('../managers/OpenAiManager');
 const DiscordManager = require('../managers/DiscordManager');
-const {
-  processCommand,
-  shouldProcessMessage,
-  summarizeMessage
-} = require('../utils/messageHandlerUtils');
+const { processCommand, shouldProcessMessage } = require('../utils/messageHandlerUtils');
 const commands = require('../commands/inline');
 const constants = require('../config/constants');
 const rateLimiter = require('../utils/rateLimiter');
@@ -15,6 +11,8 @@ const MessageResponseManager = require('../managers/MessageResponseManager').get
  * Handles incoming Discord messages by processing commands, querying OpenAI for responses, and managing response timings.
  * @param {IMessage} originalMessage - The message object received from Discord.
  * @param {Array} historyMessages - An array of previous messages for context.
+ * @async
+ * @returns {Promise<void>}
  */
 async function messageHandler(originalMessage, historyMessages = []) {
     const startTime = Date.now();
@@ -44,7 +42,7 @@ async function messageHandler(originalMessage, historyMessages = []) {
         return;
     }
 
-    await manageTypingAndDelay(channelId);
+    await manageTypingAndDelay(channelId, discordManager);
 
     const decision = await MessageResponseManager.shouldReplyToMessage(originalMessage);
     if (!decision.shouldReply) {
@@ -60,29 +58,33 @@ async function messageHandler(originalMessage, historyMessages = []) {
 }
 
 /**
- * Validates the structure and necessary methods of the message object.
+ * Validates the structure and necessary methods of the message object to ensure it can be processed.
  * @param {IMessage} message - The message object to validate.
- * @returns {boolean} - True if the message is valid, false otherwise.
+ * @returns {boolean} True if the message object has the necessary methods, false otherwise.
  */
 function isValidMessage(message) {
     return typeof message.getText === 'function' && typeof message.getChannelId === 'function';
 }
 
 /**
- * Manages typing indicators and introduces a delay simulating typing speed.
+ * Manages typing indicators and delays to simulate natural typing speed, enhancing user interaction realism.
  * @param {string} channelId - The channel ID where the message was received.
+ * @param {DiscordManager} discordManager - The DiscordManager instance to manage typing indicators.
+ * @async
+ * @returns {Promise<void>}
  */
-async function manageTypingAndDelay(channelId) {
-    const discordManager = DiscordManager.getInstance();
+async function manageTypingAndDelay(channelId, discordManager) {
     await waitForQuietTypingWindow(channelId, discordManager);
     discordManager.startTyping(channelId);
     await delay(getRandomDelay(constants.BOT_PRE_TYPING_DELAY_MIN_MS, constants.BOT_PRE_TYPING_DELAY_MAX_MS));
 }
 
 /**
- * Waits for a period of inactivity in typing before proceeding, to mimic natural pause in conversation.
+ * Waits until there is no recent typing activity in the channel to continue, simulating thoughtful pause in conversation.
  * @param {string} channelId - The ID of the channel to monitor for typing activity.
  * @param {DiscordManager} discordManager - Instance of DiscordManager to access typing timestamps.
+ * @async
+ * @returns {Promise<void>}
  */
 async function waitForQuietTypingWindow(channelId, discordManager) {
     let isQuiet = false;
@@ -98,30 +100,31 @@ async function waitForQuietTypingWindow(channelId, discordManager) {
 }
 
 /**
- * Generates a random delay within specified bounds to simulate natural typing speed.
+ * Generates a random delay within specified bounds to simulate typing speed, adding to the realism of bot interactions.
  * @param {number} minMs - Minimum milliseconds to delay.
  * @param {number} maxMs - Maximum milliseconds to delay.
- * @returns {number} - A randomly determined delay period within the given bounds.
+ * @returns {number} A randomly determined delay period within the specified bounds.
  */
 function getRandomDelay(minMs, maxMs) {
     return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
 }
 
 /**
- * Pauses the execution for a specified duration. Used to simulate typing delays.
- * @param {number} ms - The delay duration in milliseconds.
- * @returns {Promise<void>} - A promise that resolves after the delay period.
+ * Delays the execution for a specified duration, used mainly to manage pacing in bot responses.
+ * @param {number} ms - The milliseconds to delay execution by.
+ * @returns {Promise<void>} A promise that resolves after the specified delay, simulating typing or processing delay.
  */
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
- * Generates response content by querying OpenAI with the original message and historical context.
- * @param {IMessage} originalMessage - The original message object received from Discord.
- * @param {Array} historyMessages - Historical messages for context.
- * @param {OpenAiManager} openAiManager - The OpenAiManager instance for handling requests to OpenAI.
- * @returns {Promise<string>} - The generated response content from OpenAI.
+ * Constructs and sends a request to OpenAI based on the original message and historical context, retrieving a generated response.
+ * @param {IMessage} originalMessage - The original Discord message.
+ * @param {Array} historyMessages - Contextual messages that precede the original message.
+ * @param {OpenAiManager} openAiManager - The manager handling interactions with OpenAI's API.
+ * @async
+ * @returns {Promise<string>} The text response generated by OpenAI, or an error message if the process fails.
  */
 async function generateResponseContent(originalMessage, historyMessages, openAiManager) {
     const prompt = originalMessage.getText();
