@@ -1,0 +1,33 @@
+// Mock dependencies
+jest.mock('../../src/managers/OpenAiManager', () => ({
+  getInstance: jest.fn().mockImplementation(() => ({
+      getIsResponding: jest.fn().mockReturnValue(false),
+      sendRequest: jest.fn().mockResolvedValue({ getContent: jest.fn().mockReturnValue('Mock response') })
+  })),
+}));
+
+jest.mock('../../src/managers/DiscordManager', () => ({
+  getInstance: jest.fn().mockImplementation(() => ({
+      sendMessage: jest.fn().mockResolvedValue(true),
+      getLastMessageTimestamp: jest.fn().mockReturnValue(Date.now())
+  })),
+}));
+
+const { messageHandler } = require('../../src/handlers/messageHandler');
+const DiscordManager = require('../../src/managers/DiscordManager');
+const OpenAiManager = require('../../src/managers/OpenAiManager');
+
+describe('messageHandler tests', () => {
+  it('should process message correctly', async () => {
+      const mockMessage = {
+          getText: jest.fn().mockReturnValue('Hello world'),
+          getChannelId: jest.fn().mockReturnValue('12345'),
+          isFromBot: jest.fn().mockReturnValue(false),
+      };
+
+      await messageHandler(mockMessage, []);
+
+      expect(OpenAiManager.getInstance().sendRequest).toHaveBeenCalledWith('Hello world');
+      expect(DiscordManager.getInstance().sendMessage).toHaveBeenCalledWith('12345', 'Mock response');
+  });
+});

@@ -104,14 +104,16 @@ async function summarizeMessage(initialMessageContent, targetSize = constants.LL
 }
 
 // Determines whether the message should be processed
-function shouldProcessMessage(originalMessage, openAiManager) {
+function shouldProcessMessage(originalMessage) {
+    const openAiManager = OpenAiManager.getInstance();  // Ensure a fresh instance for each call
+
     // Check if the message is from the bot itself
     if (originalMessage.isFromBot()) {
         logger.debug("[shouldProcessMessage] Skipping message from the bot itself.");
         return false; // Skip processing for bot's own messages
     }
 
-    // This can include checks like rate limiting, bot mentions, or command prefixes
+    // Additional checks like rate limiting, bot mentions, or command prefixes
     if (openAiManager.getIsResponding()) {
         logger.info("Skipping message processing due to concurrent request.");
         return false; // Avoid processing if already handling another request

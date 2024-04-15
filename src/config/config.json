@@ -5,7 +5,7 @@
     "messageResponse": {
       "interrobangBonus": 0.2,
       "mentionBonus": 0.4,
-      "botResponsePenalty": 0.8,
+      "botResponseModifier": -0.5,
       "maxDelay": 10000,
       "minDelay": 1000,
       "decayRate": -0.5,

@@ -1,77 +1,165 @@
-const configurationManager = require('../config/configurationManager');
+/**
+ * The MessageResponseManager is responsible for managing and timing the responses sent by the bot,
+ * based on a variety of configured conditions and modifiers. This manager dynamically loads and
+ * applies configuration settings that affect how responses are generated and delivered.
+ *
+ * Configuration settings include:
+ * - `interrobangBonus`: Added to the chance of replying when the message contains '!' or '?' anywhere except as the first character.
+ * - `mentionBonus`: Increases the chance of replying when the bot's ID (as specified by CLIENT_ID in constants) is mentioned.
+ * - `botResponseModifier`: Adjusts the chance of replying when the message originates from a bot (negative values decrease the chance).
+ * - `maxDelay` and `minDelay`: Specify the maximum and minimum delay timings for starting to type responses and for waiting between sending parts of long messages that exceed Discord's character limit.
+ * - `decayRate`: Used to reduce the waiting time incrementally when the bot is waiting for the channel to become idle.
+ * - `llmWakewords`: A set of keywords that, when found at the start of a message, ensure the bot will respond.
+ * - `unsolicitedChannelCap`: Limits the number of channels the bot will send unsolicited messages to, helping manage spam and bot activity visibility.
+ *
+ * These settings are loaded from the configuration manager and are merged with default values to ensure all settings are initialized properly.
+ */
 const logger = require('../utils/logger');
 const TimingManager = require('./TimingManager');
-const DiscordMessage = require('../models/DiscordMessage');
-const OpenAiManager = require('./OpenAiManager');
+const configurationManager = require('../config/configurationManager');
+const constants = require('../config/constants'); // Assuming this contains CLIENT_ID
+const { IMessage } = require('../interfaces/IMessage');
 
 /**
- * Manages responses to Discord messages by leveraging OpenAI's API to generate dynamic, context-aware replies.
+ * Manages and schedules responses by the bot, incorporating various interaction-driven modifiers.
+ * Utilizes detailed logging for debugging and JSDoc comments for better maintainability.
  */
 class MessageResponseManager {
     static instance;
-    config;
     timingManager;
-    openAiManager;
+    config;
+    lastActivityTimestamps = {};  // Tracks last activity time by channel ID
+    unsolicitedChannelCounts = {}; // Tracks counts of unsolicited messages by channel ID
 
     /**
-     * Initializes the MessageResponseManager with required managers and configurations.
+     * Ensures a single instance of the manager is used throughout the application.
      */
     constructor() {
-        logger.debug('Initializing MessageResponseManager with configuration.');
-        this.config = this.loadConfig();
-
+        if (MessageResponseManager.instance) {
+            logger.debug("[MessageResponseManager] An instance already exists. Skipping creation.");
+            return MessageResponseManager.instance;
+        }
         this.timingManager = TimingManager.getInstance();
-        this.openAiManager = OpenAiManager.getInstance();
+        this.config = this.loadConfig();
+        MessageResponseManager.instance = this;
+        logger.debug("[MessageResponseManager] An instance was created.");
     }
 
     /**
-     * Retrieves the singleton instance of the MessageResponseManager.
+     * Provides access to the singleton instance of the MessageResponseManager.
      * @returns {MessageResponseManager} The singleton instance.
      */
     static getInstance() {
         if (!this.instance) {
-            this.instance = new MessageResponseManager();
+            logger.debug("[MessageResponseManager] Creating a new instance.");
+            new MessageResponseManager();
         }
         return this.instance;
     }
 
     /**
-     * Loads configuration settings from the configuration manager, applying defaults where necessary.
-     * @returns {Object} Configuration settings for message responses.
+     * Loads and returns configuration settings, applying defaults where necessary.
+     * @returns {Object} The configuration settings object.
      */
     loadConfig() {
         const defaults = {
             interrobangBonus: 0.3,
             mentionBonus: 0.4,
-            botResponsePenalty: 0.5,
+            botResponseModifier: -0.5,
             maxDelay: 10000,
             minDelay: 1000,
-            decayRate: -0.5,
+            decayRate: 0.1,
             llmWakewords: ['!help', '!ping', '!echo'],
-            unsolicitedChannelCap: 2
+            unsolicitedChannelCap: 2,
+            decayThreshold: 3000,
+            channelInactivityLimit: 86400000 // 24 hours in milliseconds
         };
-        const config = configurationManager.getConfig('messageResponse') || {};
-        config.llmWakewords = config.llmWakewords ? config.llmWakewords.split(',').map(s => s.trim()) : defaults.llmWakewords;
-        return { ...defaults, ...config };
+        const config = {...defaults, ...configurationManager.getConfig('messageResponseSettings')};
+        logger.debug("[MessageResponseManager] Configuration loaded.");
+        return config;
     }
 
     /**
-     * Decides whether to respond to a given message and schedules the response if appropriate.
-     * @param {DiscordMessage} discordMessage The message to respond to.
+     * Updates the last activity time for a specified channel.
+     * @param {string} channelId - The ID of the channel.
      */
-    async manageResponse(discordMessage) {
-        if (!this.isValidMessage(discordMessage) || discordMessage.isFromBot()) {
-            logger.debug("Ignoring invalid or bot-originated message.");
+    updateLastActivity(channelId) {
+        this.lastActivityTimestamps[channelId] = Date.now();
+        logger.debug(`[MessageResponseManager] Updated last activity time for channel ID: ${channelId}`);
+    }
+
+    /**
+     * Manages the sending of a response if conditions are met, including response content generation and timing.
+     * @param {IMessage} message - The message object to respond to.
+     * @param {string} responseContent - The content of the response.
+     * @param {number} responseDelay - The initial delay before sending the response.
+     */
+    async manageResponse(message, responseContent, responseDelay) {
+        logger.debug("[MessageResponseManager] Attempting to manage response.");
+        if (!responseContent) {
+            logger.debug("[MessageResponseManager] No response content provided.");
             return;
         }
 
-        const decision = await this.shouldReplyToMessage(discordMessage);
-        if (!decision.shouldReply) {
-            logger.debug("No reply will be made based on the evaluation criteria.");
+        if (message.isFromBot()) {
+            logger.debug("[MessageResponseManager] Ignoring bot's own message.");
             return;
         }
 
-        this.timingManager.scheduleMessage(discordMessage.channel.id, decision.responseContent, decision.responseDelay);
+        const channelId = message.getChannelId();
+        this.updateLastActivity(channelId);
+
+        if (!this.shouldSendResponse(message)) {
+            logger.debug("[MessageResponseManager] Conditions not met for sending response.");
+            return;
+        }
+
+        if (this.shouldConsiderUnsolicited(message)) {
+            this.resetUnsolicitedCountIfNeeded(channelId);
+            if (this.unsolicitedChannelCounts[channelId] >= this.config.unsolicitedChannelCap) {
+                logger.info(`[MessageResponseManager] Unsolicited message cap reached for channel ID: ${channelId}.`);
+                return; // Skip sending to avoid spam
+            }
+            this.unsolicitedChannelCounts[channelId] = (this.unsolicitedChannelCounts[channelId] || 0) + 1;
+        }
+
+        const currentTime = Date.now();
+        const lastActivityTime = this.lastActivityTimestamps[channelId] || 0;
+        const timeSinceLastActivity = currentTime - lastActivityTime;
+        const adjustedDelay = this.calculateAdjustedDelay(timeSinceLastActivity, responseDelay);
+
+        if (adjustedDelay > this.config.decayThreshold) {
+            logger.debug(`[MessageResponseManager] Postponing response due to recent activity. New delay: ${adjustedDelay}ms.`);
+            setTimeout(() => this.manageResponse(message, responseContent, this.config.minDelay), adjustedDelay);
+            return;
+        }
+
+        logger.info(`[MessageResponseManager] Scheduling response to message ID: ${message.getMessageId()} with an adjusted delay of ${adjustedDelay}ms.`);
+        await this.timingManager.scheduleMessage(channelId, responseContent, adjustedDelay);
+    }
+
+    /**
+     * Resets the unsolicited message count for a channel if there has been significant inactivity.
+     * @param {string} channelId - The ID of the channel to check.
+     */
+    resetUnsolicitedCountIfNeeded(channelId) {
+        const lastActive = this.lastActivityTimestamps[channelId] || 0;
+        const timeSinceLastActive = Date.now() - lastActive;
+        if (timeSinceLastActive > this.config.channelInactivityLimit) {
+            this.unsolicitedChannelCounts[channelId] = 0; // Reset the count due to inactivity
+            logger.debug(`[MessageResponseManager] Reset unsolicited count for channel ID: ${channelId}`);
+        }
+    }
+
+    /**
+     * Determines if a message should be considered unsolicited based on its content.
+     * @param {IMessage} message - The message to evaluate.
+     * @returns {boolean} True if the message is unsolicited, false otherwise.
+     */
+    shouldConsiderUnsolicited(message) {
+        const isUnsolicited = !message.getText().toLowerCase().startsWith(tuple => tuple[1]);
+        logger.debug(`[MessageResponseManager] Message ID: ${message.getMessageId()} is ${isUnsolicited ? '' : 'not '}unsolicited.`);
+        return isUnsolicited;
     }
 
     /**
@@ -80,78 +168,62 @@ class MessageResponseManager {
      * @returns {Promise<{shouldReply: boolean, responseContent: string, responseDelay: number}>} Decision and details for the response.
      */
     async shouldReplyToMessage(discordMessage) {
-        logger.debug("Evaluating if the bot should reply to the message...");
+        return this.shouldSendResponse(discordMessage);
+    }
 
-        if (this.isEligibleForReply(discordMessage)) {
-            const baseChance = this.calculateBaseChance(discordMessage);
-            const shouldReply = Math.random() < baseChance;
-            const responseContent = shouldReply ? await this.generateResponseContent(discordMessage) : "";
-            const responseDelay = this.calculateDelay(discordMessage);
+    /**
+     * Calculates the adjusted delay for sending a message based on the last activity time.
+     * @param {number} timeSinceLastActivity - The time in milliseconds since the last activity in the channel.
+     * @param {number} initialDelay - The initial proposed delay.
+     * @returns {number} The adjusted delay.
+     */
+    calculateAdjustedDelay(timeSinceLastActivity, initialDelay) {
+        const decayedDelay = initialDelay - (this.config.decayRate * timeSinceLastActivity);
+        const adjustedDelay = Math.max(decayedDelay, this.config.decayThreshold);
+        logger.debug(`[MessageResponseManager] Calculated adjusted delay: ${adjustedDelay}ms for initial delay: ${initialDelay}ms.`);
+        return adjustedDelay;
+    }
 
-            logger.debug(`Decision to reply: ${shouldReply}, with a delay of ${responseDelay}ms.`);
-            return { shouldReply, responseContent, responseDelay };
+    /**
+     * Determines if the bot should send a response based on random probability and the calculated base chance.
+     * @param {IMessage} message - The message to evaluate.
+     * @returns {boolean} True if the bot should send a response, false otherwise.
+     */
+    shouldSendResponse(message) {
+        const probabilityOfResponse = Math.random();
+        const baseChance = this.calculateBaseChance(message);
+        logger.debug(`[MessageResponseManager] Base chance for message ID: ${message.getMessageId()} is ${baseChance}.`);
+        return probabilityOfResponse < baseChance;
+    }
+
+    /**
+     * Calculates the base chance of responding based on message content and interaction modifiers.
+     * @param {IMessage} message - The message to evaluate.
+     * @returns {number} The base chance of responding, as a probability between 0 and 1.
+     */
+    calculateBaseChance(message) {
+        const text = message.getText().toLowerCase();
+        let chance = 0;
+
+        if (/[!?]/.test(text.slice(1))) {
+            chance += this.config.interrobangBonus;
         }
 
-        return { shouldReply: false, responseContent: "", responseDelay: 0 };
-    }
+        if (text.includes(constants.CLIENT_ID)) {
+            chance += this.config.mentionBonus;
+        }
 
-    /**
-     * Generates a response using the configured OpenAI model based on the message's content.
-     * @param {DiscordMessage} discordMessage The message for which to generate a response.
-     * @returns {Promise<string>} The generated response content.
-     */
-    async generateResponseContent(discordMessage) {
-        const prompt = discordMessage.getText();
-        const requestBody = this.openAiManager.buildRequestBody([discordMessage], prompt);
-        const aiResponse = await this.openAiManager.sendRequest(requestBody);
-        return aiResponse.getContent() || "Sorry, I couldn't come up with a response.";
-    }
+        if (message.isFromBot()) {
+            chance -= this.config.botResponseModifier;
+        }
 
-    /**
-     * Validates that the provided object is a DiscordMessage instance.
-     * @param {any} discordMessage The object to validate.
-     * @returns {boolean} True if the object is a valid DiscordMessage, otherwise false.
-     */
-    isValidMessage(discordMessage) {
-        return discordMessage instanceof DiscordMessage;
-    }
+        const startsWithWakeword = this.config.llmWakewords.some(wakeword => text.startsWith(wakeword));
+        if (startsWithWakeword) {
+            chance = 1; // Guarantees a response if a wakeword starts the message
+        }
 
-    /**
-     * Calculates the appropriate delay before sending a response to mimic human interaction times.
-     * @param {DiscordMessage} discordMessage The message to evaluate for delay calculation.
-     * @returns {number} The delay in milliseconds.
-     */
-    calculateDelay(discordMessage) {
-        const hasQuestion = discordMessage.getText().includes('?');
-        const delay = hasQuestion ? 500 : 2000;
-        logger.debug(`Response delay calculated based on message content: ${delay}ms.`);
-        return delay;
-    }
-
-    /**
-     * Checks if the message content or context triggers a response from the bot.
-     * @param {DiscordMessage} discordMessage The message to check.
-     * @returns {boolean} True if the message triggers a response, otherwise false.
-     */
-    isEligibleForReply(discordMessage) {
-        const messageText = discordMessage.getText().toLowerCase();
-        const isWakewordPresent = this.config.llmWakewords.some(word => messageText.startsWith(word));
-        const mentionsUsers = discordMessage.mentionsUsers();
-        logger.debug(`Checking message eligibility: Wakeword present: ${isWakewordPresent}, Mentions users: ${mentionsUsers}`);
-        return isWakewordPresent || mentionsUsers;
-    }
-
-    /**
-     * Calculates the base chance that the bot will decide to reply to a message.
-     * @param {DiscordMessage} discordMessage The message to evaluate.
-     * @returns {number} The base chance of replying, as a probability between 0 and 1.
-     */
-    calculateBaseChance(discordMessage) {
-        const text = discordMessage.getText();
-        let chance = this.config.interrobangBonus * (text.includes('?') ? 1 : 0) +
-                     this.config.mentionBonus * (discordMessage.mentionsUsers() ? 1 : 0);
-        logger.debug(`Base chance of replying calculated: ${chance}`);
-        return Math.min(chance, 1);  // Ensuring the chance does not exceed 100%
+        logger.debug(`[MessageResponseManager] Final chance for message ID: ${message.getMessageId()} is ${chance}.`);
+        return Math.min(chance, 1); // Ensures the probability does not exceed 1
     }
 }
 
