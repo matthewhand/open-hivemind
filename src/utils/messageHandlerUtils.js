@@ -5,86 +5,34 @@ const commands = require('../commands/inline');
 
 const { listAllAliases } = require('./aliasUtils');
 const constants = require('../config/constants');
-
-
 /**
- * Sends a message to a specified Discord channel. This function delegates the responsibility
- * of message handling, including any necessary splitting, to the DiscordManager.
- * 
- * @param {string} channelId - The ID of the Discord channel where the message will be sent.
- * @param {string|number} messageContent - The content of the message to be sent.
- */
-// async function sendResponse(channelId, messageContent) {
-//     logger.debug(`[messageHandlerUtils] Preparing to send response. Channel ID: ${channelId}, Content: ${messageContent}`);
-
-//     if (typeof channelId !== 'string') {
-//         logger.error('[messageHandlerUtils] Invalid channelId type. Expected string.');
-//         throw new TypeError('channelId must be a string');
-//     }
-
-//     if (typeof messageContent !== 'string' && typeof messageContent !== 'number') {
-//         logger.error('[messageHandlerUtils] Invalid messageContent type. Expected string or number.');
-//         throw new TypeError('messageContent must be a string or a number');
-//     }
-
-//     // Convert number to string if necessary
-//     messageContent = messageContent.toString();
-//     logger.debug(`[messageHandlerUtils] Sending message. Channel ID: ${channelId}, Content: ${messageContent}`);
-
-//     try {
-//         // Directly use DiscordManager's sendResponse method to send the message
-//         await DiscordManager.getInstance().sendResponse(channelId, messageContent);
-//         logger.debug(`[messageHandlerUtils] Message successfully sent to channel ID: ${channelId}. Content: ${messageContent}`);
-//     } catch (error) {
-//         // Log any errors encountered during the message sending process
-//         logger.error(`[messageHandlerUtils] Failed to send message to channel ID: ${channelId}: ${error}`);
-//     }
-// }
-
-/**
- * Sends a response message to a specified channel with artificial delays to simulate human-like interaction and to avoid spamming the channel.
- * This function also handles message splitting if the message exceeds a certain length or contains natural breakpoints such as periods or newlines.
+ * Sends a response message to a specified channel with artificial delays to simulate human-like interaction.
+ * Ensures continuous sending of parts of a long message with a consistent small delay.
+ * Introduces a larger delay if the channel had recent activity, simulating "reading" time.
  *
  * @param {string} messageContent - The content of the message to be sent.
  * @param {string} channelId - The Discord channel ID where the message will be sent.
  * @param {number} startTime - The timestamp when the message processing started, used to calculate total processing time.
  */
 async function sendResponse(messageContent, channelId, startTime) {
+    const maxPartLength = 2000; // Discord's max message length limit
     logger.debug(`[sendResponse] Starting to send response to channel ${channelId}. Initial content length: ${messageContent.length}`);
-    
-    // Calculate the initial delay based on recent channel activity to prevent spamming.
-    let delay = getInitialDelay(channelId);
-    logger.debug(`[sendResponse] Initial calculated delay: ${delay}ms for channel ${channelId}.`);
 
-    while (delay > 0) {
-        logger.debug(`[sendResponse] Delaying message send by ${delay}ms to simulate human-like response.`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        // Recalculate delay with a decay factor to ensure the message is sent even during active channel periods.
-        delay = getNextDelay(delay, channelId, 0.9); // Less aggressive decay for initial responses
-        logger.debug(`[sendResponse] New delay after decay calculation: ${delay}ms.`);
-    }
+    if (messageContent.length > maxPartLength) {
+        const parts = splitMessageContent(messageContent, maxPartLength);
+        const initialDelay = getInitialDelay(channelId); // Calculate initial delay based on recent channel activity
+        await new Promise(resolve => setTimeout(resolve, initialDelay));
 
-    // Split message if needed and send each part with an appropriate delay.
-    const splitChance = 0.5; // Probability to split the message at a natural breakpoint
-    if (Math.random() < splitChance) {
-        logger.debug(`[sendResponse] Chance to split message met. Evaluating split points.`);
-        const splitIndex = Math.max(messageContent.indexOf('! ') + 1, messageContent.indexOf('? ') + 1, messageContent.indexOf('. ') + 1, messageContent.indexOf('\n') + 1);
-        if (splitIndex > 0) {
-            const firstPart = messageContent.substring(0, splitIndex);
-            logger.debug(`[sendResponse] Splitting message at index ${splitIndex}. First part length: ${firstPart.length}`);
-            await sendMessagePart(firstPart, startTime, channelId);
-            const remainingMessage = messageContent.substring(splitIndex).trim();
-            if (remainingMessage) {
-                logger.debug(`[sendResponse] Sending remaining part of the message after split. Remaining length: ${remainingMessage.length}`);
-                await sendResponse(remainingMessage, channelId, Date.now()); // Recursively send the remaining part
+        for (let i = 0; i < parts.length; i++) {
+            await sendMessagePart(parts[i], channelId);
+            if (i < parts.length - 1) { // Apply inter-part delay for all but the last part
+                await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
             }
-        } else {
-            logger.debug(`[sendResponse] No valid split point found. Sending message as a single part.`);
-            await sendMessagePart(messageContent, startTime, channelId);
         }
     } else {
-        logger.debug(`[sendResponse] Message will not be split. Sending as a single part.`);
-        await sendMessagePart(messageContent, startTime, channelId);
+        const initialDelay = getInitialDelay(channelId);
+        await new Promise(resolve => setTimeout(resolve, initialDelay));
+        await sendMessagePart(messageContent, channelId);
     }
 
     const processingTime = Date.now() - startTime;
@@ -92,35 +40,54 @@ async function sendResponse(messageContent, channelId, startTime) {
 }
 
 /**
- * Sends a part of the message after applying the final delay.
+ * Splits message content into parts based on natural breakpoints or the maximum message length allowable by Discord.
  *
- * @param {string} part - The part of the message to send.
- * @param {number} startTime - The start time of the message processing.
- * @param {string} channelId - The channel ID to send the message to.
+ * @param {string} messageContent - The content to split into parts.
+ * @param {number} maxPartLength - Maximum length of each message part.
+ * @returns {string[]} An array of message parts.
  */
-async function sendMessagePart(part, startTime, channelId) {
-    let finalDelay = getNextDelay(0, channelId, 0.5); // More aggressive decay for subsequent parts
-    logger.debug(`[sendMessagePart] Final delay before sending message part: ${finalDelay}ms for channel ${channelId}.`);
-    await new Promise(resolve => setTimeout(resolve, finalDelay));
-    // Assume sendMessage is a function that sends a message to the channel.
-    await DiscordManager.getInstance().sendMessage(channelId, part);
-    logger.debug(`[sendMessagePart] Message part sent to channel ${channelId}. Content length: ${part.length}.`);
+function splitMessageContent(messageContent, maxPartLength) {
+    let parts = [];
+    let currentPart = '';
+    messageContent.split(/(\n|\. |\? |! )/).forEach(segment => {
+        if (segment === '') return;
+        if (currentPart.length + segment.length > maxPartLength) {
+            parts.push(currentPart);
+            currentPart = '';
+        }
+        currentPart += segment;
+    });
+    if (currentPart) parts.push(currentPart);
+    return parts.filter(part => part.length > 0);
 }
 
 /**
- * Sends a part of the message considering typing delay and ensuring the simulation of typing speed.
+ * Sends a single part of a message to the specified channel.
  *
  * @param {string} part - The part of the message to send.
- * @param {number} startTime - The start time of the message sending process to calculate delays.
- * @param {string} channelId - The ID of the channel where the message is being sent.
+ * @param {string} channelId - The channel ID to send the message to.
  */
-async function sendMessagePart(part, startTime, channelId) {
-    const processingTime = Date.now() - startTime;
-    // Calculate delay to simulate typing speed (approximately 300ms per character)
-    const delay = Math.max((part.length / 3.33) * 1000 - processingTime, 5000 - processingTime, 0);
-    await new Promise(resolve => setTimeout(resolve, delay));
+async function sendMessagePart(part, channelId) {
+    logger.debug(`[sendMessagePart] Sending message part to channel ${channelId}. Content length: ${part.length}.`);
     await DiscordManager.getInstance().sendMessage(channelId, part);
-    logger.info(`Message part sent with delay ${delay}ms: "${part}"`);
+    logger.debug(`[sendMessagePart] Message part sent to channel ${channelId}.`);
+}
+
+/**
+ * Calculates the initial delay for sending a message based on the last message timestamp in the channel.
+ * This delay simulates the bot "reading" new messages if there have been recent posts.
+ *
+ * @param {string} channelId - The ID of the channel where the message will be sent.
+ * @returns {number} The initial delay in milliseconds before the message can be sent.
+ */
+function getInitialDelay(channelId) {
+    const lastMessageTime = DiscordManager.getInstance().getLastMessageTimestamp(channelId);
+    const timeSinceLastMessage = Date.now() - lastMessageTime;
+    const decayTime = 5000; // Time after which the delay starts to decay
+    if (timeSinceLastMessage < decayTime) {
+        return Math.max(3000, (decayTime - timeSinceLastMessage)); // At least a 3-second delay
+    }
+    return 0; // No delay if the last message was older than the decay time
 }
 
 // Processes commands detected in messages
@@ -243,23 +210,6 @@ function generateFollowUpSuggestions(messageContent) {
  */
 function shouldSummarize(llmResponse) {
     return constants.LLM_ALWAYS_SUMMARISE || (llmResponse.finish_reason === "length") || (llmResponse.getCompletionTokens() >= constants.LLM_RESPONSE_MAX_TOKENS);
-}
-
-/**
- * Calculates the initial delay for sending a message based on the last message timestamp in the channel.
- * This initial delay helps in preventing the bot from spamming the channel especially if someone else has posted recently.
- *
- * @param {string} channelId - The ID of the channel where the message will be sent.
- * @returns {number} The initial delay in milliseconds before the message can be sent.
- */
-function getInitialDelay(channelId) {
-    const lastPostTime = DiscordManager.getInstance().getLastMessageTimestamp(channelId);
-    const timeSinceLastPost = Date.now() - lastPostTime;
-    // If the last post in the channel was less than 10 seconds ago, set an initial delay of 30 seconds.
-    if (timeSinceLastPost < 10000) { // Less than 10 seconds
-        return 30000; // Start with a 30-second delay
-    }
-    return 0; // No delay if the last post was longer ago
 }
 
 /**
