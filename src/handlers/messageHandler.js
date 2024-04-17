@@ -33,13 +33,9 @@ async function messageHandler(originalMsg, historyMessages = []) {
         const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, channelId, historyMessages);
         logger.debug(`[messageHandler] Request body prepared: ${JSON.stringify(requestBody, null, 2)}`);
 
-        // Ensure requestBody is properly structured
-        // if (typeof requestBody !== 'object' || !requestBody.prompt || !requestBody.model) {
-        //     logger.error('[messageHandler] Request body is not correctly formatted.');
-        //     return;
-        // }
+        const llmResponse = await OpenAiManager.getInstance().sendRequest(requestBody);
+        let responseContent = llmResponse.getContent();
 
-        let responseContent = await OpenAiManager.getInstance().sendRequest(requestBody).getContent();
         // Checking if responseContent is a string before trying to log part of it
         if (typeof responseContent === 'string') {
             logger.debug(`[messageHandler] Response from OpenAI received: ${responseContent.substring(0, 50)}...`);
@@ -47,8 +43,8 @@ async function messageHandler(originalMsg, historyMessages = []) {
             logger.debug(`[messageHandler] Response from OpenAI received (non-string): ${JSON.stringify(responseContent, null, 2)}`);
         }
         
-        if (!responseContent) {
-            logger.error('[messageHandler] OpenAI API returned no content.');
+        if (!responseContent || typeof responseContent !== 'string') {
+            logger.error('[messageHandler] OpenAI API returned no content or content is not a string.');
             return;
         }
 
