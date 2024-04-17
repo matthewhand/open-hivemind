@@ -116,8 +116,14 @@ class OpenAiManager {
             }
             
             const firstChoice = response.choices[0];
-            // Create and return an instance of LLMResponse
-            return new LLMResponse(firstChoice.message?.content || "", firstChoice.finish_reason || "unknown", response.usage.completion_tokens);
+            const messageContent = firstChoice.text || firstChoice.message?.content || "";
+            
+            if (!messageContent) {
+                logger.error('No valid message content was returned in the API response.');
+                return new LLMResponse("", "error");
+            }
+
+            return new LLMResponse(messageContent, firstChoice.finish_reason || "unknown", response.usage.completion_tokens);
         } catch (error) {
             handleError(error);
             return new LLMResponse("", "error"); // Ensure a consistent return type
