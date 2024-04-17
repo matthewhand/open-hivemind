@@ -39,15 +39,14 @@ async function messageHandler(originalMsg, historyMessages = []) {
         //     return;
         // }
 
-        let responseContent = await OpenAiManager.getInstance().sendRequest(requestBody);
-        logger.debug(`[messageHandler] Response from OpenAI received: ${responseContent.substring(0, 50)}...`);
-
-        // Type checking and error handling for responseContent
-        if (!responseContent || typeof responseContent !== 'string') {
-            logger.error('[messageHandler] OpenAI API returned no content or content is not a string.');
-            return;
+        let responseContent = await OpenAiManager.getInstance().sendRequest(requestBody).getContent();
+        // Checking if responseContent is a string before trying to log part of it
+        if (typeof responseContent === 'string') {
+            logger.debug(`[messageHandler] Response from OpenAI received: ${responseContent.substring(0, 50)}...`);
+        } else {
+            logger.debug(`[messageHandler] Response from OpenAI received (non-string): ${JSON.stringify(responseContent, null, 2)}`);
         }
-
+        
         if (!responseContent) {
             logger.error('[messageHandler] OpenAI API returned no content.');
             return;
