@@ -68,6 +68,7 @@ class MessageResponseManager {
             llmWakewords: ['!help', '!ping', '!echo'],
             unsolicitedChannelCap: 3,
             decayThreshold: 3000,
+            recentActivityDecayRate: 0.5, // The rate at which the chance decays with recent activity
             channelInactivityLimit: 600000 // 10 minutes in milliseconds
         };
         return {...defaults, ...configurationManager.getConfig('messageResponseSettings')};
@@ -142,12 +143,16 @@ class MessageResponseManager {
         }
 
         if (message.isFromBot()) {
-            chance -= this.config.botResponseModifier;
+            chance += this.config.botResponseModifier;
         }
 
         if (this.config.llmWakewords.some(wakeword => text.startsWith(wakeword))) {
             return 1; // Guaranteed response if the message starts with a wakeword
         }
+
+        const timeSinceLastMessage = Date.now() - (this.lastActivityTimestamps[message.getChannelId()] || 0);
+        const activityModifier = Math.exp(-this.config.recentActivityDecayRate * timeSinceLastMessage / this.config.unsolicitedResponseCooldown);
+        chance *= activityModifier;
 
         return Math.min(chance, 1); // Probability is capped at 1
     }
@@ -179,10 +184,10 @@ class MessageResponseManager {
      * @returns {boolean} True if the message is unsolicited, false otherwise.
      */
     async shouldReplyToMessage(message) {
-        const isUnsolicited = !message.getText().toLowerCase().startsWith(tuple => tuple[1]);
-        logger.debug(`[MessageResponseManager] Message ID: ${message.getMessageId()} is ${isUnsolicited ? '' : 'not '}unsolicited.`);
-        return isUnsolicited;
-    }
+        const probabilityOfResponse = Math.random();
+        const baseChance = this.calculateBaseChance(message);
+        logger.debug(`[MessageResponseManager] Base chance for message ID: ${message.getMessageId()} is ${baseChance}.`);
+        return probabilityOfResponse < baseChance;    }
 
 }
 
