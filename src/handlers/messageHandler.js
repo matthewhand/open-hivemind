@@ -48,8 +48,8 @@ async function messageHandler(originalMsg, historyMessages = []) {
             return;
         }
 
-        if (responseContent.length > 1000) {
-            logger.info("[messageHandler] Message exceeds 1000 characters. Summarizing.");
+        if (responseContent.length > 100) {
+            logger.info("[messageHandler] Message exceeds 100 characters. Summarizing.");
             responseContent = await summarizeMessage(responseContent);
         }
 
