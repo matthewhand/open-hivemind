@@ -63,9 +63,9 @@ class MessageResponseManager {
      */
     loadConfig() {
         const defaults = {
-            interrobangBonus: 0.3,
-            mentionBonus: 0.4,
-            botResponseModifier: -0.5,
+            interrobangBonus: 0.2,
+            mentionBonus: 0.6,
+            botResponseModifier: -0.8,
             maxDelay: 10000,
             minDelay: 1000,
             decayRate: 0.1,
@@ -204,6 +204,11 @@ class MessageResponseManager {
     calculateBaseChance(message) {
         const text = message.getText().toLowerCase();
         let chance = 0;
+        
+        const authorId = message.getAuthorId();
+        if (authorId === constants.CLIENT_ID) {
+            return 0; // Exits early if the bot is the author
+        }
 
         if (/[!?]/.test(text.slice(1))) {
             chance += this.config.interrobangBonus;
@@ -219,11 +224,7 @@ class MessageResponseManager {
 
         const startsWithWakeword = this.config.llmWakewords.some(wakeword => text.startsWith(wakeword));
         if (startsWithWakeword) {
-            chance = 1; // Guarantees a response if a wakeword starts the message
-        }
-
-        if (message.getAuthorId() === constants.CLIENT_ID) {
-            chance = 0;
+            return 1;
         }
 
         logger.debug(`[MessageResponseManager] Final chance for message ID: ${message.getMessageId()} is ${chance}.`);
