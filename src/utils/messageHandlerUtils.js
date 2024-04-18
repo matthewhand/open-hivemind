@@ -24,10 +24,10 @@ async function sendResponse(messageContent, channelId, startTime) {
         await new Promise(resolve => setTimeout(resolve, initialDelay));
 
         for (let i = 0; i < parts.length; i++) {
-            await sendMessagePart(parts[i], channelId);
-            if (i < parts.length - 1) { // Apply inter-part delay for all but the last part
+            // if (i < parts.length - 1) { // Apply inter-part delay for all but the last part
                 await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
-            }
+            // }
+            await sendMessagePart(parts[i], channelId);
         }
     } else {
         const initialDelay = getInitialDelay(channelId);
