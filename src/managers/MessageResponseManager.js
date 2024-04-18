@@ -222,6 +222,10 @@ class MessageResponseManager {
             chance = 1; // Guarantees a response if a wakeword starts the message
         }
 
+        if (message.getAuthorId() === constants.CLIENT_ID) {
+            chance = 0;
+        }
+
         logger.debug(`[MessageResponseManager] Final chance for message ID: ${message.getMessageId()} is ${chance}.`);
         return Math.min(chance, 1); // Ensures the probability does not exceed 1
     }
