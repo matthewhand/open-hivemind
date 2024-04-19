@@ -70,20 +70,20 @@ class MessageResponseManager {
      */
     shouldReplyToMessage(message, timeSinceLastActivity = 5000) {
         const channelId = message.getChannelId();
-        logger.debug(`Evaluating reply possibility for message from channel ${channelId}.`);
+        logger.debug(`[MessageResponseManager] Evaluating reply possibility for message from channel ${channelId}.`);
 
         if (!this.isEligibleForResponse(message)) {
-            logger.debug("Message is not eligible for a response.");
+            logger.debug("[MessageResponseManager] Message is not eligible for a response.");
             return false;
         }
 
         if (!this.isWithinUnsolicitedLimit(channelId)) {
-            logger.debug("Channel has exceeded the unsolicited message limit.");
+            logger.debug("[MessageResponseManager] Channel has exceeded the unsolicited message limit.");
             return false;
         }
 
         const shouldSend = this.shouldSendResponse(message, timeSinceLastActivity);
-        logger.debug(`Decision to send response: ${shouldSend}`);
+        logger.debug(`[MessageResponseManager] Decision to send response: ${shouldSend}`);
         return shouldSend;
     }
 
@@ -93,7 +93,7 @@ class MessageResponseManager {
      * @returns {boolean} True if the message is eligible, false otherwise.
      */
     isEligibleForResponse(message) {
-        const isEligible = message.getContent() && !message.isFromBot();
+        const isEligible = message.getText() && !message.isFromBot();
         logger.debug(`Message eligibility for response: ${isEligible}`);
         return isEligible;
     }
