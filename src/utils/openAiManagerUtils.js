@@ -16,14 +16,12 @@ const LLMResponse = require('../interfaces/LLMResponse');
  * @param {number} [maxTokens=constants.LLM_RESPONSE_MAX_TOKENS] - The maximum number of tokens allowed for the OpenAI response.
  * @returns {Promise<LLMResponse>} - An LLMResponse object containing the summarized text, finish reason, and the number of tokens used.
  */
-async function summarize(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
+async function summarize(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
     logger.debug('Starting the text summarization process.');
 
     let messages = [
         { role: 'system', content: systemMessageContent },
-        { role: 'user', content: "Please make it shorter" },
-        { role: 'assistant', content: userMessage },
-        { role: 'user', content: "Add an emoji or two." }
+        { role: 'user', content: userMessage }
     ];
 
     const requestBody = {

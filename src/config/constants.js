@@ -14,6 +14,7 @@ module.exports = {
     LLM_PROVIDER: process.env.LLM_PROVIDER || 'OpenAI',
     LLM_MODEL: process.env.LLM_MODEL || 'gpt-3.5-turbo',
     LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Contribute to the provided message history.',
+    LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Repeat User message succinctly, without changing tone or perspective.',
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.5'),
     LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '150', 10),
 
