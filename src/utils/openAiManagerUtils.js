@@ -5,17 +5,20 @@ const LLMResponse = require('../interfaces/LLMResponse');
 const constants = require('../config/constants');
 
 /**
- * Attempts to retrieve the message content from the first choice of the response.
- * @param {Object} firstChoice - The first choice object from the OpenAI API response.
- * @returns {string|null} The message content if available, null otherwise.
+ * Extracts the message content based on the response structure which varies between services.
+ * This function ensures to check the structure and data type before returning the content.
+ * It handles both possible structures of the response: with 'message.content' or 'text'.
+ *
+ * @param {Object} choice - The first choice object from the OpenAI API response.
+ * @returns {string} The extracted message content if available; an empty string otherwise.
  */
-function getMessageContent(firstChoice) {
-    if (firstChoice.message && typeof firstChoice.message.content === 'string') {
-        return firstChoice.message.content;
-    } else if (typeof firstChoice.text === 'string') {
-        return firstChoice.text;
+function extractContent(choice) {
+    if (choice.message && typeof choice.message.content === 'string') {
+        return choice.message.content;
+    } else if (typeof choice.text === 'string') {
+        return choice.text;
     } else {
-        return null;
+        return "";  // Return an empty string if no valid content is found.
     }
 }
 
@@ -35,7 +38,7 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
         { role: 'system', content: systemMessageContent },
         { role: 'user', content: "..." },
         { role: 'assistant', content: userMessage },
-        { role: 'user', content: "please summarise" }
+        { role: 'user', content: "that cut off, please repeat only shorter." }
     ];
 
     const requestBody = {
@@ -45,32 +48,30 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
         max_tokens: parseInt(maxTokens, 10)
     };
 
-    logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
+    logger.debug(`Sending summarization request with requestBody: ${JSON.stringify(requestBody, null, 2)}`);
     try {
         const response = await openai.completions.create(requestBody);
-        logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
+        logger.debug(`Received raw API response: ${JSON.stringify(response, null, 2)}`);
 
         if (!response.choices || response.choices.length === 0) {
-            logger.error('No choices were returned in the API response.', { requestBody });
+            logger.error('No choices were returned in the API response.', { response });
             return new LLMResponse("", "error", 0);
         }
 
         const firstChoice = response.choices[0];
-        const summary = getMessageContent(firstChoice);
+        const summary = extractContent(firstChoice);
 
         if (!summary) {
-            logger.error('Error: Missing text in the first choice.', { firstChoice });
+            logger.error('No valid content was found in the first choice of the API response.', { firstChoice });
             return new LLMResponse("", "error", 0);
         }
 
-        logger.info('Summarization processed successfully.');
-        logger.debug(`Summarized text: ${summary}`);
-
-        return new LLMResponse(summary, firstChoice.finish_reason, response.usage.completion_tokens);
+        logger.info('Summarization processed successfully.', { summary });
+        return new LLMResponse(summary, firstChoice.finish_reason, response.usage.total_tokens);
     } catch (error) {
         handleError(error);
-        logger.error(`Error in text summarization: ${error.message}`, { error, requestBody });
-        return new LLMResponse("", "error", 0); // Error handling, ensuring a consistent return type
+        logger.error(`An error occurred during the text summarization process: ${error.message}`, { requestBody, error });
+        return new LLMResponse("", "error", 0);
     }
 }
 
