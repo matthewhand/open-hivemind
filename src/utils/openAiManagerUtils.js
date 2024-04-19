@@ -36,9 +36,7 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
 
     let messages = [
         { role: 'system', content: systemMessageContent },
-        { role: 'user', content: "..." },
-        { role: 'assistant', content: userMessage },
-        { role: 'user', content: "that cut off, please repeat only shorter." }
+        { role: 'user', content: `Provide a concise summary of the following text without any additional text or introductions: ${userMessage}`}
     ];
 
     const requestBody = {
