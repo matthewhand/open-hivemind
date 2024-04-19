@@ -3,6 +3,7 @@ const logger = require('../utils/logger');
 const configurationManager = require('../config/configurationManager');
 const discordUtils = require('../utils/discordUtils');
 const DiscordMessage = require('../models/DiscordMessage');
+const constants = require('../config/constants'); // Assuming this contains CLIENT_ID
 
 /**
  * Manages interactions with the Discord API, facilitating message handling, channel operations, and event responses.
