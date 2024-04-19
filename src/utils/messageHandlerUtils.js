@@ -44,53 +44,45 @@ async function sendResponse(messageContent, channelId, startTime) {
     logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms.`);
 }
 
-
 /**
  * Splits message content into parts based on natural breakpoints or the maximum message length allowable by Discord.
- * This version improves readability and efficiency by directly constructing parts without unnecessary concatenation.
+ * This version improves readability and prevents end-of-line punctuation from being isolated at the beginning of new parts.
  *
  * @param {string} messageContent - The content to split into parts.
  * @param {number} maxPartLength - Maximum length of each message part.
- * @returns {string[]} An array of message parts.
+ * @returns {string[]} An array of message parts that respect linguistic breakpoints and formatting.
  */
 function splitMessageContent(messageContent, maxPartLength) {
     const parts = [];
-    const totalLength = messageContent.length;
     let currentPart = '';
-    let partLength = Math.ceil(totalLength / 3);  // Calculate optimal part length to aim for three parts
 
-    // Adjust partLength if calculated optimal length exceeds maxPartLength
-    partLength = Math.min(partLength, maxPartLength);
+    // Split the message by natural linguistic breakpoints (new lines, periods followed by spaces, etc.)
+    const segments = messageContent.split(/(?<=[.?!])\s+/);  // Use positive lookbehind to keep punctuation at the end of the split parts
 
-    // Split the message by natural linguistic breakpoints (new lines, periods, question marks, exclamation marks)
-    const segments = messageContent.split(/(\n|\. |\? |! )/);
-
-    // Concatenate segments into parts, trying not to exceed the calculated partLength
-    segments.forEach(segment => {
-        if (segment === '') return; // Skip empty segments which can occur with split regex capturing groups
-
-        if (currentPart.length + segment.length > partLength && parts.length < 2) {
-            // Ensure we only push if under the limit of 3 parts
-            parts.push(currentPart);
-            currentPart = '';
+    for (const segment of segments) {
+        if (currentPart.length + segment.length > maxPartLength) {
+            if (currentPart !== '') {  // Avoid pushing empty strings if the segment itself exceeds maxPartLength
+                parts.push(currentPart);
+                currentPart = '';
+            }
+            // If the segment is too long, split it further
+            if (segment.length > maxPartLength) {
+                const subParts = segment.match(new RegExp('.{1,' + maxPartLength + '}', 'g')) || [];
+                parts.push(...subParts.slice(0, -1));  // Push all but the last sub-part
+                currentPart = subParts[subParts.length - 1] || '';  // Start new part with the last sub-part
+            } else {
+                currentPart = segment;
+            }
+        } else {
+            currentPart += (currentPart.length > 0 ? ' ' : '') + segment;  // Prepend space if currentPart is not empty
         }
-
-        currentPart += segment;
-
-        // If reaching the capacity of parts (3 parts), push all remaining content in the current part
-        if (parts.length == 2 && currentPart.length + segment.length > partLength) {
-            parts.push(currentPart);
-            currentPart = messageContent.substring(parts.join('').length);  // All remaining content goes to the last part
-            return;
-        }
-    });
-
-    // Push the last part if there's any leftover content not yet added
-    if (currentPart) {
-        parts.push(currentPart);
     }
 
-    return parts.filter(part => part.length > 0);  // Filter out any empty parts just in case
+    if (currentPart) {
+        parts.push(currentPart);  // Push the last part
+    }
+
+    return parts.filter(part => part.trim().length > 0);  // Ensure no empty parts are returned
 }
 
 
