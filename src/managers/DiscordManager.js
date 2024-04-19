@@ -74,6 +74,12 @@ class DiscordManager {
                     return; // Exit if message is incomplete to prevent errors downstream
                 }
 
+                // Prevent the bot from responding to its own messages
+                if (processedMessage.getAuthorId() === constants.CLIENT_ID) {
+                    logger.debug(`[DiscordManager] Skipping response to own message ID: ${processedMessage.getMessageId()}`);
+                    return;
+                }
+                
                 logger.debug(`[DiscordManager] Processed message ID: ${processedMessage.getMessageId()}`);
 
                 // Directly utilize fetchChannel and fetchMessages from discordUtils to get channel context
