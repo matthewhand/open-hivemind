@@ -126,6 +126,10 @@ class DiscordManager {
         await discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
+    async sendMessage(channelId, messageText) {
+        this.sendResponse(channelId, messageText);
+    }
+
     /**
      * Retrieves the singleton instance of DiscordManager, creating it if it does not already exist.
      * @returns {DiscordManager} The singleton instance.
