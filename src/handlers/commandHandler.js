@@ -24,7 +24,7 @@ async function processCommand(message) {
         // Resolve command from the content
         const resolvedCommand = parseCommand(commandContent);
         if (!resolvedCommand) {
-            message.reply('No command found in the message.');
+            logger.debug('No command found in the message.');
             return;
         }
 
@@ -43,7 +43,6 @@ async function processCommand(message) {
             await command.execute(message, args, action);  // Execute the command function
         } else {
             logger.warn(`Unknown command: ${commandName}`);
-            message.reply(`Unknown command: '${commandName}'. Try '!help' for a list of commands.`);
         }
     } catch (error) {
         logger.error(`Error while handling command: ${message.getText()}`, error);
