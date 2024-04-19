@@ -10,7 +10,13 @@ const { summarize } = require('../utils/openAiManagerUtils');
 class OpenAiManager {
     static instance;
 
-    static emojis = ['😊', '👍', '😉', '🎉', '💬', '🤖', '👀', '📚', '🚀', '✨'];
+    static emojis = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+        '🙂', '🙃', '😉', '😌', '😍', '😘', '😗', '😙', '😚', '😋',
+        '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳',
+        '🤖', // Robot emoji
+        '👀'  // Eyes-looking emoji
+    ];
 
     constructor() {
         if (OpenAiManager.instance) {

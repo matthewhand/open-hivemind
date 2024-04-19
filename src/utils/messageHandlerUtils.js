@@ -5,6 +5,7 @@ const commands = require('../commands/inline');
 
 const { listAllAliases } = require('./aliasUtils');
 const constants = require('../config/constants');
+
 /**
  * Sends a response message to a specified channel with artificial delays to simulate human-like interaction.
  * Ensures continuous sending of parts of a long message with a consistent small delay.
