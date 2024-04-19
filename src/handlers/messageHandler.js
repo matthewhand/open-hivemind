@@ -1,6 +1,5 @@
 // Import necessary modules and managers
-const commandHandler = require('../handlers/commandHandler');
-const DiscordManager = require('../managers/DiscordManager');
+const { processCommand } = require('../handlers/commandHandler');
 const LLMInterface = require('../interfaces/LLMInterface');
 const MessageResponseManager = require('../managers/MessageResponseManager');
 const constants = require('../config/constants');
@@ -31,7 +30,7 @@ async function messageHandler(originalMsg, historyMessages = []) {
     }
 
     // Use commandHandler to process potential commands
-    if (await commandHandler.processCommand(originalMsg)) {
+    if (await processCommand(originalMsg)) {
         logger.debug("[messageHandler] Processed as command.");
         return;  // If processed as command, no further action needed
     }

@@ -5,13 +5,13 @@ const logger = require('../utils/logger');
 const IMessage = require('../interfaces/IMessage');  // Ensure IMessage is correctly imported
 
 /**
- * Handles commands parsed from messages that conform to the IMessage interface.
- * This handler validates the command structure, checks for aliases, and executes the command if valid.
- * 
+ * Processes commands parsed from messages that conform to the IMessage interface.
+ * Validates the command structure, checks for aliases, and executes the command if valid.
+ *
  * @param {IMessage} message - The message object implementing the IMessage interface.
  * @returns {Promise<void>} - A promise that resolves when the command has been processed.
  */
-async function commandHandler(message) {
+async function processCommand(message) {
     try {
         // Validate that the message is an instance of IMessage
         if (!(message instanceof IMessage)) {
@@ -51,4 +51,4 @@ async function commandHandler(message) {
     }
 }
 
-module.exports = { commandHandler };
+module.exports = { processCommand };  // Exporting as an object with processCommand method
