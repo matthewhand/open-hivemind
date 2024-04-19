@@ -15,8 +15,8 @@ module.exports = {
     LLM_MODEL: process.env.LLM_MODEL || 'gpt-3.5-turbo',
     LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Contribute to the provided message history.',
     LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise your previous response when instructed.',
-    LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.5'),
-    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '150', 10),
+    LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.7'),
+    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '69', 10),
 
     // Advanced LLM parameters
     LLM_MAX_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
