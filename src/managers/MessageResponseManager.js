@@ -68,7 +68,7 @@ class MessageResponseManager {
      * @param {number} [timeSinceLastActivity=5000] - The time in milliseconds since the last activity in the channel.
      * @returns {boolean} True if the bot should respond, false otherwise.
      */
-    shouldReplyToMessage(message, timeSinceLastActivity = 5000) {
+    shouldReplyToMessage(message, timeSinceLastActivity = 10000) {
         const channelId = message.getChannelId();
         logger.debug(`[MessageResponseManager] Evaluating reply possibility for message from channel ${channelId}.`);
 
