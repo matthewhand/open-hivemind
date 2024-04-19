@@ -21,18 +21,21 @@ function getMessageContent(firstChoice) {
 
 /**
  * Processes text summarization using the OpenAI API based on provided parameters.
+ * Incorporates a structured message format to interact with the AI model.
  * @param {Object} openai - The OpenAI service client.
  * @param {string} userMessage - User's input message to summarize.
  * @param {string} [systemMessageContent=constants.LLM_SUMMARY_PROMPT] - System's prompt message.
  * @param {number} [maxTokens=constants.LLM_RESPONSE_MAX_TOKENS] - Maximum response tokens.
- * @returns {Promise<LLMResponse>} - The result of the summarization attempt.
+ * @returns {Promise<LLMResponse>} - The result of the summarization attempt, encapsulated in an LLMResponse object.
  */
 async function summarize(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
     logger.debug('Starting the text summarization process.');
 
     let messages = [
         { role: 'system', content: systemMessageContent },
-        { role: 'user', content: userMessage }
+        { role: 'user', content: "..." },
+        { role: 'assistant', content: userMessage },
+        { role: 'user', content: "please summarise" }
     ];
 
     const requestBody = {
@@ -42,13 +45,13 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
         max_tokens: parseInt(maxTokens, 10)
     };
 
-    logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 3)}`);
+    logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 2)}`);
     try {
         const response = await openai.completions.create(requestBody);
         logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
 
         if (!response.choices || response.choices.length === 0) {
-            logger.error('No choices were returned in the API response.');
+            logger.error('No choices were returned in the API response.', { requestBody });
             return new LLMResponse("", "error", 0);
         }
 
@@ -56,7 +59,7 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
         const summary = getMessageContent(firstChoice);
 
         if (!summary) {
-            logger.error('Error: Missing text in the first choice.');
+            logger.error('Error: Missing text in the first choice.', { firstChoice });
             return new LLMResponse("", "error", 0);
         }
 
@@ -65,7 +68,8 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
 
         return new LLMResponse(summary, firstChoice.finish_reason, response.usage.completion_tokens);
     } catch (error) {
-        logger.error(`Error in text summarization: ${error.message}`);
+        handleError(error);
+        logger.error(`Error in text summarization: ${error.message}`, { error, requestBody });
         return new LLMResponse("", "error", 0); // Error handling, ensuring a consistent return type
     }
 }
