@@ -10,6 +10,8 @@ const { summarize } = require('../utils/openAiManagerUtils');
 class OpenAiManager {
     static instance;
 
+    static emojis = ['😊', '👍', '😉', '🎉', '💬', '🤖', '👀', '📚', '🚀', '✨'];
+
     constructor() {
         if (OpenAiManager.instance) {
             return OpenAiManager.instance;
@@ -82,11 +84,13 @@ class OpenAiManager {
 
     finalizeMessageList(messages) {
         if (messages.length > 1 && messages[1].role === 'assistant') {
-            messages.splice(1, 0, { role: 'user', content: '(...)' });  // More semantic padding
+            const randomEmoji = OpenAiManager.emojis[Math.floor(Math.random() * OpenAiManager.emojis.length)];
+            messages.splice(1, 0, { role: 'user', content: `...${randomEmoji}` });  // Insert an engaging emoji pad
         }
 
         if (messages[messages.length - 1].role !== 'user') {
-            messages.push({ role: 'user', content: '(...)' });  // Ensure it ends with a user message
+            const randomEmoji = OpenAiManager.emojis[Math.floor(Math.random() * OpenAiManager.emojis.length)];
+            messages.push({ role: 'user', content: `...${randomEmoji}` });  // Ensure it ends with a user message with an emoji
         }
     }
 
