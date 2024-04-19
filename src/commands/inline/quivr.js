@@ -1,16 +1,30 @@
-// commands/quivr.js
 const axios = require('axios');
 const Command = require('../../utils/Command');
 const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
 
+/**
+ * Defines the QuivrCommand class that sends queries to the Quivr API.
+ * This class extends the Command class and manages the execution of the 'quivr' command.
+ */
 class QuivrCommand extends Command {
+    /**
+     * Constructs an instance of the QuivrCommand.
+     */
     constructor() {
         super('quivr', 'Sends a query to the Quivr API. Usage: !quivr:[chatCategory] [query]');
     }
 
+    /**
+     * Executes the command with the provided message and arguments.
+     * It sends a query to the Quivr API and replies with the result.
+     * 
+     * @param {IMessage} message - The message object implementing the IMessage interface.
+     * @param {string} args - A string containing all arguments passed to the command.
+     * @param {string|null} action - Not used in this command.
+     * @returns {Promise<void>}
+     */
     async execute(message, args=null, action=null) {
-
         if (!args) {
             logger.warn('No query provided for Quivr.');
             message.reply('Please provide a query for Quivr.');

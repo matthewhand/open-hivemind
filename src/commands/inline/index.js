@@ -3,7 +3,11 @@ const path = require('path');
 const logger = require('../../utils/logger');
 const Command = require('../../utils/Command');
 
-const commandsDirectory = path.join(__dirname, '.');
+/**
+ * Dynamically loads all command modules from the current directory, excluding index.js itself.
+ * Each command module must export an instance of the Command class. This script logs all loaded commands.
+ */
+const commandsDirectory = __dirname;  // Use __dirname to refer to the current directory path
 const commandFiles = fs.readdirSync(commandsDirectory).filter(file => file.endsWith('.js') && file !== 'index.js');
 
 const commands = {};
