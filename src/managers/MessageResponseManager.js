@@ -1,43 +1,26 @@
 /**
- * The MessageResponseManager is responsible for managing and timing the responses sent by the bot,
- * based on a variety of configured conditions and modifiers. This manager dynamically loads and
- * applies configuration settings that affect how responses are generated and delivered.
+ * Manages the decision-making process for sending responses by the bot, using configured conditions and modifiers.
+ * Implements a singleton pattern to ensure consistent application of settings and prioritizes a specific
+ * channel that can always receive unsolicited messages, regardless of other limits.
  *
- * Configuration settings include:
- * - `interrobangBonus`: Added to the chance of replying when the message contains '!' or '?' anywhere except as the first character.
- * - `mentionBonus`: Increases the chance of replying when the bot's ID (as specified by CLIENT_ID in constants) is mentioned.
- * - `botResponseModifier`: Adjusts the chance of replying when the message originates from a bot (negative values decrease the chance).
- * - `maxDelay` and `minDelay`: Specify the maximum and minimum delay timings for starting to type responses and for waiting between sending parts of long messages that exceed Discord's character limit.
- * - `decayRate`: Used to reduce the waiting time incrementally when the bot is waiting for the channel to become idle.
- * - `llmWakewords`: A set of keywords that, when found at the start of a message, ensure the bot will respond.
- * - `unsolicitedChannelCap`: Limits the number of channels the bot will send unsolicited messages to, helping manage spam and bot activity visibility.
- *
- * These settings are loaded from the configuration manager and are merged with default values to ensure all settings are initialized properly.
+ * @module MessageResponseManager
  */
 const logger = require('../utils/logger');
-const TimingManager = require('./TimingManager');
 const configurationManager = require('../config/configurationManager');
-const constants = require('../config/constants'); // Assuming this contains CLIENT_ID
-const { IMessage } = require('../interfaces/IMessage');
-/**
- * Manages and schedules bot responses considering various conditions to ensure timely and context-aware interactions.
- * This includes managing response delays to simulate human-like interactions and controlling unsolicited message frequencies.
- */
+const constants = require('../config/constants'); // This should contain CLIENT_ID and possibly CHANNEL_ID
+
 class MessageResponseManager {
     static instance;
-    timingManager;
     config;
-    lastActivityTimestamps = {};  // Tracks last activity time by channel ID
-    unsolicitedChannelCounts = {}; // Tracks counts of unsolicited messages by channel ID
 
     /**
-     * Constructs the singleton instance of MessageResponseManager.
+     * Constructs a singleton instance of the MessageResponseManager.
+     * If an instance already exists, it returns the existing instance instead of creating a new one.
      */
     constructor() {
         if (MessageResponseManager.instance) {
             return MessageResponseManager.instance;
         }
-        this.timingManager = TimingManager.getInstance();
         this.config = this.loadConfig();
         MessageResponseManager.instance = this;
     }
@@ -54,8 +37,8 @@ class MessageResponseManager {
     }
 
     /**
-     * Loads the configuration settings from a configuration manager, applying defaults for any missing settings.
-     * @returns {Object} The fully populated configuration settings.
+     * Loads configuration settings from the central configuration manager, applying defaults where not specified.
+     * @returns {Object} The configuration settings, populated with defaults and external configurations.
      */
     loadConfig() {
         const defaults = {
@@ -67,131 +50,112 @@ class MessageResponseManager {
             decayRate: 0.95,
             llmWakewords: ['!help', '!ping', '!echo'],
             unsolicitedChannelCap: 3,
+            priorityChannel: constants.CHANNEL_ID,
             decayThreshold: 3000,
-            recentActivityDecayRate: 0.5, // The rate at which the chance decays with recent activity
-            activityDecayBase: 0.5,  // Base for exponential decay calculation
-            activityTimeWindow: 300000,  // Time window in milliseconds (5 minutes)
-            channelInactivityLimit: 600000 // 10 minutes in milliseconds
+            recentActivityDecayRate: 0.5,
+            activityDecayBase: 0.5,
+            activityTimeWindow: 300000,
+            channelInactivityLimit: 600000
         };
-        return {...defaults, ...configurationManager.getConfig('messageResponseSettings')};
+        const config = { ...defaults, ...configurationManager.getConfig('messageResponseSettings') };
+        logger.debug("Configuration loaded: ", config);
+        return config;
     }
 
     /**
-     * Updates the last known activity timestamp for a specified channel.
-     * @param {string} channelId - The ID of the channel to update.
+     * Determines whether the bot should respond to a specific message.
+     * @param {IMessage} message - The message object to evaluate.
+     * @param {number} [timeSinceLastActivity=5000] - The time in milliseconds since the last activity in the channel.
+     * @returns {boolean} True if the bot should respond, false otherwise.
      */
-    updateLastActivity(channelId) {
-        this.lastActivityTimestamps[channelId] = Date.now();
-    }
-
-    /**
-     * Manages the process of sending a response to a channel based on the provided message and response content.
-     * @param {IMessage} message - The message object to respond to.
-     * @param {string} responseContent - The content to be sent as a response.
-     * @param {number} responseDelay - The initial delay before sending the response, in milliseconds.
-     */
-    async manageResponse(message, responseContent, responseDelay = 2000) {
-        if (!responseContent || message.isFromBot()) {
-            return;
-        }
-
+    shouldReplyToMessage(message, timeSinceLastActivity = 5000) {
         const channelId = message.getChannelId();
-        this.updateLastActivity(channelId);
-        
-        if (!this.shouldSendResponse(message)) {
-            return;
+        logger.debug(`Evaluating reply possibility for message from channel ${channelId}.`);
+
+        if (!this.isEligibleForResponse(message)) {
+            logger.debug("Message is not eligible for a response.");
+            return false;
         }
 
-        this.incrementUnsolicitedCount(channelId);
-        if (this.unsolicitedChannelCounts[channelId] > this.config.unsolicitedChannelCap) {
-            return;
+        if (!this.isWithinUnsolicitedLimit(channelId)) {
+            logger.debug("Channel has exceeded the unsolicited message limit.");
+            return false;
         }
 
-        const adjustedDelay = this.calculateAdjustedDelay(channelId, responseDelay);
-        setTimeout(() => {
-            this.timingManager.scheduleMessage(channelId, responseContent, adjustedDelay);
-        }, adjustedDelay);
+        const shouldSend = this.shouldSendResponse(message, timeSinceLastActivity);
+        logger.debug(`Decision to send response: ${shouldSend}`);
+        return shouldSend;
     }
 
     /**
-     * Calculates if a message should be sent in response to the received message, based on configured probabilities and conditions.
+     * Checks if the message meets basic criteria to be eligible for a response.
+     * @param {IMessage} message - The message to check.
+     * @returns {boolean} True if the message is eligible, false otherwise.
+     */
+    isEligibleForResponse(message) {
+        const isEligible = message.getContent() && !message.isFromBot();
+        logger.debug(`Message eligibility for response: ${isEligible}`);
+        return isEligible;
+    }
+
+    /**
+     * Verifies if the channel is within its limit for sending unsolicited messages or is the priority channel.
+     * @param {string} channelId - The ID of the channel to check.
+     * @returns {boolean} True if the channel can still send unsolicited messages, false otherwise.
+     */
+    isWithinUnsolicitedLimit(channelId) {
+        const isWithinLimit = channelId === this.config.priorityChannel || this.unsolicitedChannelCounts[channelId] < this.config.unsolicitedChannelCap;
+        logger.debug(`Unsolicited message limit check for channel ${channelId}: ${isWithinLimit}`);
+        return isWithinLimit;
+    }
+
+    /**
+     * Determines if a response should be sent based on a random chance compared to the calculated base chance, including time decay factors.
      * @param {IMessage} message - The message to evaluate.
+     * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity in the channel.
      * @returns {boolean} True if a response should be sent, false otherwise.
      */
-    shouldSendResponse(message) {
-        const baseChance = this.calculateBaseChance(message);
-        return Math.random() < baseChance;
+    shouldSendResponse(message, timeSinceLastActivity) {
+        const baseChance = this.calculateBaseChance(message, timeSinceLastActivity);
+        const decision = Math.random() < baseChance;
+        logger.debug(`Should send response (random < baseChance): ${decision} (${Math.random()} < ${baseChance})`);
+        return decision;
     }
 
     /**
-     * Calculates the base probability of responding to a given message, factoring in message content and special conditions.
+     * Calculates the base probability of responding to a given message, factoring in message content, special conditions, and activity decay.
      * @param {IMessage} message - The message to evaluate.
+     * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity, used to calculate decay.
      * @returns {number} The probability of sending a response, between 0 and 1.
      */
-    calculateBaseChance(message) {
+    calculateBaseChance(message, timeSinceLastActivity) {
         if (message.getAuthorId() === constants.CLIENT_ID) {
-            return 0; // No response to self
+            logger.debug("Not responding to self-generated messages.");
+            return 0; // Do not respond to self
         }
 
         let chance = 0;
         const text = message.getText().toLowerCase();
-
         if (/[!?]/.test(text.slice(1))) {
             chance += this.config.interrobangBonus;
         }
-
         if (text.includes(constants.CLIENT_ID)) {
             chance += this.config.mentionBonus;
         }
-
         if (message.isFromBot()) {
             chance += this.config.botResponseModifier;
         }
-
         if (this.config.llmWakewords.some(wakeword => text.startsWith(wakeword))) {
-            return 1; // Guaranteed response if the message starts with a wakeword
+            logger.debug("Wakeword found, responding immediately.");
+            return 1; // Guaranteed response if wakeword is matched
         }
 
-        // Calculate time-based decay factor for response probability
-        const timeSinceLastMessage = Date.now() - (this.lastActivityTimestamps[message.getChannelId()] || 0);
-        const decayFactor = Math.pow(this.config.activityDecayBase, timeSinceLastMessage / this.config.activityTimeWindow);
+        const decayFactor = Math.exp(-this.config.recentActivityDecayRate * (timeSinceLastActivity / this.config.activityTimeWindow));
         chance *= decayFactor;
-
-        return Math.min(chance, 1); // Probability is capped at 1
+        
+        logger.debug(`Calculated base chance for response: ${chance}`);
+        return Math.min(chance, 1);
     }
-
-    /**
-     * Increments the count of unsolicited messages for a given channel.
-     * @param {string} channelId - The ID of the channel.
-     */
-    incrementUnsolicitedCount(channelId) {
-        this.unsolicitedChannelCounts[channelId] = (this.unsolicitedChannelCounts[channelId] || 0) + 1;
-    }
-
-    /**
-     * Calculates an adjusted delay for sending a message based on the channel's last activity time.
-     * This method helps in preventing the bot from appearing too "robotic" by spacing out messages naturally.
-     * @param {string} channelId - The ID of the channel.
-     * @param {number} initialDelay - The initially planned delay, in milliseconds.
-     * @returns {number} The adjusted delay, ensuring it meets minimum configured thresholds.
-     */
-    calculateAdjustedDelay(channelId, initialDelay) {
-        const timeSinceLastActivity = Date.now() - (this.lastActivityTimestamps[channelId] || 0);
-        let delay = initialDelay * Math.exp(-this.config.decayRate * timeSinceLastActivity / this.config.decayThreshold);
-        return Math.max(delay, this.config.minDelay);
-    }
-
-    /**
-     * Determines if a message should be considered unsolicited based on its content.
-     * @param {IMessage} message - The message to evaluate.
-     * @returns {boolean} True if the message is unsolicited, false otherwise.
-     */
-    async shouldReplyToMessage(message) {
-        const probabilityOfResponse = Math.random();
-        const baseChance = this.calculateBaseChance(message);
-        logger.debug(`[MessageResponseManager] Base chance for message ID: ${message.getMessageId()} is ${baseChance}.`);
-        return probabilityOfResponse < baseChance;    }
-
 }
 
 module.exports = MessageResponseManager;
