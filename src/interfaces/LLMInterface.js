@@ -1,6 +1,6 @@
 // src/interfaces/LLMInterface.js
 const logger = require('../utils/logger');
-const constants = require('../config/Constants');
+const constants = require('../config/constants');
 
 /**
  * Abstracts the LLM (Large Language Models) interface to provide a consistent method
