@@ -1,5 +1,5 @@
 // src/interfaces/LLMInterface.js
-const logger = require('../utils/Logger');
+const logger = require('../utils/logger');
 const constants = require('../config/Constants');
 
 /**
