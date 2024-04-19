@@ -57,10 +57,10 @@ async function messageHandler(originalMsg, historyMessages = []) {
 
         logger.debug(`[messageHandler] Response from LLM received: ${responseContent.substring(0, 50)}...`);
         
-        if (responseContent.length > 100) {
-            logger.info("[messageHandler] Message exceeds 100 characters. Summarizing.");
-            responseContent = await summarizeMessage(responseContent);
-        }
+        // if (responseContent.length > 100) {
+        //     logger.info("[messageHandler] Message exceeds 100 characters. Summarizing.");
+        //     responseContent = await summarizeMessage(responseContent);
+        // }
 
         await sendResponse(responseContent, channelId, startTime);
         logger.debug("[messageHandler] Response sent to the channel successfully.");
