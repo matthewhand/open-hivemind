@@ -4,16 +4,11 @@ const { handleError } = require('../utils/handleError');
 const constants = require('../config/constants');
 const IMessage = require('../interfaces/IMessage');
 const LLMResponse = require('../interfaces/LLMResponse'); 
-
-// Custom replacer function for redacting sensitive information in logs
-function redactSensitiveInfo(key, value) {
-    if (key === 'apiKey') {
-        return `${value.substring(0, 5)}*********${value.slice(-2)}`;
-    }
-    return value;
-}
+const { redactSensitiveInfo } = require('../utils/commonUtils');  // Importing the common utility function
 
 class OpenAiManager {
+    static instance;
+
     constructor() {
         if (OpenAiManager.instance) {
             return OpenAiManager.instance;
@@ -22,7 +17,7 @@ class OpenAiManager {
             apiKey: constants.LLM_API_KEY,
             baseURL: constants.LLM_ENDPOINT_URL
         });
-        this.isResponding = false;
+        this.busy = false;
         OpenAiManager.instance = this;
     }
 
@@ -33,35 +28,33 @@ class OpenAiManager {
         return OpenAiManager.instance;
     }
 
+
+    /**
+     * Constructs the request body for the OpenAI API call based on the history of messages and the system message content.
+     * @param {IMessage[]} historyMessages - Array of historical IMessage instances for context.
+     * @param {string} systemMessageContent - The system directive or prompt to guide the conversation.
+     * @param {number} maxTokens - Maximum tokens to generate in the response.
+     * @returns {Object} The structured request body for the API call.
+     */
     buildRequestBody(historyMessages = [], systemMessageContent = constants.LLM_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         logger.debug('Building request body for OpenAI API call.');
 
         let messages = [{
             role: 'system',
-            content: systemMessageContent, 
+            content: systemMessageContent,
         }];
-    
+
         let lastRole = 'system';
         let accumulatedContent = '';
-    
-        historyMessages.forEach((message, index) => {
-            // Ensure the message is an instance of IMessage or similar for correct interface
+
+        historyMessages.forEach((message) => {
             if (!(message instanceof IMessage)) {
                 throw new Error("All history messages must be instances of IMessage or its subclasses.");
             }
-    
+
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-    
-            // If last role was 'system' and the current role is 'assistant', insert a placeholder user message
-            if (lastRole === 'system' && currentRole === 'assistant') {
-                messages.push({
-                    role: 'user',
-                    content: '...', // Placeholder user content
-                });
-            }
-    
+
             if (lastRole !== currentRole) {
-                // When role changes, push accumulated content for the last role and reset accumulator
                 if (accumulatedContent) {
                     messages.push({
                         role: lastRole,
@@ -71,67 +64,81 @@ class OpenAiManager {
                 }
                 lastRole = currentRole;
             }
-    
-            // Accumulate content from consecutive messages of the same role
-            accumulatedContent += (accumulatedContent ? '\n' : '') + message.getText();
+
+            accumulatedContent += `${accumulatedContent ? '\n' : ''}${message.getText()}`;
         });
-    
-        // After iterating, if there's any remaining content, push it as the last message
+
         if (accumulatedContent) {
             messages.push({
                 role: lastRole,
                 content: accumulatedContent.trim(),
             });
         }
-    
-        // Always ensure the conversation ends with a 'user' role message
+
         if (lastRole === 'assistant') {
             messages.push({
                 role: 'user',
-                content: '...', // Placeholder content for a final 'user' message
+                content: '...',
             });
         }
-    
+
         const requestBody = {
             model: constants.LLM_MODEL,
             max_tokens: parseInt(maxTokens, 10),
             messages,
         };
-    
+
         logger.info('Request body for OpenAI API call built successfully.');
-        logger.debug(`Request body: ${JSON.stringify(requestBody, null, 2)}`);
-    
+        logger.debug(`Request body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
+
         return requestBody;
     }
-                        
-    async sendRequest(requestBody) {
-        logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
-        try {
-            const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
-            
-            if (!response.choices || response.choices.length === 0) {
-                logger.error('No choices were returned in the API response.');
-                return new LLMResponse("", "error");
-            }
-            
-            const firstChoice = response.choices[0];
-            const messageContent = firstChoice.text || firstChoice.message?.content || "";
-            
-            if (!messageContent) {
-                logger.error('No valid message content was returned in the API response.');
-                return new LLMResponse("", "error");
-            }
 
-            return new LLMResponse(messageContent, firstChoice.finish_reason || "unknown", response.usage.completion_tokens);
-        } catch (error) {
-            handleError(error);
-            return new LLMResponse("", "error"); // Ensure a consistent return type
-        } finally {
-            this.isResponding = false;
-            logger.debug('Set isResponding to false');
-        }
+/**
+ * Sends a request to the OpenAI API and handles the response.
+ * @param {Object} requestBody - The fully formed request body to send to the API.
+ * @returns {LLMResponse} - An object containing the response data or an error message.
+ */
+async sendRequest(requestBody) {
+    logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
+    if (this.busy) {
+        logger.debug('OpenAiManager is currently busy.');
+        return new LLMResponse("", "busy");
     }
+    this.busy = true;
+
+    try {
+        const response = await this.openai.Completion.create(requestBody);
+        logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
+
+        if (!response.choices || response.choices.length === 0) {
+            logger.error('No choices were returned in the API response.');
+            this.busy = false;
+            return new LLMResponse("", "error");
+        }
+
+        const firstChoice = response.choices[0];
+        const messageContent = firstChoice.text || firstChoice.message?.content || "";
+
+        if (!messageContent) {
+            logger.error('No valid message content was returned in the API response.');
+            this.busy = false;
+            return new LLMResponse("", "error");
+        }
+
+        logger.debug(`Processing completion with reason: ${firstChoice.finish_reason}`);
+        return new LLMResponse(messageContent, firstChoice.finish_reason || "unknown", response.usage.total_tokens);
+    } catch (error) {
+        handleError(error);
+        this.busy = false;
+        logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error });
+        return new LLMResponse("", "error");
+    } finally {
+        this.busy = false;
+        logger.debug('Set busy to false after processing OpenAI request.');
+    }
+}
+
             
     /**
      * Summarizes the given text by sending a request to the OpenAI API.
@@ -202,18 +209,14 @@ class OpenAiManager {
         }
     }
     
-    setIsResponding(isResponding) {
-        this.isResponding = isResponding;
-        logger.debug(`Set isResponding to ${isResponding}`);
-    }
-
-    getIsResponding() {
-        return this.isResponding;
+    isBusy() {
+        return this.busy;
     }
 
     requiresHistory() {
         return true;
     }
+
 }
 
 module.exports = OpenAiManager;

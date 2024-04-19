@@ -69,6 +69,8 @@ class MessageResponseManager {
             unsolicitedChannelCap: 3,
             decayThreshold: 3000,
             recentActivityDecayRate: 0.5, // The rate at which the chance decays with recent activity
+            activityDecayBase: 0.5,  // Base for exponential decay calculation
+            activityTimeWindow: 300000,  // Time window in milliseconds (5 minutes)
             channelInactivityLimit: 600000 // 10 minutes in milliseconds
         };
         return {...defaults, ...configurationManager.getConfig('messageResponseSettings')};
@@ -150,9 +152,10 @@ class MessageResponseManager {
             return 1; // Guaranteed response if the message starts with a wakeword
         }
 
+        // Calculate time-based decay factor for response probability
         const timeSinceLastMessage = Date.now() - (this.lastActivityTimestamps[message.getChannelId()] || 0);
-        const activityModifier = Math.exp(-this.config.recentActivityDecayRate * timeSinceLastMessage / this.config.unsolicitedResponseCooldown);
-        chance *= activityModifier;
+        const decayFactor = Math.pow(this.config.activityDecayBase, timeSinceLastMessage / this.config.activityTimeWindow);
+        chance *= decayFactor;
 
         return Math.min(chance, 1); // Probability is capped at 1
     }

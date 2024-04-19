@@ -1,6 +1,6 @@
 // Import necessary modules and managers
 const DiscordManager = require('../managers/DiscordManager');
-const OpenAiManager = require('../managers/OpenAiManager');
+const LLMInterface = require('../interfaces/LLMInterface');
 const MessageResponseManager = require('../managers/MessageResponseManager');
 const constants = require('../config/constants');
 const logger = require('../utils/logger');
@@ -28,23 +28,30 @@ async function messageHandler(originalMsg, historyMessages = []) {
         return;  // Early exit if no response is needed
     }
 
+    // Initialize the LLM Manager from LLMInterface
+    const llmManager = LLMInterface.getManager();
+    if (llmManager.isBusy()) {
+        logger.info("[messageHandler] LLM Manager is currently busy.");
+        return;  // Exit if the LLM manager is busy
+    }
+
     try {
-        const channelId = typeof originalMsg.getChannelId === 'function' ? originalMsg.getChannelId() : originalMsg.getChannelId;
+        const channelId = originalMsg.getChannelId();
         const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, channelId, historyMessages);
         logger.debug(`[messageHandler] Request body prepared: ${JSON.stringify(requestBody, null, 2)}`);
 
-        const llmResponse = await OpenAiManager.getInstance().sendRequest(requestBody);
+        const llmResponse = await llmManager.sendRequest(originalMsg, historyMessages);
         let responseContent = llmResponse.getContent();
 
-        // Checking if responseContent is a string before trying to log part of it
+        // Check if responseContent is a string before trying to log part of it
         if (typeof responseContent === 'string') {
-            logger.debug(`[messageHandler] Response from OpenAI received: ${responseContent.substring(0, 50)}...`);
+            logger.debug(`[messageHandler] Response from LLM received: ${responseContent.substring(0, 50)}...`);
         } else {
-            logger.debug(`[messageHandler] Response from OpenAI received (non-string): ${JSON.stringify(responseContent, null, 2)}`);
+            logger.debug(`[messageHandler] Response from LLM received (non-string): ${JSON.stringify(responseContent, null, 2)}`);
         }
-        
+
         if (!responseContent || typeof responseContent !== 'string') {
-            logger.error('[messageHandler] OpenAI API returned no content or content is not a string.');
+            logger.error('[messageHandler] LLM API returned no content or content is not a string.');
             return;
         }
 
@@ -72,4 +79,3 @@ async function messageHandler(originalMsg, historyMessages = []) {
 }
 
 module.exports = { messageHandler };
-
