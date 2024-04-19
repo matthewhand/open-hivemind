@@ -94,21 +94,38 @@ class OpenAiManager {
         return requestBody;
     }
 
+    /**
+     * Sends a request to the OpenAI API and handles the response.
+     * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
+     *
+     * @param {Object} requestBody - The fully formed request body to send to the API.
+     * @returns {LLMResponse} - An object containing the response data or an error message.
+     */
 /**
  * Sends a request to the OpenAI API and handles the response.
+ * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
+ *
  * @param {Object} requestBody - The fully formed request body to send to the API.
  * @returns {LLMResponse} - An object containing the response data or an error message.
  */
 async sendRequest(requestBody) {
     logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
+
+    // Check if the OpenAI API client instance is ready
+    if (!this.openai || typeof this.openai.completions.create !== 'function') {
+        logger.error('OpenAI API client is not properly instantiated.');
+        return new LLMResponse("", "error");
+    }
+
     if (this.busy) {
         logger.debug('OpenAiManager is currently busy.');
         return new LLMResponse("", "busy");
     }
+
     this.busy = true;
 
     try {
-        const response = await this.openai.Completion.create(requestBody);
+        const response = await this.openai.completions.create(requestBody);
         logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
 
         if (!response.choices || response.choices.length === 0) {
@@ -139,7 +156,6 @@ async sendRequest(requestBody) {
     }
 }
 
-            
     /**
      * Summarizes the given text by sending a request to the OpenAI API.
      * The function constructs a specific payload to encourage the model

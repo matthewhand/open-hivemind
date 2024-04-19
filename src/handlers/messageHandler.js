@@ -17,9 +17,9 @@ async function messageHandler(originalMsg, historyMessages = []) {
     const startTime = Date.now();
     logger.debug(`[messageHandler] Started at ${new Date(startTime).toISOString()} for message: ${originalMsg.content}`);
 
-    // Ensure originalMsg is an object and has necessary methods
-    if (typeof originalMsg !== 'object' || !originalMsg.getChannelId) {
-        logger.error('[messageHandler] Invalid message object received.');
+    // Validate message object structure and necessary methods
+    if (typeof originalMsg !== 'object' || !originalMsg.getChannelId || !originalMsg.content) {
+        logger.error('[messageHandler] Invalid or incomplete message object received.');
         return;
     }
 
@@ -40,18 +40,17 @@ async function messageHandler(originalMsg, historyMessages = []) {
         const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, channelId, historyMessages);
         logger.debug(`[messageHandler] Request body prepared: ${JSON.stringify(requestBody, null, 2)}`);
 
-        const llmResponse = await llmManager.sendRequest(originalMsg, historyMessages);
+        // Additional debug before sending to log key request body elements
+        logger.debug(`[messageHandler] Sending request with content: ${requestBody.messages.map(m => m.content).join(', ')}`);
+
+        const llmResponse = await llmManager.sendRequest(requestBody);
         let responseContent = llmResponse.getContent();
 
         // Check if responseContent is a string before trying to log part of it
-        if (typeof responseContent === 'string') {
+        if (typeof responseContent === 'string' && responseContent.trim() !== '') {
             logger.debug(`[messageHandler] Response from LLM received: ${responseContent.substring(0, 50)}...`);
         } else {
-            logger.debug(`[messageHandler] Response from LLM received (non-string): ${JSON.stringify(responseContent, null, 2)}`);
-        }
-
-        if (!responseContent || typeof responseContent !== 'string') {
-            logger.error('[messageHandler] LLM API returned no content or content is not a string.');
+            logger.error(`[messageHandler] Response from LLM received (non-string or empty): ${JSON.stringify(responseContent, null, 2)}`);
             return;
         }
 
@@ -60,7 +59,7 @@ async function messageHandler(originalMsg, historyMessages = []) {
             responseContent = await summarizeMessage(responseContent);
         }
 
-        await sendResponse(responseContent, originalMsg.getChannelId(), startTime);
+        await sendResponse(responseContent, channelId, startTime);
         logger.debug("[messageHandler] Response sent to the channel successfully.");
 
         if (constants.FOLLOW_UP_ENABLED) {
