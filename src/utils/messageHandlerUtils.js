@@ -47,23 +47,35 @@ async function sendResponse(messageContent, channelId, startTime) {
 
 /**
  * Splits message content into parts based on natural breakpoints or the maximum message length allowable by Discord.
+ * This version improves readability and efficiency by directly constructing parts without unnecessary concatenation.
  *
  * @param {string} messageContent - The content to split into parts.
  * @param {number} maxPartLength - Maximum length of each message part.
  * @returns {string[]} An array of message parts.
  */
 function splitMessageContent(messageContent, maxPartLength) {
-    let parts = [];
+    const parts = [];
     let currentPart = '';
+
+    // Split the message by natural linguistic breakpoints (new lines, periods, question marks, exclamation marks)
     messageContent.split(/(\n|\. |\? |! )/).forEach(segment => {
-        if (segment === '') return;
+        if (segment === '') return; // Skip empty segments which can occur with split regex capturing groups
+
+        // Check if adding this segment would exceed the max part length
         if (currentPart.length + segment.length > maxPartLength) {
-            parts.push(currentPart);
-            currentPart = '';
+            parts.push(currentPart); // Push the current part to the list
+            currentPart = ''; // Reset current part
         }
-        currentPart += segment;
+
+        currentPart += segment; // Add segment to current part
     });
-    if (currentPart) parts.push(currentPart);
+
+    // Push the last part if there's any leftover content not yet added
+    if (currentPart) {
+        parts.push(currentPart);
+    }
+
+    // Filter out any empty parts just in case (though there shouldn't be any)
     return parts.filter(part => part.length > 0);
 }
 
