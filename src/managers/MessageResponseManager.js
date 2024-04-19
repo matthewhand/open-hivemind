@@ -128,32 +128,43 @@ class MessageResponseManager {
      * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity, used to calculate decay.
      * @returns {number} The probability of sending a response, between 0 and 1.
      */
+    /**
+     * Calculates the base probability of responding to a given message, factoring in message content, special conditions, and activity decay.
+     * @param {IMessage} message - The message to evaluate.
+     * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity, used to calculate decay.
+     * @returns {number} The probability of sending a response, between 0 and 1.
+     */
     calculateBaseChance(message, timeSinceLastActivity) {
         if (message.getAuthorId() === constants.CLIENT_ID) {
-            logger.debug("Not responding to self-generated messages.");
+            logger.debug("[MessageResponseManager] Not responding to self-generated messages.");
             return 0; // Do not respond to self
         }
 
         let chance = 0;
         const text = message.getText().toLowerCase();
+        logger.debug(`[MessageResponseManager] Calculating base chance for message: "${message.getText()}"`);
+
         if (/[!?]/.test(text.slice(1))) {
             chance += this.config.interrobangBonus;
+            logger.debug(`[MessageResponseManager] Interrobang bonus applied: +${this.config.interrobangBonus}`);
         }
         if (text.includes(constants.CLIENT_ID)) {
             chance += this.config.mentionBonus;
+            logger.debug(`[MessageResponseManager] Mention bonus applied: +${this.config.mentionBonus}`);
         }
         if (message.isFromBot()) {
             chance += this.config.botResponseModifier;
+            logger.debug(`[MessageResponseManager] Bot response modifier applied: +${this.config.botResponseModifier}`);
         }
         if (this.config.llmWakewords.some(wakeword => text.startsWith(wakeword))) {
-            logger.debug("Wakeword found, responding immediately.");
+            logger.debug("[MessageResponseManager] Wakeword found, responding immediately.");
             return 1; // Guaranteed response if wakeword is matched
         }
 
         const decayFactor = Math.exp(-this.config.recentActivityDecayRate * (timeSinceLastActivity / this.config.activityTimeWindow));
         chance *= decayFactor;
         
-        logger.debug(`Calculated base chance for response: ${chance}`);
+        logger.debug(`[MessageResponseManager] Final calculated chance after decay factor (${decayFactor.toFixed(4)}): ${chance.toFixed(4)}`);
         return Math.min(chance, 1);
     }
 }
