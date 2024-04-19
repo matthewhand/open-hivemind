@@ -3,8 +3,9 @@ const logger = require('../utils/logger');
 const { handleError } = require('../utils/handleError');
 const constants = require('../config/constants');
 const IMessage = require('../interfaces/IMessage');
-const LLMResponse = require('../interfaces/LLMResponse'); 
-const { redactSensitiveInfo } = require('../utils/commonUtils');  // Importing the common utility function
+const LLMResponse = require('../interfaces/LLMResponse');
+const { redactSensitiveInfo } = require('../utils/commonUtils'); 
+const { summarize } = require('../utils/openAiManagerUtils'); 
 
 class OpenAiManager {
     static instance;
@@ -23,26 +24,31 @@ class OpenAiManager {
 
     static getInstance() {
         if (!OpenAiManager.instance) {
-            OpenAiManager.instance = new OpenAiManager();
+            new OpenAiManager();
         }
         return OpenAiManager.instance;
     }
 
-    /**
-     * Constructs the request body for the OpenAI API call based on the history of messages and the system message content.
-     * @param {IMessage[]} historyMessages - Array of historical IMessage instances for context.
-     * @param {string} systemMessageContent - The system directive or prompt to guide the conversation.
-     * @param {number} maxTokens - Maximum tokens to generate in the response.
-     * @returns {Object} The structured request body for the API call.
-     */
     buildRequestBody(historyMessages = [], systemMessageContent = constants.LLM_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
-        logger.debug('Building request body for OpenAI API call.');
+        let messages = this.initializeMessageList(systemMessageContent);
+        this.processHistoryMessages(messages, historyMessages);
+        this.finalizeMessageList(messages);
 
-        let messages = [{
+        return {
+            model: constants.LLM_MODEL,
+            max_tokens: parseInt(maxTokens, 10),
+            messages
+        };
+    }
+
+    initializeMessageList(systemMessageContent) {
+        return [{
             role: 'system',
-            content: systemMessageContent,
+            content: systemMessageContent
         }];
+    }
 
+    processHistoryMessages(messages, historyMessages) {
         let lastRole = 'system';
         let accumulatedContent = '';
 
@@ -52,7 +58,6 @@ class OpenAiManager {
             }
 
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-
             if (lastRole !== currentRole) {
                 if (accumulatedContent) {
                     messages.push({
@@ -73,155 +78,63 @@ class OpenAiManager {
                 content: accumulatedContent.trim(),
             });
         }
+    }
 
-        // Check if the first message role after 'system' is 'assistant' and prepend a 'user' padding message if true
+    finalizeMessageList(messages) {
         if (messages.length > 1 && messages[1].role === 'assistant') {
-            messages.splice(1, 0, { role: 'user', content: '...' }); // Insert a padding 'user' message
+            messages.splice(1, 0, { role: 'user', content: 'User is typing...' });  // More semantic padding
         }
 
-        const requestBody = {
-            model: constants.LLM_MODEL,
-            max_tokens: parseInt(maxTokens, 10),
-            messages
-        };
-
-        logger.info('Request body for OpenAI API call built successfully.');
-        logger.debug(`Request body: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
-
-        return requestBody;
+        if (messages[messages.length - 1].role !== 'user') {
+            messages.push({ role: 'user', content: 'Please wait...' });  // Ensure it ends with a user message
+        }
     }
+
+    async sendRequest(requestBody) {
+        logger.debug(`Preparing to send request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
     
-/**
- * Sends a request to the OpenAI API and handles the response.
- * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
- *
- * @param {Object} requestBody - The fully formed request body to send to the API.
- * @returns {LLMResponse} - An object containing the response data or an error message.
- */
-async sendRequest(requestBody) {
-    logger.debug(`Preparing to send request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
-
-    // Check if the OpenAI API client instance is ready
-    if (!this.openai || typeof this.openai.completions.create !== 'function') {
-        logger.error('OpenAI API client is not properly instantiated.');
-        return new LLMResponse("", "error");
-    }
-
-    if (this.busy) {
-        logger.debug('OpenAiManager is currently busy.');
-        return new LLMResponse("", "busy");
-    }
-
-    this.busy = true;
-
-    try {
-        // Ensuring requestBody is not a Promise and is properly formed
-        if (typeof requestBody !== 'object' || requestBody instanceof Promise) {
-            logger.error('Invalid request body: Expected a fully-resolved object.');
-            this.busy = false;
+        if (!this.openai || typeof this.openai.completions.create !== 'function') {
+            logger.error('OpenAI API client is not properly instantiated.');
             return new LLMResponse("", "error");
         }
-
-        // Debugging final requestBody to be sent
-        logger.debug(`Sending request to OpenAI with fully formed body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
-
-        const response = await this.openai.completions.create(requestBody);
-        logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
-
-        if (!response.choices || response.choices.length === 0) {
-            logger.error('No choices were returned in the API response.');
-            this.busy = false;
-            return new LLMResponse("", "error");
+    
+        if (this.busy) {
+            logger.debug('OpenAiManager is currently busy.');
+            return new LLMResponse("", "busy");
         }
-
-        const firstChoice = response.choices[0];
-        const messageContent = firstChoice.text || firstChoice.message?.content || "";
-
-        if (!messageContent) {
-            logger.error('No valid message content was returned in the API response.');
-            this.busy = false;
-            return new LLMResponse("", "error");
-        }
-
-        logger.debug(`Processing completion with reason: ${firstChoice.finish_reason}`);
-        return new LLMResponse(messageContent, firstChoice.finish_reason || "unknown", response.usage.total_tokens);
-    } catch (error) {
-        handleError(error);
-        this.busy = false;
-        logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error, requestBody });
-        return new LLMResponse("", "error");
-    } finally {
-        this.busy = false;
-        logger.debug('Set busy to false after processing OpenAI request.');
-    }
-}
-
-    /**
-     * Summarizes the given text by sending a request to the OpenAI API.
-     * The function constructs a specific payload to encourage the model
-     * to adjust and shorten the provided text, optionally embellishing it
-     * with emojis as per the user's request.
-     *
-     * @param {string} userMessage - The original message provided by the user.
-     * @param {string} [systemMessageContent="Adjust text as per User requirement. Respond with only the revised message."] - The system message to guide the OpenAI model.
-     * @param {number} [maxTokens=constants.LLM_RESPONSE_MAX_TOKENS] - The maximum number of tokens allowed for the OpenAI response.
-     * @returns {Promise<LLMResponse>} - An LLMResponse object containing the summarized text, finish reason, and the number of tokens used.
-     */
-    async summarizeText(userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
-        logger.debug('Starting the text summarization process.');
-
-        let messages = [
-            {
-                role: 'system',
-                content: systemMessageContent
-            },
-            {
-                role: 'user',
-                content: "Please make it shorter"
-            },
-            {
-                role: 'assistant',
-                content: userMessage
-            },
-            {
-                role: 'user',
-                content: "Add an emoji or two."
-            }
-        ];
-
-        const requestBody = {
-            model: constants.LLM_MODEL,
-            messages: messages,
-            temperature: 0.2,
-            max_tokens: parseInt(maxTokens, 10)
-        };
-
-        logger.debug(`Sending summarization request with body: ${JSON.stringify(requestBody, null, 3)}`);
+    
+        this.busy = true;
+    
         try {
+            if (typeof requestBody !== 'object' || requestBody instanceof Promise) {
+                logger.error('Invalid request body: Expected a fully-resolved object.');
+                this.busy = false;
+                return new LLMResponse("", "error");
+            }
+    
+            logger.debug(`Sending request to OpenAI with fully formed body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
             const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Raw API response: ${JSON.stringify(response, null, 2)}`);
-
-            if (!response.choices || response.choices.length === 0) {
-                logger.error('No choices were returned in the API response.');
-                return new LLMResponse("", "error", 0);
+            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
+    
+            if (!response || !response.choices || response.choices.length === 0 || !response.choices[0].message || !response.choices[0].message.content) {
+                logger.error('No valid message content was returned in the API response.');
+                this.busy = false;
+                return new LLMResponse("", "error");
             }
-
-            const firstChoice = response.choices[0];
-            const summary = firstChoice.text || ''; // Ensure to use 'text' as per the response structure
-            const finishReason = firstChoice.finish_reason;
-
-            if (!summary) {
-                logger.error('Error: Missing text in the first choice.');
-                return new LLMResponse("", "error", 0);
-            }
-
-            logger.info('Summarization processed successfully.');
-            logger.debug(`Summarized text: ${summary}`);
-
-            return new LLMResponse(summary, finishReason, response.usage.completion_tokens);
+    
+            const messageContent = response.choices[0].message.content;
+            const finishReason = response.choices[0].finish_reason;
+    
+            logger.debug(`Processing completion with reason: ${finishReason}`);
+            return new LLMResponse(messageContent, finishReason || "unknown", response.usage.total_tokens);
         } catch (error) {
-            logger.error(`Error in text summarization: ${error.message}`);
-            return new LLMResponse("", "error", 0); // Error handling, ensuring a consistent return type
+            handleError(error);
+            this.busy = false;
+            logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error, requestBody });
+            return new LLMResponse("", "error");
+        } finally {
+            this.busy = false;
+            logger.debug('Set busy to false after processing OpenAI request.');
         }
     }
     
@@ -233,6 +146,27 @@ async sendRequest(requestBody) {
         return true;
     }
 
+    
+    /**
+     * Utilizes the OpenAI API to summarize text based on user input.
+     *
+     * @param {string} userMessage The user's message to summarize.
+     * @param {string} [systemMessageContent="Please summarize this text:"] Prompt message for AI.
+     * @param {number} [maxTokens=150] Max number of tokens to generate.
+     * @returns {Promise<LLMResponse>} The summarized text wrapped in a response object.
+     */
+     async summarizeText(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
+        this.busy = true;
+        try {
+            const response = await summarize(this.openai, userMessage, systemMessageContent, maxTokens);
+            return response;
+        } catch (error) {
+            handleError(error);
+            return new LLMResponse("", "error", 0);
+        } finally {
+            this.busy = false;
+        }
+    }
 }
 
 module.exports = OpenAiManager;
