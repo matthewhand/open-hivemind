@@ -44,8 +44,8 @@ class OpenAiManager {
             content: systemMessageContent,
         }];
 
-        // This will hold the last role that was added to the messages array
         let lastRole = 'system';
+        let accumulatedContent = '';
 
         historyMessages.forEach((message) => {
             if (!(message instanceof IMessage)) {
@@ -54,21 +54,31 @@ class OpenAiManager {
 
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
 
-            // Only add a new message object when the role changes
             if (lastRole !== currentRole) {
-                // Add accumulated content as a new message if there's any content present
-                if (message.getText().trim()) {
+                if (accumulatedContent) {
                     messages.push({
-                        role: currentRole,
-                        content: message.getText().trim()
+                        role: lastRole,
+                        content: accumulatedContent.trim(),
                     });
+                    accumulatedContent = '';
                 }
-                lastRole = currentRole; // Update the lastRole to the current role
-            } else {
-                // If the role didn't change, append the text to the last message object
-                messages[messages.length - 1].content += `\n${message.getText().trim()}`;
+                lastRole = currentRole;
             }
+
+            accumulatedContent += `${accumulatedContent ? '\n' : ''}${message.getText()}`;
         });
+
+        if (accumulatedContent) {
+            messages.push({
+                role: lastRole,
+                content: accumulatedContent.trim(),
+            });
+        }
+
+        // Check if the first message role after 'system' is 'assistant' and prepend a 'user' padding message if true
+        if (messages.length > 1 && messages[1].role === 'assistant') {
+            messages.splice(1, 0, { role: 'user', content: '...' }); // Insert a padding 'user' message
+        }
 
         const requestBody = {
             model: constants.LLM_MODEL,
