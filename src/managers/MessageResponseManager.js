@@ -55,7 +55,8 @@ class MessageResponseManager {
             recentActivityDecayRate: 0.5,
             activityDecayBase: 0.5,
             activityTimeWindow: 300000,
-            channelInactivityLimit: 600000
+            channelInactivityLimit: 600000,
+            priorityChannelBonus: 0.8 // Additional chance bonus for priority channel
         };
         const config = { ...defaults, ...configurationManager.getConfig('messageResponseSettings') };
         logger.debug("Configuration loaded: ", config);
@@ -144,6 +145,11 @@ class MessageResponseManager {
         const text = message.getText().toLowerCase();
         logger.debug(`[MessageResponseManager] Calculating base chance for message: "${message.getText()}"`);
 
+        if (this.config.llmWakewords.some(wakeword => text.startsWith(wakeword))) {
+            logger.debug("[MessageResponseManager] Wakeword found, responding immediately.");
+            return 1; // Guaranteed response if wakeword is matched
+        }
+
         if (/[!?]/.test(text.slice(1))) {
             chance += this.config.interrobangBonus;
             logger.debug(`[MessageResponseManager] Interrobang bonus applied: +${this.config.interrobangBonus}`);
@@ -156,9 +162,10 @@ class MessageResponseManager {
             chance += this.config.botResponseModifier;
             logger.debug(`[MessageResponseManager] Bot response modifier applied: +${this.config.botResponseModifier}`);
         }
-        if (this.config.llmWakewords.some(wakeword => text.startsWith(wakeword))) {
-            logger.debug("[MessageResponseManager] Wakeword found, responding immediately.");
-            return 1; // Guaranteed response if wakeword is matched
+
+        if (message.getChannelId() === this.config.priorityChannel) {
+            chance += this.config.priorityChannelBonus;
+            logger.debug(`[MessageResponseManager] Priority channel bonus applied: +${this.config.priorityChannelBonus}`);
         }
 
         const decayFactor = Math.exp(-this.config.recentActivityDecayRate * (timeSinceLastActivity / this.config.activityTimeWindow));
