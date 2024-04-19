@@ -20,8 +20,8 @@ async function sendResponse(messageContent, channelId, startTime) {
     logger.debug(`[sendResponse] Starting to send response to channel ${channelId}. Initial content length: ${messageContent.length}`);
 
     // Calculate initial delay based on the length of the message to simulate typing speed
-    const typingSpeedPerChar = 100; // milliseconds per character
-    const initialDelay = Math.min(messageContent.length / 1000 * typingSpeedPerChar, constants.MAX_INITIAL_DELAY);
+    const typingSpeedPerChar = 1000; // milliseconds per character
+    const initialDelay = Math.min(messageContent.length / 10 * typingSpeedPerChar, constants.MAX_INITIAL_DELAY);
     await new Promise(resolve => setTimeout(resolve, initialDelay));
 
     let parts = [messageContent];
