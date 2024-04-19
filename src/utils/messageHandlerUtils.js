@@ -18,25 +18,31 @@ async function sendResponse(messageContent, channelId, startTime) {
     const maxPartLength = 2000; // Discord's max message length limit
     logger.debug(`[sendResponse] Starting to send response to channel ${channelId}. Initial content length: ${messageContent.length}`);
 
+    // Calculate initial delay based on recent channel activity to avoid rate limits
+    const initialDelay = getInitialDelay(channelId);
+    logger.debug(`[sendResponse] Initial delay set to ${initialDelay}ms based on channel activity.`);
+
+    await new Promise(resolve => setTimeout(resolve, initialDelay));
+
     if (messageContent.length > maxPartLength) {
         const parts = splitMessageContent(messageContent, maxPartLength);
-        const initialDelay = getInitialDelay(channelId); // Calculate initial delay based on recent channel activity
-        await new Promise(resolve => setTimeout(resolve, initialDelay));
+        logger.debug(`[sendResponse] Message split into ${parts.length} parts due to length exceeding ${maxPartLength} characters.`);
 
         for (let i = 0; i < parts.length; i++) {
-            // if (i < parts.length - 1) { // Apply inter-part delay for all but the last part
+            if (i > 0) { // Apply inter-part delay for all but the first part to respect rate limits
                 await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
-            // }
+                logger.debug(`[sendResponse] Inter-part delay of ${constants.INTER_PART_DELAY}ms applied.`);
+            }
             await sendMessagePart(parts[i], channelId);
+            logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length}.`);
         }
     } else {
-        const initialDelay = getInitialDelay(channelId);
-        await new Promise(resolve => setTimeout(resolve, initialDelay));
         await sendMessagePart(messageContent, channelId);
+        logger.debug(`[sendResponse] Single-part message sent.`);
     }
 
     const processingTime = Date.now() - startTime;
-    logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms.`);
+    logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms. Elapsed time since start: ${Date.now() - startTime}ms.`);
 }
 
 /**
