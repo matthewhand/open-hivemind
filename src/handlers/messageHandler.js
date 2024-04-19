@@ -15,11 +15,17 @@ const { sendResponse, sendFollowUp, prepareMessageBody, summarizeMessage } = req
  */
 async function messageHandler(originalMsg, historyMessages = []) {
     const startTime = Date.now();
-    logger.debug(`[messageHandler] Started at ${new Date(startTime).toISOString()} for message: ${originalMsg.content}`);
+    logger.debug(`[messageHandler] Started at ${new Date(startTime).toISOString()} for message ID: ${originalMsg?.id || 'unknown'}`);
 
-    // Validate message object structure and necessary methods
-    if (typeof originalMsg !== 'object' || !originalMsg.getChannelId || !originalMsg.content) {
-        logger.error('[messageHandler] Invalid or incomplete message object received.');
+    // Check if the message object is properly structured with necessary data
+    if (!originalMsg || typeof originalMsg !== 'object' || !originalMsg.content || !originalMsg.getChannelId) {
+        logger.error('[messageHandler] Invalid or incomplete message object received:', { originalMsg });
+        return;
+    }
+
+    // Check if the message content is empty or the message is not intended to be processed
+    if (!originalMsg.content.trim()) {
+        logger.info("[messageHandler] Received an empty or whitespace-only message; no processing needed.");
         return;
     }
 
@@ -40,20 +46,17 @@ async function messageHandler(originalMsg, historyMessages = []) {
         const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, channelId, historyMessages);
         logger.debug(`[messageHandler] Request body prepared: ${JSON.stringify(requestBody, null, 2)}`);
 
-        // Additional debug before sending to log key request body elements
-        logger.debug(`[messageHandler] Sending request with content: ${requestBody.messages.map(m => m.content).join(', ')}`);
-
         const llmResponse = await llmManager.sendRequest(requestBody);
         let responseContent = llmResponse.getContent();
 
-        // Check if responseContent is a string before trying to log part of it
-        if (typeof responseContent === 'string' && responseContent.trim() !== '') {
-            logger.debug(`[messageHandler] Response from LLM received: ${responseContent.substring(0, 50)}...`);
-        } else {
-            logger.error(`[messageHandler] Response from LLM received (non-string or empty): ${JSON.stringify(responseContent, null, 2)}`);
+        // Validate the response content
+        if (typeof responseContent !== 'string' || !responseContent.trim()) {
+            logger.error(`[messageHandler] Invalid response content received: ${JSON.stringify(responseContent)}`);
             return;
         }
 
+        logger.debug(`[messageHandler] Response from LLM received: ${responseContent.substring(0, 50)}...`);
+        
         if (responseContent.length > 100) {
             logger.info("[messageHandler] Message exceeds 100 characters. Summarizing.");
             responseContent = await summarizeMessage(responseContent);
@@ -64,12 +67,12 @@ async function messageHandler(originalMsg, historyMessages = []) {
 
         if (constants.FOLLOW_UP_ENABLED) {
             logger.info("[messageHandler] Follow-up is enabled. Processing follow-up message.");
-            const topic = originalMsg.channel.topic || "General Discussion";  // Dynamically determine or use a fallback
+            const topic = originalMsg.channel.topic || "General Discussion";  // Use a fallback if no topic is set
             await sendFollowUp(originalMsg, topic);
         }
 
     } catch (error) {
-        logger.error(`[messageHandler] An error occurred: ${error.message}`, { originalMsg, error });
+        logger.error(`[messageHandler] An error occurred: ${error.message}`, { errorDetail: error, originalMsg });
         // Handle specific errors if necessary (e.g., API limits exceeded, network issues)
     } finally {
         const processingTime = Date.now() - startTime;

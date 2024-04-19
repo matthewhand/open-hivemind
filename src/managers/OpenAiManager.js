@@ -93,14 +93,6 @@ class OpenAiManager {
 
         return requestBody;
     }
-
-    /**
-     * Sends a request to the OpenAI API and handles the response.
-     * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
-     *
-     * @param {Object} requestBody - The fully formed request body to send to the API.
-     * @returns {LLMResponse} - An object containing the response data or an error message.
-     */
 /**
  * Sends a request to the OpenAI API and handles the response.
  * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
@@ -109,7 +101,7 @@ class OpenAiManager {
  * @returns {LLMResponse} - An object containing the response data or an error message.
  */
 async sendRequest(requestBody) {
-    logger.debug(`Sending request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
+    logger.debug(`Preparing to send request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
 
     // Check if the OpenAI API client instance is ready
     if (!this.openai || typeof this.openai.completions.create !== 'function') {
@@ -125,6 +117,16 @@ async sendRequest(requestBody) {
     this.busy = true;
 
     try {
+        // Ensuring requestBody is not a Promise and is properly formed
+        if (typeof requestBody !== 'object' || requestBody instanceof Promise) {
+            logger.error('Invalid request body: Expected a fully-resolved object.');
+            this.busy = false;
+            return new LLMResponse("", "error");
+        }
+
+        // Debugging final requestBody to be sent
+        logger.debug(`Sending request to OpenAI with fully formed body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
+
         const response = await this.openai.completions.create(requestBody);
         logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
 
@@ -148,7 +150,7 @@ async sendRequest(requestBody) {
     } catch (error) {
         handleError(error);
         this.busy = false;
-        logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error });
+        logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error, requestBody });
         return new LLMResponse("", "error");
     } finally {
         this.busy = false;
