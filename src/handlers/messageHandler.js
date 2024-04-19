@@ -1,4 +1,5 @@
 // Import necessary modules and managers
+const commandHandler = require('../handlers/commandHandler');
 const DiscordManager = require('../managers/DiscordManager');
 const LLMInterface = require('../interfaces/LLMInterface');
 const MessageResponseManager = require('../managers/MessageResponseManager');
@@ -27,6 +28,12 @@ async function messageHandler(originalMsg, historyMessages = []) {
     if (!originalMsg.content.trim()) {
         logger.info("[messageHandler] Received an empty or whitespace-only message; no processing needed.");
         return;
+    }
+
+    // Use commandHandler to process potential commands
+    if (await commandHandler.processCommand(originalMsg)) {
+        logger.debug("[messageHandler] Processed as command.");
+        return;  // If processed as command, no further action needed
     }
 
     if (!MessageResponseManager.getInstance().shouldReplyToMessage(originalMsg)) {
