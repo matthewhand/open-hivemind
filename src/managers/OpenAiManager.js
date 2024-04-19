@@ -155,7 +155,7 @@ class OpenAiManager {
      * @param {number} [maxTokens=150] Max number of tokens to generate.
      * @returns {Promise<LLMResponse>} The summarized text wrapped in a response object.
      */
-     async summarizeText(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
+     async summarizeText(userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         this.busy = true;
         try {
             const response = await summarize(this.openai, userMessage, systemMessageContent, maxTokens);
