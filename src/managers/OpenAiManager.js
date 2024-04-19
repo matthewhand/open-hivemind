@@ -28,7 +28,6 @@ class OpenAiManager {
         return OpenAiManager.instance;
     }
 
-
     /**
      * Constructs the request body for the OpenAI API call based on the history of messages and the system message content.
      * @param {IMessage[]} historyMessages - Array of historical IMessage instances for context.

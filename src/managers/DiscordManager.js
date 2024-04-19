@@ -143,6 +143,10 @@ class DiscordManager {
         return this.typingTimestamps.get(channelId) || Date.now();
     }
 
+    getLastMessageTimestamp(channelId) {
+        return this.messageTimestamps.get(channelId) || 0; // Retrieve the last message timestamp, or 0 if none exists
+    }
+
     /**
      * Signals that the bot is typing in a specific channel. This visual cue can make interactions
      * feel more dynamic and responsive.

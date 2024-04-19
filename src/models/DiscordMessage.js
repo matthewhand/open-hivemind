@@ -103,6 +103,7 @@ class DiscordMessage extends IMessage {
         const isReplyToBot = this.repliedMessage && this.repliedMessage.authorId === constants.CLIENT_ID;
         return !!this.message.reference && isReplyToBot;
     }
+    
 }
 
 module.exports = DiscordMessage;
