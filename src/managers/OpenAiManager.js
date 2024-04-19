@@ -44,8 +44,8 @@ class OpenAiManager {
             content: systemMessageContent,
         }];
 
+        // This will hold the last role that was added to the messages array
         let lastRole = 'system';
-        let accumulatedContent = '';
 
         historyMessages.forEach((message) => {
             if (!(message instanceof IMessage)) {
@@ -54,38 +54,26 @@ class OpenAiManager {
 
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
 
+            // Only add a new message object when the role changes
             if (lastRole !== currentRole) {
-                if (accumulatedContent) {
+                // Add accumulated content as a new message if there's any content present
+                if (message.getText().trim()) {
                     messages.push({
-                        role: lastRole,
-                        content: accumulatedContent.trim(),
+                        role: currentRole,
+                        content: message.getText().trim()
                     });
-                    accumulatedContent = '';
                 }
-                lastRole = currentRole;
+                lastRole = currentRole; // Update the lastRole to the current role
+            } else {
+                // If the role didn't change, append the text to the last message object
+                messages[messages.length - 1].content += `\n${message.getText().trim()}`;
             }
-
-            accumulatedContent += `${accumulatedContent ? '\n' : ''}${message.getText()}`;
         });
-
-        if (accumulatedContent) {
-            messages.push({
-                role: lastRole,
-                content: accumulatedContent.trim(),
-            });
-        }
-
-        if (lastRole === 'assistant') {
-            messages.push({
-                role: 'user',
-                content: '...',
-            });
-        }
 
         const requestBody = {
             model: constants.LLM_MODEL,
             max_tokens: parseInt(maxTokens, 10),
-            messages,
+            messages
         };
 
         logger.info('Request body for OpenAI API call built successfully.');
@@ -93,6 +81,7 @@ class OpenAiManager {
 
         return requestBody;
     }
+    
 /**
  * Sends a request to the OpenAI API and handles the response.
  * Ensures that the OpenAI client is properly instantiated and manages the busy state to avoid concurrent modifications.
