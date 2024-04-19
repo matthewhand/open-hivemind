@@ -18,9 +18,10 @@ async function sendResponse(messageContent, channelId, startTime) {
     const maxPartLength = 2000; // Discord's max message length limit
     logger.debug(`[sendResponse] Starting to send response to channel ${channelId}. Initial content length: ${messageContent.length}`);
 
-    // Calculate initial delay based on recent channel activity to avoid rate limits
-    const initialDelay = getInitialDelay(channelId);
-    logger.debug(`[sendResponse] Initial delay set to ${initialDelay}ms based on channel activity.`);
+    // Calculate initial delay based on the length of the message to simulate typing speed
+    const typingSpeedPerChar = 100; // milliseconds per character
+    const initialDelay = Math.min(messageContent.length / 10 * typingSpeedPerChar, constants.MAX_INITIAL_DELAY);
+    logger.debug(`[sendResponse] Initial typing delay set to ${initialDelay}ms based on message length.`);
 
     await new Promise(resolve => setTimeout(resolve, initialDelay));
 
@@ -31,7 +32,6 @@ async function sendResponse(messageContent, channelId, startTime) {
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) { // Apply inter-part delay for all but the first part to respect rate limits
                 await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
-                logger.debug(`[sendResponse] Inter-part delay of ${constants.INTER_PART_DELAY}ms applied.`);
             }
             await sendMessagePart(parts[i], channelId);
             logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length}.`);
