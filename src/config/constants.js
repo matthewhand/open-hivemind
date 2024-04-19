@@ -16,7 +16,6 @@ module.exports = {
     LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Contribute to the provided message history.',
     LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise your previous response when instructed.',
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.7'),
-    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '69', 10),
 
     // Advanced LLM parameters
     LLM_MAX_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
@@ -25,7 +24,8 @@ module.exports = {
     LLM_PRESENCE_PENALTY: parseFloat(process.env.LLM_PRESENCE_PENALTY || '0.05'),
 
     // Message handling specifics
-    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '150', 10),
+    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '69', 10), // deprecated?
+    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '69', 10),
     LLM_MESSAGE_LIMIT_PER_HOUR: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '100', 10),
     LLM_MESSAGE_LIMIT_PER_DAY: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000', 10),
 
