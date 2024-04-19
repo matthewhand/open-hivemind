@@ -15,35 +15,35 @@ const constants = require('../config/constants');
  * @param {number} startTime - The timestamp when the message processing started, used to calculate total processing time.
  */
 async function sendResponse(messageContent, channelId, startTime) {
-    const maxPartLength = 2000; // Discord's max message length limit
+    const maxPartLength = 2000;  // Discord's max message length limit
+    const randomSplit = Math.random() < 0.5;  // 50% chance to split randomly
     logger.debug(`[sendResponse] Starting to send response to channel ${channelId}. Initial content length: ${messageContent.length}`);
 
     // Calculate initial delay based on the length of the message to simulate typing speed
     const typingSpeedPerChar = 100; // milliseconds per character
     const initialDelay = Math.min(messageContent.length / 10 * typingSpeedPerChar, constants.MAX_INITIAL_DELAY);
-    logger.debug(`[sendResponse] Initial typing delay set to ${initialDelay}ms based on message length.`);
-
     await new Promise(resolve => setTimeout(resolve, initialDelay));
 
-    if (messageContent.length > maxPartLength) {
-        const parts = splitMessageContent(messageContent, maxPartLength);
-        logger.debug(`[sendResponse] Message split into ${parts.length} parts due to length exceeding ${maxPartLength} characters.`);
+    let parts = [messageContent];
 
-        for (let i = 0; i < parts.length; i++) {
-            if (i > 0) { // Apply inter-part delay for all but the first part to respect rate limits
-                await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
-            }
-            await sendMessagePart(parts[i], channelId);
-            logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length}.`);
+    // Decide whether to split the message
+    if (messageContent.length > maxPartLength || randomSplit) {
+        parts = splitMessageContent(messageContent, maxPartLength);
+        logger.debug(`[sendResponse] Message split into ${parts.length} parts due to length exceeding ${maxPartLength} characters or random split condition.`);
+    }
+
+    for (let i = 0; i < parts.length; i++) {
+        if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));  // Delay for each part after the first
         }
-    } else {
-        await sendMessagePart(messageContent, channelId);
-        logger.debug(`[sendResponse] Single-part message sent.`);
+        await sendMessagePart(parts[i], channelId);
+        logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length}.`);
     }
 
     const processingTime = Date.now() - startTime;
-    logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms. Elapsed time since start: ${Date.now() - startTime}ms.`);
+    logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms.`);
 }
+
 
 /**
  * Splits message content into parts based on natural breakpoints or the maximum message length allowable by Discord.
@@ -55,19 +55,34 @@ async function sendResponse(messageContent, channelId, startTime) {
  */
 function splitMessageContent(messageContent, maxPartLength) {
     const parts = [];
+    const totalLength = messageContent.length;
     let currentPart = '';
+    let partLength = Math.ceil(totalLength / 3);  // Calculate optimal part length to aim for three parts
+
+    // Adjust partLength if calculated optimal length exceeds maxPartLength
+    partLength = Math.min(partLength, maxPartLength);
 
     // Split the message by natural linguistic breakpoints (new lines, periods, question marks, exclamation marks)
-    messageContent.split(/(\n|\. |\? |! )/).forEach(segment => {
+    const segments = messageContent.split(/(\n|\. |\? |! )/);
+
+    // Concatenate segments into parts, trying not to exceed the calculated partLength
+    segments.forEach(segment => {
         if (segment === '') return; // Skip empty segments which can occur with split regex capturing groups
 
-        // Check if adding this segment would exceed the max part length
-        if (currentPart.length + segment.length > maxPartLength) {
-            parts.push(currentPart); // Push the current part to the list
-            currentPart = ''; // Reset current part
+        if (currentPart.length + segment.length > partLength && parts.length < 2) {
+            // Ensure we only push if under the limit of 3 parts
+            parts.push(currentPart);
+            currentPart = '';
         }
 
-        currentPart += segment; // Add segment to current part
+        currentPart += segment;
+
+        // If reaching the capacity of parts (3 parts), push all remaining content in the current part
+        if (parts.length == 2 && currentPart.length + segment.length > partLength) {
+            parts.push(currentPart);
+            currentPart = messageContent.substring(parts.join('').length);  // All remaining content goes to the last part
+            return;
+        }
     });
 
     // Push the last part if there's any leftover content not yet added
@@ -75,9 +90,9 @@ function splitMessageContent(messageContent, maxPartLength) {
         parts.push(currentPart);
     }
 
-    // Filter out any empty parts just in case (though there shouldn't be any)
-    return parts.filter(part => part.length > 0);
+    return parts.filter(part => part.length > 0);  // Filter out any empty parts just in case
 }
+
 
 /**
  * Sends a single part of a message to the specified channel.
