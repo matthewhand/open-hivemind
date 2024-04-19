@@ -21,7 +21,7 @@ async function sendResponse(messageContent, channelId, startTime) {
 
     // Calculate initial delay based on the length of the message to simulate typing speed
     const typingSpeedPerChar = 1000; // milliseconds per character
-    const initialDelay = Math.min(messageContent.length / 10 * typingSpeedPerChar, constants.MAX_INITIAL_DELAY);
+    const initialDelay = Math.min(messageContent.length / 10 * typingSpeedPerChar, constants.BOT_TYPING_DELAY_MAX_MS);
     await new Promise(resolve => setTimeout(resolve, initialDelay));
 
     let parts = [messageContent];

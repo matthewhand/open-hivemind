@@ -31,6 +31,6 @@ module.exports = {
 
     // Typing delay simulation
     BOT_TYPING_DELAY_MIN_MS: parseInt(process.env.BOT_TYPING_DELAY_MIN_MS || '1000', 10),
-    BOT_TYPING_DELAY_MAX_MS: parseInt(process.env.BOT_TYPING_DELAY_MAX_MS || '5000', 10),
+    BOT_TYPING_DELAY_MAX_MS: parseInt(process.env.BOT_TYPING_DELAY_MAX_MS || '15000', 10),
     INTER_PART_DELAY: parseInt(process.env.BOT_TYPING_DELAY_MAX_MS || '3000', 10),
 };
