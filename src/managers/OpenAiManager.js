@@ -82,11 +82,11 @@ class OpenAiManager {
 
     finalizeMessageList(messages) {
         if (messages.length > 1 && messages[1].role === 'assistant') {
-            messages.splice(1, 0, { role: 'user', content: 'User is typing...' });  // More semantic padding
+            messages.splice(1, 0, { role: 'user', content: '...' });  // More semantic padding
         }
 
         if (messages[messages.length - 1].role !== 'user') {
-            messages.push({ role: 'user', content: 'Please wait...' });  // Ensure it ends with a user message
+            messages.push({ role: 'user', content: '...' });  // Ensure it ends with a user message
         }
     }
 
