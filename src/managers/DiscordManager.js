@@ -29,6 +29,8 @@ class DiscordManager {
         });
         this.initialize();
         DiscordManager.instance = this;
+
+        this.messageTimestamps = new Map();
     }
 
     /**
@@ -120,6 +122,7 @@ class DiscordManager {
      * @returns {Promise<void>}
      */
     async sendResponse(channelId, messageText) {
+        this.logMessageTimestamp(channelId);
         await discordUtils.sendResponse(this.client, channelId, messageText);
     }
 
@@ -145,6 +148,14 @@ class DiscordManager {
 
     getLastMessageTimestamp(channelId) {
         return this.messageTimestamps.get(channelId) || 0; // Retrieve the last message timestamp, or 0 if none exists
+    }
+
+    /**
+     * Records the timestamp of a sent message.
+     * @param {string} channelId - The ID of the channel where the message was sent.
+     */
+    logMessageTimestamp(channelId) {
+        this.messageTimestamps.set(channelId, Date.now());
     }
 
     /**
