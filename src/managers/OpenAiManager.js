@@ -91,12 +91,12 @@ class OpenAiManager {
     finalizeMessageList(messages) {
         if (messages.length > 1 && messages[1].role === 'assistant') {
             const randomEmoji = OpenAiManager.emojis[Math.floor(Math.random() * OpenAiManager.emojis.length)];
-            messages.splice(1, 0, { role: 'user', content: `...${randomEmoji}` });  // Insert an engaging emoji pad
+            messages.splice(1, 0, { role: 'user', content: `...` });  // Insert ellippses 
         }
 
         if (messages[messages.length - 1].role !== 'user') {
             const randomEmoji = OpenAiManager.emojis[Math.floor(Math.random() * OpenAiManager.emojis.length)];
-            messages.push({ role: 'user', content: `...${randomEmoji}` });  // Ensure it ends with a user message with an emoji
+            messages.push({ role: 'user', content: `${randomEmoji}` });  // Ensure it ends with a user message with an emoji
         }
     }
 
