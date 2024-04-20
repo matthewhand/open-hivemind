@@ -24,7 +24,7 @@ class DiscordMessage extends IMessage {
             throw new Error('Message parameter is required');
         }
     
-        logger.debug(`DiscordMessage constructor: Initializing with message ID: ${message.id}`);
+        // logger.debug(`DiscordMessage constructor: Initializing with message ID: ${message.id}`);
     
         this.message = message;
         this.repliedMessage = repliedMessage;
