@@ -1,67 +1,53 @@
-const Command = require('../../utils/Command');
+const axios = require('axios');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
-const OpenAiManager = require('../../managers/OpenAiManager').getInstance();
 
-class OaiCommand extends Command {
+/**
+ * Command to interact with the OpenAI API for generating text responses.
+ * Usage: !oai <prompt>
+ */
+class OAICommand extends ICommand {
     constructor() {
-        super('oai', 'Interact with OpenAI models. Usage: !oai:[model] [query]. Defaults to gpt-3.5-turbo if no model specified.');
+        super();
+        this.name = 'oai';
+        this.description = 'Interacts with the OpenAI API to generate responses.';
     }
 
-    async execute(message, args) {
-        if (!args || args.trim() === '') {
-            logger.warn('[oai] No arguments provided to oai command.');
-            await message.reply('Error: No arguments provided.');
-            return;
-        }
-
-        // Splitting arguments and establishing a default model
-        const defaultModel = 'gpt-3.5-turbo';
-        const parts = args.split(' ');
-        let model = defaultModel, query;
-
-        // If the first part of the command contains a model specifier (indicated by a colon)
-        if (parts[0].includes(':')) {
-            [model, ...parts] = parts[0].split(':');
-            query = parts.join(' ') + ' ' + parts.slice(1).join(' ');
-        } else {
-            query = parts.join(' ');
-        }
+    /**
+     * Executes the OAI command using the provided message context and arguments.
+     * @param {Object} message - The Discord message object that triggered the command.
+     * @param {string[]} args - The arguments provided with the command.
+     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     */
+    async execute(args) {
+        const message = args.message;
+        const prompt = args.join(' ');  // Combining all arguments to form the prompt
+        logger.info(`OAICommand: Generating response for prompt: ${prompt}`);
 
         try {
-            const requestBody = OpenAiManager.buildRequestBody({
-                model: model || defaultModel, // Use specified model or default
-                messages: [{
-                    isFromBot: () => false, // Simulate a user message
-                    getText: () => query.trim()
-                }],
-                context: `You are a helpful assistant talking to ${message.author.username}.`,
+            const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
+                prompt: prompt,
+                max_tokens: 150
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                }
             });
 
-            const data = await OpenAiManager.sendRequest(requestBody);
-            const responseContent = this.processResponse(data);
-            await message.reply(responseContent);
+            if (response.data.choices && response.data.choices.length > 0) {
+                const generatedText = response.data.choices[0].text.trim();
+                logger.info(`OAICommand: Response generated successfully`);
+                return { success: true, message: generatedText };
+            } else {
+                logger.warn('OAICommand: No response generated.');
+                return { success: false, message: 'Failed to generate response.' };
+            }
         } catch (error) {
-            logger.error(`[oai] Error executing command: ${error.message}`, error);
-            await message.reply(getRandomErrorMessage());
+            logger.error(`OAICommand execute error: ${error}`);
+            return { success: false, message: getRandomErrorMessage(), error: error.toString() };
         }
-    }
-    
-    processResponse(data) {
-        if (!data || !data.choices || data.choices.length === 0 || !data.choices[0].message || !data.choices[0].message.content) {
-            logger.warn('[oai] Inadequate response data from the server.');
-            return 'No meaningful response from the server.';
-        }
-
-        const content = data.choices[0].message.content.trim().replace(/^<@\w+>: /, '');
-
-        if (content === '') {
-            logger.warn('[oai] Response content is empty after processing.');
-            return 'No meaningful response from the server.';
-        }
-
-        return content;
     }
 }
 
-module.exports = new OaiCommand();
+module.exports = OAICommand;  // Correct: Exports the class for dynamic instantiation

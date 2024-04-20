@@ -1,51 +1,46 @@
-const Command = require('../../utils/Command');
-const commandHandlers = require('.'); // Import all command handlers from the current directory (commands/index.js)
+const ICommand = require('../../interfaces/ICommand');
+const commandHandlers = require('.'); // This imports all command handlers from the current directory
 const { aliases } = require('../../config/aliases');
 const logger = require('../../utils/logger');
-const { getRandomErrorMessage } = require('../../config/errorMessages');
 
-class HelpCommand extends Command {
+/**
+ * Class representing the 'help' command.
+ * @class HelpCommand
+ * @extends ICommand
+ */
+class HelpCommand extends ICommand {
+    /**
+     * Constructs the help command object.
+     */
     constructor() {
-        super('help', 'Displays help message. Usage: !help [command]');
-        this.help = 'The !help command displays a list of available commands and their descriptions. ' +
-                    'You can also use it to get detailed help for a specific command by typing !help [command].';
+        super();
+        this.name = 'help';
+        this.description = 'Displays help message. Usage: !help [command]';
     }
 
-    async execute(message, args=null, action=null) {
-        try {
-            let helpMessage = this.help + '\n\n';
+    /**
+     * Executes the help command and returns a structured response.
+     * @param {string[]} args - Arguments provided to the help command.
+     * @returns {Promise<CommandResponse>} The result of the command execution.
+     */
+    async execute(args) {
+        logger.debug('Executing help command with args:', args);
+        let helpMessage = this.description + '\n\nAvailable commands:\n';
 
-            if (args && args.trim()) {
-                const commandName = args.trim().split(' ')[0]; // Get the first word as command name
-                const command = commandHandlers[commandName];
+        Object.entries(commandHandlers).forEach(([commandName, commandInstance]) => {
+            helpMessage += `- !${commandName}: ${commandInstance.description}\n`;
+            logger.debug(`Added ${commandName} to help message.`);
+        });
 
-                if (command && command.description) {
-                    helpMessage = `Help for !${commandName}: ${command.description}`;
-                } else {
-                    helpMessage = `Detailed help for the command '!${commandName}' is pending.`;
-                }
-            } else {
-                helpMessage += 'Available commands:\n';
+        helpMessage += '\nCommand Aliases:\n';
+        Object.entries(aliases).forEach(([alias, realCommand]) => {
+            helpMessage += `- !${alias} translates to !${realCommand}\n`;
+            logger.debug(`Added alias ${alias} for ${realCommand} to help message.`);
+        });
 
-                for (const [commandName, commandInstance] of Object.entries(commandHandlers)) {
-                    if (commandInstance.description) {
-                        helpMessage += `- !${commandName}: ${commandInstance.description}\n`;
-                    }
-                }
-
-                helpMessage += '\nCommand Aliases:\n';
-                for (const [alias, commandName] of Object.entries(aliases)) {
-                    helpMessage += `- !${alias}: Translates to !${commandName}\n`;
-                }
-            }
-
-            message.reply(helpMessage);
-            logger.info('Help command executed successfully.');
-        } catch (error) {
-            logger.error(`Error in HelpCommand execute: ${error}`);
-            message.reply(getRandomErrorMessage());
-        }
+        logger.info('Help command executed successfully.');
+        return { success: true, message: helpMessage };
     }
 }
 
-module.exports = new HelpCommand();
+module.exports = HelpCommand;  // Export the class for instantiation by CommandManager

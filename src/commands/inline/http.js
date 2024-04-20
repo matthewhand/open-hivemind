@@ -1,66 +1,33 @@
-const axios = require('axios');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
-const Command = require('../../utils/Command');
-const { getRandomErrorMessage } = require('../../config/errorMessages');
 
-class HttpCommand extends Command {
+/**
+ * Executes HTTP requests.
+ * Usage: !http <url>
+ */
+class HTTPCommand extends ICommand {
     constructor() {
-        super('http', 'Executes HTTP commands. Usage: !http [action] [query]');
-        // Safely parse HTTP_ACTIONS, defaulting to an empty array if it's not set
-        this.httpActions = process.env.HTTP_ACTIONS ? process.env.HTTP_ACTIONS.split(',') : [];
-        this.httpUrls = this.httpActions.reduce((acc, action) => {
-            const url = process.env[`HTTP_${action.toUpperCase()}_URL`];
-            if (url) {
-                acc[action] = url;
-            }
-            return acc;
-        }, {});
+        super();
+        this.name = 'http';  // Command name is same as the filename "http.js" minus ".js"
+        this.description = 'Executes HTTP requests. Usage: !http <url>';
     }
 
-    async execute(message, args=null, action=null) {
+    async execute(args) {
+        if (args.length === 0) {
+            logger.error('HTTPCommand: No URL provided');
+            return { success: false, message: "Please provide a URL." };
+        }
+        const url = args[0];
         try {
-            if (this.httpActions.length === 0) {
-                message.reply('No HTTP actions are currently available.');
-                return;
-            }
-
-            if (!args) {
-                const availableActions = this.httpActions.join(', ');
-                message.reply(`Available actions: ${availableActions}`);
-                return;
-            }
-
-            const [action, ...queryParts] = args.split(' ');
-            const query = queryParts.join(' ');
-            const url = this.httpUrls[action];
-
-            if (!url) {
-                logger.error(`Unknown action: ${action}`);
-                message.reply(`Unknown action: ${action}`);
-                return;
-            }
-
-            if (!query) {
-                message.reply(`Please provide a query for the action: ${action}.`);
-                return;
-            }
-
-            const fullUrl = `${url}${encodeURIComponent(query)}`;
-            logger.debug(`Sending request to: ${fullUrl}`);
-
-            const response = await axios.get(fullUrl);
-            if (response.status === 200 && response.data) {
-                const responseText = JSON.stringify(response.data); // Adjust if the response format is different
-                message.reply(`Response from ${action}: ${responseText}`);
-            } else {
-                logger.error(`Error from ${action} API: Status ${response.status}`);
-                message.reply(`An error occurred while processing your request to ${action}.`);
-            }
+            const response = await fetch(url);  // Assuming 'fetch' is available
+            const data = await response.json();
+            logger.info(`HTTPCommand: Successfully fetched data from ${url}`);
+            return { success: true, message: "Data fetched successfully", data };
         } catch (error) {
-            logger.error(`Error in execute (HTTP Command): ${error}`);
-            message.reply(getRandomErrorMessage());
+            logger.error(`HTTPCommand: Error fetching data from ${url} - ${error}`);
+            return { success: false, message: "Failed to fetch data", error: error.message };
         }
     }
 }
 
-module.exports = new HttpCommand();
+module.exports = HTTPCommand;

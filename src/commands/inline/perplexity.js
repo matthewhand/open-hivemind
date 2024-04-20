@@ -1,19 +1,30 @@
-// commands/perplexity.js
 const axios = require('axios');
-const Command = require('../../utils/Command');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 
-class PerplexityCommand extends Command {
+/**
+ * Command to search online using perplexity.ai for the provided text.
+ * Usage: !perplexity <text>
+ */
+class PerplexityCommand extends ICommand {
     constructor() {
-        super('perplexity', 'Searches online using perplexity.ai for the provided text. Usage: !perplexity [text]');
+        super();
+        this.name = 'perplexity';
+        this.description = 'Searches online using perplexity.ai for the provided text. Usage: !perplexity [text]';
     }
 
-    async execute(message, args=null, action=null) {
+    /**
+     * Executes the Perplexity command using provided arguments and context.
+     * @param {Object} args - The arguments and context for the command.
+     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     */
+    async execute(args) {
+        const message = args.message;
+        const query = args.join(' ');  // Assuming args is an array of words
 
-        if (!args) {
-            logger.warn('No query provided for Perplexity.');
-            message.reply('Please provide a query for Perplexity.');
-            return;
+        if (!query) {
+            logger.warn('PerplexityCommand: No query provided for Perplexity.');
+            return { success: false, message: 'Please provide a query for Perplexity.' };
         }
 
         try {
@@ -23,28 +34,28 @@ class PerplexityCommand extends Command {
                 messages.push({ role: 'system', content: process.env.PERPLEXITY_SYSTEM_PROMPT });
             }
 
-            messages.push({ role: 'user', content: args });
+            messages.push({ role: 'user', content: query });
 
-            logger.debug(`Sending Perplexity request with messages: ${JSON.stringify(messages)}`);
+            logger.debug(`PerplexityCommand: Sending request with messages: ${JSON.stringify(messages)}`);
             const perplexityResponse = await axios.post(
                 process.env.PERPLEXITY_URL,
                 { model: process.env.PERPLEXITY_MODEL || 'mistral-7b-instruct', messages },
                 { headers: { 'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}` } }
             );
 
-            if (perplexityResponse.status === 200) {
+            if (perplexityResponse.status === 200 && perplexityResponse.data.choices && perplexityResponse.data.choices.length > 0) {
                 const assistantMessage = perplexityResponse.data.choices[0].message.content;
-                logger.info('Received Perplexity response successfully.');
-                message.reply(`Perplexity response: ${assistantMessage}`);
+                logger.info('PerplexityCommand: Received response successfully.');
+                return { success: true, message: `Perplexity response: ${assistantMessage}` };
             } else {
-                logger.error(`Error from Perplexity API: Status ${perplexityResponse.status}`);
-                message.reply('An error occurred while processing your Perplexity request.');
+                logger.error(`PerplexityCommand: Error from API: Status ${perplexityResponse.status}`);
+                return { success: false, message: 'An error occurred while processing your Perplexity request.' };
             }
         } catch (error) {
-            logger.error(`Error in execute function of Perplexity request: ${error.message}`);
-            message.reply('An error occurred while processing your Perplexity request.');
+            logger.error(`PerplexityCommand: Execute error: ${error.message}`);
+            return { success: false, message: 'An error occurred while processing your Perplexity request.', error: error.toString() };
         }
     }
 }
 
-module.exports = new PerplexityCommand();
+module.exports = PerplexityCommand;  // Correct: Exports the class for dynamic instantiation

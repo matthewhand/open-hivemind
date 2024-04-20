@@ -1,45 +1,52 @@
 const axios = require('axios');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
-const Command = require('../../utils/Command');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
 
-class MemGPTCommand extends Command {
+/**
+ * Command to interact with the MemGPT service.
+ * Usage: !memgpt <action> <message>
+ */
+class MemGPTCommand extends ICommand {
     constructor() {
-        super('memgpt', 'Interacts with the MemGPT service.');
+        super();
+        this.name = 'memgpt';
+        this.description = 'Interacts with the MemGPT service to send and receive messages.';
     }
 
-    async execute(message, args=null, action=null) {
-        try {
-            const agentId = action;
-            const messageContent = args;
+    /**
+     * Executes the MemGPT command using the provided message context and arguments.
+     * @param {Object} message - The Discord message object that triggered the command.
+     * @param {string[]} args - The arguments provided with the command.
+     * @param {string} action - Specific action to be taken (usually part of args in practical usage).
+     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     */
+    async execute(args) {
+        const message = args.message;
+        const action = args.action; // Assuming 'action' is separately parsed if needed
+        const messageContent = args.join(' '); // Joining all arguments to form the message content
 
+        try {
             const requestUrl = `${process.env.MEMGPT_ENDPOINT_URL}/api/agents/message`;
             const userId = process.env.MEMGPT_USER_ID;
             const memGptApiKey = process.env.MEMGPT_API_KEY;
-            const headers = {};
-
-            if (memGptApiKey) {
-                headers['Authorization'] = `Bearer ${memGptApiKey}`;
-            } else {
-                logger.warn('MEMGPT_API_KEY is not defined. Proceeding without Authorization header.');
-            }
+            const headers = memGptApiKey ? { 'Authorization': `Bearer ${memGptApiKey}` } : {};
 
             const response = await axios.post(requestUrl, {
-                agent_id: agentId,
+                agent_id: action,
                 user_id: userId,
                 message: messageContent
             }, { headers });
 
-            logger.debug('Request sent to MemGPT:', { agentId, userId, message: messageContent });
-            logger.debug('Response received from MemGPT:', response.data);
+            logger.debug(`MemGPTCommand: Request sent to MemGPT for agent ${action} with message: ${messageContent}`);
+            logger.debug(`MemGPTCommand: Response received from MemGPT with data: ${response.data}`);
 
-            // Send the response back to the Discord channel
-            message.channel.send(response.data); // Modify this line based on how you want to format the response
+            return { success: true, message: response.data };
         } catch (error) {
-            logger.error('Error in MemGPTCommand execute:', error);
-            message.channel.send(getRandomErrorMessage());
+            logger.error(`MemGPTCommand execute error: ${error}`);
+            return { success: false, message: getRandomErrorMessage(), error: error.toString() };
         }
     }
 }
 
-module.exports = new MemGPTCommand();
+module.exports = MemGPTCommand;  // Correctly exporting the class

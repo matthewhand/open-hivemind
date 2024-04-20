@@ -1,0 +1,58 @@
+const CommandManager = require('@/managers/CommandManager');
+
+// Simulating a Discord-like message object
+class MessageMock {
+    constructor(content) {
+        this.content = content;
+        this.channel = { send: jest.fn() };
+        this.author = { id: "user123" };
+    }
+
+    reply(text) {
+        return this.channel.send(text);
+    }
+}
+
+describe('CommandManager', () => {
+    let commandManager;
+
+    beforeEach(() => {
+        commandManager = new CommandManager();
+    });
+
+    test('should correctly extract command name from message', () => {
+        const mockMessage = new MessageMock('!help');
+        const result = commandManager.parseCommand(mockMessage.content);
+        expect(result.success).toBeTruthy();
+        expect(result.commandName).toEqual('help');
+        expect(result.args).toEqual([]);
+    });
+
+    test('should correctly handle command with arguments', () => {
+        const mockMessage = new MessageMock('!ban user123');
+        const result = commandManager.parseCommand(mockMessage.content);
+        expect(result.success).toBeTruthy();
+        expect(result.commandName).toEqual('ban');
+        expect(result.args).toEqual(['user123']);
+    });
+
+    test('should handle unrecognized command', () => {
+        const mockMessage = new MessageMock('!unknown');
+        const result = commandManager.parseCommand(mockMessage.content);
+        expect(result.success).toBeFalsy();
+        expect(result.message).toContain("not recognized");
+    });
+
+    test('should handle command execution with valid command', async () => {
+        const mockMessage = new MessageMock('!help');
+        const result = await commandManager.executeCommand('help', []);
+        expect(result).toHaveProperty('success', true);
+    });
+
+    test('should return error for command execution with invalid command', async () => {
+        const mockMessage = new MessageMock('!invalid');
+        const result = await commandManager.executeCommand('invalid', []);
+        expect(result).toHaveProperty('success', false);
+        expect(result).toHaveProperty('error', "Command implementation missing");
+    });
+});

@@ -1,13 +1,21 @@
-const Command = require('../../utils/Command');
+const axios = require('axios');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 const { MessageEmbed, MessageCollector } = require('discord.js');
 
-class ReportCommand extends Command {
+/**
+ * Command for users to report issues or rule violations.
+ * Usage: !report [text]
+ */
+class ReportCommand extends ICommand {
     constructor() {
-        super('report', 'User reports about issues or rule violations. Usage: !report');
+        super();
+        this.name = 'report';
+        this.description = 'User reports about issues or rule violations. Usage: !report [text]';
     }
 
-    async execute(message, args=null, action=null) {
+    async execute(args) {
+        const message = args.message;
         const filter = m => m.author.id === message.author.id;
         message.channel.send('Please describe the issue you are reporting within the next 30 seconds:');
 
@@ -16,17 +24,17 @@ class ReportCommand extends Command {
             const reportDescription = collected.first().content.toLowerCase();
 
             if (reportDescription.includes('spam') || reportDescription.includes('harassment')) {
-                this.initiateModeratorVote(message, reportDescription);
+                await this.initiateModeratorVote(message, reportDescription);
             } else {
                 message.channel.send('Thank you for the report. Our team will look into this matter.');
             }
         } catch (error) {
-            this.handleErrors(message, error);
+            await this.handleErrors(message, error);
         }
     }
 
     async initiateModeratorVote(message, reportDescription) {
-        const moderationTeamRole = message.guild.roles.cache.find(role => role.name === 'Moderation Team'); // Adjust the role name accordingly
+        const moderationTeamRole = message.guild.roles.cache.find(role => role.name === 'Moderation Team');
         const onlineModerators = moderationTeamRole.members.filter(member => member.presence.status === 'online');
     
         if (onlineModerators.size === 0) {
@@ -41,29 +49,21 @@ class ReportCommand extends Command {
             .setColor('ORANGE')
             .setTimestamp();
     
-        const moderatorChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-vote'); // Adjust the channel name accordingly
+        const moderatorChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-vote');
         const voteMessage = await moderatorChannel.send({ embeds: [embed] });
     
-        const voteCollector = new MessageCollector(moderatorChannel, {
-            time: 60000 // 1 minute voting duration
-        });
-    
+        const voteCollector = new MessageCollector(moderatorChannel, { time: 60000 }); // 1 minute voting duration
         voteCollector.on('collect', msg => {
             if (msg.content.toLowerCase() === '!agree' && onlineModerators.has(msg.author.id)) {
-                // Count the vote
-                // Implement the logic to count votes and make a decision
-                // For example, if all online moderators agree, take action
+                // Logic to count votes and make a decision
             }
         });
-    
         voteCollector.on('end', collected => {
-            // Check the voting result and take action accordingly
-            // For example, send a message to the channel with the decision
             moderatorChannel.send('Voting ended. Decision: ...'); // Replace with the actual decision
         });
     }
 
-    handleErrors(message, error) {
+    async handleErrors(message, error) {
         if (error.message === 'time') {
             message.channel.send('You did not provide any report details in time. Please try again.');
         } else {
@@ -73,4 +73,4 @@ class ReportCommand extends Command {
     }
 }
 
-module.exports = new ReportCommand();
+module.exports = ReportCommand;  // Correct: Exports the class for dynamic instantiation

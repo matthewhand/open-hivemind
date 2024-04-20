@@ -1,43 +1,41 @@
-const Command = require('../../utils/Command');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
-const { checkMutingEligibility, muteMember, parseDuration } = require('../../utils/mutingUtils');
 const { getRandomErrorMessage } = require('../../config/errorMessages');
 
-class MuteCommand extends Command {
+/**
+ * Command to mute a specified user in a Discord server.
+ * Usage: !mute @user
+ */
+class MuteCommand extends ICommand {
     constructor() {
-        super('mute', 'Mutes a user for a specified duration. Usage: !mute <userID> [duration]');
+        super();
+        this.name = 'mute';
+        this.description = 'Mutes a specified user.';
     }
 
-    async execute(message, args=null, action=null) {
-        try {
-            const args = message.content.split(' ').slice(1);
-            const userIdToMute = args[0];
-            const muteDuration = args[1] || '1h'; // Default duration of 1 hour
-
-            if (!userIdToMute) {
-                message.reply('Usage: !mute <userID> [duration]\nInitiates a process to mute a user for a specified duration.');
-                return;
-            }
-
-            if (!checkMutingEligibility(message.author.id)) {
-                message.reply('You are not eligible to initiate a mute.');
-                return;
-            }
-
-            const memberToMute = message.guild.members.cache.get(userIdToMute);
-            if (!memberToMute) {
-                message.reply('User not found.');
-                return;
-            }
-
-            const durationMs = parseDuration(muteDuration);
-            await muteMember(memberToMute, durationMs, `Muted by ${message.author.tag}`);
-            message.reply(`User <@${userIdToMute}> has been muted for ${muteDuration}.`);
-        } catch (error) {
-            logger.error(`Error in MuteCommand execute:`, error);
-            message.reply(getRandomErrorMessage());
+    /**
+     * Executes the mute command using the provided message context and arguments.
+     * @param {Object} message - The Discord message object that triggered the command.
+     * @param {string[]} args - The arguments provided with the command.
+     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     */
+    async execute(args) {
+        const message = args.message;
+        const targetUser = message.mentions.users.first();
+        if (!targetUser) {
+            return { success: false, message: "Please mention a user to mute." };
         }
+
+        const muteRole = message.guild.roles.cache.find(role => role.name === "Muted");
+        if (!muteRole) {
+            return { success: false, message: "Mute role not found on this server." };
+        }
+
+        const member = message.guild.members.cache.get(targetUser.id);
+        await member.roles.add(muteRole);
+        logger.info(`MuteCommand: ${targetUser.tag} has been muted.`);
+        return { success: true, message: `${targetUser.tag} has been muted.` };
     }
 }
 
-module.exports = new MuteCommand();
+module.exports = MuteCommand;  // Correct: Exports the class for dynamic instantiation

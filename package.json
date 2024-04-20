@@ -26,19 +26,14 @@
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFiles": [
-      "./tests/testSetup.js"
-    ],
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
-  },
   "devDependencies": {
     "@babel/core": "^7.23.9",
     "@babel/eslint-parser": "^7.23.10",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-transform-class-properties": "^7.24.1",
+    "@babel/plugin-transform-object-rest-spread": "^7.24.1",
     "@babel/preset-env": "^7.23.9",
+    "@babel/preset-flow": "^7.24.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "babel-jest": "^29.7.0",
     "eslint": "^8.56.0",

@@ -1,41 +1,51 @@
-// commands/python.js
 const { executePythonCode, extractPythonCodeBlocks, isUserAllowed } = require('../../utils/utils');
-const Command = require('../../utils/Command');
+const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 
-class PythonCommand extends Command {
+/**
+ * Command to execute Python code blocks submitted through Discord messages.
+ * Usage: !python [code]
+ */
+class PythonCommand extends ICommand {
     constructor() {
-        super('python', 'Executes Python code blocks. Usage: !python [code]');
+        super();
+        this.name = 'python';
+        this.description = 'Executes Python code blocks. Usage: !python [code]';
     }
 
-    async execute(message, args=null, action=null) {
+    /**
+     * Executes the Python command using provided arguments and context.
+     * @param {Object} args - The arguments and context for the command.
+     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     */
+    async execute(args) {
+        const message = args.message;
         const userId = message.author.id;
         const member = await message.guild.members.fetch(userId);
         const userRoles = member.roles.cache.map(role => role.id);
 
-        // Check if the user is allowed to execute Python code
         if (!isUserAllowed(userId, userRoles)) {
-            message.reply('You do not have permission to execute Python code.');
-            return;
+            return { success: false, message: 'You do not have permission to execute Python code.' };
         }
 
-        // Extract Python code blocks from the message
         const codeBlocks = extractPythonCodeBlocks(message.content);
-        if (!codeBlocks || codeBlocks.length === 0) {
-            message.reply('No Python code blocks found.');
-            return;
+        if (!codeBlocks.length) {
+            return { success: false, message: 'No Python code blocks found.' };
         }
 
-        // Execute each Python code block found in the message
-        codeBlocks.forEach(codeBlock => {
+        for (const codeBlock of codeBlocks) {
             const code = codeBlock.replace(/```(python)?|```/gi, '').trim();
-            logger.debug(`Executing Python code: ${code.substring(0, 50)}...`);
-            executePythonCode(code, message).catch(error => {
+            try {
+                logger.debug(`Executing Python code: ${code.substring(0, 50)}...`);
+                await executePythonCode(code, message);
+            } catch (error) {
                 logger.error(`Error executing Python code: ${error.message}`);
-                message.reply('An error occurred while executing Python code.');
-            });
-        });
+                return { success: false, message: 'An error occurred while executing Python code.', error: error.toString() };
+            }
+        }
+
+        return { success: true, message: 'Executed all Python code blocks successfully.' };
     }
 }
 
-module.exports = new PythonCommand();
+module.exports = PythonCommand;  // Correct: Exports the class for dynamic instantiation
