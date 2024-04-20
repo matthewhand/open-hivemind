@@ -24,8 +24,8 @@ module.exports = {
     LLM_PRESENCE_PENALTY: parseFloat(process.env.LLM_PRESENCE_PENALTY || '0.05'),
 
     // Message handling specifics
-    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '69', 10), // deprecated?
-    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '69', 10),
+    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '42', 10), // deprecated?
+    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '42', 10),
     LLM_MESSAGE_LIMIT_PER_HOUR: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '100', 10),
     LLM_MESSAGE_LIMIT_PER_DAY: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000', 10),
 

@@ -1,148 +1,107 @@
-const OpenAI = require("openai");
 const logger = require('./logger');
-const constants = require('../config/constants');
-const { handleError } = require('./commonUtils');
-const LLMResponse = require('../interfaces/LLMResponse');
-
-/**
- * Processes text summarization using the OpenAI API based on provided parameters.
- * Incorporates a structured message format to interact with the AI model.
- * @param {Object} openai - The OpenAI service client.
- * @param {string} userMessage - User's input message to summarize.
- * @param {string} [systemMessageContent=constants.LLM_SUMMARY_PROMPT] - System's prompt message.
- * @param {number} [maxTokens=constants.LLM_RESPONSE_MAX_TOKENS] - Maximum response tokens.
- * @returns {Promise<LLMResponse>} - The result of the summarization attempt, encapsulated in an LLMResponse object.
- */
-async function summarize(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
-    logger.debug('Starting the text summarization process.');
-
-    let messages = [
-        { role: 'system', content: systemMessageContent },
-        { role: 'user', content: `Provide a concise summary of the following text without any additional text or introductions: ${userMessage}`}
-    ];
-
-    const requestBody = {
-        model: constants.LLM_MODEL,
-        messages: messages,
-        temperature: constants.LLM_TEMPERATURE,
-        max_tokens: parseInt(maxTokens, 10)
-    };
-
-    logger.debug(`Sending summarization request with requestBody: ${JSON.stringify(requestBody, null, 2)}`);
-    try {
-        const response = await openai.completions.create(requestBody);
-        logger.debug(`Received raw API response: ${JSON.stringify(response, null, 2)}`);
-
-        if (!response.choices || response.choices.length === 0) {
-            logger.error('No choices were returned in the API response.', { response });
-            return new LLMResponse("", "error", 0);
-        }
-
-        const firstChoice = response.choices[0];
-        const summary = extractContent(firstChoice);
-
-        if (!summary) {
-            logger.error('No valid content was found in the first choice of the API response.', { firstChoice });
-            return new LLMResponse("", "error", 0);
-        }
-
-        logger.info('Summarization processed successfully.', { summary });
-        return new LLMResponse(summary, firstChoice.finish_reason, response.usage.total_tokens);
-    } catch (error) {
-        handleError(error);
-        logger.error(`An error occurred during the text summarization process: ${error.message}`, { requestBody, error });
-        return new LLMResponse("", "error", 0);
-    }
-}
-
 
 /**
  * Extracts the message content from a response choice.
- * 
  * @param {Object} choice - The choice object from the OpenAI API response.
- * @returns {string} The extracted message content if available; an empty string otherwise.
+ * @returns {string} The extracted message content if available; otherwise, an empty string.
  */
 function extractContent(choice) {
     if (!choice) {
-        logger.debug("[openAiManagerUtils.extractContent] No choice object provided for content extraction.");
-        return "";  // Return an empty string if no choice object is found.
+        logger.debug("[extractContent] No choice object provided for content extraction.");
+        return "";  
     }
 
     if (choice.text && typeof choice.text === 'string') {
-        logger.debug("[openAiManagerUtils.extractContent] Content extracted directly from 'text' field.");
+        logger.debug("[extractContent] Content extracted directly from 'text' field.");
         return choice.text;
     } else if (choice.message && typeof choice.message.content === 'string') {
-        logger.debug("[openAiManagerUtils.extractContent] Content extracted from 'message.content' field.");
+        logger.debug("[extractContent] Content extracted from 'message.content' field.");
         return choice.message.content;
     } else {
-        logger.debug("[openAiManagerUtils.extractContent] No valid content found in choice object; returning empty string.");
-        return "";  // Return an empty string if no valid content structure is identified.
+        logger.debug("[extractContent] No valid content found in choice object; returning empty string.");
+        return "";  
     }
 }
 
 /**
- * Sends a request to the OpenAI completions endpoint and validates the response.
- * 
+ * Sends a request to the OpenAI API to generate text completions.
  * @param {Object} openai - The OpenAI client instance.
- * @param {Object} requestBody - The body of the request to send.
- * @returns {Promise<Object>} The response from the OpenAI API if valid.
- * @throws {Error} If the response is invalid or an error occurs during the request.
+ * @param {Object} requestBody - The request body to send.
+ * @returns {Promise<Object>} The response from the OpenAI API, if valid.
  */
 async function makeOpenAiRequest(openai, requestBody) {
     try {
         const response = await openai.completions.create(requestBody);
-        if (!response || !response.choices || response.choices.length === 0 ||
-            !response.choices[0].message || !response.choices[0].message.content) {
-            throw new Error('No valid message content was returned in the API response.');
+        if (!response || !response.choices || response.choices.length === 0) {
+            throw new Error('No valid response or choices returned from the API.');
         }
-        logger.debug("OpenAI request successful, response valid.");
+        logger.debug("[makeOpenAiRequest] OpenAI request successful, response valid.");
         return response;
     } catch (error) {
-        logger.error(`Failed to make OpenAI request: ${error.message}`, { requestBody });
+        logger.error(`[makeOpenAiRequest] Failed to make OpenAI request: ${error.message}`, { requestBody });
         throw new Error(`OpenAI API request failed: ${error.message}`);
     }
 }
 
 /**
- * Completes a sentence if it ends abruptly due to reaching the max token limit.
- * 
+ * Completes a sentence by generating additional content.
  * @param {Object} openai - The OpenAI client instance.
  * @param {string} content - The content that might need completion.
- * @param {string} finishReason - The reason the initial request ended (e.g., 'length' for token limit).
  * @param {Object} constants - Configuration constants (model, max_tokens, etc.).
- * @returns {Promise<string>} The potentially completed content.
+ * @returns {Promise<string>} The completed content.
  */
-async function completeSentence(openai, content, finishReason, constants) {
-    if (finishReason === 'length' && !/[.?!]\s*$/.test(content)) {
-        const lastSpace = content.lastIndexOf(" ");
-        const promptText = lastSpace !== -1 ? content.substring(lastSpace + 1) : content;
-        const continuationBody = {
-            model: constants.LLM_MODEL,
-            prompt: promptText,
-            max_tokens: 50,  // small number to just try and finish the thought
-            temperature: 0.7  // reasonable default for generating natural completions
-        };
+async function completeSentence(openai, content, constants) {
+    const promptText = content.split(/\s+/).slice(-5).join(' ');  // Use the last five words as the prompt for completion.
+    const continuationBody = {
+        model: constants.LLM_MODEL,
+        prompt: promptText,
+        max_tokens: 50,  // Limit the number of additional tokens to generate.
+        temperature: 0.7  // Reasonable default for generating natural completions.
+    };
 
-        logger.debug(`Attempting to complete sentence. Prompt: ${promptText}`);
-        try {
-            const continuationResponse = await openai.completions.create(continuationBody);
-            if (continuationResponse && continuationResponse.choices && continuationResponse.choices.length > 0) {
-                const continuationText = continuationResponse.choices[0].text;
-                logger.debug(`Sentence completed: ${continuationText}`);
-                content += continuationText;
-            }
-        } catch (error) {
-            logger.error(`Error in completing sentence: ${error.message}`, { continuationBody });
+    logger.debug(`[completeSentence] Attempting to complete sentence. Prompt: ${promptText}`);
+    try {
+        const continuationResponse = await openai.completions.create(continuationBody);
+        if (continuationResponse && continuationResponse.choices && continuationResponse.choices.length > 0) {
+            const continuationText = continuationResponse.choices[0].text.trim();
+            logger.debug(`[completeSentence] Sentence completed: ${continuationText}`);
+            content += continuationText;
         }
-    } else {
-        logger.debug("No sentence completion needed.");
+    } catch (error) {
+        logger.error(`[completeSentence] Error in completing sentence: ${error.message}`, { continuationBody });
     }
     return content;
+}
+
+/**
+ * Determines if the content needs to be completed based on the tokens used and the finish reason.
+ * @param {boolean} maxTokensReached - Whether the maximum token count has been reached.
+ * @param {string} finishReason - The reason provided by the API for the text generation stopping.
+ * @param {string} content - The generated content that may need completion.
+ * @returns {boolean} True if the sentence should be completed, false otherwise.
+ */
+function needsCompletion(maxTokensReached, finishReason, content) {
+    return (maxTokensReached || finishReason === 'length') && !/[.?!]\s*$/.test(content);
+}
+
+/**
+ * Selects a random emoji from a predefined list.
+ * @returns {string} A random emoji.
+ */
+function getEmoji() {
+    const emojis = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+        '🙂', '🙃', '😉', '😌', '😍', '😘', '😗', '😙', '😚', '😋',
+        '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳',
+        '🤖', '👀'
+    ];
+    return emojis[Math.floor(Math.random() * emojis.length)];
 }
 
 module.exports = {
     extractContent,
     makeOpenAiRequest,
-    summarize,
-    completeSentence
+    completeSentence,
+    needsCompletion,
+    getEmoji
 };
