@@ -30,7 +30,10 @@
     "testEnvironment": "node",
     "setupFiles": [
       "./tests/testSetup.js"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",

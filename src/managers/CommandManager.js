@@ -1,98 +1,83 @@
 const IMessage = require('../interfaces/IMessage');
+const { getRandomErrorMessage } = require('../utils/commandManagerUtils');
+const logger = require('../utils/logger');
 
 /**
- * Manages command parsing and execution for a Discord bot.
- * This manager handles identifying if a piece of text is a command and then processes it accordingly,
- * sending responses through a designated channel.
+ * Manages the parsing and execution of commands within a Discord bot environment.
+ * This class loads commands dynamically, checks command syntax, and executes them accordingly.
  */
 class CommandManager {
     /**
-     * Constructs the command manager and initializes command configurations.
-     * @param {function} responseHandler - Function to handle responses. This function accepts the response text and the channel ID.
-     * @param {string} channelId - The default channel ID where responses will be sent.
+     * Initializes a new instance of the CommandManager class.
      */
-    constructor(responseHandler, channelId) {
-        this.commands = require('../commands/inline');  // Loads all inline commands
-        this.aliases = require('../config/aliases');    // Loads command aliases
-        this.logger = require('../utils/logger');       // Logger utility for logging information
-        this.responseHandler = responseHandler;         // Function to handle posting responses
-        this.channelId = channelId;                     // Default channel ID for responses
+    constructor() {
+        this.commands = require('../commands/inline'); // Dynamically load command modules
+        this.aliases = require('../config/aliases');   // Load aliases for commands
+        this.currentCommand = null;                    // Stores the last parsed command
     }
 
     /**
-     * Parses the command from the provided text.
-     * 
-     * @param {string} text - Text to parse the command from.
-     * @returns {Object|null} - The parsed command object if successful, null if command is unrecognized.
+     * Parses the provided text to identify if it is a command.
+     * @param {string} text - The text to parse for command syntax.
+     * @returns {boolean} - True if a valid command is identified, otherwise false.
      */
-    async parseCommand(text) {
-        const parts = text.match(/!(\w+)(?:\s+(.*))?/);  // Regex to identify command patterns
-        if (!parts) {
-            this.logger.debug('No command pattern found in the text.');
-            return null;
-        }
-
-        const [, command, argString] = parts;
-        const args = argString ? argString.split(/\s+/) : [];
-        const commandName = command.toLowerCase();
-
-        if (!this.commands[commandName]) {
-            this.logger.debug(`Command ${commandName} is not recognized.`);
-            return null;
-        }
-
-        return { commandName, args };
-    }
-
-    /**
-     * Executes a parsed command using the provided message context.
-     * 
-     * @param {Object} commandObj - An object containing the parsed command details.
-     * @param {IMessage} message - The message context to use for executing the command.
-     * @returns {Promise<boolean>} - True if the command was executed successfully, false otherwise.
-     */
-    async executeCommand(commandObj, message) {
-        const { commandName, args } = commandObj;
-        const resolvedAlias = this.aliases[commandName] || commandName;
-        const command = this.commands[resolvedAlias];
-
-        if (!command) {
-            this.logger.warn(`Command ${commandName} is not available.`);
+    parseCommand(text) {
+        logger.debug(`Attempting to parse command from text: "${text}"`);
+        const match = text.match(/!(\w+)(?:\s+(.*))?/);
+        if (!match) {
+            logger.debug("No command pattern found in the text.");
             return false;
+        }
+
+        const [, command, argString] = match;
+        const commandName = this.aliases[command.toLowerCase()] || command.toLowerCase();
+        if (!this.commands[commandName]) {
+            logger.debug(`Command '${commandName}' is not recognized. Available commands: ${Object.keys(this.commands).join(', ')}`);
+            return false;
+        }
+
+        this.currentCommand = {
+            commandName,
+            args: argString ? argString.split(/\s+/) : []
+        };
+
+        logger.info(`Command parsed successfully: '${commandName}' with arguments: [${this.currentCommand.args.join(', ')}]`);
+        return true;
+    }
+
+    /**
+     * Executes the previously parsed command using the provided message context.
+     * @param {IMessage} message - The message context to use for executing the command.
+     * @returns {Promise<string>} - The result of the command execution or an error message.
+     */
+    async executeCommand(message) {
+        if (!this.currentCommand) {
+            logger.error("Attempt to execute a command without parsing any command text first.");
+            return "No command has been parsed or command not recognized. Please try again.";
+        }
+
+        if (!(message instanceof IMessage)) {
+            logger.error("The provided message object does not conform to the IMessage interface.");
+            return "The provided message does not implement the required IMessage interface.";
+        }
+
+        const { commandName, args } = this.currentCommand;
+        const commandFunction = this.commands[commandName];
+
+        if (!commandFunction) {
+            logger.warn(`Command '${commandName}' is not available. It might have been misspelled or does not exist.`);
+            return "Command not found. Try `!help` for a list of commands.";
         }
 
         try {
-            this.logger.info(`Executing command: ${resolvedAlias}, Args: ${args.join(' ')}`);
-            await command.execute(message, args.join(' '), '');  // Executes the command; assumes 'action' is not used
-            return true;
+            logger.info(`Executing command: '${commandName}' with arguments: [${args.join(', ')}]`);
+            const result = await commandFunction.execute(message, args.join(' '), '');
+            logger.info(`Command '${commandName}' executed successfully.`);
+            return result;
         } catch (error) {
-            this.logger.error(`Error executing command: ${resolvedAlias}`, error);
-            return false;
+            logger.error(`Error while executing command '${commandName}': ${error.message}`, error);
+            return getRandomErrorMessage();  // Returning a user-friendly error message
         }
-    }
-
-    /**
-     * Processes the command from the given message.
-     * This method parses the command and, if valid, executes it. It ensures that a response is always sent,
-     * either acknowledging the command's execution or indicating an error.
-     * 
-     * @param {IMessage} message - The message object implementing the IMessage interface.
-     * @returns {Promise<boolean>} - True if a command was executed, false otherwise.
-     */
-    async processCommand(message) {
-        if (!(message instanceof IMessage)) {
-            throw new TypeError("Provided message does not implement IMessage interface");
-        }
-
-        const commandContent = message.getText().trim();
-        const commandObj = await this.parseCommand(commandContent);
-
-        if (!commandObj) {
-            this.logger.debug('Invalid command or command format. Please check and try again.', this.channelId);
-            return false;
-        }
-
-        return await this.executeCommand(commandObj, message);
     }
 }
 
