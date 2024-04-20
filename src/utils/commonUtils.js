@@ -31,16 +31,23 @@ function getRandomErrorMessage() {
 }
 
 /**
- * Redacts sensitive information from a string based on the associated key.
- * @param {string} key - The key potentially associated with sensitive information.
- * @param {string} value - The value to be redacted, if necessary.
+ * Redacts sensitive information from a string based on the associated key, focusing on keys
+ * commonly used for sensitive data like passwords, API keys, and authorization tokens.
+ *
+ * @param {string} key - The key potentially associated with sensitive data.
+ * @param {string} value - The value corresponding to the key which might need redaction.
  * @returns {string} The redacted or original value, depending on the sensitivity of the key.
  */
 function redactSensitiveInfo(key, value) {
-    if (['apiKey', 'password', 'token'].includes(key)) {
-        return `${value.substring(0, 5)}...[REDACTED]...${value.slice(-5)}`;
+    const lowerKey = key.toLowerCase();
+    const sensitiveKeys = ['password', 'secret', 'apikey', 'access_token', 'auth_token'];
+    const sensitivePhrases = ['bearer'];
+    
+    if (sensitiveKeys.includes(lowerKey) || sensitivePhrases.some(phrase => value.includes(phrase))) {
+        const redactedPart = value.length > 10 ? value.substring(0, 5) + '...' + value.slice(-5) : '[REDACTED]';
+        return `${key}: ${redactedPart}`;
     }
-    return value;
+    return `${key}: ${value}`;
 }
 
 /**
