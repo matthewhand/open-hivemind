@@ -63,12 +63,20 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
  * @returns {string} The extracted message content if available; an empty string otherwise.
  */
 function extractContent(choice) {
-    if (choice.message && typeof choice.message.content === 'string') {
-        return choice.message.content;
-    } else if (typeof choice.text === 'string') {
+    if (!choice) {
+        logger.debug("[openAiManagerUtils.extractContent] No choice object provided for content extraction.");
+        return "";  // Return an empty string if no choice object is found.
+    }
+
+    if (choice.text && typeof choice.text === 'string') {
+        logger.debug("[openAiManagerUtils.extractContent] Content extracted directly from 'text' field.");
         return choice.text;
+    } else if (choice.message && typeof choice.message.content === 'string') {
+        logger.debug("[openAiManagerUtils.extractContent] Content extracted from 'message.content' field.");
+        return choice.message.content;
     } else {
-        return "";  // Return an empty string if no valid content is found.
+        logger.debug("[openAiManagerUtils.extractContent] No valid content found in choice object; returning empty string.");
+        return "";  // Return an empty string if no valid content structure is identified.
     }
 }
 
@@ -87,6 +95,7 @@ async function makeOpenAiRequest(openai, requestBody) {
             !response.choices[0].message || !response.choices[0].message.content) {
             throw new Error('No valid message content was returned in the API response.');
         }
+        logger.debug("OpenAI request successful, response valid.");
         return response;
     } catch (error) {
         logger.error(`Failed to make OpenAI request: ${error.message}`, { requestBody });
@@ -114,15 +123,19 @@ async function completeSentence(openai, content, finishReason, constants) {
             temperature: 0.7  // reasonable default for generating natural completions
         };
 
+        logger.debug(`Attempting to complete sentence. Prompt: ${promptText}`);
         try {
             const continuationResponse = await openai.completions.create(continuationBody);
             if (continuationResponse && continuationResponse.choices && continuationResponse.choices.length > 0) {
-                content += continuationResponse.choices[0].text;  // Assuming 'text' is the correct field
+                const continuationText = continuationResponse.choices[0].text;
+                logger.debug(`Sentence completed: ${continuationText}`);
+                content += continuationText;
             }
         } catch (error) {
-            logger.error('Error in completing sentence: ' + error.message, { continuationBody });
-            // Log the body and error for troubleshooting
+            logger.error(`Error in completing sentence: ${error.message}`, { continuationBody });
         }
+    } else {
+        logger.debug("No sentence completion needed.");
     }
     return content;
 }
