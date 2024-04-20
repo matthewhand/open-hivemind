@@ -1,13 +1,26 @@
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+const { isCommand, parseCommandDetails, executeParsedCommand } = require('../utils/commandManagerUtils');
 
+/**
+ * Manages command operations including loading commands, parsing input texts, and executing commands.
+ */
 class CommandManager {
+    /**
+     * Initializes a new instance of the CommandManager class.
+     */
     constructor() {
         this.commands = this.loadCommands('../commands/inline');
         this.aliases = require('../config/aliases');
+        logger.debug("CommandManager initialized with commands and aliases.");
     }
 
+    /**
+     * Loads command modules from a specified directory.
+     * @param {string} directory - The relative path to the directory containing command files.
+     * @returns {object} A dictionary of command names to command instance objects.
+     */
     loadCommands(directory) {
         const fullPath = path.resolve(__dirname, directory);
         const commandFiles = fs.readdirSync(fullPath);
@@ -19,8 +32,8 @@ class CommandManager {
                 try {
                     const CommandClass = require(path.join(fullPath, file));
                     if (typeof CommandClass === 'function') {
-                        const instance = new CommandClass();
-                        commands[commandName] = instance;
+                        commands[commandName] = new CommandClass();
+                        logger.debug(`Command loaded: ${commandName}`);
                     } else {
                         logger.error(`The command module ${file} does not export a class.`);
                     }
@@ -32,28 +45,32 @@ class CommandManager {
         return commands;
     }
     
-    parseCommand(text) {
-        const match = text.match(/!(\w+)(?:\s+(.*))?/);
-        if (!match) return { success: false, message: "No command pattern found.", error: "Invalid syntax" };
-
-        const [, command, argString] = match;
-        const commandName = this.aliases[command.toLowerCase()] || command.toLowerCase();
-        const args = argString ? argString.split(/\s+/) : [];
-
-        if (!this.commands[commandName]) {
-            return { success: false, message: `Command '${commandName}' not recognized.`, error: "Command not found" };
+    /**
+     * Executes a command based on the text received from an original message.
+     * @param {IMessage} originalMsg - The original message object containing text to parse and execute.
+     * @returns {Promise<object>} A promise that resolves to the result of the command execution.
+     */
+    async executeCommand(originalMsg) {
+        const text = originalMsg.getText().trim();
+        if (!isCommand(text)) {
+            logger.debug("Text does not start with '!', not a command.");
+            return { success: false, message: "Not a command.", error: "Invalid command syntax" };
         }
 
-        return { success: true, commandName, args };
-    }
-
-    async executeCommand(commandName, args) {
-        const command = this.commands[commandName];
-        if (!command) {
-            return { success: false, message: "Command not available.", error: "Command implementation missing" };
+        const commandDetails = parseCommandDetails(text);
+        if (!commandDetails) {
+            logger.error("Failed to parse command details.");
+            return { success: false, message: "Parsing error.", error: "Invalid command format" };
         }
 
-        return command.execute(args);
+        logger.debug(`Executing command: ${commandDetails.command} with arguments: [${commandDetails.args.join(', ')}]`);
+        const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
+        if (!executionResult.success) {
+            logger.error(`Command execution failed: ${executionResult.error}`);
+        } else {
+            logger.debug(`Command executed successfully: ${executionResult.result}`);
+        }
+        return executionResult;
     }
 }
 

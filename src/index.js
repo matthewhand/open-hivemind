@@ -1,43 +1,43 @@
-require('dotenv').config(); // This will read your .env file, parse the contents, assign it to process.env
+require('dotenv').config(); // Load environment variables from .env file into process.env
 
 const logger = require('./utils/logger');
 const DiscordManager = require('./managers/DiscordManager');
-const messageHandler = require('./handlers/messageHandler').messageHandler;
+const { messageHandler } = require('./handlers/messageHandler');
 const { debugEnvVars } = require('./utils/environmentUtils');
 const configurationManager = require('./config/configurationManager');
 const { startWebhookServer } = require('./handlers/webhookHandler');
 
-// Assuming debugEnvVars is a function that logs environment variables for debugging
-// Ensure this function respects privacy and security by not logging sensitive info
+/**
+ * Logs environment variables for debugging purposes, ensuring sensitive information is not exposed.
+ */
 debugEnvVars();
 
+/**
+ * Initializes the Discord bot and related services.
+ */
 async function initialize() {
+    logger.info('Initialization started.');
     try {
-        // Check if debugging is enabled
-        if (process.env.DEBUG === 'true') {
-            logger.debug('Debug logging is enabled.');
-        }
-        
-        logger.info('Initialization started.');
-        // Retrieve CLIENT_ID from your configuration manager or directly from process.env
         const CLIENT_ID = configurationManager.getConfig('CLIENT_ID') || process.env.CLIENT_ID;
+        
         if (!CLIENT_ID) {
             throw new Error('CLIENT_ID is not defined. Please check your configuration.');
         }
 
         const discordManager = DiscordManager.getInstance();
+        console.log(`Type of messageHandler: ${typeof messageHandler}`); // Debug: Confirm type is 'function'
         discordManager.setMessageHandler(messageHandler);
-        
-        logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}`);
-        
-        // At the end of the initialize function or after the bot has logged in
-        // startWebhookServer(process.env.WEB_SERVER_PORT || 3000);
+
+        logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}. Starting webhook server...`);
         startWebhookServer(process.env.WEBHOOK_SERVER_PORT || 3000);
 
     } catch (error) {
-        logger.error(`Error during initialization: ${error}`);
-        process.exit(1);
+        logger.error(`Error during initialization: ${error.message}`);
+        process.exit(1); // Exit the process with a status code of 1 (indicates failure)
     }
 }
 
-initialize().catch(error => logger.error(`Unhandled error during initialization: ${error}`));
+initialize().catch(error => {
+    logger.error(`Unhandled error during initialization: ${error.message}`, { stack: error.stack });
+    process.exit(1); // Ensure the process exits with a failure status code on unhandled errors
+});

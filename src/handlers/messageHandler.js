@@ -6,6 +6,7 @@ const constants = require('../config/constants');
 const logger = require('../utils/logger');
 const { sendResponse, sendFollowUp, prepareMessageBody, summarizeMessage } = require('../utils/messageHandlerUtils');
 const DiscordManager = require('../managers/DiscordManager');
+const { isCommand } = require('../utils/commandManagerUtils');
 
 /**
  * Handles incoming messages by determining if they are commands and processing them accordingly,
@@ -19,42 +20,77 @@ async function messageHandler(originalMsg, historyMessages = []) {
     const startTime = Date.now();
     logger.debug(`[messageHandler] Started processing message ID: ${originalMsg.getMessageId()} at ${new Date(startTime).toISOString()}`);
 
-    if (!(originalMsg instanceof IMessage)) {
-        logger.error('[messageHandler] The provided message object does not conform to the IMessage interface.');
-        return;
+    if (!validateMessage(originalMsg)) {
+        return; // Validation failed, exit the function
     }
 
-    if (!originalMsg.getText().trim()) {
-        logger.info("[messageHandler] Received an empty or whitespace-only message; no processing will be undertaken.");
-        return;
+    if (await processCommand(originalMsg)) {
+        return; // Command processed, exit the function
     }
 
+    await processAIResponse(originalMsg, historyMessages, startTime);
+}
+
+/**
+ * Validates the integrity and content of the message.
+ * @param {IMessage} message - The message to validate.
+ * @returns {boolean} - True if the message is valid, otherwise false.
+ */
+function validateMessage(message) {
+    if (!(message instanceof IMessage)) {
+        logger.error('[messageHandler] Invalid message object type.');
+        return false; // Message does not conform to the IMessage interface
+    }
+    if (!message.getText().trim()) {
+        logger.info("[messageHandler] Empty message received; no action taken.");
+        return false; // Message is empty or contains only whitespace
+    }
+    return true;
+}
+
+/**
+ * Attempts to process the message as a command.
+ * @param {IMessage} message - The message to process.
+ * @returns {Promise<boolean>} - True if the message was a command and was processed, otherwise false.
+ */
+async function processCommand(message) {
+    const text = message.getText().trim();
+    if (!isCommand(text)) {
+        return false; // Text does not start with '!', not a command
+    }
+
+    logger.debug("[messageHandler] Command detected, processing...");
     const commandManager = new CommandManager();
-    const text = originalMsg.getText().trim();
-
-    // Attempt to parse and execute command
-    if (commandManager.parseCommand(text)) {
-        logger.debug("[messageHandler] Text recognized as a command, attempting to execute.");
-        const commandResult = await commandManager.executeCommand(originalMsg);
-        await DiscordManager.getInstance().sendResponse(originalMsg.getChannelId(), commandResult);
-        logger.info("[messageHandler] Command executed and response sent to the channel.");
-        return;
+    const commandResult = await commandManager.executeCommand(message);
+    if (commandResult.success) {
+        logger.info("[messageHandler] Command executed successfully, response sent.");
+        await DiscordManager.getInstance().sendResponse(message.getChannelId(), commandResult.message);
+    } else {
+        logger.error("[messageHandler] Command execution failed: " + commandResult.error);
     }
+    return true;
+}
 
-    // If text is not a command, check if a generic AI-generated response is needed
-    if (!MessageResponseManager.getInstance().shouldReplyToMessage(originalMsg)) {
+/**
+ * Processes the message for an AI-generated response if applicable.
+ * @param {IMessage} message - The message to process.
+ * @param {IMessage[]} historyMessages - Historical messages for context.
+ * @param {number} startTime - The timestamp when the message processing started.
+ */
+async function processAIResponse(message, historyMessages, startTime) {
+    if (!MessageResponseManager.getInstance().shouldReplyToMessage(message)) {
         logger.info("[messageHandler] No AI response deemed necessary based on the content and context.");
-        return;
+        return; // No AI response is required for this message
     }
 
     const llmManager = LLMInterface.getManager();
     if (llmManager.isBusy()) {
         logger.info("[messageHandler] LLM Manager is currently busy, unable to process AI response.");
-        return;
+        return; // LLM is busy, cannot process AI response now
     }
 
     try {
-        const channelId = originalMsg.getChannelId();
+        const channelId = message.getChannelId();
         const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, channelId, historyMessages);
         logger.debug(`[messageHandler] LLM request body prepared, sending request to LLM.`);
 
@@ -63,7 +99,7 @@ async function messageHandler(originalMsg, historyMessages = []) {
 
         if (!responseContent.trim()) {
             logger.error("[messageHandler] LLM provided an empty or invalid response.");
-            return;
+            return; // LLM response is empty or invalid
         }
 
         logger.debug("[messageHandler] LLM response received, processing content for sending.");
@@ -76,14 +112,14 @@ async function messageHandler(originalMsg, historyMessages = []) {
         logger.info("[messageHandler] LLM response sent to the channel successfully.");
 
         if (constants.FOLLOW_UP_ENABLED) {
-            logger.info("[messageHandler] Follow-up enabled, initiating follow-up interaction.");
-            await sendFollowUp(originalMsg, originalMsg.getChannelTopic() || "General Discussion");
+            await sendFollowUp(message, message.getChannelTopic() || "General Discussion");
+            logger.debug("[messageHandler] Follow-up interaction initiated.");
         }
     } catch (error) {
-        logger.error(`[messageHandler] Failed processing LLM response: ${error}`, { errorDetail: error, originalMsg });
+        logger.error(`[messageHandler] Error processing LLM response: ${error.message}`, { originalMsg: message, error });
     } finally {
         const processingTime = Date.now() - startTime;
-        logger.info(`[messageHandler] Message processing completed in ${processingTime}ms.`);
+        logger.info(`[messageHandler] AI message processing completed in ${processingTime}ms.`);
     }
 }
 

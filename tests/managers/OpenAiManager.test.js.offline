@@ -1,89 +1,83 @@
-// Define a constants object to mirror the mocked values
 const constants = {
-  CLIENT_ID: '1234567890',
-  LLM_MODEL: "gpt-3.5-turbo",
+  LLM_API_KEY: 'fake-api-key',
+  LLM_MODEL: "text-davinci-003",
   LLM_SYSTEM_PROMPT: "You are a helpful assistant.",
-  LLM_MAX_TOKENS: 150,
-  LLM_TEMPERATURE: 0.7,
-  LLM_TOP_P: 1,
-  LLM_FREQUENCY_PENALTY: 0,
-  LLM_PRESENCE_PENALTY: 0,
-  USE_PADDING_FOR_CONSECUTIVE_MESSAGES: false,
-  ADJUST_CONVERSATION_ENDING: true,
-  PADDING_CONTENT: "...",
-  ADJUSTMENT_CONTENT: "...",
+  LLM_RESPONSE_MAX_TOKENS: 150,
+  LLM_ENDPOINT_URL: "https://api.openai.com"
 };
 
-jest.mock('../../src/models/DiscordMessage');
+// Mocking the OpenAI library to simulate a constructor behavior correctly.
+// The OpenAI object needs to mimic an actual class with a completions.create method.
 jest.mock('openai', () => {
   const mockCompletionsCreate = jest.fn().mockResolvedValue({
-    data: {
-      choices: [{ text: 'mocked response' }]
-    }
+    choices: [{ text: 'Test response', finish_reason: 'length' }]
   });
 
-  // Mocking as if OpenAI is a default export
-  const MockOpenAI = class {
-    constructor({ apiKey, baseURL }) {
-      this.apiKey = apiKey;
-      this.baseURL = baseURL;
-    }
-
-    completions = {
-      create: mockCompletionsCreate
-    };
-  };
-
+  // OpenAI is mocked as a constructor function that returns an object with a completions property.
   return {
-    default: MockOpenAI, // Simulate default export
+    OpenAI: jest.fn().mockImplementation(() => {
+      return { completions: { create: mockCompletionsCreate }};
+    })
   };
 });
 
-
+const { OpenAI } = require("openai");
 const OpenAiManager = require('../../src/managers/OpenAiManager');
-const DiscordMessage = require('../../src/models/DiscordMessage');
-DiscordMessage.mockImplementation((content, isBot = false) => ({
-  getText: () => content,
-  getChannelId: () => '1234567890',
-  getAuthorId: () => isBot ? '1234567890' : '987654321',
-  isFromBot: () => isBot,
-}));
-
+const LLMResponse = require('../../src/interfaces/LLMResponse');
 
 describe('OpenAiManager', () => {
   let openAiManager;
 
   beforeEach(() => {
+    OpenAI.mockClear();
     openAiManager = new OpenAiManager();
   });
 
-  test('structures payload correctly for alternating roles after system messages', () => {
-    // Setup your history messages to include a case where the first role after "system" should be "user"
+  // Test to ensure that the OpenAI client is instantiated with correct API parameters.
+  it('instantiates OpenAI with the correct parameters', () => {
+    expect(OpenAI).toHaveBeenCalledTimes(1);  // Asserts that the constructor was called exactly once.
+    expect(OpenAI).toHaveBeenCalledWith({
+      apiKey: constants.LLM_API_KEY,
+      baseURL: constants.LLM_ENDPOINT_URL
+    });
+  });
+
+  // Test to verify that the payload is structured correctly following specific message role sequences.
+  it('structures payload correctly for alternating roles after system messages', () => {
     const historyMessages = [
-      new DiscordMessage("System prompt", true), // True signifies a bot message, potentially used for system messages
-      new DiscordMessage("Assistant message without user reply", true),
-      new DiscordMessage("User message 1", false),
-      new DiscordMessage("Assistant response", true),
-      new DiscordMessage("User message 2", false),
+      { getText: () => "System prompt", isFromBot: () => true },
+      { getText: () => "User message 1", isFromBot: () => false },
+      { getText: () => "Assistant response", isFromBot: () => true },
+      { getText: () => "User message 2", isFromBot: () => false }
     ];
 
     const expectedPayload = {
       model: constants.LLM_MODEL,
+      max_tokens: constants.LLM_RESPONSE_MAX_TOKENS,
       messages: [
-        { role: 'system', content: constants.LLM_SYSTEM_PROMPT },
-        // Expecting a placeholder "user" message if the first message after "system" is not from "user"
-        { role: 'user', content: "." }, // Placeholder user message
-        { role: 'assistant', content: "Assistant message without user reply" },
+        { role: 'system', content: "System prompt" },
         { role: 'user', content: "User message 1" },
         { role: 'assistant', content: "Assistant response" },
         { role: 'user', content: "User message 2" },
-      ],
+      ]
     };
 
-    const result = openAiManager.buildRequestBody(historyMessages, constants.LLM_SYSTEM_PROMPT);
-
+    // This call assumes the implementation of buildRequestBody to prepare data correctly based on roles.
+    const result = openAiManager.buildRequestBody(historyMessages);
     expect(result).toEqual(expectedPayload);
   });
 
-  // Add more tests as needed to cover various edge cases and scenarios
+  // Test to check if the sendRequest method processes the API call correctly and returns a structured LLMResponse.
+  it('returns an LLMResponse object with the correct properties after a successful API call', async () => {
+    const requestBody = {
+      model: constants.LLM_MODEL,
+      prompt: "Tell me a joke",
+      max_tokens: constants.LLM_RESPONSE_MAX_TOKENS
+    };
+    const response = await openAiManager.sendRequest(requestBody);
+    expect(response).toBeInstanceOf(LLMResponse);  // The response should be an instance of LLMResponse.
+    expect(response.content).toEqual('Test response');  // Checking the response content.
+    expect(response.finishReason).toEqual('length');  // Verifying the reason for the response completion.
+    expect(response.tokensUsed).toBeLessThan(requestBody.max_tokens);  // Ensuring token usage is within limits.
+  });
 });

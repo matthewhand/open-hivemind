@@ -1,26 +1,8 @@
 const OpenAI = require("openai");
 const logger = require('./logger');
-const { handleError } = require('./handleError');
-const LLMResponse = require('../interfaces/LLMResponse');
 const constants = require('../config/constants');
-
-/**
- * Extracts the message content based on the response structure which varies between services.
- * This function ensures to check the structure and data type before returning the content.
- * It handles both possible structures of the response: with 'message.content' or 'text'.
- *
- * @param {Object} choice - The first choice object from the OpenAI API response.
- * @returns {string} The extracted message content if available; an empty string otherwise.
- */
-function extractContent(choice) {
-    if (choice.message && typeof choice.message.content === 'string') {
-        return choice.message.content;
-    } else if (typeof choice.text === 'string') {
-        return choice.text;
-    } else {
-        return "";  // Return an empty string if no valid content is found.
-    }
-}
+const { handleError } = require('./commonUtils');
+const LLMResponse = require('../interfaces/LLMResponse');
 
 /**
  * Processes text summarization using the OpenAI API based on provided parameters.
@@ -74,6 +56,80 @@ async function summarize(openai, userMessage, systemMessageContent = constants.L
 }
 
 
+/**
+ * Extracts the message content from a response choice.
+ * 
+ * @param {Object} choice - The choice object from the OpenAI API response.
+ * @returns {string} The extracted message content if available; an empty string otherwise.
+ */
+function extractContent(choice) {
+    if (choice.message && typeof choice.message.content === 'string') {
+        return choice.message.content;
+    } else if (typeof choice.text === 'string') {
+        return choice.text;
+    } else {
+        return "";  // Return an empty string if no valid content is found.
+    }
+}
+
+/**
+ * Sends a request to the OpenAI completions endpoint and validates the response.
+ * 
+ * @param {Object} openai - The OpenAI client instance.
+ * @param {Object} requestBody - The body of the request to send.
+ * @returns {Promise<Object>} The response from the OpenAI API if valid.
+ * @throws {Error} If the response is invalid or an error occurs during the request.
+ */
+async function makeOpenAiRequest(openai, requestBody) {
+    try {
+        const response = await openai.completions.create(requestBody);
+        if (!response || !response.choices || response.choices.length === 0 ||
+            !response.choices[0].message || !response.choices[0].message.content) {
+            throw new Error('No valid message content was returned in the API response.');
+        }
+        return response;
+    } catch (error) {
+        logger.error(`Failed to make OpenAI request: ${error.message}`, { requestBody });
+        throw new Error(`OpenAI API request failed: ${error.message}`);
+    }
+}
+
+/**
+ * Completes a sentence if it ends abruptly due to reaching the max token limit.
+ * 
+ * @param {Object} openai - The OpenAI client instance.
+ * @param {string} content - The content that might need completion.
+ * @param {string} finishReason - The reason the initial request ended (e.g., 'length' for token limit).
+ * @param {Object} constants - Configuration constants (model, max_tokens, etc.).
+ * @returns {Promise<string>} The potentially completed content.
+ */
+async function completeSentence(openai, content, finishReason, constants) {
+    if (finishReason === 'length' && !/[.?!]\s*$/.test(content)) {
+        const lastSpace = content.lastIndexOf(" ");
+        const promptText = lastSpace !== -1 ? content.substring(lastSpace + 1) : content;
+        const continuationBody = {
+            model: constants.LLM_MODEL,
+            prompt: promptText,
+            max_tokens: 50,  // small number to just try and finish the thought
+            temperature: 0.7  // reasonable default for generating natural completions
+        };
+
+        try {
+            const continuationResponse = await openai.completions.create(continuationBody);
+            if (continuationResponse && continuationResponse.choices && continuationResponse.choices.length > 0) {
+                content += continuationResponse.choices[0].text;  // Assuming 'text' is the correct field
+            }
+        } catch (error) {
+            logger.error('Error in completing sentence: ' + error.message, { continuationBody });
+            // Log the body and error for troubleshooting
+        }
+    }
+    return content;
+}
+
 module.exports = {
-    summarize
+    extractContent,
+    makeOpenAiRequest,
+    summarize,
+    completeSentence
 };

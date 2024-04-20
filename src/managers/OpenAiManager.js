@@ -1,11 +1,10 @@
 const OpenAI = require("openai");
 const logger = require('../utils/logger');
-const { handleError } = require('../utils/handleError');
 const constants = require('../config/constants');
 const IMessage = require('../interfaces/IMessage');
 const LLMResponse = require('../interfaces/LLMResponse');
-const { redactSensitiveInfo } = require('../utils/commonUtils'); 
-const { summarize } = require('../utils/openAiManagerUtils'); 
+const { summarize, extractContent, makeOpenAiRequest, completeSentence } = require('../utils/openAiManagerUtils');
+const { handleError, redactSensitiveInfo } = require('../utils/commonUtils');
 
 class OpenAiManager {
     static instance;
@@ -100,54 +99,64 @@ class OpenAiManager {
         }
     }
 
-    async sendRequest(requestBody) {
-        logger.debug(`Preparing to send request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
+/**
+ * Sends a request to the OpenAI API to generate text completions and handles the response.
+ * This method ensures the OpenAI client is correctly instantiated and manages the 'busy' state to avoid concurrent processing conflicts.
+ *
+ * @param {Object} requestBody - The complete request body for the OpenAI API.
+ * @returns {Promise<LLMResponse>} - The response encapsulated in an LLMResponse object, detailing the content, finish reason, and token usage.
+ */
+async sendRequest(requestBody) {
+    logger.debug(`Preparing to send request to OpenAI with body: ${JSON.stringify(requestBody, redactSensitiveInfo, 4)}`);
     
-        if (!this.openai || typeof this.openai.completions.create !== 'function') {
-            logger.error('OpenAI API client is not properly instantiated.');
-            return new LLMResponse("", "error");
-        }
-    
-        if (this.busy) {
-            logger.debug('OpenAiManager is currently busy.');
-            return new LLMResponse("", "busy");
-        }
-    
-        this.busy = true;
-    
-        try {
-            if (typeof requestBody !== 'object' || requestBody instanceof Promise) {
-                logger.error('Invalid request body: Expected a fully-resolved object.');
-                this.busy = false;
-                return new LLMResponse("", "error");
-            }
-    
-            logger.debug(`Sending request to OpenAI with fully formed body: ${JSON.stringify(requestBody, redactSensitiveInfo, 3)}`);
-            const response = await this.openai.completions.create(requestBody);
-            logger.debug(`Raw API response: ${JSON.stringify(response, redactSensitiveInfo, 3)}`);
-    
-            if (!response || !response.choices || response.choices.length === 0 || !response.choices[0].message || !response.choices[0].message.content) {
-                logger.error('No valid message content was returned in the API response.');
-                this.busy = false;
-                return new LLMResponse("", "error");
-            }
-    
-            const messageContent = response.choices[0].message.content;
-            const finishReason = response.choices[0].finish_reason;
-    
-            logger.debug(`Processing completion with reason: ${finishReason}`);
-            return new LLMResponse(messageContent, finishReason || "unknown", response.usage.total_tokens);
-        } catch (error) {
-            handleError(error);
-            this.busy = false;
-            logger.error(`An error occurred while sending request to OpenAI: ${error.message}`, { errorDetail: error, requestBody });
-            return new LLMResponse("", "error");
-        } finally {
-            this.busy = false;
-            logger.debug('Set busy to false after processing OpenAI request.');
-        }
+    if (!this.openai || typeof this.openai.completions.create !== 'function') {
+        logger.error('OpenAI API client is not properly instantiated.');
+        return new LLMResponse("", "error");
     }
     
+    if (this.busy) {
+        logger.debug('OpenAiManager is currently busy.');
+        return new LLMResponse("", "busy");
+    }
+    
+    this.busy = true;
+    
+    try {
+        // Validate the request body to ensure it is a fully-resolved object and not a Promise (async unresolved).
+        if (typeof requestBody !== 'object' || requestBody instanceof Promise) {
+            logger.error('Invalid request body: Expected a fully-resolved object.', { requestBody: JSON.stringify(requestBody, redactSensitiveInfo) });
+            this.busy = false;
+            return new LLMResponse("", "error");
+        }
+        
+        // Making the API request using the utility function which also handles the response validation.
+        const response = await makeOpenAiRequest(this.openai, requestBody);
+        logger.debug(`API request made successfully, processing response.`);
+
+        // Extracting content using the utility function to handle different data structures in the response.
+        let messageContent = extractContent(response.choices[0]);
+        let finishReason = response.choices[0].finish_reason;
+        
+        // Conditionally completing the sentence if the response was cut due to max token limit.
+        if (finishReason === 'length') {
+            messageContent = await completeSentence(this.openai, messageContent, finishReason, constants);
+            logger.debug(`Sentence completion triggered due to max token limit reached.`);
+        }
+        
+        logger.debug(`Completion processed with reason: ${finishReason || "unknown"}, using ${response.usage.total_tokens} tokens.`);
+        return new LLMResponse(messageContent, finishReason || "unknown", response.usage.total_tokens);
+    } catch (error) {
+        // Handling errors specifically with context for better debugging and error tracking.
+        handleError(error, "OpenAiManager.sendRequest");
+        this.busy = false;
+        return new LLMResponse("", "error");
+    } finally {
+        // Ensuring the 'busy' state is cleared after the request is processed, regardless of success or error.
+        this.busy = false;
+        logger.debug('Set busy to false after processing OpenAI request.');
+    }
+}
+        
     isBusy() {
         return this.busy;
     }

@@ -1,17 +1,64 @@
+const logger = require('./logger');
+
 /**
- * Redacts sensitive information in logs.
- * 
+ * List of whimsical error messages used across the application.
+ * @type {string[]}
+ */
+const errorMessages = [
+    "Oops, my circuits got tangled in digital spaghetti! 🍝🤖",
+    "Whoa, I tripped over a virtual shoelace! 🤖👟",
+    "Ah, I just had a byte-sized hiccup! 🤖🍔",
+    "Looks like I bumbled the binary! 💾🐝",
+    "Yikes, my code caught a digital cold! 🤖🤧",
+    "Gosh, I stumbled into a loop hole! 🌀🤖",
+    "Oopsie, I accidentally swapped my bits with bytes! 🔄🤖",
+    "My gears are in a jam, quite a pickle indeed! 🤖🥒",
+    "Uh-oh, I spilled some pixels here! 🤖🎨",
+    "Hold on, recalibrating my humor sensors! 🤖😂",
+];
+
+/**
+ * Retrieves a random error message from the predefined list.
+ * @returns {string} A randomly selected, whimsical error message.
+ */
+function getRandomErrorMessage() {
+    const randomIndex = Math.floor(Math.random() * errorMessages.length);
+    if (randomIndex < 0 || randomIndex >= errorMessages.length) {
+        logger.error("Error selecting a random message: Index out of bounds.");
+        return "An unexpected error occurred."; // Fallback error message
+    }
+    return errorMessages[randomIndex];
+}
+
+/**
+ * Redacts sensitive information from a string based on the associated key.
  * @param {string} key - The key potentially associated with sensitive information.
- * @param {string} value - The value associated with the key.
- * @returns {string} - The redacted or original value, depending on the key.
+ * @param {string} value - The value to be redacted, if necessary.
+ * @returns {string} The redacted or original value, depending on the sensitivity of the key.
  */
 function redactSensitiveInfo(key, value) {
-    if (key === 'apiKey') {
-        return `${value.substring(0, 5)}*********${value.slice(-2)}`;
+    if (['apiKey', 'password', 'token'].includes(key)) {
+        return `${value.substring(0, 5)}...[REDACTED]...${value.slice(-5)}`;
     }
     return value;
 }
 
+/**
+ * Logs an error message and its stack trace to the console. Optionally sends a whimsical error message as a response in a messaging context.
+ * @param {Error} error - The error object to be logged and handled.
+ * @param {any} [messageChannel=null] - Optional. The channel to send a response message to, if provided.
+ */
+function handleError(error, messageChannel = null) {
+    const errorMsg = getRandomErrorMessage();
+    logger.error(`${errorMsg} Details: ${error.message}`);
+    logger.error(`Error Stack Trace: ${error.stack}`);
+    if (messageChannel && typeof messageChannel.send === 'function') {
+        messageChannel.send(errorMsg);  // Send the whimsical error message to the channel
+    }
+}
+
 module.exports = {
     redactSensitiveInfo,
+    getRandomErrorMessage,
+    handleError
 };

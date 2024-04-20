@@ -1,30 +1,69 @@
-// commandManagerUtils.js
+const logger = require('./logger'); // Assuming a logger utility for debug and error logging
 
 /**
- * Provides utility functions for command management, such as generating random error messages.
+ * Utilities for parsing and executing commands based on chat inputs.
  */
-
-const errorMessages = [
-    "Oops, my circuits got tangled in digital spaghetti! 🍝🤖",
-    "Whoa, I tripped over a virtual shoelace! 🤖👟",
-    "Ah, I just had a byte-sized hiccup! 🤖🍔",
-    "Looks like I bumbled the binary! 💾🐝",
-    "Yikes, my code caught a digital cold! 🤖🤧",
-    "Gosh, I stumbled into a loop hole! 🌀🤖",
-    "Oopsie, I accidentally swapped my bits with bytes! 🔄🤖",
-    "My gears are in a jam, quite a pickle indeed! 🤖🥒",
-    "Uh-oh, I spilled some pixels here! 🤖🎨",
-    "Hold on, recalibrating my humor sensors! 🤖😂",
-    // Feel free to add more whimsical messages here
-];
 
 /**
- * Returns a random error message from a predefined list.
- * @returns {string} A random, whimsical error message.
+ * Checks if the given text starts with a '!' followed by alphanumeric characters, indicating a command.
+ * @param {string} text - The input text to check.
+ * @returns {boolean} - True if the text is a command, otherwise false.
  */
-function getRandomErrorMessage() {
-    const randomIndex = Math.floor(Math.random() * errorMessages.length);
-    return errorMessages[randomIndex];
+function isCommand(text) {
+    const commandPattern = /^!(\w+)/;
+    const isCmd = commandPattern.test(text);
+    logger.debug(`isCommand: ${text} - ${isCmd}`);
+    return isCmd;
 }
 
-module.exports = { getRandomErrorMessage };
+/**
+ * Parses the command and its arguments from the given text.
+ * @param {string} text - The text containing the command to parse.
+ * @returns {object|null} - Returns an object with `command` and `args` if the command is valid, otherwise null.
+ */
+function parseCommandDetails(text) {
+    const match = text.match(/^!(\w+)\s*(.*)/);
+    if (!match) {
+        logger.error(`parseCommandDetails: Invalid command format - ${text}`);
+        return null;
+    }
+
+    const command = match[1].toLowerCase();
+    const args = match[2] ? match[2].split(/\s+/) : [];
+    logger.debug(`parseCommandDetails: command - ${command}, args - [${args.join(', ')}]`);
+    return { command, args };
+}
+
+/**
+ * Executes the command using the provided command details, commands repository, and aliases.
+ * @param {object} commandDetails - An object containing the command and its arguments.
+ * @param {object} commands - A repository of available command instances.
+ * @param {object} aliases - A mapping of command aliases to their respective command names.
+ * @returns {Promise<object>} - The result of the command execution, formatted as an object.
+ */
+async function executeParsedCommand(commandDetails, commands, aliases) {
+    if (!commandDetails) {
+        logger.error("executeParsedCommand: commandDetails not provided");
+        return { success: false, message: "Invalid command syntax.", error: "No command details provided." };
+    }
+
+    const { command, args } = commandDetails;
+    const commandName = aliases[command] || command;
+    const commandInstance = commands[commandName];
+
+    if (!commandInstance) {
+        logger.error(`executeParsedCommand: Command not found - ${commandName}`);
+        return { success: false, message: "Command not available.", error: "Command implementation missing." };
+    }
+
+    try {
+        const result = await commandInstance.execute(args);
+        logger.debug(`executeParsedCommand: Executed command - ${commandName}, Result - ${result}`);
+        return { success: true, result: result };
+    } catch (error) {
+        logger.error(`executeParsedCommand: Error executing command - ${commandName}, Error - ${error.message}`);
+        return { success: false, message: "Error executing command.", error: error.message };
+    }
+}
+
+module.exports = { isCommand, parseCommandDetails, executeParsedCommand };
