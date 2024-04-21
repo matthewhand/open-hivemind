@@ -39,14 +39,35 @@ function getRandomErrorMessage() {
  * @returns {string} The redacted or original value, depending on the sensitivity of the key.
  */
 function redactSensitiveInfo(key, value) {
+    // Validate input types
+    if (typeof key !== 'string') {
+        console.error(`Invalid key type: ${typeof key}. Key must be a string.`);
+        return 'Invalid key: [Key must be a string]';
+    }
+    
+    // Convert any non-string value to a string (except for undefined or null)
+    if (value == null) {  // Loose equality to catch both undefined and null
+        value = '[Value is null or undefined]';
+    } else if (typeof value !== 'string') {
+        try {
+            value = JSON.stringify(value);
+        } catch (error) {
+            console.error(`Error stringifying value: ${error.message}`);
+            value = '[Complex value cannot be stringified]';
+        }
+    }
+
+    // Define sensitive information criteria
     const lowerKey = key.toLowerCase();
     const sensitiveKeys = ['password', 'secret', 'apikey', 'access_token', 'auth_token'];
-    const sensitivePhrases = ['bearer'];
-    
+    const sensitivePhrases = ['bearer', 'token'];
+
+    // Check if the key or value contains sensitive information
     if (sensitiveKeys.includes(lowerKey) || sensitivePhrases.some(phrase => value.includes(phrase))) {
-        const redactedPart = value.length > 10 ? value.substring(0, 5) + '...' + value.slice(-5) : '[REDACTED]';
+        const redactedPart = value.length > 10 ? `${value.substring(0, 5)}...${value.slice(-5)}` : '[REDACTED]';
         return `${key}: ${redactedPart}`;
     }
+
     return `${key}: ${value}`;
 }
 
@@ -56,10 +77,10 @@ function redactSensitiveInfo(key, value) {
  * @param {any} [messageChannel=null] - Optional. The channel to send a response message to, if provided.
  */
 function handleError(error, messageChannel = null) {
-    const errorMsg = getRandomErrorMessage();
-    logger.error(`${errorMsg} Details: ${error.message}`);
+    logger.error(`Error Mesage: ${error.message}`);
     logger.error(`Error Stack Trace: ${error.stack}`);
     if (messageChannel && typeof messageChannel.send === 'function') {
+        const errorMsg = getRandomErrorMessage();
         messageChannel.send(errorMsg);  // Send the whimsical error message to the channel
     }
 }

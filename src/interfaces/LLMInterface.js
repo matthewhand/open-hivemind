@@ -22,7 +22,7 @@ class LLMInterface {
         switch (constants.LLM_PROVIDER) {
             case 'OpenAI': {
                 const OpenAiManager = require('../managers/OpenAiManager'); // Dynamic require within a block
-                return new OpenAiManager();
+                return OpenAiManager.getInstance();  // Correctly uses the singleton pattern
             }
             // Potential cases for other providers can be added here
             default:

@@ -42,68 +42,44 @@ class DiscordMessage extends IMessage {
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
     }
-
-    /**
-     * Retrieves the message ID.
-     * @returns {string} The message ID.
-     */
-    getMessageId() {
-        return this.id;
-    }
-
-    /**
-     * Retrieves the textual content of the message.
-     * @returns {string} The message content, or an empty string if undefined or null.
-     */
-    getText() {
-        return this.content || '';
-    }
-
-    /**
-     * Retrieves the ID of the channel the message was sent in.
-     * @returns {string} The channel ID.
-     */
-    getChannelId() {
-        return this.channelId || '';
-    }
-
-    /**
-     * Retrieves the ID of the author of the message.
-     * @returns {string} The author ID.
-     */
-    getAuthorId() {
-        return this.authorId;
-    }
-
-    /**
-     * Determines if the message was sent by a bot.
-     * This can be explicitly set or derived from the message's author.bot flag.
-     * @returns {boolean} True if the message is from a bot, false otherwise.
-     */
-    isFromBot() {
-        return this.isBot;
-    }
-
-    /**
-     * Checks if the message mentions specific users.
-     * @param {string|string[]} userIds - A single user ID or an array of user IDs to check for mentions.
-     * @returns {boolean} True if any of the specified users are mentioned in the message.
-     */
-    mentionsUsers(userIds = [constants.CLIENT_ID]) {
-        const mentionsArray = Array.isArray(userIds) ? userIds : [userIds];
-        const mentionedUserIds = this.message.mentions.users.map(user => user.id);
-        return mentionsArray.some(userId => mentionedUserIds.includes(userId));
-    }
-
-    /**
-     * Determines if the message is a reply to another message.
-     * @returns {boolean} True if the message is a reply and specifically to the bot.
-     */
-    isReply() {
-        const isReplyToBot = this.repliedMessage && this.repliedMessage.authorId === constants.CLIENT_ID;
-        return !!this.message.reference && isReplyToBot;
-    }
     
-}
+    getMessageId() {
+        return this.message.id;
+    }
 
+    getText() {
+        return this.message.content;
+    }
+
+    getChannelId() {
+        return this.message.channel.id;
+    }
+
+    getAuthorId() {
+        return this.message.author.id;
+    }
+
+    getChannelTopic() {
+        return this.message.channel.topic || "No topic";
+    }
+
+    getUserMentions() {
+        // Corrected to remove .toArray()
+        return this.message.mentions.users.map(user => ({
+            id: user.id,
+            displayName: user.username
+        }));
+    }
+
+    getChannelUsers() {
+        return Array.from(this.message.channel.members.values()).map(member => ({
+            id: member.user.id,
+            displayName: member.user.username
+        }));
+    }
+
+    isFromBot() {
+        return this.message.author.bot;
+    }
+}
 module.exports = DiscordMessage;

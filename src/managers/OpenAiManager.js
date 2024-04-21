@@ -94,6 +94,7 @@ class OpenAiManager {
         }
 
         this.busy = true;
+        logger.debug(`[OpenAiManager.sendRequest] Sending request to OpenAI`);
         logger.debug(`[OpenAiManager.sendRequest] Sending request to OpenAI: ${JSON.stringify(requestBody, redactSensitiveInfo, 2)}`);
 
         try {
@@ -117,6 +118,7 @@ class OpenAiManager {
             logger.debug('[OpenAiManager.sendRequest] Set busy to false after processing the request.');
         }
     }
+
     /**
      * Summarizes text using the OpenAI model based on the provided user message and system prompt.
      * Constructs a request using the 'prompt' parameter for text completions, tailored for summarization tasks.
