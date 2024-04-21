@@ -39,25 +39,48 @@ function extractContent(choice) {
 }
 
 /**
- * Sends a request to the OpenAI API to generate text completions.
- * @param {Object} openai - The OpenAI client instance.
- * @param {Object} requestBody - The request body to send.
- * @returns {Promise<Object>} The response from the OpenAI API, if valid.
+ * Sends a request to the OpenAI API to generate text completions and handles the response.
+ * This function ensures that the request body is appropriate and logs detailed information
+ * about the request and response processes.
+ *
+ * @param {Object} openai - The OpenAI client instance used to make API calls.
+ * @param {Object} requestBody - The body of the request which includes the model, prompt, and other parameters.
+ * @returns {Promise<Object>} The response from the OpenAI API, structured as an object.
+ * @throws {Error} If the response from the API is invalid or if an error occurs during the request.
  */
 async function makeOpenAiRequest(openai, requestBody) {
+    // Validate input types
+    if (typeof openai !== 'object' || openai === null) {
+        logger.error("[makeOpenAiRequest] Invalid OpenAI client instance passed.");
+        throw new TypeError("Invalid OpenAI client instance passed.");
+    }
+
+    if (typeof requestBody !== 'object' || requestBody === null) {
+        logger.error("[makeOpenAiRequest] Invalid request body passed.");
+        throw new TypeError("Invalid request body passed.");
+    }
+
+    // Debugging: Log the request body
+    logger.debug(`[makeOpenAiRequest] Sending request with body: ${JSON.stringify(requestBody)}`);
+
     try {
         const response = await openai.completions.create(requestBody);
+
+        // Validate response structure
         if (!response || !response.choices || response.choices.length === 0) {
-            throw new Error('No valid response or choices returned from the API.');
+            logger.error("[makeOpenAiRequest] No valid response or choices returned from the API.");
+            throw new Error("No valid response or choices returned from the API.");
         }
-        logger.debug("[makeOpenAiRequest] OpenAI request successful, response valid.");
+
+        // Debugging: Log the raw API response
+        logger.debug(`[makeOpenAiRequest] Received response: ${JSON.stringify(response)}`);
+
         return response;
     } catch (error) {
-        logger.error(`[makeOpenAiRequest] Failed to make OpenAI request: ${error.message}`, { requestBody });
+        logger.error(`[makeOpenAiRequest] Failed to make OpenAI request: ${error.message}`, error);
         throw new Error(`OpenAI API request failed: ${error.message}`);
     }
 }
-
 
 /**
  * Completes a sentence by generating additional content if the response is cut off or incomplete.
