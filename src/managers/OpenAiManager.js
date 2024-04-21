@@ -50,11 +50,11 @@ class OpenAiManager {
      */
     buildRequestBody(historyMessages = [], systemMessageContent = constants.LLM_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         let messages = [{ role: 'system', content: systemMessageContent }];
-
+    
         if (historyMessages.length > 0 && historyMessages[0].isFromBot() && historyMessages[0].role !== 'user') {
             messages.push({ role: 'user', content: '...' });  // Ensuring logical flow by inserting ellipses when needed
         }
-
+    
         historyMessages.forEach(message => {
             if (!(message instanceof IMessage)) {
                 logger.error("[OpenAiManager.buildRequestBody] Invalid message type, expected IMessage interface.");
@@ -67,19 +67,29 @@ class OpenAiManager {
                 messages[messages.length - 1].content += ` ${message.getText()}`;
             }
         });
-
+    
         if (messages[messages.length - 1].role !== 'user') {
             messages.push({ role: 'user', content: getEmoji() });  // Ensures the conversation ends with a user message
         }
-
-        return {
+    
+        let requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
             max_tokens: maxTokens,
             temperature: constants.LLM_TEMPERATURE,
-            stop: ["\n", ".", "?", "!"],  // Stops generating text at any of these characters
         };
+    
+        // Parse LLM_STOP only if it's a non-empty string; otherwise, set it to null
+        constants.LLM_STOP = process.env.LLM_STOP ? JSON.parse(process.env.LLM_STOP) : null;
+
+        // Conditionally add the 'stop' parameter only if LLM_STOP is configured and not null
+        if (constants.LLM_STOP) {
+            requestBody.stop = constants.LLM_STOP;
+        }
+    
+        return requestBody;
     }
+    
 
     /**
      * Sends a formatted request to the OpenAI API and handles the response.

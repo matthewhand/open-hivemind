@@ -17,6 +17,7 @@ module.exports = {
     LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise: ',
     LLM_SENTENCE_PROMPT: process.env.LLM_SENTENCE_PROMPT || 'Complete this sentence: ',
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.7'),
+    LLM_STOP: process.env.LLM_STOP || '["\n", ".", "?", "!"]',
 
     // Advanced LLM parameters
     LLM_MAX_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),
