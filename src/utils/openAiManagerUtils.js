@@ -1,25 +1,40 @@
 const logger = require('./logger');
+const constants = require('../config/constants');
 
 /**
- * Extracts the message content from a response choice.
- * @param {Object} choice - The choice object from the OpenAI API response.
- * @returns {string} The extracted message content if available; otherwise, an empty string.
+ * Extracts the textual content from a choice object within the OpenAI API response. This function
+ * ensures that the extracted content is a valid string and logs detailed information about the
+ * extraction process.
+ *
+ * @param {Object} choice - The choice object from the OpenAI API response which contains the text to be extracted.
+ * @returns {string} The extracted text if available; otherwise, returns an empty string.
  */
 function extractContent(choice) {
+    // Initial validation to ensure the choice object is provided
     if (!choice) {
         logger.debug("[extractContent] No choice object provided for content extraction.");
-        return "";  
+        return "";
     }
 
+    // Debugging: Log the actual choice object before processing
+    logger.debug(`[extractContent] Initial choice object: ${JSON.stringify(choice)}`);
+
+    // Check for 'text' field which is directly usable
     if (choice.text && typeof choice.text === 'string') {
         logger.debug("[extractContent] Content extracted directly from 'text' field.");
-        return choice.text;
-    } else if (choice.message && typeof choice.message.content === 'string') {
+        return choice.text.trim();
+    }
+
+    // Check for 'message' field with nested 'content' which is the fallback content source
+    else if (choice.message && typeof choice.message.content === 'string') {
         logger.debug("[extractContent] Content extracted from 'message.content' field.");
-        return choice.message.content;
-    } else {
+        return choice.message.content.trim();
+    }
+
+    // If no valid content structure is identified, log the issue and return an empty string
+    else {
         logger.debug("[extractContent] No valid content found in choice object; returning empty string.");
-        return "";  
+        return "";
     }
 }
 
@@ -43,33 +58,62 @@ async function makeOpenAiRequest(openai, requestBody) {
     }
 }
 
+
 /**
- * Completes a sentence by generating additional content.
- * @param {Object} openai - The OpenAI client instance.
- * @param {string} content - The content that might need completion.
- * @param {Object} constants - Configuration constants (model, max_tokens, etc.).
- * @returns {Promise<string>} The completed content.
+ * Completes a sentence by generating additional content if the response is cut off or incomplete.
+ * This function is designed to handle cases where the initial response from the OpenAI API does not
+ * terminate with a proper ending punctuation mark, indicating that the response may be incomplete.
+ *
+ * @param {Object} openai - The OpenAI client instance used to make API calls.
+ * @param {string} content - The initial content that might be incomplete and needs finishing.
+ * @param {Object} constants - Contains configuration constants like model and token limits.
+ * @returns {Promise<string>} The potentially completed content, ensuring it ends with proper punctuation.
  */
 async function completeSentence(openai, content, constants) {
-    const promptText = content.split(/\s+/).slice(-5).join(' ');  // Use the last five words as the prompt for completion.
+    if (typeof content !== 'string') {
+        logger.error("[completeSentence] The content must be a string.");
+        throw new TypeError("Expected content to be a string, received type " + typeof content);
+    }
+
+    // Debugging: Log the type and actual content before processing
+    logger.debug(`[completeSentence] Content type: ${typeof content}, content value: ${content}`);
+
+    // Check if the content already ends with a punctuation mark
+    if (/[.?!]\s*$/.test(content)) {
+        logger.debug("[completeSentence] Content already ends with a punctuation mark.");
+        return content;  // Return as no completion needed
+    }
+
+    // Preparing the prompt for OpenAI to generate the rest of the content
+    const promptText = content.trim() + " ";  // Ensure there's a space after the last word
     const continuationBody = {
         model: constants.LLM_MODEL,
         prompt: promptText,
-        max_tokens: 50,  // Limit the number of additional tokens to generate.
-        temperature: 0.7  // Reasonable default for generating natural completions.
+        max_tokens: 50,  // Allow a small number of extra tokens to complete the sentence
+        temperature: 0.5  // Using a moderate temperature for natural completions
     };
 
-    logger.debug(`[completeSentence] Attempting to complete sentence. Prompt: ${promptText}`);
+    logger.debug(`[completeSentence] Sending continuation request: ${JSON.stringify(continuationBody)}`);
+
     try {
         const continuationResponse = await openai.completions.create(continuationBody);
-        if (continuationResponse && continuationResponse.choices && continuationResponse.choices.length > 0) {
-            const continuationText = continuationResponse.choices[0].text.trim();
-            logger.debug(`[completeSentence] Sentence completed: ${continuationText}`);
-            content += continuationText;
+        if (!continuationResponse || !continuationResponse.choices || continuationResponse.choices.length === 0) {
+            logger.error("[completeSentence] No valid choices returned from the API.");
+            throw new Error("Failed to retrieve valid choices from the API.");
+        }
+
+        const continuationText = continuationResponse.choices[0].text.trim();
+        if (continuationText) {
+            logger.debug(`[completeSentence] Received continuation text: ${continuationText}`);
+            content += continuationText;  // Append the additional text to the original content
+        } else {
+            logger.warn("[completeSentence] Received empty continuation text.");
         }
     } catch (error) {
-        logger.error(`[completeSentence] Error in completing sentence: ${error.message}`, { continuationBody });
+        logger.error("[completeSentence] Error completing sentence:", error);
+        throw error;  // Rethrow to handle the error further up the call stack
     }
+
     return content;
 }
 
