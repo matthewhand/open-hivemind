@@ -76,7 +76,8 @@ class OpenAiManager {
             model: constants.LLM_MODEL,
             messages: messages,
             max_tokens: maxTokens,
-            temperature: 0.5  // Setting a neutral temperature for balanced creativity
+            temperature: constants.LLM_TEMPERATURE,
+            stop: ["\n", ".", "?", "!"],  // Stops generating text at any of these characters
         };
     }
 

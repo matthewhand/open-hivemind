@@ -13,8 +13,9 @@ module.exports = {
     LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL || "http://localhost:5000/v1/chat/completions",
     LLM_PROVIDER: process.env.LLM_PROVIDER || 'OpenAI',
     LLM_MODEL: process.env.LLM_MODEL || 'gpt-3.5-turbo',
-    LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Contribute to the provided message history.',
-    LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise your previous response when instructed.',
+    LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Respond to the provided message history as a friendly discord user.',
+    LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise: ',
+    LLM_SENTENCE_PROMPT: process.env.LLM_SENTENCE_PROMPT || 'Complete this sentence: ',
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.7'),
 
     // Advanced LLM parameters
@@ -24,8 +25,8 @@ module.exports = {
     LLM_PRESENCE_PENALTY: parseFloat(process.env.LLM_PRESENCE_PENALTY || '0.05'),
 
     // Message handling specifics
-    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '42', 10), // deprecated?
-    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '42', 10),
+    LLM_MAX_TOKENS: parseInt(process.env.LLM_MAX_TOKENS || '69', 10), // deprecated?
+    LLM_RESPONSE_MAX_TOKENS: parseInt(process.env.LLM_RESPONSE_MAX_TOKENS || '69', 10),
     LLM_MESSAGE_LIMIT_PER_HOUR: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '100', 10),
     LLM_MESSAGE_LIMIT_PER_DAY: parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000', 10),
 
