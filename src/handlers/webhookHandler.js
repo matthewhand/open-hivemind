@@ -8,8 +8,8 @@ const DiscordManager = require('../managers/DiscordManager');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID || !process.env.REPLICATE_TOKEN) {
-    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID and/or REPLICATE_TOKEN');
+if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID) {
+    console.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID');
     process.exit(1);
 }
 
