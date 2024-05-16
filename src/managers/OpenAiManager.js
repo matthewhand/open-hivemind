@@ -61,8 +61,10 @@ class OpenAiManager {
                 throw new Error("All history messages must be instances of IMessage or its subclasses.");
             }
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            if (messages[messages.length - 1].role !== currentRole) {
-                messages.push({ role: currentRole, content: message.getText() });
+            const authorName = message.getAuthorId(); // TODO try name instead of id
+    
+            if (messages[messages.length - 1].role !== currentRole || messages[messages.length - 1].name !== authorName) {
+                messages.push({ role: currentRole, content: message.getText(), name: authorName });
             } else {
                 messages[messages.length - 1].content += ` ${message.getText()}`;
             }
@@ -89,7 +91,6 @@ class OpenAiManager {
     
         return requestBody;
     }
-    
 
     /**
      * Sends a formatted request to the OpenAI API and handles the response.
