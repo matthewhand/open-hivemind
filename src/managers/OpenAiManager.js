@@ -50,6 +50,7 @@ class OpenAiManager {
      */
     buildRequestBody(historyMessages = [], systemMessageContent = constants.LLM_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         let messages = [{ role: 'system', content: systemMessageContent }];
+        const supportNameField = process.env.LLM_SUPPORT_NAME_FIELD !== 'false';
     
         if (historyMessages.length > 0 && historyMessages[0].isFromBot() && historyMessages[0].role !== 'user') {
             messages.push({ role: 'user', content: '...' });  // Ensuring logical flow by inserting ellipses when needed
@@ -61,12 +62,20 @@ class OpenAiManager {
                 throw new Error("All history messages must be instances of IMessage or its subclasses.");
             }
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            const authorName = message.getAuthorId(); // TODO try name instead of id
+            const authorName = message.getAuthorId(); // Assuming this returns the user's name
     
-            if (messages[messages.length - 1].role !== currentRole || messages[messages.length - 1].name !== authorName) {
-                messages.push({ role: currentRole, content: message.getText(), name: authorName });
+            if (supportNameField) {
+                if (messages[messages.length - 1].role !== currentRole || messages[messages.length - 1].name !== authorName) {
+                    messages.push({ role: currentRole, content: message.getText(), name: authorName });
+                } else {
+                    messages[messages.length - 1].content += ` ${message.getText()}`;
+                }
             } else {
-                messages[messages.length - 1].content += ` ${message.getText()}`;
+                if (messages[messages.length - 1].role !== currentRole) {
+                    messages.push({ role: currentRole, content: message.getText() });
+                } else {
+                    messages[messages.length - 1].content += ` ${message.getText()}`;
+                }
             }
         });
     
