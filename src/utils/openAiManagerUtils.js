@@ -64,9 +64,16 @@ async function makeOpenAiRequest(openai, requestBody) {
     logger.debug(`[makeOpenAiRequest] Sending request with body: ${JSON.stringify(requestBody)}`);
 
     try {
-        const response = await openai.completions.create(requestBody, {
+        const requestOptions = {
             timeout: 300 * 1000, // 300 seconds
-          });
+        }
+
+        let response = null;
+        if (requestBody.prompt) {
+            response = await openai.completions.create(requestBody, requestOptions);
+        } else {
+            response = await openai.chat.completions.create(requestBody, requestOptions);
+        }
 
         // Validate response structure
         if (!response || !response.choices || response.choices.length === 0) {

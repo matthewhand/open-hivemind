@@ -62,7 +62,7 @@ class OpenAiManager {
                 throw new Error("All history messages must be instances of IMessage or its subclasses.");
             }
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
-            const authorName = message.getAuthorId(); // Assuming this returns the user's name
+            const authorName = message.getAuthorId(); // using id so name does not confuse the ai
     
             if (supportNameField) {
                 if (messages[messages.length - 1].role !== currentRole || messages[messages.length - 1].name !== authorName) {
