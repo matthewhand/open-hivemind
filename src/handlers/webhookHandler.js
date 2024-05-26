@@ -97,33 +97,72 @@ const startWebhookServer = (port) => {
         console.log(`HTTP server listening at http://localhost:${port}`);
     });
 
-    app.post('/receive-message', async (req, res) => {
-        const { message } = req.body; // Assume the incoming payload has a 'message' field
-    
-        // Get an instance of OpenAiManager
-        const openAiManager = OpenAiManager.getInstance();
-    
+    /**
+     * @route POST /post
+     * @description Endpoint to post the message as-is to Discord.
+     * @param {Object} req - The request object.
+     * @param {Object} req.body - The body of the request.
+     * @param {string} req.body.message - The message to be posted to Discord.
+     * @param {Object} res - The response object.
+     * @returns {void}
+     */
+    app.post('/post', async (req, res) => {
+        const { message } = req.body;
+        const discordManager = DiscordManager.getInstance();
+
+        if (!message) {
+            console.error('No message provided in request body');
+            return res.status(400).send({ error: 'Message is required' });
+        }
+
         try {
-            // Use summarizeText to process the message with OpenAI
-            // const systemMessage = "Please summarise the incoming message from your external augmentations, translate into an upbeat comedic message, to be shared in public chat forum.";
-            // const summarizedTexts = await openAiManager.summarizeText(message, systemMessage);
+            await discordManager.sendResponse(process.env.CHANNEL_ID, message);
+            console.debug(`Message sent to Discord: ${message}`);
+            res.status(200).send({ message: "Message sent to Discord." });
+        } catch (error) {
+            console.error('Failed to send the message:', error);
+            res.status(500).send({ error: 'Failed to send the message' });
+        }
+    });
+
+    /**
+     * @route POST /summarise-then-post
+     * @description Endpoint to summarize the message using OpenAI and then post it to Discord.
+     * @param {Object} req - The request object.
+     * @param {Object} req.body - The body of the request.
+     * @param {string} req.body.message - The message to be summarized and posted to Discord.
+     * @param {Object} res - The response object.
+     * @returns {void}
+     */
+    app.post('/summarise-then-post', async (req, res) => {
+        const { message } = req.body;
+        const openAiManager = OpenAiManager.getInstance();
+
+        if (!message) {
+            console.error('No message provided in request body');
+            return res.status(400).send({ error: 'Message is required' });
+        }
+
+        try {
+            console.debug(`Received message for summarization: ${message}`);
             const summarizedTexts = await openAiManager.summarizeText(message);
-    
-            // Assuming we only care about the first summary
-            // const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : "Could not summarize the message.";
             const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : "";
-    
-            // Get an instance of DiscordManager and send the summarized message to a specific channel
+
+            if (!summarizedMessage) {
+                console.warn('Summarized message is empty');
+                return res.status(500).send({ error: 'Failed to summarize the message' });
+            }
+
             const discordManager = DiscordManager.getInstance();
             await discordManager.sendResponse(process.env.CHANNEL_ID, summarizedMessage);
-    
+            console.debug(`Summarized message sent to Discord: ${summarizedMessage}`);
             res.status(200).send({ message: "Message summarized and sent to Discord." });
         } catch (error) {
             console.error('Failed to summarize or send the message:', error);
             res.status(500).send({ error: 'Failed to summarize or send the message' });
         }
     });
-    
+
 };
 
 client.once('ready', () => {
