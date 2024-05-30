@@ -64,8 +64,9 @@ async function makeOpenAiRequest(openai, requestBody) {
     logger.debug(`[makeOpenAiRequest] Sending request with body: ${JSON.stringify(requestBody)}`);
 
     try {
-        const requestOptions = {
-            timeout: 300 * 1000, // 300 seconds
+        const requestOptions = {};
+        if (constants.LLM_TIMEOUT) {
+            requestOptions.timeout = constants.LLM_TIMEOUT * 1000;
         }
 
         let response = null;

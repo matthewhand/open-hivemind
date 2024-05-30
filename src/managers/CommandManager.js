@@ -11,7 +11,7 @@ class CommandManager {
      * Initializes a new instance of the CommandManager class.
      */
     constructor() {
-        this.commands = this.loadCommands('../commands/inline');
+        this.commands = this.loadCommands(path.join(__dirname, '../commands/inline'));
         this.aliases = require('../config/aliases');
         logger.debug("CommandManager initialized with commands and aliases.");
     }
@@ -25,17 +25,26 @@ class CommandManager {
         const fullPath = path.resolve(__dirname, directory);
         const commandFiles = fs.readdirSync(fullPath);
         const commands = {};
-    
+
         commandFiles.forEach(file => {
             if (file.endsWith('.js')) {
                 const commandName = file.slice(0, -3);
                 try {
-                    const CommandClass = require(path.join(fullPath, file));
-                    if (typeof CommandClass === 'function') {
-                        commands[commandName] = new CommandClass();
+                    const CommandModule = require(path.join(fullPath, file));
+                    let commandInstance;
+                    if (typeof CommandModule === 'function') {
+                        commandInstance = new CommandModule();
+                    } else if (typeof CommandModule === 'object' && CommandModule !== null) {
+                        commandInstance = CommandModule;
+                    } else {
+                        logger.error(`The command module ${file} does not export a class or valid object. Export type: ${typeof CommandModule}`);
+                        return;
+                    }
+                    if (commandInstance && typeof commandInstance.execute === 'function') {
+                        commands[commandName] = commandInstance;
                         logger.debug(`Command loaded: ${commandName}`);
                     } else {
-                        logger.error(`The command module ${file} does not export a class.`);
+                        logger.error(`The command module ${file} does not export a valid command instance. Export type: ${typeof CommandModule}`);
                     }
                 } catch (error) {
                     logger.error(`Failed to load command ${commandName}: ${error}`);

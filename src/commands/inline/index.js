@@ -16,11 +16,23 @@ commandFiles.forEach(file => {
     const filePath = path.join(commandsDirectory, file);
     const commandModule = require(filePath);
 
+    let commandInstance;
     if (commandModule instanceof Command) {
-        commands[commandModule.name] = commandModule;
-        logger.info(`Dynamically loaded command: ${commandModule.name}`);
+        commandInstance = commandModule;
+    } else if (typeof commandModule === 'function') {
+        commandInstance = new commandModule();
+    } else if (typeof commandModule === 'object' && commandModule !== null && commandModule.execute) {
+        commandInstance = commandModule;
     } else {
-        logger.warn(`File ${file} does not export a Command instance.`);
+        logger.warn(`File ${file} does not export a Command instance or valid class.`);
+        return;
+    }
+
+    if (commandInstance && commandInstance.name && commandInstance.execute) {
+        commands[commandInstance.name] = commandInstance;
+        logger.info(`Dynamically loaded command: ${commandInstance.name}`);
+    } else {
+        logger.warn(`File ${file} does not export a valid Command instance or class.`);
     }
 });
 
