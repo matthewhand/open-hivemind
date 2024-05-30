@@ -20,7 +20,7 @@ export default {
             return new Response('Invalid JSON', { status: 400 });
         }
 
-        const { model, messages } = requestBody;
+        const { model, messages, max_tokens } = requestBody;
 
         if (!Array.isArray(messages) || messages.length === 0) {
             return new Response('Missing or invalid messages in request', { status: 400 });
@@ -28,7 +28,7 @@ export default {
 
         const modelToUse = model || '@cf/mistral/mistral-7b-instruct-v0.1';
         const ai = new Ai(env.AI);
-        const chat = { messages: messages };
+        const chat = { messages: messages, max_tokens: max_tokens || 420 };
 
         console.log('Starting AI processing for model:', modelToUse);
 
