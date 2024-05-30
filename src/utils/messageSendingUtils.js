@@ -117,7 +117,7 @@ async function sendFollowUp(originalMessage, topic) {
                 return;
             }
 
-            const followUpMessage = responseContent[0].trim();
+            const followUpMessage = typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
             if (followUpMessage) {
                 await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
             } else {

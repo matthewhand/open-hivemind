@@ -65,10 +65,10 @@ class DiscordManager {
 
         this.client.on('messageCreate', async (discordMessage) => {
             try {
-                const processedMessage = new DiscordMessage(discordMessage);
-
                 // Debug: Log the entire message object to check all properties
                 logger.debug(`[DiscordManager] Received message object: ${JSON.stringify(discordMessage)}`);
+
+                const processedMessage = new DiscordMessage(discordMessage);
 
                 if (!processedMessage.getMessageId() || !processedMessage.content) {
                     logger.error(`[DiscordManager] Invalid or incomplete message received: ID: ${processedMessage.getMessageId()}, Content: ${processedMessage.content}`);
@@ -93,6 +93,7 @@ class DiscordManager {
                 }
 
                 if (this.messageHandler) {
+                    logger.debug(`Executing message handler on channel ${channel}`)
                     await this.messageHandler(processedMessage, historyMessages, channel);
                 }
             } catch (error) {
