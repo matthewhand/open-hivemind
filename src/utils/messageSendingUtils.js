@@ -1,6 +1,8 @@
+const OpenAiManager = require('../managers/OpenAiManager');
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('./logger');
 const constants = require('../config/constants');
+const commands = require('../commands/inline');
 
 /**
  * Sends a formatted message to a specified channel. If the message exceeds Discord's maximum message length,
@@ -87,9 +89,50 @@ function delay(duration) {
     return new Promise(resolve => setTimeout(resolve, duration));
 }
 
+async function sendFollowUp(originalMessage, topic) {
+    const openAiManager = OpenAiManager.getInstance();
+    logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
+
+    const channelTopic = topic || "General conversation";
+    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay
+
+    setTimeout(async () => {
+        try {
+            logger.debug('Commands loaded for follow-up.');
+            const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
+            logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
+
+            const prompt = `Inform user about a relevant command based on the discussion and topic, "${channelTopic}" from the built in commands: ${commandDescriptions}. Suggest one command to user.`;
+
+            const requestBody = {
+                model: constants.LLM_MODEL,
+                prompt: prompt,
+                max_tokens: 420,
+                stop: ["\n", " END"],
+            };
+
+            const responseContent = await openAiManager.sendRequest(requestBody);
+            if (!responseContent || responseContent.length === 0) {
+                logger.error("Received empty or invalid response from OpenAI for follow-up.");
+                return;
+            }
+
+            const followUpMessage = responseContent[0].trim();
+            if (followUpMessage) {
+                await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
+            } else {
+                logger.warn(`No follow-up action suggested for message ID: ${originalMessage.id}`);
+            }
+        } catch (error) {
+            logger.error(`Error during follow-up handling: ${error}`);
+        }
+    }, followUpDelay);
+}
+
 module.exports = {
     sendResponse,
     sendMessagePart,
     splitMessageContent,
-    delay
+    delay,
+    sendFollowUp 
 };
