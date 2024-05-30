@@ -7,6 +7,11 @@ This service facilitates interaction with a language model, either through a Clo
 ### Requirements
 
 - Free Cloudflare account
+- wrangler (npm install wrangler)
+
+Then publish using:
+- wrangler login
+- wrangler deploy
 
 ## Option 2: Consuming existing Perplexity API
 
