@@ -12,6 +12,7 @@ const constants = require('../config/constants'); // This should contain CLIENT_
 class MessageResponseManager {
     static instance;
     config;
+    unsolicitedChannelCounts = {};
 
     /**
      * Constructs a singleton instance of the MessageResponseManager.
@@ -105,7 +106,7 @@ class MessageResponseManager {
      * @returns {boolean} True if the channel can still send unsolicited messages, false otherwise.
      */
     isWithinUnsolicitedLimit(channelId) {
-        const isWithinLimit = channelId === this.config.priorityChannel || this.unsolicitedChannelCounts[channelId] < this.config.unsolicitedChannelCap;
+        const isWithinLimit = channelId === this.config.priorityChannel || (this.unsolicitedChannelCounts[channelId] || 0) < this.config.unsolicitedChannelCap;
         logger.debug(`Unsolicited message limit check for channel ${channelId}: ${isWithinLimit}`);
         return isWithinLimit;
     }
@@ -123,12 +124,6 @@ class MessageResponseManager {
         return decision;
     }
 
-    /**
-     * Calculates the base probability of responding to a given message, factoring in message content, special conditions, and activity decay.
-     * @param {IMessage} message - The message to evaluate.
-     * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity, used to calculate decay.
-     * @returns {number} The probability of sending a response, between 0 and 1.
-     */
     /**
      * Calculates the base probability of responding to a given message, factoring in message content, special conditions, and activity decay.
      * @param {IMessage} message - The message to evaluate.
@@ -154,10 +149,18 @@ class MessageResponseManager {
             chance += this.config.interrobangBonus;
             logger.debug(`[MessageResponseManager] Interrobang bonus applied: +${this.config.interrobangBonus}`);
         }
-        if (text.includes(constants.CLIENT_ID)) {
+
+        const mentions = message.getUserMentions();
+        const isBotMentioned = mentions.some(user => user.id === constants.CLIENT_ID);
+
+        if (isBotMentioned) {
             chance += this.config.mentionBonus;
             logger.debug(`[MessageResponseManager] Mention bonus applied: +${this.config.mentionBonus}`);
+        } else if (mentions.length > 0) {
+            chance += this.config.botResponseModifier;
+            logger.debug(`[MessageResponseManager] Bot response modifier applied: +${this.config.botResponseModifier}`);
         }
+
         if (message.isFromBot()) {
             chance += this.config.botResponseModifier;
             logger.debug(`[MessageResponseManager] Bot response modifier applied: +${this.config.botResponseModifier}`);
@@ -170,7 +173,7 @@ class MessageResponseManager {
 
         const decayFactor = Math.exp(-this.config.recentActivityDecayRate * (timeSinceLastActivity / this.config.activityTimeWindow));
         chance *= decayFactor;
-        
+
         logger.debug(`[MessageResponseManager] Final calculated chance after decay factor (${decayFactor.toFixed(4)}): ${chance.toFixed(4)}`);
         return Math.min(chance, 1);
     }
