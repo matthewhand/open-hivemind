@@ -1,5 +1,7 @@
 const logger = require('./logger');
 const constants = require('../config/constants');
+const LLMResponse = require('../interfaces/LLMResponse');
+const { handleError } = require('../utils/commonUtils');
 
 /**
  * Extracts the textual content from a choice object within the OpenAI API response. This function
@@ -175,10 +177,49 @@ function getEmoji() {
     return emojis[Math.floor(Math.random() * emojis.length)];
 }
 
+/**
+ * Summarizes text using the OpenAI model based on the provided user message and system prompt.
+ * Constructs a request using the 'prompt' parameter for text completions, tailored for summarization tasks.
+ *
+ * @param {Object} openai - The OpenAI client instance used to make API calls.
+ * @param {string} userMessage - The user's message to summarize.
+ * @param {string} [systemMessageContent=constants.LLM_SUMMARY_SYSTEM_PROMPT] - System prompt to use for the summary.
+ * @param {number} [maxTokens=constants.LLM_SUMMARY_MAX_TOKENS] - Maximum number of tokens that the model can use.
+ * @returns {Promise<LLMResponse>} - The summarized text response encapsulated in an LLMResponse object.
+ */
+async function summarizeText(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_SUMMARY_MAX_TOKENS) {
+    if (!constants.LLM_SUPPORTS_COMPLETIONS) {
+        logger.warn('[summarizeText] Summarization requires completions support which is disabled.');
+        return new LLMResponse("", "completions_disabled");
+    }
+
+    const prompt = `${systemMessageContent}\nUser: ${userMessage}\nAssistant:`;
+    const requestBody = {
+        model: constants.LLM_MODEL,
+        prompt: prompt,
+        max_tokens: maxTokens,
+        temperature: 0.5  // Using a moderate temperature for natural completions
+    };
+
+    logger.debug(`[summarizeText] Sending summarization request with prompt: ${prompt}`);
+
+    try {
+        const response = await makeOpenAiRequest(openai, requestBody);
+        const summary = extractContent(response.choices[0]);
+        logger.info('[summarizeText] Summary processed successfully.');
+
+        return new LLMResponse(summary, "completed", response.usage.total_tokens);
+    } catch (error) {
+        handleError(error, "[summarizeText] Error during text summarization");
+        return new LLMResponse("", "error", 0);
+    }
+}
+
 module.exports = {
     extractContent,
     makeOpenAiRequest,
     completeSentence,
     needsCompletion,
-    getEmoji
+    getEmoji,
+    summarizeText
 };

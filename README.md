@@ -75,23 +75,8 @@ Before submitting your changes, please run the following command to execute both
 npm run validate
 ```
 
-This command runs ESLint to check for code style and potential errors, followed by Jest to run unit tests. It ensures that any new code or modifications adhere to our project's coding standards and passes all tests.
+## 📄 Additional Documentation
 
-- **ESLint**: Helps maintain code quality and consistency across the project.
-- **Jest**: Runs unit tests to verify that the bot's functionalities work as expected.
+For detailed configuration management, refer to [docs/CONFIGURATION.chatgpt.md](./docs/CONFIGURATION.chatgpt.md).
 
-### 📝 Note:
-
-- Ensure you have installed all project dependencies with `npm install` before running the validation command.
-- If ESLint reports any issues, please fix them to adhere to the project's coding standards. You can also automatically fix some of these issues by running `npm run lint -- --fix`.
-- Review test results for any failures and address them to ensure your changes do not introduce regressions.
-
-By following these steps, you help maintain the quality and integrity of the Discord LLM Interaction Bot, ensuring it continues to deliver a great experience to users and developers alike.
-
-## 🤝 Contributing
-
-We welcome contributions! Please refer to `CONTRIBUTING.md` for contribution guidelines and submit issues or pull requests as needed.
-
-## 📝 License
-
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+For license information, refer to [docs/LICENSE.chatgpt.md](./docs/LICENSE.chatgpt.md).

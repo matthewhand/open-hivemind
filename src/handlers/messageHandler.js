@@ -51,47 +51,67 @@ async function processAIResponse(message, historyMessages, startTime) {
         const userMentions = message.getUserMentions();
         const channelUsers = message.getChannelUsers();
 
-        const requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, message.getChannelId(), historyMessages, topic, userMentions, channelUsers);
-        logger.debug(`[messageHandler] LLM request body prepared, contents: ${JSON.stringify(requestBody)}`);
-
-        const llmResponse = await llmManager.sendRequest(requestBody);
-        let responseContent = llmResponse.getContent();
-        if (responseContent && typeof responseContent === 'string' && responseContent.includes('error')) {
-            logger.error("[messageHandler] Error found in LLM response.");
+        let requestBody;
+        try {
+            requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, message.getChannelId(), historyMessages, topic, userMentions, channelUsers);
+            logger.debug(`[messageHandler] LLM request body prepared, contents: ${JSON.stringify(requestBody)}`);
+        } catch (error) {
+            logger.error(`[messageHandler] Error preparing LLM request body: ${error.message}`, { error });
             return;
         }
-        
-        logger.debug(`[messageHandler] LLM response received, contents: ${responseContent}`);
 
-        if (typeof responseContent !== 'string') {
-            logger.error("[messageHandler] Expected string from LLM response, received type: " + typeof responseContent);
-            responseContent = "";  // Sets content to empty if not a string to avoid further errors
+        let llmResponse;
+        try {
+            llmResponse = await llmManager.sendRequest(requestBody);
+        } catch (error) {
+            logger.error(`[messageHandler] Error sending LLM request: ${error.message}`, { error });
+            return;
         }
 
-        if (responseContent && responseContent.includes && responseContent.includes('error')) {
-            logger.error("[messageHandler] Error keyword found in LLM response.");
-            return;  // Early exit if the response contains 'error'
+        let responseContent;
+        try {
+            responseContent = llmResponse.getContent();
+            logger.debug(`[messageHandler] LLM response received, contents: ${responseContent}`);
+
+            if (typeof responseContent !== 'string') {
+                throw new Error(`Expected string from LLM response, received type: ${typeof responseContent}`);
+            }
+
+            // Use the getFinishReason method to check for error finish reasons
+            const finishReason = llmResponse.getFinishReason();
+            if (finishReason !== 'stop') {
+                throw new Error(`LLM response finished with reason: ${finishReason}`);
+            }
+
+            if (!responseContent.trim()) {
+                throw new Error("LLM provided an empty or invalid response.");
+            }
+
+            if (responseContent.length > constants.MAX_MESSAGE_LENGTH) {
+                responseContent = await summarizeMessage(responseContent);
+                logger.info("[messageHandler] LLM response exceeded maximum length and was summarized.");
+            }
+        } catch (error) {
+            logger.error(`[messageHandler] Error processing LLM response content: ${error.message}`, { error });
+            return;
         }
 
-        if (!responseContent.trim()) {
-            logger.error("[messageHandler] LLM provided an empty or invalid response.");
-            return;  // Exits if no valid content is returned
+        try {
+            await sendResponse(responseContent, message.getChannelId(), startTime);
+            logger.info("[messageHandler] LLM response sent to the channel successfully.");
+        } catch (error) {
+            logger.error(`[messageHandler] Error sending response to channel: ${error.message}`, { error });
+            return;
         }
-
-        if (responseContent.length > constants.MAX_MESSAGE_LENGTH) {
-            responseContent = await summarizeMessage(responseContent);
-            logger.info("[messageHandler] LLM response exceeded maximum length and was summarized.");
-        }
-
-        await sendResponse(responseContent, message.getChannelId(), startTime);
-        logger.info("[messageHandler] LLM response sent to the channel successfully.");
 
         if (constants.FOLLOW_UP_ENABLED) {
-            await sendFollowUp(message, topic || "General Discussion");
-            logger.debug("[messageHandler] Follow-up interaction initiated.");
+            try {
+                await sendFollowUp(message, topic || "General Discussion");
+                logger.debug("[messageHandler] Follow-up interaction initiated.");
+            } catch (error) {
+                logger.error(`[messageHandler] Error initiating follow-up interaction: ${error.message}`, { error });
+            }
         }
-    } catch (error) {
-        logger.error(`[messageHandler] Error processing LLM response: ${error.message}`, { originalMsg: message, error });
     } finally {
         const processingTime = Date.now() - startTime;
         logger.info(`[messageHandler] Message processing completed in ${processingTime}ms.`);

@@ -11,13 +11,15 @@ module.exports = {
     // LLM interaction configurations
     LLM_API_KEY: process.env.LLM_API_KEY,
     LLM_ENDPOINT_URL: process.env.LLM_ENDPOINT_URL || "http://localhost:5000/v1/chat/completions",
+    LLM_COMPLETIONS_ENDPOINT_URL: process.env.LLM_COMPLETIONS_ENDPOINT_URL || "http://localhost:5000/v1/completions",
+    LLM_SUPPORTS_COMPLETIONS: process.env.LLM_SUPPORTS_COMPLETIONS === 'true' || 'false',
     LLM_PROVIDER: process.env.LLM_PROVIDER || 'OpenAI',
     LLM_MODEL: process.env.LLM_MODEL || 'gpt-3.5-turbo',
     LLM_SYSTEM_PROMPT: process.env.LLM_SYSTEM_PROMPT || 'Respond to the provided message history as a friendly discord user.',
     LLM_SUMMARY_PROMPT: process.env.LLM_SUMMARY_PROMPT || 'Summarise: ',
     LLM_SENTENCE_PROMPT: process.env.LLM_SENTENCE_PROMPT || 'Complete this sentence: ',
     LLM_TEMPERATURE: parseFloat(process.env.LLM_TEMPERATURE || '0.7'),
-    LLM_STOP: process.env.LLM_STOP || '["\n", ".", "?", "!", "<|im_end|>", "<|system|>"]',
+    LLM_STOP: process.env.LLM_STOP || '["\\n", ".", "?", "!", "<|endoftext|>"]',
 
     // Advanced LLM parameters
     LLM_MAX_LENGTH: parseInt(process.env.LLM_MAX_CONTENT_LENGTH || '4096', 10),

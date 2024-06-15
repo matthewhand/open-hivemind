@@ -51,11 +51,11 @@ class OpenAiManager {
     buildRequestBody(historyMessages = [], systemMessageContent = constants.LLM_SYSTEM_PROMPT, maxTokens = constants.LLM_RESPONSE_MAX_TOKENS) {
         let messages = [{ role: 'system', content: systemMessageContent }];
         const supportNameField = process.env.LLM_SUPPORT_NAME_FIELD !== 'false';
-    
+
         if (historyMessages.length > 0 && historyMessages[0].isFromBot() && historyMessages[0].role !== 'user') {
             messages.push({ role: 'user', content: '...' });  // Ensuring logical flow by inserting ellipses when needed
         }
-    
+
         historyMessages.forEach(message => {
             if (!(message instanceof IMessage)) {
                 logger.error("[OpenAiManager.buildRequestBody] Invalid message type, expected IMessage interface.");
@@ -63,7 +63,7 @@ class OpenAiManager {
             }
             const currentRole = message.isFromBot() ? 'assistant' : 'user';
             const authorName = message.getAuthorId(); // using id so name does not confuse the ai
-    
+
             if (supportNameField) {
                 if (messages[messages.length - 1].role !== currentRole || messages[messages.length - 1].name !== authorName) {
                     messages.push({ role: currentRole, content: message.getText(), name: authorName });
@@ -78,18 +78,18 @@ class OpenAiManager {
                 }
             }
         });
-    
+
         if (messages[messages.length - 1].role !== 'user') {
             messages.push({ role: 'user', content: getEmoji() });  // Ensures the conversation ends with a user message
         }
-    
+
         let requestBody = {
             model: constants.LLM_MODEL,
             messages: messages,
             max_tokens: maxTokens,
             temperature: constants.LLM_TEMPERATURE,
         };
-    
+
         // Parse LLM_STOP only if it's a non-empty string; otherwise, set it to null
         constants.LLM_STOP = process.env.LLM_STOP ? JSON.parse(process.env.LLM_STOP) : null;
 
@@ -97,7 +97,7 @@ class OpenAiManager {
         if (constants.LLM_STOP) {
             requestBody.stop = constants.LLM_STOP;
         }
-    
+
         return requestBody;
     }
 
@@ -125,9 +125,11 @@ class OpenAiManager {
             let finishReason = response.choices[0].finish_reason;
             let maxTokensReached = tokensUsed >= constants.MAX_TOKENS;
 
-            if (needsCompletion(maxTokensReached, finishReason, content)) {
+            if (constants.LLM_SUPPORTS_COMPLETIONS && needsCompletion(maxTokensReached, finishReason, content)) {
                 logger.info('[OpenAiManager.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
                 content = await completeSentence(this.openai, content, constants);
+            } else {
+                logger.debug('[OpenAiManager.sendRequest] Sentence needs completion but LLM_SUPPORTS_COMPLETIONS is disabled.');
             }
 
             return new LLMResponse(content, finishReason, tokensUsed);
@@ -137,47 +139,6 @@ class OpenAiManager {
         } finally {
             this.busy = false;
             logger.debug('[OpenAiManager.sendRequest] Set busy to false after processing the request.');
-        }
-    }
-
-    /**
-     * Summarizes text using the OpenAI model based on the provided user message and system prompt.
-     * Constructs a request using the 'prompt' parameter for text completions, tailored for summarization tasks.
-     *
-     * @param {string} userMessage - The user's message to summarize.
-     * @param {string} [systemMessageContent=constants.LLM_SUMMARY_SYSTEM_PROMPT] - System prompt to use for the summary.
-     * @param {number} [maxTokens=constants.LLM_SUMMARY_MAX_TOKENS] - Maximum number of tokens that the model can use.
-     * @returns {Promise<LLMResponse>} - The summarized text response encapsulated in an LLMResponse object.
-     */
-    async summarizeText(userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_SUMMARY_MAX_TOKENS) {
-        if (this.busy) {
-            logger.warn('[OpenAiManager.summarizeText] The manager is currently busy.');
-            return new LLMResponse("", "busy");
-        }
-
-        this.busy = true;
-        const prompt = `${systemMessageContent}\nUser: ${userMessage}\nAssistant:`;
-        const requestBody = {
-            model: constants.LLM_MODEL,
-            prompt: prompt,
-            max_tokens: maxTokens,
-            temperature: 0.5  // Using a moderate temperature for natural completions.
-        };
-
-        logger.debug(`[OpenAiManager.summarizeText] Sending summarization request with prompt: ${prompt}`);
-
-        try {
-            const response = await makeOpenAiRequest(this.openai, requestBody);
-            const summary = extractContent(response.choices[0]);
-            logger.info('[OpenAiManager.summarizeText] Summary processed successfully.');
-
-            return new LLMResponse(summary, "completed", response.usage.total_tokens);
-        } catch (error) {
-            handleError(error, "[OpenAiManager.summarizeText] Error during text summarization");
-            return new LLMResponse("", "error", 0);
-        } finally {
-            this.busy = false;
-            logger.debug('[OpenAiManager.summarizeText] Set busy to false after summarization.');
         }
     }
 
