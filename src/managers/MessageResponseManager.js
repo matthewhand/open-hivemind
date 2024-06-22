@@ -45,19 +45,19 @@ class MessageResponseManager {
         const defaults = {
             interrobangBonus: 0.1,
             mentionBonus: 0.5,
-            botResponseModifier: -1.0,
-            maxDelay: 7000,
-            minDelay: 1500,
+            botResponseModifier: -0.7,
+            maxDelay: 17000,
+            minDelay: 4500,
             decayRate: 0.95,
             llmWakewords: ['!help', '!ping', '!echo'],
-            unsolicitedChannelCap: 3,
+            unsolicitedChannelCap: 2,
             priorityChannel: constants.CHANNEL_ID,
             decayThreshold: 3000,
             recentActivityDecayRate: 0.5,
             activityDecayBase: 0.5,
             activityTimeWindow: 300000,
             channelInactivityLimit: 600000,
-            priorityChannelBonus: 0.8 // Additional chance bonus for priority channel
+            priorityChannelBonus: 0.6 // Additional chance bonus for priority channel
         };
         const config = { ...defaults, ...configurationManager.getConfig('messageResponseSettings') };
         logger.debug("Configuration loaded: ", config);

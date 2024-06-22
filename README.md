@@ -23,7 +23,7 @@ A sophisticated Discord bot leveraging cutting-edge language models, image analy
 ### Prerequisites
 
 - Node.js (version 16.x or higher recommended)
-- Docker (for containerized deployment)
+- Docker (optional, for containerized deployment)
 - A Discord bot token and client ID from the Discord Developer Portal
 
 ### Environment Setup
@@ -32,12 +32,14 @@ A sophisticated Discord bot leveraging cutting-edge language models, image analy
 
 ### Deployment Guide
 
-#### Localhost
+#### Localhost (npm)
 
 1. Clone the repository to your local machine.
 2. Install dependencies using `npm install`.
 3. Configure your `.env` file with the necessary environment variables.
 4. Start the bot with `npm start`.
+
+Tested and confirmed working on Windows.
 
 #### Docker
 
@@ -80,3 +82,11 @@ npm run validate
 For detailed configuration management, refer to [docs/CONFIGURATION.chatgpt.md](./docs/CONFIGURATION.chatgpt.md).
 
 For license information, refer to [docs/LICENSE.chatgpt.md](./docs/LICENSE.chatgpt.md).
+
+## 🛡 Compliance with Discord's Terms of Service
+
+To comply with Discord's new Developer Terms of Service effective July 8, 2024, the bot includes the following measures:
+
+- **Encrypted Data Storage**: All end user data, including usernames and user IDs, is stored using encryption to ensure data security.
+- **Access Control and Auditing**: Logs are maintained to track access to user data, and the bot is prepared to provide access to Discord for compliance verification if required.
+- **User Consent**: Explicit permission is obtained from users before storing any message data, ensuring transparency and user control over their information.
