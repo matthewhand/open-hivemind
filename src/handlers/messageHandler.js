@@ -1,5 +1,5 @@
 const IMessage = require('../interfaces/IMessage');
-const CommandManager = require('../managers/CommandManager');
+//const CommandManager = require('../managers/CommandManager');
 const MessageResponseManager = require('../managers/MessageResponseManager');
 const LLMInterface = require('../interfaces/LLMInterface');
 const constants = require('../config/constants');
@@ -9,16 +9,26 @@ const { prepareMessageBody, summarizeMessage, processCommand } = require('../uti
 const { encrypt } = require('../utils/encryptionUtils');  // Import encryption utils
 
 async function messageHandler(originalMsg, historyMessages = []) {
+    if (!originalMsg) {
+        logger.error('[messageHandler] No original message provided.');
+        return;
+    }
+    
     const startTime = Date.now();
+    logger.debug(`[messageHandler] originalMsg: ${JSON.stringify(originalMsg)}`);
     logger.debug(`[messageHandler] Started processing message ID: ${encrypt(originalMsg.getMessageId())} at ${new Date(startTime).toISOString()}`);
 
     if (!validateMessage(originalMsg)) {
         return;
     }
 
+    logger.debug(`[messageHandler] validated message`);
+
     if (await processCommand(originalMsg)) {
         return;
     }
+
+    logger.debug(`[messageHandler] processed command`);
 
     await processAIResponse(originalMsg, historyMessages, startTime);
 }
@@ -36,6 +46,9 @@ function validateMessage(message) {
 }
 
 async function processAIResponse(message, historyMessages, startTime) {
+
+    logger.debug(`[messageHandler] process ai response`);
+
     if (!MessageResponseManager.getInstance().shouldReplyToMessage(message)) {
         logger.info(`[messageHandler] No AI response deemed necessary based on the content and context.`);
         return;
@@ -47,15 +60,18 @@ async function processAIResponse(message, historyMessages, startTime) {
         return;
     }
 
+    logger.debug(`[messageHandler] processAiResponse called.`);
+
     try {
         const topic = message.getChannelTopic();
+        logger.debug(`[messageHandler] channel topic is ${topic}.`);
         const userMentions = message.getUserMentions().map(user => encrypt(user));  // Encrypt user mentions
         const channelUsers = message.getChannelUsers().map(user => encrypt(user));  // Encrypt channel users
 
         let requestBody;
         try {
             requestBody = await prepareMessageBody(constants.LLM_SYSTEM_PROMPT, message.getChannelId(), historyMessages, topic, userMentions, channelUsers);
-            logger.debug(`[messageHandler] LLM request body prepared.`);
+            logger.debug(`[messageHandler] LLM request body prepared: ${JSON.stringify(requestBody)}`);
         } catch (error) {
             logger.error(`[messageHandler] Error preparing LLM request body: ${error.message}`, { error });
             return;
@@ -64,6 +80,7 @@ async function processAIResponse(message, historyMessages, startTime) {
         let llmResponse;
         try {
             llmResponse = await llmManager.sendRequest(requestBody);
+            logger.debug(`[messageHandler] LLM request sent successfully.`);
         } catch (error) {
             logger.error(`[messageHandler] Error sending LLM request: ${error.message}`, { error });
             return;
@@ -72,7 +89,7 @@ async function processAIResponse(message, historyMessages, startTime) {
         let responseContent;
         try {
             responseContent = llmResponse.getContent();
-            logger.debug(`[messageHandler] LLM response received.`);
+            logger.debug(`[messageHandler] LLM response received. Response Content: ${responseContent}`);
 
             if (typeof responseContent !== 'string') {
                 throw new Error(`Expected string from LLM response, received type: ${typeof responseContent}`);
@@ -94,6 +111,13 @@ async function processAIResponse(message, historyMessages, startTime) {
         } catch (error) {
             logger.error(`[messageHandler] Error processing LLM response content: ${error.message}`, { error });
             return;
+        }
+
+        logger.debug(`[messageHandler] Preparing to send response. Response Content: ${responseContent}`);
+
+        if (typeof responseContent !== 'string' && !Buffer.isBuffer(responseContent)) {
+            logger.error(`[messageHandler] responseContent is not string or is not Buffer`);
+            throw new Error(`Invalid responseContent type: ${typeof responseContent}`);
         }
 
         try {
