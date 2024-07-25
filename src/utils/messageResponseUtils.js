@@ -1,4 +1,3 @@
-// utils/messageResponseUtils.js
 const configurationManager = require('../config/configurationManager');
 const logger = require('./logger');
 
