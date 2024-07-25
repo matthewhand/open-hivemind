@@ -1,4 +1,4 @@
-const configurationManager = require('../config/configurationManager');
+// const configurationManager = require('../config/configurationManager');
 const logger = require('./logger');
 
 class ReplyManager {
