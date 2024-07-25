@@ -1,5 +1,5 @@
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
+// const { REST } = require('@discordjs/rest');
+// const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const path = require('path');
 const logger = require('./utils/logger');
@@ -19,9 +19,9 @@ commandFiles.forEach(file => {
     if (commandModule.data && typeof commandModule.execute === 'function') {
         commandExecutors[commandModule.data.name] = commandModule.execute;
         commandDataArray.push(commandModule.data);
-        logger.debug(`Dynamically loaded command: ${commandModule.data.name} with data:`, commandModule.data);
+        logger.debug('Dynamically loaded command: ' + commandModule.data.name + ' with data:', commandModule.data);
     } else {
-        logger.warn(`[WARNING] Command module '${file}' is missing required properties.`);
+        logger.warn('[WARNING] Command module ' + file + ' is missing required properties.');
     }
 });
 
