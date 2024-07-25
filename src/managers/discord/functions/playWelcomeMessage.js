@@ -1,19 +1,19 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-const logger = require('../../../utils/logger');
-const constants = require('../../../config/constants');
-const { generateDependencyReport } = require('@discordjs/voice');
-const OpenAI = require('openai');
+const { joinVoiceChannel } = require('@discordjs/voice');
 const fs = require('fs');
 const util = require('util');
+const OpenAI = require('openai');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const constants = require('../../../config/constants');
+const logger = require('../../../utils/logger');
 
 /**
- * Plays a welcome message in a specified voice channel.
- * @param {VoiceChannel} voiceChannel - The voice channel to join and play the welcome message.
+ * Plays a welcome message in the voice channel.
+ * @param {VoiceConnection} connection - The voice connection to use.
  */
-const playWelcomeMessage = async (voiceChannel) => {
+async function playWelcomeMessage(connection) {
     const welcomeMessage = constants.WELCOME_MESSAGE;
-    logger.info('Playing welcome message:  + welcomeMessage + ');
-    logger.debug('Dependency Report:\n' + generateDependencyReport());
+    logger.info('Playing welcome message: ' + welcomeMessage);
+    logger.debug('joinVoiceChannel is available: ' + typeof joinVoiceChannel !== 'undefined');
 
     const openai = new OpenAI({
         apiKey: constants.NARRATION_API_KEY
@@ -38,7 +38,7 @@ const playWelcomeMessage = async (voiceChannel) => {
         const player = createAudioPlayer();
         const resource = createAudioResource('welcome.mp3');
         player.play(resource);
-        voiceChannel.connection.subscribe(player);
+        connection.subscribe(player);
 
         player.on(AudioPlayerStatus.Idle, () => {
             fs.unlinkSync('welcome.mp3');
@@ -55,6 +55,6 @@ const playWelcomeMessage = async (voiceChannel) => {
             logger.error('Response data: ' + JSON.stringify(error.response.data));
         }
     }
-};
+}
 
 module.exports = playWelcomeMessage;
