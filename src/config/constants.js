@@ -1,7 +1,9 @@
 module.exports = {
     // Client and channel identification for the bot
+    DISCORD_TOKEN: process.env.DISCORD_TOKEN,
     CLIENT_ID: process.env.CLIENT_ID,
     CHANNEL_ID: process.env.CHANNEL_ID,
+    VOICE_CHANNEL_ID: process.env.VOICE_CHANNEL_ID,
 
     // Follow-up message configuration
     FOLLOW_UP_ENABLED: process.env.LLM_FOLLOW_UP_ENABLED !== 'false',
@@ -37,4 +39,12 @@ module.exports = {
     BOT_TYPING_DELAY_MIN_MS: parseInt(process.env.BOT_TYPING_DELAY_MIN_MS || '1000', 10),
     BOT_TYPING_DELAY_MAX_MS: parseInt(process.env.BOT_TYPING_DELAY_MAX_MS || '15000', 10),
     INTER_PART_DELAY: parseInt(process.env.BOT_TYPING_DELAY_MAX_MS || '20000', 10),
+
+    // Transcribe and Narration configurations
+    TRANSCRIBE_API_KEY: process.env.TRANSCRIBE_API_KEY || process.env.OPENAI_API_KEY,
+    TRANSCRIBE_ENDPOINT_URL: process.env.TRANSCRIBE_ENDPOINT_URL || "https://api.openai.com/v1/audio/transcriptions",
+    NARRATION_API_KEY: process.env.NARRATION_API_KEY || process.env.OPENAI_API_KEY,
+    NARRATION_ENDPOINT_URL: process.env.NARRATION_ENDPOINT_URL || "https://api.openai.com/v1/audio/translations",
+    WELCOME_MESSAGE: process.env.WELCOME_MESSAGE || 'Hello everyone, I have joined the voice channel!'
+
 };
