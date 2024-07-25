@@ -1,3 +1,4 @@
+const { makeOpenAiRequest } = require('./openAiManagerUtils');
 const OpenAiManager = require('../managers/OpenAiManager');
 const DiscordManager = require('../managers/DiscordManager');
 const logger = require('./logger');
@@ -14,12 +15,17 @@ const commands = require('../commands/inline');
  */
 async function sendResponse(messageContent, channelId, startTime) {
     try {
+        if (typeof messageContent !== 'string' && !Buffer.isBuffer(messageContent)) {
+            throw new Error(`Invalid messageContent type: ${typeof messageContent}`);
+        }
+
         const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) {
                 // Wait between parts to simulate human typing speed
                 await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
             }
+            logger.debug(`[sendResponse] Sending part ${i + 1} to channel ${channelId}. Part content: ${parts[i]}`);
             await sendMessagePart(parts[i], channelId);
             logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length} to channel ${channelId}.`);
         }
@@ -70,6 +76,10 @@ function splitMessageContent(messageContent, maxPartLength) {
  */
 async function sendMessagePart(part, channelId) {
     try {
+        if (typeof part !== 'string' && !Buffer.isBuffer(part)) {
+            throw new Error(`Invalid part type: ${typeof part}`);
+        }
+
         await DiscordManager.getInstance().sendMessage(channelId, part);
         logger.debug(`[sendMessagePart] Sent message part to channel ${channelId}. Content length: ${part.length}.`);
     } catch (error) {
@@ -89,6 +99,13 @@ function delay(duration) {
     return new Promise(resolve => setTimeout(resolve, duration));
 }
 
+/**
+ * Handles follow-up interactions by sending a message based on the original message's context and topic.
+ * Utilizes OpenAI to generate a relevant follow-up command suggestion.
+ * 
+ * @param {Object} originalMessage The original message object.
+ * @param {string} topic The topic of the channel or conversation.
+ */
 async function sendFollowUp(originalMessage, topic) {
     const openAiManager = OpenAiManager.getInstance();
     logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
@@ -111,7 +128,7 @@ async function sendFollowUp(originalMessage, topic) {
                 stop: ["\n", " END"],
             };
 
-            const responseContent = await openAiManager.sendRequest(requestBody);
+            const responseContent = await makeOpenAiRequest(openAiManager, requestBody);
             if (!responseContent || responseContent.length === 0) {
                 logger.error("Received empty or invalid response from OpenAI for follow-up.");
                 return;

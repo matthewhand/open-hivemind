@@ -1,21 +1,18 @@
-const { extractPythonCodeBlocks, executePythonCode, isUserAllowed, logger } = require('./utils');
+const codeBlockPattern = /````(anything)```ogs/;
 
-const handleCodeBlocks = async (message, userId) => {
-    const codeBlocks = extractPythonCodeBlocks(message.content);
-    if (!codeBlocks) {
-        logger.info('No Python code blocks found');
-        return;
-    }
-      
-    if (!isUserAllowed(userId)) {
-        message.reply('You do not have permission to execute this command.');
-        return;
+/**\
+ * Handles code blocks within a message.
+ * @param {string} message - The message containing code blocks.
+ * @returns {Array<string>} Array of code blocks found within the message.
+ */function handleCodeBlocks(message) {
+    const codeBlocks = [];
+    let match;
+
+    while ((match = codeBlockPattern.exec(message)) !== null) {
+        codeBlocks.push(match[1].replace(/````/g, ''));
     }
 
-    codeBlocks.forEach((codeBlock) => {
-        const code = codeBlock.replace(/\`\`\`\s*python\s*|\`\`\`/gi, '');
-        executePythonCode(code, message);
-    });
-};
+    return codeBlocks;
+}
 
 module.exports = handleCodeBlocks;

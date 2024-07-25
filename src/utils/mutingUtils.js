@@ -1,29 +1,36 @@
-// utils/mutingUtils.js
-const { Permissions } = require('discord.js');
+const { MessageEmbed } = require('discord.js');
+const logger = require('./logger');
 
-function checkMutingEligibility(userId) {
-    // Your eligibility logic here
-    return true;
-}
+/**
+ * Mutes a user in the specified channel.
+ * @param {Object} channel - The channel where the user will be muted.
+ * @param {string} userId - The ID of the user to be muted.
+ * @returns {Promise} Resolves when the user is muted.
+ */
+async function muteUser(channel, userId) {
+    logger.debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
 
-async function muteMember(member, durationMs, reason = 'No reason provided') {
-    if (!member.guild.me.permissions.has(Permissions.FLAGS.MODERATE_MEMBERS)) {
-        throw new Error("Bot does not have permission to mute members.");
+    const member = await channel.guild.members.fetch(userId);
+    const role = channel.guild.roles.cache.find(role => role.name === 'Muted');
+
+    if (!role) {
+        logger.error('Mute role not found');
+        return;
     }
-    await member.timeout(durationMs, reason);
+
+    await member.roles.add(role);
+    logger.debug('User muted successfully');
+
+    const embed = new MessageEmbed()
+        .setTitle('User Muted')
+        .setDescription('The user has been muted.')
+        .addField('User ID', userId)
+        .setColor('#FF0000');
+
+    await channel.send({ embeds: [embed] });
+    logger.debug('Mute confirmation message sent');
 }
 
-function parseDuration(duration) {
-    const match = duration.match(/(\d+)(h|m|s)/);
-    if (!match) return 0;
-    const durationValue = parseInt(match[1]);
-    const durationType = match[2];
-    switch (durationType) {
-        case 'h': return durationValue * 60 * 60 * 1000;
-        case 'm': return durationValue * 60 * 1000;
-        case 's': return durationValue * 1000;
-        default: return 0;
-    }
-}
-
-module.exports = { checkMutingEligibility, muteMember, parseDuration };
+module.exports = {
+    muteUser
+};
