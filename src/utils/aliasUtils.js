@@ -8,7 +8,7 @@ const logger = require('./logger');
 function getRandomAliasCommand() {
     const aliasKeys = Object.keys(aliases);
     const randomIndex = Math.floor(Math.random() * aliasKeys.length);
-    const randomCommand = '!'+aliasKeys[randomIndex];
+    const randomCommand = '!' + aliasKeys[randomIndex];
     logger.debug('Generated random alias command: ' + randomCommand);
     return randomCommand;
 }
@@ -31,7 +31,7 @@ function getAliasDescription(commandName) {
  */
 function listAllAliases() {
     const allAliases = Object.entries(aliases).map(([command, { description }]) =>
-        '!'+command + ' - ' + description).join('\n');
+        '!' + command + ' - ' + description).join('\n');
     logger.debug('Listing all aliases');
     return allAliases;
 }
@@ -43,7 +43,7 @@ function listAllAliases() {
  */
 function findAliasesByCategory(category) {
     const categorizedAliases = Object.entries(aliases)
-        .filter(([_, alias]) => alias.category === category)
+        .filter(([, alias]) => alias.category === category) // Removed 
         .reduce((acc, [command, { description }]) => {
             acc[command] = description;
             return acc;
@@ -65,7 +65,7 @@ function getDetailedAliasInfo(commandName) {
         return message;
     }
     const { handler, description } = alias;
-    const detailedInfo = 'Command: !'+commandName+'\nHandler: ' + handler + '\nDescription: ' + description;
+    const detailedInfo = 'Command: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
     logger.debug('Fetched detailed info for command: ' + commandName + ', info: ' + detailedInfo);
     return detailedInfo;
 }

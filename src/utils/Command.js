@@ -1,16 +1,14 @@
+const logger = require('../utils/logger');
+
 class Command {
-    constructor(name, description) {
+    constructor(name, execute) {
         this.name = name;
-        this.description = description;
+        this.execute = execute;
     }
 
-    async execute(message, args) {
-        throw new Error('execute method must be implemented');
-    }
-    
-    async handleException(message, error) {
-        logger.error(`Error in ${this.name}: ${error.message}`);
-        message.reply('An error occurred while processing your request.');
+    run(...args) {
+        logger.info('Running command: ' + this.name);
+        return this.execute(...args);
     }
 }
 
