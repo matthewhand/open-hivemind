@@ -1,4 +1,3 @@
-// src/interfaces/LLMInterface.js
 const logger = require('../utils/logger');
 const constants = require('../config/constants');
 
@@ -9,8 +8,9 @@ const constants = require('../config/constants');
 class LLMInterface {
     constructor() {
         if (this.constructor === LLMInterface) {
-            throw new Error("Abstract class LLMInterface cannot be instantiated directly.");
+            throw new Error('Abstract class LLMInterface cannot be instantiated directly.');
         }
+        logger.debug('LLMInterface instantiated');
     }
 
     /**
@@ -19,6 +19,7 @@ class LLMInterface {
      * @throws {Error} Throws an error if the LLM provider is not supported.
      */
     static getManager() {
+        logger.debug('getManager called');
         switch (constants.LLM_PROVIDER) {
             case 'OpenAI': {
                 const OpenAiManager = require('../managers/OpenAiManager'); // Dynamic require within a block
@@ -26,8 +27,8 @@ class LLMInterface {
             }
             // Potential cases for other providers can be added here
             default:
-                logger.error(`Unsupported LLM Provider specified in constants: ${constants.LLM_PROVIDER}`);
-                throw new Error(`Unsupported LLM Provider specified in constants: ${constants.LLM_PROVIDER}`);
+                logger.error('Unsupported LLM Provider specified in constants: ' + constants.LLM_PROVIDER);
+                throw new Error('Unsupported LLM Provider specified in constants: ' + constants.LLM_PROVIDER);
         }
     }
 
@@ -38,7 +39,8 @@ class LLMInterface {
      * @throws {Error} Must be implemented in subclass.
      */
     async buildRequestBody(historyMessages) {
-        throw new Error("buildRequestBody method must be implemented by subclasses");
+        logger.debug('buildRequestBody called with historyMessages: ' + JSON.stringify(historyMessages));
+        throw new Error('buildRequestBody method must be implemented by subclasses');
     }
 
     /**
@@ -48,8 +50,9 @@ class LLMInterface {
      * @returns {Promise<LLMResponse>} The response from the LLM.
      * @throws {Error} Must be implemented in subclass.
      */
-    async sendRequest(message, history=[]) {
-        throw new Error("sendRequest method must be implemented by subclasses");
+    async sendRequest(message, history = []) {
+        logger.debug('sendRequest called with message: ' + JSON.stringify(message) + ', history: ' + JSON.stringify(history));
+        throw new Error('sendRequest method must be implemented by subclasses');
     }
 
     /**
@@ -59,7 +62,8 @@ class LLMInterface {
      * @throws {Error} Must be implemented in subclass.
      */
     isBusy() {
-        throw new Error("isBusy method must be implemented by subclasses");
+        logger.debug('isBusy called');
+        throw new Error('isBusy method must be implemented by subclasses');
     }
 
     /**
@@ -67,6 +71,7 @@ class LLMInterface {
      * @returns {boolean} True if historical data is required, false otherwise.
      */
     requiresHistory() {
+        logger.debug('requiresHistory called');
         return false; // Default implementation, override in subclasses if needed
     }
 }
