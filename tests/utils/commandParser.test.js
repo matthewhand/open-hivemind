@@ -1,51 +1,23 @@
-// Assuming configurationManager.js exports a getConfig method to access specific config values
-const { parseCommand } = require('../../src/utils/commandParser');
-const logger = require('../../src/utils/logger');
-const configurationManager = require('../../src/config/configurationManager');
+const commandParser = require('../../utils/commandParser');
 
-describe('parseCommand', () => {
-    test('parses command with multiple arguments', () => {
-        const commandContent = '!ban user123 for breaking rules';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'ban',
-            action: '',
-            args: 'user123 for breaking rules'
-        });
+describe('Command Parser', () => {
+    test('parses a command without arguments', () => {
+        const input = '!hello';
+        const result = commandParser.parse(input);
+        expect(result.command).toBe('hello');
+        expect(result.args).toEqual([]);
     });
 
-    test('parses command with action and arguments', () => {
-        const commandContent = '!user:add user123 admin';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'user',
-            action: 'add',
-            args: 'user123 admin'
-        });
-    });
-    
-    test('parses command with special characters in arguments', () => {
-        const commandContent = '!message @user123 👋 Hello!';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'message',
-            action: '',
-            args: '@user123 👋 Hello!'
-        });
+    test('parses a command with arguments', () => {
+        const input = '!greet John Doe';
+        const result = commandParser.parse(input);
+        expect(result.command).toBe('greet');
+        expect(result.args).toEqual(['John', 'Doe']);
     });
 
-    test('parses command with empty or whitespace arguments', () => {
-        const commandContent = '!command   ';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'command',
-            action: '',
-            args: ''
-        });
-    });
-
-    test('parses complex command structures', () => {
-        const commandContent = '!config:set key:value';
-        expect(parseCommand(commandContent)).toEqual({
-            commandName: 'config',
-            action: 'set',
-            args: 'key:value'
-        });
+    test('returns null for an invalid command', () => {
+        const input = 'hello';
+        const result = commandParser.parse(input);
+        expect(result).toBeNull();
     });
 });
