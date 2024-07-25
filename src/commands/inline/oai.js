@@ -21,9 +21,9 @@ class OAICommand extends ICommand {
      * @returns {Promise<CommandResponse>} - The result of the command execution.
      */
     async execute(args) {
-        const message = args.message;
+        // const message = args.message;
         const prompt = args.join(' ');  // Combining all arguments to form the prompt
-        logger.info(`OAICommand: Generating response for prompt: ${prompt}`);
+        logger.info('OAICommand: Generating response for prompt: ' + prompt);
 
         try {
             const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
@@ -31,20 +31,20 @@ class OAICommand extends ICommand {
                 max_tokens: 150
             }, {
                 headers: {
-                    'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                    'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
                 }
             });
 
             if (response.data.choices && response.data.choices.length > 0) {
                 const generatedText = response.data.choices[0].text.trim();
-                logger.info(`OAICommand: Response generated successfully`);
+                logger.info('OAICommand: Response generated successfully');
                 return { success: true, message: generatedText };
             } else {
                 logger.warn('OAICommand: No response generated.');
                 return { success: false, message: 'Failed to generate response.' };
             }
         } catch (error) {
-            logger.error(`OAICommand execute error: ${error}`);
+            logger.error('OAICommand execute error: ' + error);
             return { success: false, message: getRandomErrorMessage(), error: error.toString() };
         }
     }

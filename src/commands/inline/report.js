@@ -1,4 +1,4 @@
-const axios = require('axios');
+// const axios = require('axios');
 const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 const { MessageEmbed, MessageCollector } = require('discord.js');
@@ -44,7 +44,7 @@ class ReportCommand extends ICommand {
     
         const embed = new MessageEmbed()
             .setTitle('Moderation Vote Required')
-            .setDescription(`A report has been filed for: ${reportDescription}`)
+            .setDescription('A report has been filed for: ' + reportDescription)
             .addField('Reported by', message.author.tag)
             .setColor('ORANGE')
             .setTimestamp();
@@ -67,7 +67,7 @@ class ReportCommand extends ICommand {
         if (error.message === 'time') {
             message.channel.send('You did not provide any report details in time. Please try again.');
         } else {
-            logger.error(`Error in ReportCommand: ${error.message}`);
+            logger.error('Error in ReportCommand: ' + error.message);
             message.channel.send('An error occurred while processing your report. Please try again.');
         }
     }
