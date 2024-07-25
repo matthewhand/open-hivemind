@@ -64,4 +64,4 @@ RUN ls -latr src/
 # Copy Python environment
 #COPY --from=python-env /usr/local /usr/local
 
-CMD [ \node\, \index.js\ ]
+CMD [ "node", "index.js" ]
