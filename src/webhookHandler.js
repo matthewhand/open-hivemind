@@ -1,4 +1,3 @@
-const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { predictionImageMap } = require('../utils/handleImageMessage');
@@ -13,37 +12,10 @@ if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID) {
 }
 
 client.login(process.env.DISCORD_TOKEN).catch(error => {
-    console.error('Failed to login to Discord: ' + error.message);
+    console.error('Failed to login to Discord:', error.message);
     process.exit(1);
 });
 
-/**
- * Fetches the prediction result from Replicate API.
- * @param {string} predictionId - The ID of the prediction.
- * @returns {Object} The prediction result.
- * @throws Will throw an error if the request fails.
- */
-async function getPredictionResult(predictionId) {
-    try {
-        const response = await axios.get(
-            'https://api.replicate.com/v1/predictions/' + predictionId,
-            {
-                headers: {
-                    'Authorization': 'Token ' + process.env.REPLICATE_API_TOKEN
-                }
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Failed to get prediction result: ' + (error.response ? error.response.data : error.message));
-        throw new Error('Failed to get prediction result');
-    }
-}
-
-/**
- * Starts the webhook server.
- * @param {number} port - The port on which the server will listen.
- */
 const startWebhookServer = (port) => {
     const app = express();
     app.use(express.json());
@@ -54,6 +26,7 @@ const startWebhookServer = (port) => {
         const predictionId = req.body.id;
         const predictionResult = req.body;  // Adjust this line if necessary to obtain the prediction result
         const imageUrl = predictionImageMap.get(predictionId); // Retrieve the image URL using the prediction ID
+        console.debug('Image URL: ' + imageUrl);
 
         const channelId = process.env.CHANNEL_ID;
         const channel = client.channels.cache.get(channelId);
@@ -64,7 +37,7 @@ const startWebhookServer = (port) => {
                 const resultArray = predictionResult.output;
                 const resultText = resultArray.join(' ');  // Join array elements into a single string
                 // Include the image URL in the result message
-                resultMessage = resultText;
+                resultMessage = resultText + '\nImage URL: ' + imageUrl;
             } else if (predictionResult.status === 'processing') {
                 console.debug('Processing: ' + predictionId);
             } else {
@@ -72,7 +45,7 @@ const startWebhookServer = (port) => {
             }
 
             await channel.send(resultMessage).catch(error => {
-                console.error('Failed to send message to channel: ' + error.message);
+                console.error('Failed to send message to channel:', error.message);
             });
 
             // Remove the image URL from the map after sending the message
@@ -97,7 +70,8 @@ const startWebhookServer = (port) => {
 
     // Error handling middleware
     app.use((err, req, res, next) => {
-        console.error('Unhandled Error: ' + err.message);
+        console.error('Unhandled Error:', err.message);
+        console.debug('Next middleware function: ' + next);
         res.status(500).send({ error: 'Server Error' });
     });
 
@@ -128,7 +102,7 @@ const startWebhookServer = (port) => {
             console.debug('Message sent to Discord: ' + message);
             res.status(200).send({ message: 'Message sent to Discord.' });
         } catch (error) {
-            console.error('Failed to send the message: ' + error);
+            console.error('Failed to send the message:', error);
             res.status(500).send({ error: 'Failed to send the message' });
         }
     });
@@ -166,7 +140,7 @@ const startWebhookServer = (port) => {
             console.debug('Summarized message sent to Discord: ' + summarizedMessage);
             res.status(200).send({ message: 'Message summarized and sent to Discord.' });
         } catch (error) {
-            console.error('Failed to summarize or send the message: ' + error);
+            console.error('Failed to summarize or send the message:', error);
             res.status(500).send({ error: 'Failed to summarize or send the message' });
         }
     });
