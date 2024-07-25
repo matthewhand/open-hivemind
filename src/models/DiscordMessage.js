@@ -1,4 +1,3 @@
-// src/models/DiscordMessage.js
 const IMessage = require('../interfaces/IMessage');
 const logger = require('../utils/logger');
 const constants = require('../config/constants'); // Ensure this path is correct
@@ -18,14 +17,14 @@ class DiscordMessage extends IMessage {
      */
     constructor(message, repliedMessage = null, isBot = null) {
         super(message);
-    
+
         if (!message) {
             logger.error('DiscordMessage constructor: message parameter is undefined or null.');
             throw new Error('Message parameter is required');
         }
-    
-        // logger.debug(`DiscordMessage constructor: Initializing with message ID: ${message.id}`);
-    
+
+        logger.debug('[DiscordMessage] Initializing with message ID: ' + message.id);
+
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.isBotExplicitlySet = isBot;
@@ -38,11 +37,13 @@ class DiscordMessage extends IMessage {
         // Initialize essential properties from the message object
         this.id = message.id;
         this.content = message.content;
-        this.channelId = message.channelId;
+        this.channelId = message.channel.id;
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
+
+        logger.debug('DiscordMessage initialized with constants: ' + JSON.stringify(constants));
     }
-    
+
     getMessageId() {
         return this.message.id;
     }
@@ -60,11 +61,10 @@ class DiscordMessage extends IMessage {
     }
 
     getChannelTopic() {
-        return this.message.channel.topic || "No topic";
+        return this.message.channel.topic || 'No topic';
     }
 
     getUserMentions() {
-        // Corrected to remove .toArray()
         return this.message.mentions.users.map(user => ({
             id: user.id,
             displayName: user.username
@@ -82,4 +82,5 @@ class DiscordMessage extends IMessage {
         return this.message.author.bot;
     }
 }
+
 module.exports = DiscordMessage;

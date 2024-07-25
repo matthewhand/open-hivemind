@@ -1,48 +1,78 @@
 const { aliases } = require('../config/aliases');
+const logger = require('./logger');
 
-// Returns a random command prefixed with "!"
+/**
+ * Returns a random command prefixed with '!'.
+ * @returns {string} A random alias command.
+ */
 function getRandomAliasCommand() {
     const aliasKeys = Object.keys(aliases);
     const randomIndex = Math.floor(Math.random() * aliasKeys.length);
-    return `!${aliasKeys[randomIndex]}`;
+    const randomCommand = '!'+aliasKeys[randomIndex];
+    logger.debug('Generated random alias command: ' + randomCommand);
+    return randomCommand;
 }
 
-// Fetches the description for a given alias
+/**
+ * Fetches the description for a given alias.
+ * @param {string} commandName - The name of the command.
+ * @returns {string} The description of the alias or a default message if not found.
+ */
 function getAliasDescription(commandName) {
     const alias = aliases[commandName.toLowerCase()];
-    return alias ? alias.description : 'No description available.';
+    const description = alias ? alias.description : 'No description available.';
+    logger.debug('Fetched alias description for command: ' + commandName + ', description: ' + description);
+    return description;
 }
 
-// Lists all aliases with their descriptions, formatted as a string
+/**
+ * Lists all aliases with their descriptions, formatted as a string.
+ * @returns {string} A formatted list of all aliases and their descriptions.
+ */
 function listAllAliases() {
-    return Object.entries(aliases).map(([command, {description}]) => 
-        `!${command} - ${description}`).join('\n');
+    const allAliases = Object.entries(aliases).map(([command, { description }]) =>
+        '!'+command + ' - ' + description).join('\n');
+    logger.debug('Listing all aliases');
+    return allAliases;
 }
 
-// Optional: Find aliases by category (if your aliases are categorized)
+/**
+ * Finds aliases by category (if your aliases are categorized).
+ * @param {string} category - The category to filter by.
+ * @returns {Object} The aliases that match the given category.
+ */
 function findAliasesByCategory(category) {
-    return Object.entries(aliases)
+    const categorizedAliases = Object.entries(aliases)
         .filter(([_, alias]) => alias.category === category)
-        .reduce((acc, [command, {description}]) => {
+        .reduce((acc, [command, { description }]) => {
             acc[command] = description;
             return acc;
         }, {});
+    logger.debug('Found aliases by category: ' + category);
+    return categorizedAliases;
 }
 
-// Get detailed info for an alias, optionally formatted for display
+/**
+ * Gets detailed info for an alias, optionally formatted for display.
+ * @param {string} commandName - The name of the command.
+ * @returns {string} The detailed information of the alias or a default message if not found.
+ */
 function getDetailedAliasInfo(commandName) {
     const alias = aliases[commandName.toLowerCase()];
     if (!alias) {
-        return 'Alias does not exist.';
+        const message = 'Alias does not exist.';
+        logger.debug(message);
+        return message;
     }
-    // Assuming you might add more detailed info in aliases, like categories, handlers, etc.
     const { handler, description } = alias;
-    return `Command: !${commandName}\nHandler: ${handler}\nDescription: ${description}`;
+    const detailedInfo = 'Command: !'+commandName+'\nHandler: ' + handler + '\nDescription: ' + description;
+    logger.debug('Fetched detailed info for command: ' + commandName + ', info: ' + detailedInfo);
+    return detailedInfo;
 }
 
-module.exports = { 
-    getRandomAliasCommand, 
-    getAliasDescription, 
+module.exports = {
+    getRandomAliasCommand,
+    getAliasDescription,
     listAllAliases,
     findAliasesByCategory,
     getDetailedAliasInfo
