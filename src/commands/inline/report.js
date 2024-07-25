@@ -1,4 +1,3 @@
-// const axios = require('axios');
 const ICommand = require('../../interfaces/ICommand');
 const logger = require('../../utils/logger');
 const { MessageEmbed, MessageCollector } = require('discord.js');
@@ -50,7 +49,8 @@ class ReportCommand extends ICommand {
             .setTimestamp();
     
         const moderatorChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-vote');
-        const voteMessage = await moderatorChannel.send({ embeds: [embed] });
+        // const voteMessage = 
+        await moderatorChannel.send({ embeds: [embed] });
     
         const voteCollector = new MessageCollector(moderatorChannel, { time: 60000 }); // 1 minute voting duration
         voteCollector.on('collect', msg => {
@@ -58,7 +58,7 @@ class ReportCommand extends ICommand {
                 // Logic to count votes and make a decision
             }
         });
-        voteCollector.on('end', collected => {
+        voteCollector.on('end', () => {
             moderatorChannel.send('Voting ended. Decision: ...'); // Replace with the actual decision
         });
     }
