@@ -28,6 +28,10 @@ class OpenAiManager {
         OpenAiManager.instance = this;
     }
 
+    getClient() {
+        return this.openai;
+    }
+
     /**
      * Retrieves the singleton instance of OpenAiManager.
      * @returns {OpenAiManager} The singleton instance.
