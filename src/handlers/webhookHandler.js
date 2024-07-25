@@ -1,10 +1,8 @@
-const axios = require('axios');
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { predictionImageMap } = require('../utils/handleImageMessage');
 const OpenAiManager = require('../managers/OpenAiManager');
 const DiscordManager = require('../managers/DiscordManager');
-
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -18,23 +16,6 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
     process.exit(1);
 });
 
-async function getPredictionResult(predictionId) {
-    try {
-        const response = await axios.get(
-            `https://api.replicate.com/v1/predictions/${predictionId}`,
-            {
-                headers: {
-                    'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`
-                }
-             }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Failed to get prediction result:', error.response ? error.response.data : error.message);
-        throw new Error('Failed to get prediction result');
-    }
-}
-
 const startWebhookServer = (port) => {
     const app = express();
     app.use(express.json());
@@ -45,6 +26,7 @@ const startWebhookServer = (port) => {
         const predictionId = req.body.id;
         const predictionResult = req.body;  // Adjust this line if necessary to obtain the prediction result
         const imageUrl = predictionImageMap.get(predictionId); // Retrieve the image URL using the prediction ID
+        console.debug('Image URL: ' + imageUrl);
 
         const channelId = process.env.CHANNEL_ID;
         const channel = client.channels.cache.get(channelId);
@@ -55,11 +37,11 @@ const startWebhookServer = (port) => {
                 const resultArray = predictionResult.output;
                 const resultText = resultArray.join(' ');  // Join array elements into a single string
                 // Include the image URL in the result message
-                resultMessage = `${resultText}`;
+                resultMessage = resultText + '\nImage URL: ' + imageUrl;
             } else if (predictionResult.status === 'processing') {
-                console.debug(`Processing: ${predictionId}`);
+                console.debug('Processing: ' + predictionId);
             } else {
-                resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionResult.status}`;
+                resultMessage = 'Prediction ID: ' + predictionId + '\nStatus: ' + predictionResult.status;
             }
 
             await channel.send(resultMessage).catch(error => {
@@ -76,7 +58,6 @@ const startWebhookServer = (port) => {
         res.sendStatus(200);
     });
 
-
     app.get('/health', (req, res) => {
         console.debug('Received health probe');
         res.sendStatus(200);
@@ -90,11 +71,12 @@ const startWebhookServer = (port) => {
     // Error handling middleware
     app.use((err, req, res, next) => {
         console.error('Unhandled Error:', err.message);
+        console.debug('Next middleware function: ' + next);
         res.status(500).send({ error: 'Server Error' });
     });
 
     app.listen(port, () => {
-        console.log(`HTTP server listening at http://localhost:${port}`);
+        console.log('HTTP server listening at http://localhost:' + port);
     });
 
     /**
@@ -117,8 +99,8 @@ const startWebhookServer = (port) => {
 
         try {
             await discordManager.sendResponse(process.env.CHANNEL_ID, message);
-            console.debug(`Message sent to Discord: ${message}`);
-            res.status(200).send({ message: "Message sent to Discord." });
+            console.debug('Message sent to Discord: ' + message);
+            res.status(200).send({ message: 'Message sent to Discord.' });
         } catch (error) {
             console.error('Failed to send the message:', error);
             res.status(500).send({ error: 'Failed to send the message' });
@@ -144,9 +126,9 @@ const startWebhookServer = (port) => {
         }
 
         try {
-            console.debug(`Received message for summarization: ${message}`);
+            console.debug('Received message for summarization: ' + message);
             const summarizedTexts = await openAiManager.summarizeText(message);
-            const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : "";
+            const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : '';
 
             if (!summarizedMessage) {
                 console.warn('Summarized message is empty');
@@ -155,8 +137,8 @@ const startWebhookServer = (port) => {
 
             const discordManager = DiscordManager.getInstance();
             await discordManager.sendResponse(process.env.CHANNEL_ID, summarizedMessage);
-            console.debug(`Summarized message sent to Discord: ${summarizedMessage}`);
-            res.status(200).send({ message: "Message summarized and sent to Discord." });
+            console.debug('Summarized message sent to Discord: ' + summarizedMessage);
+            res.status(200).send({ message: 'Message summarized and sent to Discord.' });
         } catch (error) {
             console.error('Failed to summarize or send the message:', error);
             res.status(500).send({ error: 'Failed to summarize or send the message' });
@@ -166,7 +148,7 @@ const startWebhookServer = (port) => {
 };
 
 client.once('ready', () => {
-    console.log('Logged in as', client.user.tag);
+    console.log('Logged in as ' + client.user.tag);
 
     const port = process.env.WEB_SERVER_PORT || 3001;
     startWebhookServer(port);
@@ -175,4 +157,3 @@ client.once('ready', () => {
 module.exports = {
     startWebhookServer,
 };
-
