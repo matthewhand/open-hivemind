@@ -10,9 +10,14 @@ const OpenAiManager = require('../managers/OpenAiManager');
  * @returns {Promise<boolean>} - Returns true if a command was processed successfully, false otherwise.
  */
 async function processCommand(message) {
+    if (!message || typeof message.getText !== 'function') {
+        logger.error('[processCommand] Invalid message object.');
+        return false;
+    }
+
     const text = message.getText().trim();
     if (!text.startsWith('!')) {
-        logger.debug("[processCommand] No command prefix found.");
+        logger.debug('[processCommand] No command prefix found.');
         return false;  // Not a command
     }
 
@@ -20,14 +25,14 @@ async function processCommand(message) {
     try {
         const commandResult = await commandManager.executeCommand(message);
         if (commandResult.success) {
-            logger.info(`[processCommand] Command '${commandResult.command}' executed successfully.`);
+            logger.info('[processCommand] Command \'' + commandResult.command + '\' executed successfully.');
             return true;
         } else {
-            logger.error(`[processCommand] Command '${commandResult.command}' failed with error: ${commandResult.error}`);
+            logger.error('[processCommand] Command \'' + commandResult.command + '\' failed with error: ' + commandResult.error);
             return false;
         }
     } catch (error) {
-        logger.error(`[processCommand] Exception while executing command: ${error.message}`);
+        logger.error('[processCommand] Exception while executing command: ' + error.message);
         throw error;  // Rethrow after logging to handle the exception further up the call stack
     }
 }
@@ -40,13 +45,18 @@ async function processCommand(message) {
  * @returns {Promise<string>} - The summarized text if successful, the original text otherwise.
  */
 async function summarizeMessage(content, targetSize = constants.LLM_RESPONSE_MAX_TOKENS) {
+    if (typeof content !== 'string') {
+        logger.error('[summarizeMessage] Invalid content type: ' + typeof content);
+        throw new Error('Content must be a string.');
+    }
+
     const openAiManager = OpenAiManager.getInstance();
     try {
         const summary = await openAiManager.summarizeText(content, targetSize);
-        logger.info(`[summarizeMessage] Content summarized to ${summary.length} characters.`);
+        logger.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.');
         return summary;
     } catch (error) {
-        logger.error(`[summarizeMessage] Failed to summarize content: ${error.message}, returning original content.`);
+        logger.error('[summarizeMessage] Failed to summarize content: ' + error.message + ', returning original content.');
         return content;  // Return the original content if summarization fails
     }
 }
@@ -61,7 +71,22 @@ async function summarizeMessage(content, targetSize = constants.LLM_RESPONSE_MAX
  * @returns {Promise<Object>} A configuration object containing the model, prompt, and settings for the API call.
  */
 async function prepareMessageBody(prompt, channelId = constants.CHANNEL_ID, history = []) {
-    logger.debug(`Preparing message body for channel ID: ${channelId} with prompt: ${prompt.substring(0, 50)}...`);
+    if (typeof prompt !== 'string') {
+        logger.error('[prepareMessageBody] Invalid prompt type: ' + typeof prompt);
+        throw new Error('Prompt must be a string.');
+    }
+
+    if (typeof channelId !== 'string') {
+        logger.error('[prepareMessageBody] Invalid channelId type: ' + typeof channelId);
+        throw new Error('ChannelId must be a string.');
+    }
+
+    if (!Array.isArray(history)) {
+        logger.error('[prepareMessageBody] Invalid history type: ' + typeof history);
+        throw new Error('History must be an array.');
+    }
+
+    logger.debug('Preparing message body for channel ID: ' + channelId + ' with prompt: ' + prompt.substring(0, 50) + '...');
 
     return OpenAiManager.getInstance().buildRequestBody(history, prompt);
 }

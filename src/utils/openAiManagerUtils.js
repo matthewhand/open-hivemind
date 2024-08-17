@@ -12,32 +12,25 @@ const { handleError } = require('../utils/commonUtils');
  * @returns {string} The extracted text if available; otherwise, returns an empty string.
  */
 function extractContent(choice) {
-    // Initial validation to ensure the choice object is provided
-    if (!choice) {
-        logger.debug("[extractContent] No choice object provided for content extraction.");
-        return "";
+    if (!choice || typeof choice !== 'object') {
+        logger.debug('[extractContent] Invalid choice object.');
+        return '';
     }
 
-    // Debugging: Log the actual choice object before processing
-    logger.debug(`[extractContent] Initial choice object: ${JSON.stringify(choice)}`);
+    logger.debug('[extractContent] Initial choice object: ' + JSON.stringify(choice));
 
-    // Check for 'text' field which is directly usable
-    if (choice.text && typeof choice.text === 'string') {
-        logger.debug("[extractContent] Content extracted directly from 'text' field.");
+    if (typeof choice.text === 'string') {
+        logger.debug('[extractContent] Content extracted directly from text field.');
         return choice.text.trim();
     }
 
-    // Check for 'message' field with nested 'content' which is the fallback content source
-    else if (choice.message && typeof choice.message.content === 'string') {
-        logger.debug("[extractContent] Content extracted from 'message.content' field.");
+    if (choice.message && typeof choice.message.content === 'string') {
+        logger.debug('[extractContent] Content extracted from message.content field.');
         return choice.message.content.trim();
     }
 
-    // If no valid content structure is identified, log the issue and return an empty string
-    else {
-        logger.debug("[extractContent] No valid content found in choice object; returning empty string.");
-        return "";
-    }
+    logger.debug('[extractContent] No valid content found in choice object; returning empty string.');
+    return '';
 }
 
 /**
@@ -51,19 +44,17 @@ function extractContent(choice) {
  * @throws {Error} If the response from the API is invalid or if an error occurs during the request.
  */
 async function makeOpenAiRequest(openai, requestBody) {
-    // Validate input types
     if (typeof openai !== 'object' || openai === null) {
-        logger.error("[makeOpenAiRequest] Invalid OpenAI client instance passed.");
-        throw new TypeError("Invalid OpenAI client instance passed.");
+        logger.error('[makeOpenAiRequest] Invalid OpenAI client instance passed.');
+        throw new TypeError('Invalid OpenAI client instance passed.');
     }
 
     if (typeof requestBody !== 'object' || requestBody === null) {
-        logger.error("[makeOpenAiRequest] Invalid request body passed.");
-        throw new TypeError("Invalid request body passed.");
+        logger.error('[makeOpenAiRequest] Invalid request body passed.');
+        throw new TypeError('Invalid request body passed.');
     }
 
-    // Debugging: Log the request body
-    logger.debug(`[makeOpenAiRequest] Sending request with body: ${JSON.stringify(requestBody)}`);
+    logger.debug('[makeOpenAiRequest] Sending request with body: ' + JSON.stringify(requestBody));
 
     try {
         const requestOptions = {};
@@ -78,19 +69,17 @@ async function makeOpenAiRequest(openai, requestBody) {
             response = await openai.chat.completions.create(requestBody, requestOptions);
         }
 
-        // Validate response structure
         if (!response || !response.choices || response.choices.length === 0) {
-            logger.error("[makeOpenAiRequest] No valid response or choices returned from the API.");
-            throw new Error("No valid response or choices returned from the API.");
+            logger.error('[makeOpenAiRequest] No valid response or choices returned from the API.');
+            throw new Error('No valid response or choices returned from the API.');
         }
 
-        // Debugging: Log the raw API response
-        logger.debug(`[makeOpenAiRequest] Received response: ${JSON.stringify(response)}`);
+        logger.debug('[makeOpenAiRequest] Received response: ' + JSON.stringify(response));
 
         return response;
     } catch (error) {
-        logger.error(`[makeOpenAiRequest] Failed to make OpenAI request: ${error.message}`, error);
-        throw new Error(`OpenAI API request failed: ${error.message}`);
+        logger.error('[makeOpenAiRequest] Failed to make OpenAI request: ' + error.message, error);
+        throw new Error('OpenAI API request failed: ' + error.message);
     }
 }
 
@@ -106,47 +95,44 @@ async function makeOpenAiRequest(openai, requestBody) {
  */
 async function completeSentence(openai, content, constants) {
     if (typeof content !== 'string') {
-        logger.error("[completeSentence] The content must be a string.");
-        throw new TypeError("Expected content to be a string, received type " + typeof content);
+        logger.error('[completeSentence] The content must be a string.');
+        throw new TypeError('Expected content to be a string, received type ' + typeof content);
     }
 
-    // Debugging: Log the type and actual content before processing
-    logger.debug(`[completeSentence] Content type: ${typeof content}, content value: ${content}`);
+    logger.debug('[completeSentence] Content type: ' + typeof content + ', content value: ' + content);
 
-    // Check if the content already ends with a punctuation mark
     if (/[.?!]\s*$/.test(content)) {
-        logger.debug("[completeSentence] Content already ends with a punctuation mark.");
+        logger.debug('[completeSentence] Content already ends with a punctuation mark.');
         return content;  // Return as no completion needed
     }
 
-    // Preparing the prompt for OpenAI to generate the rest of the content
-    const promptText = content.trim() + " ";  // Ensure there's a space after the last word
+    const promptText = content.trim() + ' ';
     const continuationBody = {
         model: constants.LLM_MODEL,
         prompt: promptText,
-        max_tokens: 50,  // Allow a small number of extra tokens to complete the sentence
-        temperature: 0.5  // Using a moderate temperature for natural completions
+        max_tokens: 50,
+        temperature: 0.5
     };
 
-    logger.debug(`[completeSentence] Sending continuation request: ${JSON.stringify(continuationBody)}`);
+    logger.debug('[completeSentence] Sending continuation request: ' + JSON.stringify(continuationBody));
 
     try {
         const continuationResponse = await openai.completions.create(continuationBody);
         if (!continuationResponse || !continuationResponse.choices || continuationResponse.choices.length === 0) {
-            logger.error("[completeSentence] No valid choices returned from the API.");
-            throw new Error("Failed to retrieve valid choices from the API.");
+            logger.error('[completeSentence] No valid choices returned from the API.');
+            throw new Error('Failed to retrieve valid choices from the API.');
         }
 
         const continuationText = continuationResponse.choices[0].text.trim();
         if (continuationText) {
-            logger.debug(`[completeSentence] Received continuation text: ${continuationText}`);
-            content += continuationText;  // Append the additional text to the original content
+            logger.debug('[completeSentence] Received continuation text: ' + continuationText);
+            content += continuationText;
         } else {
-            logger.warn("[completeSentence] Received empty continuation text.");
+            logger.warn('[completeSentence] Received empty continuation text.');
         }
     } catch (error) {
-        logger.error("[completeSentence] Error completing sentence:", error);
-        throw error;  // Rethrow to handle the error further up the call stack
+        logger.error('[completeSentence] Error completing sentence:', error);
+        throw error;
     }
 
     return content;
@@ -190,28 +176,28 @@ function getEmoji() {
 async function summarizeText(openai, userMessage, systemMessageContent = constants.LLM_SUMMARY_SYSTEM_PROMPT, maxTokens = constants.LLM_SUMMARY_MAX_TOKENS) {
     if (!constants.LLM_SUPPORTS_COMPLETIONS) {
         logger.warn('[summarizeText] Summarization requires completions support which is disabled.');
-        return new LLMResponse("", "completions_disabled");
+        return new LLMResponse('', 'completions_disabled');
     }
 
-    const prompt = `${systemMessageContent}\nUser: ${userMessage}\nAssistant:`;
+    const prompt = systemMessageContent + '\nUser: ' + userMessage + '\nAssistant:';
     const requestBody = {
         model: constants.LLM_MODEL,
         prompt: prompt,
         max_tokens: maxTokens,
-        temperature: 0.5  // Using a moderate temperature for natural completions
+        temperature: 0.5
     };
 
-    logger.debug(`[summarizeText] Sending summarization request with prompt: ${prompt}`);
+    logger.debug('[summarizeText] Sending summarization request with prompt: ' + prompt);
 
     try {
         const response = await makeOpenAiRequest(openai, requestBody);
         const summary = extractContent(response.choices[0]);
         logger.info('[summarizeText] Summary processed successfully.');
 
-        return new LLMResponse(summary, "completed", response.usage.total_tokens);
+        return new LLMResponse(summary, 'completed', response.usage.total_tokens);
     } catch (error) {
-        handleError(error, "[summarizeText] Error during text summarization");
-        return new LLMResponse("", "error", 0);
+        handleError(error, '[summarizeText] Error during text summarization');
+        return new LLMResponse('', 'error', 0);
     }
 }
 

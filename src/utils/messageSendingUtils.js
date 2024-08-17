@@ -9,32 +9,40 @@ const commands = require('../commands/inline');
  * Sends a formatted message to a specified channel. If the message exceeds Discord's maximum message length,
  * it will be split into smaller parts and sent sequentially with delays between each part to mimic typing speed.
  * 
- * @param {string} messageContent The complete content of the message to send.
+ * @param {string|Buffer} messageContent The complete content of the message to send.
  * @param {string} channelId The Discord channel ID where the message will be sent.
  * @param {number} startTime The timestamp marking the start of the message processing, used for performance tracking.
  */
 async function sendResponse(messageContent, channelId, startTime) {
     try {
-        if (typeof messageContent !== 'string' && !Buffer.isBuffer(messageContent)) {
-            throw new Error(`Invalid messageContent type: ${typeof messageContent}`);
+        const isString = typeof messageContent === 'string';
+        const isBuffer = Buffer.isBuffer(messageContent);
+
+        if (!isString && !isBuffer) {
+            throw new Error('Invalid messageContent type: ' + typeof messageContent);
+        }
+
+        const isChannelIdValid = typeof channelId === 'string' && channelId.trim() !== '';
+        if (!isChannelIdValid) {
+            throw new Error('No channelId provided or channelId is not a valid string.');
         }
 
         const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) {
                 // Wait between parts to simulate human typing speed
-                await new Promise(resolve => setTimeout(resolve, constants.INTER_PART_DELAY));
+                await delay(constants.INTER_PART_DELAY);
             }
-            logger.debug(`[sendResponse] Sending part ${i + 1} to channel ${channelId}. Part content: ${parts[i]}`);
+            logger.debug('[sendResponse] Sending part ' + (i + 1) + ' to channel ' + channelId + '. Part content: ' + parts[i]);
             await sendMessagePart(parts[i], channelId);
-            logger.debug(`[sendResponse] Sent part ${i + 1} of ${parts.length} to channel ${channelId}.`);
+            logger.debug('[sendResponse] Sent part ' + (i + 1) + ' of ' + parts.length + ' to channel ' + channelId + '.');
         }
 
         const processingTime = Date.now() - startTime;
-        logger.info(`[sendResponse] Message processing complete. Total time: ${processingTime}ms.`);
+        logger.info('[sendResponse] Message processing complete. Total time: ' + processingTime + 'ms.');
     } catch (error) {
-        logger.error(`[sendResponse] Failed to send message to channel ${channelId}. Error: ${error.message}`, { error });
-        throw new Error(`Failed to send message: ${error.message}`);
+        logger.error('[sendResponse] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
+        throw new Error('Failed to send message: ' + error.message);
     }
 }
 
@@ -63,7 +71,7 @@ function splitMessageContent(messageContent, maxPartLength) {
         parts.push(currentPart);
     }
 
-    logger.debug(`[splitMessageContent] Split message into ${parts.length} parts.`);
+    logger.debug('[splitMessageContent] Split message into ' + parts.length + ' parts.');
     return parts;
 }
 
@@ -71,20 +79,23 @@ function splitMessageContent(messageContent, maxPartLength) {
  * Sends a single part of a split message to a specified channel.
  * This function handles the dispatch of individual message segments to the Discord channel.
  * 
- * @param {string} part The individual part of the message to send.
+ * @param {string|Buffer} part The individual part of the message to send.
  * @param {string} channelId The ID of the Discord channel where the message is being sent.
  */
 async function sendMessagePart(part, channelId) {
     try {
-        if (typeof part !== 'string' && !Buffer.isBuffer(part)) {
-            throw new Error(`Invalid part type: ${typeof part}`);
+        const isPartString = typeof part === 'string';
+        const isPartBuffer = Buffer.isBuffer(part);
+
+        if (!isPartString && !isPartBuffer) {
+            throw new Error('Invalid part type: ' + typeof part);
         }
 
         await DiscordManager.getInstance().sendMessage(channelId, part);
-        logger.debug(`[sendMessagePart] Sent message part to channel ${channelId}. Content length: ${part.length}.`);
+        logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
     } catch (error) {
-        logger.error(`[sendMessagePart] Failed to send message part to channel ${channelId}. Error: ${error.message}`, { error });
-        throw new Error(`Failed to send message part: ${error.message}`);
+        logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
+        throw new Error('Failed to send message part: ' + error.message);
     }
 }
 
@@ -108,40 +119,40 @@ function delay(duration) {
  */
 async function sendFollowUp(originalMessage, topic) {
     const openAiManager = OpenAiManager.getInstance();
-    logger.debug(`Handling follow-up for message ID: ${originalMessage.id}`);
+    logger.debug('Handling follow-up for message ID: ' + originalMessage.id);
 
-    const channelTopic = topic || "General conversation";
+    const channelTopic = topic || 'General conversation';
     const followUpDelay = 5 * 60 * 1000; // 5 minutes delay
 
     setTimeout(async () => {
         try {
             logger.debug('Commands loaded for follow-up.');
-            const commandDescriptions = Object.values(commands).map(cmd => `${cmd.name}: ${cmd.description}`).join('; ');
-            logger.debug(`Command descriptions compiled: ${commandDescriptions}`);
+            const commandDescriptions = Object.values(commands).map(cmd => cmd.name + ': ' + cmd.description).join('; ');
+            logger.debug('Command descriptions compiled: ' + commandDescriptions);
 
-            const prompt = `Inform user about a relevant command based on the discussion and topic, "${channelTopic}" from the built in commands: ${commandDescriptions}. Suggest one command to user.`;
+            const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built in commands: ' + commandDescriptions + '. Suggest one command to user.';
 
             const requestBody = {
                 model: constants.LLM_MODEL,
                 prompt: prompt,
                 max_tokens: 420,
-                stop: ["\n", " END"],
+                stop: ['\n', ' END'],
             };
 
             const responseContent = await makeOpenAiRequest(openAiManager, requestBody);
             if (!responseContent || responseContent.length === 0) {
-                logger.error("Received empty or invalid response from OpenAI for follow-up.");
+                logger.error('Received empty or invalid response from OpenAI for follow-up.');
                 return;
             }
 
-            const followUpMessage = typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
+            const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
             if (followUpMessage) {
                 await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
             } else {
-                logger.warn(`No follow-up action suggested for message ID: ${originalMessage.id}`);
+                logger.warn('No follow-up action suggested for message ID: ' + originalMessage.id);
             }
         } catch (error) {
-            logger.error(`Error during follow-up handling: ${error}`);
+            logger.error('Error during follow-up handling: ' + error);
         }
     }, followUpDelay);
 }
@@ -151,5 +162,5 @@ module.exports = {
     sendMessagePart,
     splitMessageContent,
     delay,
-    sendFollowUp 
+    sendFollowUp
 };
