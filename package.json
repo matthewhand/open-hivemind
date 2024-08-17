@@ -4,9 +4,11 @@
   "description": "A Discord bot to communicate with LLMs and execute Python code",
   "main": "src/index.js",
   "scripts": {
-    "lint": "eslint . --ext .js",
+    "lint": "eslint . --ext .js,.ts",
     "validate": "npm-run-all --parallel lint test",
-    "start": "node src/index.js",
+    "start": "node dist/index.js",
+    "start:dev": "nodemon --exec npx ts-node src/index.ts",
+    "build": "tsc",
     "test": "jest",
     "dep-report": "node src/dependencyReport.js",
     "test-libs": "node src/test-libs.js"

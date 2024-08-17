@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2018",                   // JavaScript version to compile to
+    "module": "CommonJS",                 // Module system used by Node.js
+    "strict": true,                       // Enable all strict type-checking options
+    "esModuleInterop": true,              // Allows default imports from modules with `export =`
+    "moduleResolution": "node",           // Resolve modules as Node.js does
+    "outDir": "./dist",                   // Output directory for compiled JavaScript files
+    "rootDir": "./",                      // Root directory of your project
+    "baseUrl": ".",                       // Base directory for resolving non-relative modules
+    "paths": {
+      "@src/*": ["src/*"]                 // Path alias for cleaner imports
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"], // Custom type definitions
+    "incremental": true,                  // Enable incremental compilation
+    "skipLibCheck": true,                 // Skip type checking of declaration files
+    "downlevelIteration": true            // Enable full support for iterables in older targets
+  },
+  "include": [
+    "src/**/*",                           // Include all TypeScript files in the `src` directory
+    "tests/**/*"                          // Include all test files
+  ],
+  "files": [
+    "src/types/express.d.ts",             // Specific type definition files
+    "src/global.d.ts"
+  ]
+}
+
