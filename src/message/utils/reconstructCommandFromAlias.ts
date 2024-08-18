@@ -1,0 +1,26 @@
+import { aliases } from '../config/aliases';
+
+/**
+ * Reconstructs a full command string from an alias and additional arguments.
+ * 
+ * @param alias - The alias used to reference a command.
+ * @param additionalArgs - Additional arguments to append to the reconstructed command.
+ * @returns The reconstructed command string or null if the alias is not found.
+ */
+export function reconstructCommandFromAlias(alias: string, additionalArgs: string): string | null {
+    if (!alias || !additionalArgs) {
+        console.warn('[reconstructCommandFromAlias] Invalid arguments provided.');
+        return null;
+    }
+
+    if (!aliases[alias]) {
+        console.warn('[reconstructCommandFromAlias] Alias not found: ' + alias);
+        return null;
+    }
+
+    const [aliasedCommand, action] = aliases[alias].split(':');
+    const reconstructedCommand = '!' + aliasedCommand + (action ? ':' + action : '') + ' ' + additionalArgs;
+
+    console.debug('[reconstructCommandFromAlias] Reconstructed command: ' + reconstructedCommand.trim());
+    return reconstructedCommand.trim();
+}
