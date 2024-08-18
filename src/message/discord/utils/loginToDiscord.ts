@@ -1,7 +1,7 @@
 // src/message/discord/utils/loginToDiscord.ts
 
 import { Client } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 
 /**
  * Logs in the Discord client using the provided bot token.
@@ -25,7 +25,7 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
         const result = await client.login(token);
         logger.info('Successfully logged in to Discord.');
         return result;
-    } catch (error) {
+    } catch (error: any) {
         const errorMessage = 'Failed to log in to Discord: ' + (error instanceof Error ? error.message : String(error));
         logger.error(errorMessage);
         throw new Error(errorMessage);
