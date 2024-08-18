@@ -36,7 +36,7 @@ export class FlowiseCommand extends BaseCommand {
                 logger.error('FlowiseCommand: Failed API call with status ' + response.status);
                 return { success: false, message: getRandomErrorMessage() };
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('FlowiseCommand: Error during API call - ' + error.message);
             return { success: false, message: getRandomErrorMessage(), error: error.message };
         }
