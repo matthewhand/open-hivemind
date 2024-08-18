@@ -32,7 +32,7 @@ export async function processCommand(message: IMessage): Promise<boolean> {
             logger.error('[processCommand] Command "' + commandResult.command + '" failed with error: ' + commandResult.error, { commandResult });
             return false;
         }
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[processCommand] Exception while executing command: ' + error.message, { error });
         throw error;  // Rethrow after logging to handle the exception further up the call stack
     }
