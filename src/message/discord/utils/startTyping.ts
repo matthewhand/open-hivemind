@@ -1,5 +1,5 @@
 import { Client, PermissionsBitField } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 
 /**
  * Signals that the bot is typing in a specific channel. This visual cue can make interactions
@@ -33,7 +33,7 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
         } else {
             logger.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support typing.');
         }
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[DiscordManager] Failed to start typing in channel ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
     }
 }
