@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 
 interface Command {
     data: {
@@ -29,7 +29,7 @@ export function collectSlashCommands(commandsPath: string): object[] {
                 logger.warn('No data found in command file: ' + file);
             }
         }
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error collecting slash commands: ' + (error instanceof Error ? error.message : String(error)));
     }
 
