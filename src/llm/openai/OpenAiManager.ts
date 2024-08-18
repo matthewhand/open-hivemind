@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import logger from '../logging/logger';
-import constants from '../config/constants';
+import constants from '../config/configurationManager';
 import { IMessage } from '../message/IMessage';
 import { LLMResponse } from '../message/LLMResponse';
 import { extractContent } from './utils/extractContent';
@@ -125,7 +125,7 @@ class OpenAiManager {
             }
 
             return new LLMResponse(content, finishReason, tokensUsed);
-        } catch (error) {
+        } catch (error: any) {
             handleError(error);
             return new LLMResponse('', 'error');
         } finally {
