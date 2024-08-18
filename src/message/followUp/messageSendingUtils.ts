@@ -2,7 +2,7 @@ import { makeOpenAiRequest } from './openAiManagerUtils';
 import OpenAiManager from '../managers/OpenAiManager';
 import DiscordManager from '../managers/DiscordManager';
 import logger from './logger';
-import constants from '../config/constants';
+import constants from '../config/configurationManager';
 import commands from '../commands/inline';
 
 export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
@@ -31,7 +31,7 @@ export async function sendResponse(messageContent: string | Buffer, channelId: s
 
         const processingTime = Date.now() - startTime;
         logger.info('[sendResponse] Message processing complete. Total time: ' + processingTime + 'ms.');
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[sendResponse] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
         throw new Error('Failed to send message: ' + error.message);
     }
@@ -69,7 +69,7 @@ async function sendMessagePart(part: string | Buffer, channelId: string): Promis
 
         await DiscordManager.getInstance().sendMessage(channelId, part);
         logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
         throw new Error('Failed to send message part: ' + error.message);
     }
@@ -113,7 +113,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
             } else {
                 logger.warn('No follow-up action suggested for message ID: ' + originalMessage.id);
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Error during follow-up handling: ' + error);
         }
     }, followUpDelay);
