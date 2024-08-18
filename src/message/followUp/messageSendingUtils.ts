@@ -1,7 +1,7 @@
 import { makeOpenAiRequest } from './openAiManagerUtils';
 import OpenAiManager from '../managers/OpenAiManager';
 import DiscordManager from '../managers/DiscordManager';
-import logger from './logger';
+import logger from '@utils/logger';
 import constants from '../config/configurationManager';
 import commands from '../commands/inline';
 

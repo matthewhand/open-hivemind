@@ -1,4 +1,4 @@
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Parses a command string and extracts the command name, action, and arguments.

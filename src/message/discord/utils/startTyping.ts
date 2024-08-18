@@ -1,5 +1,5 @@
 import { Client, PermissionsBitField } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Signals that the bot is typing in a specific channel. This visual cue can make interactions

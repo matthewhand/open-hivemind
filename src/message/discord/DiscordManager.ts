@@ -1,6 +1,6 @@
 import { Client, Message } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice'; 
-import logger from '../logging/logger'; // Ensure logger is correctly imported
+import logger from '@utils/logger'; // Ensure logger is correctly imported
 import { loginToDiscord } from './utils/loginToDiscord';
 import { sendMessageToChannel } from './utils/sendMessageToChannel';
 import { setupVoiceChannel } from './utils/setupVoiceChannel';

@@ -1,4 +1,4 @@
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { splitMessageContent } from './splitMessage';
 import DiscordManager from '../managers/DiscordManager';
 import constants from '../../config/configurationManager';

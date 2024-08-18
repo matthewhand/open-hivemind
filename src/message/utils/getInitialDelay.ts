@@ -1,4 +1,4 @@
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { getLastTypingTimestamp } from './timestampFunctions';
 
 /**

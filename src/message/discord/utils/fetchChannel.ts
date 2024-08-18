@@ -1,5 +1,5 @@
 import { Client, Channel } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Fetches a Discord channel by its ID.

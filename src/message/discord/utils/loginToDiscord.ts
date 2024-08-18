@@ -1,7 +1,7 @@
 // src/message/discord/utils/loginToDiscord.ts
 
 import { Client } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Logs in the Discord client using the provided bot token.

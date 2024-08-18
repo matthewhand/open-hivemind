@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import constants from '../../config/configurationManager';
 
 /**

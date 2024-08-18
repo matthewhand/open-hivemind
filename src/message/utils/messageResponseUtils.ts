@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import logger from '@utils/logger';
 
 class ReplyManager {
     private replyMetrics: Record<string, { lastReplyTime: number; replyCount: number }> = {};

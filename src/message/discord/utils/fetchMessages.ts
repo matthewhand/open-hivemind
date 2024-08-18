@@ -1,5 +1,5 @@
 import { Client, Message as DiscordMessage, TextChannel } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
 
 /**

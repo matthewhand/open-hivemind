@@ -1,6 +1,6 @@
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import constants from '../../config/configurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';

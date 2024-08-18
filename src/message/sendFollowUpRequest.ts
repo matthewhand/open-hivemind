@@ -1,6 +1,6 @@
 import axios from 'axios';
 import configurationManager from '../config/configurationManager';
-import logger from './logger';
+import logger from '@utils/logger';
 import { getRandomDelay } from './common';
 import { aliases } from '../config/aliases';
 

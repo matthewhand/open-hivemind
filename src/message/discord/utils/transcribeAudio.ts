@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import fs from 'fs';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import constants from '../../config/configurationManager';
 
 /**

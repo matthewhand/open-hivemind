@@ -1,4 +1,4 @@
-import logger from '../logger';
+import logger from '@utils/logger';
 import constants from '../../config/configurationManager';
 import OpenAiManager from '../../managers/OpenAiManager';
 

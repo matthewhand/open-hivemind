@@ -1,5 +1,5 @@
 import { MessageEmbed, TextChannel } from 'discord.js';
-import logger from './logger';
+import logger from '@utils/logger';
 
 /**
  * Mutes a user in the specified channel.

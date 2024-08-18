@@ -2,7 +2,7 @@ import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnect
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import constants from '../../config/configurationManager';
 
 /**

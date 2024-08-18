@@ -1,4 +1,4 @@
-import logger from '../logger';
+import logger from '@utils/logger';
 import configManager from '../config/configurationManager';
 
 interface ParsedCommand {

@@ -1,5 +1,5 @@
 import { Client, Message } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
 import constants from '../../config/configurationManager';
 import * as discordUtils from '../../utils/discordUtils';

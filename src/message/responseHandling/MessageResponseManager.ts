@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import logger from '@utils/logger';
 import configurationManager from '../config/configurationManager';
 import constants from '../config/configurationManager';
 

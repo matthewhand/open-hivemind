@@ -2,7 +2,7 @@
 
 import { spawn } from 'child_process';
 import { Readable } from 'stream';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Converts Opus audio buffer to WAV format using FFmpeg.

@@ -1,5 +1,5 @@
 import { Client, TextChannel } from 'discord.js';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { splitMessage } from './splitMessage';
 
 /**

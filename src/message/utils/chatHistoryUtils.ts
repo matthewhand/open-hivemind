@@ -1,5 +1,5 @@
 import { encode } from 'gpt-tokenizer';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 interface Message {
     content: string;
