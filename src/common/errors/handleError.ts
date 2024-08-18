@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import logger from '@utils/logger';
 
 export function handleError(error: Error): void {
     logger.warn('[handleError]: DEPRECATED - use utils/commonUtils instead!');

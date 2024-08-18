@@ -1,5 +1,5 @@
 import { aliases } from '../config/aliases';
-import logger from '../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Returns a random command prefixed with '!'.

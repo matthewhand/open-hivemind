@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../logging/logger';
+import logger from '@utils/logger';
 
 interface CommandModule {
     data: {
