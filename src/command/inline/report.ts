@@ -33,7 +33,7 @@ export class ReportCommand extends BaseCommand {
     }
 
     private async initiateModeratorVote(message: Message, reportDescription: string): Promise<void> {
-        const moderationTeamRole = message.guild?.roles.cache.find(role => role.name === 'Moderation Team');
+        const moderationTeamRole = message.guild?.roles?.cache.find(role => role.name === 'Moderation Team');
         const onlineModerators = moderationTeamRole?.members.filter(member => member.presence?.status === 'online');
     
         if (!onlineModerators?.size) {
@@ -48,7 +48,7 @@ export class ReportCommand extends BaseCommand {
             .setColor('ORANGE')
             .setTimestamp();
     
-        const moderatorChannel = message.guild?.channels.cache.find(ch => ch.name === 'moderator-vote');
+        const moderatorChannel = message.guild?.channels?.cache.find(ch => ch.name === 'moderator-vote');
         await moderatorChannel?.send({ embeds: [embed] });
     
         const voteCollector = new MessageCollector(moderatorChannel!, { time: 60000 }); // 1 minute voting duration
