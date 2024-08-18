@@ -1,42 +1,42 @@
-const ICommand = require('../../interfaces/ICommand');
-const logger = require('../../utils/logger');
-const { MessageEmbed, MessageCollector } = require('discord.js');
+import { Message, MessageEmbed, MessageCollector } from 'discord.js';
+import { BaseCommand } from '../types/BaseCommand';
+import logger from '../../logging/logger';
 
 /**
  * Command for users to report issues or rule violations.
  * Usage: !report [text]
  */
-class ReportCommand extends ICommand {
+export class ReportCommand extends BaseCommand {
     constructor() {
-        super();
-        this.name = 'report';
-        this.description = 'User reports about issues or rule violations. Usage: !report [text]';
+        super('report', 'User reports about issues or rule violations. Usage: !report [text]');
     }
 
-    async execute(args) {
-        const message = args.message;
-        const filter = m => m.author.id === message.author.id;
+    async execute(args: { message: Message }): Promise<{ success: boolean, message: string, error?: string }> {
+        const { message } = args;
+        const filter = (m: Message) => m.author.id === message.author.id;
         message.channel.send('Please describe the issue you are reporting within the next 30 seconds:');
 
         try {
             const collected = await message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
-            const reportDescription = collected.first().content.toLowerCase();
+            const reportDescription = collected.first()?.content.toLowerCase();
 
-            if (reportDescription.includes('spam') || reportDescription.includes('harassment')) {
+            if (reportDescription?.includes('spam') || reportDescription?.includes('harassment')) {
                 await this.initiateModeratorVote(message, reportDescription);
             } else {
                 message.channel.send('Thank you for the report. Our team will look into this matter.');
             }
-        } catch (error) {
+        } catch (error: any) {
             await this.handleErrors(message, error);
         }
+
+        return { success: true, message: 'Report processed successfully.' };
     }
 
-    async initiateModeratorVote(message, reportDescription) {
-        const moderationTeamRole = message.guild.roles.cache.find(role => role.name === 'Moderation Team');
-        const onlineModerators = moderationTeamRole.members.filter(member => member.presence.status === 'online');
+    private async initiateModeratorVote(message: Message, reportDescription: string): Promise<void> {
+        const moderationTeamRole = message.guild?.roles.cache.find(role => role.name === 'Moderation Team');
+        const onlineModerators = moderationTeamRole?.members.filter(member => member.presence?.status === 'online');
     
-        if (onlineModerators.size === 0) {
+        if (!onlineModerators?.size) {
             message.channel.send('No online moderators available to initiate a vote.');
             return;
         }
@@ -48,22 +48,21 @@ class ReportCommand extends ICommand {
             .setColor('ORANGE')
             .setTimestamp();
     
-        const moderatorChannel = message.guild.channels.cache.find(ch => ch.name === 'moderator-vote');
-        // const voteMessage = 
-        await moderatorChannel.send({ embeds: [embed] });
+        const moderatorChannel = message.guild?.channels.cache.find(ch => ch.name === 'moderator-vote');
+        await moderatorChannel?.send({ embeds: [embed] });
     
-        const voteCollector = new MessageCollector(moderatorChannel, { time: 60000 }); // 1 minute voting duration
+        const voteCollector = new MessageCollector(moderatorChannel!, { time: 60000 }); // 1 minute voting duration
         voteCollector.on('collect', msg => {
             if (msg.content.toLowerCase() === '!agree' && onlineModerators.has(msg.author.id)) {
                 // Logic to count votes and make a decision
             }
         });
         voteCollector.on('end', () => {
-            moderatorChannel.send('Voting ended. Decision: ...'); // Replace with the actual decision
+            moderatorChannel?.send('Voting ended. Decision: ...'); // Replace with the actual decision
         });
     }
 
-    async handleErrors(message, error) {
+    private async handleErrors(message: Message, error: any): Promise<void> {
         if (error.message === 'time') {
             message.channel.send('You did not provide any report details in time. Please try again.');
         } else {
@@ -72,5 +71,3 @@ class ReportCommand extends ICommand {
         }
     }
 }
-
-module.exports = ReportCommand;  // Correct: Exports the class for dynamic instantiation

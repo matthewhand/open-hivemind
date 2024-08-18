@@ -1,0 +1,34 @@
+import { Message } from 'discord.js';
+import { COMMAND_PREFIX } from '../../config/environment';
+import logger from '../../logging/logger';
+import { getAvailableCommands } from '../utils/commandUtils';
+
+/**
+ * Executes the help command, providing a list of available commands.
+ * 
+ * @param message - The Discord message object.
+ * @param args - The arguments passed with the help command.
+ */
+export function executeHelpCommand(message: Message, args: string[]): void {
+    const prefix = process.env.COMMAND_PREFIX || COMMAND_PREFIX || '!';
+
+    // Guard clause to check if the message object is valid
+    if (!message) {
+        logger.warn('[executeHelpCommand] No message object provided.');
+        return;
+    }
+
+    // Log the command execution attempt
+    logger.debug(`[executeHelpCommand] Attempting to execute help command with prefix: ${prefix}`);
+
+    // Retrieve the list of available commands
+    const availableCommands = getAvailableCommands();
+
+    // Format the command list
+    const commandList = availableCommands.map(cmd => `${prefix}${cmd.name} - ${cmd.description}`).join('\n');
+
+    // Respond with the list of available commands
+    message.channel.send(`Here are the available commands:\n${commandList}`)
+        .then(() => logger.debug('[executeHelpCommand] Help command executed successfully.'))
+        .catch(error => logger.error('[executeHelpCommand] Error sending help message: ' + error));
+}

@@ -1,30 +1,29 @@
-const axios = require('axios');
-const ICommand = require('../../interfaces/ICommand');
-const logger = require('../../utils/logger');
-const { getRandomErrorMessage } = require('../../config/errorMessages');
+import axios from 'axios';
+import { ICommand } from '../../interfaces/ICommand';
+import logger from '../../logging/logger';
+import { getRandomErrorMessage } from '../../config/errorMessages';
 
 /**
  * Command to interact with the MemGPT service.
  * Usage: !memgpt <action> <message>
  */
-class MemGPTCommand extends ICommand {
+export class MemGPTCommand implements ICommand {
+    name: string;
+    description: string;
+
     constructor() {
-        super();
         this.name = 'memgpt';
         this.description = 'Interacts with the MemGPT service to send and receive messages.';
     }
 
     /**
      * Executes the MemGPT command using the provided message context and arguments.
-     * @param {Object} message - The Discord message object that triggered the command.
-     * @param {string[]} args - The arguments provided with the command.
-     * @param {string} action - Specific action to be taken (usually part of args in practical usage).
-     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     * @param args - The arguments provided with the command.
+     * @returns A promise resolving with the execution result.
      */
-    async execute(args) {
-        // const message = args.message;
-        const action = args.action; // Assuming 'action' is separately parsed if needed
-        const messageContent = args.join(' '); // Joining all arguments to form the message content
+    async execute(args: string[]): Promise<{ success: boolean, message: string, error?: string }> {
+        const action = args[0]; // Assuming 'action' is the first argument
+        const messageContent = args.slice(1).join(' '); // Joining the remaining arguments
 
         try {
             const requestUrl = process.env.MEMGPT_ENDPOINT_URL + '/api/agents/message';
@@ -42,11 +41,9 @@ class MemGPTCommand extends ICommand {
             logger.debug('MemGPTCommand: Response received from MemGPT with data: ' + response.data);
 
             return { success: true, message: response.data };
-        } catch (error) {
-            logger.error('MemGPTCommand execute error: ' + error);
-            return { success: false, message: getRandomErrorMessage(), error: error.toString() };
+        } catch (error: any) {
+            logger.error('MemGPTCommand execute error: ' + error.message);
+            return { success: false, message: getRandomErrorMessage(), error: error.message };
         }
     }
 }
-
-module.exports = MemGPTCommand;

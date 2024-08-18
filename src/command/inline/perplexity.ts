@@ -1,25 +1,26 @@
-const axios = require('axios');
-const ICommand = require('../../interfaces/ICommand');
-const logger = require('../../utils/logger');
+import axios from 'axios';
+import { ICommand } from '../../interfaces/ICommand';
+import logger from '../../logging/logger';
 
 /**
  * Command to search online using perplexity.ai for the provided text.
  * Usage: !perplexity <text>
  */
-class PerplexityCommand extends ICommand {
+export class PerplexityCommand implements ICommand {
+    name: string;
+    description: string;
+
     constructor() {
-        super();
         this.name = 'perplexity';
         this.description = 'Searches online using perplexity.ai for the provided text. Usage: !perplexity [text]';
     }
 
     /**
      * Executes the Perplexity command using provided arguments and context.
-     * @param {Object} args - The arguments and context for the command.
-     * @returns {Promise<CommandResponse>} - The result of the command execution.
+     * @param args - The arguments and context for the command.
+     * @returns A promise resolving with the execution result.
      */
-    async execute(args) {
-        // const message = args.message;
+    async execute(args: string[]): Promise<{ success: boolean, message: string, error?: string }> {
         const query = args.join(' ');  // Assuming args is an array of words
 
         if (!query) {
@@ -51,11 +52,9 @@ class PerplexityCommand extends ICommand {
                 logger.error('PerplexityCommand: Error from API: Status ' + perplexityResponse.status);
                 return { success: false, message: 'An error occurred while processing your Perplexity request.' };
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('PerplexityCommand: Execute error: ' + error.message);
-            return { success: false, message: 'An error occurred while processing your Perplexity request.', error: error.toString() };
+            return { success: false, message: 'An error occurred while processing your Perplexity request.', error: error.message };
         }
     }
 }
-
-module.exports = PerplexityCommand;  // Correct: Exports the class for dynamic instantiation
