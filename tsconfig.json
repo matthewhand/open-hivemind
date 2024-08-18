@@ -9,6 +9,7 @@
     "rootDir": "./",                      // Root directory of your project
     "baseUrl": ".",                       // Base directory for resolving non-relative modules
     "paths": {
+      "@message/*": ["src/message/*"],
       "@utils/*": ["src/utils/*"],
       "@src/*": ["src/*"]
     },
