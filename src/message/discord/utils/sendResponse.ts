@@ -1,5 +1,5 @@
 import { Client, TextChannel } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 import { splitMessage } from './splitMessage';
 
 /**
@@ -34,7 +34,7 @@ export async function sendResponse(client: Client, channelId: string, messageTex
             await channel.send(part);
             logger.debug('Message sent to channel ID: ' + channelId);
         }
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error sending message to channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
     }
 }
