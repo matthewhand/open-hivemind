@@ -9,7 +9,8 @@
     "rootDir": "./",                      // Root directory of your project
     "baseUrl": ".",                       // Base directory for resolving non-relative modules
     "paths": {
-      "@src/*": ["src/*"]                 // Path alias for cleaner imports
+      "@utils/*": ["utils/*"],
+      "@src/*": ["src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"], // Custom type definitions
     "incremental": true,                  // Enable incremental compilation
