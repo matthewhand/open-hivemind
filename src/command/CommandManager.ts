@@ -43,7 +43,7 @@ export class CommandManager {
                     } else {
                         logger.error('The command module ' + file + ' does not export a valid command instance. Export type: ' + typeof CommandModule);
                     }
-                } catch (error) {
+                } catch (error: any) {
                     logger.error('Failed to load command ' + commandName + ': ' + error);
                 }
             }
