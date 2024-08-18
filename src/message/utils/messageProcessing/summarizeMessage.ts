@@ -1,5 +1,5 @@
 import logger from '../logger';
-import constants from '../../config/constants';
+import constants from '../../config/configurationManager';
 import OpenAiManager from '../../managers/OpenAiManager';
 
 /**
@@ -21,7 +21,7 @@ export async function summarizeMessage(content: string, targetSize: number = con
         const summary = await openAiManager.summarizeText(content, targetSize);
         logger.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });
         return summary;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[summarizeMessage] Failed to summarize content: ' + error.message + ', returning original content.', { error });
         return content;  // Return the original content if summarization fails
     }
