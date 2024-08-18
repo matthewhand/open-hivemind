@@ -1,7 +1,7 @@
 import 'dotenv/config'; // Load environment variables from .env file into process.env
 
 import logger from './utils/logger';
-import DiscordManager from './managers/DiscordManager';
+import DiscordManager from './discord/DiscordManager'; // Updated import path for DiscordManager
 import { messageHandler } from './handlers/messageHandler';
 import { debugEnvVars } from './utils/environmentUtils';
 import configurationManager from './config/configurationManager';

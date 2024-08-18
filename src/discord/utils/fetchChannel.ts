@@ -1,4 +1,5 @@
-const logger = require('../../utils/logger');
+import { Client, Channel } from 'discord.js';
+import logger from '../../utils/logger';
 
 /**
  * Fetches a Discord channel by its ID.
@@ -6,11 +7,11 @@ const logger = require('../../utils/logger');
  * interface for other utilities to access channel details. It ensures that errors
  * are handled gracefully and logs meaningful information for debugging.
  * 
- * @param {Discord.Client} client - The Discord client instance.
+ * @param {Client} client - The Discord client instance.
  * @param {string} channelId - The ID of the channel to be fetched.
- * @returns {Promise<Discord.Channel|null>} The fetched channel object or null if an error occurs.
+ * @returns {Promise<Channel | null>} The fetched channel object or null if an error occurs.
  */
-async function fetchChannel(client, channelId) {
+export async function fetchChannel(client: Client, channelId: string): Promise<Channel | null> {
     if (!client) {
         logger.error('fetchChannel was called with an undefined or null client.');
         return null;
@@ -25,9 +26,7 @@ async function fetchChannel(client, channelId) {
         logger.debug('Channel with ID: ' + channelId + ' fetched successfully.');
         return channel;
     } catch (error) {
-        logger.error('Error fetching channel with ID: ' + channelId + ':', error);
+        logger.error('Error fetching channel with ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
         return null;
     }
 }
-
-module.exports = fetchChannel;

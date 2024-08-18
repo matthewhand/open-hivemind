@@ -1,39 +1,42 @@
-const logger = require('../../../utils/logger');
-const DiscordMessage = require('../../../models/DiscordMessage');
-const constants = require('../../../config/constants');
-const discordUtils = require('../../../utils/discordUtils');
+import { Client, Message } from 'discord.js';
+import logger from '../../utils/logger';
+import { DiscordMessageModel } from '../../models/DiscordMessage';
+import constants from '../../config/constants';
+import * as discordUtils from '../../utils/discordUtils';
 
 /**
  * Configures event listeners for typing events and message creation, handling them appropriately.
  * @param {Client} client - The Discord client instance.
- * @param {Function} messageHandler - The message handler callback function.
- * @param {Map} typingTimestamps - Map to store typing timestamps.
- * @param {Function} fetchMessages - Function to fetch messages.
+ * @param {(processedMessage: DiscordMessageModel, historyMessages: Message[]) => Promise<void>} messageHandler - The message handler callback function.
+ * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
+ * @param {(channelId: string) => Promise<Message[]>} fetchMessages - Function to fetch messages.
  */
-function setupEventHandlers(client, messageHandler, typingTimestamps, fetchMessages) {
+export function setupEventHandlers(
+    client: Client,
+    messageHandler: (processedMessage: DiscordMessageModel, historyMessages: Message[]) => Promise<void>,
+    typingTimestamps: Map<string, number>,
+    fetchMessages: (channelId: string) => Promise<Message[]>
+): void {
     client.on('typingStart', (channel) => {
         typingTimestamps.set(channel.id, Date.now());
     });
 
-    client.on('messageCreate', async (discordMessage) => {
+    client.on('messageCreate', async (discordMessage: Message) => {
         try {
-            // Debug: Log the entire message object to check all properties
             logger.debug('[DiscordManager] Received message object: ' + JSON.stringify(discordMessage));
 
-            // Ensure client is set
             if (!client) {
                 logger.error('[DiscordManager] Discord client is not initialized.');
                 return;
             }
 
-            const processedMessage = new DiscordMessage(discordMessage);
+            const processedMessage = new DiscordMessageModel(discordMessage);
 
             if (!processedMessage.getMessageId() || !processedMessage.getText()) {
                 logger.error('[DiscordManager] Invalid or incomplete message received: ID: ' + processedMessage.getMessageId() + ', Content: ' + processedMessage.getText());
-                return; // Exit if message is incomplete to prevent errors downstream
+                return;
             }
 
-            // Prevent the bot from responding to its own messages
             if (processedMessage.getAuthorId() === constants.CLIENT_ID) {
                 logger.debug('[DiscordManager] Skipping response to own message ID: ' + processedMessage.getMessageId());
                 return;
@@ -41,14 +44,12 @@ function setupEventHandlers(client, messageHandler, typingTimestamps, fetchMessa
 
             logger.debug('[DiscordManager] Processed message ID: ' + processedMessage.getMessageId());
 
-            // Validate getChannelId
             const channelId = processedMessage.getChannelId();
             if (!channelId) {
                 logger.error('[DiscordManager] Processed message has no valid channel ID.');
                 return;
             }
 
-            // Directly utilize fetchChannel and fetchMessages from discordUtils to get channel context
             const channel = await discordUtils.fetchChannel(client, channelId);
             if (!channel) {
                 logger.error('[DiscordManager] Could not fetch channel with ID: ' + channelId);
@@ -67,9 +68,7 @@ function setupEventHandlers(client, messageHandler, typingTimestamps, fetchMessa
                 await messageHandler(processedMessage, historyMessages);
             }
         } catch (error) {
-            logger.error('[DiscordManager] Error processing message: ' + error.message, { error });
+            logger.error('[DiscordManager] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });
         }
     });
 }
-
-module.exports = setupEventHandlers;

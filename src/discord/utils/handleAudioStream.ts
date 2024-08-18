@@ -1,19 +1,21 @@
-const logger = require('../../../utils/logger');
-const fs = require('fs');
-const { convertOpusToWav } = require('../../../utils/audioConversion');
-const { transcribeAudio, generateResponse, playAudioResponse } = require('../../../utils/audioProcessing');
+import { Readable } from 'stream';
+import { VoiceConnection } from '@discordjs/voice';
+import fs from 'fs';
+import logger from '../../utils/logger';
+import { convertOpusToWav } from './convertOpusToWav';
+import { transcribeAudio, generateResponse, playAudioResponse } from './audioProcessing';
 
 /**
  * Handles audio streaming to a Discord voice connection.
- * @param {ReadableStream} stream - The audio stream to handle.
+ * @param {Readable} stream - The audio stream to handle.
  * @param {string} userId - The ID of the user sending the audio.
  * @param {VoiceConnection} connection - The voice connection to stream to.
  */
-const handleAudioStream = async (stream, userId, connection) => {
-    const audioChunks = [];
+export const handleAudioStream = async (stream: Readable, userId: string, connection: VoiceConnection): Promise<void> => {
+    const audioChunks: Buffer[] = [];
     logger.debug('handleAudioStream: Initialized for user ' + userId);
 
-    stream.on('data', (chunk) => {
+    stream.on('data', (chunk: Buffer) => {
         logger.info('Receiving audio data from user ' + userId);
         audioChunks.push(chunk);
         logger.debug('handleAudioStream: Collected audio chunk of size ' + chunk.length);
@@ -35,7 +37,6 @@ const handleAudioStream = async (stream, userId, connection) => {
             const audioFilePath = 'audio.wav';
             fs.writeFileSync(audioFilePath, wavBuffer);
 
-            // Log file details for debugging
             const stats = fs.statSync(audioFilePath);
             logger.debug('handleAudioStream: Saved WAV file size ' + stats.size);
 
@@ -58,15 +59,13 @@ const handleAudioStream = async (stream, userId, connection) => {
                 logger.warn('handleAudioStream: Transcription returned null or undefined');
             }
         } catch (error) {
-            logger.error('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + error.message);
+            logger.error('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + (error instanceof Error ? error.message : String(error)));
             logger.debug('handleAudioStream: Error stack trace: ' + error.stack);
         }
     });
 
-    stream.on('error', (error) => {
+    stream.on('error', (error: Error) => {
         logger.error('handleAudioStream: Error in audio stream for user ' + userId + ': ' + error.message);
         logger.debug('handleAudioStream: Stream error stack trace: ' + error.stack);
     });
 };
-
-module.exports = handleAudioStream;

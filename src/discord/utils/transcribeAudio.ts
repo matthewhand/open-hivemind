@@ -1,14 +1,14 @@
-const OpenAI = require('openai');
-const logger = require('../../utils/logger');
-const fs = require('fs');
-const constants = require('../../config/constants');
+import OpenAI from 'openai';
+import fs from 'fs';
+import logger from '../../utils/logger';
+import constants from '../../config/constants';
 
 /**
  * Transcribes audio using the OpenAI API.
  * @param {string} audioFilePath - The path to the audio file to be transcribed.
  * @returns {Promise<string>} The transcribed text.
  */
-async function transcribeAudio(audioFilePath) {
+export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
         const openai = new OpenAI({
             apiKey: constants.TRANSCRIBE_API_KEY
@@ -16,17 +16,17 @@ async function transcribeAudio(audioFilePath) {
 
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),
-            model: 'whisper-1', // Assuming you are using OpenAI Whisper model
-            response_format: 'text', // Specify the desired response format
+            model: 'whisper-1',
+            response_format: 'text',
             headers: {
-                'Content-Type': 'audio/wav' // Ensure the correct content type is specified
+                'Content-Type': 'audio/wav'
             }
         });
 
         logger.debug('transcribeAudio: Response data:', response.data);
         return response.data.text;
     } catch (error) {
-        logger.error('transcribeAudio: Error transcribing audio: ' + error.message);
+        logger.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
             logger.debug('transcribeAudio: Response status: ' + error.response.status);
             logger.debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
@@ -34,5 +34,3 @@ async function transcribeAudio(audioFilePath) {
         throw error;
     }
 }
-
-module.exports = transcribeAudio;

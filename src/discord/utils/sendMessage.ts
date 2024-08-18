@@ -1,4 +1,5 @@
-const sendResponse = require('./sendResponse');
+import { sendResponse } from './sendResponse';
+import logger from '../../utils/logger';
 
 /**
  * Sends a message to a specified channel.
@@ -6,8 +7,7 @@ const sendResponse = require('./sendResponse');
  * @param {string} messageText - The text of the message to be sent.
  * @returns {Promise<void>}
  */
-async function sendMessage(channelId, messageText) {
+export async function sendMessage(channelId: string, messageText: string): Promise<void> {
+    logger.info('Sending message to channel ID: ' + channelId + '. Message: ' + messageText);
     await sendResponse(channelId, messageText);
 }
-
-module.exports = sendMessage;

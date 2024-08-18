@@ -1,14 +1,15 @@
-const { ChannelType, PermissionsBitField, joinVoiceChannel, VoiceConnectionStatus, EndBehaviorType } = require('discord.js');
-const logger = require('../../../utils/logger');
-const constants = require('../../../config/constants');
-const playWelcomeMessage = require('./playWelcomeMessage');
-const handleAudioStream = require('./handleAudioStream');
+import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
+import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
+import logger from '../../utils/logger';
+import constants from '../../config/constants';
+import { playWelcomeMessage } from './playWelcomeMessage';
+import { handleAudioStream } from './handleAudioStream';
 
 /**
  * Sets up the voice channel by joining it and configuring the connection to handle audio streams.
  * Ensures the bot has the necessary permissions and logs relevant information for debugging.
  */
-async function setupVoiceChannel(client) {
+export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
     const VOICE_CHANNEL_ID = constants.VOICE_CHANNEL_ID;
     logger.debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
 
@@ -20,8 +21,8 @@ async function setupVoiceChannel(client) {
     try {
         const channel = await client.channels.fetch(VOICE_CHANNEL_ID);
         logger.debug('Fetched channel: ' + (channel ? channel.id : 'null'));
-        
-        if (!channel || channel.type !== ChannelType.GuildVoice) {
+
+        if (!channel || !(channel instanceof VoiceChannel)) {
             logger.error('Channel with ID ' + VOICE_CHANNEL_ID + ' is not a valid voice channel.');
             return;
         }
@@ -67,17 +68,15 @@ async function setupVoiceChannel(client) {
             await playWelcomeMessage(connection);
         });
 
-        connection.on(VoiceConnectionStatus.Disconnected, (oldState, newState) => {
-            if (newState.status === VoiceConnectionStatus.Disconnected) {
-                logger.warn('Disconnected from the voice channel.');
-            }
+        connection.on(VoiceConnectionStatus.Disconnected, () => {
+            logger.warn('Disconnected from the voice channel.');
         });
 
         connection.on(VoiceConnectionStatus.Destroyed, () => {
             logger.warn('Voice connection destroyed.');
         });
 
-        connection.on('error', error => {
+        connection.on('error', (error) => {
             logger.error('Voice connection error: ' + error.message);
         });
 
@@ -87,9 +86,8 @@ async function setupVoiceChannel(client) {
             handleAudioStream(audioStream, userId, connection);
         });
 
+        return connection;
     } catch (error) {
-        logger.error('Error setting up voice channel: ' + error.message);
+        logger.error('Error setting up voice channel: ' + (error instanceof Error ? error.message : String(error)));
     }
 }
-
-module.exports = setupVoiceChannel;
