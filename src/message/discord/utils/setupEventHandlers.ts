@@ -1,7 +1,7 @@
 import { Client, Message } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
-import constants from '../../config/constants';
+import constants from '../../config/configurationManager';
 import * as discordUtils from '../../utils/discordUtils';
 
 /**
@@ -67,7 +67,7 @@ export function setupEventHandlers(
                 logger.debug('Executing message handler on channel ' + channel.id);
                 await messageHandler(processedMessage, historyMessages);
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('[DiscordManager] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });
         }
     });
