@@ -34,7 +34,7 @@ export const startWebhookServer = (port: number): void => {
         console.debug('Image URL: ' + imageUrl);
 
         const channelId = process.env.CHANNEL_ID!;
-        const channel = client.channels.cache.get(channelId) as TextChannel;
+        const channel = client.channels?.cache.get(channelId) as TextChannel;
 
         if (channel) {
             let resultMessage: string;
@@ -95,7 +95,7 @@ export const startWebhookServer = (port: number): void => {
             await discordManager.sendResponse(process.env.CHANNEL_ID!, message);
             console.debug('Message sent to Discord: ' + message);
             res.status(200).send({ message: 'Message sent to Discord.' });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to send the message:', error);
             res.status(500).send({ error: 'Failed to send the message' });
         }
@@ -124,7 +124,7 @@ export const startWebhookServer = (port: number): void => {
             await discordManager.sendResponse(process.env.CHANNEL_ID!, summarizedMessage);
             console.debug('Summarized message sent to Discord: ' + summarizedMessage);
             res.status(200).send({ message: 'Message summarized and sent to Discord.' });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to summarize or send the message:', error);
             res.status(500).send({ error: 'Failed to summarize or send the message' });
         }
