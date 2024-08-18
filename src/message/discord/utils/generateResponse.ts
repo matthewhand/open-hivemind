@@ -1,6 +1,6 @@
 import axios from 'axios';
-import logger from '../../utils/logger';
-import constants from '../../config/constants';
+import logger from '../../logging/logger';
+import constants from '../../config/configurationManager';
 
 /**
  * Generates a response using the LLM API.
@@ -27,7 +27,7 @@ export async function generateResponse(transcript: string): Promise<string | und
         });
 
         return response.data.choices[0].text.trim();
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error generating response: ' + (error instanceof Error ? error.message : String(error)));
         return undefined;
     }
