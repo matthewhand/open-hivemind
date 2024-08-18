@@ -11,7 +11,7 @@ export async function muteUser(channel: TextChannel, userId: string): Promise<vo
     logger.debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
 
     const member = await channel.guild.members.fetch(userId);
-    const role = channel.guild.roles.cache.find(role => role.name === 'Muted');
+    const role = channel.guild.roles?.cache.find(role => role.name === 'Muted');
 
     if (!role) {
         logger.error('Mute role not found');
