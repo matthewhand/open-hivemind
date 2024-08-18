@@ -1,8 +1,8 @@
-import IMessage from '../interfaces/IMessage';
+import IMessage from '../types/IMessage';
 import MessageResponseManager from '../message/responseManager/MessageResponseManager';
 import LLMInterface from '../interfaces/LLMInterface';
-import constants from '../config/constants';
-import logger from '../utils/logger';
+import constants from '../config/configurationManager';
+import logger from '../logging/logger';
 import { sendResponse, sendFollowUp } from '../message/utils/messageSendingUtils';
 import { prepareMessageBody, summarizeMessage, processCommand } from '../message/utils/messageProcessingUtils';
 
@@ -106,7 +106,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
                 channelUsers
             );
             logger.debug('[messageHandler] LLM request body prepared: ' + JSON.stringify(requestBody));
-        } catch (error) {
+        } catch (error: any) {
             logger.error('[messageHandler] Error preparing LLM request body: ' + error.message, { error });
             return;
         }
@@ -115,7 +115,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
         try {
             llmResponse = await llmManager.sendRequest(requestBody);
             logger.debug('[messageHandler] LLM request sent successfully.');
-        } catch (error) {
+        } catch (error: any) {
             logger.error('[messageHandler] Error sending LLM request: ' + error.message, { error });
             return;
         }
@@ -145,7 +145,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
                 responseContent = await summarizeMessage(responseContent);
                 logger.info('[messageHandler] LLM response exceeded maximum length and was summarized.');
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('[messageHandler] Error processing LLM response content: ' + error.message, { error });
             return;
         }
@@ -160,7 +160,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
         try {
             await sendResponse(responseContent, message.getChannelId(), startTime);
             logger.info('[messageHandler] LLM response sent to the channel successfully.');
-        } catch (error) {
+        } catch (error: any) {
             logger.error('[messageHandler] Error sending response to channel: ' + error.message, { error });
             return;
         }
@@ -169,7 +169,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
             try {
                 await sendFollowUp(message, topic || 'General Discussion');
                 logger.debug('[messageHandler] Follow-up interaction initiated.');
-            } catch (error) {
+            } catch (error: any) {
                 logger.error('[messageHandler] Error initiating follow-up interaction: ' + error.message, { error });
             }
         }
