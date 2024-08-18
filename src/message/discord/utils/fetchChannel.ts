@@ -1,5 +1,5 @@
 import { Client, Channel } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 
 /**
  * Fetches a Discord channel by its ID.
@@ -25,7 +25,7 @@ export async function fetchChannel(client: Client, channelId: string): Promise<C
         }
         logger.debug('Channel with ID: ' + channelId + ' fetched successfully.');
         return channel;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error fetching channel with ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
         return null;
     }
