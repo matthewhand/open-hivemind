@@ -41,7 +41,7 @@ export class ReplicateCommand extends BaseCommand {
                     logger.error('ReplicateCommand: Failed API call with status ' + response.status);
                     return { success: false, message: 'Failed to initiate image analysis.' };
                 }
-            } catch (error) {
+            } catch (error: any) {
                 logger.error('ReplicateCommand: Error during API call - ' + error.message);
                 return { success: false, message: getRandomErrorMessage(), error: error.message };
             }
