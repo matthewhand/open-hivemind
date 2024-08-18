@@ -1,7 +1,7 @@
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
-import logger from '../../utils/logger';
-import constants from '../../config/constants';
+import logger from '../../logging/logger';
+import constants from '../../config/configurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
 
@@ -87,7 +87,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
         });
 
         return connection;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error setting up voice channel: ' + (error instanceof Error ? error.message : String(error)));
     }
 }
