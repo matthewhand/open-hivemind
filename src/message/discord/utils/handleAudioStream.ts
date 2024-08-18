@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio, generateResponse, playAudioResponse } from './audioProcessing';
 
@@ -58,7 +58,7 @@ export const handleAudioStream = async (stream: Readable, userId: string, connec
             } else {
                 logger.warn('handleAudioStream: Transcription returned null or undefined');
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + (error instanceof Error ? error.message : String(error)));
             logger.debug('handleAudioStream: Error stack trace: ' + error.stack);
         }
