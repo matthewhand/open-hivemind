@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import fs from 'fs';
-import logger from '../../utils/logger';
-import constants from '../../config/constants';
+import logger from '../../logging/logger';
+import constants from '../../config/configurationManager';
 
 /**
  * Transcribes audio using the OpenAI API.
@@ -25,7 +25,7 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
 
         logger.debug('transcribeAudio: Response data:', response.data);
         return response.data.text;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
             logger.debug('transcribeAudio: Response status: ' + error.response.status);
