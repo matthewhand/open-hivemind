@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../utils/logger';
+import logger from '../logging/logger';
 
 const requiredEnvVars = ['CLIENT_ID', 'DISCORD_TOKEN', 'GUILD_ID'];
 
@@ -27,7 +27,7 @@ class ConfigurationManager {
                 const fileConfig = JSON.parse(fs.readFileSync(this.configFilePath, 'utf-8'));
                 this.config = { ...this.config, ...fileConfig };
                 logger.info('Configuration loaded from file.');
-            } catch (error) {
+            } catch (error: any) {
                 logger.error(`Error loading configuration from file: ${error}`);
             }
         } else {
@@ -83,7 +83,7 @@ class ConfigurationManager {
         try {
             fs.writeFileSync(this.configFilePath, JSON.stringify(this.config, null, 2));
             logger.info('Configuration saved to file successfully.');
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`Error saving configuration to file: ${error}`);
         }
     }
