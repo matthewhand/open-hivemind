@@ -1,5 +1,5 @@
 import logger from '../logger';
-import constants from '../../config/constants';
+import constants from '../../config/configurationManager';
 import OpenAiManager from '../../managers/OpenAiManager';
 
 /**
