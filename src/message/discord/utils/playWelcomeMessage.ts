@@ -2,8 +2,8 @@ import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerSta
 import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
-import logger from '../../utils/logger';
-import constants from '../../config/constants';
+import logger from '../../logging/logger';
+import constants from '../../config/configurationManager';
 
 /**
  * Plays a welcome message in the voice channel.
@@ -46,7 +46,7 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
             logger.error('Error playing welcome message: ' + error.message);
         });
 
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error generating welcome message: ' + error.message);
         if (error.response) {
             logger.error('Response status: ' + error.response.status);
