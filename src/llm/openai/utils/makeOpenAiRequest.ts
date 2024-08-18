@@ -16,7 +16,7 @@ export async function makeOpenAiRequest(
         const response = await openaiClient.chat.completions.create(requestBody);
         logger.debug('[makeOpenAiRequest] Received response from OpenAI API.');
         return response;
-    } catch (error) {
+    } catch (error: any) {
         logger.error('[makeOpenAiRequest] Error during OpenAI API request: ' + (error instanceof Error ? error.message : String(error)));
         throw error;
     }
