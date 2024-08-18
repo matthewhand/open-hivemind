@@ -2,7 +2,7 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import fs from 'fs';
 import path from 'path';
-import logger from '../utils/logger';
+import logger from '../logging/logger';
 import { Client, CommandInteraction } from 'discord.js';
 
 interface Command {
@@ -50,7 +50,7 @@ export const registerCommands = async (clientId: string, token: string, guildId:
             { body: commands },
         );
         logger.info(`Successfully reloaded ${Array.isArray(data) ? data.length : 0} application (/) commands.`);
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error registering commands:', error);
         if (error.code === 50001) {
             logger.error('Missing Access: The bot does not have permissions to register slash commands in the guild.');
@@ -68,7 +68,7 @@ export const handleCommands = (client: Client): void => {
         if (commandExecutor) {
             try {
                 await commandExecutor(interaction);
-            } catch (error) {
+            } catch (error: any) {
                 logger.error(`Error executing command ${interaction.commandName}:`, error);
                 await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
             }
