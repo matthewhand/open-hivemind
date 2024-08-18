@@ -33,7 +33,7 @@ export function redactSensitiveInfo(key: string, value: any): string {
     } else if (typeof value !== 'string') {
         try {
             value = JSON.stringify(value);
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`Error stringifying value: ${error.message}`);
             value = '[Complex value cannot be stringified]';
         }
