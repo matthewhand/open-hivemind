@@ -1,6 +1,6 @@
 import { Client, Message } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice'; 
-import logger from '../utils/logger'; // Ensure logger is correctly imported
+import logger from '../logging/logger'; // Ensure logger is correctly imported
 import { loginToDiscord } from './utils/loginToDiscord';
 import { sendMessageToChannel } from './utils/sendMessageToChannel';
 import { setupVoiceChannel } from './utils/setupVoiceChannel';
@@ -63,7 +63,7 @@ class DiscordManager {
             logger.info('DiscordManager: Setting up event handlers');
             setupEventHandlers(this.client, this.handleMessage.bind(this));
 
-        } catch (error) {
+        } catch (error: any) {
             const errorMessage = `Error during Discord initialization: ${(error instanceof Error) ? error.message : String(error)}`;
             logger.error(errorMessage);
             process.exit(1);  // Exits the process if the initialization fails
