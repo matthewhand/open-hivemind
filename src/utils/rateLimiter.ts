@@ -1,4 +1,4 @@
-import { LLM_MESSAGE_LIMIT_PER_HOUR, LLM_MESSAGE_LIMIT_PER_DAY } from '../config/constants';
+import { LLM_MESSAGE_LIMIT_PER_HOUR, LLM_MESSAGE_LIMIT_PER_DAY } from '../config/configurationManager';
 
 /**
  * Rate Limiter for Discord Bot Messages
