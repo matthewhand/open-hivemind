@@ -1,6 +1,6 @@
 import { Client, Message as DiscordMessage, TextChannel } from 'discord.js';
 import logger from '../../utils/logger';
-import { DiscordMessageModel } from '../../models/DiscordMessage';
+import { DiscordMessageModel } from '../types/DiscordMessage';
 
 /**
  * Fetches messages from a specified Discord channel.
