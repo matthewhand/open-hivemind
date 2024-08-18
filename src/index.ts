@@ -31,7 +31,7 @@ async function initialize(): Promise<void> {
         logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}. Starting webhook server...`);
         startWebhookServer(process.env.WEBHOOK_SERVER_PORT ? parseInt(process.env.WEBHOOK_SERVER_PORT) : 3000);
 
-    } catch (error) {
+    } catch (error: any) {
         logger.error(`Error during initialization: ${(error as Error).message}`);
         process.exit(1); // Exit the process with a status code of 1 (indicates failure)
     }
