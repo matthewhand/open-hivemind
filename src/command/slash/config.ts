@@ -28,7 +28,7 @@ export const configCommand = {
 
     async execute(interaction: CommandInteraction): Promise<void> {
         const userId = interaction.user.id;
-        const userRoles = interaction.member?.roles.cache.map(role => role.id) || [];
+        const userRoles = interaction.member?.roles?.cache.map(role => role.id) || [];
 
         if (!isUserAllowed(userId, allowedUsers) && !isRoleAllowed(userRoles, allowedRoles)) {
             await interaction.reply({ content: 'You do not have permission to execute this command.', ephemeral: true });
