@@ -1,0 +1,8 @@
+{
+    "logLevel": "info",
+    "discord": {
+        "token": "YOUR_PROD_DISCORD_TOKEN",
+        "clientId": "YOUR_PROD_CLIENT_ID",
+        "guildId": "YOUR_PROD_GUILD_ID"
+    }
+}

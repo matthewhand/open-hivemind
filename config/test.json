@@ -1,0 +1,8 @@
+{
+    "logLevel": "warn",
+    "discord": {
+        "token": "YOUR_TEST_DISCORD_TOKEN",
+        "clientId": "YOUR_TEST_CLIENT_ID",
+        "guildId": "YOUR_TEST_GUILD_ID"
+    }
+}

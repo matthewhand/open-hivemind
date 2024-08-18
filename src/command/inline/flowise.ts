@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { BaseCommand } from '../types/BaseCommand';
 import logger from '../../logging/logger';
-import { getRandomErrorMessage } from '../../config/errorMessages';
+import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
 export class FlowiseCommand extends BaseCommand {
     constructor() {

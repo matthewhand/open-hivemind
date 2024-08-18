@@ -1,67 +1,23 @@
-import logger from '../../logging/logger'; // Adjust the import path to match the correct logger utility
+import logger from '../logging/logger';
 
 /**
- * Manages voting operations such as initiation, recording votes, and determining outcomes.
+ * Simulates the process of starting a voting process for banning a user.
+ * @param userId - The ID of the user to start a ban vote for.
+ * @returns A promise resolving with the result of the voting process.
  */
-export class VotingManager {
-    private votes: Record<string, { yes: number; no: number }>;
+export async function startVotingProcess(userId: string): Promise<{ votePassed: boolean }> {
+    logger.debug(`[votingUtils] Starting voting process for user ID: \${userId}`);
+    // Simulated voting process result
+    return { votePassed: true };
+}
 
-    constructor() {
-        this.votes = {};
-    }
-
-    /**
-     * Initiates a vote for a particular subject (e.g., user ban).
-     * @param subject - The subject of the vote.
-     */
-    public initiateVote(subject: string): void {
-        if (!subject) {
-            logger.error('[VotingManager.initiateVote] Invalid subject provided.');
-            throw new Error('Invalid subject.');
-        }
-
-        this.votes[subject] = { yes: 0, no: 0 };
-        logger.info('Voting initiated for subject: ' + subject);
-    }
-
-    /**
-     * Records a vote for a particular subject.
-     * @param subject - The subject of the vote.
-     * @param vote - The vote, where true is 'yes' and false is 'no'.
-     */
-    public recordVote(subject: string, vote: boolean): void {
-        if (!this.votes[subject]) {
-            logger.error('Attempted to vote on non-existent subject: ' + subject);
-            throw new Error('Voting subject does not exist.');
-        }
-
-        if (vote) {
-            this.votes[subject].yes += 1;
-        } else {
-            this.votes[subject].no += 1;
-        }
-
-        logger.info('Vote recorded for subject: ' + subject + ', vote: ' + (vote ? 'yes' : 'no'));
-    }
-
-    /**
-     * Determines the outcome of the vote for a particular subject.
-     * @param subject - The subject of the vote.
-     * @returns The outcome of the vote ('yes', 'no', or 'tie').
-     */
-    public determineOutcome(subject: string): 'yes' | 'no' | 'tie' {
-        if (!this.votes[subject]) {
-            logger.error('Attempted to determine outcome for non-existent subject: ' + subject);
-            throw new Error('Voting subject does not exist.');
-        }
-
-        const { yes, no } = this.votes[subject];
-        if (yes > no) {
-            return 'yes';
-        } else if (no > yes) {
-            return 'no';
-        } else {
-            return 'tie';
-        }
-    }
+/**
+ * Checks if the user is eligible to initiate a voting process this year.
+ * @param userId - The ID of the user to check eligibility for.
+ * @returns A boolean indicating if the user is eligible.
+ */
+export function checkVotingEligibility(userId: string): boolean {
+    logger.debug(`[votingUtils] Checking voting eligibility for user ID: \${userId}`);
+    // Simulated eligibility check
+    return true;
 }

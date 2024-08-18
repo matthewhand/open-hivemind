@@ -1,0 +1,8 @@
+{
+    "logLevel": "debug",
+    "discord": {
+        "token": "YOUR_DEV_DISCORD_TOKEN",
+        "clientId": "YOUR_DEV_CLIENT_ID",
+        "guildId": "YOUR_DEV_GUILD_ID"
+    }
+}
