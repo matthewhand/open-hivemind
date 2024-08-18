@@ -2,8 +2,8 @@ import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnect
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import logger from '../../utils/logger';
-import constants from '../../config/constants';
+import logger from '../../logging/logger';
+import constants from '../../config/configurationManager';
 
 /**
  * Plays the audio response back in the voice channel.
@@ -48,7 +48,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         player.on('error', (error) => {
             logger.error('Error playing audio response: ' + error.message);
         });
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
     }
 }
