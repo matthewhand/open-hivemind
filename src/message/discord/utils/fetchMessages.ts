@@ -1,5 +1,5 @@
 import { Client, Message as DiscordMessage, TextChannel } from 'discord.js';
-import logger from '../../utils/logger';
+import logger from '../../logging/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
 
 /**
@@ -29,7 +29,7 @@ export async function fetchMessages(client: Client, channelId: string, limit = 2
 
         const fetchedMessages = await channel.messages.fetch({ limit });
         return fetchedMessages.map(message => new DiscordMessageModel(message));
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error fetching messages from Discord for channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
         return [];
     }
