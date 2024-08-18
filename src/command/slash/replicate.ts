@@ -2,7 +2,7 @@ import axios from 'axios';
 import { BaseCommand } from '../types/BaseCommand';
 import logger from '../../logging/logger';
 import { Message } from 'discord.js';
-import { getRandomErrorMessage } from '../../common/errors/errorMessages;
+import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
 export class ReplicateCommand extends BaseCommand {
     constructor() {
@@ -13,7 +13,7 @@ export class ReplicateCommand extends BaseCommand {
         const { message } = args;
         const attachments = message.attachments;
         if (attachments.size > 0) {
-            const imageUrl = attachments.first().url;
+            const imageUrl = attachments.first()?.url;
             const prompt = args.args.join(' ') || process.env.IMAGE_PROMPT || 'Please describe this image';
 
             logger.debug('ReplicateCommand: Sending image analysis request for ' + imageUrl);

@@ -19,13 +19,13 @@ export class FlowiseCommand extends BaseCommand {
 
         const validActions = process.env.FLOWISE_ACTIONS?.split(',') || [];
         if (!validActions.includes(action)) {
-            logger.error('FlowiseCommand: Invalid action \' + action + '\'');
+            logger.error('FlowiseCommand: Invalid action ' + action + '');
             return { success: false, message: 'Invalid action specified. Available actions are: ' + validActions.join(', ') };
         }
 
         const endpointId = process.env['FLOWISE_' + action.toUpperCase() + '_ID'];
         const url = process.env.FLOWISE_API_BASE_URL + endpointId;
-        logger.debug('FlowiseCommand: Calling API at ' + url + ' with query \' + query + '\'');
+        logger.debug('FlowiseCommand: Calling API at ' + url + ' with query ' + query + '');
 
         try {
             const response = await axios.post(url, { question: query });
