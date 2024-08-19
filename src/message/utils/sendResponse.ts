@@ -1,7 +1,7 @@
 import logger from '@utils/logger';
 import { splitMessageContent } from './splitMessage';
 import DiscordManager from '../managers/DiscordManager';
-import constants from '../../config/configurationManager';
+import constants from '../../config/ConfigurationManager';
 
 /**
  * Sends a response message to a specified channel with artificial delays to simulate human-like interaction.

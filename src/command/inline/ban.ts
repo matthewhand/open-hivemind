@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
-import { startVotingProcess, checkVotingEligibility } from '../../utils/votingUtils';
-import logger from '../../logging/logger';
-import { ICommand } from '../../interfaces/ICommand';
+import { startVotingProcess, checkVotingEligibility } from '@src/message/utils/votingUtils';
+import logger from '@utils/logger';
+import { ICommand } from '../types/ICommand';
 
 /**
  * BanCommand class handles initiating a ban voting process.

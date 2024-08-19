@@ -1,4 +1,4 @@
-import configurationManager from '../config/configurationManager';
+import configurationManager from './ConfigurationManager';
 
 export const constants = {
     // Client and channel identification for the bot

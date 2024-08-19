@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import logger from '@utils/logger';
-import { isCommand, parseCommandDetails, executeParsedCommand } from '../command/utils/commandManagerUtils';
+import { isCommand, ./parseCommandDetails, ./executeParsedCommand } from './isCommand';
 import { IMessage } from '../command/types/IMessage';
 import { ICommand } from '../command/types/ICommand';
 
@@ -58,14 +58,14 @@ export class CommandManager {
             return { success: false, message: "Not a command.", error: "Invalid command syntax" };
         }
 
-        const commandDetails = parseCommandDetails(text);
+        const commandDetails = ./parseCommandDetails(text);
         if (!commandDetails) {
             logger.error("Failed to parse command details.");
             return { success: false, message: "Parsing error.", error: "Invalid command format" };
         }
 
         logger.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join(', ') + ']');
-        const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
+        const executionResult = await ./executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
             logger.error('Command execution failed: ' + executionResult.error);
         } else {

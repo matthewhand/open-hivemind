@@ -4,7 +4,7 @@ import logger from './utils/logger';
 import DiscordManager from './discord/DiscordManager'; // Updated import path for DiscordManager
 import { messageHandler } from './handlers/messageHandler';
 import { debugEnvVars } from './utils/environmentUtils';
-import configurationManager from './config/configurationManager';
+import configurationManager from './config/ConfigurationManager';
 import { startWebhookServer } from './handlers/webhookHandler';
 
 /**

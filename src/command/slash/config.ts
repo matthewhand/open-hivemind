@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import { isUserAllowed, isRoleAllowed } from '../../utils/permissions';
-import configManager from '../../config/configurationManager';
+import configManager from '../../config/ConfigurationManager';
 
 const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];
 const allowedRoles = process.env.BOT_ALLOWED_ROLES ? process.env.BOT_ALLOWED_ROLES.split(',') : [];

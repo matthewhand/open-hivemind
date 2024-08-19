@@ -1,5 +1,5 @@
 import logger from './logger';
-import constants from '../config/configurationManager';
+import constants from '../config/ConfigurationManager';
 import LLMResponse from '../interfaces/LLMResponse';
 import { handleError } from '../utils/commonUtils';
 import { extractContent } from './openAiUtils';
