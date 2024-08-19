@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, GuildMemberRoleManager } from 'discord.js';
-import { isUserAllowed, isRoleAllowed } from '@utils/permissions';
+import { isUserAllowed, isRoleAllowed } from '@message/helpers/permissions';
 import configManager from '@config/ConfigurationManager';
 
 // Allowed users and roles from environment variables
@@ -57,13 +57,13 @@ export const configCommand = {
             console.debug('Updating configuration:', { setting, value });
 
             if (nonOverridableEnvVars.has(setting)) {
-                await interaction.reply({ content: \`The setting '\${setting}' cannot be overridden.\`, ephemeral: true });
+                await interaction.reply({ content: `The setting '${setting}' cannot be overridden.`, ephemeral: true });
                 return;
             }
 
             // Update the configuration
             configManager.setConfig(setting, value);
-            await interaction.reply({ content: \`Configuration updated: \${setting} is now \${value}.\`, ephemeral: true });
+            await interaction.reply({ content: `Configuration updated: ${setting} is now ${value}.`, ephemeral: true });
         } else if (interaction.options.getSubcommand() === 'save') {
             // Save the current configuration to file
             configManager.saveConfig();

@@ -7,7 +7,7 @@ import { extractContent } from './utils/extractContent';
 import { makeOpenAiRequest } from './utils/makeOpenAiRequest';
 import { completeSentence } from './utils/completeSentence';
 import { needsCompletion } from './utils/needsCompletion';
-import { getEmoji } from './utils/getEmoji';
+import { getEmoji } from '@message/helpers/getEmoji';
 import { handleError, redactSensitiveInfo } from '../message/commonUtils';
 
 /**

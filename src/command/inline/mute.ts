@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
-import { getRandomErrorMessage } from '../../utils/errorMessages';
-import logger from '../../logging/logger';
+import { getRandomErrorMessage } from '@utils/commonUtils';
+import logger from '@utils/logger';
 
 export const data = new SlashCommandBuilder()
     .setName('mute')

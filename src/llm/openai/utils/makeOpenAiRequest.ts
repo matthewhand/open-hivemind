@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 
 /**
  * Sends a request to the OpenAI API and returns the response.

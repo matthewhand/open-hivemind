@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { ICommand } from '../../interfaces/ICommand';
-import logger from '../../logging/logger';
+import { ICommand } from '@command/types/ICommand';
+import logger from '@utils/logger';
 
 /**
  * Command to search online using perplexity.ai for the provided text.
