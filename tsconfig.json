@@ -10,6 +10,7 @@
     "baseUrl": ".",                       // Base directory for resolving non-relative modules
     "paths": {
       "@config/*": ["src/config/*"],
+      "@command/*": ["src/command/*"],
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
       "@utils/*": ["src/utils/*"],

@@ -1,4 +1,4 @@
-import DiscordManager from '../../src/discord/DiscordManager';
+import DiscordManager from '@discord/DiscordManager';
 import logger from '../../src/utils/logger';
 
 describe('DiscordManager Initialization', () => {

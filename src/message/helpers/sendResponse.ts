@@ -1,5 +1,5 @@
 import logger from '@utils/logger';
-import { splitMessageContent } from './splitMessage';
+import { splitMessageContent } from '@message/helpers/splitMessage';
 import DiscordManager from '../managers/DiscordManager';
 import constants from '../../config/ConfigurationManager';
 
