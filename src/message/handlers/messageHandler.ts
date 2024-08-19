@@ -1,10 +1,13 @@
-import IMessage from '../types/IMessage';
-import MessageResponseManager from '../message/responseManager/MessageResponseManager';
-import LLMInterface from '../interfaces/LLMInterface';
-import constants from '../config/configurationManager';
+import { IMessage } from '@src/message/types/IMessage';
+import MessageResponseManager from '@src/message/responseHandling/MessageResponseManager';
+import { LLMInterface } from '@src/llm/LLMInterface';
+import constants from '@src/config/configurationManager';
 import logger from '@utils/logger';
-import { sendResponse, sendFollowUp } from '../message/utils/messageSendingUtils';
-import { prepareMessageBody, summarizeMessage, processCommand } from '../message/utils/messageProcessingUtils';
+import { sendResponse } from '@src/message/followUp/sendResponse';
+import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
+import { prepareMessageBody } from '@src/message/utils/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@src/message/utils/messageProcessing/summarizeMessage';
+import { processCommand } from '@src/message/utils/messageProcessing/processCommand';;
 
 export async function messageHandler(originalMsg: IMessage, historyMessages: IMessage[] = []): Promise<void> {
     if (!originalMsg) {
