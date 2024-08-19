@@ -1,90 +1,52 @@
 import { Message } from 'discord.js';
-import { startVotingProcess, checkVotingEligibility } from '@src/message/utils/votingUtils';
-import logger from '@utils/logger';
 import { ICommand } from '../types/ICommand';
+import logger from '@utils/logger';
 
-/**
- * BanCommand class handles initiating a ban voting process.
- */
 export class BanCommand implements ICommand {
-    name: string;
-    description: string;
-
-    constructor() {
-        this.name = 'ban';
-        this.description = 'Initiates a ban voting process for a user. Usage: !ban userID';
-    }
+    name = 'ban';
+    description = 'Bans a user from the server. Usage: !ban @user [reason]';
 
     /**
      * Executes the ban command.
-     * @param message - The Discord message object containing the command.
-     * @param args - The arguments passed with the ban command.
-     * @returns A promise resolving with the execution result.
+     * @param args The command arguments, which should include the message and any additional parameters.
+     * @returns An object indicating the success of the operation, a message, and optionally any additional data.
      */
-    async execute(message: Message, args: string[]): Promise<{ success: boolean, message: string, data?: any }> {
-        const userIdToBan = args[0];
-
-        // Guard clause to ensure user ID is provided
-        if (!userIdToBan) {
-            return {
-                success: false,
-                message: 'Please provide a user ID to ban. Usage: `!ban userID`'
-            };
+    async execute(args: { message: Message, args: string[] }): Promise<{ success: boolean, message: string, error?: string }> {
+        const { message, args: commandArgs } = args;
+        
+        // Guard: Ensure a user was mentioned
+        if (message.mentions.users.size === 0) {
+            const errorMessage = 'You need to mention a user to ban.';
+            logger.error(errorMessage);
+            return { success: false, message: errorMessage };
         }
 
-        // Check voting eligibility
-        if (!checkVotingEligibility(userIdToBan)) {
-            return {
-                success: false,
-                message: 'You are not eligible to initiate a ban vote this year.'
-            };
+        const targetUser = message.mentions.users.first();
+        const reason = commandArgs.slice(1).join(' ') || 'No reason provided';
+
+        // Guard: Ensure the target user exists
+        if (!targetUser) {
+            const errorMessage = 'Mentioned user was not found.';
+            logger.error(errorMessage);
+            return { success: false, message: errorMessage };
         }
 
+        // Attempt to ban the user
         try {
-            const chatHistory = await this.fetchConversationHistory(message.channel.id);
-            const decision = await this.shouldUserBeBanned(chatHistory, userIdToBan);
-
-            if (decision) {
-                const votingResult = await startVotingProcess(userIdToBan);
-                return {
-                    success: true,
-                    message: `Ban vote initiated for user ID ${userIdToBan}. Decision: ${decision}`,
-                    data: votingResult
-                };
-            } else {
-                return {
-                    success: false,
-                    message: 'Ban vote not initiated due to insufficient evidence.'
-                };
+            const member = await message.guild?.members.fetch(targetUser.id);
+            if (!member) {
+                const errorMessage = 'Member not found in this server.';
+                logger.error(errorMessage);
+                return { success: false, message: errorMessage };
             }
+
+            await member.ban({ reason });
+            const successMessage = `User ${targetUser.tag} has been banned. Reason: ${reason}`;
+            logger.info(successMessage);
+            return { success: true, message: successMessage };
         } catch (error: any) {
-            logger.error(`Error in BanCommand execute: ${error.message}`);
-            return {
-                success: false,
-                message: 'Failed to initiate ban vote due to an internal error.',
-                error: error.message
-            };
+            logger.error('Failed to ban user: ' + error.message);
+            return { success: false, message: 'Failed to ban user.', error: error.message };
         }
-    }
-
-    /**
-     * Fetches conversation history for the specified channel.
-     * @param channelId - The ID of the channel to fetch history from.
-     * @returns A promise resolving with the chat history.
-     */
-    private async fetchConversationHistory(channelId: string): Promise<{ userId: string, content: string, timestamp: Date }[]> {
-        logger.debug(`[BanCommand] Fetching conversation history for channel ${channelId}`);
-        // Simulated chat history for demonstration purposes
-        return [{ userId: '12345', content: 'Some old message', timestamp: new Date() }];
-    }
-
-    /**
-     * Determines if a user should be banned based on chat history.
-     * @param chatHistory - The conversation history.
-     * @param userId - The ID of the user in question.
-     * @returns A boolean indicating whether the user should be banned.
-     */
-    private async shouldUserBeBanned(chatHistory: { userId: string, content: string, timestamp: Date }[], userId: string): Promise<boolean> {
-        return chatHistory.some(log => log.userId === userId && log.content.includes('violation'));
     }
 }

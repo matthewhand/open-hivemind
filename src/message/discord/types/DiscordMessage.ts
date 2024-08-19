@@ -1,6 +1,6 @@
 import { GuildMember, Message } from 'discord.js';
 import logger from '@utils/logger';
-import constants from '../config/configurationManager'; 
+import { constants } from '../../../config/constants';
 
 /**
  * Represents a Discord message, extending a generic message interface.

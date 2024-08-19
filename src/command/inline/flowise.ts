@@ -1,44 +1,50 @@
 import axios from 'axios';
-import { BaseCommand } from '../types/BaseCommand';
-import logger from '../../logging/logger';
-import { getRandomErrorMessage } from '../../common/errors/errorMessages';
+import logger from '@utils/logger';
 
-export class FlowiseCommand extends BaseCommand {
-    constructor() {
-        super('flowise', 'Sends a query to the Flowise API. Usage: !flowise [action] [query]');
-    }
+export class FlowiseCommand {
+    name = 'flowise';
+    description = 'Interact with the Flowise API to retrieve information based on the provided endpoint ID.';
 
-    async execute(args: string[]): Promise<{ success: boolean, message: string, error?: string }> {
-        if (args.length < 2) {
-            logger.error('FlowiseCommand: Insufficient arguments');
-            return { success: false, message: 'Usage: !flowise [action] [query]' };
+    /**
+     * Executes the Flowise API command.
+     * @param args The command arguments, including an optional endpointId.
+     * @returns An object indicating the success of the operation, a message, and optionally any additional data.
+     */
+    async execute(args: { endpointId?: string }): Promise<{ success: boolean, message: string, error?: string, data?: any }> {
+        const { endpointId } = args;
+
+        // Guard: Check if the API base URL is defined in the environment variables
+        const apiUrl = process.env.FLOWISE_API_BASE_URL;
+        if (!apiUrl) {
+            const errorMessage = 'Flowise API base URL is not defined in the environment variables.';
+            logger.error(errorMessage);
+            return { success: false, message: errorMessage };
         }
+        logger.debug('Flowise API base URL: ' + apiUrl);
 
-        const action = args[0];
-        const query = args.slice(1).join(' ');
-
-        const validActions = process.env.FLOWISE_ACTIONS?.split(',') || [];
-        if (!validActions.includes(action)) {
-            logger.error('FlowiseCommand: Invalid action ' + action + '');
-            return { success: false, message: 'Invalid action specified. Available actions are: ' + validActions.join(', ') };
+        // Guard: Ensure endpointId is provided
+        if (!endpointId) {
+            const errorMessage = 'Endpoint ID is required but was not provided.';
+            logger.error(errorMessage);
+            return { success: false, message: errorMessage };
         }
+        logger.debug('Endpoint ID: ' + endpointId);
 
-        const endpointId = process.env['FLOWISE_' + action.toUpperCase() + '_ID'];
-        const url = process.env.FLOWISE_API_BASE_URL + endpointId;
-        logger.debug('FlowiseCommand: Calling API at ' + url + ' with query ' + query + '');
+        // Construct the full API URL
+        const url = apiUrl + endpointId;
+        logger.debug('Constructed Flowise API URL: ' + url);
 
         try {
-            const response = await axios.post(url, { question: query });
-            if (response.status === 200 && response.data.success) {
-                logger.info('FlowiseCommand: Received successful response from Flowise API');
-                return { success: true, message: response.data.text };
-            } else {
-                logger.error('FlowiseCommand: Failed API call with status ' + response.status);
-                return { success: false, message: getRandomErrorMessage() };
-            }
+            // Make a GET request to the Flowise API
+            const response = await axios.get(url);
+            logger.debug('Flowise API response status: ' + response.status);
+
+            // Return success response with data
+            return { success: true, message: 'Request successful', data: response.data };
         } catch (error: any) {
-            logger.error('FlowiseCommand: Error during API call - ' + error.message);
-            return { success: false, message: getRandomErrorMessage(), error: error.message };
+            // Handle and log any errors that occur during the API request
+            logger.error('Flowise API request failed: ' + error.message);
+            return { success: false, message: 'Flowise API request failed', error: error.message };
         }
     }
 }

@@ -20,6 +20,11 @@ export class CommandManager {
         logger.debug('CommandManager initialized with commands and aliases.');
     }
 
+    /**
+     * Loads all command modules from the specified directory.
+     * @param directory The directory containing command modules.
+     * @returns A record of command names to their respective ICommand instances.
+     */
     private loadCommands(directory: string): Record<string, ICommand> {
         const fullPath = path.resolve(__dirname, directory);
         const commandFiles = fs.readdirSync(fullPath);
@@ -27,7 +32,7 @@ export class CommandManager {
 
         commandFiles.forEach(file => {
             if (file.endsWith('.ts')) {
-                const commandName = file.slice(0, -3);
+                const commandName = file.slice(0, -3); // Remove the .ts extension to get the command name
                 try {
                     const CommandModule = require(path.join(fullPath, file)).default;
                     let commandInstance: ICommand;
@@ -53,26 +58,41 @@ export class CommandManager {
         return commands;
     }
 
+    /**
+     * Executes a command based on the provided message.
+     * @param originalMsg The original message containing the command.
+     * @returns The result of the command execution.
+     */
     async executeCommand(originalMsg: IMessage): Promise<{ success: boolean; message: string; error?: string }> {
         const text = originalMsg.getText().trim();
+
+        // Check if the message is a command
         if (!isCommand(text)) {
             logger.debug("Text does not start with '!', not a command.");
-            return { success: false, message: "Not a command.", error: "Invalid command syntax" };
+            return { success: false, message: 'Not a command.', error: 'Invalid command syntax' };
         }
 
+        // Parse the command details
         const commandDetails = parseCommandDetails(text);
         if (!commandDetails) {
-            logger.error("Failed to parse command details.");
-            return { success: false, message: "Parsing error.", error: "Invalid command format" };
+            logger.error('Failed to parse command details.');
+            return { success: false, message: 'Parsing error.', error: 'Invalid command format' };
         }
 
         logger.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join(', ') + ']');
+
+        // Execute the parsed command
         const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
             logger.error('Command execution failed: ' + executionResult.error);
         } else {
             logger.debug('Command executed successfully: ' + executionResult.result);
         }
-        return executionResult;
+
+        // Ensure `message` is always a string
+        return {
+            ...executionResult,
+            message: executionResult.message || 'Operation completed.'
+        };
     }
 }

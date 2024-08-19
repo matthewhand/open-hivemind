@@ -1,0 +1,52 @@
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { CommandInteraction } from 'discord.js';
+import axios from 'axios';
+import logger from '@utils/logger';
+
+export const quivrCommand = {
+    data: new SlashCommandBuilder()
+        .setName('quivr')
+        .setDescription('Interact with Quivr API.')
+        .addStringOption(option =>
+            option.setName('chatid')
+                .setDescription('The chat ID for the Quivr conversation')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('brainid')
+                .setDescription('The brain ID associated with the Quivr chat')
+                .setRequired(true)),
+
+    async execute(interaction: CommandInteraction): Promise<void> {
+        // Extract options from interaction
+        const quivrChatId = interaction.options.getString('chatid');
+        const quivrBrainId = interaction.options.getString('brainid');
+        
+        // Guard: Ensure environment variable QUIVR_BASE_URL is defined
+        const quivrBaseUrl = process.env.QUIVR_BASE_URL;
+        if (!quivrBaseUrl) {
+            await interaction.reply({ content: 'Error: Quivr base URL is not set in the environment.', ephemeral: true });
+            logger.error('Quivr base URL is undefined.');
+            return;
+        }
+
+        // Guard: Ensure quivrChatId is defined
+        if (!quivrChatId) {
+            await interaction.reply({ content: 'Error: Quivr chat ID is missing.', ephemeral: true });
+            logger.error('Quivr chat ID is undefined.');
+            return;
+        }
+
+        // Debug: Log values being used
+        logger.debug('Quivr command executed with:', { quivrBaseUrl, quivrChatId, quivrBrainId });
+
+        try {
+            const quivrUrl = `${quivrBaseUrl}/${quivrChatId}/question?brain_id=${quivrBrainId}`;
+            const response = await axios.post(quivrUrl, {});
+
+            await interaction.reply({ content: 'Request sent to Quivr successfully.', ephemeral: true });
+        } catch (error: any) {
+            logger.error('Failed to send request to Quivr:', error);
+            await interaction.reply({ content: 'Error: Failed to send request to Quivr.', ephemeral: true });
+        }
+    }
+};
