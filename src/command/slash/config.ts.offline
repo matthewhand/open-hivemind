@@ -43,9 +43,9 @@ export const configCommand = {
         }
 
         // Handle 'update' subcommand
-        if (interaction.options.getSubcommand() === 'update') {
-            const setting = interaction.options.getString('setting');
-            const value = interaction.options.getString('value');
+        if (interaction.options.getCommandSubcommand() === 'update') {
+            const setting = interaction.options.getCommandString('setting');
+            const value = interaction.options.getCommandString('value');
 
             // Guard: Ensure setting and value are defined
             if (!setting || !value) {
@@ -64,7 +64,7 @@ export const configCommand = {
             // Update the configuration
             configManager.setConfig(setting, value);
             await interaction.reply({ content: `Configuration updated: ${setting} is now ${value}.`, ephemeral: true });
-        } else if (interaction.options.getSubcommand() === 'save') {
+        } else if (interaction.options.getCommandSubcommand() === 'save') {
             // Save the current configuration to file
             configManager.saveConfig();
             await interaction.reply({ content: 'Configuration saved successfully.', ephemeral: true });
