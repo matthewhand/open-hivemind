@@ -1,11 +1,11 @@
 import 'dotenv/config'; // Load environment variables from .env file into process.env
 
 import logger from './utils/logger';
-import DiscordManager from './discord/DiscordManager'; // Updated import path for DiscordManager
-import { messageHandler } from './handlers/messageHandler';
+import DiscordManager from './message/discord/DiscordManager'; // Updated import path for DiscordManager
+import { messageHandler } from './message/handlers/messageHandler';
 import { debugEnvVars } from './utils/environmentUtils';
 import configurationManager from './config/ConfigurationManager';
-import { startWebhookServer } from './handlers/webhookHandler';
+import { startWebhookServer } from './webhook/webhookHandler';
 
 /**
  * Logs environment variables for debugging purposes, ensuring sensitive information is not exposed.
