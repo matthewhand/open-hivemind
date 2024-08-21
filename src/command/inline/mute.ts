@@ -20,8 +20,8 @@ export async function execute(interaction: CommandInteraction): Promise<void> {
 
     try {
         // Mute logic here
-        logger.info('User ' + target.tag + ' has been muted.');
-        await interaction.reply('User ' + target.tag + ' has been muted.');
+        logger.info('User ' + target?.user?.tag + ' has been muted.');
+        await interaction.reply('User ' + target?.user?.tag + ' has been muted.');
     } catch (error: any) {
         logger.error('Error muting user: ' + error.message);
         await interaction.reply({ content: getRandomErrorMessage(), ephemeral: true });

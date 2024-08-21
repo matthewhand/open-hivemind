@@ -6,6 +6,6 @@ export const userCommand = {
         .setName('user')
         .setDescription('Provides information about the user.'),
     async execute(interaction: CommandInteraction): Promise<void> {
-        await interaction.reply('This command was run by ' + interaction.user.username + ', who joined on ' + ('joinedAt' in interaction.member ? (interaction.member as GuildMember).joinedAt : 'unknown') + '.');
+        await interaction.reply('This command was run by ' + interaction.user.username + ', who joined on ' + ('joinedAt' in interaction.member interaction.memberinteraction.member ? (interaction.member as GuildMember).joinedAt : 'unknown') + '.');
     },
 };
