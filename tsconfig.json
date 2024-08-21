@@ -11,6 +11,7 @@
     "paths": {
       "@config/*": ["src/config/*"],
       "@command/*": ["src/command/*"],
+      "@common/*": ["src/common/*"],
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
       "@utils/*": ["src/utils/*"],

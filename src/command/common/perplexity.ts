@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { ConfigurationManager } from '@config/ConfigurationManager';
-import { Logger } from '@utils/logger';
+import ConfigurationManager from '@config/ConfigurationManager';
+import Logger from '@utils/logger';
 
-const perplexityApiUrl = ConfigurationManager.get<string>('perplexity.apiUrl');
+const perplexityApiUrl = ConfigurationManager.getConfig<string>('perplexity.apiUrl');
 
 export async function searchPerplexity(query: string): Promise<string> {
     try {
