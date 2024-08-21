@@ -1,29 +1,18 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
+import { ICommand } from '@src/types/Command';
 import { CommandInteraction } from 'discord.js';
-import { getRandomErrorMessage } from '@utils/commonUtils';
-import logger from '@utils/logger';
+import { muteUser } from '@command/common/mute';
 
-export const data = new SlashCommandBuilder()
-    .setName('mute')
-    .setDescription('Mutes a user')
-    .addUserOption(option => 
-        option.setName('target')
-            .setDescription('The user to mute')
-            .setRequired(true));
+const muteCommand: ICommand = {
+    name: 'mute',
+    description: 'Mutes a user via inline command.',
+    async execute(interaction: CommandInteraction) {
+        const target = interaction.options.getMember('target') as GuildMember;
+        if (target) {
+            await muteUser(interaction, target);
+        } else {
+            await interaction.reply('Could not find the specified user.');
+        }
+    },
+};
 
-export async function execute(interaction: CommandInteraction): Promise<void> {
-    const target = interaction.options.get('target');
-    if (!target) {
-        await interaction.reply({ content: getRandomErrorMessage(), ephemeral: true });
-        return;
-    }
-
-    try {
-        // Mute logic here
-        logger.info('User ' + target?.user?.tag + ' has been muted.');
-        await interaction.reply('User ' + target?.user?.tag + ' has been muted.');
-    } catch (error: any) {
-        logger.error('Error muting user: ' + error.message);
-        await interaction.reply({ content: getRandomErrorMessage(), ephemeral: true });
-    }
-}
+export default muteCommand;
