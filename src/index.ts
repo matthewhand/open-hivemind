@@ -2,7 +2,7 @@ import 'dotenv/config'; // Load environment variables from .env file into proces
 
 import logger from './utils/logger';
 import DiscordManager from './message/discord/DiscordManager'; // Updated import path for DiscordManager
-import { messageHandler } from './message/handlers/messageHandler';
+import { message => messageHandler(message as IMessage) } from './message/handlers/messageHandler';
 import { debugEnvVars } from './utils/environmentUtils';
 import configurationManager from './config/ConfigurationManager';
 import { startWebhookServer } from './webhook/webhookHandler';
@@ -25,8 +25,8 @@ async function initialize(): Promise<void> {
         }
 
         const discordManager = DiscordManager.getInstance();
-        console.log(`Type of messageHandler: ${typeof messageHandler}`); // Debug: Confirm type is 'function'
-        discordManager.setMessageHandler(messageHandler);
+        console.log(`Type of message => messageHandler(message as IMessage): ${typeof messageHandler}`); // Debug: Confirm type is 'function'
+        discordManager.setMessageHandler(message => messageHandler(message as IMessage));
 
         logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}. Starting webhook server...`);
         startWebhookServer(process.env.WEBHOOK_SERVER_PORT ? parseInt(process.env.WEBHOOK_SERVER_PORT) : 3000);
