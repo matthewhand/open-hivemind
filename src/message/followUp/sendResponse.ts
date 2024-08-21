@@ -1,6 +1,6 @@
 import DiscordManager from '@src/message/discord/DiscordManager';
 import logger from '@utils/logger';
-import constants from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
@@ -16,10 +16,13 @@ export async function sendResponse(messageContent: string | Buffer, channelId: s
             throw new Error('No channelId provided or channelId is not a valid string.');
         }
 
-        const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
+        const maxMessageLength = ConfigurationManager.get<number>('messagePlatform.discord.maxMessageLength');
+        const parts = splitMessageContent(messageContent, maxMessageLength);
+
+        const interPartDelay = ConfigurationManager.get<number>('messagePlatform.discord.interPartDelayMs');
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) {
-                await delay(constants.INTER_PART_DELAY);
+                await delay(interPartDelay);
             }
             logger.debug('[sendResponse] Sending part ' + (i + 1) + ' to channel ' + channelId + '. Part content: ' + parts[i]);
             await sendMessagePart(parts[i], channelId);
