@@ -1,5 +1,5 @@
 import logger from '@utils/logger';
-import constants from '../config/ConfigurationManager';
+import config from 'config';';
 
 export abstract class LLMInterface {
     constructor() {
