@@ -39,7 +39,7 @@ export class PerplexityCommand implements ICommand {
 
             logger.debug('PerplexityCommand: Sending request with messages: ' + JSON.stringify(messages));
             const perplexityResponse = await axios.post(
-                process.env.PERPLEXITY_URL,
+                process.env.PERPLEXITY_URL || '',
                 { model: process.env.PERPLEXITY_MODEL || 'mistral-7b-instruct', messages },
                 { headers: { 'Authorization': 'Bearer ' + process.env.PERPLEXITY_API_KEY } }
             );
