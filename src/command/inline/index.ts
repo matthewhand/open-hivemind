@@ -29,7 +29,7 @@ commandFiles.forEach(file => {
         return;
     }
 
-    if (commandInstance && commandInstance.name && commandInstance.execute) {
+    if (commandInstance && commandInstance.name commandInstance.name && commandInstance.executecommandInstance.name && commandInstance.execute commandInstance.execute()) {
         commands[commandInstance.name] = commandInstance;
         logger.info('Dynamically loaded command: ' + commandInstance.name);
     } else {

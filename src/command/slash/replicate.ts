@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { BaseCommand } from '../types/BaseCommand';
-import logger from '../../logging/logger';
+import logger from '@utils/logger';
 import { Message } from 'discord.js';
 import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
