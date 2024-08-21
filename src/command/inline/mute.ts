@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
             .setRequired(true));
 
 export async function execute(interaction: CommandInteraction): Promise<void> {
-    const target = interaction.options.getMentionable('target');
+    const target = interaction.options.getUser('target');
     if (!target) {
         await interaction.reply({ content: getRandomErrorMessage(), ephemeral: true });
         return;
