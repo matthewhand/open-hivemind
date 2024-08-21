@@ -1,5 +1,5 @@
 import { CommandInteraction } from 'discord.js';
-import { ICommand } from '@command/types/ICommand';
+import { ICommand } from '@command/types/Command';
 import { handleUserCommand } from '@command/common/user';
 
 const userCommand: ICommand = {

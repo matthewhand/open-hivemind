@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ICommand } from '@command/types/ICommand';
+import { ICommand } from '@command/types/Command';
 import logger from '@utils/logger';
 import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
