@@ -6,6 +6,10 @@ export const serverCommand = {
         .setName('server')
         .setDescription('Provides information about the server.'),
     async execute(interaction: CommandInteraction): Promise<void> {
-        await interaction.reply('This server is ' + interaction.guild.name + ' and has ' + interaction.guild.memberCount + ' members.');
+        if (interaction.guild) {
+            await interaction.reply('This server is ' + interaction.guild.name + ' and has ' + interaction.guild.memberCount + ' members.');
+        } else {
+            await interaction.reply('Unable to retrieve server information.');
+        }
     },
 };
