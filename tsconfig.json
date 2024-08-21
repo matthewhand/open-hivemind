@@ -9,9 +9,9 @@
     "rootDir": "./",                      // Root directory of your project
     "baseUrl": ".",                       // Base directory for resolving non-relative modules
     "paths": {
-      "@config/*": ["src/config/*"],
       "@command/*": ["src/command/*"],
       "@common/*": ["src/common/*"],
+      "@config/*": ["src/common/config/*"],
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
       "@utils/*": ["src/utils/*"],
