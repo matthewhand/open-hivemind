@@ -1,11 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
+import { handleUserCommand } from '@command/common/user';
 
-export const userCommand = {
-    data: new SlashCommandBuilder()
-        .setName('user')
-        .setDescription('Provides information about the user.'),
-    async execute(interaction: CommandInteraction): Promise<void> {
-        await interaction.reply('This command was run by ' + interaction.user.username + ', who joined on ' + ('joinedAt' in interaction.member interaction.memberinteraction.member ? (interaction.member as GuildMember).joinedAt : 'unknown') + '.');
-    },
-};
+export const data = new SlashCommandBuilder()
+    .setName('user')
+    .setDescription('Displays information about a user');
+
+export async function execute(interaction: CommandInteraction) {
+    await handleUserCommand(interaction);
+}
