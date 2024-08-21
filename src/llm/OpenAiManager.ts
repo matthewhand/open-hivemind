@@ -1,6 +1,6 @@
-import logger from './logger';
+import logger from '@utils/logger';
 import constants from '../config/ConfigurationManager';
-import LLMResponse from '../interfaces/LLMResponse';
+import LLMResponse from '@src/llm/LLMResponse';
 import { handleError } from '../utils/commonUtils';
 import { extractContent } from './openAiUtils';
 
