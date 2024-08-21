@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from '@utils/logger';;
 
 export function extractContent(choice: any): string {
     if (!choice || typeof choice !== 'object') {
