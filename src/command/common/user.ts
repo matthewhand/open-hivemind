@@ -1,18 +1,10 @@
-import { CommandInteraction, GuildMember } from 'discord.js';
-import { ICommand } from '@command/types/ICommand';
-import Logger from '@utils/logger';
+import { GuildMember } from 'discord.js';
 
-export async function handleUserCommand(interaction: CommandInteraction): Promise<void> {
-    const user = interaction.user;
-    const member = interaction.member as GuildMember;
+export async function handleUserCommand(interaction: any): Promise<string> {
+    const user = interaction.user.username;
+    const member = interaction.member as GuildMember | null;
 
-    const joinedDate = member.joinedAt ? member.joinedAt.toDateString() : 'unknown';
-    const message = `This command was run by ${user.username}, who joined on ${joinedDate}.`;
+    const joinDate = member ? member.joinedAt?.toDateString() || 'unknown' : 'unknown';
 
-    try {
-        await interaction.reply(message);
-    } catch (error) {
-        Logger.error('Failed to send user command reply: ', error);
-        throw new Error('Failed to send reply for user command.');
-    }
+    return 'This command was run by ' + user + ', who joined on ' + joinDate + '.';
 }
