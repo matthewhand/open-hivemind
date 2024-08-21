@@ -1,43 +1,30 @@
-import 'dotenv/config'; // Load environment variables from .env file into process.env
+import DiscordManager from '@src/discord/DiscordManager';
+import ConfigurationManager from '@common/ConfigurationManager';
+import Logger from '@utils/logger';
 
-import logger from './utils/logger';
-import DiscordManager from './message/discord/DiscordManager'; // Updated import path for DiscordManager
-import { message => messageHandler(message as IMessage) } from './message/handlers/messageHandler';
-import { debugEnvVars } from './utils/environmentUtils';
-import configurationManager from './config/ConfigurationManager';
-import { startWebhookServer } from './webhook/webhookHandler';
+import { messageHandler } from '@message/handlers/messageHandler';
 
-/**
- * Logs environment variables for debugging purposes, ensuring sensitive information is not exposed.
- */
-debugEnvVars();
-
-/**
- * Initializes the Discord bot and related services.
- */
-async function initialize(): Promise<void> {
-    logger.info('Initialization started.');
+async function main() {
     try {
-        const CLIENT_ID: string | undefined = configurationManager.getConfig('CLIENT_ID') || process.env.CLIENT_ID;
+        // Initialize DiscordManager
+        const discordManager = new DiscordManager();
         
-        if (!CLIENT_ID) {
-            throw new Error('CLIENT_ID is not defined. Please check your configuration.');
-        }
-
-        const discordManager = DiscordManager.getInstance();
-        console.log(`Type of message => messageHandler(message as IMessage): ${typeof messageHandler}`); // Debug: Confirm type is 'function'
-        discordManager.setMessageHandler(message => messageHandler(message as IMessage));
-
-        logger.info(`Bot initialization completed with CLIENT_ID: ${CLIENT_ID}. Starting webhook server...`);
-        startWebhookServer(process.env.WEBHOOK_SERVER_PORT ? parseInt(process.env.WEBHOOK_SERVER_PORT) : 3000);
-
-    } catch (error: any) {
-        logger.error(`Error during initialization: ${(error as Error).message}`);
-        process.exit(1); // Exit the process with a status code of 1 (indicates failure)
+        // Set up the message handler
+        discordManager.setMessageHandler(messageHandler);
+        
+        // Retrieve the client ID from the configuration manager
+        const clientId = ConfigurationManager.getConfig<string>('discord.clientId');
+        
+        // Start the Discord manager with the client ID
+        await discordManager.start(clientId);
+    } catch (error) {
+        // Log the error if the Discord manager fails to start
+        Logger.error('Failed to start Discord manager:', error);
+        
+        // Exit the process with an error code
+        process.exit(1);
     }
 }
 
-initialize().catch(error => {
-    logger.error(`Unhandled error during initialization: ${(error as Error).message}`, { stack: (error as Error).stack });
-    process.exit(1); // Ensure the process exits with a failure status code on unhandled errors
-});
+// Call the main function to start the application
+main();
