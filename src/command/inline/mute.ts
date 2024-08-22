@@ -1,4 +1,4 @@
-import { ICommand } from '@src/types/Command';
+import { ICommand } from '@command/types/Command';
 import { CommandInteraction } from 'discord.js';
 import { muteUser } from '@src/command/common/mute';
 import logger from '@src/utils/logger';
