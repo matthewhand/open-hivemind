@@ -2,7 +2,7 @@ import { Message, TextChannel, MessageCollector } from 'discord.js';
 import { BaseCommand } from '../types/BaseCommand';
 import logger from '@src/utils/logger';
 
-export class ReportCommand extends BaseCommand {
+export class ReportCommand extends InlineCommand {
     constructor() {
         super('report', 'User reports about issues or rule violations. Usage: !report [text]');
     }

@@ -1,4 +1,4 @@
-export interface ICommand {
+export default interface ICommand {
     name: string;
     description: string;
     allowedRoles?: string[];

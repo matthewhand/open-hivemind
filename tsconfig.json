@@ -16,6 +16,7 @@
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
       "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"],
       "@src/*": ["src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"], // Custom type definitions
