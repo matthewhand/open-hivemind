@@ -2,7 +2,7 @@ import { makeOpenAiRequest } from './openAiManagerUtils';
 import OpenAiManager from '../managers/OpenAiManager';
 import DiscordManager from '../managers/DiscordManager';
 import logger from '@src/utils/logger';
-import constants from '../config/configurationManager';
+import constants from '@config/configurationManager';
 import commands from '../commands/inline';
 
 export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {

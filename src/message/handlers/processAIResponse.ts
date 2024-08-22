@@ -2,7 +2,7 @@ import { IMessage } from "@message/types/IMessage";
 import MessageResponseManager from "@message/responseHandling/MessageResponseManager";
 import { LLMInterface } from "@llm/LLMInterface";
 import logger from "@utils/logger";
-import constants from "@common/config/ConfigurationManager";
+import constants from "@comm@config/ConfigurationManager";
 import { prepareMessageBody } from "@message/helpers/messageProcessing/prepareMessageBody";
 import { summarizeMessage } from "@message/helpers/messageProcessing/summarizeMessage";
 import { sendResponse } from "@message/followUp/sendResponse";

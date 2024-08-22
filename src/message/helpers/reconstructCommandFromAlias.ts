@@ -1,4 +1,4 @@
-import { aliases } from '../config/aliases';
+import { Alias } from "@types/aliases";
 
 /**
  * Reconstructs a full command string from an alias and additional arguments.

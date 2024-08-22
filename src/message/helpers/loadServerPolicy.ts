@@ -9,7 +9,7 @@ import logger from '@src/utils/logger';
  */
 export default function loadServerPolicy(): string {
     try {
-        const policyPath = path.resolve(__dirname, '../../config/serverPolicy.json');
+        const policyPath = path.resolve(__dirname, '../@config/serverPolicy.json');
         const policyData = fs.readFileSync(policyPath, 'utf-8');
         logger.debug('[loadServerPolicy] Server policy loaded successfully.');
         return policyData;

@@ -1,4 +1,4 @@
-import { aliases } from '../config/aliases';
+import { aliases } from '@config/aliases';
 import logger from '@src/utils/logger';
 
 /**

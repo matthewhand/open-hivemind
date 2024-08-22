@@ -1,8 +1,8 @@
 import axios from 'axios';
-import configurationManager from '../config/ConfigurationManager';
+import configurationManager from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 import { getRandomDelay } from './common';
-import { aliases } from '../config/aliases';
+import { aliases } from '@config/aliases';
 
 /**
  * Sends a follow-up request to the LLM endpoint with a reflective prompt.

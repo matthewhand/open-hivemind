@@ -1,32 +1,21 @@
 import config from 'config';
 import logger from '../../utils/logger';
 
-class ConfigurationManager {
-    /**
-     * Retrieves the configuration value for the specified key.
-     * @param key - The key of the configuration value.
-     * @param defaultValue - The default value if the key is not found.
-     * @returns The configuration value.
-     */
-    getConfig<T>(key: string, defaultValue?: T): T {
-        try {
-            const value = config.get<T>(key);
-            return value;
-        } catch (error) {
-            logger.warn();
-            return defaultValue as T;
-        }
+function getConfigOrWarn<T>(configKey: string, defaultValue: T): T {
+    if (!config.has(configKey)) {
+        logger.warn('Missing mandatory configuration key: ' + configKey);
+        return defaultValue;
     }
+    return config.get<T>(configKey);
+}
 
-    /**
-     * Example configuration values that can be fetched dynamically.
-     */
-    public readonly BOT_TYPING_DELAY_MAX_MS: number = this.getConfig<number>('BOT_TYPING_DELAY_MAX_MS', 3000);
-    public readonly INTER_PART_DELAY: number = this.getConfig<number>('INTER_PART_DELAY', 500);
-    public readonly BOT_USER_ID: string = this.getConfig<string>('BOT_USER_ID', 'default_bot_id');
-    public readonly MIN_MESSAGE_INTERVAL_MS: number = this.getConfig<number>('MIN_MESSAGE_INTERVAL_MS', 1000);
-    public readonly LLM_MESSAGE_LIMIT_PER_HOUR: number = this.getConfig<number>('LLM_MESSAGE_LIMIT_PER_HOUR', 100);
-    public readonly LLM_MESSAGE_LIMIT_PER_DAY: number = this.getConfig<number>('LLM_MESSAGE_LIMIT_PER_DAY', 1000);
+class ConfigurationManager {
+    public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';
+    public readonly LLM_ENDPOINT_URL: string = process.env.LLM_ENDPOINT_URL || 'default_endpoint_url';
+    public readonly LLM_SYSTEM_PROMPT: string = getConfigOrWarn<string>('llm.systemPrompt', 'default_system_prompt');
+    public readonly LLM_RESPONSE_MAX_TOKENS: number = getConfigOrWarn<number>('llm.responseMaxTokens', 100);
+    public readonly LLM_TEMPERATURE: number = getConfigOrWarn<number>('llm.temperature', 0.7);
+    public readonly LLM_MODEL: string = getConfigOrWarn<string>('llm.model', 'default_model');
 }
 
 export default new ConfigurationManager();

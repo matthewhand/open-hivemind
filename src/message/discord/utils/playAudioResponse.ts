@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
 import logger from '@src/utils/logger';
-import constants from '../../config/configurationManager';
+import constants from '../@config/configurationManager';
 
 /**
  * Plays the audio response back in the voice channel.

@@ -16,7 +16,7 @@ export class CommandManager {
 
     constructor() {
         this.commands = this.loadCommands(path.join(__dirname, '../command/inline'));
-        this.aliases = require('../config/aliases');
+        this.aliases = require('@config/aliases');
         logger.debug('CommandManager initialized with commands and aliases.');
     }
 
