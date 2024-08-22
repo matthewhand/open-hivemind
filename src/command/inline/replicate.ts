@@ -6,18 +6,36 @@ export class ReplicateCommand implements ICommand {
     name = 'replicate';
     description = 'Analyze an image using the Replicate API';
 
-    async execute(interaction: any): Promise<void> {
+    async execute(interaction: any): Promise<{ success: boolean; message: string; error?: string }> {
         const imageUrl = interaction.options.getString('image', true);
         const prompt = interaction.options.getString('prompt', true);
 
         await interaction.deferReply();
 
-        const result = await analyzeImage(imageUrl, prompt);
+        try {
+            const result = await analyzeImage(imageUrl, prompt);
 
-        if (result.success) {
-            await interaction.editReply({ content: result.message, components: [{ type: 1, components: [{ type: 2, style: 5, label: 'View Prediction', url: result.url }] }] });
-        } else {
-            await interaction.editReply(`Failed to analyze image: ${result.message}`);
+            if (result.success) {
+                await interaction.editReply({
+                    content: result.message,
+                    components: [{ 
+                        type: 1, 
+                        components: [{ 
+                            type: 2, 
+                            style: 5, 
+                            label: 'View Prediction', 
+                            url: result.url 
+                        }] 
+                    }]
+                });
+                return { success: true, message: 'Image analyzed successfully.' };
+            } else {
+                await interaction.editReply(`Failed to analyze image: ${result.message}`);
+                return { success: false, message: `Failed to analyze image: ${result.message}` };
+            }
+        } catch (error) {
+            logger.error('Error analyzing image:', error);
+            return { success: false, message: 'Error analyzing image.', error: error.message };
         }
     }
 }
