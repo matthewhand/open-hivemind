@@ -46,7 +46,7 @@ export class CommandManager {
                     }
                     if (commandInstance && typeof commandInstance.execute === 'function') {
                         commands[commandName] = commandInstance;
-                        logger.debug('Command loaded: ' + commandName);
+                        logger.debug('CommandHandler loaded: ' + commandName);
                     } else {
                         logger.error('The command module ' + file + ' does not export a valid command instance. Export type: ' + typeof CommandModule);
                     }
@@ -84,9 +84,9 @@ export class CommandManager {
         // Execute the parsed command
         const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
-            logger.error('Command execution failed: ' + executionResult.error);
+            logger.error('CommandHandler execution failed: ' + executionResult.error);
         } else {
-            logger.debug('Command executed successfully: ' + executionResult.result);
+            logger.debug('CommandHandler executed successfully: ' + executionResult.result);
         }
 
         // Ensure `message` is always a string

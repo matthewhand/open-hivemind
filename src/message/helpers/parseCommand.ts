@@ -29,6 +29,6 @@ export function parseCommand(commandContent: string): { commandName: string, act
         };
     }
 
-    logger.debug('[parseCommand] Command content did not match expected pattern.');
+    logger.debug('[parseCommand] CommandHandler content did not match expected pattern.');
     return null;
 }

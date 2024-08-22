@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { ICommand } from '@src/command/types/Command';
+import { ICommand } from '@src/comma@command/types/CommandHandler';
 import logger from '@src/utils/logger';
 import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
 /**
- * Command to interact with the OpenAI API for generating text responses.
+ * CommandHandler to interact with the OpenAI API for generating text responses.
  * Usage: !oai <prompt>
  */
 export class OAICommand implements ICommand {

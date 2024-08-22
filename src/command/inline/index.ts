@@ -25,7 +25,7 @@ commandFiles.forEach(file => {
     } else if (typeof commandModule === 'object' && commandModule !== null && commandModule.execute) {
         commandInstance = commandModule;
     } else {
-        logger.warn('File ' + file + ' does not export a valid Command instance or class.');
+        logger.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
         return;
     }
 
@@ -33,7 +33,7 @@ commandFiles.forEach(file => {
         commands[commandInstance.name] = commandInstance;
         logger.info('Dynamically loaded command: ' + commandInstance.name);
     } else {
-        logger.warn('File ' + file + ' does not export a valid Command instance or class.');
+        logger.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
     }
 });
 

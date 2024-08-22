@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from '@src/utils/logger';
 
-interface Command {
+interface CommandHandler {
     data: {
         toJSON: () => any;
     };
@@ -21,7 +21,7 @@ export function collectSlashCommands(commandsPath: string): object[] {
         }
 
         for (const file of commandFiles) {
-            const command: Command = require(path.join(commandsPath, file));
+            const command: CommandHandler = require(path.join(commandsPath, file));
             if (command.data) {
                 logger.debug('Adding command: ' + JSON.stringify(command.data.toJSON()));
                 commands.push(command.data.toJSON());

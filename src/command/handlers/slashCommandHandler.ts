@@ -5,7 +5,7 @@ import path from 'path';
 import logger from '@src/utils/logger';
 import { Client, CommandInteraction } from 'discord.js';
 
-interface Command {
+interface CommandHandler {
     data: {
         toJSON: () => object;
         name: string;
@@ -22,7 +22,7 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     if (file.endsWith('.ts') && require.extensions['.ts']) {
-        const command: Command = require(filePath).default;  // Adjust to use .default if needed for ts imports
+        const command: CommandHandler = require(filePath).default;  // Adjust to use .default if needed for ts imports
         if (command.data && command.execute) {
             commands.push(command.data.toJSON());
             commandExecutors[command.data.name] = command.execute;
@@ -30,7 +30,7 @@ for (const file of commandFiles) {
             logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
     } else if (file.endsWith('.js')) {
-        const command: Command = require(filePath);
+        const command: CommandHandler = require(filePath);
         if (command.data && command.execute) {
             commands.push(command.data.toJSON());
             commandExecutors[command.data.name] = command.execute;

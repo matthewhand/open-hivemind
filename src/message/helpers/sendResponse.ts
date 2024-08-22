@@ -25,7 +25,7 @@ export async function sendResponse(messageContent: string, channelId: string, st
     let parts = [messageContent];
 
     // Decide whether to split the message
-    if (messageContent length > maxPartLength || randomSplit) {
+    if (messageContent.length > maxPartLength || randomSplit) {
         parts = splitMessageContent(messageContent, maxPartLength);
         logger.debug(`[sendResponse] Message split into ${parts.length} parts due to length exceeding ${maxPartLength} characters or random split condition.`);
     }
@@ -53,4 +53,3 @@ async function sendMessagePart(part: string, channelId: string): Promise<void> {
     await DiscordManager.getInstance().sendMessage(channelId, part);
     logger.debug(`[sendMessagePart] Message part sent to channel ${channelId}.`);
 }
-

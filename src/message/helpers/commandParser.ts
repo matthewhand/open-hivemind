@@ -41,6 +41,6 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
         }
     }
 
-    logger.debug('Command content did not match expected pattern and no default command could be applied.');
+    logger.debug('CommandHandler content did not match expected pattern and no default command could be applied.');
     return null;
 }

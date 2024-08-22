@@ -26,10 +26,10 @@ export async function processCommand(message: IMessage): Promise<boolean> {
     try {
         const commandResult = await commandManager.executeCommand(message);
         if (commandResult.success) {
-            logger.info('[processCommand] Command "' + commandResult.command + '" executed successfully.', { commandResult });
+            logger.info('[processCommand] CommandHandler "' + commandResult.command + '" executed successfully.', { commandResult });
             return true;
         } else {
-            logger.error('[processCommand] Command "' + commandResult.command + '" failed with error: ' + commandResult.error, { commandResult });
+            logger.error('[processCommand] CommandHandler "' + commandResult.command + '" failed with error: ' + commandResult.error, { commandResult });
             return false;
         }
     } catch (error: any) {

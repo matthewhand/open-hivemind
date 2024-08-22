@@ -39,8 +39,8 @@ export async function executeParsedCommand(
     const commandInstance = commands[commandName];
 
     if (!commandInstance) {
-        logger.error(`executeParsedCommand: Command not found - ${commandName}`);
-        return { success: false, message: 'Command not available.', error: 'Command implementation missing.' };
+        logger.error(`executeParsedCommand: CommandHandler not found - ${commandName}`);
+        return { success: false, message: 'CommandHandler not available.', error: 'CommandHandler implementation missing.' };
     }
 
     try {

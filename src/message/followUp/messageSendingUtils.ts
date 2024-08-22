@@ -90,7 +90,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
         try {
             logger.debug('Commands loaded for follow-up.');
             const commandDescriptions = Object.values(commands).map(cmd => cmd.name + ': ' + cmd.description).join('; ');
-            logger.debug('Command descriptions compiled: ' + commandDescriptions);
+            logger.debug('CommandHandler descriptions compiled: ' + commandDescriptions);
 
             const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built in commands: ' + commandDescriptions + '. Suggest one command to user.';
 

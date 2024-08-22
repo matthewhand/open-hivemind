@@ -1,4 +1,4 @@
-import { ICommand } from '@src/command/types/Command';
+import { ICommand } from '@src/comma@command/types/CommandHandler';
 import { analyzeImage } from '@src/command/common/replicate';
 import logger from '@src/utils/logger';
 

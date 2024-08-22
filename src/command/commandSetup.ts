@@ -28,7 +28,7 @@ commandFiles.forEach(file => {
         commandDataArray.push(commandModule.data);
         logger.debug('Dynamically loaded command: ' + commandModule.data.name + ' with data:', commandModule.data);
     } else {
-        logger.warn('[WARNING] Command module ' + file + ' is missing required properties.');
+        logger.warn('[WARNING] CommandHandler module ' + file + ' is missing required properties.');
     }
 });
 

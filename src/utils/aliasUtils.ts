@@ -75,7 +75,7 @@ export function getDetailedAliasInfo(commandName: string): string {
         return message;
     }
     const { handler, description } = alias;
-    const detailedInfo = 'Command: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
+    const detailedInfo = 'CommandHandler: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
     logger.debug('Fetched detailed info for command: ' + commandName + ', info: ' + detailedInfo);
     return detailedInfo;
 }

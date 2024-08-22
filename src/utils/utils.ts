@@ -15,7 +15,7 @@ export async function executeCommand(command: string): Promise<string> {
     if (stderr) {
         logger.error('Error executing command: ' + stderr);
     }
-    logger.debug('Command output: ' + stdout);
+    logger.debug('CommandHandler output: ' + stdout);
     return stdout;
 }
 
