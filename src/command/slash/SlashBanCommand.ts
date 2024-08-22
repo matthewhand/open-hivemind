@@ -1,4 +1,4 @@
-import { SlashCommand } from '@command/types/SlashCommand';
+import { SlashCommand } from '../types/SlashCommand';
 import { CommandInteraction } from 'discord.js';
 import logger from '@utils/logger';
 import { BanCommand } from '@command/common/ban';
