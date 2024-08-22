@@ -1,7 +1,7 @@
 import OpenAiManager from '@src/llm/OpenAiManager';
 import logger from '@utils/logger';
 import { sendResponse } from '@src/message/followUp/sendResponse';
-import constants from '@src/config/ConfigurationManager';
+import constants from '@common/config/ConfigurationManager';
 
 export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
     try {

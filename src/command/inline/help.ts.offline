@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import { COMMAND_PREFIX } from '@config/environment';
-import logger from '@utils/logger';
+import { logger } from '@utils/logger';
 import { getAvailableCommands } from '../utils/commandUtils';
 
 /**

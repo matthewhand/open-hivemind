@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import axios from 'axios';
-import logger from '@utils/logger';
+import { logger } from '@utils/logger';
 
 export const quivrCommand = {
     data: new SlashCommandBuilder()

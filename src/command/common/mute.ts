@@ -1,5 +1,5 @@
 import { CommandInteraction, GuildMember } from 'discord.js';
-import { logger } from '@utils/logger';
+import logger from '@utils/logger';
 
 /**
  * Mute a user in the guild.

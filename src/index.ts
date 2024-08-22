@@ -1,6 +1,6 @@
-import DiscordManager from '../../src/discord/DiscordManager';
+import DiscordManager from '@message/discord/DiscordManager';
 import ConfigurationManager from '@common/ConfigurationManager';
-import Logger from '@utils/logger';
+import logger from '@utils/logger';
 
 import { messageHandler } from '@message/handlers/messageHandler';
 

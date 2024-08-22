@@ -1,7 +1,7 @@
 import { ICommand } from '@src/types/Command';
 import { CommandInteraction } from 'discord.js';
 import { muteUser } from '@command/common/mute';
-import Logger from '@utils/logger';
+import logger from '@utils/logger';
 
 const muteCommand: ICommand = {
     name: 'mute',

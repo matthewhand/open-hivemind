@@ -1,6 +1,6 @@
 import axios from 'axios';
-import ConfigurationManager from '@config/ConfigurationManager';
-import Logger from '@utils/logger';
+import ConfigurationManager from '@common/config/ConfigurationManager';
+import logger from '@utils/logger';
 
 const perplexityApiUrl = ConfigurationManager.getConfig<string>('perplexity.apiUrl');
 

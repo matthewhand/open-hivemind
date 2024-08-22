@@ -1,5 +1,5 @@
 import { CommandInteraction } from 'discord.js';
-import Logger from '@utils/logger';
+import logger from '@utils/logger';
 
 /**
  * Handles the server command, which provides information about the current server.

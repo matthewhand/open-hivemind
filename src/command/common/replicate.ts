@@ -1,6 +1,6 @@
 import axios from 'axios';
-import ConfigurationManager from '@common/configurationManager';
-import Logger from '@utils/logger';
+import ConfigurationManager from '@common/config/ConfigurationManager';
+import logger from '@utils/logger';
 import { getRandomErrorMessage } from '@common/errors/errorMessages';
 
 export async function analyzeImage(imageUrl: string, prompt: string): Promise<{ success: boolean, message: string, url?: string, error?: string }> {
