@@ -1,7 +1,7 @@
 import logger from '@src/utils/logger';
 import { splitMessageContent } from '../helpers/splitMessage';
 import DiscordManager from '../managers/DiscordManager';
-import constants from '../@config/ConfigurationManager';
+import constants from '@config/ConfigurationManager';
 
 /**
  * Sends a response message to a specified channel with artificial delays to simulate human-like interaction.
@@ -25,7 +25,7 @@ export async function sendResponse(messageContent: string, channelId: string, st
     let parts = [messageContent];
 
     // Decide whether to split the message
-    if (messageContent.length > maxPartLength || randomSplit) {
+    if (messageContent length > maxPartLength || randomSplit) {
         parts = splitMessageContent(messageContent, maxPartLength);
         logger.debug(`[sendResponse] Message split into ${parts.length} parts due to length exceeding ${maxPartLength} characters or random split condition.`);
     }

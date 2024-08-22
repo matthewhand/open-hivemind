@@ -1,6 +1,6 @@
 import axios from 'axios';
 import logger from '@src/utils/logger';
-import constants from '../@config/configurationManager';
+import constants from '@config/ConfigurationManager';
 
 /**
  * Generates a response using the LLM API.

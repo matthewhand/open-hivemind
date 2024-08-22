@@ -1,5 +1,5 @@
 import axios from 'axios';
-import ConfigurationManager from '@src/comm@config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 import { getRandomErrorMessage } from '@src/common/errors/errorMessages';
 

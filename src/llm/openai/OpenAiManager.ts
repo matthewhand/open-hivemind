@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import logger from '@src/utils/logger';;
-import constants from '@comm@config/ConfigurationManager';
+import constants from '@config/ConfigurationManager';
 import { IMessage } from '../../message/types/IMessage';
 import { LLMResponse } from '../../llm/LLMResponse';
 import { extractContent } from './utils/extractContent';

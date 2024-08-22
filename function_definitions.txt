@@ -1,83 +1,626 @@
 src/common/config/environment.ts:export const COMMAND_PREFIX = '!';
-src/common/config/aliases.ts:export const aliases: Record<string, Alias> = {
+src/common/config/rateLimiter.ts:class RateLimiter {
+src/common/config/rateLimiter.ts:        const now = new Date();
+src/common/config/rateLimiter.ts:        const oneHourAgo = new Date(now.getTime() - 3600000);
+src/common/config/rateLimiter.ts:        const oneDayAgo = new Date(now.getTime() - 86400000);
+src/common/config/rateLimiter.ts:        const canSend = this.messagesLastHour.length < LLM_MESSAGE_LIMIT_PER_HOUR && this.messagesLastDay.length < LLM_MESSAGE_LIMIT_PER_DAY;
+src/common/config/rateLimiter.ts:const rateLimiter = new RateLimiter();
+src/common/config/ConfigurationManager.ts:class ConfigurationManager {
+src/common/errors/errorMessages.ts:const errorMessages: string[] = [
 src/common/errors/errorMessages.ts:export function getRandomErrorMessage(): string {
+src/common/errors/errorMessages.ts:    const randomIndex = Math.floor(Math.random() * errorMessages.length);
 src/common/errors/handleError.ts:export function handleError(error: Error): void {
 src/environment/constants.ts:export const constants = {
+src/command/common/mute.ts:export async function muteUser(interaction: CommandInteraction, target: GuildMember): Promise<void> {
+src/command/common/perplexity.ts:const perplexityApiUrl = ConfigurationManager.getConfig<string>('perplexity.apiUrl');
+src/command/common/perplexity.ts:export async function searchPerplexity(query: string): Promise<string> {
+src/command/common/perplexity.ts:        const response = await axios.post(perplexityApiUrl, { query });
+src/command/common/user.ts:export async function handleUserCommand(interaction: any): Promise<string> {
+src/command/common/user.ts:    const user = interaction.user.username;
+src/command/common/user.ts:    const member = interaction.member as GuildMember | null;
+src/command/common/user.ts:    const joinDate = member ? member.joinedAt?.toDateString() || 'unknown' : 'unknown';
+src/command/common/replicate.ts:export async function analyzeImage(imageUrl: string, prompt: string): Promise<{ success: boolean, message: string, url?: string, error?: string }> {
+src/command/common/replicate.ts:        const response = await axios.post(
+src/command/common/server.ts:export async function handleServerCommand(interaction: CommandInteraction): Promise<void> {
+src/command/common/server.ts:        const guild = interaction.guild;
 src/command/isCommand.ts:export function isCommand(text: string): boolean {
+src/command/isCommand.ts:    const commandPattern = /^!(\w+)/;
+src/command/isCommand.ts:    const isCmd = commandPattern.test(text);
+src/command/inline/mute.ts:const muteCommand: ICommand = {
+src/command/inline/mute.ts:        const target = interaction.options.getMember('target') as GuildMember;
+src/command/inline/http.ts: * HTTPCommand class to handle HTTP requests.
 src/command/inline/http.ts:export class HTTPCommand implements ICommand {
+src/command/inline/http.ts:        const url = args[0];
+src/command/inline/http.ts:            const response = await fetch(url);
+src/command/inline/http.ts:            const data = await response.json();
 src/command/inline/memgpt.ts:export class MemGPTCommand implements ICommand {
+src/command/inline/memgpt.ts:        const action = args[0]; // Assuming 'action' is the first argument
+src/command/inline/memgpt.ts:        const messageContent = args.slice(1).join(' '); // Joining the remaining arguments
+src/command/inline/memgpt.ts:            const requestUrl = process.env.MEMGPT_ENDPOINT_URL + '/api/agents/message';
+src/command/inline/memgpt.ts:            const userId = process.env.MEMGPT_USER_ID;
+src/command/inline/memgpt.ts:            const memGptApiKey = process.env.MEMGPT_API_KEY;
+src/command/inline/memgpt.ts:            const headers = memGptApiKey ? { 'Authorization': 'Bearer ' + memGptApiKey } : {};
+src/command/inline/memgpt.ts:            const response = await axios.post(requestUrl, {
 src/command/inline/perplexity.ts:export const PerplexityCommand = {
+src/command/inline/perplexity.ts:        const query = args.join(' ');
+src/command/inline/perplexity.ts:        const result = await performPerplexitySearch(query);
 src/command/inline/oai.ts:export class OAICommand implements ICommand {
+src/command/inline/oai.ts:        const prompt = args.join(' ');  // Combining all arguments to form the prompt
+src/command/inline/oai.ts:            const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
+src/command/inline/oai.ts:                const generatedText = response.data.choices[0].text.trim();
 src/command/inline/help.ts.offline:export function executeHelpCommand(message: Message, args: string[]): void {
+src/command/inline/help.ts.offline:    const prefix = process.env.COMMAND_PREFIX || COMMAND_PREFIX || '!';
+src/command/inline/help.ts.offline:    const availableCommands = getAvailableCommands();
+src/command/inline/help.ts.offline:    const commandList = availableCommands.map(cmd => `${prefix}${cmd.name} - ${cmd.description}`).join('\n');
 src/command/inline/ban.ts:export class BanCommand implements ICommand {
+src/command/inline/ban.ts:        const { message, args: commandArgs } = args;
+src/command/inline/ban.ts:            const errorMessage = 'You need to mention a user to ban.';
+src/command/inline/ban.ts:        const targetUser = message.mentions.users.first();
+src/command/inline/ban.ts:        const reason = commandArgs.slice(1).join(' ') || 'No reason provided';
+src/command/inline/ban.ts:            const errorMessage = 'Mentioned user was not found.';
+src/command/inline/ban.ts:            const member = await message.guild?.members.fetch(targetUser.id);
+src/command/inline/ban.ts:                const errorMessage = 'Member not found in this server.';
+src/command/inline/ban.ts:            const successMessage = `User ${targetUser.tag} has been banned. Reason: ${reason}`;
+src/command/inline/user.ts:const userCommand: ICommand = {
 src/command/inline/report.ts:export class ReportCommand extends BaseCommand {
+src/command/inline/report.ts:        const { message } = args;
+src/command/inline/report.ts:        const filter = (m: Message) => m.author.id === message.author.id;
+src/command/inline/report.ts:            const collected = await message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+src/command/inline/report.ts:            const reportDescription = collected.first()?.content.toLowerCase();
+src/command/inline/report.ts:        const moderationTeamRole = message.guild?.roles?.cache.find(role => role.name === 'Moderation Team');
+src/command/inline/report.ts:        const onlineModerators = moderationTeamRole.members.filter(member => member.presence?.status === 'online');
+src/command/inline/report.ts:        const embed = {
+src/command/inline/report.ts:        const moderatorChannel = message.guild?.channels?.cache.find(
+src/command/inline/report.ts:        const voteCollector = new MessageCollector(moderatorChannel, { time: 60000 });
 src/command/inline/replicate.ts:export class ReplicateCommand implements ICommand {
+src/command/inline/replicate.ts:        const imageUrl = interaction.options.getString('image', true);
+src/command/inline/replicate.ts:        const prompt = interaction.options.getString('prompt', true);
+src/command/inline/replicate.ts:        const result = await analyzeImage(imageUrl, prompt);
+src/command/inline/index.ts: * Each command module must export an instance of a class implementing the ICommand interface.
+src/command/inline/index.ts:const commandsDirectory = __dirname;
+src/command/inline/index.ts:const commandFiles = fs.readdirSync(commandsDirectory).filter(file => file.endsWith('.ts') && file !== 'index.ts');
+src/command/inline/index.ts:const commands: Record<string, ICommand> = {};
+src/command/inline/index.ts:    const filePath = path.join(commandsDirectory, file);
+src/command/inline/index.ts:    const commandModule = require(filePath);
 src/command/inline/server.ts:export const command: ICommand = {
 src/command/inline/flowise.ts:export class FlowiseCommand {
+src/command/inline/flowise.ts:        const { endpointId } = args;
+src/command/inline/flowise.ts:        const apiUrl = process.env.FLOWISE_API_BASE_URL;
+src/command/inline/flowise.ts:            const errorMessage = 'Flowise API base URL is not defined in the environment variables.';
+src/command/inline/flowise.ts:            const errorMessage = 'Endpoint ID is required but was not provided.';
+src/command/inline/flowise.ts:        const url = apiUrl + endpointId;
+src/command/inline/flowise.ts:            const response = await axios.get(url);
 src/command/types/CommandResponse.ts:export class CommandResponse {
-src/command/types/Command.ts:export class Command {
+src/command/types/BaseCommand.ts:export abstract class BaseCommand implements ICommand {
 src/command/parseCommandDetails.ts:export function parseCommandDetails(text: string): CommandDetails | null {
+src/command/parseCommandDetails.ts:    const match = text.match(/^!(\w+)\s*(.*)/);
+src/command/parseCommandDetails.ts:    const command = match[1].toLowerCase();
+src/command/parseCommandDetails.ts:    const args = match[2] ? match[2].split(/\s+/) : [];
+src/command/handlers/slashCommandHandler.ts:const commands: object[] = [];
+src/command/handlers/slashCommandHandler.ts:const commandExecutors: Record<string, (interaction: CommandInteraction) => Promise<void>> = {};
+src/command/handlers/slashCommandHandler.ts:const commandsPath = path.join(__dirname, '..', 'commands', 'slash');
+src/command/handlers/slashCommandHandler.ts:const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
+src/command/handlers/slashCommandHandler.ts:for (const file of commandFiles) {
+src/command/handlers/slashCommandHandler.ts:    const filePath = path.join(commandsPath, file);
+src/command/handlers/slashCommandHandler.ts:        const command: Command = require(filePath).default;  // Adjust to use .default if needed for ts imports
+src/command/handlers/slashCommandHandler.ts:        const command: Command = require(filePath);
 src/command/handlers/slashCommandHandler.ts:export const registerCommands = async (clientId: string, token: string, guildId: string): Promise<void> => {
+src/command/handlers/slashCommandHandler.ts:    const rest = new REST({ version: '9' }).setToken(token);
+src/command/handlers/slashCommandHandler.ts:        const data = await rest.put(
 src/command/handlers/slashCommandHandler.ts:export const handleCommands = (client: Client): void => {
+src/command/handlers/slashCommandHandler.ts:        const commandExecutor = commandExecutors[interaction.commandName];
 src/command/slash/mute.ts:export const data = new SlashCommandBuilder()
+src/command/slash/mute.ts:export async function execute(interaction: CommandInteraction) {
+src/command/slash/mute.ts:    const target = interaction.options.getMember('target') as GuildMember;
 src/command/slash/quivr.ts.offline:export const quivrCommand = {
+src/command/slash/quivr.ts.offline:        const quivrChatId = interaction.options.getString('chatid');
+src/command/slash/quivr.ts.offline:        const quivrBrainId = interaction.options.getString('brainid');
+src/command/slash/quivr.ts.offline:        const quivrBaseUrl = process.env.QUIVR_BASE_URL;
+src/command/slash/quivr.ts.offline:            const quivrUrl = `${quivrBaseUrl}/${quivrChatId}/question?brain_id=${quivrBrainId}`;
+src/command/slash/quivr.ts.offline:            const response = await axios.post(quivrUrl, {});
 src/command/slash/perplexity.ts:export const data = new SlashCommandBuilder()
+src/command/slash/perplexity.ts:export async function execute(interaction: CommandInteraction) {
+src/command/slash/perplexity.ts:    const query = interaction.options.getString('query', true);
+src/command/slash/perplexity.ts:        const result = await searchPerplexity(query);
 src/command/slash/user.ts:export const data = new SlashCommandBuilder()
+src/command/slash/user.ts:export async function execute(interaction: any): Promise<void> {
+src/command/slash/user.ts:    const response = await handleUserCommand(interaction);
+src/command/slash/config.ts.offline:const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];
+src/command/slash/config.ts.offline:const allowedRoles = process.env.BOT_ALLOWED_ROLES ? process.env.BOT_ALLOWED_ROLES.split(',') : [];
+src/command/slash/config.ts.offline:const nonOverridableEnvVars = new Set(['CLIENT_ID', 'DISCORD_TOKEN', 'GUILD_ID']);
 src/command/slash/config.ts.offline:export const configCommand = {
+src/command/slash/config.ts.offline:        const userId = interaction.user.id;
+src/command/slash/config.ts.offline:        const roles = interaction.member?.roles;
+src/command/slash/config.ts.offline:        const userRoles = Array.isArray(roles) ? roles : (roles as GuildMemberRoleManager)?.cache.map(role => role.id) || [];
+src/command/slash/config.ts.offline:            const setting = interaction.options.getCommandString('setting');
+src/command/slash/config.ts.offline:            const value = interaction.options.getCommandString('value');
 src/command/slash/replicate.ts:export const data = new SlashCommandBuilder()
 src/command/slash/replicate.ts:export const execute: ICommand['execute'] = async (interaction) => {
+src/command/slash/replicate.ts:    const imageUrl = interaction.options.getString('image', true);
+src/command/slash/replicate.ts:    const prompt = interaction.options.getString('prompt', true);
+src/command/slash/replicate.ts:    const result = await analyzeImage(imageUrl, prompt);
 src/command/slash/server.ts:export const data = new SlashCommandBuilder()
+src/command/slash/server.ts:export async function execute(interaction: CommandInteraction): Promise<void> {
+src/command/commandSetup.ts:const commandExecutors: Record<string, Function> = {};
+src/command/commandSetup.ts:const commandDataArray: CommandModule['data'][] = [];
+src/command/commandSetup.ts:const commandsDirectory = path.join(__dirname, 'commands');
+src/command/commandSetup.ts:const commandFiles = fs.readdirSync(commandsDirectory).filter(file => file.endsWith('.ts'));
+src/command/commandSetup.ts:    const filePath = path.join(commandsDirectory, file);
+src/command/commandSetup.ts:    const commandModule: CommandModule = require(filePath);
 src/command/CommandManager.ts:export class CommandManager {
+src/command/CommandManager.ts:        const fullPath = path.resolve(__dirname, directory);
+src/command/CommandManager.ts:        const commandFiles = fs.readdirSync(fullPath);
+src/command/CommandManager.ts:        const commands: Record<string, ICommand> = {};
+src/command/CommandManager.ts:                const commandName = file.slice(0, -3); // Remove the .ts extension to get the command name
+src/command/CommandManager.ts:                    const CommandModule = require(path.join(fullPath, file)).default;
+src/command/CommandManager.ts:                        logger.error('The command module ' + file + ' does not export a class or valid object. Export type: ' + typeof CommandModule);
+src/command/CommandManager.ts:        const text = originalMsg.getText().trim();
+src/command/CommandManager.ts:        const commandDetails = parseCommandDetails(text);
+src/command/CommandManager.ts:        const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
+src/command/executeParsedCommand.ts:export async function executeParsedCommand(
+src/command/executeParsedCommand.ts:    const { command, args } = commandDetails;
+src/command/executeParsedCommand.ts:    const commandName = aliases[command] || command;
+src/command/executeParsedCommand.ts:    const commandInstance = commands[commandName];
+src/command/executeParsedCommand.ts:        const result = await commandInstance.execute(args);
+src/webhook/webhookHandler.ts:const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 src/webhook/webhookHandler.ts:export const startWebhookServer = (port: number): void => {
+src/webhook/webhookHandler.ts:    const app = express();
+src/webhook/webhookHandler.ts:        const predictionId = req.body.id;
+src/webhook/webhookHandler.ts:        const predictionResult = req.body;
+src/webhook/webhookHandler.ts:        const imageUrl = predictionImageMap.get(predictionId);
+src/webhook/webhookHandler.ts:        const channelId = process.env.CHANNEL_ID!;
+src/webhook/webhookHandler.ts:        const channel = client.channels?.cache.get(channelId) as TextChannel;
+src/webhook/webhookHandler.ts:                const resultArray = predictionResult.output;
+src/webhook/webhookHandler.ts:                const resultText = resultArray.join(' ');
+src/webhook/webhookHandler.ts:        const { message } = req.body;
+src/webhook/webhookHandler.ts:        const discordManager = DiscordManager.getInstance();
+src/webhook/webhookHandler.ts:        const { message } = req.body;
+src/webhook/webhookHandler.ts:        const openAiManager = OpenAiManager.getInstance();
+src/webhook/webhookHandler.ts:            const summarizedTexts = await openAiManager.summarizeText(message);
+src/webhook/webhookHandler.ts:            const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : '';
+src/webhook/webhookHandler.ts:            const discordManager = DiscordManager.getInstance();
+src/webhook/webhookHandler.ts:    const port = Number(process.env.WEB_SERVER_PORT) || 3001;
 src/webhook/types/webhookHandler.d.ts:export const startWebhookServer: any;
+src/types/constants.d.ts:const constants: {
+src/types/MessageResponseManager.ts:class MessageResponseManager {
+src/types/MessageResponseManager.ts:        const defaults = {
+src/types/MessageResponseManager.ts:        const config = { ...defaults, ...configurationManager.getConfig('messageResponseSettings') };
+src/types/MessageResponseManager.ts:        const channelId = message.getChannelId();
+src/types/MessageResponseManager.ts:        const shouldSend = this.shouldSendResponse(message, timeSinceLastActivity);
+src/types/MessageResponseManager.ts:        const isEligible = message.getText() && !message.isFromBot();
+src/types/MessageResponseManager.ts:        const isWithinLimit = channelId === this.config.priorityChannel || (this.unsolicitedChannelCounts[channelId] || 0) < this.config.unsolicitedChannelCap;
+src/types/MessageResponseManager.ts:        const baseChance = this.calculateBaseChance(message, timeSinceLastActivity);
+src/types/MessageResponseManager.ts:        const decision = Math.random() < baseChance;
+src/types/MessageResponseManager.ts:        const text = message.getText().toLowerCase();
+src/types/MessageResponseManager.ts:        const mentions = message.getUserMentions();
+src/types/MessageResponseManager.ts:        const isBotMentioned = mentions.some(user => user.id === constants.CLIENT_ID);
+src/types/MessageResponseManager.ts:        const decayFactor = Math.exp(-this.config.recentActivityDecayRate * (timeSinceLastActivity / this.config.activityTimeWindow));
+src/types/configurationManager.d.ts:declare const configurationManager: any;
+src/types/LLMInterface.ts:export abstract class LLMInterface {
+src/types/LLMInterface.ts:            throw new Error('Abstract class LLMInterface cannot be instantiated directly.');
+src/types/LLMInterface.ts:                const { OpenAiManager } = require('../managers/OpenAiManager');
+src/types/Command.ts:export class Command {
+src/types/Command.ts:     * @param {(...args: any[]) => any} execute - The function to execute when the command is run.
+src/types/aliases.ts:export const aliases: Record<string, Alias> = {
+src/message/followUp/sendResponse.ts:export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
+src/message/followUp/sendResponse.ts:        const isString = typeof messageContent === 'string';
+src/message/followUp/sendResponse.ts:        const isBuffer = Buffer.isBuffer(messageContent);
+src/message/followUp/sendResponse.ts:        const isChannelIdValid = typeof channelId === 'string' && channelId.trim() !== '';
+src/message/followUp/sendResponse.ts:        const maxMessageLength = ConfigurationManager.get<number>('messagePlatform.discord.maxMessageLength');
+src/message/followUp/sendResponse.ts:        const parts = splitMessageContent(messageContent, maxMessageLength);
+src/message/followUp/sendResponse.ts:        const interPartDelay = ConfigurationManager.get<number>('messagePlatform.discord.interPartDelayMs');
+src/message/followUp/sendResponse.ts:        const processingTime = Date.now() - startTime;
+src/message/followUp/sendResponse.ts:function splitMessageContent(messageContent: string, maxPartLength: number): string[] {
+src/message/followUp/sendResponse.ts:    const parts: string[] = [];
+src/message/followUp/sendResponse.ts:    const words = messageContent.split(' ');
+src/message/followUp/sendResponse.ts:async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
+src/message/followUp/sendResponse.ts:        const isPartString = typeof part === 'string';
+src/message/followUp/sendResponse.ts:        const isPartBuffer = Buffer.isBuffer(part);
+src/message/followUp/sendResponse.ts:function delay(duration: number): Promise<void> {
+src/message/followUp/sendFollowUp.ts:export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
+src/message/followUp/sendFollowUp.ts:        const followUpText = await OpenAiManager.generateFollowUpText(originalMessage, topic);
+src/message/followUp/messageSendingUtils.ts:export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
+src/message/followUp/messageSendingUtils.ts:        const isString = typeof messageContent === 'string';
+src/message/followUp/messageSendingUtils.ts:        const isBuffer = Buffer.isBuffer(messageContent);
+src/message/followUp/messageSendingUtils.ts:        const isChannelIdValid = typeof channelId === 'string' && channelId.trim() !== '';
+src/message/followUp/messageSendingUtils.ts:        const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
+src/message/followUp/messageSendingUtils.ts:        const processingTime = Date.now() - startTime;
+src/message/followUp/messageSendingUtils.ts:function splitMessageContent(messageContent: string, maxPartLength: number): string[] {
+src/message/followUp/messageSendingUtils.ts:    const parts: string[] = [];
+src/message/followUp/messageSendingUtils.ts:    const words = messageContent.split(' ');
+src/message/followUp/messageSendingUtils.ts:async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
+src/message/followUp/messageSendingUtils.ts:        const isPartString = typeof part === 'string';
+src/message/followUp/messageSendingUtils.ts:        const isPartBuffer = Buffer.isBuffer(part);
+src/message/followUp/messageSendingUtils.ts:function delay(duration: number): Promise<void> {
+src/message/followUp/messageSendingUtils.ts:export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
+src/message/followUp/messageSendingUtils.ts:    const openAiManager = OpenAiManager.getInstance();
+src/message/followUp/messageSendingUtils.ts:    const channelTopic = topic || 'General conversation';
+src/message/followUp/messageSendingUtils.ts:    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay
+src/message/followUp/messageSendingUtils.ts:            const commandDescriptions = Object.values(commands).map(cmd => cmd.name + ': ' + cmd.description).join('; ');
+src/message/followUp/messageSendingUtils.ts:            const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built in commands: ' + commandDescriptions + '. Suggest one command to user.';
+src/message/followUp/messageSendingUtils.ts:            const requestBody = {
+src/message/followUp/messageSendingUtils.ts:            const responseContent = await makeOpenAiRequest(openAiManager, requestBody);
+src/message/followUp/messageSendingUtils.ts:            const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
+src/message/sendFollowUpRequest.ts:export async function sendFollowUpRequest(message: any, aliasCommand: string): Promise<void> {
+src/message/sendFollowUpRequest.ts:        const reflectivePrompt = 'Given the conversation, how might the command !' + aliasCommand + ' provide further insights?';
+src/message/sendFollowUpRequest.ts:        const response = await axios.post(configurationManager.getConfig('LLM_ENDPOINT_URL'), {
+src/message/sendFollowUpRequest.ts:        const suggestion = response.data.choices[0].text.trim();
 src/message/sendFollowUpRequest.ts:export function scheduleFollowUpRequest(message: any): void {
+src/message/sendFollowUpRequest.ts:    const randomAlias = Object.keys(aliases)[Math.floor(Math.random() * Object.keys(aliases).length)];
+src/message/sendFollowUpRequest.ts:    const delay = getRandomDelay(2 * 60 * 1000, 10 * 60 * 1000);
 src/message/discord/discordUtils.d.ts:export function someUtility(arg: string): string;
+src/message/discord/DiscordManager.ts:class DiscordManager {
+src/message/discord/DiscordManager.ts:            const token = process.env.DISCORD_TOKEN || '';
+src/message/discord/DiscordManager.ts:            const errorMessage = `Error during Discord initialization: ${(error instanceof Error) ? error.message : String(error)}`;
+src/message/discord/DiscordManager.ts:        const connection = await setupVoiceChannel(this.client);
+src/message/discord/types/DiscordMessage.ts: * This class encapsulates the properties and behaviors of a Discord message,
+src/message/discord/types/DiscordMessage.ts:export default class DiscordMessage {
+src/message/discord/types/DiscordMessage.ts:        const members = this.message.channel.members as Map<string, GuildMember>;
+src/message/discord/types/DiscordMessage.d.ts:export default class DiscordMessage {
+src/message/discord/utils/registerSlashCommands.ts:export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
+src/message/discord/utils/registerSlashCommands.ts:    const clientId = process.env.CLIENT_ID;
+src/message/discord/utils/registerSlashCommands.ts:    const rest = new REST({ version: '9' }).setToken(token);
 src/message/discord/utils/setupEventHandlers.ts:export function setupEventHandlers(
+src/message/discord/utils/setupEventHandlers.ts:            const processedMessage = new DiscordMessageModel(discordMessage);
+src/message/discord/utils/setupEventHandlers.ts:            const channelId = processedMessage.getChannelId();
+src/message/discord/utils/setupEventHandlers.ts:            const channel = await discordUtils.fetchChannel(client, channelId);
+src/message/discord/utils/setupEventHandlers.ts:            const historyMessages = await fetchMessages(channelId);
+src/message/discord/utils/fetchMessages.ts:export async function fetchMessages(client: Client, channelId: string, limit = 20): Promise<DiscordMessageModel[]> {
+src/message/discord/utils/fetchMessages.ts:        const channel = await client.channels.fetch(channelId) as TextChannel;
+src/message/discord/utils/fetchMessages.ts:        const fetchedMessages = await channel.messages.fetch({ limit });
+src/message/discord/utils/sendMessageToChannel.ts:export async function sendMessageToChannel(client: Client, channelId: string, message: string): Promise<Message> {
+src/message/discord/utils/sendMessageToChannel.ts:    const channel = client.channels?.cache.get(channelId) as TextChannel;
+src/message/discord/utils/sendMessageToChannel.ts:        const errorMessage = 'Channel with ID ' + channelId + ' not found.';
+src/message/discord/utils/sendMessageToChannel.ts:        const sentMessage = await channel.send(message);
+src/message/discord/utils/sendMessageToChannel.ts:        const errorMessage = 'Failed to send message to channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error));
+src/message/discord/utils/fetchChannel.ts: * This function abstracts the API call to fetch a channel, providing a simplified
+src/message/discord/utils/fetchChannel.ts:export async function fetchChannel(client: Client, channelId: string): Promise<Channel | null> {
+src/message/discord/utils/fetchChannel.ts:        const channel = await client.channels.fetch(channelId);
+src/message/discord/utils/transcribeAudio.ts:export async function transcribeAudio(audioFilePath: string): Promise<string> {
+src/message/discord/utils/transcribeAudio.ts:        const openai = new OpenAI({
+src/message/discord/utils/transcribeAudio.ts:        const response = await openai.audio.transcriptions.create({
+src/message/discord/utils/setupVoiceChannel.ts:export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
+src/message/discord/utils/setupVoiceChannel.ts:    const VOICE_CHANNEL_ID = ConfigurationManager.getConfig("VOICE_CHANNEL_ID", "default_voice_channel_id");
+src/message/discord/utils/setupVoiceChannel.ts:        const channel = await client.channels.fetch(VOICE_CHANNEL_ID);
+src/message/discord/utils/setupVoiceChannel.ts:        const permissions = channel.permissionsFor(client.user);
+src/message/discord/utils/setupVoiceChannel.ts:        const connection = joinVoiceChannel({
+src/message/discord/utils/setupVoiceChannel.ts:            const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: 5000 } });
 src/message/discord/utils/collectSlashCommands.ts:export function collectSlashCommands(commandsPath: string): object[] {
+src/message/discord/utils/collectSlashCommands.ts:    const commands: object[] = [];
+src/message/discord/utils/collectSlashCommands.ts:        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+src/message/discord/utils/collectSlashCommands.ts:        for (const file of commandFiles) {
+src/message/discord/utils/collectSlashCommands.ts:            const command: Command = require(path.join(commandsPath, file));
+src/message/discord/utils/playAudioResponse.ts:export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
+src/message/discord/utils/playAudioResponse.ts:    const narrationEndpointUrl = constants.NARRATION_ENDPOINT_URL;
+src/message/discord/utils/playAudioResponse.ts:        const response = await axios.post(narrationEndpointUrl, {
+src/message/discord/utils/playAudioResponse.ts:        const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
+src/message/discord/utils/playAudioResponse.ts:        const writeFile = util.promisify(fs.writeFile);
+src/message/discord/utils/playAudioResponse.ts:        const player = createAudioPlayer();
+src/message/discord/utils/playAudioResponse.ts:        const resource = createAudioResource('output.mp3');
+src/message/discord/utils/generateResponse.ts:export async function generateResponse(transcript: string): Promise<string | undefined> {
+src/message/discord/utils/generateResponse.ts:    const llmEndpointUrl = constants.LLM_ENDPOINT_URL;
+src/message/discord/utils/generateResponse.ts:        const response = await axios.post(llmEndpointUrl, {
+src/message/discord/utils/sendResponse.ts:export async function sendResponse(client: Client, channelId: string, messageText: string): Promise<void> {
+src/message/discord/utils/sendResponse.ts:        const channel = await client.channels.fetch(channelId) as TextChannel;
+src/message/discord/utils/sendResponse.ts:        const messageParts = splitMessage(messageText);
+src/message/discord/utils/sendResponse.ts:        for (const part of messageParts) {
+src/message/discord/utils/sendMessage.ts:export async function sendMessage(channelId: string, messageText: string): Promise<void> {
 src/message/discord/utils/timestampFunctions.ts:export function getLastTypingTimestamp(typingTimestamps: Map<string, number>, channelId: string): number {
 src/message/discord/utils/timestampFunctions.ts:export function getLastMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): number {
 src/message/discord/utils/timestampFunctions.ts:export function logMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): void {
 src/message/discord/utils/splitMessage.ts:export function splitMessage(messageText: string, maxLength = 1997): string[] {
+src/message/discord/utils/splitMessage.ts:    const parts: string[] = [];
+src/message/discord/utils/splitMessage.ts:            const lastSpace = part.lastIndexOf(' ');
+src/message/discord/utils/setMessageHandler.ts: * Sets a callback function to handle incoming Discord messages.
+src/message/discord/utils/setMessageHandler.ts: * @param {(message: any) => void} messageHandlerCallback - The function to be called with the message data.
 src/message/discord/utils/setMessageHandler.ts:export function setMessageHandler(messageHandlerCallback: (message: any) => void): void {
+src/message/discord/utils/loginToDiscord.ts:export async function loginToDiscord(client: Client, token: string): Promise<string> {
+src/message/discord/utils/loginToDiscord.ts:        const errorMessage = 'DISCORD_TOKEN is not defined.';
+src/message/discord/utils/loginToDiscord.ts:        const result = await client.login(token);
+src/message/discord/utils/loginToDiscord.ts:        const errorMessage = 'Failed to log in to Discord: ' + (error instanceof Error ? error.message : String(error));
 src/message/discord/utils/handleAudioStream.ts:export const handleAudioStream = async (stream: Readable, userId: string, connection: VoiceConnection): Promise<void> => {
+src/message/discord/utils/handleAudioStream.ts:    const audioChunks: Buffer[] = [];
+src/message/discord/utils/handleAudioStream.ts:            const audioBuffer = Buffer.concat(audioChunks);
+src/message/discord/utils/handleAudioStream.ts:            const wavBuffer = await convertOpusToWav(audioBuffer);
+src/message/discord/utils/handleAudioStream.ts:            const audioFilePath = 'audio.wav';
+src/message/discord/utils/handleAudioStream.ts:            const stats = fs.statSync(audioFilePath);
+src/message/discord/utils/handleAudioStream.ts:            const transcript = await transcribeAudio(audioFilePath);
+src/message/discord/utils/handleAudioStream.ts:                const response = await generateResponse(transcript);
+src/message/discord/utils/startTyping.ts:export async function startTyping(client: Client, channelId: string): Promise<void> {
+src/message/discord/utils/startTyping.ts:        const channel = await client.channels.fetch(channelId);
+src/message/discord/utils/startTyping.ts:            const permissions = channel.permissionsFor(client.user!);
+src/message/discord/utils/playWelcomeMessage.ts:export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
+src/message/discord/utils/playWelcomeMessage.ts:    const welcomeMessage = constants.WELCOME_MESSAGE;
+src/message/discord/utils/playWelcomeMessage.ts:    const openai = new OpenAI({
+src/message/discord/utils/playWelcomeMessage.ts:        const response = await openai.audio.speech.create({
+src/message/discord/utils/playWelcomeMessage.ts:        const buffer = Buffer.from(await response.arrayBuffer());
+src/message/discord/utils/playWelcomeMessage.ts:        const writeFile = util.promisify(fs.writeFile);
+src/message/discord/utils/playWelcomeMessage.ts:        const player = createAudioPlayer();
+src/message/discord/utils/playWelcomeMessage.ts:        const resource = createAudioResource('welcome.mp3');
+src/message/discord/utils/convertOpusToWav.ts:export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
+src/message/discord/utils/convertOpusToWav.ts:        const ffmpeg = spawn('ffmpeg', [
+src/message/discord/utils/convertOpusToWav.ts:        const output: Buffer[] = [];
+src/message/discord/utils/convertOpusToWav.ts:            const wavBuffer = Buffer.concat(output);
+src/message/discord/utils/convertOpusToWav.ts:        const input = new Readable();
+src/message/followUpRequest.ts:export async function shouldSendFollowUp(message: any, threshold: number): Promise<boolean> {
+src/message/followUpRequest.ts:        const recentMessages = await fetchConversationHistory(message.channel);
+src/message/followUpRequest.ts:export async function scheduleFollowUpRequest(message: any): Promise<void> {
+src/message/followUpRequest.ts:        const aliasCommand = getRandomAliasCommand();
+src/message/followUpRequest.ts:        const reflectivePrompt = 'Reflecting on the recent conversation, how might the command ' + aliasCommand + ' provide further insights?';
+src/message/types/IMessage.ts: * Abstract class representing a standardized message format.
+src/message/types/IMessage.ts: * This class is intended to be extended with specific implementations as needed.
+src/message/types/IMessage.ts:export abstract class IMessage {
 src/message/types/messageHandler.d.ts:export const messageHandler: any;
+src/message/types/IMessengerService.ts: * Abstract class representing a messenger service interface.
+src/message/types/IMessengerService.ts:export abstract class IMessengerService {
+src/message/helpers/messageProcessing/summarizeMessage.ts: * This function reduces the length of responses that exceed Discord's message length limits.
+src/message/helpers/messageProcessing/summarizeMessage.ts:export async function summarizeMessage(content: string, targetSize: number = constants.LLM_RESPONSE_MAX_TOKENS): Promise<string> {
+src/message/helpers/messageProcessing/summarizeMessage.ts:    const openAiManager = OpenAiManager.getInstance();
+src/message/helpers/messageProcessing/summarizeMessage.ts:        const summary = await openAiManager.summarizeText(content, targetSize);
+src/message/helpers/messageProcessing/prepareMessageBody.ts:export async function prepareMessageBody(prompt: string, channelId: string = constants.CHANNEL_ID, history: Array<Object> = []): Promise<Object> {
+src/message/helpers/messageProcessing/processCommand.ts:export async function processCommand(message: IMessage): Promise<boolean> {
+src/message/helpers/messageProcessing/processCommand.ts:    const text = message.getText().trim();
+src/message/helpers/messageProcessing/processCommand.ts:    const commandManager = new CommandManager();
+src/message/helpers/messageProcessing/processCommand.ts:        const commandResult = await commandManager.executeCommand(message);
+src/message/helpers/loadServerPolicy.ts:export default function loadServerPolicy(): string {
+src/message/helpers/loadServerPolicy.ts:        const policyPath = path.resolve(__dirname, '../@config/serverPolicy.json');
+src/message/helpers/loadServerPolicy.ts:        const policyData = fs.readFileSync(policyPath, 'utf-8');
 src/message/helpers/handleImageMessage.ts:export const predictionImageMap = new Map<string, string>();
+src/message/helpers/handleImageMessage.ts:export async function createPrediction(imageUrl: string): Promise<any> {
+src/message/helpers/handleImageMessage.ts:        const postData: Record<string, any> = {
+src/message/helpers/handleImageMessage.ts:        const response = await axios.post(
+src/message/helpers/handleImageMessage.ts:export async function handleImageMessage(message: any): Promise<boolean> {
+src/message/helpers/handleImageMessage.ts:        const attachments = message.attachments;
+src/message/helpers/handleImageMessage.ts:            const imageUrl = attachments.first().url;
+src/message/helpers/handleImageMessage.ts:            const prediction = await createPrediction(imageUrl);
+src/message/helpers/handleImageMessage.ts:                const predictionId = prediction.id;
+src/message/helpers/messageResponseUtils.ts:class ReplyManager {
+src/message/helpers/messageResponseUtils.ts:        const currentTime = Date.now();
+src/message/helpers/messageResponseUtils.ts:        const replyCount = this.getReplyCount(channelId);
+src/message/helpers/messageResponseUtils.ts:const replyManagerInstance = new ReplyManager();
 src/message/helpers/messageResponseUtils.ts:export const getTimeSinceLastReply = (channelId: string): number => replyManagerInstance.getTimeSinceLastReply(channelId);
 src/message/helpers/messageResponseUtils.ts:export const logReply = (channelId: string): void => replyManagerInstance.logReply(channelId);
 src/message/helpers/messageResponseUtils.ts:export const calculateDynamicFactor = (channelId: string): number => replyManagerInstance.calculateDynamicFactor(channelId);
 src/message/helpers/messageResponseUtils.ts:export const getReplyCount = (channelId: string): number => replyManagerInstance.getReplyCount(channelId);
 src/message/helpers/messageResponseUtils.ts:export const resetReplyCount = (channelId: string): void => replyManagerInstance.resetReplyCount(channelId);
 src/message/helpers/handleCodeBlocks.ts:export function handleCodeBlocks(message: string): Array<{ label: string | null, content: string }> {
+src/message/helpers/handleCodeBlocks.ts:    const codeBlockPattern = /```(\w+)?\s*(.*?)```/gs;
+src/message/helpers/handleCodeBlocks.ts:    const codeBlocks: Array<{ label: string | null, content: string }> = [];
+src/message/helpers/handleCodeBlocks.ts:        const label = match[1] ? match[1].trim() : null;
+src/message/helpers/handleCodeBlocks.ts:        const content = match[2].trim();
 src/message/helpers/commandParser.ts:export function parseCommand(commandContent: string): ParsedCommand | null {
+src/message/helpers/commandParser.ts:    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
+src/message/helpers/commandParser.ts:    const matches = commandContent.match(commandRegex);
+src/message/helpers/commandParser.ts:        const [, commandName, action = '', args = ''] = matches.map(match => match?.trim() || '');
+src/message/helpers/commandParser.ts:        const defaultCommand = configManager.getConfig('defaultCommand') || 'oai';
+src/message/helpers/commandParser.ts:        const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
+src/message/helpers/sendResponse.ts:export async function sendResponse(messageContent: string, channelId: string, startTime: number): Promise<void> {
+src/message/helpers/sendResponse.ts:    const maxPartLength = 2000; // Discord's max message length limit
+src/message/helpers/sendResponse.ts:    const randomSplit = Math.random() < 0.5; // 50% chance to split randomly
+src/message/helpers/sendResponse.ts:    const typingSpeedPerChar = 1000; // milliseconds per character
+src/message/helpers/sendResponse.ts:    const initialDelay = Math.min(messageContent.length * typingSpeedPerChar, constants.BOT_TYPING_DELAY_MAX_MS);
+src/message/helpers/sendResponse.ts:    const processingTime = Date.now() - startTime;
+src/message/helpers/sendResponse.ts:async function sendMessagePart(part: string, channelId: string): Promise<void> {
+src/message/helpers/votingUtils.ts:export async function startVotingProcess(userId: string): Promise<{ votePassed: boolean }> {
 src/message/helpers/votingUtils.ts:export function checkVotingEligibility(userId: string): boolean {
+src/message/helpers/mutingUtils.ts:export async function muteUser(channel: TextChannel, userId: string): Promise<void> {
+src/message/helpers/mutingUtils.ts:    const member = await channel.guild.members.fetch(userId);
+src/message/helpers/mutingUtils.ts:    const role = channel.guild.roles?.cache.find(role => role.name === 'Muted');
+src/message/helpers/mutingUtils.ts:    const embed = new MessageEmbed()
+src/message/helpers/moderationUtils.ts:export async function shouldUserBeBanned(chatHistory: string[], userId: string): Promise<string> {
+src/message/helpers/moderationUtils.ts:    const serverPolicy = loadServerPolicy();
+src/message/helpers/moderationUtils.ts:    const prompt = 'Given the chat history and server policy, should user ' + userId + ' be banned?';
+src/message/helpers/moderationUtils.ts:    const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL');
+src/message/helpers/moderationUtils.ts:    const LLM_MODEL = configurationManager.getConfig('LLM_MODEL');
+src/message/helpers/moderationUtils.ts:    const LLM_API_KEY = configurationManager.getConfig('LLM_API_KEY');
+src/message/helpers/moderationUtils.ts:        const response = await axios.post(LLM_ENDPOINT_URL, {
 src/message/helpers/shouldProcessMessage.ts:export function shouldProcessMessage(
+src/message/helpers/shouldProcessMessage.ts:    const lastMessageTimestamp = getLastMessageTimestamp(messageTimestamps, channelId);
+src/message/helpers/shouldProcessMessage.ts:    const timeSinceLastMessage = messageTimestamp - lastMessageTimestamp;
+src/message/helpers/sendMessagePart.ts:export async function sendMessagePart(part: string, channelId: string): Promise<void> {
 src/message/helpers/reconstructCommandFromAlias.ts:export function reconstructCommandFromAlias(alias: string, additionalArgs: string): string | null {
+src/message/helpers/reconstructCommandFromAlias.ts:    const [aliasedCommand, action] = aliases[alias].split(':');
+src/message/helpers/reconstructCommandFromAlias.ts:    const reconstructedCommand = '!' + aliasedCommand + (action ? ':' + action : '') + ' ' + additionalArgs;
 src/message/helpers/chatHistoryUtils.ts:export function trimMessagesByTokenCount(messages: Message[], newPrompt: string, maxTokens: number): Message[] {
+src/message/helpers/chatHistoryUtils.ts:    const trimmedMessages: Message[] = [];
+src/message/helpers/chatHistoryUtils.ts:    for (const message of messages.reverse()) {
+src/message/helpers/chatHistoryUtils.ts:        const messageTokens = encode(message.content);
 src/message/helpers/permissions.ts:export function isUserAllowed(userId: string, allowedUsers: string[]): boolean {
+src/message/helpers/permissions.ts:    const isAllowed = allowedUsers.includes(userId);
 src/message/helpers/permissions.ts:export function isRoleAllowed(userRoles: string[], allowedRoles: string[]): boolean {
+src/message/helpers/permissions.ts:    const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
 src/message/helpers/getInitialDelay.ts:export function getInitialDelay(
+src/message/helpers/getInitialDelay.ts:    const lastTyping = getLastTypingTimestamp(typingTimestamps, channelId);
+src/message/helpers/getInitialDelay.ts:    const timeSinceLastTyping = Date.now() - lastTyping;
+src/message/helpers/getInitialDelay.ts:    const delay = Math.min(maxDelay, Math.max(minDelay, timeSinceLastTyping));
 src/message/helpers/parseCommand.ts:export function parseCommand(commandContent: string): { commandName: string, action: string, args: string } | null {
+src/message/helpers/parseCommand.ts:    const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
+src/message/helpers/parseCommand.ts:    const matches = commandContent.match(commandRegex);
+src/message/helpers/parseCommand.ts:        const [, commandName, action = '', args = ''] = matches.map(match => match.trim());
 src/message/helpers/splitMessageContent.ts:export function splitMessageContent(messageText: string, maxLength = 1997): string[] {
+src/message/helpers/splitMessageContent.ts:    const parts: string[] = [];
+src/message/helpers/splitMessageContent.ts:            const lastSpace = part.lastIndexOf(' ');
+src/message/handlers/processAIResponse.ts:export async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
+src/message/handlers/processAIResponse.ts:    const llmManager = LLMInterface.getManager();
+src/message/handlers/processAIResponse.ts:        const topic = message.getChannelTopic();
+src/message/handlers/processAIResponse.ts:        const userMentions = message.getUserMentions();
+src/message/handlers/processAIResponse.ts:        const channelUsers = message.getChannelUsers();
+src/message/handlers/processAIResponse.ts:            const finishReason = llmResponse.getFinishReason();
+src/message/handlers/processAIResponse.ts:        const processingTime = Date.now() - startTime;
+src/message/handlers/messageHandler.ts:export async function messageHandler(
+src/message/handlers/messageHandler.ts:    const startTime = Date.now();
+src/message/handlers/messageHandler.ts:    const messageId = originalMsg.getMessageId();
+src/message/validators/validateMessage.ts:export function validateMessage(message: IMessage): boolean {
+src/message/responseHandling/ResponseTimingManager.ts:class ResponseTimingManager {
+src/message/responseHandling/ResponseTimingManager.ts:        const currentTime = Date.now();
+src/message/responseHandling/ResponseTimingManager.ts:        const currentTime = Date.now();
+src/message/responseHandling/ResponseTimingManager.ts:        const channelInfo = this.channelsTimingInfo[channelId];
+src/message/responseHandling/ResponseTimingManager.ts:        const timeSinceLastIncomingMessage = currentTime - channelInfo.lastIncomingMessageTime;
+src/message/responseHandling/ResponseTimingManager.ts:     * @param sendFunction - The function to call for sending the message.
+src/message/responseHandling/ResponseTimingManager.ts:        const delay = this.calculateDelay(channelId, processingTime);
+src/utils/utils.ts:export async function executeCommand(command: string): Promise<string> {
+src/utils/utils.ts:    const exec = util.promisify(require('child_process').exec);
+src/utils/utils.ts:    const { stdout, stderr } = await exec(command);
+src/utils/utils.ts:export async function readFile(filePath: string): Promise<string> {
+src/utils/utils.ts:    const readFile = util.promisify(fs.readFile);
+src/utils/utils.ts:    const content = await readFile(filePath, 'utf8');
+src/utils/logger.ts:const logger = pino({
+src/utils/environmentUtils.ts:function redactValue(value: string | undefined): string {
 src/utils/environmentUtils.ts:export function debugEnvVars(): void {
+src/utils/environmentUtils.ts:    const requiredEnvVars = [
+src/utils/environmentUtils.ts:    const optionalEnvVars = [
+src/utils/environmentUtils.ts:    const flowiseActions = process.env.FLOWISE_ACTIONS ? process.env.FLOWISE_ACTIONS.split(',') : [];
+src/utils/environmentUtils.ts:    const redactSuffixes = ['_TOKEN', '_KEY'];
+src/utils/environmentUtils.ts:            const value = process.env[varName];
+src/utils/environmentUtils.ts:            const redactedValue = redactSuffixes.some(suffix => varName.endsWith(suffix)) ? redactValue(value) : value;
+src/utils/environmentUtils.ts:    const unsetRequiredVars = requiredEnvVars.filter(varName => !process.env[varName]);
+src/utils/logger.d.ts:declare const logger: any;
+src/utils/encryptionUtils.ts:const secretKey = process.env.ENCRYPTION_SECRET_KEY || '';
+src/utils/encryptionUtils.ts:const iv = crypto.randomBytes(16);
 src/utils/encryptionUtils.ts:export function encrypt(text: string): string {
+src/utils/encryptionUtils.ts:    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey), iv);
 src/utils/encryptionUtils.ts:export function decrypt(text: string): string {
+src/utils/encryptionUtils.ts:    const parts = text.split(':');
+src/utils/encryptionUtils.ts:    const iv = Buffer.from(parts.shift() as string, 'hex');
+src/utils/encryptionUtils.ts:    const encryptedText = parts.join(':');
+src/utils/encryptionUtils.ts:    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secretKey), iv);
 src/utils/environmentUtils.d.ts:export const debugEnvVars: any;
+src/utils/commonUtils.ts:const errorMessages: string[] = [
 src/utils/commonUtils.ts:export function getRandomErrorMessage(): string {
+src/utils/commonUtils.ts:    const randomIndex = Math.floor(Math.random() * errorMessages.length);
 src/utils/commonUtils.ts:export function redactSensitiveInfo(key: string, value: any): string {
+src/utils/commonUtils.ts:    const lowerKey = key.toLowerCase();
+src/utils/commonUtils.ts:    const sensitiveKeys = ['password', 'secret', 'apikey', 'access_token', 'auth_token'];
+src/utils/commonUtils.ts:    const sensitivePhrases = ['bearer', 'token'];
+src/utils/commonUtils.ts:        const redactedPart = value.length > 10 ? value.substring(0, 5) + '...' + value.slice(-5) : '[REDACTED]';
 src/utils/commonUtils.ts:export function handleError(error: Error, messageChannel: any = null): void {
+src/utils/commonUtils.ts:        const errorMsg = getRandomErrorMessage();
+src/utils/initializeFetch.ts:export async function initializeFetch(): Promise<void> {
+src/utils/initializeFetch.ts:    const nodeFetch = await import('node-fetch');
+src/utils/configUtils.ts:export function getConfigOrWarn<T>(configKey: string, defaultValue: T): T {
+src/utils/configUtils.ts:        const value = config.get<T>(configKey);
 src/utils/reconstructCommandFromAlias.ts:export function reconstructCommandFromAlias(alias: string): string | null {
+src/utils/reconstructCommandFromAlias.ts:    const foundAlias = aliases[alias] as Alias | undefined;
 src/utils/common.ts:export function splitMessage(message: string, maxLength: number = 2000): string[] {
+src/utils/common.ts:    const messageParts = message.match(new RegExp('.{1,' + maxLength + '}(\s|$)', 'g')) || [];
 src/utils/common.ts:export function getRandomDelay(min: number, max: number): number {
+src/utils/common.ts:    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
 src/utils/common.ts:export function startTypingIndicator(channel: any): NodeJS.Timeout {
+src/utils/common.ts:    const typingInterval = setInterval(() => channel.sendTyping(), 15000);
+src/utils/processingLocks.ts:class ProcessingLocks {
+src/utils/processingLocks.ts:        const locked = this.locks.has(channelId);
+src/utils/processingLocks.ts:const processingLocks = new ProcessingLocks();
 src/utils/aliasUtils.ts:export function getRandomAliasCommand(): string {
+src/utils/aliasUtils.ts:    const aliasKeys = Object.keys(aliases);
+src/utils/aliasUtils.ts:    const randomIndex = Math.floor(Math.random() * aliasKeys.length);
+src/utils/aliasUtils.ts:    const randomCommand = '!' + aliasKeys[randomIndex];
 src/utils/aliasUtils.ts:export function getAliasDescription(commandName: string): string {
+src/utils/aliasUtils.ts:    const alias = aliases[commandName.toLowerCase()];
+src/utils/aliasUtils.ts:    const description = alias ? alias.description : 'No description available.';
 src/utils/aliasUtils.ts:export function listAllAliases(): string {
+src/utils/aliasUtils.ts:    const allAliases = Object.entries(aliases)
 src/utils/aliasUtils.ts:export function findAliasesByCategory(category: string): Record<string, string> {
+src/utils/aliasUtils.ts:    const categorizedAliases = Object.entries(aliases)
 src/utils/aliasUtils.ts:export function getDetailedAliasInfo(commandName: string): string {
+src/utils/aliasUtils.ts:    const alias = aliases[commandName.toLowerCase()];
+src/utils/aliasUtils.ts:        const message = 'Alias does not exist.';
+src/utils/aliasUtils.ts:    const { handler, description } = alias;
+src/utils/aliasUtils.ts:    const detailedInfo = 'Command: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
 src/utils/getEmoji.ts:export function getEmoji(): string {
+src/utils/getEmoji.ts:    const emojis = ['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥'];
 src/llm/OpenAiManager.ts:export class OpenAiManager {
+src/llm/OpenAiManager.ts:            const requestOptions: any = {};
+src/llm/OpenAiManager.ts:            const timeout = config.get<number>('llm.openai.timeout');
+src/llm/OpenAiManager.ts:        const promptText = content.trim() + ' ';
+src/llm/OpenAiManager.ts:        const continuationBody = {
+src/llm/OpenAiManager.ts:            const continuationResponse = await this.openai.completions.create(continuationBody);
+src/llm/OpenAiManager.ts:            const continuationText = continuationResponse.choices[0].text.trim();
+src/llm/OpenAiManager.ts:        const supportsCompletions = config.get<boolean>('llm.supportsCompletions');
+src/llm/OpenAiManager.ts:        const prompt = systemMessageContent + '\nUser: ' + userMessage + '\nAssistant:';
+src/llm/OpenAiManager.ts:        const requestBody = {
+src/llm/OpenAiManager.ts:            const response = await this.makeOpenAiRequest(requestBody);
+src/llm/OpenAiManager.ts:            const summary = extractContent(response.choices[0]);
+src/llm/openai/OpenAiManager.ts:class OpenAiManager {
+src/llm/openai/OpenAiManager.ts:        const supportNameField = process.env.LLM_SUPPORT_NAME_FIELD !== 'false';
+src/llm/openai/OpenAiManager.ts:            const currentRole = message.isFromBot() ? 'assistant' : 'user';
+src/llm/openai/OpenAiManager.ts:            const authorName = message.getAuthorId();
+src/llm/openai/OpenAiManager.ts:        const requestBody: Record<string, any> = {
+src/llm/openai/OpenAiManager.ts:            const response = await makeOpenAiRequest(this.openai, requestBody);
 src/llm/openai/utils/extractContent.ts:export function extractContent(choice: any): string {
+src/llm/openai/utils/makeOpenAiRequest.ts:export async function makeOpenAiRequest(
+src/llm/openai/utils/makeOpenAiRequest.ts:        const response = await openaiClient.chat.completions.create(requestBody);
+src/llm/openai/utils/completeSentence.ts:export async function completeSentence(
+src/llm/openai/utils/completeSentence.ts:    const requestBody = {
+src/llm/openai/utils/completeSentence.ts:    const response = await openaiClient.completions.create(requestBody);
 src/llm/openai/utils/needsCompletion.ts:export function needsCompletion(
+src/llm/openai/utils/needsCompletion.ts:    const endsInPunctuation = /[.!?]$/.test(content.trim());
 src/llm/openAiUtils.ts:export function extractContent(choice: any): string {
 src/llm/openAiUtils.ts:export function needsCompletion(maxTokensReached: boolean, finishReason: string, content: string): boolean {
 src/llm/openAiUtils.ts:export function getEmoji(): string {
+src/llm/openAiUtils.ts:    const emojis = [
+src/llm/LLMResponse.ts:class LLMResponse {
+src/index.ts:async function main() {
+src/index.ts:        const discordManager = new DiscordManager();
+src/index.ts:        const clientId = ConfigurationManager.getConfig<string>('discord.clientId');
+src/index.ts:// Call the main function to start the application
+src/managers/DiscordManager.d.ts:declare const DiscordManager: any;
+src/managers/DiscordManager-20240725.bak:const { Client, GatewayIntentBits, PermissionsBitField, ChannelType } = require('discord.js');
+src/managers/DiscordManager-20240725.bak:const { generateDependencyReport } = require('@discordjs/voice');
+src/managers/DiscordManager-20240725.bak:const logger = require('../utils/logger');
+src/managers/DiscordManager-20240725.bak:const configurationManager = require('../config/configurationManager');
+src/managers/DiscordManager-20240725.bak:const discordUtils = require('../utils/discordUtils');
+src/managers/DiscordManager-20240725.bak:const DiscordMessage = require('../models/DiscordMessage');
+src/managers/DiscordManager-20240725.bak:const ConfigurationManager = require('../config/ConfigurationManager')../ Assuming this contains CLIENT_ID
+src/managers/DiscordManager-20240725.bak:const { joinVoiceChannel, EndBehaviorType, VoiceConnectionStatus, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+src/managers/DiscordManager-20240725.bak:const axios = require('axios');
+src/managers/DiscordManager-20240725.bak:// const FormData = require('form-data');
+src/managers/DiscordManager-20240725.bak:const util = require('util');
+src/managers/DiscordManager-20240725.bak:const OpenAI = require('openai');
+src/managers/DiscordManager-20240725.bak:const { spawn } = require('child_process');
+src/managers/DiscordManager-20240725.bak:const { Readable } = require('stream');
+src/managers/DiscordManager-20240725.bak:const fs = require('fs');
+src/managers/DiscordManager-20240725.bak:async function convertOpusToWav(opusBuffer) {
+src/managers/DiscordManager-20240725.bak:        const ffmpeg = spawn('ffmpeg', [
+src/managers/DiscordManager-20240725.bak:        const output = [];
+src/managers/DiscordManager-20240725.bak:            const wavBuffer = Buffer.concat(output);
+src/managers/DiscordManager-20240725.bak:        const input = new Readable();
+src/managers/DiscordManager-20240725.bak:class DiscordManager {
+src/managers/DiscordManager-20240725.bak:        const token = configurationManager.getConfig('DISCORD_TOKEN');
+src/managers/DiscordManager-20240725.bak:    const VOICE_CHANNEL_ID = ConfigurationManager.VOICE_CHANNEL_ID;
+src/managers/DiscordManager-20240725.bak:        const channel = await this.client.channels.fetch(VOICE_CHANNEL_ID);
+src/managers/DiscordManager-20240725.bak:        const permissions = channel.permissionsFor(this.client.user);
+src/managers/DiscordManager-20240725.bak:        const connection = joinVoiceChannel({
+src/managers/DiscordManager-20240725.bak:            const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence } });
+src/managers/DiscordManager-20240725.bak:        const welcomeMessage = ConfigurationManager.WELCOME_MESSAGE;
+src/managers/DiscordManager-20240725.bak:        const openai = new OpenAI({
+src/managers/DiscordManager-20240725.bak:            const response = await openai.audio.speech.create({
+src/managers/DiscordManager-20240725.bak:            const buffer = Buffer.from(await response.arrayBuffer());
+src/managers/DiscordManager-20240725.bak:            const writeFile = util.promisify(fs.writeFile);
+src/managers/DiscordManager-20240725.bak:            const player = createAudioPlayer();
+src/managers/DiscordManager-20240725.bak:            const resource = createAudioResource('welcome.mp3');
+src/managers/DiscordManager-20240725.bak:        const openai = new OpenAI({
+src/managers/DiscordManager-20240725.bak:        const response = await openai.audio.transcriptions.create({
+src/managers/DiscordManager-20240725.bak:    const audioChunks = [];
+src/managers/DiscordManager-20240725.bak:            const audioBuffer = Buffer.concat(audioChunks);
+src/managers/DiscordManager-20240725.bak:            const wavBuffer = await convertOpusToWav(audioBuffer);
+src/managers/DiscordManager-20240725.bak:            const audioFilePath = 'audio.wav';
+src/managers/DiscordManager-20240725.bak:            const stats = fs.statSync(audioFilePath);
+src/managers/DiscordManager-20240725.bak:            const transcript = await this.transcribeAudio(audioFilePath);
+src/managers/DiscordManager-20240725.bak:                const response = await this.generateResponse(transcript);
+src/managers/DiscordManager-20240725.bak:        const llmEndpointUrl = ConfigurationManager.LLM_ENDPOINT_URL;
+src/managers/DiscordManager-20240725.bak:        const response = await axios.post(llmEndpointUrl, {
+src/managers/DiscordManager-20240725.bak:        const narrationEndpointUrl = ConfigurationManager.NARRATION_ENDPOINT_URL;
+src/managers/DiscordManager-20240725.bak:        const response = await axios.post(narrationEndpointUrl, {
+src/managers/DiscordManager-20240725.bak:        const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
+src/managers/DiscordManager-20240725.bak:        const writeFile = util.promisify(fs.writeFile);
+src/managers/DiscordManager-20240725.bak:        const player = createAudioPlayer();
+src/managers/DiscordManager-20240725.bak:        const resource = createAudioResource('output.mp3');
+src/managers/DiscordManager-20240725.bak:                const processedMessage = new DiscordMessage(discordMessage);
+src/managers/DiscordManager-20240725.bak:                const channelId = processedMessage.getChannelId();
+src/managers/DiscordManager-20240725.bak:                const channel = await discordUtils.fetchChannel(this.client, channelId);
+src/managers/DiscordManager-20240725.bak:                const historyMessages = await this.fetchMessages(channelId);
+src/managers/DiscordManager-20240725.bak:     * Sets a callback function to handle incoming Discord messages.
+src/managers/DiscordManager-20240725.bak:     * @param {Function} messageHandlerCallback - The function to be called with the message data.
+src/managers/DiscordManager-20240725.bak:        const messages = await discordUtils.fetchMessages(this.client, channelId);
+src/managers/DiscordManager-20240725.bak:            const channel = await this.client.channels.fetch(channelId);
+src/managers/DiscordManager-20240725.bak:                const permissions = channel.permissionsFor(this.client.user);

@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
 import logger from '@src/utils/logger';
-import constants from '../@config/configurationManager';
+import constants from '@config/ConfigurationManager';
 
 /**
  * Plays a welcome message in the voice channel.

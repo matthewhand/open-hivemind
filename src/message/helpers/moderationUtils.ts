@@ -1,6 +1,6 @@
 import axios from 'axios';
 import loadServerPolicy from './loadServerPolicy';
-import configurationManager from '../@config/ConfigurationManager';
+import configurationManager from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 
 /**

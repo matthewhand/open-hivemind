@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import fs from 'fs';
 import logger from '@src/utils/logger';
-import constants from '../@config/configurationManager';
+import constants from '@config/ConfigurationManager';
 
 /**
  * Transcribes audio using the OpenAI API.
