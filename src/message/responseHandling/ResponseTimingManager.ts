@@ -1,8 +1,8 @@
 class ResponseTimingManager {
     private static instance: ResponseTimingManager;
-    private maxDelay: number;
-    private minDelay: number;
-    private decayRate: number;
+    private maxDelay: number = 0;
+    private minDelay: number = 0;
+    private decayRate: number = 0;
     private channelsTimingInfo: Record<string, { lastIncomingMessageTime?: number }> = {};
 
     private constructor({ maxDelay = 10000, minDelay = 1000, decayRate = -0.5 } = {}) {
