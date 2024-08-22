@@ -1,4 +1,4 @@
-import { ICommand } from './ICommand';
+import ICommand from '../interfaces/ICommand';
 
 export abstract class BaseCommand implements ICommand {
     name: string;

@@ -1,4 +1,4 @@
-import { ICommand } from '@src/comma@command/types/CommandHandler';
+import ICommand from '../interfaces/ICommand';
 import { handleServerCommand } from '@src/command/common/server';
 
 export const command: ICommand = {

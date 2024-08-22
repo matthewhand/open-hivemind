@@ -1,4 +1,3 @@
-import { Message, TextChannel, MessageCollector } from 'discord.js';
 import { BaseCommand } from '../types/BaseCommand';
 import logger from '@src/utils/logger';
 

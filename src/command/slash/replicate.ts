@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { ICommand } from '@src/comma@command/types/CommandHandler';
+import ICommand from '../interfaces/ICommand';
 import { analyzeImage } from '@src/command/common/replicate';
 import logger from '@src/utils/logger';
 

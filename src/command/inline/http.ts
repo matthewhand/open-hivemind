@@ -1,4 +1,4 @@
-import { ICommand } from '@src/comma@command/types/CommandHandler';
+import ICommand from '../interfaces/ICommand';
 import logger from '@src/utils/logger';
 
 /**

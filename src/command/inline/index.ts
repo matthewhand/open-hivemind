@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import logger from '@src/utils/logger';
-import { ICommand } from '../types/ICommand';
+import ICommand from '../interfaces/ICommand';
 
 /**
  * Dynamically loads all command modules from the current directory, excluding index.ts itself.
