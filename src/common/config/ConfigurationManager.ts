@@ -1,13 +1,12 @@
 import config from 'config';
 import logger from '../../utils/logger';
 
-function getConfigOrWarn<T>(configKey: string, defaultValue: T): T {
+import { getConfigOrWarn } from "@utils/configUtils";
     if (!config.has(configKey)) {
         logger.warn('Missing mandatory configuration key: ' + configKey);
         return defaultValue;
     }
     return config.get<T>(configKey);
-}
 
 class ConfigurationManager {
     public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';

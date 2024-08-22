@@ -1,4 +1,4 @@
-import constants from '../../comm@config/constants';
+import constants from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 import config from 'config';
 

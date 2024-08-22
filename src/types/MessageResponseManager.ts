@@ -1,6 +1,6 @@
 import logger from '@src/utils/logger';
-import configurationManager from '@config/configurationManager';
-import constants from '@config/configurationManager';
+import configurationManager from '@config/ConfigurationManager';
+import constants from '@config/ConfigurationManager';
 
 interface IMessage {
     getText(): string;

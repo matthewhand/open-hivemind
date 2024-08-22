@@ -3,13 +3,8 @@
 import * as aliasUtils from './aliasUtils';
 import * as common from './common';
 import { handleError } from '../utils/commonUtils';
-import { handleImageMessage } from "@message/helpers/handleImageMessage";
 import logger from './logger';
-import { mutingUtils } from "@message/helpers/mutingUtils";
-import { parseCommand } from "@src/message/helpers/parseCommand";
-import { permissions } from "@message/helpers/permissions";
-import { reconstructCommandFromAlias } from "@src/utils/reconstructCommandFromAlias";
-import { sendFollowUpRequest } from "@src/message/sendFollowUpRequest";
+import { ConfigurationManager } from "@config/ConfigurationManager";
 import * as votingUtils from './votingUtils';
 
 export {
