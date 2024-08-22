@@ -1,12 +1,12 @@
 import { ICommand } from '@command/types/Command';
-import { { CommandInteraction } from "discord.js"; } from 'discord.js';
+import { CommandInteraction } from "discord.js";
 import { muteUser } from '@src/command/common/mute';
 import logger from '@src/utils/logger';
 
 const muteCommand: ICommand = {
     name: 'mute',
     description: 'Mutes a user via inline command.',
-    async execute(interaction: import { CommandInteraction } from "discord.js";) {
+    async execute(interaction: CommandInteraction) {
         const target = interaction.options.getMember('target') as GuildMember;
         if (target) {
             await muteUser(interaction, target);

@@ -12,6 +12,7 @@
       "@command/*": ["src/command/*"],
       "@common/*": ["src/common/*"],
       "@config/*": ["src/common/config/*"],
+      "@llm/*": ["src/llm/*"],
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
       "@utils/*": ["src/utils/*"],

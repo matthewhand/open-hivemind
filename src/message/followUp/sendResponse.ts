@@ -1,6 +1,6 @@
 import DiscordManager from '@message/discord/DiscordManager';
 import logger from '@src/utils/logger';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
