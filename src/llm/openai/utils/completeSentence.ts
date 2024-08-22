@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import logger from '@utils/logger';
-import constants from '@config/configurationManager';
+import logger from '@src/utils/logger';
+import constants from '@src/config/configurationManager';
 
 /**
  * Completes a sentence by making an additional request to the OpenAI API.

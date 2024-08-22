@@ -1,5 +1,5 @@
 import config from 'config';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 class ConfigurationManager {
     /**
@@ -30,3 +30,4 @@ class ConfigurationManager {
 }
 
 export default new ConfigurationManager();
+    public readonly VOICE_CHANNEL_ID: string = this.getConfig<string>('VOICE_CHANNEL_ID', 'default_voice_channel_id');

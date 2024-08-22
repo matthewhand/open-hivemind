@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Checks if the given text starts with a '!' followed by alphanumeric characters, indicating a command.

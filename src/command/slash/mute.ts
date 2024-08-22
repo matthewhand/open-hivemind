@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { muteUser } from '@command/common/mute';
+import { muteUser } from '@src/command/common/mute';
 import { CommandInteraction } from 'discord.js';
 
 export const data = new SlashCommandBuilder()

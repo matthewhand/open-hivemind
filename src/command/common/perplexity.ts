@@ -1,6 +1,6 @@
 import axios from 'axios';
-import ConfigurationManager from '@common/config/ConfigurationManager';
-import logger from '@utils/logger';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import logger from '@src/utils/logger';
 
 const perplexityApiUrl = ConfigurationManager.getConfig<string>('perplexity.apiUrl');
 
@@ -9,7 +9,7 @@ export async function searchPerplexity(query: string): Promise<string> {
         const response = await axios.post(perplexityApiUrl, { query });
         return response.data.result;
     } catch (error) {
-        Logger.error(`Error performing Perplexity search: ${error}`);
+        logger.error(`Error performing Perplexity search: ${error}`);
         throw new Error('Failed to retrieve results from Perplexity.');
     }
 }

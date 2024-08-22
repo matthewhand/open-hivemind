@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { ICommand } from '@command/types/Command';
-import logger from '@utils/logger';
+import { ICommand } from '@src/command/types/Command';
+import logger from '@src/utils/logger';
 import { getRandomErrorMessage } from '../../common/errors/errorMessages';
 
 /**

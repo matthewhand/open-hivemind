@@ -1,5 +1,5 @@
 // Import the aliases configuration from the config directory
-import { aliases } from '@config/aliases';
+import { aliases } from '../config/aliases';
 
 // Define the expected structure of an Alias if it's not a string.
 interface Alias {

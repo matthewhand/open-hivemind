@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { ICommand } from '@command/types/Command';
-import { analyzeImage } from '@command/common/replicate';
-import logger from '@utils/logger';
+import { ICommand } from '@src/command/types/Command';
+import { analyzeImage } from '@src/command/common/replicate';
+import logger from '@src/utils/logger';
 
 export const data = new SlashCommandBuilder()
     .setName('replicate')

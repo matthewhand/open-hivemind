@@ -1,7 +1,7 @@
 // src/message/discord/utils/sendMessageToChannel.ts
 
 import { Client, Message, TextChannel } from 'discord.js';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Sends a message to a specified channel using the Discord client.

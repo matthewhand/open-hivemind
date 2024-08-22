@@ -1,0 +1,83 @@
+src/common/config/environment.ts:export const COMMAND_PREFIX = '!';
+src/common/config/aliases.ts:export const aliases: Record<string, Alias> = {
+src/common/errors/errorMessages.ts:export function getRandomErrorMessage(): string {
+src/common/errors/handleError.ts:export function handleError(error: Error): void {
+src/environment/constants.ts:export const constants = {
+src/command/isCommand.ts:export function isCommand(text: string): boolean {
+src/command/inline/http.ts:export class HTTPCommand implements ICommand {
+src/command/inline/memgpt.ts:export class MemGPTCommand implements ICommand {
+src/command/inline/perplexity.ts:export const PerplexityCommand = {
+src/command/inline/oai.ts:export class OAICommand implements ICommand {
+src/command/inline/help.ts.offline:export function executeHelpCommand(message: Message, args: string[]): void {
+src/command/inline/ban.ts:export class BanCommand implements ICommand {
+src/command/inline/report.ts:export class ReportCommand extends BaseCommand {
+src/command/inline/replicate.ts:export class ReplicateCommand implements ICommand {
+src/command/inline/server.ts:export const command: ICommand = {
+src/command/inline/flowise.ts:export class FlowiseCommand {
+src/command/types/CommandResponse.ts:export class CommandResponse {
+src/command/types/Command.ts:export class Command {
+src/command/parseCommandDetails.ts:export function parseCommandDetails(text: string): CommandDetails | null {
+src/command/handlers/slashCommandHandler.ts:export const registerCommands = async (clientId: string, token: string, guildId: string): Promise<void> => {
+src/command/handlers/slashCommandHandler.ts:export const handleCommands = (client: Client): void => {
+src/command/slash/mute.ts:export const data = new SlashCommandBuilder()
+src/command/slash/quivr.ts.offline:export const quivrCommand = {
+src/command/slash/perplexity.ts:export const data = new SlashCommandBuilder()
+src/command/slash/user.ts:export const data = new SlashCommandBuilder()
+src/command/slash/config.ts.offline:export const configCommand = {
+src/command/slash/replicate.ts:export const data = new SlashCommandBuilder()
+src/command/slash/replicate.ts:export const execute: ICommand['execute'] = async (interaction) => {
+src/command/slash/server.ts:export const data = new SlashCommandBuilder()
+src/command/CommandManager.ts:export class CommandManager {
+src/webhook/webhookHandler.ts:export const startWebhookServer = (port: number): void => {
+src/webhook/types/webhookHandler.d.ts:export const startWebhookServer: any;
+src/message/sendFollowUpRequest.ts:export function scheduleFollowUpRequest(message: any): void {
+src/message/discord/discordUtils.d.ts:export function someUtility(arg: string): string;
+src/message/discord/utils/setupEventHandlers.ts:export function setupEventHandlers(
+src/message/discord/utils/collectSlashCommands.ts:export function collectSlashCommands(commandsPath: string): object[] {
+src/message/discord/utils/timestampFunctions.ts:export function getLastTypingTimestamp(typingTimestamps: Map<string, number>, channelId: string): number {
+src/message/discord/utils/timestampFunctions.ts:export function getLastMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): number {
+src/message/discord/utils/timestampFunctions.ts:export function logMessageTimestamp(messageTimestamps: Map<string, number>, channelId: string): void {
+src/message/discord/utils/splitMessage.ts:export function splitMessage(messageText: string, maxLength = 1997): string[] {
+src/message/discord/utils/setMessageHandler.ts:export function setMessageHandler(messageHandlerCallback: (message: any) => void): void {
+src/message/discord/utils/handleAudioStream.ts:export const handleAudioStream = async (stream: Readable, userId: string, connection: VoiceConnection): Promise<void> => {
+src/message/types/messageHandler.d.ts:export const messageHandler: any;
+src/message/helpers/handleImageMessage.ts:export const predictionImageMap = new Map<string, string>();
+src/message/helpers/messageResponseUtils.ts:export const getTimeSinceLastReply = (channelId: string): number => replyManagerInstance.getTimeSinceLastReply(channelId);
+src/message/helpers/messageResponseUtils.ts:export const logReply = (channelId: string): void => replyManagerInstance.logReply(channelId);
+src/message/helpers/messageResponseUtils.ts:export const calculateDynamicFactor = (channelId: string): number => replyManagerInstance.calculateDynamicFactor(channelId);
+src/message/helpers/messageResponseUtils.ts:export const getReplyCount = (channelId: string): number => replyManagerInstance.getReplyCount(channelId);
+src/message/helpers/messageResponseUtils.ts:export const resetReplyCount = (channelId: string): void => replyManagerInstance.resetReplyCount(channelId);
+src/message/helpers/handleCodeBlocks.ts:export function handleCodeBlocks(message: string): Array<{ label: string | null, content: string }> {
+src/message/helpers/commandParser.ts:export function parseCommand(commandContent: string): ParsedCommand | null {
+src/message/helpers/votingUtils.ts:export function checkVotingEligibility(userId: string): boolean {
+src/message/helpers/shouldProcessMessage.ts:export function shouldProcessMessage(
+src/message/helpers/reconstructCommandFromAlias.ts:export function reconstructCommandFromAlias(alias: string, additionalArgs: string): string | null {
+src/message/helpers/chatHistoryUtils.ts:export function trimMessagesByTokenCount(messages: Message[], newPrompt: string, maxTokens: number): Message[] {
+src/message/helpers/permissions.ts:export function isUserAllowed(userId: string, allowedUsers: string[]): boolean {
+src/message/helpers/permissions.ts:export function isRoleAllowed(userRoles: string[], allowedRoles: string[]): boolean {
+src/message/helpers/getInitialDelay.ts:export function getInitialDelay(
+src/message/helpers/parseCommand.ts:export function parseCommand(commandContent: string): { commandName: string, action: string, args: string } | null {
+src/message/helpers/splitMessageContent.ts:export function splitMessageContent(messageText: string, maxLength = 1997): string[] {
+src/utils/environmentUtils.ts:export function debugEnvVars(): void {
+src/utils/encryptionUtils.ts:export function encrypt(text: string): string {
+src/utils/encryptionUtils.ts:export function decrypt(text: string): string {
+src/utils/environmentUtils.d.ts:export const debugEnvVars: any;
+src/utils/commonUtils.ts:export function getRandomErrorMessage(): string {
+src/utils/commonUtils.ts:export function redactSensitiveInfo(key: string, value: any): string {
+src/utils/commonUtils.ts:export function handleError(error: Error, messageChannel: any = null): void {
+src/utils/reconstructCommandFromAlias.ts:export function reconstructCommandFromAlias(alias: string): string | null {
+src/utils/common.ts:export function splitMessage(message: string, maxLength: number = 2000): string[] {
+src/utils/common.ts:export function getRandomDelay(min: number, max: number): number {
+src/utils/common.ts:export function startTypingIndicator(channel: any): NodeJS.Timeout {
+src/utils/aliasUtils.ts:export function getRandomAliasCommand(): string {
+src/utils/aliasUtils.ts:export function getAliasDescription(commandName: string): string {
+src/utils/aliasUtils.ts:export function listAllAliases(): string {
+src/utils/aliasUtils.ts:export function findAliasesByCategory(category: string): Record<string, string> {
+src/utils/aliasUtils.ts:export function getDetailedAliasInfo(commandName: string): string {
+src/utils/getEmoji.ts:export function getEmoji(): string {
+src/llm/OpenAiManager.ts:export class OpenAiManager {
+src/llm/openai/utils/extractContent.ts:export function extractContent(choice: any): string {
+src/llm/openai/utils/needsCompletion.ts:export function needsCompletion(
+src/llm/openAiUtils.ts:export function extractContent(choice: any): string {
+src/llm/openAiUtils.ts:export function needsCompletion(maxTokensReached: boolean, finishReason: string, content: string): boolean {
+src/llm/openAiUtils.ts:export function getEmoji(): string {

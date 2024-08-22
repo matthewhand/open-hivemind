@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import { ICommand } from '../types/ICommand';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 export class BanCommand implements ICommand {
     name = 'ban';

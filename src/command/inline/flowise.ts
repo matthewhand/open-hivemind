@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 export class FlowiseCommand {
     name = 'flowise';

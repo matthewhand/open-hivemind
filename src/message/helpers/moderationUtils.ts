@@ -1,7 +1,7 @@
 import axios from 'axios';
 import loadServerPolicy from './loadServerPolicy';
 import configurationManager from '../../config/ConfigurationManager';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Determines if a user should be banned based on chat history and server policy.

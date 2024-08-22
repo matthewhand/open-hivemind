@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Handles code blocks within a message, including labels.

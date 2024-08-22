@@ -1,6 +1,6 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Registers slash commands with Discord for a specific guild.

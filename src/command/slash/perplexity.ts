@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { searchPerplexity } from '@command/common/perplexity';
+import { searchPerplexity } from '@src/command/common/perplexity';
 import { CommandInteraction } from 'discord.js';
 
 export const data = new SlashCommandBuilder()

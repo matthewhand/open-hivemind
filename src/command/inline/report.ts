@@ -1,6 +1,6 @@
 import { Message, TextChannel, MessageCollector } from 'discord.js';
 import { BaseCommand } from '../types/BaseCommand';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 export class ReportCommand extends BaseCommand {
     constructor() {

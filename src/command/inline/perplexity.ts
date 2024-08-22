@@ -1,4 +1,4 @@
-import { performPerplexitySearch } from '@command/common/perplexity';
+import { performPerplexitySearch } from '@src/command/common/perplexity';
 
 export const PerplexityCommand = {
     name: 'perplexity',

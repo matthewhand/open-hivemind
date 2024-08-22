@@ -1,5 +1,5 @@
-import { ICommand } from '@command/types/Command';
-import logger from '@utils/logger';
+import { ICommand } from '@src/command/types/Command';
+import logger from '@src/utils/logger';
 
 /**
  * HTTPCommand class to handle HTTP requests.

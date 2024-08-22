@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 import DiscordManager from '../managers/DiscordManager';
 
 /**

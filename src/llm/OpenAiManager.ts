@@ -1,5 +1,5 @@
 import config from 'config'; // Importing the config module to access JSON configuration
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 import LLMResponse from '@src/llm/LLMResponse';
 import { handleError } from '../utils/commonUtils';
 import { extractContent } from './openAiUtils';

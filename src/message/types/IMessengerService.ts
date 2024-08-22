@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Abstract class representing a messenger service interface.

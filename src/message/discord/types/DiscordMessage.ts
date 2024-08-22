@@ -1,5 +1,5 @@
 import { GuildMember, Message } from 'discord.js';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 import { constants } from '../../../config/constants';
 
 /**

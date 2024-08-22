@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Represents a command with a name and an execution function.

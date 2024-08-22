@@ -1,8 +1,8 @@
 import { IMessage } from '@src/message/types/IMessage';
 import MessageResponseManager from '@src/message/responseHandling/MessageResponseManager';
 import { LLMInterface } from '@src/llm/LLMInterface';
-import constants from '@common/config/ConfigurationManager';
-import logger from '@utils/logger';
+import constants from '@src/common/config/ConfigurationManager';
+import logger from '@src/utils/logger';
 import { sendResponse } from '@src/message/followUp/sendResponse';
 import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 import { prepareMessageBody } from '@src/message/utils/messageProcessing/prepareMessageBody';

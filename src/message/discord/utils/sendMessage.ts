@@ -1,5 +1,5 @@
 import { sendResponse } from './sendResponse';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Sends a message to a specified channel.

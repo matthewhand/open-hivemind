@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { handleUserCommand } from '@command/common/user';
+import { handleUserCommand } from '@src/command/common/user';
 
 export const data = new SlashCommandBuilder()
     .setName('user')

@@ -1,6 +1,6 @@
 import DiscordManager from '@message/discord/DiscordManager';
-import ConfigurationManager from '@common/ConfigurationManager';
-import logger from '@utils/logger';
+import ConfigurationManager from "@src/utils/configurationManager";
+import logger from '@src/utils/logger';
 
 import { messageHandler } from '@message/handlers/messageHandler';
 
@@ -19,7 +19,7 @@ async function main() {
         await discordManager.start(clientId);
     } catch (error) {
         // Log the error if the Discord manager fails to start
-        Logger.error('Failed to start Discord manager:', error);
+        logger.error('Failed to start Discord manager:', error);
         
         // Exit the process with an error code
         process.exit(1);

@@ -1,6 +1,6 @@
-import { ICommand } from '@command/types/Command';
-import { analyzeImage } from '@command/common/replicate';
-import logger from '@utils/logger';
+import { ICommand } from '@src/command/types/Command';
+import { analyzeImage } from '@src/command/common/replicate';
+import logger from '@src/utils/logger';
 
 export class ReplicateCommand implements ICommand {
     name = 'replicate';

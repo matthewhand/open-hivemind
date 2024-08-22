@@ -1,4 +1,4 @@
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Simulates the process of starting a voting process for banning a user.

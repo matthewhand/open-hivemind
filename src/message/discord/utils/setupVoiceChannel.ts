@@ -1,7 +1,8 @@
+import ConfigurationManager from '../../common/config/ConfigurationManager';
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
-import logger from '@utils/logger';
-import constants from '../../config/configurationManager';
+import logger from '@src/utils/logger';
+import constants from '../../common/config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
 
@@ -10,7 +11,7 @@ import { handleAudioStream } from './handleAudioStream';
  * Ensures the bot has the necessary permissions and logs relevant information for debugging.
  */
 export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
-    const VOICE_CHANNEL_ID = constants.VOICE_CHANNEL_ID;
+    const VOICE_CHANNEL_ID = ConfigurationManager.getConfig("VOICE_CHANNEL_ID", "default_voice_channel_id");
     logger.debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
 
     if (!VOICE_CHANNEL_ID) {
@@ -82,7 +83,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
 
         connection.receiver.speaking.on('start', (userId) => {
             logger.info('User ' + userId + ' started speaking');
-            const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence } });
+            const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: 5000 } });
             handleAudioStream(audioStream, userId, connection);
         });
 

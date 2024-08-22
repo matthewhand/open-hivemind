@@ -1,5 +1,5 @@
 import { CommandInteraction } from 'discord.js';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 
 /**
  * Handles the server command, which provides information about the current server.
@@ -17,7 +17,7 @@ export async function handleServerCommand(interaction: CommandInteraction): Prom
             `This server is ${guild.name} and has ${guild.memberCount} members.`
         );
     } catch (error) {
-        Logger.error(`Error executing server command: ${error.message}`);
+        logger.error(`Error executing server command: ${error.message}`);
         await interaction.reply('Failed to retrieve server information.');
     }
 }

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { handleServerCommand } from '@command/common/server';
+import { handleServerCommand } from '@src/command/common/server';
 
 export const data = new SlashCommandBuilder()
     .setName('server')

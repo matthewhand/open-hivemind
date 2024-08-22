@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import logger from '@utils/logger';
+import logger from '@src/utils/logger';
 import { isCommand } from './isCommand';
 import { parseCommandDetails } from './parseCommandDetails';
 import { executeParsedCommand } from './executeParsedCommand';

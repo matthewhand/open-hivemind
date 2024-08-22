@@ -2,7 +2,7 @@
 
 import * as aliasUtils from './aliasUtils';
 import * as common from './common';
-import { handleError } from '@utils/commonUtils';
+import { handleError } from '../utils/commonUtils';
 import handleImageMessage from './handleImageMessage';
 import logger from './logger';
 import * as mutingUtils from './mutingUtils';
