@@ -1,6 +1,6 @@
-import { IMessage } from '@message/types/IMessage';
+import { { IMessage } from "@message/types/IMessage"; } from '@message/types/import { IMessage } from "@message/types/IMessage";';
 import MessageResponseManager from '@message/responseHandling/MessageResponseManager';
-import { LLMInterface } from '@llm/LLMInterface';
+import { { LLMInterface } from "@llm/LLMInterface"; } from '@llm/import { LLMInterface } from "@llm/LLMInterface";';
 import constants from '@common/config/ConfigurationManager';
 import logger from '@utils/logger';
 import { sendResponse } from '@message/followUp/sendResponse';
@@ -9,7 +9,7 @@ import { prepareMessageBody } from '@message/helpers/messageProcessing/prepareMe
 import { summarizeMessage } from '@message/helpers/messageProcessing/summarizeMessage';
 import { processCommand } from '@message/helpers/messageProcessing/processCommand';;
 
-export async function messageHandler(originalMsg: IMessage, historyMessages: IMessage[] = []): Promise<void> {
+export async function messageHandler(originalMsg: import { IMessage } from "@message/types/IMessage";, historyMessages: import { IMessage } from "@message/types/IMessage";[] = []): Promise<void> {
     if (!originalMsg) {
         logger.error('[messageHandler] No original message provided.');
         return;
@@ -21,11 +21,11 @@ export async function messageHandler(originalMsg: IMessage, historyMessages: IMe
     const messageId = originalMsg.getMessageId();
     logger.debug('[messageHandler] Started processing message ID: ' + messageId + ' at ' + new Date(startTime).toISOString());
 
-    if (!(originalMsg instanceof IMessage)) {
-        logger.error('[messageHandler] originalMsg is not an instance of IMessage. Actual type: ' + originalMsg.constructor.name);
+    if (!(originalMsg instanceof import { IMessage } from "@message/types/IMessage";)) {
+        logger.error('[messageHandler] originalMsg is not an instance of import { IMessage } from "@message/types/IMessage";. Actual type: ' + originalMsg.constructor.name);
         return;
     } else {
-        logger.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
+        logger.debug('[messageHandler] originalMsg is a valid instance of import { IMessage } from "@message/types/IMessage";.');
     }
 
     if (!originalMsg.getText || typeof originalMsg.getText !== 'function') {
@@ -55,9 +55,9 @@ export async function messageHandler(originalMsg: IMessage, historyMessages: IMe
     await processAIResponse(originalMsg, historyMessages, startTime);
 }
 
-function validateMessage(message: IMessage): boolean {
-    if (!(message instanceof IMessage)) {
-        logger.error('[validateMessage] Invalid message object type. Expected IMessage instance, got: ' + message.constructor.name);
+function validateMessage(message: import { IMessage } from "@message/types/IMessage";): boolean {
+    if (!(message instanceof import { IMessage } from "@message/types/IMessage";)) {
+        logger.error('[validateMessage] Invalid message object type. Expected import { IMessage } from "@message/types/IMessage"; instance, got: ' + message.constructor.name);
         return false;
     }
 
@@ -75,7 +75,7 @@ function validateMessage(message: IMessage): boolean {
     return true;
 }
 
-async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
+async function processAIResponse(message: import { IMessage } from "@message/types/IMessage";, historyMessages: import { IMessage } from "@message/types/IMessage";[], startTime: number): Promise<void> {
     logger.debug('[messageHandler] process ai response');
 
     if (!MessageResponseManager.getInstance().shouldReplyToMessage(message)) {
@@ -83,7 +83,7 @@ async function processAIResponse(message: IMessage, historyMessages: IMessage[],
         return;
     }
 
-    const llmManager = LLMInterface.getManager();
+    const llmManager = import { LLMInterface } from "@llm/LLMInterface";.getManager();
     if (llmManager.isBusy()) {
         logger.info('[messageHandler] LLM Manager busy.');
         return;
