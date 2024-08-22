@@ -1,13 +1,13 @@
-import { IMessage } from '@src/message/types/IMessage';
-import MessageResponseManager from '@src/message/responseHandling/MessageResponseManager';
-import { LLMInterface } from '@src/llm/LLMInterface';
-import constants from '@config/ConfigurationManager';
-import logger from '@src/utils/logger';
-import { sendResponse } from '@src/message/followUp/sendResponse';
-import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
-import { prepareMessageBody } from '@src/message/utils/messageProcessing/prepareMessageBody';
-import { summarizeMessage } from '@src/message/utils/messageProcessing/summarizeMessage';
-import { processCommand } from '@src/message/utils/messageProcessing/processCommand';;
+import { IMessage } from '@message/types/IMessage';
+import MessageResponseManager from '@message/responseHandling/MessageResponseManager';
+import { LLMInterface } from '@llm/LLMInterface';
+import constants from '@common/config/ConfigurationManager';
+import logger from '@utils/logger';
+import { sendResponse } from '@message/followUp/sendResponse';
+import { sendFollowUp } from '@message/followUp/sendFollowUp';
+import { prepareMessageBody } from '@message/helpers/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@message/helpers/messageProcessing/summarizeMessage';
+import { processCommand } from '@message/helpers/messageProcessing/processCommand';;
 
 export async function messageHandler(originalMsg: IMessage, historyMessages: IMessage[] = []): Promise<void> {
     if (!originalMsg) {
