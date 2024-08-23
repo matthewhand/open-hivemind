@@ -23,8 +23,8 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
             }
         });
 
-        logger.debug('transcribeAudio: Response data:', response.data);
-        return response.data.text;
+        logger.debug('transcribeAudio: Full response:', response);
+        return response.text;
     } catch (error: any) {
         logger.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
