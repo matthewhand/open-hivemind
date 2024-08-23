@@ -5,7 +5,7 @@ import { isCommand } from './isCommand';
 import { parseCommandDetails } from './parseCommandDetails';
 import { executeParsedCommand } from './executeParsedCommand';
 import { IMessage } from '../message/types/IMessage';
-import ICommand from '../interfaces/ICommand';
+import ICommand from '@src/command/interfaces/ICommand';
 
 /**
  * Manages command operations including loading commands, parsing input texts, and executing commands.
@@ -96,3 +96,4 @@ export class CommandManager {
         };
     }
 }
+

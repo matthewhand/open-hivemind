@@ -7,6 +7,11 @@ export class BanCommand {
 
     async banUser(message: Message, reason: string): Promise<{ success: boolean, message: string, error?: string }> {
         const targetUser = message.mentions.users.first();
+        
+        if (!targetUser) {
+            return { success: false, message: 'No user mentioned to ban.', error: 'No user mentioned' };
+        }
+        
         try {
             const member = await message.guild?.members.fetch(targetUser.id);
             await member?.ban({ reason });

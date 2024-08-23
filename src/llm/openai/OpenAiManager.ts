@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import logger from '@src/utils/logger';;
+import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import { IMessage } from '../../message/types/IMessage';
 import { LLMResponse } from '../../llm/LLMResponse';
@@ -7,8 +7,8 @@ import { extractContent } from './utils/extractContent';
 import { makeOpenAiRequest } from './utils/makeOpenAiRequest';
 import { completeSentence } from './utils/completeSentence';
 import { needsCompletion } from './utils/needsCompletion';
-import { getEmoji } from '@src/utils/getEmoji';;
-import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';;
+import { getEmoji } from '@src/utils/getEmoji';
+import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';
 
 /**
  * Manages interactions with the OpenAI API, ensuring efficient and correct request handling.
@@ -90,10 +90,10 @@ class OpenAiManager {
             temperature: constants.LLM_TEMPERATURE,
         };
 
-        constants.LLM_STOP = process.env.LLM_STOP ? JSON.parse(process.env.LLM_STOP) : null;
+        const llmStop = constants.LLM_STOP.length > 0 ? constants.LLM_STOP : null;
 
-        if (constants.LLM_STOP) {
-            requestBody.stop = constants.LLM_STOP;
+        if (llmStop) {
+            requestBody.stop = llmStop;
         }
 
         return requestBody;

@@ -7,7 +7,7 @@ const muteCommand: ICommand = {
   name: 'mute',
   description: 'Mutes a user via inline command.',
   async execute(interaction: CommandInteraction) {
-    const targetUser = interaction.options.interaction.options.getUser('target') as User || interaction.options.interaction.options.getUser('user') as User;
+    const targetUser = interaction.options.getUser('target') as User || interaction.options.getUser('user') as User;
     const target = targetUser ? interaction.guild?.members.cache.get(targetUser.id) : undefined;
 
     if (target) {
