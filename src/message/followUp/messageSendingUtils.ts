@@ -1,4 +1,4 @@
-import { makeOpenAiRequest } from '@src/llm/openai/utils/makeOpenAiRequest';
+
 import OpenAiManager from '@src/llm/openai/OpenAiManager';
 import DiscordManager from '@src/message/discord/DiscordManager';
 import logger from '@src/utils/logger';

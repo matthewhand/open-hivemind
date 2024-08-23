@@ -1,4 +1,4 @@
-import OpenAI from '@src/llm/openai/OpenAI';
+import OpenAI from 'openai';
 import constants from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/utils/extractContent';
