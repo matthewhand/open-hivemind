@@ -24,7 +24,7 @@ export async function messageHandler(
         new Date(startTime).toISOString()
     );
 
-    if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg)) {
+    if (!(originalMsg if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg))if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg)) 'getMessageId' in originalMsg)) {
         logger.error(
             '[messageHandler] originalMsg is not an instance of IMessage. Actual type: ' +
             originalMsg.constructor.name
