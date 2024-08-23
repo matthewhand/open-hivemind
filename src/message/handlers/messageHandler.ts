@@ -24,24 +24,23 @@ export async function messageHandler(
         new Date(startTime).toISOString()
     );
 
-if (!(originalMsg     if (!(originalMsg if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg))if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg)) 'getMessageId' in originalMsg)) {    if (!(originalMsg if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg))if (!(originalMsg if (!(originalMsg instanceof IMessage)) {if (!(originalMsg instanceof IMessage)) { 'getMessageId' in originalMsg)) 'getMessageId' in originalMsg)) { 'getMessageId' in originalMsg)) {
-        logger.error(
-            '[messageHandler] originalMsg is not an instance of IMessage. Actual type: ' +
-            originalMsg.constructor.name
-        );
+    // Type guard to ensure originalMsg is a valid instance of IMessage
+    if (!(originalMsg && 'getMessageId' in originalMsg)) {
+        logger.error('[messageHandler] originalMsg is not a valid IMessage instance.');
         return;
-    } else {
-        logger.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
     }
 
-    if (!originalMsg.getText || typeof originalMsg.getText !== 'function') {
+    logger.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
+
+    // Validate getText method
+    if (typeof originalMsg.getText !== 'function') {
         logger.error('[messageHandler] originalMsg does not have a valid getText method.');
         return;
-    } else {
-        logger.debug('[messageHandler] originalMsg has a valid getText method.');
     }
 
-    if (originalMsg.getText && !originalMsg.getText().trim()) {
+    logger.debug('[messageHandler] originalMsg has a valid getText method.');
+
+    if (!originalMsg.getText().trim()) {
         logger.info('[messageHandler] Received empty message.');
         return;
     }
