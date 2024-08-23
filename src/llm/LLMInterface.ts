@@ -1,6 +1,5 @@
 import constants from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
-import config from 'config';
 
 export abstract class LLMInterface {
     constructor() {
@@ -14,7 +13,7 @@ export abstract class LLMInterface {
         logger.debug('getManager called');
         switch (constants.LLM_PROVIDER) {
             case 'OpenAI': {
-                const { OpenAiManager } = require('../managers/OpenAiManager');
+                const { OpenAiManager } = require('@src/llm/openai/OpenAiManager');
                 return OpenAiManager.getInstance();
             }
             default:

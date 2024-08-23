@@ -1,14 +1,14 @@
 import OpenAI from 'openai';
-import logger from '../../utils/logger';
-import constants from '../../common/config/ConfigurationManager';
-import { IMessage } from '../../message/types/IMessage';
-import LLMResponse from '../../llm/LLMResponse';
-import { extractContent } from './utils/extractContent';
-import { makeOpenAiRequest } from './utils/makeOpenAiRequest';
-import { completeSentence } from './utils/completeSentence';
-import { needsCompletion } from './utils/needsCompletion';
-import { getEmoji } from '../../utils/getEmoji';
-import { handleError, redactSensitiveInfo } from '../../utils/commonUtils';
+import logger from '@src/utils/logger';
+import constants from '@config/ConfigurationManager';
+import { IMessage } from '@src/message/types/IMessage';
+import LLMResponse from '@src/llm/LLMResponse';
+import { extractContent } from '@src/llm/openai/utils/extractContent';
+import { makeOpenAiRequest } from '@src/llm/openai/utils/makeOpenAiRequest';
+import { completeSentence } from '@src/llm/openai/utils/completeSentence';
+import { needsCompletion } from '@src/llm/openai/utils/needsCompletion';
+import { getEmoji } from '@src/utils/getEmoji';
+import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';
 
 /**
  * Manages interactions with the OpenAI API, ensuring efficient and correct request handling.
