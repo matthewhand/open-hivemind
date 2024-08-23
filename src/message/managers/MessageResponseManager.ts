@@ -1,6 +1,4 @@
-import configurationManager from '@src/common/config/ConfigurationManager';
-
-export class MessageResponseManager {
+class MessageResponseManager {
     private static instance: MessageResponseManager;
 
     private constructor() {}
@@ -12,8 +10,9 @@ export class MessageResponseManager {
         return MessageResponseManager.instance;
     }
 
-    public async getMessageResponse(): Promise<string> {
-        const messageResponseSettings = configurationManager.getConfig('messageResponseSettings', 'default-settings');
-        return `Response with settings: ${messageResponseSettings}`;
+    public shouldReplyToMessage(message: any): boolean {
+        // Implementation logic
     }
 }
+
+export default MessageResponseManager;
