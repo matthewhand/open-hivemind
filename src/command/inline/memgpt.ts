@@ -1,6 +1,7 @@
 import axios from 'axios';
-import ICommand from '../interfaces/ICommand';
+import ICommand from '@src/command/interfaces/ICommand';
 import logger from '@src/utils/logger';
+import { getRandomErrorMessage } from '@src/utils/commonUtils';
 
 /**
  * CommandHandler to interact with the MemGPT service.

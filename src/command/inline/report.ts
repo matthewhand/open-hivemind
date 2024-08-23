@@ -1,4 +1,5 @@
-import { BaseCommand } from '../types/BaseCommand';
+import { InlineCommand } from '@src/command/types/InlineCommand';
+import { Message, TextChannel, MessageCollector } from 'discord.js';
 import logger from '@src/utils/logger';
 
 export class ReportCommand extends InlineCommand {
