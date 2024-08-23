@@ -20,7 +20,7 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
         }
 
         logger.debug('[DiscordManager] Channel type: ' + channel.type);
-        if (channel.isTextBased()) {
+        if (channel.isTextBased() && channel.type === 'GUILD_TEXT') {
             // Check if the bot has permission to send messages in the channel
             const permissions = channel.permissionsFor(client.user!);
             if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {

@@ -2,8 +2,8 @@ import { IMessage } from "@message/types/IMessage";
 import logger from "@utils/logger";
 
 export function validateMessage(message: IMessage): boolean {
-    if (!(message instanceof IMessage)) {
-        logger.error('[validateMessage] Invalid message object type. Expected IMessage instance, got: ' + message.constructor.name);
+    if (!(message as any instanceof IMessage)) {
+        logger.error('[validateMessage] Invalid message object type. Expected IMessage instance, got: ' + (message.constructor?.name || 'unknown'));
         return false;
     }
 

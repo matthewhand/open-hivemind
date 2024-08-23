@@ -2,7 +2,7 @@ import { Client, Message } from 'discord.js';
 import logger from '@src/utils/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
 import constants from '@config/ConfigurationManager';
-import * as discordUtils from '../../utils/discordUtils';
+import { fetchChannel } from '../utils/fetchChannel';
 
 /**
  * Configures event listeners for typing events and message creation, handling them appropriately.
@@ -17,8 +17,8 @@ export function setupEventHandlers(
     typingTimestamps: Map<string, number>,
     fetchMessages: (channelId: string) => Promise<Message[]>
 ): void {
-    client.on('typingStart', (channel) => {
-        typingTimestamps.set(channel.id, Date.now());
+    client.on('typingStart', (typing) => {
+        typingTimestamps.set(typing.channel.id, Date.now());
     });
 
     client.on('messageCreate', async (discordMessage: Message) => {
@@ -50,7 +50,7 @@ export function setupEventHandlers(
                 return;
             }
 
-            const channel = await discordUtils.fetchChannel(client, channelId);
+            const channel = await fetchChannel(client, channelId);
             if (!channel) {
                 logger.error('[DiscordManager] Could not fetch channel with ID: ' + channelId);
                 return;

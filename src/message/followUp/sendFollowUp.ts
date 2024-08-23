@@ -1,4 +1,4 @@
-import { OpenAiManager } from '@src/llm/OpenAiManager';
+import OpenAiManager from '@src/llm/OpenAiManager';
 import logger from '@src/utils/logger';
 import { sendResponse } from '@src/message/followUp/sendResponse';
 import constants from '@config/ConfigurationManager';
