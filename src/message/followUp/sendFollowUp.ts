@@ -5,7 +5,7 @@ import constants from '@config/ConfigurationManager';
 
 export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
     try {
-        const followUpText = await OpenAiManager.generateFollowUpText(originalMessage, topic);
+        const followUpText = await OpenAiManager.getInstance().sendRequest({ content: topic, originalMessage });
 
         if (followUpText) {
             await sendResponse(followUpText, originalMessage.channel.id, Date.now());
