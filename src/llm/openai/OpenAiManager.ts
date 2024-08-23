@@ -6,8 +6,8 @@ import LLMResponse from '@src/llm/LLMResponse';
 import { buildRequestBody } from '@src/llm/openai/utils/buildRequestBody';
 import { sendRequest } from '@src/llm/openai/utils/sendRequest';
 
-class OpenAiManager {
-    private static instance: OpenAiManager;
+class OpenAI {
+    private static instance: OpenAI;
     private openai: OpenAI;
     private busy: boolean;
 
@@ -19,11 +19,11 @@ class OpenAiManager {
         this.busy = false;
     }
 
-    public static getInstance(): OpenAiManager {
-        if (!OpenAiManager.instance) {
-            OpenAiManager.instance = new OpenAiManager();
+    public static getInstance(): OpenAI {
+        if (!OpenAI.instance) {
+            OpenAI.instance = new OpenAI();
         }
-        return OpenAiManager.instance;
+        return OpenAI.instance;
     }
 
     public getClient(): OpenAI {
@@ -44,4 +44,4 @@ class OpenAiManager {
     }
 }
 
-export default OpenAiManager;
+export default OpenAI;

@@ -2,7 +2,6 @@ import OpenAI from '@src/llm/openai/OpenAI';
 import constants from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/utils/extractContent';
-import { makeOpenAiRequest } from '@src/llm/openai/utils/makeOpenAiRequest';
 import { completeSentence } from '@src/llm/openai/utils/completeSentence';
 import { needsCompletion } from '@src/llm/openai/utils/needsCompletion';
 import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';
@@ -29,7 +28,7 @@ export async function sendRequest(
     logger.debug('[OpenAI.sendRequest] Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
 
     try {
-        const response = await makeOpenAiRequest(openAiManager.getClient(), requestBody);
+        const response = await openAiManager.chat.completions.create(requestBody);
         let content = extractContent(response.choices[0]);
         let tokensUsed = response.usage.total_tokens;
         let finishReason = response.choices[0].finish_reason;
@@ -40,7 +39,7 @@ export async function sendRequest(
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
             logger.info('[OpenAI.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
-            content = await completeSentence(openAiManager.getClient(), content, constants);
+            content = await completeSentence(openAiManager, content, constants);
         }
 
         return new LLMResponse(content, finishReason, tokensUsed);
