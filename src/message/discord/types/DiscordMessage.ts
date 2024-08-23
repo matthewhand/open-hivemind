@@ -1,4 +1,4 @@
-import { GuildMember, Message } from 'discord.js';
+import { GuildMember, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 import { constants } from '@config/constants';
 
@@ -87,7 +87,10 @@ export default class DiscordMessage {
      * @returns {string} The channel topic or 'No topic' if none is set.
      */
     getChannelTopic(): string {
-        return this.message.channel.topic || 'No topic';
+        if (this.message.channel instanceof TextChannel) {
+            return this.message.channel.topic || 'No topic';
+        }
+        return 'No topic';
     }
 
     /**
@@ -106,11 +109,14 @@ export default class DiscordMessage {
      * @returns {Array<{ id: string, displayName: string }>} An array of users in the channel.
      */
     getChannelUsers(): Array<{ id: string, displayName: string }> {
-        const members = this.message.channel.members as Map<string, GuildMember>;
-        return Array.from(members.values()).map(member => ({
-            id: member.user.id,
-            displayName: member.user.username,
-        }));
+        if (this.message.channel instanceof TextChannel) {
+            const members = this.message.channel.members as Map<string, GuildMember>;
+            return Array.from(members.values()).map(member => ({
+                id: member.user.id,
+                displayName: member.user.username,
+            }));
+        }
+        return [];
     }
 
     /**

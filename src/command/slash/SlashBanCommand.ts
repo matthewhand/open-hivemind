@@ -1,17 +1,20 @@
-import { SlashCommand } from '../types/SlashCommand';
 import { CommandInteraction } from 'discord.js';
-import logger from '@utils/logger';
-import { BanCommand } from '@command/common/ban';
+import { banUser } from '@src/command/common/ban';
+import ICommand from '../interfaces/ICommand';
 
-export class SlashBanCommand extends BanCommand implements SlashCommand {
-    async execute(interaction: CommandInteraction): Promise<{ success: boolean, message: string, error?: string }> {
-        const targetUser = interaction.options.getUser('target');
-        if (!targetUser) {
-            const errorMessage = 'You need to mention a user to ban.';
-            logger.error(errorMessage);
-            return { success: false, message: errorMessage };
-        }
-        const reason = interaction.options.getString('reason') || 'No reason provided';
-        return await this.banUser(interaction, reason);
+const SlashBanCommand: ICommand = {
+  name: 'ban',
+  description: 'Bans a user via slash command.',
+  async execute(interaction: CommandInteraction) {
+    const targetUser = interaction.options.getUser('target') || interaction.options.getUser('user');
+    const reason = interaction.options.getString('reason') || 'No reason provided';
+
+    if (targetUser) {
+      await banUser(interaction, targetUser, reason);
+    } else {
+      await interaction.reply('Could not find the specified user.');
     }
-}
+  },
+};
+
+export default SlashBanCommand;

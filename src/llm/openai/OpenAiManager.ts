@@ -114,7 +114,7 @@ class OpenAiManager {
             let content = extractContent(response.choices[0]);
             let tokensUsed = response.usage.total_tokens;
             let finishReason = response.choices[0].finish_reason;
-            let maxTokensReached = tokensUsed >= constants.MAX_TOKENS;
+            let maxTokensReached = tokensUsed >= constants.LLM_RESPONSE_MAX_TOKENS;
 
             if (
                 constants.LLM_SUPPORTS_COMPLETIONS &&
