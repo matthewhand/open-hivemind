@@ -6,12 +6,14 @@ import logger from '@src/utils/logger';
  */
 export abstract class IMessage {
     protected data: any;
+    public role: string;  // Added role property
 
-    constructor(data: any) {
+    constructor(data: any, role: string) {
         if (new.target === IMessage) {
             throw new TypeError('Cannot construct IMessage instances directly');
         }
         this.data = data;
+        this.role = role;
         logger.debug('IMessage initialized with data: ' + JSON.stringify(data));
     }
 

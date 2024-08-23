@@ -41,6 +41,13 @@ class ConfigurationManager {
     // Transcription Configuration
     public readonly TRANSCRIBE_API_KEY: string = this.getConfig<string>('transcribe.apiKey', 'default_transcribe_api_key');
 
+    // Follow-Up Configuration
+    public readonly FOLLOW_UP_ENABLED: boolean = this.getConfig<boolean>('followUp.enabled', false);
+
+    // Custom Configurations
+    public readonly CHANNEL_ID: string = this.getConfig<string>('discord.channelId', 'default_channel_id');
+    public readonly MIN_MESSAGE_INTERVAL_MS: number = this.getConfig<number>('message.minMessageIntervalMs', 1000);
+
     // New getConfig method wrapping around getConfigOrWarn
     public getConfig<T>(key: string, defaultValue: T): T {
         return getConfigOrWarn<T>(key, defaultValue);
