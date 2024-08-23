@@ -13,8 +13,8 @@ export abstract class LLMInterface {
         logger.debug('getManager called');
         switch (constants.LLM_PROVIDER) {
             case 'OpenAI': {
-                const { OpenAiManager } = require('@src/llm/openai/OpenAiManager');
-                return OpenAiManager.getInstance();
+                const { OpenAI } = require('@src/llm/openai/OpenAI');
+                return OpenAI.getInstance();
             }
             default:
                 logger.error('Unsupported LLM Provider specified in constants: ' + constants.LLM_PROVIDER);

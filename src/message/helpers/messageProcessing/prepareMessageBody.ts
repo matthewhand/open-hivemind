@@ -1,6 +1,6 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAiManager from '@src/llm/openai/OpenAiManager';
+import OpenAI from '@src/llm/openai/OpenAI';
 
 /**
  * Prepares the request body for the OpenAI API call, incorporating the provided message content,
@@ -29,5 +29,5 @@ export async function prepareMessageBody(prompt: string, channelId: string = con
 
     logger.debug('[prepareMessageBody] Preparing message body for channel ID: ' + channelId + ' with prompt: ' + prompt.substring(0, 50) + '...', { prompt, channelId });
 
-    return OpenAiManager.getInstance().buildRequestBody(history, prompt);
+    return OpenAI.getInstance().buildRequestBody(history, prompt);
 }

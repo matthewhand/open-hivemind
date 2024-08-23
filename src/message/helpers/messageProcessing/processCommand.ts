@@ -1,5 +1,5 @@
 import logger from '@src/utils/logger';
-import CommandManager from '../../managers/CommandManager';
+import CommandManager from '../../command/CommandManager';
 
 /**
  * Processes a command contained within a message.

@@ -102,7 +102,7 @@ export const startWebhookServer = (port: number): void => {
 
     // app.post('/summarise-then-post', async (req: Request, res: Response) => {
     //     const { message } = req.body;
-    //     const openAiManager = OpenAiManager.getInstance();
+    //     const openAiManager = new OpenAI({ apiKey: constants.LLM_API_KEY, baseURL: constants.LLM_ENDPOINT_URL });
 
     //     if (!message) {
     //         console.error('No message provided in request body');

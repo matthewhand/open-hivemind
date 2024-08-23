@@ -1,6 +1,6 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAiManager from '@src/llm/openai/OpenAiManager';
+import OpenAI from '@src/llm/openai/OpenAI';
 
 /**
  * Summarizes a given text to a specified target size using the OpenAI API.
@@ -16,7 +16,7 @@ export async function summarizeMessage(content: string, targetSize: number = con
         throw new Error('Content must be a string.');
     }
 
-    const openAiManager = OpenAiManager.getInstance();
+    const openAiManager = OpenAI.getInstance();
     try {
         const summary = await openAiManager.summarizeText(content, targetSize);
         logger.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });

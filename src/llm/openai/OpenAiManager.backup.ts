@@ -14,8 +14,8 @@ import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';
  * Manages interactions with the OpenAI API, ensuring efficient and correct request handling.
  * This manager maintains a single instance throughout the application to manage state and API interactions.
  */
-class OpenAiManager {
-    private static instance: OpenAiManager;
+class OpenAI {
+    private static instance: OpenAI;
     private openai: OpenAI;
     private busy: boolean;
 
@@ -27,11 +27,11 @@ class OpenAiManager {
         this.busy = false;
     }
 
-    public static getInstance(): OpenAiManager {
-        if (!OpenAiManager.instance) {
-            OpenAiManager.instance = new OpenAiManager();
+    public static getInstance(): OpenAI {
+        if (!OpenAI.instance) {
+            OpenAI.instance = new OpenAI();
         }
-        return OpenAiManager.instance;
+        return OpenAI.instance;
     }
 
     public getClient(): OpenAI {
@@ -101,13 +101,13 @@ class OpenAiManager {
 
     public async sendRequest(requestBody: Record<string, any>): Promise<LLMResponse> {
         if (this.busy) {
-            logger.warn('[OpenAiManager.sendRequest] The manager is currently busy with another request.');
+            logger.warn('[OpenAI.sendRequest] The manager is currently busy with another request.');
             return new LLMResponse('', 'busy');
         }
 
         this.busy = true;
-        logger.debug('[OpenAiManager.sendRequest] Sending request to OpenAI');
-        logger.debug('[OpenAiManager.sendRequest] Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
+        logger.debug('[OpenAI.sendRequest] Sending request to OpenAI');
+        logger.debug('[OpenAI.sendRequest] Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
 
         try {
             const response = await makeOpenAiRequest(this.openai, requestBody);
@@ -120,7 +120,7 @@ class OpenAiManager {
                 constants.LLM_SUPPORTS_COMPLETIONS &&
                 needsCompletion(maxTokensReached, finishReason, content)
             ) {
-                logger.info('[OpenAiManager.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
+                logger.info('[OpenAI.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
                 content = await completeSentence(this.openai, content, constants);
             }
 
@@ -130,7 +130,7 @@ class OpenAiManager {
             return new LLMResponse('', 'error');
         } finally {
             this.busy = false;
-            logger.debug('[OpenAiManager.sendRequest] Set busy to false after processing the request.');
+            logger.debug('[OpenAI.sendRequest] Set busy to false after processing the request.');
         }
     }
 
@@ -143,4 +143,4 @@ class OpenAiManager {
     }
 }
 
-export default OpenAiManager;
+export default OpenAI;
