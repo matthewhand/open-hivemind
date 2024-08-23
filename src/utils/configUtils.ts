@@ -1,4 +1,4 @@
-import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 export function getConfigOrWarn<T>(configKey: string, defaultValue: T): T {
     const value = ConfigurationManager.getConfig<T>(configKey, defaultValue);

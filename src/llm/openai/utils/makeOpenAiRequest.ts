@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import logger from '../../../utils/logger';
-import { ChatCompletionCreateParamsNonStreaming } from 'openai';
+import ChatCompletionCreateParams from 'openai';
 
 /**
  * Sends a request to the OpenAI API and returns the response.
@@ -10,7 +10,7 @@ import { ChatCompletionCreateParamsNonStreaming } from 'openai';
  */
 export async function makeOpenAiRequest(
     openaiClient: OpenAI,
-    requestBody: ChatCompletionCreateParamsNonStreaming
+    requestBody: ChatCompletionCreateParams
 ): Promise<any> {
     try {
         logger.debug('[makeOpenAiRequest] Sending request to OpenAI API.');

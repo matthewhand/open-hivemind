@@ -14,7 +14,7 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
 
         logger.debug('[DiscordManager] Channel type: ' + channel.type);
         if (channel.isTextBased() && channel.type === ChannelType.GuildText) {
-            const textChannel = channel as TextChannel;
+            const textChannel = channel as TextBasedChannel;
             const permissions = textChannel.permissionsFor(client.user!);
             if (!permissions || !permissions.has('SEND_MESSAGES')) {
                 logger.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);

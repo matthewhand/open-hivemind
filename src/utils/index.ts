@@ -4,7 +4,7 @@ import * as aliasUtils from './aliasUtils';
 import * as common from './common';
 import { handleError } from '../utils/commonUtils';
 import logger from './logger';
-import { ConfigurationManager } from "@config/ConfigurationManager";
+import ConfigurationManager from "@config/ConfigurationManager";
 import * as votingUtils from './votingUtils';
 
 export {

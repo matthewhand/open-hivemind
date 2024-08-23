@@ -1,4 +1,4 @@
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { splitMessage } from '../../utils/splitMessage';
 import DiscordManager from '@src/message/discord/DiscordManager';
 import { Client } from 'discord.js';

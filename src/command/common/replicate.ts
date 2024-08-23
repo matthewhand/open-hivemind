@@ -1,4 +1,4 @@
-import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import axios from 'axios';
 
 export async function replicateImageAnalysis(imageUrl: string): Promise<any> {

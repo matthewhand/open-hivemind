@@ -1,5 +1,5 @@
 import logger from '@src/utils/logger';
-import configManager from '@config/configurationManager';
+import configManager from '@config/ConfigurationManager';
 
 interface ParsedCommand {
     commandName: string;

@@ -1,15 +1,15 @@
 import { Client, Message as DiscordMessage, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
-import { DiscordMessageModel } from '../types/DiscordMessage';
+import { DiscordMessage } from '../types/DiscordMessage';
 
 /**
  * Fetches messages from a specified Discord channel.
  * @param {Client} client - The Discord client instance.
  * @param {string} channelId - The ID of the channel from which messages are fetched.
  * @param {number} limit - The maximum number of messages to fetch.
- * @returns {Promise<DiscordMessageModel[]>} An array of messages in a generic format.
+ * @returns {Promise<DiscordMessage[]>} An array of messages in a generic format.
  */
-export async function fetchMessages(client: Client, channelId: string, limit = 20): Promise<DiscordMessageModel[]> {
+export async function fetchMessages(client: Client, channelId: string, limit = 20): Promise<DiscordMessage[]> {
     if (!client) {
         logger.error('fetchMessages was called with an undefined or null client.');
         return [];
@@ -28,7 +28,7 @@ export async function fetchMessages(client: Client, channelId: string, limit = 2
         }
 
         const fetchedMessages = await channel.messages.fetch({ limit });
-        return fetchedMessages.map(message => new DiscordMessageModel(message));
+        return fetchedMessages.map(message => new DiscordMessage(message));
     } catch (error: any) {
         logger.error('Error fetching messages from Discord for channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
         return [];

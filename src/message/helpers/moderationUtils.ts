@@ -1,4 +1,4 @@
-import configurationManager from '@src/common/config/ConfigurationManager';
+import configurationManager from '@config/ConfigurationManager';
 import axios from 'axios';
 
 export async function moderateMessage(message: string): Promise<boolean> {

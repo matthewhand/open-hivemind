@@ -1,5 +1,5 @@
 import axios from 'axios';
-import configurationManager from '@src/common/config/ConfigurationManager';
+import configurationManager from '@config/ConfigurationManager';
 
 export async function sendFollowUpRequest(message: string): Promise<any> {
     const LLM_ENDPOINT_URL = configurationManager.getConfig('LLM_ENDPOINT_URL', 'https://api.default-llm.com');

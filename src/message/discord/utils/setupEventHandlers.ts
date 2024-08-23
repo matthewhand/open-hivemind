@@ -1,19 +1,19 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
-import { DiscordMessageModel } from '../types/DiscordMessage';
+import { DiscordMessage } from '../types/DiscordMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../utils/fetchChannel';
 
 /**
  * Configures event listeners for typing events and message creation, handling them appropriately.
  * @param {Client} client - The Discord client instance.
- * @param {(processedMessage: DiscordMessageModel, historyMessages: Message[]) => Promise<void>} messageHandler - The message handler callback function.
+ * @param {(processedMessage: DiscordMessage, historyMessages: Message[]) => Promise<void>} messageHandler - The message handler callback function.
  * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
  * @param {(channelId: string) => Promise<Message[]>} fetchMessages - Function to fetch messages.
  */
 export function setupEventHandlers(
     client: Client,
-    messageHandler: (processedMessage: DiscordMessageModel, historyMessages: Message[]) => Promise<void>,
+    messageHandler: (processedMessage: DiscordMessage, historyMessages: Message[]) => Promise<void>,
     typingTimestamps: Map<string, number>,
     fetchMessages: (channelId: string) => Promise<Message[]>
 ): void {
@@ -30,7 +30,7 @@ export function setupEventHandlers(
                 return;
             }
 
-            const processedMessage = new DiscordMessageModel(discordMessage);
+            const processedMessage = new DiscordMessage(discordMessage);
 
             if (!processedMessage.getMessageId() || !processedMessage.getText()) {
                 logger.error('[DiscordManager] Invalid or incomplete message received: ID: ' + processedMessage.getMessageId() + ', Content: ' + processedMessage.getText());

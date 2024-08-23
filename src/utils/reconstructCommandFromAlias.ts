@@ -1,5 +1,5 @@
-import { ConfigurationManager } from '@src/common/config/ConfigurationManager';
-import { Alias } from '@src/command/interfaces/ICommand';
+import ConfigurationManager from '@config/ConfigurationManager';
+import Alias from '@command/interfaces/ICommand';
 
 export function reconstructCommandFromAlias(alias: string): string | null {
     const aliases: Record<string, Alias> = ConfigurationManager.getConfig('aliases');
