@@ -2,7 +2,7 @@ import config from 'config'; // Importing the config module to access JSON confi
 import logger from '@src/utils/logger';
 import LLMResponse from '@src/llm/LLMResponse';
 import { handleError } from '../utils/commonUtils';
-import { extractContent } from './openAiUtils';
+import { extractContent } from '@src/llm/openai/utils/extractContent';
 
 export class OpenAiManager {
     // Constructor to inject the OpenAI client instance.
