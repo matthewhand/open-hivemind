@@ -40,6 +40,24 @@ export abstract class IMessage {
     abstract getAuthorId(): string;
 
     /**
+     * Retrieves the topic of the channel.
+     * @returns {string | null} The channel topic, or null if not available.
+     */
+    abstract getChannelTopic(): string | null;
+
+    /**
+     * Retrieves the users mentioned in the message.
+     * @returns {string[]} Array of mentioned user IDs.
+     */
+    abstract getUserMentions(): string[];
+
+    /**
+     * Retrieves the users in the channel.
+     * @returns {string[]} Array of user IDs in the channel.
+     */
+    abstract getChannelUsers(): string[];
+
+    /**
      * Checks if the message is a reply to the bot.
      * @returns {boolean} True if the message is a reply to the bot, false otherwise.
      */
