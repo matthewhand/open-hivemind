@@ -1,4 +1,4 @@
-import { Client, Message } from 'discord.js';
+import { Client, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 import { DiscordMessageModel } from '../types/DiscordMessage';
 import constants from '@config/ConfigurationManager';
@@ -57,15 +57,21 @@ export function setupEventHandlers(
             }
 
             logger.debug('[DiscordManager] Fetched channel: ' + channel.id);
-            const historyMessages = await fetchMessages(channelId);
 
-            if (historyMessages) {
-                logger.info('Channel topic: ' + (channel.topic || 'No topic') + '. History messages count: ' + historyMessages.length);
-            }
+            // Add a type guard to ensure channel is a TextChannel before accessing the topic property
+            if ((channel as TextChannel).topic) {
+                const historyMessages = await fetchMessages(channelId);
 
-            if (messageHandler) {
-                logger.debug('Executing message handler on channel ' + channel.id);
-                await messageHandler(processedMessage, historyMessages);
+                if (historyMessages) {
+                    logger.info('Channel topic: ' + ((channel as TextChannel).topic || 'No topic') + '. History messages count: ' + historyMessages.length);
+                }
+
+                if (messageHandler) {
+                    logger.debug('Executing message handler on channel ' + channel.id);
+                    await messageHandler(processedMessage, historyMessages);
+                }
+            } else {
+                logger.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support topics.');
             }
         } catch (error: any) {
             logger.error('[DiscordManager] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });

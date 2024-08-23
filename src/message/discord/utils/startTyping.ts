@@ -1,4 +1,4 @@
-import { Client, PermissionsBitField } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 
 /**
@@ -21,14 +21,14 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
 
         logger.debug('[DiscordManager] Channel type: ' + channel.type);
         if (channel.isTextBased() && channel.type === 'GUILD_TEXT') {
-            // Check if the bot has permission to send messages in the channel
-            const permissions = channel.permissionsFor(client.user!);
-            if (!permissions || !permissions.has(PermissionsBitField.Flags.SendMessages)) {
+            const textChannel = channel as TextChannel;
+            const permissions = textChannel.permissionsFor(client.user!);
+            if (!permissions || !permissions.has('SEND_MESSAGES')) {
                 logger.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
                 return;
             }
 
-            await channel.sendTyping();
+            await textChannel.sendTyping();
             logger.debug('[DiscordManager] Started typing in channel ID: ' + channelId);
         } else {
             logger.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support typing.');

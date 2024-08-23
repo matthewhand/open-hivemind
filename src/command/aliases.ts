@@ -1,6 +1,7 @@
 export interface Alias {
     handler: string;
     description: string;
+    category?: string; // Optional category property
 }
 
 export const aliases: Record<string, Alias> = {
