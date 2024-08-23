@@ -1,6 +1,6 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAiManager from '../../managers/OpenAiManager';
+import OpenAiManager from '@src/llm/openai/OpenAiManager';
 
 /**
  * Prepares the request body for the OpenAI API call, incorporating the provided message content,

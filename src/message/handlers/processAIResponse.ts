@@ -1,5 +1,5 @@
 import { IMessage } from "@message/types/IMessage";
-import MessageResponseManager from "@message/responseHandling/MessageResponseManager";
+import { MessageResponseManager } from "@message/managers/MessageResponseManager";
 import { LLMInterface } from "@llm/LLMInterface";
 import logger from "@utils/logger";
 import constants from "@config/ConfigurationManager";

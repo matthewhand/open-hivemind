@@ -1,7 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
-import { predictionImageMap } from '../utils/handleImageMessage';
-import OpenAiManager from '../managers/OpenAiManager';
+import { predictionImageMap } from '@message/helpers/handleImageMessage';
 import DiscordManager from '../managers/DiscordManager';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
@@ -101,34 +100,34 @@ export const startWebhookServer = (port: number): void => {
         }
     });
 
-    app.post('/summarise-then-post', async (req: Request, res: Response) => {
-        const { message } = req.body;
-        const openAiManager = OpenAiManager.getInstance();
+    // app.post('/summarise-then-post', async (req: Request, res: Response) => {
+    //     const { message } = req.body;
+    //     const openAiManager = OpenAiManager.getInstance();
 
-        if (!message) {
-            console.error('No message provided in request body');
-            return res.status(400).send({ error: 'Message is required' });
-        }
+    //     if (!message) {
+    //         console.error('No message provided in request body');
+    //         return res.status(400).send({ error: 'Message is required' });
+    //     }
 
-        try {
-            console.debug('Received message for summarization: ' + message);
-            const summarizedTexts = await openAiManager.summarizeText(message);
-            const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : '';
+    //     try {
+    //         console.debug('Received message for summarization: ' + message);
+    //         const summarizedTexts = await summarizeMessage(message);
+    //         const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : '';
 
-            if (!summarizedMessage) {
-                console.warn('Summarized message is empty');
-                return res.status(500).send({ error: 'Failed to summarize the message' });
-            }
+    //         if (!summarizedMessage) {
+    //             console.warn('Summarized message is empty');
+    //             return res.status(500).send({ error: 'Failed to summarize the message' });
+    //         }
 
-            const discordManager = DiscordManager.getInstance();
-            await discordManager.sendResponse(process.env.CHANNEL_ID!, summarizedMessage);
-            console.debug('Summarized message sent to Discord: ' + summarizedMessage);
-            res.status(200).send({ message: 'Message summarized and sent to Discord.' });
-        } catch (error: any) {
-            console.error('Failed to summarize or send the message:', error);
-            res.status(500).send({ error: 'Failed to summarize or send the message' });
-        }
-    });
+    //         const discordManager = DiscordManager.getInstance();
+    //         await discordManager.sendResponse(process.env.CHANNEL_ID!, summarizedMessage);
+    //         console.debug('Summarized message sent to Discord: ' + summarizedMessage);
+    //         res.status(200).send({ message: 'Message summarized and sent to Discord.' });
+    //     } catch (error: any) {
+    //         console.error('Failed to summarize or send the message:', error);
+    //         res.status(500).send({ error: 'Failed to summarize or send the message' });
+    //     }
+    // });
 };
 
 client.once('ready', () => {

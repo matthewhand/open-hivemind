@@ -1,6 +1,6 @@
 import { GuildMember, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
-import { constants } from '@config/constants';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 /**
  * Represents a Discord message, extending a generic message interface.
@@ -47,7 +47,7 @@ export default class DiscordMessage {
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
 
-        logger.debug('DiscordMessage initialized with constants: ' + JSON.stringify(constants));
+        logger.debug('DiscordMessage initialized with constants: ' + JSON.stringify(ConfigurationManager.getConstants()));
     }
 
     /**

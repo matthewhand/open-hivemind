@@ -1,4 +1,4 @@
-import { LLM_MESSAGE_LIMIT_PER_HOUR, LLM_MESSAGE_LIMIT_PER_DAY } from '@config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 /**
  * Rate Limiter for Discord Bot Messages
@@ -37,7 +37,8 @@ class RateLimiter {
      * @returns True if a message can be sent, false otherwise.
      */
     canSendMessage(): boolean {
-        const canSend = this.messagesLastHour.length < LLM_MESSAGE_LIMIT_PER_HOUR && this.messagesLastDay.length < LLM_MESSAGE_LIMIT_PER_DAY;
+        const canSend = this.messagesLastHour.length < ConfigurationManager.LLM_MESSAGE_LIMIT_PER_HOUR 
+                        && this.messagesLastDay.length < ConfigurationManager.LLM_MESSAGE_LIMIT_PER_DAY;
         console.debug('canSendMessage: ', canSend);
         return canSend;
     }

@@ -16,10 +16,10 @@ export async function sendResponse(messageContent: string | Buffer, channelId: s
             throw new Error('No channelId provided or channelId is not a valid string.');
         }
 
-        const maxMessageLength = constants.MESSAGE_MAX_LENGTH;
+        const maxMessageLength = ConfigurationManager.MAX_MESSAGE_LENGTH;
         const parts = splitMessageContent(messageContent, maxMessageLength);
 
-        const interPartDelay = constants.INTER_PART_DELAY_MS;
+        const interPartDelay = ConfigurationManager.INTER_PART_DELAY;
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) {
                 await delay(interPartDelay);

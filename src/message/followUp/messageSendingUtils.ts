@@ -1,9 +1,9 @@
-import { makeOpenAiRequest } from './openAiManagerUtils';
-import OpenAiManager from '../managers/OpenAiManager';
-import DiscordManager from '../managers/DiscordManager';
+import { makeOpenAiRequest } from '@src/llm/openai/utils/makeOpenAiRequest';
+import OpenAiManager from '@src/llm/openai/OpenAiManager';
+import DiscordManager from '@src/message/discord/DiscordManager';
 import logger from '@src/utils/logger';
-import constants from '@config/configurationManager';
-import commands from '../commands/inline';
+import constants from '@common/config/ConfigurationManager';
+import commands from '@src/command/inline';
 
 export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {

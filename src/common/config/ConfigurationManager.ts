@@ -3,6 +3,9 @@ import logger from '../../utils/logger';
 import { getConfigOrWarn } from '@utils/configUtils';
 
 class ConfigurationManager {
+    getConstants(): any {
+        throw new Error('Method not implemented.');
+    }
     // LLM Configuration
     public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';
     public readonly LLM_ENDPOINT_URL: string = process.env.LLM_ENDPOINT_URL || 'default_endpoint_url';
@@ -52,6 +55,7 @@ class ConfigurationManager {
     public getConfig<T>(key: string, defaultValue: T): T {
         return getConfigOrWarn<T>(key, defaultValue);
     }
+        
 }
 
 export default new ConfigurationManager();
