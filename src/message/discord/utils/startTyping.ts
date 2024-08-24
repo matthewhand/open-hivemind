@@ -1,4 +1,4 @@
-import { Client, ChannelType } from 'discord.js';
+import { Client, ChannelType, TextChannel, DMChannel, NewsChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 
 export async function startTyping(client: Client, channelId: string): Promise<void> {
@@ -13,8 +13,8 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
         }
 
         logger.debug('[DiscordManager] Channel type: ' + channel.type);
-        if (channel.isTextBased() && channel.type === ChannelType.GuildText) {
-            const textChannel = channel as TextBasedChannel;
+        if (channel.isTextBased() && (channel instanceof TextChannel || channel instanceof DMChannel || channel instanceof NewsChannel)) {
+            const textChannel = channel as TextChannel;
             const permissions = textChannel.permissionsFor(client.user!);
             if (!permissions || !permissions.has('SEND_MESSAGES')) {
                 logger.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
