@@ -1,5 +1,5 @@
 import logger from '@src/utils/logger';
-import DiscordManager from '@src/message/discord/DiscordManager';
+import DiscordManager from '../message/discord/DiscordManager';
 
 /**
  * Sends a single part of a message to the specified channel.

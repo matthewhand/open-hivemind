@@ -1,6 +1,6 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAiManager from '@src/llm/openai/OpenAiManager';
+import OpenAiManager from '../../llm/openai/OpenAiManager';
 
 /**
  * Summarizes a given text to a specified target size using the OpenAiManager API.

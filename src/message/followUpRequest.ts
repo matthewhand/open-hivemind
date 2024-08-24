@@ -1,7 +1,7 @@
 import logger from '@src/utils/logger';
-import fetchMessages from '../util../utils/fetchMessages';
+import fetchMessages from '../utils/fetchMessages';
 import { getRandomAliasCommand } from '../utils/aliasUtils';
-import { sendLlmRequestUtils } from '../util../utils/sendLlmRequestUtils';
+import { sendLlmRequestUtils } from '../utils/sendLlmRequestUtils';
 
 /**
  * Determines if a follow-up should be sent based on recent conversation history.

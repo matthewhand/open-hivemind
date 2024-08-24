@@ -1,6 +1,6 @@
 
-import OpenAiManager from '@src/llm/openai/OpenAiManager';
-import DiscordManager from '@src/message/discord/DiscordManager';
+import OpenAiManager from '../../llm/openai/OpenAiManager';
+import DiscordManager from '../message/discord/DiscordManager';
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import commands from '@src/command/inline';

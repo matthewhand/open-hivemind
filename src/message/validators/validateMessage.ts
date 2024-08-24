@@ -1,4 +1,4 @@
-import { IMessage } from "@message/types/IMessage";
+import { IMessage } from "../types/IMessage";
 import logger from "@utils/logger";
 
 export function validateMessage(message: IMessage): boolean {

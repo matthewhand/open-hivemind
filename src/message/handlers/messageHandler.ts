@@ -1,4 +1,4 @@
-import { IMessage } from "@message/types/IMessage";
+import { IMessage } from "../types/IMessage";
 import { validateMessage } from "@message/validators/validateMessage";
 import { processAIResponse } from "@message/handlers/processAIResponse";
 import { processCommand } from "@message/helpers/messageProcessing/processCommand";

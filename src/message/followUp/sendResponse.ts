@@ -1,4 +1,4 @@
-import DiscordManager from '@message/discord/DiscordManager';
+import DiscordManager from '../message/discord/DiscordManager';
 import logger from '@src/utils/logger';
 import ConfigurationManager from '@config/ConfigurationManager';
 

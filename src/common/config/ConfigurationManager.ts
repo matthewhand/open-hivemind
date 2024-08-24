@@ -14,6 +14,8 @@ class ConfigurationManager {
     public readonly LLM_PROVIDER: string = this.getConfig<string>('llm.provider', 'default_provider');
     public readonly LLM_SUPPORTS_COMPLETIONS: boolean = this.getConfig<boolean>('llm.supportsCompletions', true);
     public readonly LLM_STOP: string[] = this.getConfig<string[]>('llm.stop', []);
+    public readonly INCLUDE_USERNAME_IN_COMPLETION: boolean = this.getConfig<boolean>('llm.includeUsernameInCompletion', false);
+    public readonly INCLUDE_USERNAME_IN_CHAT_COMPLETION: boolean = this.getConfig<boolean>('llm.includeUsernameInChatCompletion', false);
 
     // Discord Configuration
     public readonly CLIENT_ID: string = this.getConfig<string>('discord.clientId', 'default_client_id');

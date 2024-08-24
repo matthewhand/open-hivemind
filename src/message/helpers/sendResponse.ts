@@ -1,6 +1,6 @@
 import ConfigurationManager from '@config/ConfigurationManager';
 import { splitMessage } from '../../utils/splitMessage';
-import DiscordManager from '@src/message/discord/DiscordManager';
+import DiscordManager from ../message/discord/DiscordManager';
 import { Client } from 'discord.js';
 
 export async function sendResponse(client: Client, channelId: string, messageText: string): Promise<void> {
