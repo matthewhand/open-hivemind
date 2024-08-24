@@ -1,36 +1,38 @@
-import { Client, Message as DiscordMessage, TextChannel } from 'discord.js';
+import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import logger from '@src/utils/logger';
-import { DiscordMessage } from '../types/DiscordMessage';
+import { fetchChannel } from './fetchChannel';
+import { IMessage } from '../types/IMessage';
 
 /**
- * Fetches messages from a specified Discord channel.
- * @param {Client} client - The Discord client instance.
- * @param {string} channelId - The ID of the channel from which messages are fetched.
- * @param {number} limit - The maximum number of messages to fetch.
- * @returns {Promise<DiscordMessage[]>} An array of messages in a generic format.
+ * Fetches a list of messages from a Discord channel.
+ *
+ * @param client - The Discord client instance.
+ * @param channelId - The ID of the channel to fetch messages from.
+ * @param limit - The maximum number of messages to fetch.
+ * @returns A Promise that resolves to an array of IMessage objects.
  */
-export async function fetchMessages(client: Client, channelId: string, limit = 20): Promise<DiscordMessage[]> {
-    if (!client) {
-        logger.error('fetchMessages was called with an undefined or null client.');
-        return [];
-    }
-
-    if (!client.channels) {
-        logger.error('fetchMessages was called on a client with an undefined or null channels collection.');
-        return [];
-    }
-
+export async function fetchMessages(client: Client, channelId: string, limit: number = 50): Promise<IMessage[]> {
     try {
-        const channel = await client.channels.fetch(channelId) as TextChannel;
-        if (!channel) {
-            logger.error('Channel with ID ' + channelId + ' could not be fetched or does not exist.');
-            return [];
+        const channel = await fetchChannel(client, channelId);
+
+        if (!channel || !(channel instanceof TextChannel)) {
+            throw new Error('Invalid channel or not a text channel');
         }
 
-        const fetchedMessages = await channel.messages.fetch({ limit });
-        return fetchedMessages.map(message => new DiscordMessage(message));
-    } catch (error: any) {
-        logger.error('Error fetching messages from Discord for channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
+        const messages = await channel.messages.fetch({ limit });
+        const fetchedMessages: IMessage[] = messages.map((msg: DiscordJSMessage) => ({
+            id: msg.id,
+            content: msg.content,
+            authorId: msg.author.id,
+            createdAt: msg.createdAt,
+            updatedAt: msg.editedAt || msg.createdAt,
+        }));
+
+        logger.debug(`Fetched ${fetchedMessages.length} messages from channel ${channelId}`);
+
+        return fetchedMessages;
+    } catch (error) {
+        logger.error(`Failed to fetch messages from channel ${channelId}: ${error instanceof Error ? error.message : error}`);
         return [];
     }
 }

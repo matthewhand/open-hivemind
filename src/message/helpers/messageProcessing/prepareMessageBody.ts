@@ -1,12 +1,12 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAI from '@src/llm/openai/OpenAI';
+import OpenAiManager from '../../llm/openai/OpenAiManager.ts';
 
 /**
- * Prepares the request body for the OpenAI API call, incorporating the provided message content,
+ * Prepares the request body for the OpenAiManager API call, incorporating the provided message content,
  * channel history, and other contextual information.
  *
- * @param {string} prompt - The main content for the OpenAI prompt.
+ * @param {string} prompt - The main content for the OpenAiManager prompt.
  * @param {string} [channelId=constants.CHANNEL_ID] - The ID of the Discord channel, defaults to a predefined channel ID.
  * @param {Array<Object>} [history=[]] - Historical messages to provide context.
  * @returns {Promise<Object>} A configuration object containing the model, prompt, and settings for the API call.
@@ -29,5 +29,5 @@ export async function prepareMessageBody(prompt: string, channelId: string = con
 
     logger.debug('[prepareMessageBody] Preparing message body for channel ID: ' + channelId + ' with prompt: ' + prompt.substring(0, 50) + '...', { prompt, channelId });
 
-    return OpenAI.getInstance().buildRequestBody(history, prompt);
+    return OpenAiManager.getInstance().buildRequestBody(history, prompt);
 }

@@ -1,9 +1,9 @@
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import OpenAI from '@src/llm/openai/OpenAI';
+import OpenAiManager from '@src/llm/openai/OpenAiManager';
 
 /**
- * Summarizes a given text to a specified target size using the OpenAI API.
+ * Summarizes a given text to a specified target size using the OpenAiManager API.
  * This function reduces the length of responses that exceed Discord's message length limits.
  * 
  * @param {string} content - The content to be summarized.
@@ -16,9 +16,9 @@ export async function summarizeMessage(content: string, targetSize: number = con
         throw new Error('Content must be a string.');
     }
 
-    const openAiManager = OpenAI.getInstance();
+    const openAiManager = OpenAiManager.getInstance();
     try {
-        const summary = await openAiManager.summarizeText(content, targetSize);
+        const summary = await openAiManager.completeSentence(content, targetSize);
         logger.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });
         return summary;
     } catch (error: any) {

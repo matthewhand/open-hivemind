@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, { ChatCompletionCreateParamsNonStreaming } from 'openai';
 import constants from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 import { LLMInterface } from '@src/llm/LLMInterface';
@@ -41,7 +41,7 @@ class OpenAiManager extends LLMInterface {
         this.busy = isBusy;
     }
 
-    public async buildRequestBody(historyMessages: any[]): Promise<object> {
+    public async buildRequestBody(historyMessages: any[]): Promise<ChatCompletionCreateParamsNonStreaming> {
         return {
             model: constants.LLM_MODEL,
             messages: historyMessages.map((msg) => ({ role: msg.role, content: msg.content }))

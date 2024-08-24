@@ -1,7 +1,7 @@
 import logger from '@src/utils/logger';
-import fetchConversationHistory from './fetchConversationHistory';
-import { getRandomAliasCommand } from './aliasUtils';
-import { sendLlmRequest } from './sendLlmRequest';
+import fetchMessages from '../util../utils/fetchMessages';
+import { getRandomAliasCommand } from '../utils/aliasUtils';
+import { sendLlmRequestUtils } from '../util../utils/sendLlmRequestUtils';
 
 /**
  * Determines if a follow-up should be sent based on recent conversation history.
@@ -11,7 +11,7 @@ import { sendLlmRequest } from './sendLlmRequest';
  */
 export async function shouldSendFollowUp(message: any, threshold: number): Promise<boolean> {
     try {
-        const recentMessages = await fetchConversationHistory(message.channel);
+        const recentMessages = await fetchMessages(message.channel);
         return recentMessages.length <= threshold;
     } catch (error: any) {
         logger.error(`Error in shouldSendFollowUp: ${error.message}`);
@@ -28,7 +28,7 @@ export async function scheduleFollowUpRequest(message: any): Promise<void> {
     try {
         const aliasCommand = getRandomAliasCommand();
         const reflectivePrompt = 'Reflecting on the recent conversation, how might the command ' + aliasCommand + ' provide further insights?';
-        await sendLlmRequest(message, reflectivePrompt);
+        await sendLlmRequestUtils(message, reflectivePrompt);
     } catch (error: any) {
         logger.error(`Error in scheduleFollowUpRequest: ${error.message}`);
     }
