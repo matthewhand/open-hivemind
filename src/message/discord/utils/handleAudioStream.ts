@@ -3,7 +3,9 @@ import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
 import logger from '../../../utils/logger';
 import { convertOpusToWav } from './convertOpusToWav';
-import { transcribeAudio, generateResponse, playAudioResponse } from './audioProcessing';
+import { transcribeAudio } from './transcribeAudio';
+import { generateResponse } from './generateResponse';
+import { playAudioResponse } from './playAudioResponse';
 
 /**
  * Handles audio streaming to a Discord voice connection.

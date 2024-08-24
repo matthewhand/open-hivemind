@@ -1,6 +1,7 @@
 import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import logger from '@src/utils/logger';
 import { fetchChannel } from './fetchChannel';
+import DiscordMessageImpl from './DiscordMessageImpl';
 import { IMessage } from '@message/types/IMessage';
 
 /**
@@ -20,19 +21,13 @@ export async function fetchMessages(client: Client, channelId: string, limit: nu
         }
 
         const messages = await channel.messages.fetch({ limit });
-        const fetchedMessages: IMessage[] = messages.map((msg: DiscordJSMessage) => ({
-            id: msg.id,
-            content: msg.content,
-            authorId: msg.author.id,
-            createdAt: msg.createdAt,
-            updatedAt: msg.editedAt || msg.createdAt,
-        }));
+        const fetchedMessages: IMessage[] = messages.map((msg: DiscordJSMessage) => new DiscordMessageImpl(msg));
 
-        logger.debug(`Fetched ${fetchedMessages.length} messages from channel ${channelId}`);
+        logger.debug('Fetched ' + fetchedMessages.length + ' messages from channel ' + channelId);
 
         return fetchedMessages;
     } catch (error) {
-        logger.error(`Failed to fetch messages from channel ${channelId}: ${error instanceof Error ? error.message : error}`);
+        logger.error('Failed to fetch messages from channel ' + channelId + ': ' + (error instanceof Error ? error.message : error));
         return [];
     }
 }

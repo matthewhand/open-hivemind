@@ -10,6 +10,12 @@ import logger from '@src/utils/logger';
  */
 export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
     const clientId = process.env.CLIENT_ID;
+
+    if (!clientId) {
+        logger.error('Client ID is not defined. Cannot register slash commands.');
+        return;
+    }
+
     const rest = new REST({ version: '9' }).setToken(token);
 
     try {

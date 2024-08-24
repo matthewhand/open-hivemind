@@ -47,7 +47,6 @@ export default class DiscordMessage {
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
 
-        logger.debug('DiscordMessage initialized with constants: ' + JSON.stringify(ConfigurationManager.getConstants()));
     }
 
     /**
