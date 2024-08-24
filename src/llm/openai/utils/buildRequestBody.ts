@@ -1,6 +1,6 @@
 import { IMessage } from '@src/message/types/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 /**
  * Builds the request body for OpenAI API calls.

@@ -1,8 +1,8 @@
-import DiscordManager from '../message/discord/DiscordManager';
+import DiscordManager from '@message/discord/DiscordManager';
 import logger from '@src/utils/logger';
 import ConfigurationManager from '@config/ConfigurationManager';
 
-export async function sendResponse(messageContent: Buffer | Buffer, channelId: string, startTime: number): Promise<void> {
+export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
         const isString = typeof messageContent === 'string';
         const isBuffer = Buffer.isBuffer(messageContent);
@@ -58,7 +58,7 @@ function splitMessageContent(messageContent: string, maxPartLength: number): str
     return parts;
 }
 
-async function sendMessagePart(part: Buffer | Buffer, channelId: string): Promise<void> {
+async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
     try {
         const isPartString = typeof part === 'string';
         const isPartBuffer = Buffer.isBuffer(part);
