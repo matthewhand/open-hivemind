@@ -1,7 +1,7 @@
 import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import logger from '@src/utils/logger';
 import { fetchChannel } from './fetchChannel';
-import { IMessage } from '../types/IMessage';
+import { IMessage } from '@message/types/IMessage';
 
 /**
  * Fetches a list of messages from a Discord channel.
