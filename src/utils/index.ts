@@ -9,12 +9,6 @@ export {
     aliasUtils,
     common,
     handleError,
-    handleImageMessage,
     logger,
-    mutingUtils,
-    parseCommand,
-    permissions,
-    reconstructCommandFromAlias,
-    sendFollowUpRequest,
     votingUtils
 };

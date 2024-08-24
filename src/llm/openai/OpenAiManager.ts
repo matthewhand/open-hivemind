@@ -63,6 +63,27 @@ class OpenAiManager {
         };
     }
 
+    // New Method: buildRequestBody
+    public async buildRequestBody(history: any[], prompt: string): Promise<object> {
+        if (!Array.isArray(history)) {
+            throw new Error('History must be an array');
+        }
+
+        const messages = history.map((msg) => ({
+            role: this.isValidRole(msg.role) ? msg.role : 'user',
+            content: msg.content,
+        }));
+
+        messages.push({ role: 'user', content: prompt });
+
+        return {
+            model: constants.LLM_MODEL,
+            messages,
+            max_tokens: constants.LLM_RESPONSE_MAX_TOKENS,
+            temperature: constants.LLM_TEMPERATURE,
+        };
+    }
+
     public async sendCompletionsRequest(message: string, dryRun: boolean = false): Promise<LLMResponse> {
         if (this.isBusy()) {
             logger.warn('[OpenAiManager.sendCompletionsRequest] The manager is currently busy with another request.');

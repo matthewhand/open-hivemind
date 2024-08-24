@@ -1,11 +1,11 @@
-import OpenAI from '@src/llm/openai/OpenAI';
+import OpenAiManager from '@src/llm/openai/OpenAiManager';
 import logger from '@src/utils/logger';
-import { sendMessageToChannel } from '@src/message/followUp/sendMessageToChannel';
+import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
 
 export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
     try {
-        const followUpText = await OpenAI.getInstance().sendRequest({ content: topic, originalMessage });
+        const followUpText = await OpenAiManager.getInstance().sendRequest({ content: topic, originalMessage });
 
         if (followUpText) {
             await sendMessageToChannel(followUpText, originalMessage.channel.id, Date.now());
