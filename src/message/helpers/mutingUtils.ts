@@ -1,3 +1,4 @@
+import { TextChannel, EmbedBuilder } from "discord.js";
 
 import logger from '@src/utils/logger';
 
@@ -21,10 +22,10 @@ export async function muteUser(channel: TextChannel, userId: string): Promise<vo
     await member.roles.add(role);
     logger.debug('User muted successfully');
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
         .setTitle('User Muted')
         .setDescription('The user has been muted.')
-        .addField('User ID', userId)
+        .addFields('User ID', userId)
         .setColor('#FF0000');
 
     await channel.send({ embeds: [embed] });

@@ -18,7 +18,6 @@ export async function summarizeMessage(content: string, targetSize: number = con
 
     const openAiManager = OpenAiManager.getInstance();
     try {
-        const summary = await openAiManager.completeSentence(content, targetSize);
         logger.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });
         return summary;
     } catch (error: any) {

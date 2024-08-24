@@ -7,6 +7,5 @@ export function reconstructCommandFromAlias(alias: string): string | null {
     if (!foundAlias) {
         return null;
     }
-    const [command, action] = foundAlias.split(':');
     return `${command} ${action}`;
 }
