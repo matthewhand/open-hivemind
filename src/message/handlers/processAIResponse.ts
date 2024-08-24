@@ -1,12 +1,12 @@
-import { IMessage } from "../types/IMessage";
-import { MessageResponseManager } from '../message/managers/MessageResponseManager';
-import { LLMInterface } from "@llm/LLMInterface";
-import logger from "@utils/logger";
-import constants from "@config/ConfigurationManager";
-import { prepareMessageBody } from "@message/helpers/messageProcessing/prepareMessageBody";
-import { summarizeMessage } from "@message/helpers/messageProcessing/summarizeMessage";
-import { sendResponse } from "@message/followUp/sendResponse";
-import { sendFollowUp } from "@message/followUp/sendFollowUp";
+import { IMessage } from '@src/message/types/IMessage';
+import { MessageResponseManager } from '@src/message/managers/MessageResponseManager';
+import { LLMInterface } from '@src/llm/LLMInterface';
+import logger from '@src/utils/logger';
+import constants from '@src/common/config/ConfigurationManager';
+import { prepareMessageBody } from '@src/message/helpers/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@src/message/helpers/messageProcessing/summarizeMessage';
+import { sendResponse } from '@src/message/followUp/sendResponse';
+import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
 export async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
     logger.debug('[messageHandler] process ai response');

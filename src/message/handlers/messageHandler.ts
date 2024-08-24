@@ -1,8 +1,8 @@
-import { IMessage } from "../types/IMessage";
-import { validateMessage } from "@message/validators/validateMessage";
-import { processAIResponse } from "@message/handlers/processAIResponse";
-import { processCommand } from "@message/helpers/messageProcessing/processCommand";
-import logger from "@utils/logger";
+import { IMessage } from '@src/message/types/IMessage';
+import { validateMessage } from '@src/message/validators/validateMessage';
+import { processAIResponse } from '@src/message/handlers/processAIResponse';
+import { processCommand } from '@src/message/helpers/messageProcessing/processCommand';
+import logger from '@src/utils/logger';
 
 export async function messageHandler(
   originalMsg: IMessage,

@@ -1,13 +1,24 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-import { splitMessage } from '../../utils/splitMessage';
-import DiscordManager from ../message/discord/DiscordManager';
-import { Client } from 'discord.js';
+import { IMessage } from '@src/message/types/IMessage';
+import logger from '@src/utils/logger';
+import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
-export async function sendResponse(client: Client, channelId: string, messageText: string): Promise<void> {
-    const maxMessageLength = ConfigurationManager.MAX_MESSAGE_LENGTH;
-    const parts = splitMessage(messageText, maxMessageLength);
+export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
+    try {
+        await sendMessagePart(messageContent, channelId);
+        const processingTime = Date.now() - startTime;
+        logger.info('[sendResponse] Message processing complete. Total time: ' + processingTime + 'ms.');
+    } catch (error: any) {
+        logger.error('[sendResponse] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
+        throw new Error('Failed to send message: ' + error.message);
+    }
+}
 
-    for (const part of parts) {
+async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
+    try {
         await DiscordManager.getInstance().sendMessage(channelId, part);
+        logger.info('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
+    } catch (error: any) {
+        logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
+        throw new Error('Failed to send message part: ' + error.message);
     }
 }

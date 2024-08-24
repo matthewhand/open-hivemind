@@ -1,22 +1,13 @@
-import { IMessage } from "../types/IMessage";
-import logger from "@utils/logger";
+import { IMessage } from '@src/message/types/IMessage';
+import logger from '@src/utils/logger';
 
 export function validateMessage(message: IMessage): boolean {
-    if (!(message as any instanceof IMessage)) {
-        logger.error('[validateMessage] Invalid message object type. Expected IMessage instance, got: ' + (message.constructor?.name || 'unknown'));
+    try {
+        const isValid = message.getText().length > 0 && message.getAuthorId() !== '';
+        logger.info('Message validation ' + (isValid ? 'passed' : 'failed'));
+        return isValid;
+    } catch (error: any) {
+        logger.error('Failed to validate message: ' + error.message);
         return false;
     }
-
-    if (!message.getText || typeof message.getText !== 'function') {
-        logger.error('[validateMessage] Message object does not have a valid getText method.');
-        return false;
-    }
-
-    if (!message.getText().trim()) {
-        logger.info('[validateMessage] Received empty message.');
-        return false;
-    }
-
-    logger.debug('[validateMessage] Message validated successfully.');
-    return true;
 }
