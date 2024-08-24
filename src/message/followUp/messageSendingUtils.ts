@@ -4,7 +4,7 @@ import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import commands from '@src/command/inline';
 
-export async function sendResponse(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
+export async function sendMessageToChannel(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
         const isString = typeof messageContent === 'string';
         const isBuffer = Buffer.isBuffer(messageContent);
@@ -23,15 +23,15 @@ export async function sendResponse(messageContent: string | Buffer, channelId: s
             if (i > 0) {
                 await delay(constants.INTER_PART_DELAY);
             }
-            logger.debug('[sendResponse] Sending part ' + (i + 1) + ' to channel ' + channelId + '. Part content: ' + parts[i]);
+            logger.debug('[sendMessageToChannel] Sending part ' + (i + 1) + ' to channel ' + channelId + '. Part content: ' + parts[i]);
             await sendMessagePart(parts[i], channelId);
-            logger.debug('[sendResponse] Sent part ' + (i + 1) + ' of ' + parts.length + ' to channel ' + channelId + '.');
+            logger.debug('[sendMessageToChannel] Sent part ' + (i + 1) + ' of ' + parts.length + ' to channel ' + channelId + '.');
         }
 
         const processingTime = Date.now() - startTime;
-        logger.info('[sendResponse] Message processing complete. Total time: ' + processingTime + 'ms.');
+        logger.info('[sendMessageToChannel] Message processing complete. Total time: ' + processingTime + 'ms.');
     } catch (error: any) {
-        logger.error('[sendResponse] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
+        logger.error('[sendMessageToChannel] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
         throw new Error('Failed to send message: ' + error.message);
     }
 }
@@ -66,7 +66,7 @@ async function sendMessagePart(part: string | Buffer, channelId: string): Promis
             throw new Error('Invalid part type: ' + typeof part);
         }
 
-        await DiscordManager.getInstance().sendMessage(channelId, part);
+        await DiscordManager.getInstance().sendMessageToChannel(channelId, part);
         logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
     } catch (error: any) {
         logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
@@ -108,7 +108,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
 
             const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
             if (followUpMessage) {
-                await sendResponse(followUpMessage, originalMessage.getChannelId(), Date.now());
+                await sendMessageToChannel(followUpMessage, originalMessage.getChannelId(), Date.now());
             } else {
                 logger.warn('No follow-up action suggested for message ID: ' + originalMessage.id);
             }

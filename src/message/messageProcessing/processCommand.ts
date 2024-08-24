@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/types/IMessage';
-import { processAIResponse } from '@src/message/helpers/messageProcessing/processAIResponse';
+import { processAIResponse } from '@src/message/messageProcessing/processAIResponse';
 import { sendMessagePart } from '@src/message/helpers/sendMessagePart';
 import logger from '@src/utils/logger';
 

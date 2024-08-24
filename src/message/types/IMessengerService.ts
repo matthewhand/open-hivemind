@@ -24,5 +24,5 @@ export abstract class IMessengerService {
      * @param {string} message - The message to send.
      * @returns {Promise<any>} The result of sending the message.
      */
-    abstract sendResponse(channelId: string, message: string): Promise<any>;
+    abstract sendMessageToChannel(channelId: string, message: string): Promise<any>;
 }

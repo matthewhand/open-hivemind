@@ -3,9 +3,9 @@ import { MessageResponseManager } from '@src/message/managers/MessageResponseMan
 import { LLMInterface } from '@src/llm/LLMInterface';
 import logger from '@src/utils/logger';
 import constants from '@src/common/config/ConfigurationManager';
-import { prepareMessageBody } from '@src/message/helpers/messageProcessing/prepareMessageBody';
-import { summarizeMessage } from '@src/message/helpers/messageProcessing/summarizeMessage';
-import { sendResponse } from '@src/message/followUp/sendResponse';
+import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
+import { sendMessageToChannel } from '@src/message/followUp/sendMessageToChannel';
 import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
 export async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
@@ -94,7 +94,7 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
         }
 
         try {
-            await sendResponse(responseContent, message.getChannelId(), startTime);
+            await sendMessageToChannel(responseContent, message.getChannelId(), startTime);
             logger.info('[messageHandler] LLM response sent to the channel successfully.');
         } catch (error: any) {
             logger.error('[messageHandler] Error sending response to channel: ' + error.message, { error });

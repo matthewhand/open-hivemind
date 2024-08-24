@@ -5,7 +5,7 @@ import DiscordManager from '@src/message/discord/DiscordManager';
 export async function sendMessagePart(messageContent: string | Buffer, channelId: string): Promise<void> {
     try {
         const discordManager = DiscordManager.getInstance();
-        await discordManager.sendMessage(channelId, messageContent);
+        await discordManager.sendMessageToChannel(channelId, messageContent);
         logger.info('Message part sent successfully.');
     } catch (error: any) {
         logger.error('Failed to send message part: ' + error.message);

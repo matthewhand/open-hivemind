@@ -76,7 +76,7 @@ class DiscordManager {
         setMessageHandler(handler);
     }
 
-    public async sendMessage(channelId: string, message: string): Promise<Message> {
+    public async sendMessageToChannel(channelId: string, message: string): Promise<Message> {
         logger.info(`DiscordManager: Sending a message to channel ID: ${channelId}. Message: ${message}`);
         return sendMessageToChannel(this.client, channelId, message);
     }

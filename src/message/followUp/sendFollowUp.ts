@@ -1,6 +1,6 @@
 import OpenAI from '@src/llm/openai/OpenAI';
 import logger from '@src/utils/logger';
-import { sendResponse } from '@src/message/followUp/sendResponse';
+import { sendMessageToChannel } from '@src/message/followUp/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
 
 export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
@@ -8,7 +8,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
         const followUpText = await OpenAI.getInstance().sendRequest({ content: topic, originalMessage });
 
         if (followUpText) {
-            await sendResponse(followUpText, originalMessage.channel.id, Date.now());
+            await sendMessageToChannel(followUpText, originalMessage.channel.id, Date.now());
             logger.info('[sendFollowUp] Follow-up message sent successfully.');
         } else {
             logger.warn('[sendFollowUp] No follow-up text generated.');
