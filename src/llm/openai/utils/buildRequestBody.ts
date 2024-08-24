@@ -1,6 +1,6 @@
-import constants from '@config/ConfigurationManager';
 import { IMessage } from '@src/message/types/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
+import ConfigurationManager from '@src/config/ConfigurationManager';
 
 /**
  * Builds the request body for OpenAI API calls.
@@ -12,8 +12,8 @@ import { getEmoji } from '@src/utils/getEmoji';
  */
 export function buildRequestBody(
     historyMessages: IMessage[] = [],
-    systemMessageContent: string = constants.LLM_SYSTEM_PROMPT,
-    maxTokens: number = constants.LLM_RESPONSE_MAX_TOKENS
+    systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
+    maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
 ): Record<string, any> {
     let messages: Array<{ role: string; content: string; name?: string }> = [
         { role: 'system', content: systemMessageContent },
@@ -56,13 +56,13 @@ export function buildRequestBody(
     }
 
     const requestBody: Record<string, any> = {
-        model: constants.LLM_MODEL,
+        model: ConfigurationManager.LLM_MODEL,
         messages: messages,
         max_tokens: maxTokens,
-        temperature: constants.LLM_TEMPERATURE,
+        temperature: ConfigurationManager.LLM_TEMPERATURE,
     };
 
-    const llmStop = constants.LLM_STOP.length > 0 ? constants.LLM_STOP : null;
+    const llmStop = ConfigurationManager.LLM_STOP.length > 0 ? ConfigurationManager.LLM_STOP : null;
 
     if (llmStop) {
         requestBody.stop = llmStop;

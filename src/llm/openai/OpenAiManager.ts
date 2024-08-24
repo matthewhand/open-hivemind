@@ -1,32 +1,17 @@
 import OpenAI from 'openai';
 import constants from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
-import { LLMInterface } from '@src/llm/LLMInterface';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/utils/extractContent';
 import { completeSentence } from '@src/llm/openai/utils/completeSentence';
 import { needsCompletion } from '@src/llm/openai/utils/needsCompletion';
 
-interface OpenAICompletionsRequestBody {
-    model: string;
-    prompt: string;
-    max_tokens: number;
-    temperature?: number;
-    user?: string;
-}
-
-interface OpenAIChatCompletionsRequestBody {
-    model: string;
-    messages: Array<{ role: string; content: string; name?: string }>;
-}
-
-class OpenAiManager extends LLMInterface {
+class OpenAiManager {
     private static instance: OpenAiManager;
     private openai: OpenAI;
     private busy: boolean;
 
     private constructor() {
-        super();
         this.openai = new OpenAI({
             apiKey: constants.LLM_API_KEY,
             baseURL: constants.LLM_ENDPOINT_URL,
@@ -57,7 +42,7 @@ class OpenAiManager extends LLMInterface {
         return ['user', 'system', 'assistant', 'function'].includes(role);
     }
 
-    public async buildCompletionsRequest(prompt: string): Promise<OpenAICompletionsRequestBody> {
+    public async buildCompletionsRequest(prompt: string): Promise<object> {
         return {
             model: constants.LLM_MODEL,
             prompt,
@@ -67,7 +52,7 @@ class OpenAiManager extends LLMInterface {
         };
     }
 
-    public async buildChatCompletionsRequest(historyMessages: any[]): Promise<OpenAIChatCompletionsRequestBody> {
+    public async buildChatCompletionsRequest(historyMessages: any[]): Promise<object> {
         return {
             model: constants.LLM_MODEL,
             messages: historyMessages.map((msg) => ({
@@ -158,6 +143,21 @@ class OpenAiManager extends LLMInterface {
             this.setBusy(false);
             logger.debug('[OpenAiManager.sendChatCompletionsRequest] Set busy to false after processing the request.');
         }
+    }
+
+    public async summarizeText(
+        userMessage: string,
+        systemMessageContent: string = constants.LLM_SYSTEM_PROMPT,
+        maxTokens: number = constants.LLM_RESPONSE_MAX_TOKENS
+    ): Promise<LLMResponse> {
+        const prompt = `${systemMessageContent}\nUser: ${userMessage}\nAssistant:`;
+        const requestBody = await this.buildCompletionsRequest(prompt);
+        const response = await this.sendCompletionsRequest(JSON.stringify(requestBody));
+
+        const summary = extractContent(response);
+        logger.info('[OpenAiManager.summarizeText] Summary processed successfully.');
+
+        return new LLMResponse(summary, 'completed', response.usage?.total_tokens);
     }
 }
 
