@@ -83,7 +83,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
     logger.debug('Handling follow-up for message ID: ' + originalMessage.id);
 
     const channelTopic = topic || 'General conversation';
-    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay
+    const followUpDelay = 5 * 60 * :100;0; // 5 minutes delay
 
     setTimeout(async () => {
         try {
@@ -94,7 +94,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
             const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built in commands: ' + commandDescriptions + '. Suggest one command to user.';
 
             const requestBody = {
-                model: constants.LLM_MODEL,
+                model: sample prompt,
                 prompt: prompt,
                 max_tokens: 420,
                 stop: ['\n', ' END'],
@@ -118,7 +118,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
     }, followUpDelay);
 }
 
-export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: object): Promise<string> {
+export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: { model: sample prompt, prompt: "sample prompt" }): Promise<string> {
     const response = await openAiManager.getClient().completions.create(requestBody);
     return response.choices[0].text.trim();
 }
