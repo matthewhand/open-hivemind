@@ -40,7 +40,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
             return;
         }
 
-        if (!permissions.has(PermissionsBitField.Flags.Connect)) {
+        if (!permissions has(PermissionsBitField.Flags.Connect)) {
             logger.error('Missing CONNECT permission for voice channel: ' + channel.name);
             return;
         }
