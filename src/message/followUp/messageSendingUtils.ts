@@ -62,7 +62,6 @@ async function sendMessagePart(part: string, channelId: string): Promise<void> {
             throw new Error('Invalid part type: ' + typeof part);
         }
 
-        await DiscordManager.getInstance().sendMessageToChannel(channelId, part);
         logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
     } catch (error: any) {
         logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
@@ -75,7 +74,6 @@ function delay(duration: number): Promise<void> {
 }
 
 export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
-    const openAiManager = OpenAiManager.getInstance();
     logger.debug('Handling follow-up for message ID: ' + originalMessage.id);
 
     const channelTopic = topic || 'General conversation';
@@ -96,7 +94,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
                 stop: ['\n', ' END'],
             };
 
-            const responseContent = await makeOpenAiRequest(openAiManager, requestBody);
+            const responseContent = await makeOpenAiRequest(OpenAiManager, requestBody);
             if (!responseContent || responseContent.length === 0) {
                 logger.error('Received empty or invalid response from OpenAI for follow-up.');
                 return;
@@ -114,7 +112,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
     }, followUpDelay);
 }
 
-export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: { model: string, prompt: string }): Promise<string> {
-    const response = await openAiManager.getClient().completions.create(requestBody);
+export async function makeOpenAiRequest(OpenAiManager: OpenAiManager, requestBody: { model: string, prompt: string }): Promise<string> {
+    const response = await OpenAiManager.getClient().completions.create(requestBody);
     return response.choices[0].text.trim();
 }

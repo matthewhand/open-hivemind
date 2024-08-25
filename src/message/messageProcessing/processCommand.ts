@@ -1,5 +1,4 @@
-import { sendResponse } from '@src/message/helpers/sendResponse';
-import { processAIResponse } from '@src/message/handlers/processAIResponse';
+import DiscordManager from '@src/message/discord/DiscordManager';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
@@ -11,12 +10,8 @@ export async function processCommand(message: IMessage): Promise<void> {
     try {
         const content = message.content.toLowerCase();
         if (content.startsWith('!ai')) {
-            const aiResponse = await processAIResponse(message, [], Date.now());
-            if (typeof aiResponse === "string") {
-                await sendResponse(message.client, message.channelId, aiResponse);
-            } else {
-                throw new Error('AI Response is undefined or null');
-            }
+            const discordManager = DiscordManager.getInstance(message.client);
+            await discordManager.processAIResponse(message, [], Date.now());
         }
     } catch (error: any) {
         console.error('[processCommand] Error processing command:', error);

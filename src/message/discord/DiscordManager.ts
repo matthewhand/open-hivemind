@@ -6,12 +6,19 @@ import { sendMessageToChannel } from './utils/sendMessageToChannel';
 import { setupVoiceChannel } from './utils/setupVoiceChannel';
 import { playWelcomeMessage } from './utils/playWelcomeMessage';
 import { setMessageHandler } from './utils/setMessageHandler';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import { shouldReplyToMessage } from '@src/message/responseManager/shouldReplyToMessage';
+import { LLMInterface } from '@src/llm/LLMInterface';
+import constants from '@config/ConfigurationManager';
+import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
+import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
 class DiscordManager {
     private client: Client;
     private static instance: DiscordManager;
 
-    public constructor() {
+    private constructor() {
         logger.info('DiscordManager: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
         this.client = new Client({
             intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates]
@@ -68,11 +75,81 @@ class DiscordManager {
         }
     }
 
-    private async handleMessage(message: Message): Promise<void> {
+    private async handleMessage(message: IMessage): Promise<void> {
         logger.info('DiscordManager: Received message: ' + message.content);
-    }
+        if (!shouldReplyToMessage(message)) {
+            logger.info('[DiscordManager] No AI response needed.');
+            return;
+        }
 
-    public setMessageHandler(handler: (message: Message) => Promise<void>): void {
+        const llmManager = LLMInterface.getManager();
+        if (llmManager.isBusy()) {
+            logger.info('[DiscordManager] LLM Manager is busy.');
+            return;
+        }
+
+        let requestBody;
+        try {
+            requestBody = await prepareMessageBody(
+                constants.LLM_SYSTEM_PROMPT,
+                message.channelId,
+                []
+            );
+        } catch (error: any) {
+            logger.error('[DiscordManager] Error preparing LLM request body:', error);
+            return;
+        }
+
+        let llmResponse;
+        try {
+            llmResponse = await llmManager.sendRequest(requestBody);
+        } catch (error: any) {
+            logger.error('[DiscordManager] Error sending LLM request:', error);
+            return;
+        }
+
+        let responseContent;
+        try {
+            responseContent = llmResponse.getContent();
+
+            if (typeof responseContent !== 'string') {
+                throw new Error('Expected string from LLM response, received: ' + typeof responseContent);
+            }
+
+            const finishReason = llmResponse.getFinishReason();
+            if (finishReason !== 'stop') {
+                throw new Error('LLM response finished with reason: ' + finishReason);
+            }
+
+            if (!responseContent.trim()) {
+                throw new Error('LLM provided an empty or invalid response.');
+            }
+
+            if (responseContent.length > constants.MAX_MESSAGE_LENGTH) {
+                responseContent = await summarizeMessage(responseContent);
+            }
+        } catch (error: any) {
+            logger.error('[DiscordManager] Error processing LLM response content:', error);
+            return;
+        }
+
+        try {
+            await this.sendMessageToChannel(message.channelId, responseContent);
+        } catch (error: any) {
+            logger.error('[DiscordManager] Error sending response to channel:', error);
+            return;
+        }
+
+        if (constants.FOLLOW_UP_ENABLED) {
+            try {
+        if (constants.FOLLOW_UP_ENABLED) {
+        try {
+                logger.error('[DiscordManager] Error initiating follow-up interaction:', error);
+            }
+        }
+        } catch (error: any) {
+
+        }
         logger.info('DiscordManager: Setting message handler');
         setMessageHandler(this.client, handler, new Map<string, number>(), async (channelId: string) => []);
     }

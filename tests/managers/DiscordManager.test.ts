@@ -16,7 +16,7 @@ jest.mock('discord.js', () => {
 
 describe('DiscordManager', () => {
   it('should log in and start the Discord client', async () => {
-    const discordManager = new DiscordManager();
+    const discordManager = DiscordManager.getInstance(client);
     const clientId = 'test-client-id';
     await discordManager.start(clientId);
     expect(discordManager['client'].login).toHaveBeenCalledWith(clientId);

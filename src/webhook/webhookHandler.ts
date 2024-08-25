@@ -83,7 +83,6 @@ export const startWebhookServer = (port: number): void => {
 
     app.post('/post', async (req: Request, res: Response) => {
         const { message } = req.body;
-        const discordManager = DiscordManager.getInstance();
 
         if (!message) {
             console.error('No message provided in request body');
@@ -91,7 +90,7 @@ export const startWebhookServer = (port: number): void => {
         }
 
         try {
-            await discordManager.sendMessageToChannel(process.env.CHANNEL_ID!, message);
+            await DiscordManager.sendMessageToChannel(process.env.CHANNEL_ID!, message);
             console.debug('Message sent to Discord: ' + message);
             res.status(200).send({ message: 'Message sent to Discord.' });
         } catch (error: any) {
@@ -119,8 +118,7 @@ export const startWebhookServer = (port: number): void => {
     //             return res.status(500).send({ error: 'Failed to summarize the message' });
     //         }
 
-    //         const discordManager = DiscordManager.getInstance();
-    //         await discordManager.sendMessageToChannel(process.env.CHANNEL_ID!, summarizedMessage);
+    //         await DiscordManager.sendMessageToChannel(process.env.CHANNEL_ID!, summarizedMessage);
     //         console.debug('Summarized message sent to Discord: ' + summarizedMessage);
     //         res.status(200).send({ message: 'Message summarized and sent to Discord.' });
     //     } catch (error: any) {
