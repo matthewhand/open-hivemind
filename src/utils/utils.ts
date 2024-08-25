@@ -1,7 +1,5 @@
 import util from 'util';
 import fs from 'fs';
-import debug from './debug';
-
 /**
  * Executes a shell command and returns the result.
  * 
@@ -18,7 +16,6 @@ export async function executeCommand(command: string): Promise<string> {
     debug.debug('CommandHandler output: ' + stdout);
     return stdout;
 }
-
 /**
  * Reads a file and returns its content.
  * 

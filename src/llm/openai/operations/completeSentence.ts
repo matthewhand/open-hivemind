@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 import constants from '@config/ConfigurationManager';
-
 /**
  * Completes a sentence by making an additional request to the OpenAI API.
  * @param openaiClient - The initialized OpenAI client instance.
@@ -20,7 +19,6 @@ export async function completeSentence(
         max_tokens: config.LLM_RESPONSE_MAX_TOKENS,
         temperature: config.LLM_TEMPERATURE,
     };
-
     const response = await openaiClient.completions.create(requestBody);
     return response.choices[0].text.trim();
 }

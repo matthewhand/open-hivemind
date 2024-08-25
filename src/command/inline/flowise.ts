@@ -1,12 +1,9 @@
 import axios from 'axios';
 import Debug from 'debug';
-
 const debug = Debug('app:command:flowise');
-
 export class FlowiseCommand {
     name = 'flowise';
     description = 'Interact with the Flowise API to retrieve information based on the provided endpoint ID.';
-
     /**
      * Executes the Flowise API command.
      * @param args The command arguments, including an optional endpointId.
@@ -14,7 +11,6 @@ export class FlowiseCommand {
      */
     async execute(args: { endpointId?: string }): Promise<{ success: boolean, message: string, error?: string, data?: any }> {
         const { endpointId } = args;
-
         // Guard: Check if the API base URL is defined in the environment variables
         const apiUrl = process.env.FLOWISE_API_BASE_URL;
         if (!apiUrl) {
@@ -23,7 +19,6 @@ export class FlowiseCommand {
             return { success: false, message: errorMessage };
         }
         debug('Flowise API base URL: ' + apiUrl);
-
         // Guard: Ensure endpointId is provided
         if (!endpointId) {
             const errorMessage = 'Endpoint ID is required but was not provided.';
@@ -31,16 +26,13 @@ export class FlowiseCommand {
             return { success: false, message: errorMessage };
         }
         debug('Endpoint ID: ' + endpointId);
-
         // Construct the full API URL
         const url = apiUrl + endpointId;
         debug('Constructed Flowise API URL: ' + url);
-
         try {
             // Make a GET request to the Flowise API
             const response = await axios.get(url);
             debug('Flowise API response status: ' + response.status);
-
             // Return success response with data
             return { success: true, message: 'Request successful', data: response.data };
         } catch (error: any) {

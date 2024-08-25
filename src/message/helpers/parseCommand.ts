@@ -1,4 +1,3 @@
-
 /**
  * Parses a command string and extracts the command name, action, and arguments.
  * 
@@ -10,24 +9,18 @@ export function parseCommand(commandContent: string): { commandName: string, act
         debug('[parseCommand] No command content provided.');
         return null;
     }
-
     debug.debug('[parseCommand] Attempting to parse command content: ' + commandContent + '');
-
     const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
     const matches = commandContent.match(commandRegex);
-
     if (matches) {
         const [, commandName, action = '', args = ''] = matches.map(match => match.trim());
-
-        debug.debug('[parseCommand] Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
-
+        debug.debug('[parseCommand] Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args);
         return {
             commandName: commandName.toLowerCase(),
             action: action.toLowerCase(),
             args
         };
     }
-
     debug.debug('[parseCommand] CommandHandler content did not match expected pattern.');
     return null;
 }

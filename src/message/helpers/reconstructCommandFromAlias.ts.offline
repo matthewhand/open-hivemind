@@ -1,5 +1,4 @@
 import { Alias } from "@command/aliases";
-
 /**
  * Reconstructs a full command string from an alias and additional arguments.
  * 
@@ -12,15 +11,12 @@ export function reconstructCommandFromAlias(alias: string, additionalArgs: strin
         console.warn('[reconstructCommandFromAlias] Invalid arguments provided.');
         return null;
     }
-
     if (!aliases[alias]) {
         console.warn('[reconstructCommandFromAlias] Alias not found: ' + alias);
         return null;
     }
-
     const [aliasedCommand, action] = aliases[alias].split(':');
     const reconstructedCommand = '!' + aliasedCommand + (action ? ':' + action : '') + ' ' + additionalArgs;
-
     console.debug('[reconstructCommandFromAlias] Reconstructed command: ' + reconstructedCommand.trim());
     return reconstructedCommand.trim();
 }

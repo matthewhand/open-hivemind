@@ -1,16 +1,13 @@
 import { Configuration, OpenAIApi } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
 import Debug from 'debug';
-
 const debug = Debug('app:llm:OpenAiService');
-
 /**
  * A class to manage interactions with the OpenAI API, implementing LlmService.
  */
 export class OpenAiService implements LlmService {
   private openai: OpenAIApi;
   private busy = false;
-
   constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error('API key is required to instantiate OpenAiService.');
@@ -19,7 +16,6 @@ export class OpenAiService implements LlmService {
     const configuration = new Configuration({ apiKey });
     this.openai = new OpenAIApi(configuration);
   }
-
   /**
    * Generates a response from the AI based on a given prompt.
    * @param {string} prompt - The prompt to generate a response for.
@@ -40,14 +36,13 @@ export class OpenAiService implements LlmService {
       debug('Response received from OpenAI.');
       return completion.data.choices[0].text || '';
     } catch (error) {
-      debug('Error generating response: ' + (error instanceof Error ? error.message : String(error)), error);
+      debug('Error generating response: ' + (error instanceof Error ? error.message : String(error))  error);
       throw error;
     } finally {
       this.busy = false;
       debug('OpenAiService is now idle.');
     }
   }
-
   /**
    * Checks if the AI service is currently busy processing a request.
    * @returns {boolean} True if the service is busy, false otherwise.

@@ -4,9 +4,7 @@ import { setMessageHandler } from './setMessageHandler';
 import { fetchMessages } from '../fetchers/fetchMessages';
 import { sendFollowUpMessage } from '@src/message/followUp/sendFollowUpMessage';
 import { sendAiGeneratedMessage } from '@src/message/followUp/sendAiGeneratedMessage';
-
 const debug = Debug('app:discord:initializeClient');
-
 /**
  * Initializes the Discord client and sets up message handling.
  * @param {Client} client - The Discord client instance.
@@ -23,10 +21,8 @@ export function initializeClient(
       debug('Discord client is not initialized.');
       return;
     }
-
     // Set up message and typing handlers
     setMessageHandler(client, handler, typingTimestamps, fetchMessages);
-
     client.on('ready', () => {
       debug('Discord client is ready!');
     });

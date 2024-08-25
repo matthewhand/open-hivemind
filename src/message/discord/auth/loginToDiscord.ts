@@ -1,7 +1,5 @@
 // src/message/discord/operations/loginToDiscord.ts
-
 import { Client } from 'discord.js';
-
 /**
  * Logs in the Discord client using the provided bot token.
  * 
@@ -12,14 +10,12 @@ import { Client } from 'discord.js';
  */
 export async function loginToDiscord(client: Client, token: string): Promise<string> {
     debug('Attempting to log in to Discord.');
-
     // Guard clause: Ensure the token is provided.
     if (!token) {
         const errorMessage = 'DISCORD_TOKEN is not defined.';
         debug(errorMessage);
         throw new Error(errorMessage);
     }
-
     try {
         const result = await client.login(token);
         debug('Successfully logged in to Discord.');
@@ -30,4 +26,3 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
         throw new Error(errorMessage);
     }
 }
-

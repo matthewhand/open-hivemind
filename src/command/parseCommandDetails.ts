@@ -1,9 +1,7 @@
-
 interface CommandDetails {
     command: string;
     args: string[];
 }
-
 /**
  * Parses the command and its arguments from the given text.
  * @param {string} text - The text containing the command to parse.
@@ -15,9 +13,8 @@ export function parseCommandDetails(text: string): CommandDetails | null {
         debug(`parseCommandDetails: Invalid command format - ${text}`);
         return null;
     }
-
     const command = match[1].toLowerCase();
     const args = match[2] ? match[2].split(/\s+/) : [];
-    debug.debug(`parseCommandDetails: command - ${command}, args - [${args.join(', ')}]`);
+    debug.debug(`parseCommandDetails: command - ${command}  args - [${args.join(', ')}]`);
     return { command, args };
 }

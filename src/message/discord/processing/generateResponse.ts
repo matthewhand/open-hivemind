@@ -1,6 +1,5 @@
 import axios from 'axios';
 import constants from '@config/ConfigurationManager';
-
 /**
  * Generates a response using the LLM API.
  * @param {string} transcript - The transcript text to generate a response from.
@@ -12,9 +11,7 @@ export async function generateResponse(transcript: string): Promise<string | und
         debug('LLM_ENDPOINT_URL is not set in the environment variables.');
         return undefined;
     }
-
     debug.debug('LLM_ENDPOINT_URL: ' + llmEndpointUrl);
-
     try {
         const response = await axios.post(llmEndpointUrl, {
             prompt: transcript,
@@ -24,7 +21,6 @@ export async function generateResponse(transcript: string): Promise<string | und
                 'Authorization': 'Bearer ' + constants.LLM_API_KEY,
             },
         });
-
         return response.data.choices[0].text.trim();
     } catch (error: any) {
         debug('Error generating response: ' + (error instanceof Error ? error.message : String(error)));

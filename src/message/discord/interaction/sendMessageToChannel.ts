@@ -1,8 +1,6 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import Debug from 'debug';
-
 const debug = Debug('app:discord:sendMessageToChannel');
-
 /**
  * Sends a message to a specific Discord channel.
  * @param client - The Discord client instance.
@@ -16,7 +14,6 @@ export async function sendMessageToChannel(client: Client, channelId: string, me
         debug('Channel with ID ' + channelId + ' not found.');
         return;
     }
-
     try {
         const sentMessage = await channel.send(messageContent);
         debug('Message sent to channel ID ' + channelId + ': ' + messageContent);

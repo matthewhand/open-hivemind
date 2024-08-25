@@ -1,5 +1,4 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-
 export function validateMessage(message: IMessage): boolean {
     try {
         const isValid = message.getText().length > 0 && message.getAuthorId() !== '';

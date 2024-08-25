@@ -6,9 +6,7 @@ import { parseCommandDetails } from './parseCommandDetails';
 import { executeParsedCommand } from './executeParsedCommand';
 import { IMessage } from '../message/interfaces/IMessage';
 import ICommand from '@src/command/interfaces/ICommand';
-
 const debug = Debug('app:command:CommandManager');
-
 /**
  * Manages command operations including loading commands, parsing input texts, and executing commands.
  */
@@ -16,14 +14,12 @@ export class CommandManager {
     private commands: Record<string, ICommand>;
     private aliases: Record<string, string>;
     private debug: Debug.Debugger;
-
     constructor() {
         this.commands = this.loadCommands(path.join(__dirname, '../command/inline'));
         this.aliases = require('@config/aliases');
         this.debug = Debug('app:command:CommandManager');
         this.debug('CommandManager initialized with commands and aliases.');
     }
-
     /**
      * Loads all command modules from the specified directory.
      * @param directory The directory containing command modules.
@@ -33,7 +29,6 @@ export class CommandManager {
         const fullPath = path.resolve(__dirname, directory);
         const commandFiles = fs.readdirSync(fullPath);
         const commands: Record<string, ICommand> = {};
-
         commandFiles.forEach(file => {
             if (file.endsWith('.ts')) {
                 const commandName = file.slice(0, -3); // Remove the .ts extension to get the command name
@@ -61,7 +56,6 @@ export class CommandManager {
         });
         return commands;
     }
-
     /**
      * Executes a command based on the provided message.
      * @param originalMsg The original message containing the command.
@@ -69,22 +63,18 @@ export class CommandManager {
      */
     async executeCommand(originalMsg: IMessage): Promise<{ success: boolean; message: string; error?: string }> {
         const text = originalMsg.getText().trim();
-
         // Check if the message is a command
         if (!isCommand(text)) {
-            this.debug("Text does not start with '!', not a command.");
+            this.debug("Text does not start with '!'  not a command.");
             return { success: false, message: 'Not a command.', error: 'Invalid command syntax' };
         }
-
         // Parse the command details
         const commandDetails = parseCommandDetails(text);
         if (!commandDetails) {
             debug('Failed to parse command details.');
             return { success: false, message: 'Parsing error.', error: 'Invalid command format' };
         }
-
-        this.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join(', ') + ']');
-
+        this.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join('  ') + ']');
         // Execute the parsed command
         const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
@@ -92,7 +82,6 @@ export class CommandManager {
         } else {
             this.debug('CommandHandler executed successfully: ' + executionResult.result);
         }
-
         // Ensure `message` is always a string
         return {
             ...executionResult,
@@ -100,5 +89,4 @@ export class CommandManager {
         };
     }
 }
-
 export default CommandManager;

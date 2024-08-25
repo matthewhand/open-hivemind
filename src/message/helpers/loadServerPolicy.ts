@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-
 /**
  * Loads the server's moderation policy from a JSON configuration file.
  * 

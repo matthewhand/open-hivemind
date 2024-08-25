@@ -3,7 +3,6 @@ import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
 import { IMessage } from '../interfaces/IMessage';
 import { IMessengerService } from '../interfaces/IMessengerService';
-
 /**
  * Service implementation for managing Discord interactions, including message handling,
  * voice channel connections, and AI response processing.
@@ -11,19 +10,17 @@ import { IMessengerService } from '../interfaces/IMessengerService';
 export class DiscordService implements IMessengerService {
   private client: Client;
   private static instance: DiscordService;
-
   /**
    * Private constructor to enforce singleton pattern.
    * Initializes the Discord client with the necessary intents.
    */
   private constructor() {
-    debug('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
+    debug('DiscordService: Initializing Client with intents: Guilds  GuildMessages, GuildVoiceStates');
     this.client = new Client({
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates],
     });
     debug('DiscordService: Client initialized successfully');
   }
-
   /**
    * Returns the singleton instance of DiscordService, creating it if necessary.
    * @returns The singleton instance of DiscordService.
@@ -35,7 +32,6 @@ export class DiscordService implements IMessengerService {
     }
     return DiscordService.instance;
   }
-
   /**
    * Initializes the Discord service by logging in and setting up event handlers.
    */
@@ -51,11 +47,10 @@ export class DiscordService implements IMessengerService {
       });
       initializeClient(this.client);
     } catch (error: any) {
-      debug('Failed to start DiscordService:', error);
+      debug('Failed to start DiscordService:'  error);
       process.exit(1);
     }
   }
-
   /**
    * Starts the Discord service, initializing the client.
    * @param token - The Discord bot token.
@@ -63,7 +58,6 @@ export class DiscordService implements IMessengerService {
   public async start(token: string): Promise<void> {
     await this.initialize(token);
   }
-
   /**
    * Handles incoming messages, determining if an AI response is needed,
    * preparing the request, and sending the response.
@@ -73,7 +67,6 @@ export class DiscordService implements IMessengerService {
     debug.debug('DiscordService: Handling message with ID ' + message.id);
     await handleMessage(message);
   }
-
   /**
    * Sends a message to a specified channel.
    * @param {string} channelId - The ID of the channel to send the message to.
@@ -89,7 +82,7 @@ export class DiscordService implements IMessengerService {
       await channel.send(message);
       debug(`Message sent to channel ${channelId}: ${message}`);
     } catch (error: any) {
-      debug(`Failed to send message to channel ${channelId}:`, error);
+      debug(`Failed to send message to channel ${channelId}:`  error);
       throw error;
     }
   }

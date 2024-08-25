@@ -3,7 +3,6 @@ import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from './sendCompletionsRequest';
 import OpenAiService from './OpenAiService';
 import constants from '@config/ConfigurationManager';
-
 export async function summarizeText(
     manager: OpenAiService,
     userMessage: string,
@@ -13,9 +12,7 @@ export async function summarizeText(
     const prompt = systemMessageContent + '\nUser: ' + userMessage + '\nAssistant:';
     const requestBody = await manager.buildCompletionsRequest(prompt);
     const response = await sendCompletionsRequest(manager, JSON.stringify(requestBody));
-
     const summary = extractContent(response);
     debug('[summarizeText] Summary processed successfully.');
-
     return new LLMResponse(summary, 'completed');
 }

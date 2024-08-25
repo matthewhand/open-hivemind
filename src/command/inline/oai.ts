@@ -1,7 +1,6 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import { getRandomErrorMessage } from '@src/operations/commonUtils';
-
+import { getRandomErrorMessage } from '../utils/commonUtils';
 /**
  * CommandHandler to interact with the OpenAI API for generating text responses.
  * Usage: !oai <prompt>
@@ -9,12 +8,10 @@ import { getRandomErrorMessage } from '@src/operations/commonUtils';
 export class OAICommand implements ICommand {
     name: string;
     description: string;
-
     constructor() {
         this.name = 'oai';
         this.description = 'Interacts with the OpenAI API to generate responses.';
     }
-
     /**
      * Executes the OAI command using the provided message context and arguments.
      * @param args - The arguments provided with the command.
@@ -23,7 +20,6 @@ export class OAICommand implements ICommand {
     async execute(args: string[]): Promise<{ success: boolean, message: string, error?: string }> {
         const prompt = args.join(' ');  // Combining all arguments to form the prompt
         debug('OAICommand: Generating response for prompt: ' + prompt);
-
         try {
             const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
                 prompt: prompt,
@@ -33,7 +29,6 @@ export class OAICommand implements ICommand {
                     'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY
                 }
             });
-
             if (response.data.choices && response.data.choices.length > 0) {
                 const generatedText = response.data.choices[0].text.trim();
                 debug('OAICommand: Response generated successfully');

@@ -1,16 +1,13 @@
 import { Client, TextChannel, NewsChannel } from 'discord.js';
-
 export async function startTyping(client: Client, channelId: string): Promise<void> {
     try {
         debug.debug('[DiscordManager] Fetching channel ID: ' + channelId);
         const channel = await client.channels.fetch(channelId);
         debug.debug('[DiscordManager] Fetched channel: ' + (channel ? channel.id : 'null'));
-
         if (!channel) {
             debug('[DiscordManager] Channel with ID: ' + channelId + ' not found.');
             return;
         }
-
         debug.debug('[DiscordManager] Channel type: ' + channel.type);
         if (channel instanceof TextChannel || channel instanceof NewsChannel) {
             // TODO confirm permission before attempting to send
@@ -19,7 +16,6 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
             //     debug('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
             //     return;
             // }
-
             await channel.sendTyping();
             debug.debug('[DiscordManager] Started typing in channel ID: ' + channelId);
         } else {

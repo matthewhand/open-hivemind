@@ -1,8 +1,6 @@
 import constants from '@config/ConfigurationManager';
 import Debug from 'debug';
-
 const debug = Debug('app:llm:LlmService');
-
 /**
  * Abstract class representing the interface for Large Language Models (LLM).
  * Subclasses must implement the abstract methods defined here.
@@ -14,7 +12,6 @@ export abstract class LlmService {
         }
         debug('LlmService instantiated');
     }
-
     /**
      * Returns an instance of the LLM provider specified in the configuration.
      * Currently supports only OpenAI as the LLM provider.
@@ -32,7 +29,6 @@ export abstract class LlmService {
                 throw new Error('Unsupported LLM Provider specified in constants: ' + constants.LLM_PROVIDER);
         }
     }
-
     /**
      * Builds the request body to be sent to the LLM.
      * Must be implemented by subclasses.
@@ -40,7 +36,6 @@ export abstract class LlmService {
      * @returns {Promise<object>} The request body object.
      */
     abstract buildRequestBody(historyMessages: any[]): Promise<object>;
-
     /**
      * Sends the request to the LLM and returns the response.
      * Must be implemented by subclasses.
@@ -49,14 +44,12 @@ export abstract class LlmService {
      * @returns {Promise<any>} The response from the LLM.
      */
     abstract sendRequest(message: any, history?: any[]): Promise<any>;
-
     /**
      * Checks if the LLM is currently busy processing a request.
      * Must be implemented by subclasses.
      * @returns {boolean} True if the LLM is busy, false otherwise.
      */
     abstract isBusy(): boolean;
-
     /**
      * Indicates whether the LLM requires message history.
      * Can be overridden by subclasses if history is required.

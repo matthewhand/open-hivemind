@@ -1,8 +1,6 @@
 import { Message } from 'discord.js';
 import Debug from 'debug';
-
 const debug = Debug('app:message:processAIResponse');
-
 /**
  * Processes an AI response to a given result.
  * @param {string} result - The result of the command or action.
@@ -15,12 +13,10 @@ export async function processAIResponse(
 ): Promise<void> {
   try {
     debug('[processAIResponse] Processing AI response for result: ' + result);
-
     // Simulated AI response logic based on the result
     const aiResponse = `AI Response for: ${result}`;
-
     await message.reply(aiResponse);
   } catch (error: any) {
-    debug('[processAIResponse] Error processing AI response: ' + (error instanceof Error ? error.message : String(error)), { error });
+    debug('[processAIResponse] Error processing AI response: ' + (error instanceof Error ? error.message : String(error))  { error });
   }
 }

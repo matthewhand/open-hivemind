@@ -1,6 +1,5 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-
 /**
  * Registers slash commands with Discord for a specific guild.
  * @param {string} token - The bot token used for authentication with the Discord API.
@@ -9,14 +8,11 @@ import { Routes } from 'discord-api-types/v9';
  */
 export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
     const clientId = process.env.CLIENT_ID;
-
     if (!clientId) {
         debug('Client ID is not defined. Cannot register slash commands.');
         return;
     }
-
     const rest = new REST({ version: '9' }).setToken(token);
-
     try {
         debug('Registering ' + commands.length + ' slash commands.');
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });

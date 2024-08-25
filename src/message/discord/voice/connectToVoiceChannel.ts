@@ -2,7 +2,6 @@ import { Client } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice';
 import { setupVoiceChannel } from '../voice/setupVoiceChannel';
 import { playWelcomeMessage } from '../voice/playWelcomeMessage';
-
 /**
  * Connects to a specified voice channel and plays a welcome message.
  * 

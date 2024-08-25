@@ -1,8 +1,6 @@
 import { TextChannel } from 'discord.js';
 import Debug from 'debug';
-
 const debug = Debug('app:discord:sendMessageToChannel');
-
 /**
  * Sends a message to a specific Discord text channel.
  * @param {TextChannel} channel - The channel to send the message to.

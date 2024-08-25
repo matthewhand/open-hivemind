@@ -2,9 +2,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { sendMessageToChannel } from './sendMessageToChannel';
 import { Client } from 'discord.js';
-
 const debug = Debug('app:discord:sendFollowUp');
-
 /**
  * Sends a follow-up message to the specified channel.
  * @param client - The Discord client instance.

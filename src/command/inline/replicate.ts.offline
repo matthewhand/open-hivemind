@@ -1,19 +1,14 @@
 import ICommand from '../interfaces/ICommand';
 import { analyzeImage } from '@src/command/common/replicate';
-
 export class ReplicateCommand implements ICommand {
     name = 'replicate';
     description = 'Analyze an image using the Replicate API';
-
     async execute(interaction: any): Promise<{ success: boolean; message: string; error?: string }> {
         const imageUrl = interaction.options.getString('image', true);
         const prompt = interaction.options.getString('prompt', true);
-
         await interaction.deferReply();
-
         try {
             const result = await analyzeImage(imageUrl, prompt);
-
             if (result.success) {
                 await interaction.editReply({
                     content: result.message,
@@ -33,7 +28,7 @@ export class ReplicateCommand implements ICommand {
                 return { success: false, message: `Failed to analyze image: ${result.message}` };
             }
         } catch (error) {
-            debug('Error analyzing image:', error);
+            debug('Error analyzing image:'  error);
             return { success: false, message: 'Error analyzing image.', error: error.message };
         }
     }

@@ -1,12 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-
 interface CommandHandler {
     data: {
         toJSON: () => any;
     };
 }
-
 /**
  * Collects slash commands from a specified directory.
  * 
@@ -16,15 +14,12 @@ interface CommandHandler {
 export function collectSlashCommands(commandsPath: string): object[] {
     debug('Collecting slash commands from directory: ' + commandsPath);
     const commands: object[] = [];
-
     try {
         const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
         if (commandFiles.length === 0) {
             debug('No .js command files found in directory: ' + commandsPath);
             return commands;
         }
-
         for (const file of commandFiles) {
             const command: CommandHandler = require(path.join(commandsPath, file));
             if (command.data) {
@@ -37,6 +32,5 @@ export function collectSlashCommands(commandsPath: string): object[] {
     } catch (error: any) {
         debug('Error collecting slash commands: ' + (error instanceof Error ? error.message : String(error)));
     }
-
     return commands;
 }

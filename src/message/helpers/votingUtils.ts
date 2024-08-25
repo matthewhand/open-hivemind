@@ -1,4 +1,3 @@
-
 /**
  * Simulates the process of starting a voting process for banning a user.
  * @param userId - The ID of the user to start a ban vote for.
@@ -9,7 +8,6 @@ export async function startVotingProcess(userId: string): Promise<{ votePassed: 
     // Simulated voting process result
     return { votePassed: true };
 }
-
 /**
  * Checks if the user is eligible to initiate a voting process this year.
  * @param userId - The ID of the user to check eligibility for.

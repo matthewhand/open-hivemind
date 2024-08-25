@@ -18,7 +18,6 @@ export function isUserAllowed(userId: string, allowedUsers: string[]): boolean {
     console.debug('[isUserAllowed] User ' + userId + ' is ' + (isAllowed ? 'allowed' : 'not allowed') + '.');
     return isAllowed;
 }
-
 /**
  * Checks if any of the user's roles are allowed based on a list of allowed roles.
  * 

@@ -1,7 +1,5 @@
-
 class ReplyManager {
     private replyMetrics: Record<string, { lastReplyTime: number; replyCount: number }> = {};
-
     logReply(channelId: string): void {
         const currentTime = Date.now();
         if (!this.replyMetrics[channelId]) {
@@ -12,20 +10,16 @@ class ReplyManager {
         }
         debug('Logged reply for channel ' + channelId + ' at ' + currentTime);
     }
-
     getTimeSinceLastReply(channelId: string): number {
         if (!this.replyMetrics[channelId]) return Infinity;
         return Date.now() - this.replyMetrics[channelId].lastReplyTime;
     }
-
     getReplyCount(channelId: string): number {
         return this.replyMetrics[channelId]?.replyCount || 0;
     }
-
     resetReplyCount(channelId: string): void {
         if (this.replyMetrics[channelId]) this.replyMetrics[channelId].replyCount = 0;
     }
-
     calculateDynamicFactor(channelId: string): number {
         const replyCount = this.getReplyCount(channelId);
         if (replyCount > 20) return 0.3;
@@ -33,9 +27,7 @@ class ReplyManager {
         return 1; // Default factor for low to moderate activity
     }
 }
-
 const replyManagerInstance = new ReplyManager();
-
 export const getTimeSinceLastReply = (channelId: string): number => replyManagerInstance.getTimeSinceLastReply(channelId);
 export const logReply = (channelId: string): void => replyManagerInstance.logReply(channelId);
 export const calculateDynamicFactor = (channelId: string): number => replyManagerInstance.calculateDynamicFactor(channelId);

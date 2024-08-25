@@ -1,7 +1,5 @@
 import Debug from 'debug';
-
 const debug = Debug('app:message:generateResponse');
-
 /**
  * Generates an AI response for a given message.
  * @param {string} transcript - The transcript of the message to generate a response to.

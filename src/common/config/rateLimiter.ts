@@ -1,5 +1,4 @@
 import ConfigurationManager from '@config/ConfigurationManager';
-
 /**
  * Rate Limiter for Discord Bot Messages
  * 
@@ -13,7 +12,6 @@ import ConfigurationManager from '@config/ConfigurationManager';
 class RateLimiter {
     private messagesLastHour: Date[] = [];
     private messagesLastDay: Date[] = [];
-
     /**
      * Records the current time as a timestamp for a sent message.
      */
@@ -21,16 +19,13 @@ class RateLimiter {
         const now = new Date();
         this.messagesLastHour.push(now);
         this.messagesLastDay.push(now);
-
         // Filter timestamps to keep only those within the last hour
         const oneHourAgo = new Date(now.getTime() - 3600000);
         this.messagesLastHour = this.messagesLastHour.filter(timestamp => timestamp > oneHourAgo);
-
         // Filter for timestamps within the last 24 hours
         const oneDayAgo = new Date(now.getTime() - 86400000);
         this.messagesLastDay = this.messagesLastDay.filter(timestamp => timestamp > oneDayAgo);
     }
-
     /**
      * Checks if sending a new message would exceed the configured rate limits.
      * 
@@ -39,10 +34,9 @@ class RateLimiter {
     canSendMessage(): boolean {
         const canSend = this.messagesLastHour.length < ConfigurationManager.LLM_MESSAGE_LIMIT_PER_HOUR 
                         && this.messagesLastDay.length < ConfigurationManager.LLM_MESSAGE_LIMIT_PER_DAY;
-        console.debug('canSendMessage: ', canSend);
+        console.debug('canSendMessage: '  canSend);
         return canSend;
     }
 }
-
 const rateLimiter = new RateLimiter();
 export default rateLimiter;

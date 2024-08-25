@@ -1,10 +1,8 @@
 class ProcessingLocks {
     private locks: Map<string, boolean>;
-
     constructor() {
         this.locks = new Map<string, boolean>();
     }
-
     /**
      * Checks if the channel is currently locked.
      * 
@@ -16,7 +14,6 @@ class ProcessingLocks {
         console.debug('isLocked: Channel ' + channelId + ' locked status: ' + locked);
         return locked;
     }
-
     /**
      * Locks the specified channel.
      * 
@@ -26,7 +23,6 @@ class ProcessingLocks {
         this.locks.set(channelId, true);
         console.debug('lock: Channel ' + channelId + ' is now locked.');
     }
-
     /**
      * Unlocks the specified channel.
      * 
@@ -37,6 +33,5 @@ class ProcessingLocks {
         console.debug('unlock: Channel ' + channelId + ' is now unlocked.');
     }
 }
-
 const processingLocks = new ProcessingLocks();
 export default processingLocks;

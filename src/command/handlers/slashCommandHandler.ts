@@ -1,10 +1,8 @@
-import debug from 'debug';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import fs from 'fs';
 import path from 'path';
 import { Client, CommandInteraction } from 'discord.js';
-
 interface CommandHandler {
     data: {
         toJSON: () => object;
@@ -12,13 +10,10 @@ interface CommandHandler {
     };
     execute: (interaction: CommandInteraction) => Promise<void>;
 }
-
 const commands: object[] = [];
 const commandExecutors: Record<string, (interaction: CommandInteraction) => Promise<void>> = {};
-
 const commandsPath = path.join(__dirname, '..', 'commands', 'slash');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
-
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     if (file.endsWith('.ts') && require.extensions['.ts']) {
@@ -41,12 +36,10 @@ for (const file of commandFiles) {
         }
     }
 }
-
 export const registerCommands = async (clientId: string, token: string, guildId: string): Promise<void> => {
     const rest = new REST({ version: '9' }).setToken(token);
     try {
         debug('Started refreshing ' + commands.length + ' application (/) commands.');
-
         const data = await rest.put(
             Routes.applicationGuildCommands(clientId, guildId),
             { body: commands },
@@ -61,17 +54,15 @@ export const registerCommands = async (clientId: string, token: string, guildId:
         }
     }
 };
-
 export const handleCommands = (client: Client): void => {
     client.on('interactionCreate', async interaction => {
         if (!interaction.isCommand()) return;
-
         const commandExecutor = commandExecutors[interaction.commandName];
         if (commandExecutor) {
             try {
                 await commandExecutor(interaction);
             } catch (error: any) {
-                debug('Error executing command ' + interaction.commandName + ':', error);
+                debug('Error executing command ' + interaction.commandName + ':'  error);
                 await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
             }
         } else {

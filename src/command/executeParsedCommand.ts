@@ -1,24 +1,18 @@
 import Debug from 'debug';
-
 interface CommandDetails {
     command: string;
     args: string[];
 }
-
 interface CommandInstance {
     execute: (args: string[]) => Promise<any>;
 }
-
 interface CommandRepository {
     [key: string]: CommandInstance;
 }
-
 interface AliasMapping {
     [key: string]: string;
 }
-
 const debug = Debug('app:command:executeParsedCommand');
-
 /**
  * Executes the command using the provided command details, commands repository, and aliases.
  * @param {CommandDetails} commandDetails - An object containing the command and its arguments.
@@ -35,19 +29,16 @@ export async function executeParsedCommand(
         console.error('executeParsedCommand: commandDetails not provided');
         return { success: false, message: 'Invalid command syntax.', error: 'No command details provided.' };
     }
-
     const { command, args } = commandDetails;
     const commandName = aliases[command] || command;
     const commandInstance = commands[commandName];
-
     if (!commandInstance) {
         console.error(`executeParsedCommand: CommandHandler not found - ${commandName}`);
         return { success: false, message: 'CommandHandler not available.', error: 'CommandHandler implementation missing.' };
     }
-
     try {
         const result = await commandInstance.execute(args);
-        debug(`executeParsedCommand: Executed command - ${commandName}, Result - ${result}`);
+        debug(`executeParsedCommand: Executed command - ${commandName}  Result - ${result}`);
         return { success: true, result };
     } catch (error: any) {
         console.error(`executeParsedCommand: Error executing command - ${commandName}, Error - ${error.message}`);

@@ -1,18 +1,14 @@
-import debug from 'debug';
 import ICommand from '../interfaces/ICommand';
-
 /**
  * HTTPCommand class to handle HTTP requests.
  */
 export class HTTPCommand implements ICommand {
     name: string;
     description: string;
-
     constructor() {
         this.name = 'http';
         this.description = 'Executes HTTP requests. Usage: !http <url>';
     }
-
     /**
      * Executes the HTTP command.
      * @param args - The arguments passed with the HTTP command.
@@ -23,7 +19,6 @@ export class HTTPCommand implements ICommand {
             debug(`'HTTPCommand: No URL provided'`);
             return { success: false, message: 'Please provide a URL.' };
         }
-
         const url = args[0];
         try {
             const response = await fetch(url`);

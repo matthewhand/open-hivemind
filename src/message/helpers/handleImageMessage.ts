@@ -1,10 +1,8 @@
 import axios from 'axios';
-
 /**
  * A map that stores the association between prediction IDs and image URLs.
  */
 export const predictionImageMap = new Map<string, string>();
-
 /**
  * Creates a prediction via Replicate's REST API using the provided image URL.
  * 
@@ -20,14 +18,12 @@ export async function createPrediction(imageUrl: string): Promise<any> {
                 prompt: process.env.REPLICATE_DEFAULT_PROMPT || 'Please describe this image'
             }
         };
-
         if (!process.env.REPLICATE_WEBHOOK_URL) {
             postData.sync = true;  // Wait synchronously for the prediction
         } else {
             postData.webhook = process.env.REPLICATE_WEBHOOK_URL;
             postData.webhook_events_filter = ['start', 'completed'];
         }
-
         const response = await axios.post(
             'https://api.replicate.com/v1/predictions',
             postData,
@@ -38,14 +34,12 @@ export async function createPrediction(imageUrl: string): Promise<any> {
                 }
             }
         );
-
         return response.data;
     } catch (error: any) {
         console.error('Failed to create prediction:', error.response ? error.response.data : error.message);
         throw new Error('Failed to create prediction');
     }
 }
-
 /**
  * Handles an image message by creating a prediction via Replicate's REST API.
  * 
@@ -58,12 +52,10 @@ export async function handleImageMessage(message: any): Promise<boolean> {
             console.debug('Ignoring message in channel ' + message.channel.id);
             return false;
         }
-
         const attachments = message.attachments;
         if (attachments.size > 0) {
             const imageUrl = attachments.first().url;
             console.debug('Image URL: ' + imageUrl);
-
             const prediction = await createPrediction(imageUrl);
             if (!process.env.REPLICATE_WEBHOOK_URL) {
                 // Handle synchronous prediction result

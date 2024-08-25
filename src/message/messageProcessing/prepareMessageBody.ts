@@ -1,6 +1,5 @@
 import OpenAiService from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-
 export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {
     try {
         const manager = OpenAiService.getInstance();
@@ -13,7 +12,7 @@ export async function prepareMessageBody(prompt: string, channelId: string, hist
         debug('[prepareMessageBody] Request body prepared successfully.');
         return requestBody;
     } catch (error: any) {
-        debug('[prepareMessageBody] Error preparing request body:', error);
+        debug('[prepareMessageBody] Error preparing request body:'  error);
         throw error;
     }
 }

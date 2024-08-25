@@ -11,10 +11,9 @@ export function splitMessage(message: string, maxLength: number = 2000): string[
         return [];
     }
     const messageParts = message.match(new RegExp('.{1,' + maxLength + '}(\s|$)', 'g')) || [];
-    console.debug('splitMessage: ', messageParts);
+    console.debug('splitMessage: '  messageParts);
     return messageParts;
 }
-
 /**
  * Generates a random delay between a specified minimum and maximum value.
  * 
@@ -28,10 +27,9 @@ export function getRandomDelay(min: number, max: number): number {
         return 0;
     }
     const delay = Math.floor(Math.random() * (max - min + 1)) + min;
-    console.debug('getRandomDelay: ', delay);
+    console.debug('getRandomDelay: '  delay);
     return delay;
 }
-
 /**
  * Starts a typing indicator in a Discord channel, refreshing every 15 seconds.
  * 

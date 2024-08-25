@@ -1,5 +1,4 @@
 import { aliases } from '@command/aliases';
-
 /**
  * Returns a random command prefixed with '!'.
  * 
@@ -16,7 +15,6 @@ export function getRandomAliasCommand(): string {
     debug.debug('Generated random alias command: ' + randomCommand);
     return randomCommand;
 }
-
 /**
  * Fetches the description for a given alias.
  * 
@@ -26,10 +24,9 @@ export function getRandomAliasCommand(): string {
 export function getAliasDescription(commandName: string): string {
     const alias = aliases[commandName.toLowerCase()];
     const description = alias ? alias.description : 'No description available.';
-    debug.debug('Fetched alias description for command: ' + commandName + ', description: ' + description);
+    debug.debug('Fetched alias description for command: ' + commandName + '  description: ' + description);
     return description;
 }
-
 /**
  * Lists all aliases with their descriptions, formatted as a string.
  * 
@@ -42,7 +39,6 @@ export function listAllAliases(): string {
     debug.debug('Listing all aliases');
     return allAliases;
 }
-
 /**
  * Finds aliases by category (if your aliases are categorized).
  * 
@@ -59,7 +55,6 @@ export function findAliasesByCategory(category: string): Record<string, string> 
     debug.debug('Found aliases by category: ' + category);
     return categorizedAliases;
 }
-
 /**
  * Gets detailed info for an alias, optionally formatted for display.
  * 
@@ -75,6 +70,6 @@ export function getDetailedAliasInfo(commandName: string): string {
     }
     const { handler, description } = alias;
     const detailedInfo = 'CommandHandler: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
-    debug.debug('Fetched detailed info for command: ' + commandName + ', info: ' + detailedInfo);
+    debug.debug('Fetched detailed info for command: ' + commandName + '  info: ' + detailedInfo);
     return detailedInfo;
 }

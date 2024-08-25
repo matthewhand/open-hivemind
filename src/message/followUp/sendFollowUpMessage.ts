@@ -1,8 +1,6 @@
 import { Message } from 'discord.js';
 import Debug from 'debug';
-
 const debug = Debug('app:message:sendFollowUpMessage');
-
 /**
  * Sends a follow-up message with the given content to the specified channel.
  * @param {Message} originalMessage - The original message that triggered the follow-up.

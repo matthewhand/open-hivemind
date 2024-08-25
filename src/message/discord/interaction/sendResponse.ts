@@ -1,9 +1,7 @@
 import { Client, TextChannel } from 'discord.js';
 import Debug from 'debug';
 import { splitMessage } from '../processing/splitMessage';
-
 const debug = Debug('app:discord:sendResponse');
-
 /**
  * Sends a response message to a specified Discord channel,
  * automatically handling messages that exceed Discord's character limit.
@@ -17,21 +15,17 @@ export async function sendResponse(client: Client, channelId: string, messageTex
         debug('sendResponse was called with an undefined or null messageText.');
         return;
     }
-
     if (!channelId) {
         debug('sendResponse was called with an undefined or null channelId.');
         return;
     }
-
     try {
         const channel = await client.channels.fetch(channelId) as TextChannel;
         if (!channel) {
             debug('Failed to fetch channel with ID: ' + channelId);
             return;
         }
-
         const messageParts = splitMessage(messageText);
-
         for (const part of messageParts) {
             await channel.send(part);
             debug('Message sent to channel ID: ' + channelId);
