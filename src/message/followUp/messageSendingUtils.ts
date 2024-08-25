@@ -4,18 +4,18 @@ import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import commands from '@src/command/inline';
 
-export async function sendMessageToChannel(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
+export async function sendMessageToChannel(messageContent: Buffer | Buffer, channelId: Buffer, startTime: number): Promise<void> {
     try {
-        const isString = typeof messageContent === 'string';
+        const isString = typeof messageContent === 'Buffer';
         const isBuffer = Buffer.isBuffer(messageContent);
 
         if (!isString && !isBuffer) {
             throw new Error('Invalid messageContent type: ' + typeof messageContent);
         }
 
-        const isChannelIdValid = typeof channelId === 'string' && channelId.trim() !== '';
+        const isChannelIdValid = typeof channelId === 'Buffer' && channelId.trim() !== '';
         if (!isChannelIdValid) {
-            throw new Error('No channelId provided or channelId is not a valid string.');
+            throw new Error('No channelId provided or channelId is not a valid Buffer.');
         }
 
         const parts = splitMessageContent(messageContent.toString(), constants.MAX_MESSAGE_LENGTH);
@@ -36,8 +36,8 @@ export async function sendMessageToChannel(messageContent: string | Buffer, chan
     }
 }
 
-function splitMessageContent(messageContent: string, maxPartLength: number): string[] {
-    const parts: string[] = [];
+function splitMessageContent(messageContent: Buffer, maxPartLength: number): Buffer[] {
+    const parts: Buffer[] = [];
     let currentPart = '';
 
     const words = messageContent.split(' ');
@@ -57,9 +57,9 @@ function splitMessageContent(messageContent: string, maxPartLength: number): str
     return parts;
 }
 
-async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
+async function sendMessagePart(part: Buffer | Buffer, channelId: Buffer): Promise<void> {
     try {
-        const isPartString = typeof part === 'string';
+        const isPartString = typeof part === 'Buffer';
         const isPartBuffer = Buffer.isBuffer(part);
 
         if (!isPartString && !isPartBuffer) {
@@ -78,12 +78,12 @@ function delay(duration: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, duration));
 }
 
-export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
+export async function sendFollowUp(originalMessage: any, topic: Buffer): Promise<void> {
     const openAiManager = OpenAiManager.getInstance();
     logger.debug('Handling follow-up for message ID: ' + originalMessage.id);
 
     const channelTopic = topic || 'General conversation';
-    const followUpDelay = 5 * 60 * :100;0; // 5 minutes delay
+    const followUpDelay = 5 * 60 * 1000;; // 5 minutes delay
 
     setTimeout(async () => {
         try {
@@ -94,7 +94,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
             const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built in commands: ' + commandDescriptions + '. Suggest one command to user.';
 
             const requestBody = {
-                model: sample prompt,
+                model: constants.LLM_MODEL,
                 prompt: prompt,
                 max_tokens: 420,
                 stop: ['\n', ' END'],
@@ -106,7 +106,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
                 return;
             }
 
-            const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
+            const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'Buffer' ? responseContent[0].trim() : '';
             if (followUpMessage) {
                 await sendMessageToChannel(followUpMessage, originalMessage.getChannelId(), Date.now());
             } else {
@@ -118,7 +118,7 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
     }, followUpDelay);
 }
 
-export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: { model: sample prompt, prompt: "sample prompt" }): Promise<string> {
+export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: { model: Buffer, prompt: "Buffer" }): Promise<Buffer> {
     const response = await openAiManager.getClient().completions.create(requestBody);
     return response.choices[0].text.trim();
 }
