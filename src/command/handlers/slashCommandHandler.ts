@@ -1,3 +1,4 @@
+import debug from 'debug';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import fs from 'fs';
@@ -26,7 +27,8 @@ for (const file of commandFiles) {
             commands.push(command.data.toJSON());
             commandExecutors[command.data.name] = command.execute;
         } else {
-            debug.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+            const log = debug('namespace');
+            log('The command at ' + filePath + ' is missing a required "data" or "execute" property.');
         }
     } else if (file.endsWith('.js')) {
         const command: CommandHandler = require(filePath);
@@ -34,7 +36,8 @@ for (const file of commandFiles) {
             commands.push(command.data.toJSON());
             commandExecutors[command.data.name] = command.execute;
         } else {
-            debug.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
+            const log = debug('namespace');
+            log('The command at ' + filePath + ' is missing a required "data" or "execute" property.');
         }
     }
 }
@@ -42,19 +45,19 @@ for (const file of commandFiles) {
 export const registerCommands = async (clientId: string, token: string, guildId: string): Promise<void> => {
     const rest = new REST({ version: '9' }).setToken(token);
     try {
-        debug.info(`Started refreshing ${commands.length} application (/) commands.`);
+        debug('Started refreshing ' + commands.length + ' application (/) commands.');
 
         const data = await rest.put(
             Routes.applicationGuildCommands(clientId, guildId),
             { body: commands },
         );
-        debug.info(`Successfully reloaded ${Array.isArray(data) ? data.length : 0} application (/) commands.`);
+        debug('Successfully reloaded ' + (Array.isArray(data) ? data.length : 0) + ' application (/) commands.');
     } catch (error: any) {
-        debug.error('Error registering commands:', error);
+        debug('Error registering commands:' + error);
         if (error.code === 50001) {
-            debug.error('Missing Access: The bot does not have permissions to register slash commands in the guild.');
+            debug('Missing Access: The bot does not have permissions to register slash commands in the guild.');
         } else if (error.code === 50013) {
-            debug.error('Missing Permissions: The bot lacks necessary permissions to execute this operation.');
+            debug('Missing Permissions: The bot lacks necessary permissions to execute this operation.');
         }
     }
 };
@@ -68,11 +71,12 @@ export const handleCommands = (client: Client): void => {
             try {
                 await commandExecutor(interaction);
             } catch (error: any) {
-                debug.error(`Error executing command ${interaction.commandName}:`, error);
+                debug('Error executing command ' + interaction.commandName + ':', error);
                 await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
             }
         } else {
-            debug.warn(`No executor found for command ${interaction.commandName}`);
+            const log = debug('namespace');
+            log('No executor found for command ' + interaction.commandName);
         }
     });
 };

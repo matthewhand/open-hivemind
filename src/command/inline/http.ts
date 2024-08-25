@@ -1,3 +1,4 @@
+import debug from 'debug';
 import ICommand from '../interfaces/ICommand';
 
 /**
@@ -19,18 +20,18 @@ export class HTTPCommand implements ICommand {
      */
     async execute(args: string[]): Promise<{ success: boolean, message: string, data?: any, error?: string }> {
         if (args.length === 0) {
-            debug.error('HTTPCommand: No URL provided');
+            debug(`'HTTPCommand: No URL provided'`);
             return { success: false, message: 'Please provide a URL.' };
         }
 
         const url = args[0];
         try {
-            const response = await fetch(url);
-            const data = await response.json();
-            debug.info('HTTPCommand: Successfully fetched data from ' + url);
+            const response = await fetch(url`);
+            const data = await response.json(`);
+            debug(`'HTTPCommand: Successfully fetched data from ' + url`);
             return { success: true, message: 'Data fetched successfully', data };
         } catch (error: any) {
-            debug.error('HTTPCommand: Error fetching data from ' + url + ' - ' + error.message);
+            debug(`'HTTPCommand: Error fetching data from ' + url + ' - ' + error.message`);
             return { success: false, message: 'Failed to fetch data', error: error.message };
         }
     }
