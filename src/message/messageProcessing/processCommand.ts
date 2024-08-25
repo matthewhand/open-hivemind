@@ -5,7 +5,7 @@ import logger from '@src/utils/logger';
 
 export async function processCommand(message: IMessage): Promise<void> {
     try {
-        const command = message.getCommand();
+        const command = message.getText().split(' ')[0]; // Adjusted to extract command
         if (!command) {
             throw new Error('Command not found in the message.');
         }
@@ -21,5 +21,5 @@ export async function processCommand(message: IMessage): Promise<void> {
 
 async function executeCommand(command: string): Promise<string> {
     // Logic to execute the command and return a response
-    return `Executed command: ${command}`;
+    return 'Executed command: ' + command;
 }

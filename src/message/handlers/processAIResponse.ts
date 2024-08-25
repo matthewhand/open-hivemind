@@ -1,17 +1,17 @@
 import { IMessage } from '@src/message/types/IMessage';
-import { MessageResponseManager } from '@src/message/responseManager/getInstance';
+import { shouldReplyToMessage } from '@src/message/responseManager/shouldReplyToMessage';
 import { LLMInterface } from '@src/llm/LLMInterface';
 import logger from '@src/utils/logger';
-import constants from '@src/common/config/ConfigurationManager';
+import constants from '@config/ConfigurationManager';
 import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
 import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
-import { sendMessageToChannel } from '@src/message/followUp/sendMessageToChannel';
+import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
 import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
 export async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
     logger.debug('[messageHandler] process ai response');
 
-    if (!MessageResponseManager.getInstance().shouldReplyToMessage(message)) {
+    if (!shouldReplyToMessage(message)) {
         logger.info('[messageHandler] No AI response deemed necessary based on the content and context.');
         return;
     }
@@ -34,12 +34,9 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
         let requestBody;
         try {
             requestBody = await prepareMessageBody(
-                constants.LLM_SYSTEM_PROMPT, 
-                message.getChannelId(), 
-                historyMessages, 
-                topic, 
-                userMentions, 
-                channelUsers
+                constants.LLM_SYSTEM_PROMPT,
+                message.getChannelId(),
+                historyMessages
             );
             logger.debug('[messageHandler] LLM request body prepared: ' + JSON.stringify(requestBody));
         } catch (error: any) {

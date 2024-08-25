@@ -32,7 +32,7 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
         logger.debug('Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
         return { commandName: commandName.toLowerCase(), action, args };
     } else {
-        const defaultCommand = configManager.getConfig('defaultCommand') || 'oai';
+        const defaultCommand = configManager.getConfig('defaultCommand', 'oai');
         const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
 
         if (defaultCommand && argsWithoutMention) {
