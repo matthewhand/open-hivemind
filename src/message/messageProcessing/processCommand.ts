@@ -1,13 +1,15 @@
-import { IMessage } from '@src/message/types/IMessage';
+import { sendResponse } from '@src/message/helpers/sendResponse';
 import { processAIResponse } from './processAIResponse';
-import { sendMessagePart } from '@src/message/helpers/sendMessagePart';
-import logger from '@src/utils/logger';
+import { IMessage } from '@src/types/IMessage';
 
-export async function processCommand(command: IMessage): Promise<void> {
+export async function processCommand(message: IMessage): Promise<void> {
     try {
-        const aiResponse = await someOpenAiManagerFunction(command.content);
-        await processAIResponse(command.client, command.channelId, aiResponse);
+        const content = message.content.toLowerCase();
+        if (content.startsWith('!ai')) {
+            const aiResponse = await processAIResponse(message);
+            await sendResponse(message.client, message.channelId, aiResponse);
+        }
     } catch (error: any) {
-        logger.error('Failed to process command:', error);
+        console.error('Failed to process command:', error);
     }
 }

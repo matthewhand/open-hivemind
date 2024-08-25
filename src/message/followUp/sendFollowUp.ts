@@ -1,5 +1,5 @@
+import OpenAiManager from '@src/llm/openai/manager/OpenAiManager';
 import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
-import { OpenAiManager } from '@src/llm/openai/manager/OpenAiManager';
 import logger from '@src/utils/logger';
 
 export async function sendFollowUp(manager: OpenAiManager, channelId: string, originalMessage: string): Promise<void> {

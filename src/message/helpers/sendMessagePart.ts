@@ -1,12 +1,18 @@
-import DiscordManager from '@message/discord/DiscordManager';
+import { Client, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
+import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
 
-export async function sendMessagePart(part: string, channelId: string): Promise<void> {
+export async function sendMessagePart(client: Client, channelId: string, content: string): Promise<Message | void> {
     try {
-        await DiscordManager.getInstance().client.channels.cache.get(channelId)?.send(part);
-        logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
+        const channel = client.channels.cache.get(channelId) as TextChannel;
+        if (!channel) {
+            throw new Error(`Channel with ID ${channelId} not found.`);
+        }
+
+        logger.info('Sending message part to channel ID: ' + channelId);
+        const sentMessage = await sendMessageToChannel(client, channelId, content);
+        return sentMessage;
     } catch (error: any) {
-        logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
-        throw new Error('Failed to send message part: ' + error.message);
+        logger.error('Failed to send message part:', error);
     }
 }

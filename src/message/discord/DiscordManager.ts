@@ -1,4 +1,4 @@
-import { Client, Message } from 'discord.js';
+import { Client, GatewayIntentBits, Message } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice'; 
 import logger from '@src/utils/logger';
 import { loginToDiscord } from './utils/loginToDiscord';
@@ -14,7 +14,7 @@ class DiscordManager {
     public constructor() {
         logger.info('DiscordManager: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
         this.client = new Client({
-            intents: ['Guilds', 'GuildMessages', 'GuildVoiceStates']
+            intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates]
         });
         logger.info('DiscordManager: Client initialized successfully');
     }
@@ -41,10 +41,9 @@ class DiscordManager {
             await loginToDiscord(this.client, token);
 
             logger.info('DiscordManager: Setting up event handlers');
-            setMessageHandler(this.client, async (message: Message, history: Message<boolean>[]): Promise<void> => {
+            setMessageHandler(this.client, async (message: Message): Promise<void> => {
                 await this.handleMessage(message);
-                return Promise.resolve();
-            }, new Map<string, number>(), async (channelId) => Promise.resolve([]));
+            });
 
         } catch (error: any) {
             const errorMessage = 'Error during Discord initialization: ' + ((error instanceof Error) ? error.message : String(error));
@@ -75,10 +74,10 @@ class DiscordManager {
 
     public setMessageHandler(handler: (message: Message) => Promise<void>): void {
         logger.info('DiscordManager: Setting message handler');
-        setMessageHandler(this.client, async (message: Message) => Promise.resolve(), new Map<string, number>(), async (channelId: string) => []);
+        setMessageHandler(this.client, handler);
     }
 
-    public async sendMessageToChannel(channelId: string, message: string): Promise<Message> {
+    public async sendMessageToChannel(channelId: string, message: string): Promise<Message | void> {
         logger.info('DiscordManager: Sending a message to channel ID: ' + channelId + '. Message: ' + message);
         return sendMessageToChannel(this.client, channelId, message);
     }
