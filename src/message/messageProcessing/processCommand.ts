@@ -12,10 +12,10 @@ export async function processCommand(message: IMessage): Promise<void> {
         const content = message.content.toLowerCase();
         if (content.startsWith('!ai')) {
             const aiResponse = await processAIResponse(message, [], Date.now());
-            if (aiResponse) {
+            if (typeof aiResponse === "string") {
                 await sendResponse(message.client, message.channelId, aiResponse);
             } else {
-                throw new Error('AI Response is undefined');
+                throw new Error('AI Response is undefined or null');
             }
         }
     } catch (error: any) {

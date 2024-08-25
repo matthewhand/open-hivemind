@@ -7,6 +7,7 @@ import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessag
 import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
 import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
 import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
+import { Client } from 'discord.js'; // Added this import to fix the type issue
 
 /**
  * Processes the AI response based on the provided message and message history.
