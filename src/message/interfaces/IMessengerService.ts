@@ -11,15 +11,15 @@ export interface IMessengerService {
     initialize(): Promise<void>;
 
     /**
-     * Starts the Discord client and logs in with the provided client ID.
-     * @param clientId - The Discord client ID.
+     * Starts the messenger service.
+     * @param clientId - The client ID to log in with.
      */
     start(clientId: string): Promise<void>;
 
     /**
-     * Handles incoming messages, determining if an AI response is needed,
+     * Handles an incoming message, determining if an AI response is needed,
      * preparing the request, and sending the response.
-     * @param message - The incoming message.
+     * @param message - The incoming message object.
      */
-    handleMessage(message: Message): Promise<void>;
+    handleMessage(message: Message<boolean>): Promise<void>;
 }
