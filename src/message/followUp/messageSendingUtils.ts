@@ -3,6 +3,7 @@ import DiscordManager from '@message/discord/DiscordManager';
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import commands from '@src/command/inline';
+import { LLMResponse } from '@src/llm/LLMResponse';
 
 export async function sendMessageToChannel(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
@@ -18,7 +19,7 @@ export async function sendMessageToChannel(messageContent: string | Buffer, chan
             throw new Error('No channelId provided or channelId is not a valid string.');
         }
 
-        const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
+        const parts = splitMessageContent(messageContent.toString(), constants.MAX_MESSAGE_LENGTH);
         for (let i = 0; i < parts.length; i++) {
             if (i > 0) {
                 await delay(constants.INTER_PART_DELAY);
@@ -116,4 +117,9 @@ export async function sendFollowUp(originalMessage: any, topic: string): Promise
             logger.error('Error during follow-up handling: ' + error);
         }
     }, followUpDelay);
+}
+
+export async function makeOpenAiRequest(openAiManager: OpenAiManager, requestBody: object): Promise<string> {
+    const response = await openAiManager.getClient().completions.create(requestBody);
+    return response.choices[0].text.trim();
 }
