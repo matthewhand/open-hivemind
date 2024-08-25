@@ -4,7 +4,6 @@ import logger from '@src/utils/logger';
 import { loginToDiscord } from './utils/loginToDiscord';
 import { sendMessageToChannel } from './utils/sendMessageToChannel';
 import { setupVoiceChannel } from './utils/setupVoiceChannel';
-import { setupEventHandlers } from './utils/setupEventHandlers';
 import { playWelcomeMessage } from './utils/playWelcomeMessage';
 import { setMessageHandler } from './utils/setMessageHandler';
 
@@ -42,7 +41,7 @@ class DiscordManager {
             await loginToDiscord(this.client, token);
 
             logger.info('DiscordManager: Setting up event handlers');
-            setupEventHandlers(this.client, async (message, history) => { this.handleMessage(message); }, new Map(), async (channelId) => []);
+            setMessageHandler(async (message: Message) => { this.handleMessage(message); }, new Map<string, number>(), async (channelId: string) => []);
 
         } catch (error: any) {
             const errorMessage = `Error during Discord initialization: ${(error instanceof Error) ? error.message : String(error)}`;
