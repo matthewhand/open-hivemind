@@ -15,7 +15,7 @@ interface ParsedCommand {
  */
 export function parseCommand(commandContent: string): ParsedCommand | null {
     if (!commandContent) {
-        debug.warn('No command content provided to parseCommand');
+        debug('No command content provided to parseCommand');
         return null;
     }
 

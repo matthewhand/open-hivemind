@@ -26,7 +26,7 @@ export async function sendRequest(
     }
 ): Promise<LLMResponse> {
     if (openAiManager.isBusy()) {
-        debug.warn('[OpenAiService.sendRequest] The manager is currently busy with another request.');
+        debug('[OpenAiService.sendRequest] The manager is currently busy with another request.');
         return new LLMResponse('', 'busy');
     }
 
@@ -45,7 +45,7 @@ export async function sendRequest(
             constants.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
-            debug.info('[OpenAiService.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
+            debug('[OpenAiService.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
             content = await completeSentence(openAiManager.getClient(), content, constants);
         }
 

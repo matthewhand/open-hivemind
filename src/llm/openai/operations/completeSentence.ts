@@ -13,7 +13,7 @@ export async function completeSentence(
     partialContent: string,
     config: typeof constants
 ): Promise<string> {
-    debug.info('[completeSentence] Completing sentence using OpenAI API.');
+    debug('[completeSentence] Completing sentence using OpenAI API.');
     const requestBody = {
         model: config.LLM_MODEL,
         prompt: partialContent,

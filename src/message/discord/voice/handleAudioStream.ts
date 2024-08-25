@@ -23,7 +23,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
     debug.debug('handleAudioStream: Initialized for user ' + userId);
 
     stream.on('data', (chunk: Buffer) => {
-        debug.info('Receiving audio data from user ' + userId);
+        debug('Receiving audio data from user ' + userId);
         audioChunks.push(chunk);
         debug.debug('handleAudioStream: Collected audio chunk of size ' + chunk.length);
     });
@@ -36,7 +36,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             debug.debug('handleAudioStream: Concatenated audio buffer size ' + audioBuffer.length);
 
             if (audioBuffer.length === 0) {
-                debug.warn('handleAudioStream: Audio buffer is empty, skipping transcription');
+                debug('handleAudioStream: Audio buffer is empty, skipping transcription');
                 return;
             }
 
@@ -48,13 +48,13 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             debug.debug('handleAudioStream: Saved WAV file size ' + stats.size);
 
             if (stats.size === 0) {
-                debug.warn('handleAudioStream: WAV file size is 0, skipping transcription');
+                debug('handleAudioStream: WAV file size is 0, skipping transcription');
                 return;
             }
 
             const transcript = await transcribeAudio(audioFilePath);
             if (transcript) {
-                debug.info('Transcription: ' + transcript);
+                debug('Transcription: ' + transcript);
                 debug.debug('handleAudioStream: Transcription successful');
 
                 const response = await generateResponse(transcript);
@@ -63,19 +63,19 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
                     await playAudioResponse(connection, response);
                     debug.debug('handleAudioStream: Played audio response');
                 } else {
-                    debug.warn('handleAudioStream: Response generation returned null or undefined');
+                    debug('handleAudioStream: Response generation returned null or undefined');
                 }
             } else {
-                debug.warn('handleAudioStream: Transcription returned null or undefined');
+                debug('handleAudioStream: Transcription returned null or undefined');
             }
         } catch (error: any) {
-            debug.error('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + (error instanceof Error ? error.message : String(error)));
+            debug('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + (error instanceof Error ? error.message : String(error)));
             debug.debug('handleAudioStream: Error stack trace: ' + error.stack);
         }
     });
 
     stream.on('error', (error: Error) => {
-        debug.error('handleAudioStream: Error in audio stream for user ' + userId + ': ' + error.message);
+        debug('handleAudioStream: Error in audio stream for user ' + userId + ': ' + error.message);
         debug.debug('handleAudioStream: Stream error stack trace: ' + error.stack);
     });
 };

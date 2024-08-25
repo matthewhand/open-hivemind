@@ -10,7 +10,7 @@ class ReplyManager {
             this.replyMetrics[channelId].lastReplyTime = currentTime;
             this.replyMetrics[channelId].replyCount += 1;
         }
-        debug.info('Logged reply for channel ' + channelId + ' at ' + currentTime);
+        debug('Logged reply for channel ' + channelId + ' at ' + currentTime);
     }
 
     getTimeSinceLastReply(channelId: string): number {

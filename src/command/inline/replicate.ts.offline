@@ -33,7 +33,7 @@ export class ReplicateCommand implements ICommand {
                 return { success: false, message: `Failed to analyze image: ${result.message}` };
             }
         } catch (error) {
-            debug.error('Error analyzing image:', error);
+            debug('Error analyzing image:', error);
             return { success: false, message: 'Error analyzing image.', error: error.message };
         }
     }

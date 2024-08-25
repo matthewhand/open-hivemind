@@ -11,7 +11,7 @@ const muteCommand: ICommand = {
 
     if (target) {
       await muteUser(interaction, target);
-      debug.info('User ' + target.user.tag + ' has been muted.');
+      debug('User ' + target.user.tag + ' has been muted.');
       await interaction.reply('User ' + target.user.tag + ' has been muted.');
     } else {
       await interaction.reply('Could not find the specified user.');

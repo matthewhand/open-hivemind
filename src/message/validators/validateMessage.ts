@@ -3,10 +3,10 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 export function validateMessage(message: IMessage): boolean {
     try {
         const isValid = message.getText().length > 0 && message.getAuthorId() !== '';
-        debug.info('Message validation ' + (isValid ? 'passed' : 'failed'));
+        debug('Message validation ' + (isValid ? 'passed' : 'failed'));
         return isValid;
     } catch (error: any) {
-        debug.error('Failed to validate message: ' + error.message);
+        debug('Failed to validate message: ' + error.message);
         return false;
     }
 }

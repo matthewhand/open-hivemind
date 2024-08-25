@@ -13,7 +13,7 @@ export async function executeCommand(command: string): Promise<string> {
     const exec = util.promisify(require('child_process').exec);
     const { stdout, stderr } = await exec(command);
     if (stderr) {
-        debug.error('Error executing command: ' + stderr);
+        debug('Error executing command: ' + stderr);
     }
     debug.debug('CommandHandler output: ' + stdout);
     return stdout;

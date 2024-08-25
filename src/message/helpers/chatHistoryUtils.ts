@@ -14,12 +14,12 @@ interface Message {
  */
 export function trimMessagesByTokenCount(messages: Message[], newPrompt: string, maxTokens: number): Message[] {
     if (!messages || messages.length === 0) {
-        debug.warn('[trimMessagesByTokenCount] No messages provided.');
+        debug('[trimMessagesByTokenCount] No messages provided.');
         return [];
     }
 
     if (!newPrompt || maxTokens <= 0) {
-        debug.warn('[trimMessagesByTokenCount] Invalid prompt or maxTokens provided.');
+        debug('[trimMessagesByTokenCount] Invalid prompt or maxTokens provided.');
         return [];
     }
 

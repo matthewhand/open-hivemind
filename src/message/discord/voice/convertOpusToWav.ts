@@ -33,7 +33,7 @@ export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
         ffmpeg.stdout.on('end', () => {
             const wavBuffer = Buffer.concat(output);
             if (wavBuffer.length === 0) {
-                debug.error('convertOpusToWav: Conversion resulted in empty buffer. Error output: ' + errorOutput);
+                debug('convertOpusToWav: Conversion resulted in empty buffer. Error output: ' + errorOutput);
                 reject(new Error('Conversion to WAV resulted in empty buffer'));
             } else {
                 debug.debug('convertOpusToWav: Converted buffer size ' + wavBuffer.length);
@@ -42,12 +42,12 @@ export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
         });
 
         ffmpeg.stdout.on('error', (error) => {
-            debug.error('convertOpusToWav: ffmpeg stdout error: ' + error.message);
+            debug('convertOpusToWav: ffmpeg stdout error: ' + error.message);
             reject(error);
         });
 
         ffmpeg.stdin.on('error', (error) => {
-            debug.error('convertOpusToWav: ffmpeg stdin error: ' + error.message);
+            debug('convertOpusToWav: ffmpeg stdin error: ' + error.message);
             reject(error);
         });
 

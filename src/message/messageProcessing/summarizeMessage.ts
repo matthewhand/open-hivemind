@@ -11,7 +11,7 @@ import OpenAiService from '../../llm/openai/manager/OpenAiService';
  */
 export async function summarizeMessage(content: string, targetSize: number = constants.LLM_RESPONSE_MAX_TOKENS): Promise<string> {
     if (typeof content !== 'string') {
-        debug.error('[summarizeMessage] Invalid content type: ' + typeof content, { content });
+        debug('[summarizeMessage] Invalid content type: ' + typeof content, { content });
         throw new Error('Content must be a string.');
     }
 
@@ -19,10 +19,10 @@ export async function summarizeMessage(content: string, targetSize: number = con
     try {
         const response = await openAiManager.summarizeText(content);
         const summary = typeof response === 'string' ? response : JSON.stringify(response);
-        debug.info('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });
+        debug('[summarizeMessage] Content summarized to ' + summary.length + ' characters.', { summary });
         return summary;
     } catch (error: any) {
-        debug.error('[summarizeMessage] Failed to summarize content: ' + error.message + ', returning original content.', { error });
+        debug('[summarizeMessage] Failed to summarize content: ' + error.message + ', returning original content.', { error });
         return content;  // Return the original content if summarization fails
     }
 }

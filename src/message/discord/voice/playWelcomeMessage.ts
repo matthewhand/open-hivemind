@@ -10,7 +10,7 @@ import constants from '@config/ConfigurationManager';
  */
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
     const welcomeMessage = constants.WELCOME_MESSAGE;
-    debug.info('Playing welcome message: ' + welcomeMessage);
+    debug('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
         apiKey: constants.NARRATION_API_KEY
@@ -42,14 +42,14 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         });
 
         player.on('error', (error) => {
-            debug.error('Error playing welcome message: ' + error.message);
+            debug('Error playing welcome message: ' + error.message);
         });
 
     } catch (error: any) {
-        debug.error('Error generating welcome message: ' + error.message);
+        debug('Error generating welcome message: ' + error.message);
         if (error.response) {
-            debug.error('Response status: ' + error.response.status);
-            debug.error('Response data: ' + JSON.stringify(error.response.data));
+            debug('Response status: ' + error.response.status);
+            debug('Response data: ' + JSON.stringify(error.response.data));
         }
     }
 }

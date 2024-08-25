@@ -13,7 +13,7 @@ import constants from '@config/ConfigurationManager';
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
     const narrationEndpointUrl = constants.NARRATION_ENDPOINT_URL;
     if (!narrationEndpointUrl) {
-        debug.error('NARRATION_ENDPOINT_URL is not set in the environment variables.');
+        debug('NARRATION_ENDPOINT_URL is not set in the environment variables.');
         return;
     }
 
@@ -45,9 +45,9 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         });
 
         player.on('error', (error) => {
-            debug.error('Error playing audio response: ' + error.message);
+            debug('Error playing audio response: ' + error.message);
         });
     } catch (error: any) {
-        debug.error('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

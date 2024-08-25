@@ -22,7 +22,7 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
         debug.debug('transcribeAudio: Full response:', response);
         return response.text;
     } catch (error: any) {
-        debug.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
+        debug('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
             debug.debug('transcribeAudio: Response status: ' + error.response.status);
             debug.debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));

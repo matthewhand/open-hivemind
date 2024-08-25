@@ -14,7 +14,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
     debug.debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
 
     if (!VOICE_CHANNEL_ID) {
-        debug.warn('VOICE_CHANNEL_ID is not set in the environment variables.');
+        debug('VOICE_CHANNEL_ID is not set in the environment variables.');
         return;
     }
 
@@ -23,38 +23,38 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
         debug.debug('Fetched channel: ' + (channel ? channel.id : 'null'));
 
         if (!channel || !(channel instanceof VoiceChannel)) {
-            debug.error('Channel with ID ' + VOICE_CHANNEL_ID + ' is not a valid voice channel.');
+            debug('Channel with ID ' + VOICE_CHANNEL_ID + ' is not a valid voice channel.');
             return;
         }
 
         if (!client.user) {
-            debug.error('Client user is not defined.');
+            debug('Client user is not defined.');
             return;
         }
 
         const permissions = channel.permissionsFor(client.user);
         debug.debug('Permissions for channel: ' + (permissions ? permissions.bitfield : 'null'));
         if (!permissions) {
-            debug.error('Unable to fetch permissions for channel: ' + channel.name);
+            debug('Unable to fetch permissions for channel: ' + channel.name);
             return;
         }
 
         if (!permissions.has(PermissionsBitField.Flags.Connect)) {
-            debug.error('Missing CONNECT permission for voice channel: ' + channel.name);
+            debug('Missing CONNECT permission for voice channel: ' + channel.name);
             return;
         }
 
         if (!permissions.has(PermissionsBitField.Flags.Speak)) {
-            debug.error('Missing SPEAK permission for voice channel: ' + channel.name);
+            debug('Missing SPEAK permission for voice channel: ' + channel.name);
             return;
         }
 
         if (!permissions.has(PermissionsBitField.Flags.UseVAD)) {
-            debug.error('Missing USE_VOICE_ACTIVITY permission for voice channel: ' + channel.name);
+            debug('Missing USE_VOICE_ACTIVITY permission for voice channel: ' + channel.name);
             return;
         }
 
-        debug.info('Attempting to join voice channel: ' + channel.name + ' (' + channel.id + ')');
+        debug('Attempting to join voice channel: ' + channel.name + ' (' + channel.id + ')');
         const connection = joinVoiceChannel({
             channelId: channel.id,
             guildId: channel.guild.id,
@@ -64,30 +64,30 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
         debug.debug('Voice connection object:', connection);
 
         connection.on(VoiceConnectionStatus.Ready, async () => {
-            debug.info('Successfully connected to the voice channel: ' + channel.name);
+            debug('Successfully connected to the voice channel: ' + channel.name);
             await playWelcomeMessage(connection);
         });
 
         connection.on(VoiceConnectionStatus.Disconnected, () => {
-            debug.warn('Disconnected from the voice channel.');
+            debug('Disconnected from the voice channel.');
         });
 
         connection.on(VoiceConnectionStatus.Destroyed, () => {
-            debug.warn('Voice connection destroyed.');
+            debug('Voice connection destroyed.');
         });
 
         connection.on('error', (error) => {
-            debug.error('Voice connection error: ' + error.message);
+            debug('Voice connection error: ' + error.message);
         });
 
         connection.receiver.speaking.on('start', (userId) => {
-            debug.info('User ' + userId + ' started speaking');
+            debug('User ' + userId + ' started speaking');
             const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: 5000 } });
             handleAudioStream(audioStream, userId, connection);
         });
 
         return connection;
     } catch (error: any) {
-        debug.error('Error setting up voice channel: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error setting up voice channel: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

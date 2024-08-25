@@ -12,7 +12,7 @@ export async function messageHandler(
   historyMessages: IMessage[] = []
 ): Promise<void> {
   if (!originalMsg) {
-    debug.error('[messageHandler] No original message provided.');
+    debug('[messageHandler] No original message provided.');
     return;
   }
 
@@ -29,7 +29,7 @@ export async function messageHandler(
 
   // Type guard to ensure originalMsg is a valid instance of IMessage
   if (!(originalMsg && 'getMessageId' in originalMsg)) {
-    debug.error('[messageHandler] originalMsg is not a valid IMessage instance.');
+    debug('[messageHandler] originalMsg is not a valid IMessage instance.');
     return;
   }
 
@@ -37,14 +37,14 @@ export async function messageHandler(
 
   // Validate getText method
   if (typeof originalMsg.getText !== 'function') {
-    debug.error('[messageHandler] originalMsg does not have a valid getText method.');
+    debug('[messageHandler] originalMsg does not have a valid getText method.');
     return;
   }
 
   debug.debug('[messageHandler] originalMsg has a valid getText method.');
 
   if (!originalMsg.getText().trim()) {
-    debug.info('[messageHandler] Received empty message.');
+    debug('[messageHandler] Received empty message.');
     return;
   }
 

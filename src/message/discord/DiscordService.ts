@@ -17,11 +17,11 @@ export class DiscordService implements IMessengerService {
    * Initializes the Discord client with the necessary intents.
    */
   private constructor() {
-    debug.info('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
+    debug('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = new Client({
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates],
     });
-    debug.info('DiscordService: Client initialized successfully');
+    debug('DiscordService: Client initialized successfully');
   }
 
   /**
@@ -30,7 +30,7 @@ export class DiscordService implements IMessengerService {
    */
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
-      debug.info('DiscordService: Creating a new instance of DiscordService');
+      debug('DiscordService: Creating a new instance of DiscordService');
       DiscordService.instance = new DiscordService();
     }
     return DiscordService.instance;
@@ -47,11 +47,11 @@ export class DiscordService implements IMessengerService {
       }
       await this.client.login(token);
       this.client.once('ready', () => {
-        debug.info(`Logged in as ${this.client.user?.tag}!`);
+        debug(`Logged in as ${this.client.user?.tag}!`);
       });
       initializeClient(this.client);
     } catch (error: any) {
-      debug.error('Failed to start DiscordService:', error);
+      debug('Failed to start DiscordService:', error);
       process.exit(1);
     }
   }
@@ -87,9 +87,9 @@ export class DiscordService implements IMessengerService {
         throw new Error('Channel not found');
       }
       await channel.send(message);
-      debug.info(`Message sent to channel ${channelId}: ${message}`);
+      debug(`Message sent to channel ${channelId}: ${message}`);
     } catch (error: any) {
-      debug.error(`Failed to send message to channel ${channelId}:`, error);
+      debug(`Failed to send message to channel ${channelId}:`, error);
       throw error;
     }
   }

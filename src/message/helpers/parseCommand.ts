@@ -7,7 +7,7 @@
  */
 export function parseCommand(commandContent: string): { commandName: string, action: string, args: string } | null {
     if (!commandContent) {
-        debug.warn('[parseCommand] No command content provided.');
+        debug('[parseCommand] No command content provided.');
         return null;
     }
 

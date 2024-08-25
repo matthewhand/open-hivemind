@@ -11,9 +11,9 @@ import { playWelcomeMessage } from '../voice/playWelcomeMessage';
  * @returns A promise that resolves to the VoiceConnection object.
  */
 export async function connectToVoiceChannel(client: Client, channelId: string): Promise<VoiceConnection> {
-    debug.info(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
+    debug(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
     const connection = await setupVoiceChannel(client);
-    debug.info('DiscordManager: Playing welcome message');
+    debug('DiscordManager: Playing welcome message');
     if (connection) {
         playWelcomeMessage(connection);
     }

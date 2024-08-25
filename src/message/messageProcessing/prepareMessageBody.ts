@@ -10,10 +10,10 @@ export async function prepareMessageBody(prompt: string, channelId: string, hist
             max_tokens: 150,
             messages: historyMessages.map(msg => ({ role: msg.role, content: msg.getText() })),
         };
-        debug.info('[prepareMessageBody] Request body prepared successfully.');
+        debug('[prepareMessageBody] Request body prepared successfully.');
         return requestBody;
     } catch (error: any) {
-        debug.error('[prepareMessageBody] Error preparing request body:', error);
+        debug('[prepareMessageBody] Error preparing request body:', error);
         throw error;
     }
 }

@@ -9,7 +9,7 @@ import constants from '@config/ConfigurationManager';
 export async function generateResponse(transcript: string): Promise<string | undefined> {
     const llmEndpointUrl = constants.LLM_ENDPOINT_URL;
     if (!llmEndpointUrl) {
-        debug.error('LLM_ENDPOINT_URL is not set in the environment variables.');
+        debug('LLM_ENDPOINT_URL is not set in the environment variables.');
         return undefined;
     }
 
@@ -27,7 +27,7 @@ export async function generateResponse(transcript: string): Promise<string | und
 
         return response.data.choices[0].text.trim();
     } catch (error: any) {
-        debug.error('Error generating response: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error generating response: ' + (error instanceof Error ? error.message : String(error)));
         return undefined;
     }
 }

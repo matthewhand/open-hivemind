@@ -25,14 +25,14 @@ export const quivrCommand = {
         const quivrBaseUrl = process.env.QUIVR_BASE_URL;
         if (!quivrBaseUrl) {
             await interaction.reply({ content: 'Error: Quivr base URL is not set in the environment.', ephemeral: true });
-            debug.error('Quivr base URL is undefined.');
+            debug('Quivr base URL is undefined.');
             return;
         }
 
         // Guard: Ensure quivrChatId is defined
         if (!quivrChatId) {
             await interaction.reply({ content: 'Error: Quivr chat ID is missing.', ephemeral: true });
-            debug.error('Quivr chat ID is undefined.');
+            debug('Quivr chat ID is undefined.');
             return;
         }
 
@@ -45,7 +45,7 @@ export const quivrCommand = {
 
             await interaction.reply({ content: 'Request sent to Quivr successfully.', ephemeral: true });
         } catch (error: any) {
-            debug.error('Failed to send request to Quivr:', error);
+            debug('Failed to send request to Quivr:', error);
             await interaction.reply({ content: 'Error: Failed to send request to Quivr.', ephemeral: true });
         }
     }

@@ -8,7 +8,7 @@ import { aliases } from '@command/aliases';
 export function getRandomAliasCommand(): string {
     const aliasKeys = Object.keys(aliases);
     if (aliasKeys.length === 0) {
-        debug.warn('No aliases available.');
+        debug('No aliases available.');
         return '';
     }
     const randomIndex = Math.floor(Math.random() * aliasKeys.length);

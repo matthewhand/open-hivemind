@@ -7,7 +7,7 @@ import constants from '@config/ConfigurationManager';
 
 export async function sendCompletionsRequest(manager: OpenAiService, message: string, dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {
-        debug.warn('[sendCompletionsRequest] Manager is currently busy.');
+        debug('[sendCompletionsRequest] Manager is currently busy.');
         return new LLMResponse('', 'busy');
     }
 
@@ -38,13 +38,13 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
             constants.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
-            debug.info('[sendCompletionsRequest] Completing response due to token limit or incomplete sentence.');
+            debug('[sendCompletionsRequest] Completing response due to token limit or incomplete sentence.');
             content = await completeSentence(manager.getClient(), content, constants);
         }
 
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
-        debug.error('[sendCompletionsRequest] Error during OpenAI API request: ' + error.message);
+        debug('[sendCompletionsRequest] Error during OpenAI API request: ' + error.message);
         return new LLMResponse('', 'error');
     } finally {
         manager.setBusy(false);

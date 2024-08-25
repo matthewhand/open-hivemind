@@ -7,7 +7,7 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
         debug.debug('[DiscordManager] Fetched channel: ' + (channel ? channel.id : 'null'));
 
         if (!channel) {
-            debug.error('[DiscordManager] Channel with ID: ' + channelId + ' not found.');
+            debug('[DiscordManager] Channel with ID: ' + channelId + ' not found.');
             return;
         }
 
@@ -16,7 +16,7 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
             // TODO confirm permission before attempting to send
             // const permissions = channel.permissionsFor(client.user!);
             // if (!permissions || !permissions.has(PermissionsBitField.Flags.SEND_MESSAGES)) {
-            //     debug.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
+            //     debug('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
             //     return;
             // }
 
@@ -26,6 +26,6 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
             debug.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support typing.');
         }
     } catch (error: any) {
-        debug.error('[DiscordManager] Failed to start typing in channel ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
+        debug('[DiscordManager] Failed to start typing in channel ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
     }
 }

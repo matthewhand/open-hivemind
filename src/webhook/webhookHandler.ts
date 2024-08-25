@@ -6,12 +6,12 @@ import { DiscordService } from '@src/message/discord/DiscordService';
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 if (!process.env.DISCORD_TOKEN || !process.env.CHANNEL_ID) {
-    debug.error('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID');
+    debug('Missing required environment variables: DISCORD_TOKEN and/or CHANNEL_ID');
     process.exit(1);
 }
 
 client.login(process.env.DISCORD_TOKEN).catch(error => {
-    debug.error('Failed to login to Discord:', error.message);
+    debug('Failed to login to Discord:', error.message);
     process.exit(1);
 });
 
@@ -25,7 +25,7 @@ export const startWebhookServer = (port: number): void => {
     app.use(express.json());
 
     app.post('/webhook', async (req: Request, res: Response) => {
-        debug.info('Received webhook:', req.body);
+        debug('Received webhook:', req.body);
 
         const predictionId = req.body.id;
         const predictionResult = req.body;
@@ -49,12 +49,12 @@ export const startWebhookServer = (port: number): void => {
             }
 
             await channel.send(resultMessage).catch(error => {
-                debug.error('Failed to send message to channel:', error.message);
+                debug('Failed to send message to channel:', error.message);
             });
 
             predictionImageMap.delete(predictionId);
         } else {
-            debug.error('Channel not found');
+            debug('Channel not found');
         }
 
         res.setHeader('Content-Type', 'application/json');
@@ -72,20 +72,20 @@ export const startWebhookServer = (port: number): void => {
     });
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-        debug.error('Unhandled Error:', err.message);
+        debug('Unhandled Error:', err.message);
         debug.debug('Next middleware function: ' + next);
         res.status(500).send({ error: 'Server Error' });
     });
 
     app.listen(port, () => {
-        debug.info('HTTP server listening at http://localhost:' + port);
+        debug('HTTP server listening at http://localhost:' + port);
     });
 
     app.post('/post', async (req: Request, res: Response) => {
         const { message } = req.body;
 
         if (!message) {
-            debug.error('No message provided in request body');
+            debug('No message provided in request body');
             return res.status(400).send({ error: 'Message is required' });
         }
 
@@ -94,7 +94,7 @@ export const startWebhookServer = (port: number): void => {
             debug.debug('Message sent to Discord: ' + message);
             res.status(200).send({ message: 'Message sent to Discord.' });
         } catch (error: any) {
-            debug.error('Failed to send the message:', error);
+            debug('Failed to send the message:', error);
             res.status(500).send({ error: 'Failed to send the message' });
         }
     });
@@ -104,7 +104,7 @@ export const startWebhookServer = (port: number): void => {
     //     const openAiManager = new OpenAI({ apiKey: constants.LLM_API_KEY, baseURL: constants.LLM_ENDPOINT_URL });
 
     //     if (!message) {
-    //         debug.error('No message provided in request body');
+    //         debug('No message provided in request body');
     //         return res.status(400).send({ error: 'Message is required' });
     //     }
 
@@ -114,7 +114,7 @@ export const startWebhookServer = (port: number): void => {
     //         const summarizedMessage = summarizedTexts.length > 0 ? summarizedTexts[0] : '';
 
     //         if (!summarizedMessage) {
-    //             debug.warn('Summarized message is empty');
+    //             debug('Summarized message is empty');
     //             return res.status(500).send({ error: 'Failed to summarize the message' });
     //         }
 
@@ -122,14 +122,14 @@ export const startWebhookServer = (port: number): void => {
     //         debug.debug('Summarized message sent to Discord: ' + summarizedMessage);
     //         res.status(200).send({ message: 'Message summarized and sent to Discord.' });
     //     } catch (error: any) {
-    //         debug.error('Failed to summarize or send the message:', error);
+    //         debug('Failed to summarize or send the message:', error);
     //         res.status(500).send({ error: 'Failed to summarize or send the message' });
     //     }
     // });
 };
 
 client.once('ready', () => {
-    debug.info('Logged in as ' + client.user!.tag);
+    debug('Logged in as ' + client.user!.tag);
 
     const port = Number(process.env.WEB_SERVER_PORT) || 3001;
     startWebhookServer(port);

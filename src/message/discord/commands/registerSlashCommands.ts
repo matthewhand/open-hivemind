@@ -11,17 +11,17 @@ export async function registerSlashCommands(token: string, guildId: string, comm
     const clientId = process.env.CLIENT_ID;
 
     if (!clientId) {
-        debug.error('Client ID is not defined. Cannot register slash commands.');
+        debug('Client ID is not defined. Cannot register slash commands.');
         return;
     }
 
     const rest = new REST({ version: '9' }).setToken(token);
 
     try {
-        debug.info('Registering ' + commands.length + ' slash commands.');
+        debug('Registering ' + commands.length + ' slash commands.');
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-        debug.info('Successfully registered slash commands.');
+        debug('Successfully registered slash commands.');
     } catch (error: any) {
-        debug.error('Failed to register slash commands: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Failed to register slash commands: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

@@ -24,18 +24,18 @@ commandFiles.forEach(file => {
     } else if (typeof commandModule === 'object' && commandModule !== null && commandModule.execute) {
         commandInstance = commandModule;
     } else {
-        debug.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
+        debug('File ' + file + ' does not export a valid CommandHandler instance or class.');
         return;
     }
 
     if (commandInstance && commandInstance.name && typeof commandInstance.execute === 'function') {
         commands[commandInstance.name] = commandInstance;
-        debug.info('Dynamically loaded command: ' + commandInstance.name);
+        debug('Dynamically loaded command: ' + commandInstance.name);
     } else {
-        debug.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
+        debug('File ' + file + ' does not export a valid CommandHandler instance or class.');
     }
 });
 
-debug.info('Dynamically loaded commands:', Object.keys(commands));
+debug('Dynamically loaded commands:', Object.keys(commands));
 
 export default commands;

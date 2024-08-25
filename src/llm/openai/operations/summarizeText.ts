@@ -15,7 +15,7 @@ export async function summarizeText(
     const response = await sendCompletionsRequest(manager, JSON.stringify(requestBody));
 
     const summary = extractContent(response);
-    debug.info('[summarizeText] Summary processed successfully.');
+    debug('[summarizeText] Summary processed successfully.');
 
     return new LLMResponse(summary, 'completed');
 }

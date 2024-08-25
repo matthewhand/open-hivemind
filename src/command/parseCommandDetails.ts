@@ -12,7 +12,7 @@ interface CommandDetails {
 export function parseCommandDetails(text: string): CommandDetails | null {
     const match = text.match(/^!(\w+)\s*(.*)/);
     if (!match) {
-        debug.error(`parseCommandDetails: Invalid command format - ${text}`);
+        debug(`parseCommandDetails: Invalid command format - ${text}`);
         return null;
     }
 

@@ -14,14 +14,14 @@ interface CommandHandler {
  * @returns An array of command objects ready to be registered with Discord.
  */
 export function collectSlashCommands(commandsPath: string): object[] {
-    debug.info('Collecting slash commands from directory: ' + commandsPath);
+    debug('Collecting slash commands from directory: ' + commandsPath);
     const commands: object[] = [];
 
     try {
         const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
         if (commandFiles.length === 0) {
-            debug.warn('No .js command files found in directory: ' + commandsPath);
+            debug('No .js command files found in directory: ' + commandsPath);
             return commands;
         }
 
@@ -31,11 +31,11 @@ export function collectSlashCommands(commandsPath: string): object[] {
                 debug.debug('Adding command: ' + JSON.stringify(command.data.toJSON()));
                 commands.push(command.data.toJSON());
             } else {
-                debug.warn('No data found in command file: ' + file);
+                debug('No data found in command file: ' + file);
             }
         }
     } catch (error: any) {
-        debug.error('Error collecting slash commands: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error collecting slash commands: ' + (error instanceof Error ? error.message : String(error)));
     }
 
     return commands;

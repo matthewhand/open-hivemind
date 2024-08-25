@@ -13,7 +13,7 @@ export async function muteUser(channel: TextChannel, userId: string): Promise<vo
     const role = channel.guild.roles?.cache.find(role => role.name === 'Muted');
 
     if (!role) {
-        debug.error('Mute role not found');
+        debug('Mute role not found');
         return;
     }
 

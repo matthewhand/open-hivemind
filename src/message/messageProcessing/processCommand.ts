@@ -26,6 +26,6 @@ export async function processCommand(
 
     await callback(commandResult);
   } catch (error: any) {
-    debug.error('[processCommand] Error processing command: ' + (error instanceof Error ? error.message : String(error)));
+    debug('[processCommand] Error processing command: ' + (error instanceof Error ? error.message : String(error)));
   }
 }

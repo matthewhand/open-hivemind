@@ -13,7 +13,7 @@ export default function loadServerPolicy(): string {
         debug.debug('[loadServerPolicy] Server policy loaded successfully.');
         return policyData;
     } catch (error: any) {
-        debug.error('[loadServerPolicy] Failed to load server policy: ' + error.message);
+        debug('[loadServerPolicy] Failed to load server policy: ' + error.message);
         throw new Error('Unable to load server policy.');
     }
 }

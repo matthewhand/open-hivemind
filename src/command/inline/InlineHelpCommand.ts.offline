@@ -14,7 +14,7 @@ export function executeHelpCommand(message: IMessage, args: string[]): void {
 
     // Guard clause to check if the message object is valid
     if (!message) {
-        debug.warn('[executeHelpCommand] No message object provided.');
+        debug('[executeHelpCommand] No message object provided.');
         return;
     }
 
@@ -30,5 +30,5 @@ export function executeHelpCommand(message: IMessage, args: string[]): void {
     // Respond with the list of available commands
     message.sendMessage('Here are the available commands:\n' + commandList) // Assuming IMessage has a sendMessage method
         .then(() => debug.debug('[executeHelpCommand] Help command executed successfully.'))
-        .catch(error => debug.error('[executeHelpCommand] Error sending help message: ' + error));
+        .catch(error => debug('[executeHelpCommand] Error sending help message: ' + error));
 }

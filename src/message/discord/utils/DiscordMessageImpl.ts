@@ -4,7 +4,7 @@ class DiscordMessageImpl {
     constructor(private client: Client) {}
 
     public async handleMessage(message: Message): Promise<void> {
-        debug.info('Handling message:', message.content);
+        debug('Handling message:', message.content);
     }
 }
 

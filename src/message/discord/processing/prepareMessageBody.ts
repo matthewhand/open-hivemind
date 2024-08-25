@@ -7,7 +7,7 @@
  * @returns A JSON object ready to be sent to the LLM.
  */
 export async function prepareMessageBody(systemPrompt: string, channelId: string, messages: string[]): Promise<object> {
-    debug.info('Preparing message body for channel ID: ' + channelId);
+    debug('Preparing message body for channel ID: ' + channelId);
 
     // Simulate preparing a request body to send to an LLM API.
     return {
