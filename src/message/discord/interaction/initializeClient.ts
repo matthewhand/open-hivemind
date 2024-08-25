@@ -1,40 +1,34 @@
-import { Client, Message } from 'discord.js';
-import Debug from 'debug';
-import { loginToDiscord } from '../auth/loginToDiscord';
+import { Client } from 'discord.js';
 import { setMessageHandler } from './setMessageHandler';
+import Debug from 'debug';
+import { fetchMessages } from '@src/message/fetchers/fetchMessages';
 
 const debug = Debug('app:discord:initializeClient');
 
 /**
- * Initializes the Discord client by logging in and setting up event handlers.
- * Exits the process if initialization fails.
- * @param client - The Discord client instance.
+ * Initializes the Discord client and sets up message handling.
+ * @param {Client} client - The Discord client instance.
+ * @param {(message: IMessage, history: IMessage[]) => Promise<void>} handler - Function to handle incoming messages.
+ * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
  */
-export async function initializeClient(client: Client): Promise<void> {
-    debug('Initializing DiscordManager.');
-
-    try {
-        const token = process.env.DISCORD_TOKEN || '';
-        if (!token) {
-            debug('DISCORD_TOKEN is not set, exiting process with code 1');
-            process.exit(1);
-        }
-
-        debug('Logging in with token...');
-        await loginToDiscord(client, token);
-
-        debug('Setting up event handlers');
-        setMessageHandler(
-            client,
-            async (message: Message): Promise<void> => {
-                debug('Received message: ' + message.content);
-            },
-            new Map<string, number>(),
-            async (channelId: string) => []
-        );
-    } catch (error: any) {
-        const errorMessage = 'Error during Discord initialization: ' + (error instanceof Error ? error.message : String(error));
-        debug(errorMessage);
-        process.exit(1); // Exits the process if the initialization fails
+export function initializeClient(
+  client: Client,
+  handler: (message: IMessage, history: IMessage[]) => Promise<void>,
+  typingTimestamps: Map<string, number>
+): void {
+  try {
+    if (!client) {
+      debug('Discord client is not initialized.');
+      return;
     }
+
+    // Set up message and typing handlers
+    setMessageHandler(client, handler, typingTimestamps, fetchMessages);
+
+    client.on('ready', () => {
+      debug('Discord client is ready!');
+    });
+  } catch (error: any) {
+    debug('Error initializing Discord client: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }
