@@ -4,7 +4,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
 import DiscordMessage from '../DiscordMessage';
-import { fetchMessages } from '@src/message/fetchers/fetchMessages';
+import { fetchMessages } from '../fetchers/fetchMessages';
 
 const debug = Debug('app:discord:setMessageHandler');
 

@@ -1,12 +1,11 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
-import { IMessage } from "@src/message/interfaces/IMessage";
 import { processCommand } from '@src/message/messageProcessing/processCommand';
+import { processAIResponse } from '@src/message/interaction/processAIResponse';
 import logger from '@src/utils/logger';
 
 /**
  * Handles an incoming message, validating it, processing commands, and managing AI responses.
- *
  * @param originalMsg - The original message object.
  * @param historyMessages - The history of previous messages for context.
  */

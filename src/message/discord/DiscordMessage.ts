@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { Message, TextChannel } from 'discord.js';
+import { Message, Client, TextChannel } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:message:discord');
@@ -8,6 +8,12 @@ const debug = Debug('app:message:discord');
  * Represents a Discord message, implementing the IMessage interface.
  */
 export default class DiscordMessage implements IMessage {
+  public content: string;
+  public client: Client;
+  public channelId: string;
+  public data: string;
+  public role: string;
+
   private readonly message: Message;
   private readonly repliedMessage: Message | null;
 
@@ -19,6 +25,11 @@ export default class DiscordMessage implements IMessage {
   constructor(message: Message, repliedMessage: Message | null = null) {
     this.message = message;
     this.repliedMessage = repliedMessage;
+    this.content = message.content;
+    this.client = message.client;
+    this.channelId = message.channelId;
+    this.data = message.content;
+    this.role = '';  // Set this to the appropriate value based on your application's needs
     debug('[DiscordMessage] Initializing with message ID: ' + message.id);
   }
 
