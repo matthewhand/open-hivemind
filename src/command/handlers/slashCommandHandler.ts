@@ -51,7 +51,7 @@ export const registerCommands = async (clientId: string, token: string, guildId:
         );
         log('Successfully reloaded ' + (Array.isArray(data) ? data.length : 0) + ' application (/) commands.');
     } catch (error: any) {
-        log('Error registering commands: ' + error);
+        log('Error registering commands: ' + error.message);
         if (error.code === 50001) {
             log('Missing Access: The bot does not have permissions to register slash commands in the guild.');
         } else if (error.code === 50013) {
@@ -73,7 +73,7 @@ export const handleCommands = (client: Client): void => {
             try {
                 await commandExecutor(interaction);
             } catch (error: any) {
-                log('Error executing command ' + interaction.commandName + ': ' + error);
+                log('Error executing command ' + interaction.commandName + ': ' + error.message);
                 await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
             }
         } else {
