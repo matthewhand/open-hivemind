@@ -14,7 +14,7 @@ export abstract class IMessage {
         }
         this.data = data;
         this.role = role;
-        debug.debug('IMessage initialized with data: ' + JSON.stringify(data));
+        debug('IMessage initialized with data: ' + JSON.stringify(data));
     }
     /**
      * Retrieves the message ID.

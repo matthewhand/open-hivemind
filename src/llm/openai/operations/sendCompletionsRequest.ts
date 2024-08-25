@@ -10,7 +10,7 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
         return new LLMResponse('', 'busy');
     }
     manager.setBusy(true);
-    debug.debug('[sendCompletionsRequest] Sending request to OpenAI');
+    debug('[sendCompletionsRequest] Sending request to OpenAI');
     try {
         const requestBody = {
             model: constants.LLM_MODEL,
@@ -20,7 +20,7 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
             user: constants.INCLUDE_USERNAME_IN_COMPLETION ? 'assistant' : undefined,
         };
         if (dryRun) {
-            debug.debug('[sendCompletionsRequest] Dry run mode - returning request body only');
+            debug('[sendCompletionsRequest] Dry run mode - returning request body only');
             return new LLMResponse(JSON.stringify(requestBody), 'dry-run');
         }
         const response = await manager.getClient().completions.create(requestBody);
@@ -41,6 +41,6 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
         return new LLMResponse('', 'error');
     } finally {
         manager.setBusy(false);
-        debug.debug('[sendCompletionsRequest] Manager set to not busy.');
+        debug('[sendCompletionsRequest] Manager set to not busy.');
     }
 }

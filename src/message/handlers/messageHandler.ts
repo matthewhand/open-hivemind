@@ -15,9 +15,9 @@ export async function messageHandler(
     return;
   }
   const startTime = Date.now();
-  debug.debug('[messageHandler] originalMsg: ' + JSON.stringify(originalMsg));
+  debug('[messageHandler] originalMsg: ' + JSON.stringify(originalMsg));
   const messageId = originalMsg.getMessageId();
-  debug.debug(
+  debug(
     '[messageHandler] Started processing message ID: ' +
     messageId +
     ' at ' +
@@ -28,23 +28,23 @@ export async function messageHandler(
     debug('[messageHandler] originalMsg is not a valid IMessage instance.');
     return;
   }
-  debug.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
+  debug('[messageHandler] originalMsg is a valid instance of IMessage.');
   // Validate getText method
   if (typeof originalMsg.getText !== 'function') {
     debug('[messageHandler] originalMsg does not have a valid getText method.');
     return;
   }
-  debug.debug('[messageHandler] originalMsg has a valid getText method.');
+  debug('[messageHandler] originalMsg has a valid getText method.');
   if (!originalMsg.getText().trim()) {
     debug('[messageHandler] Received empty message.');
     return;
   }
   if (!validateMessage(originalMsg)) {
-    debug.debug('[messageHandler] Message validation failed.');
+    debug('[messageHandler] Message validation failed.');
     return;
   }
-  debug.debug('[messageHandler] validated message');
+  debug('[messageHandler] validated message');
   // Process command without checking for return value (processCommand returns void)
   await processCommand(originalMsg.getText(), (result) => originalMsg.reply(result));
-  debug.debug('[messageHandler] processed command');
+  debug('[messageHandler] processed command');
 }

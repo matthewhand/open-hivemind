@@ -15,6 +15,6 @@ export function parseCommandDetails(text: string): CommandDetails | null {
     }
     const command = match[1].toLowerCase();
     const args = match[2] ? match[2].split(/\s+/) : [];
-    debug.debug(`parseCommandDetails: command - ${command}  args - [${args.join(', ')}]`);
+    debug(`parseCommandDetails: command - ${command}  args - [${args.join(', ')}]`);
     return { command, args };
 }

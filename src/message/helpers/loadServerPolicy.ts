@@ -9,7 +9,7 @@ export default function loadServerPolicy(): string {
     try {
         const policyPath = path.resolve(__dirname, '../@config/serverPolicy.json');
         const policyData = fs.readFileSync(policyPath, 'utf-8');
-        debug.debug('[loadServerPolicy] Server policy loaded successfully.');
+        debug('[loadServerPolicy] Server policy loaded successfully.');
         return policyData;
     } catch (error: any) {
         debug('[loadServerPolicy] Failed to load server policy: ' + error.message);

@@ -12,11 +12,11 @@ export async function processCommand(
   try {
     const text = message.getText().trim();
     if (!text.startsWith('!')) {
-      debug.debug('[processCommand] No command found in message: ' + text);
+      debug('[processCommand] No command found in message: ' + text);
       return;
     }
     const command = text.slice(1).split(' ')[0];
-    debug.debug('[processCommand] Command extracted: ' + command);
+    debug('[processCommand] Command extracted: ' + command);
     // Simulated command processing logic (e.g., checking against a command list)
     const commandResult = `Executed command: ${command}`;
     await callback(commandResult);

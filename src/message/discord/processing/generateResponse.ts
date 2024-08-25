@@ -11,7 +11,7 @@ export async function generateResponse(transcript: string): Promise<string | und
         debug('LLM_ENDPOINT_URL is not set in the environment variables.');
         return undefined;
     }
-    debug.debug('LLM_ENDPOINT_URL: ' + llmEndpointUrl);
+    debug('LLM_ENDPOINT_URL: ' + llmEndpointUrl);
     try {
         const response = await axios.post(llmEndpointUrl, {
             prompt: transcript,

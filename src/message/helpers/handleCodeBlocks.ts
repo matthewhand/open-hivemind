@@ -10,7 +10,7 @@ export function handleCodeBlocks(message: string): Array<{ label: string | null,
     while ((match = codeBlockPattern.exec(message)) !== null) {
         const label = match[1] ? match[1].trim() : null;
         const content = match[2].trim();
-        debug.debug(`Found code block with label: ${label || 'none'}`);
+        debug(`Found code block with label: ${label || 'none'}`);
         codeBlocks.push({ label, content });
     }
     return codeBlocks;

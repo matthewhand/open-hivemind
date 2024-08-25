@@ -27,6 +27,6 @@ export function trimMessagesByTokenCount(messages: Message[], newPrompt: string,
         trimmedMessages.unshift(message); // Ensure chronological order
         totalTokens += messageTokens.length;
     }
-    debug.debug('[trimMessagesByTokenCount] Trimmed history based on token count: ' + trimmedMessages.length + ' messages retained');
+    debug('[trimMessagesByTokenCount] Trimmed history based on token count: ' + trimmedMessages.length + ' messages retained');
     return trimmedMessages;
 }

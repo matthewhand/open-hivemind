@@ -12,7 +12,7 @@ export function getRandomAliasCommand(): string {
     }
     const randomIndex = Math.floor(Math.random() * aliasKeys.length);
     const randomCommand = '!' + aliasKeys[randomIndex];
-    debug.debug('Generated random alias command: ' + randomCommand);
+    debug('Generated random alias command: ' + randomCommand);
     return randomCommand;
 }
 /**
@@ -24,7 +24,7 @@ export function getRandomAliasCommand(): string {
 export function getAliasDescription(commandName: string): string {
     const alias = aliases[commandName.toLowerCase()];
     const description = alias ? alias.description : 'No description available.';
-    debug.debug('Fetched alias description for command: ' + commandName + '  description: ' + description);
+    debug('Fetched alias description for command: ' + commandName + '  description: ' + description);
     return description;
 }
 /**
@@ -36,7 +36,7 @@ export function listAllAliases(): string {
     const allAliases = Object.entries(aliases)
         .map(([command, { description }]) => '!' + command + ' - ' + description)
         .join('\n');
-    debug.debug('Listing all aliases');
+    debug('Listing all aliases');
     return allAliases;
 }
 /**
@@ -52,7 +52,7 @@ export function findAliasesByCategory(category: string): Record<string, string> 
             acc[command] = description;
             return acc;
         }, {} as Record<string, string>);
-    debug.debug('Found aliases by category: ' + category);
+    debug('Found aliases by category: ' + category);
     return categorizedAliases;
 }
 /**
@@ -65,11 +65,11 @@ export function getDetailedAliasInfo(commandName: string): string {
     const alias = aliases[commandName.toLowerCase()];
     if (!alias) {
         const message = 'Alias does not exist.';
-        debug.debug(message);
+        debug(message);
         return message;
     }
     const { handler, description } = alias;
     const detailedInfo = 'CommandHandler: !' + commandName + '\nHandler: ' + handler + '\nDescription: ' + description;
-    debug.debug('Fetched detailed info for command: ' + commandName + '  info: ' + detailedInfo);
+    debug('Fetched detailed info for command: ' + commandName + '  info: ' + detailedInfo);
     return detailedInfo;
 }

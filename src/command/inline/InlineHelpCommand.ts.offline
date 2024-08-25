@@ -16,13 +16,13 @@ export function executeHelpCommand(message: IMessage, args: string[]): void {
         return;
     }
     // Log the command execution attempt
-    debug.debug('[executeHelpCommand] Attempting to execute help command with prefix: ' + prefix);
+    debug('[executeHelpCommand] Attempting to execute help command with prefix: ' + prefix);
     // Retrieve the list of available commands
     const availableCommands = getAvailableCommands();
     // Format the command list
     const commandList = availableCommands.map(cmd => prefix + cmd.name + ' - ' + cmd.description).join('\n');
     // Respond with the list of available commands
     message.sendMessage('Here are the available commands:\n' + commandList) // Assuming IMessage has a sendMessage method
-        .then(() => debug.debug('[executeHelpCommand] Help command executed successfully.'))
+        .then(() => debug('[executeHelpCommand] Help command executed successfully.'))
         .catch(error => debug('[executeHelpCommand] Error sending help message: ' + error));
 }

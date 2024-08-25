@@ -17,17 +17,17 @@ const debug = Debug('app:discord:handleAudioStream');
 export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage): Promise<void> => {
     const audioChunks: Buffer[] = [];
     const userId = message.getAuthorId();
-    debug.debug('handleAudioStream: Initialized for user ' + userId);
+    debug('handleAudioStream: Initialized for user ' + userId);
     stream.on('data', (chunk: Buffer) => {
         debug('Receiving audio data from user ' + userId);
         audioChunks.push(chunk);
-        debug.debug('handleAudioStream: Collected audio chunk of size ' + chunk.length);
+        debug('handleAudioStream: Collected audio chunk of size ' + chunk.length);
     });
     stream.on('end', async () => {
-        debug.debug('handleAudioStream: End of audio stream for user ' + userId);
+        debug('handleAudioStream: End of audio stream for user ' + userId);
         try {
             const audioBuffer = Buffer.concat(audioChunks);
-            debug.debug('handleAudioStream: Concatenated audio buffer size ' + audioBuffer.length);
+            debug('handleAudioStream: Concatenated audio buffer size ' + audioBuffer.length);
             if (audioBuffer.length === 0) {
                 debug('handleAudioStream: Audio buffer is empty  skipping transcription');
                 return;
@@ -36,7 +36,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             const audioFilePath = 'audio.wav';
             fs.writeFileSync(audioFilePath, wavBuffer);
             const stats = fs.statSync(audioFilePath);
-            debug.debug('handleAudioStream: Saved WAV file size ' + stats.size);
+            debug('handleAudioStream: Saved WAV file size ' + stats.size);
             if (stats.size === 0) {
                 debug('handleAudioStream: WAV file size is 0  skipping transcription');
                 return;
@@ -44,12 +44,12 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             const transcript = await transcribeAudio(audioFilePath);
             if (transcript) {
                 debug('Transcription: ' + transcript);
-                debug.debug('handleAudioStream: Transcription successful');
+                debug('handleAudioStream: Transcription successful');
                 const response = await generateResponse(transcript);
                 if (response) {
-                    debug.debug('handleAudioStream: Generated response: ' + response);
+                    debug('handleAudioStream: Generated response: ' + response);
                     await playAudioResponse(connection, response);
-                    debug.debug('handleAudioStream: Played audio response');
+                    debug('handleAudioStream: Played audio response');
                 } else {
                     debug('handleAudioStream: Response generation returned null or undefined');
                 }
@@ -58,11 +58,11 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             }
         } catch (error: any) {
             debug('handleAudioStream: Error processing audio stream for user ' + userId + ': ' + (error instanceof Error ? error.message : String(error)));
-            debug.debug('handleAudioStream: Error stack trace: ' + error.stack);
+            debug('handleAudioStream: Error stack trace: ' + error.stack);
         }
     });
     stream.on('error', (error: Error) => {
         debug('handleAudioStream: Error in audio stream for user ' + userId + ': ' + error.message);
-        debug.debug('handleAudioStream: Stream error stack trace: ' + error.stack);
+        debug('handleAudioStream: Stream error stack trace: ' + error.stack);
     });
 };

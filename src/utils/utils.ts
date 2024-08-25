@@ -7,13 +7,13 @@ import fs from 'fs';
  * @returns A promise that resolves to the command output.
  */
 export async function executeCommand(command: string): Promise<string> {
-    debug.debug('Executing command: ' + command);
+    debug('Executing command: ' + command);
     const exec = util.promisify(require('child_process').exec);
     const { stdout, stderr } = await exec(command);
     if (stderr) {
         debug('Error executing command: ' + stderr);
     }
-    debug.debug('CommandHandler output: ' + stdout);
+    debug('CommandHandler output: ' + stdout);
     return stdout;
 }
 /**
@@ -23,9 +23,9 @@ export async function executeCommand(command: string): Promise<string> {
  * @returns A promise that resolves to the file content.
  */
 export async function readFile(filePath: string): Promise<string> {
-    debug.debug('Reading file: ' + filePath);
+    debug('Reading file: ' + filePath);
     const readFile = util.promisify(fs.readFile);
     const content = await readFile(filePath, 'utf8');
-    debug.debug('File content: ' + content);
+    debug('File content: ' + content);
     return content;
 }

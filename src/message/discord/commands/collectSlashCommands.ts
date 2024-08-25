@@ -23,7 +23,7 @@ export function collectSlashCommands(commandsPath: string): object[] {
         for (const file of commandFiles) {
             const command: CommandHandler = require(path.join(commandsPath, file));
             if (command.data) {
-                debug.debug('Adding command: ' + JSON.stringify(command.data.toJSON()));
+                debug('Adding command: ' + JSON.stringify(command.data.toJSON()));
                 commands.push(command.data.toJSON());
             } else {
                 debug('No data found in command file: ' + file);

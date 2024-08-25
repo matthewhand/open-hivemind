@@ -15,7 +15,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         debug('NARRATION_ENDPOINT_URL is not set in the environment variables.');
         return;
     }
-    debug.debug('NARRATION_ENDPOINT_URL: ' + narrationEndpointUrl);
+    debug('NARRATION_ENDPOINT_URL: ' + narrationEndpointUrl);
     try {
         const response = await axios.post(narrationEndpointUrl, {
             input: text,
