@@ -6,14 +6,16 @@ import { sendFollowUp } from '../interaction/sendFollowUp';
 import { sendMessageToChannel } from '../interaction/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
 import Debug from 'debug';
+import { Client } from 'discord.js';
 
 const debug = Debug('app:discord:handleAIResponse');
 
 /**
  * Handles the logic for processing an AI response to a message.
+ * @param client - The Discord client instance.
  * @param message - The incoming message.
  */
-export async function handleAIResponse(message: IMessage): Promise<void> {
+export async function handleAIResponse(client: Client, message: IMessage): Promise<void> {
     const llmManager = LLMInterface.getManager();
     if (llmManager.isBusy()) {
         debug('LLM Manager is busy.');
@@ -70,7 +72,7 @@ export async function handleAIResponse(message: IMessage): Promise<void> {
     }
 
     try {
-        await sendMessageToChannel(message.getChannelId(), responseContent);
+        await sendMessageToChannel(client, message.getChannelId(), responseContent);
         debug('Sent message to channel successfully.');
     } catch (error: any) {
         debug('Error sending response to channel: ' + error);
@@ -79,7 +81,7 @@ export async function handleAIResponse(message: IMessage): Promise<void> {
 
     if (constants.FOLLOW_UP_ENABLED) {
         try {
-            await sendFollowUp(message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
+            await sendFollowUp(client, message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
             debug('Follow-up interaction initiated.');
         } catch (error: any) {
             debug('Error initiating follow-up interaction: ' + error);

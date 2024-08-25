@@ -5,7 +5,7 @@ import Debug from 'debug';
 const debug = Debug('app:message:discord');
 
 /**
- * Represents a Discord message, extending a generic message interface.
+ * Represents a Discord message, implementing the IMessage interface.
  * This class encapsulates the properties and behaviors of a Discord message,
  * providing methods to access its content, channel ID, author ID, and more,
  * with added error handling and logging for robustness.
@@ -95,7 +95,7 @@ export default class DiscordMessage implements IMessage {
 
     /**
      * Retrieves the user mentions in the message.
-     * @returns {Array<{ id: string, displayName: string }>} An array of user mentions.
+     * @returns {string[]} An array of user IDs mentioned in the message.
      */
     getUserMentions(): string[] {
         return this.message.mentions.users.map(user => user.id);
@@ -103,11 +103,11 @@ export default class DiscordMessage implements IMessage {
 
     /**
      * Retrieves the users in the channel where the message was sent.
-     * @returns {Array<{ id: string, displayName: string }>} An array of users in the channel.
+     * @returns {string[]} An array of user IDs in the channel.
      */
     getChannelUsers(): string[] {
         if (this.message.channel instanceof TextChannel) {
-            const members = this.message.channel.members as Map<string, GuildMember>;
+            const members = this.message.channel.members;
             return Array.from(members.values()).map(member => member.user.id);
         }
         return [];

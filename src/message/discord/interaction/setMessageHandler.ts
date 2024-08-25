@@ -1,5 +1,6 @@
-import { Client, Message, TextChannel } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
 
@@ -9,19 +10,19 @@ const debug = Debug('app:discord:setMessageHandler');
  * Sets up Message and typing event handlers for the Discord client.
  * @param {Client} client - The Discord client instance.
  * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
- * @param {(channel: string) => Promise<Message[]>} fetchMessages - Function to fetch messages.
+ * @param {(channel: string) => Promise<IMessage[]>} fetchMessages - Function to fetch messages.
  */
 export function setMessageHandler(
     client: Client,
-    handler: (message: Message, history: Message[]) => Promise<void>,
+    handler: (message: IMessage, history: IMessage[]) => Promise<void>,
     typingTimestamps: Map<string, number>,
-    fetchMessages: (channel: string) => Promise<Message[]>
+    fetchMessages: (channel: string) => Promise<IMessage[]>
 ): void {
     client.on('typingStart', (typing) => {
         typingTimestamps.set(typing.channel.id, Date.now());
     });
 
-    client.on('messageCreate', async (discordMessage: Message) => {
+    client.on('messageCreate', async (discordMessage) => {
         try {
             debug('[DiscordManager] Received Message object: ' + JSON.stringify(discordMessage));
 
@@ -58,7 +59,9 @@ export function setMessageHandler(
                 }
 
                 debug('Executing Message handler on channel ' + channel.id);
-                await handler(discordMessage, historyMessages);
+                // Ensure DiscordMessage is properly instantiated before passing to handler
+                const discordMessageWrapped: IMessage = new DiscordMessage(discordMessage);
+                await handler(discordMessageWrapped, historyMessages);
             } else {
                 debug('[DiscordManager] Channel ID: ' + channel.id + ' does not support topics.');
             }
