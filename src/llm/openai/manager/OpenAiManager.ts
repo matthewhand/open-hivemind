@@ -37,7 +37,7 @@ class OpenAiManager {
         this.busy = isBusy;
     }
 
-    private isValidRole(role: string): boolean {
+    public isValidRole(role: string): boolean {
         return ['user', 'system', 'assistant', 'function'].includes(role);
     }
 
