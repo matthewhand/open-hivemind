@@ -53,10 +53,13 @@ export const handleAudioStream = async (stream: Readable, userId: string, connec
                 logger.debug('handleAudioStream: Transcription successful');
 
                 const response = await generateResponse(transcript);
-                logger.debug('handleAudioStream: Generated response: ' + response);
-
-                await playAudioResponse(connection, response);
-                logger.debug('handleAudioStream: Played audio response');
+                if (response) {
+                    logger.debug('handleAudioStream: Generated response: ' + response);
+                    await playAudioResponse(connection, response);
+                    logger.debug('handleAudioStream: Played audio response');
+                } else {
+                    logger.warn('handleAudioStream: Response generation returned null or undefined');
+                }
             } else {
                 logger.warn('handleAudioStream: Transcription returned null or undefined');
             }
