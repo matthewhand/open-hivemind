@@ -1,5 +1,4 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import debug from '@src/operations/debug';
 
 export function validateMessage(message: IMessage): boolean {
     try {

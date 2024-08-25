@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '../message/helpers/handleImageMessage';
 import { DiscordService } from '@src/message/discord/DiscordService';
-import debug from '@src/operations/debug';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 

@@ -2,7 +2,6 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import fs from 'fs';
 import path from 'path';
-import debug from '@src/operations/debug';
 import { Client, CommandInteraction } from 'discord.js';
 
 interface CommandHandler {

@@ -1,6 +1,5 @@
 import { Client } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice';
-import debug from '@src/operations/debug';
 import { setupVoiceChannel } from '../voice/setupVoiceChannel';
 import { playWelcomeMessage } from '../voice/playWelcomeMessage';
 

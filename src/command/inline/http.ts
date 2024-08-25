@@ -1,5 +1,4 @@
 import ICommand from '../interfaces/ICommand';
-import debug from '@src/operations/debug';
 
 /**
  * HTTPCommand class to handle HTTP requests.

@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import debug from '@src/operations/debug';
 
 interface CommandHandler {
     data: {

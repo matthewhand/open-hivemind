@@ -1,5 +1,4 @@
 import { encode } from 'gpt-tokenizer';
-import debug from '@src/operations/debug';
 
 interface Message {
     content: string;

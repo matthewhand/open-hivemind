@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 
 interface CommandDetails {
     command: string;

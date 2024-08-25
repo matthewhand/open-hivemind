@@ -1,5 +1,4 @@
 import { TextChannel, EmbedBuilder } from "discord.js";
-import debug from '@src/operations/debug';
 
 /**
  * Mutes a user in the specified channel.

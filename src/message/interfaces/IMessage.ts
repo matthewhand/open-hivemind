@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 
 /**
  * Abstract class representing a standardized message format.

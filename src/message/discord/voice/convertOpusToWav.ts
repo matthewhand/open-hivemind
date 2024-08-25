@@ -2,7 +2,6 @@
 
 import { spawn } from 'child_process';
 import { Readable } from 'stream';
-import debug from '@src/operations/debug';
 
 /**
  * Converts Opus audio buffer to WAV format using FFmpeg.

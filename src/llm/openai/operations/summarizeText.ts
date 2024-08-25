@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from './sendCompletionsRequest';

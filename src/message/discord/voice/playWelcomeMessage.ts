@@ -2,7 +2,6 @@ import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerSta
 import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
-import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**

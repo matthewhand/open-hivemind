@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 import { getLastMessageTimestamp } from './timestampFunctions';
 

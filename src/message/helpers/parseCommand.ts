@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 
 /**
  * Parses a command string and extracts the command name, action, and arguments.

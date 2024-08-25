@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 import fs from 'fs';
-import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**

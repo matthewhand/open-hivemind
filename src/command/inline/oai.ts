@@ -1,6 +1,5 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import debug from '@src/operations/debug';
 import { getRandomErrorMessage } from '@src/operations/commonUtils';
 
 /**

@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 
 class ReplyManager {
     private replyMetrics: Record<string, { lastReplyTime: number; replyCount: number }> = {};

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**

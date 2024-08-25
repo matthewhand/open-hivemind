@@ -1,5 +1,4 @@
 import { Client, Message } from 'discord.js';
-import debug from '@src/operations/debug';
 
 class DiscordMessageImpl {
     constructor(private client: Client) {}

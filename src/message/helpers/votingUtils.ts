@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 
 /**
  * Simulates the process of starting a voting process for banning a user.

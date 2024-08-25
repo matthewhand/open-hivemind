@@ -1,6 +1,5 @@
 import OpenAiService from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import debug from '@src/operations/debug';
 
 export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {
     try {

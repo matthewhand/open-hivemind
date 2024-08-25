@@ -1,4 +1,3 @@
-import debug from '@src/operations/debug';
 import configManager from '@config/ConfigurationManager';
 
 interface ParsedCommand {

@@ -1,7 +1,6 @@
 // src/message/discord/operations/loginToDiscord.ts
 
 import { Client } from 'discord.js';
-import debug from '@src/operations/debug';
 
 /**
  * Logs in the Discord client using the provided bot token.

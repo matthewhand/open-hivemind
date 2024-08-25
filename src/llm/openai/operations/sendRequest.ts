@@ -5,7 +5,6 @@ import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
 import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
 import { handleError, redactSensitiveInfo } from '@src/operations/commonUtils';
-import debug from '@src/operations/debug';
 
 /**
  * Sends a request to the OpenAiService API and processes the response.

@@ -1,5 +1,4 @@
 import { aliases } from '@command/aliases';
-import debug from '@src/operations/debug';
 
 /**
  * Returns a random command prefixed with '!'.
