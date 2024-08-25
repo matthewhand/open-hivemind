@@ -1,5 +1,9 @@
 import constants from '@config/ConfigurationManager';
-import OpenAiService from '../../llm/openai/manager/OpenAiService';
+import OpenAiService from '../../llm/openai/OpenAiService';
+import Debug from 'debug';
+
+const debug = Debug('app:message:summarizeMessage');
+
 /**
  * Summarizes a given text to a specified target size using the OpenAiService API.
  * This function reduces the length of responses that exceed Discord's message length limits.
@@ -10,17 +14,17 @@ import OpenAiService from '../../llm/openai/manager/OpenAiService';
  */
 export async function summarizeMessage(content: string, targetSize: number = constants.LLM_RESPONSE_MAX_TOKENS): Promise<string> {
     if (typeof content !== 'string') {
-        debug('[summarizeMessage] Invalid content type: ' + typeof content  { content });
+        debug('[summarizeMessage] Invalid content type: ' + typeof content + ' - Content: ' + content);
         throw new Error('Content must be a string.');
     }
     const openAiManager = OpenAiService.getInstance();
     try {
         const response = await openAiManager.summarizeText(content);
         const summary = typeof response === 'string' ? response : JSON.stringify(response);
-        debug('[summarizeMessage] Content summarized to ' + summary.length + ' characters.'  { summary });
+        debug('[summarizeMessage] Content summarized to ' + summary.length + ' characters. Summary: ' + summary);
         return summary;
     } catch (error: any) {
-        debug('[summarizeMessage] Failed to summarize content: ' + error.message + '  returning original content.', { error });
+        debug('[summarizeMessage] Failed to summarize content: ' + error.message + '. Returning original content.', { error });
         return content;  // Return the original content if summarization fails
     }
 }
