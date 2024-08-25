@@ -39,9 +39,9 @@ export class DiscordService implements IMessengerService {
   /**
    * Initializes the Discord service by logging in and setting up event handlers.
    */
-  public async initialize(): Promise<void> {
+  public async initialize(token?: string): Promise<void> {
     try {
-      const token = process.env.DISCORD_TOKEN;
+      token = token || process.env.DISCORD_TOKEN;
       if (!token) {
         throw new Error('DISCORD_TOKEN is not set');
       }
@@ -61,8 +61,8 @@ export class DiscordService implements IMessengerService {
    * preparing the request, and sending the response.
    * @param message - The incoming message.
    */
-  public async handleMessage(message: Message): Promise<void> {
-    logger.debug('DiscordService: Handling message with ID ' + message.id);
+  public async handleMessage(message: IMessage): Promise<void> {
+    logger.debug('DiscordService: Handling message with ID ' + message.getMessageId());
     await handleMessage(message);
   }
 }

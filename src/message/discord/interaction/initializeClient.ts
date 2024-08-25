@@ -1,7 +1,8 @@
 import { Client } from 'discord.js';
-import { setMessageHandler } from './setMessageHandler';
 import Debug from 'debug';
-import { fetchMessages } from '@src/message/fetchers/fetchMessages';
+import { setMessageHandler } from './setMessageHandler';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import { fetchMessages } from '../fetchers/fetchMessages';
 
 const debug = Debug('app:discord:initializeClient');
 
@@ -13,8 +14,8 @@ const debug = Debug('app:discord:initializeClient');
  */
 export function initializeClient(
   client: Client,
-  handler: (message: IMessage, history: IMessage[]) => Promise<void>,
-  typingTimestamps: Map<string, number>
+  handler?: (message: IMessage, history: IMessage[]) => Promise<void>,
+  typingTimestamps: Map<string, number> = new Map()
 ): void {
   try {
     if (!client) {
@@ -23,7 +24,7 @@ export function initializeClient(
     }
 
     // Set up message and typing handlers
-    setMessageHandler(client, handler, typingTimestamps, fetchMessages);
+    setMessageHandler(client, handler || (() => Promise.resolve()), typingTimestamps, fetchMessages);
 
     client.on('ready', () => {
       debug('Discord client is ready!');
