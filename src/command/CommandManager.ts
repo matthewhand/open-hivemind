@@ -7,6 +7,8 @@ import { executeParsedCommand } from './executeParsedCommand';
 import { IMessage } from '../message/interfaces/IMessage';
 import ICommand from '@src/command/interfaces/ICommand';
 
+const debug = Debug('app:command:CommandManager');
+
 /**
  * Manages command operations including loading commands, parsing input texts, and executing commands.
  */
@@ -43,17 +45,17 @@ export class CommandManager {
                     } else if (typeof CommandModule === 'object' && CommandModule !== null) {
                         commandInstance = CommandModule;
                     } else {
-                        logger.error('The command module ' + file + ' does not export a class or valid object. Export type: ' + typeof CommandModule);
+                        debug('The command module ' + file + ' does not export a class or valid object. Export type: ' + typeof CommandModule);
                         return;
                     }
                     if (commandInstance && typeof commandInstance.execute === 'function') {
                         commands[commandName] = commandInstance;
                         this.debug('CommandHandler loaded: ' + commandName);
                     } else {
-                        logger.error('The command module ' + file + ' does not export a valid command instance. Export type: ' + typeof CommandModule);
+                        debug('The command module ' + file + ' does not export a valid command instance. Export type: ' + typeof CommandModule);
                     }
                 } catch (error: any) {
-                    logger.error('Failed to load command ' + commandName + ': ' + error.message);
+                    debug('Failed to load command ' + commandName + ': ' + error.message);
                 }
             }
         });
@@ -77,7 +79,7 @@ export class CommandManager {
         // Parse the command details
         const commandDetails = parseCommandDetails(text);
         if (!commandDetails) {
-            logger.error('Failed to parse command details.');
+            debug('Failed to parse command details.');
             return { success: false, message: 'Parsing error.', error: 'Invalid command format' };
         }
 
@@ -86,7 +88,7 @@ export class CommandManager {
         // Execute the parsed command
         const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
-            logger.error('CommandHandler execution failed: ' + executionResult.error);
+            debug('CommandHandler execution failed: ' + executionResult.error);
         } else {
             this.debug('CommandHandler executed successfully: ' + executionResult.result);
         }
