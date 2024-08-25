@@ -14,11 +14,12 @@ export async function startTyping(client: Client, channelId: string): Promise<vo
 
         logger.debug('[DiscordManager] Channel type: ' + channel.type);
         if (channel instanceof TextChannel || channel instanceof NewsChannel) {
-            const permissions = channel.permissionsFor(client.user!);
-            if (!permissions || !permissions.has('SEND_MESSAGES')) {
-                logger.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
-                return;
-            }
+            // TODO confirm permission before attempting to send
+            // const permissions = channel.permissionsFor(client.user!);
+            // if (!permissions || !permissions.has(PermissionsBitField.Flags.SEND_MESSAGES)) {
+            //     logger.error('[DiscordManager] Missing SEND_MESSAGES permission in channel ID: ' + channelId);
+            //     return;
+            // }
 
             await channel.sendTyping();
             logger.debug('[DiscordManager] Started typing in channel ID: ' + channelId);
