@@ -1,85 +1,68 @@
+/**
+ * OpenAiService Class
+ *
+ * This service integrates with the OpenAI API, allowing the bot to generate responses
+ * using OpenAI's models. It handles the communication with the API, including request
+ * preparation, sending, and response processing.
+ *
+ * Key Features:
+ * - API Key management and initialization
+ * - Request body building and response processing
+ * - Error handling and logging
+ */
+
 import Debug from 'debug';
-const debug = Debug('app:llm:OpenAiService');
+const debug = Debug('app:openai');
 
 import { OpenAIApi, Configuration } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
 import { buildRequestBody } from '@src/llm/openai/operations/buildRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 
-/**
- * OpenAiService implements LlmService to interact with the OpenAI API.
- * This class handles API requests, response processing, and state management.
- */
 export class OpenAiService implements LlmService {
   private api: OpenAIApi;
-  private isProcessing: boolean;
+  private isProcessing: boolean = false;
 
-  /**
-   * Constructor initializes the OpenAI API client with the provided API key.
-   * @param {string} apiKey - The API key for authenticating with OpenAI.
-   */
   constructor(apiKey: string) {
     const configuration = new Configuration({ apiKey });
     this.api = new OpenAIApi(configuration);
-    this.isProcessing = false;
   }
 
   /**
-   * Builds the request body for the OpenAI API based on the provided prompt.
-   * @param {string} prompt - The prompt text for the OpenAI API.
-   * @returns {object} The request body object.
+   * Builds the request body for the OpenAI API.
+   * @param prompt The input prompt for generating a response.
+   * @returns The built request body.
    */
   buildRequestBody(prompt: string): object {
+    if (!prompt) {
+      debug('No prompt provided for buildRequestBody');
+      return {};
+    }
+
     debug('Building request body for prompt:', prompt);
     return buildRequestBody(prompt);
   }
 
   /**
-   * Sends the request to the OpenAI API and returns the API response.
-   * @param {object} requestBody - The request body to be sent.
-   * @returns {Promise<any>} The response from the OpenAI API.
+   * Sends the request to the OpenAI API and processes the response.
+   * @param requestBody The prepared request body.
+   * @returns The API response.
    */
   async sendRequest(requestBody: object): Promise<any> {
+    if (!requestBody) {
+      debug('No requestBody provided for sendRequest');
+      return {};
+    }
+
     debug('Sending request to OpenAI API with body:', requestBody);
     return sendRequest(this.api, requestBody);
   }
 
   /**
-   * Determines if history is required for the API request.
-   * @returns {boolean} False, as history is not required for basic OpenAI requests.
-   */
-  requiresHistory(): boolean {
-    return false;
-  }
-
-  /**
    * Checks if the service is currently processing a request.
-   * @returns {boolean} True if the service is processing, otherwise false.
+   * @returns True if the service is processing, false otherwise.
    */
   isBusy(): boolean {
     return this.isProcessing;
-  }
-
-  /**
-   * Generates a response from the OpenAI API based on the provided prompt.
-   * @param {string} prompt - The prompt text for the OpenAI API.
-   * @returns {Promise<string>} The generated response text.
-   * @throws {Error} If an error occurs during API request or response processing.
-   */
-  async generateResponse(prompt: string): Promise<string> {
-    this.isProcessing = true;
-    try {
-      debug('Generating response for prompt:', prompt);
-      const requestBody = this.buildRequestBody(prompt);
-      const response = await this.sendRequest(requestBody);
-      debug('Response received from OpenAI API:', response);
-      const generatedText = response.choices[0].text.trim();
-      return generatedText;
-    } catch (error: any) {
-      debug('Error generating response from OpenAI:', error);
-      throw error;
-    } finally {
-      this.isProcessing = false;
-    }
   }
 }
