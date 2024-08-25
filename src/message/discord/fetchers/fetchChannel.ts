@@ -1,32 +1,26 @@
-import { Client, Channel } from 'discord.js';
-import logger from '@src/utils/logger';
+import { Client, TextChannel } from 'discord.js';
+import Debug from 'debug';
+
+const debug = Debug('app:discord:fetchChannel');
 
 /**
- * Fetches a Discord channel by its ID.
- * This function abstracts the API call to fetch a channel, providing a simplified
- * interface for other utilities to access channel details. It ensures that errors
- * are handled gracefully and logs meaningful information for debugging.
- * 
- * @param client - The Discord client instance.
- * @param channelId - The ID of the channel to be fetched.
- * @returns A promise that resolves to the fetched channel object or null if an error occurs.
+ * Fetches a text channel by its ID.
+ * @param {Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the channel to fetch.
+ * @returns {Promise<TextChannel | null>} The fetched text channel or null if not found.
  */
-export async function fetchChannel(client: Client, channelId: string): Promise<Channel | null> {
-    if (!client) {
-        logger.error('fetchChannel was called with an undefined or null client.');
-        return null;
+export async function fetchChannel(
+  client: Client,
+  channelId: string
+): Promise<TextChannel | null> {
+  try {
+    const channel = client.channels.cache.get(channelId) as TextChannel;
+    if (!channel) {
+      throw new Error('Channel not found for ID ' + channelId);
     }
-
-    try {
-        const channel = await client.channels.fetch(channelId);
-        if (!channel) {
-            logger.error('Failed to fetch channel with ID: ' + channelId + '. Channel does not exist or cannot be accessed.');
-            return null;
-        }
-        logger.debug('Channel with ID: ' + channelId + ' fetched successfully.');
-        return channel;
-    } catch (error: any) {
-        logger.error('Error fetching channel with ID: ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
-        return null;
-    }
+    return channel;
+  } catch (error: any) {
+    debug('Error fetching channel: ' + (error instanceof Error ? error.message : String(error)));
+    return null;
+  }
 }
