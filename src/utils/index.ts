@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import * as aliasUtils from './aliasUtils';
 import * as common from './common';
 import { handleError } from '../operations/commonUtils';

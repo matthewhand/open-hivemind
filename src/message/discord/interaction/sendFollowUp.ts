@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { sendMessageToChannel } from './sendMessageToChannel';

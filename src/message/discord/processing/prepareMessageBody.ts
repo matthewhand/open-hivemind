@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 /**
  * Prepares the body of the message to be sent to the LLM for processing.
  * @param systemPrompt - The initial system prompt.

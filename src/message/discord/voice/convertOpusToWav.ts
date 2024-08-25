@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 // src/message/discord/voice/convertOpusToWav.ts
 import { spawn } from 'child_process';
 import { Readable } from 'stream';

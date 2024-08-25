@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import ICommand from '../interfaces/ICommand';
 import { CommandInteraction } from 'discord.js';
 import { muteUser } from '@src/command/common/mute';

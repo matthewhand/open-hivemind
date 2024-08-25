@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import ConfigurationManager from '@config/ConfigurationManager';
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';

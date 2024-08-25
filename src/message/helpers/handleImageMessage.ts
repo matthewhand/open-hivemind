@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import axios from 'axios';
 /**
  * A map that stores the association between prediction IDs and image URLs.

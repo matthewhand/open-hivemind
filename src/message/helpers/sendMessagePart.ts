@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { TextChannel } from 'discord.js';
 import Debug from 'debug';
 const debug = Debug('app:message:sendMessagePart');

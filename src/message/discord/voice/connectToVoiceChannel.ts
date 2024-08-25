@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { VoiceChannel, Client } from 'discord.js';
 import Debug from 'debug';
 import { getRandomDelay } from '@src/utils/getRandomDelay';

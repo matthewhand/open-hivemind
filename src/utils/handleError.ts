@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import Debug from 'debug';
 import { getRandomErrorMessage } from './getRandomErrorMessage';
 const debug = Debug('app:utils:handleError');

@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import OpenAiService from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';

@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
 import Debug from 'debug';

@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import Debug from 'debug';
 import { fetchChannel } from './fetchChannel';

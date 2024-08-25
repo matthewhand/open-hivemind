@@ -1,7 +1,11 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from './sendCompletionsRequest';
-import OpenAiService from './OpenAiService';
+
+import { OpenAiService } from './OpenAiService';
 import constants from '@config/ConfigurationManager';
 export async function summarizeText(
     manager: OpenAiService,

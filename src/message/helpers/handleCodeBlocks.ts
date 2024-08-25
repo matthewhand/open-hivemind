@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 /**
  * Handles code blocks within a message, including labels.
  * @param {string} message - The message containing code blocks.

@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { Readable } from 'stream';
 import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';

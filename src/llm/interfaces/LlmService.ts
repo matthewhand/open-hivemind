@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import constants from '@config/ConfigurationManager';
 import Debug from 'debug';
 const debug = Debug('app:llm:LlmService');

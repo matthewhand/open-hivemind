@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 /**
  * Abstract class representing a standardized message format.
  * This class is intended to be extended with specific implementations as needed.

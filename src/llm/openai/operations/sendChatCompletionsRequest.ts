@@ -1,8 +1,12 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
 import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
-import OpenAiService from './OpenAiService';
+
+import { OpenAiService } from './OpenAiService';
 import constants from '@config/ConfigurationManager';
 export async function sendChatCompletionsRequest(manager: OpenAiService, historyMessages: any[], dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {

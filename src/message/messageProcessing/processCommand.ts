@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { IMessage } from '@src/message/interfaces/IMessage';
 /**
  * Processes a command extracted from the given message.

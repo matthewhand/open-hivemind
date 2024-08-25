@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 // src/message/discord/operations/loginToDiscord.ts
 import { Client } from 'discord.js';
 /**

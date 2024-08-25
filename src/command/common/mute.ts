@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { CommandInteraction, GuildMember } from 'discord.js';
 import Debug from 'debug';
 const debug = Debug('app:command:muteUser');

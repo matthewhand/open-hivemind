@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { getLastTypingTimestamp } from './timestampFunctions';
 /**
  * Calculates the initial delay before sending a message based on recent activity in the channel.

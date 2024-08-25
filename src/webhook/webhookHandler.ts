@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '../message/helpers/handleImageMessage';

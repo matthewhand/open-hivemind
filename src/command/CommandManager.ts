@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';

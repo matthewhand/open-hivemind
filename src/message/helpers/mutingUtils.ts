@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { TextChannel, EmbedBuilder } from "discord.js";
 /**
  * Mutes a user in the specified channel.

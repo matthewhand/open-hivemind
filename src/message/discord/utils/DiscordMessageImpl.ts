@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import { Client, Message } from 'discord.js';
 import Debug from 'debug';
 

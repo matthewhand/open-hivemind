@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 class ResponseTimingManager {
     private static instance: ResponseTimingManager;
     private maxDelay: number = 0;

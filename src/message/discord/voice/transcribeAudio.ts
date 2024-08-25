@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import OpenAI from 'openai';
 import fs from 'fs';
 import Debug from 'debug';

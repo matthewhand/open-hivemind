@@ -1,3 +1,6 @@
+import Debug from "debug";
+const debug = Debug("app");
+
 import axios from 'axios';
 import constants from '@config/ConfigurationManager';
 /**
