@@ -4,7 +4,7 @@ import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
 
 /**
- * Sets up message and typing event handlers for the Discord client.
+ * Sets up Message and typing event handlers for the Discord client.
  * @param {Client} client - The Discord client instance.
  * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
  * @param {(channelId: string) => Promise<Message[]>} fetchMessages - Function to fetch messages.
@@ -20,7 +20,7 @@ export function setMessageHandler(
 
     client.on('messageCreate', async (discordMessage: Message) => {
         try {
-            logger.debug('[DiscordManager] Received message object: ' + JSON.stringify(discordMessage));
+            logger.debug('[DiscordManager] Received Message object: ' + JSON.stringify(discordMessage));
 
             if (!client) {
                 logger.error('[DiscordManager] Discord client is not initialized.');
@@ -28,21 +28,21 @@ export function setMessageHandler(
             }
 
 
-            if (!message.getMessageId() || !message.getText()) {
-                logger.error('[DiscordManager] Invalid or incomplete message received: ID: ' + message.getMessageId() + ', Content: ' + message.getText());
+            if (!Message.getMessageId() || !Message.getText()) {
+                logger.error('[DiscordManager] Invalid or incomplete Message received: ID: ' + Message.getMessageId() + ', Content: ' + Message.getText());
                 return;
             }
 
-            if (message.getAuthorId() === constants.CLIENT_ID) {
-                logger.debug('[DiscordManager] Skipping response to own message ID: ' + message.getMessageId());
+            if (Message.getAuthorId() === constants.CLIENT_ID) {
+                logger.debug('[DiscordManager] Skipping response to own Message ID: ' + Message.getMessageId());
                 return;
             }
 
-            logger.debug('[DiscordManager] Processed message ID: ' + message.getMessageId());
+            logger.debug('[DiscordManager] Processed Message ID: ' + Message.getMessageId());
 
-            const channelId = message.getChannelId();
+            const channelId = Message.getChannelId();
             if (!channelId) {
-                logger.error('[DiscordManager] Processed message has no valid channel ID.');
+                logger.error('[DiscordManager] Processed Message has no valid channel ID.');
                 return;
             }
 
@@ -63,14 +63,14 @@ export function setMessageHandler(
                 }
 
                 if (messageHandler) {
-                    logger.debug('Executing message handler on channel ' + channel.id);
-                    await messageHandler(message, historyMessages);
+                    logger.debug('Executing Message handler on channel ' + channel.id);
+                    await messageHandler(Message, historyMessages);
                 }
             } else {
                 logger.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support topics.');
             }
         } catch (error: any) {
-            logger.error('[DiscordManager] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });
+            logger.error('[DiscordManager] Error processing Message: ' + (error instanceof Error ? error.Message : String(error)), { error });
         }
     });
 }

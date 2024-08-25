@@ -3,9 +3,8 @@ import DiscordManager from '@message/discord/DiscordManager';
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
 import commands from '@src/command/inline';
-// import { LLMResponse } from '@src/llm/LLMResponse';
 
-export async function sendMessageToChannel(messageContent: string, channelId: string, startTime: number): Promise<void> {
+export async function sendMessageToChannel(messageContent: string | Buffer, channelId: string, startTime: number): Promise<void> {
     try {
         const isString = typeof messageContent === 'string';
         const isBuffer = Buffer.isBuffer(messageContent);
@@ -58,7 +57,7 @@ function splitMessageContent(messageContent: string, maxPartLength: number): str
     return parts;
 }
 
-async function sendMessagePart(part: string, channelId: string): Promise<void> {
+async function sendMessagePart(part: string | Buffer, channelId: string): Promise<void> {
     try {
         const isPartString = typeof part === 'string';
         const isPartBuffer = Buffer.isBuffer(part);
