@@ -1,8 +1,9 @@
 import { Message } from 'discord.js';
 import Debug from 'debug';
 const debug = Debug('app:message:processAIResponse');
+
 /**
- * Processes an AI response to a given result.
+ * Processes an AI response to a given result and replies to the original message.
  * @param {string} result - The result of the command or action.
  * @param {Message<boolean>} message - The original message object.
  * @returns {Promise<void>} A promise that resolves when processing is complete.
@@ -17,6 +18,6 @@ export async function processAIResponse(
     const aiResponse = `AI Response for: ${result}`;
     await message.reply(aiResponse);
   } catch (error: any) {
-    debug('[processAIResponse] Error processing AI response: ' + (error instanceof Error ? error.message : String(error))  { error });
+    debug('[processAIResponse] Error processing AI response: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
