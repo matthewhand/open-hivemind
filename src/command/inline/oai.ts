@@ -1,12 +1,22 @@
-import Debug from "debug";
-const debug = Debug("app");
-
-import axios from 'axios';
 import Debug from 'debug';
+import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import { getRandomErrorMessage } from '../utils/commonUtils';
 
 const debug = Debug('app:command:OAICommand');
+
+/**
+ * Returns a random error message from a predefined set.
+ * 
+ * @returns {string} A random error message.
+ */
+function getRandomErrorMessage(): string {
+    const errorMessages = [
+        'Something went wrong. Please try again later.',
+        'An error occurred. Please check your input and try again.',
+        'We encountered an unexpected issue. Please try once more.'
+    ];
+    return errorMessages[Math.floor(Math.random() * errorMessages.length)];
+}
 
 /**
  * CommandHandler to interact with the OpenAI API for generating text responses.
@@ -15,10 +25,12 @@ const debug = Debug('app:command:OAICommand');
 export class OAICommand implements ICommand {
     name: string;
     description: string;
+
     constructor() {
         this.name = 'oai';
         this.description = 'Interacts with the OpenAI API to generate responses.';
     }
+
     /**
      * Executes the OAI command using the provided message context and arguments.
      * @param args - The arguments provided with the command.
