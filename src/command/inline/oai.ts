@@ -1,6 +1,10 @@
 import axios from 'axios';
+import Debug from 'debug';
 import ICommand from '@src/command/interfaces/ICommand';
 import { getRandomErrorMessage } from '../utils/commonUtils';
+
+const debug = Debug('app:command:OAICommand');
+
 /**
  * CommandHandler to interact with the OpenAI API for generating text responses.
  * Usage: !oai <prompt>

@@ -1,20 +1,16 @@
-interface CommandDetails {
-    command: string;
-    args: string[];
-}
+import Debug from 'debug';
+
+const debug = Debug('app:command:parseCommandDetails');
+
 /**
- * Parses the command and its arguments from the given text.
- * @param {string} text - The text containing the command to parse.
- * @returns {CommandDetails | null} - Returns an object with `command` and `args` if the command is valid, otherwise null.
+ * Parses the command details from a given input string.
+ * 
+ * @param {string} input - The input string containing the command and arguments.
+ * @returns {{command: string, args: string[]}} The parsed command and arguments.
  */
-export function parseCommandDetails(text: string): CommandDetails | null {
-    const match = text.match(/^!(\w+)\s*(.*)/);
-    if (!match) {
-        debug(`parseCommandDetails: Invalid command format - ${text}`);
-        return null;
-    }
-    const command = match[1].toLowerCase();
-    const args = match[2] ? match[2].split(/\s+/) : [];
-    debug(`parseCommandDetails: command - ${command}  args - [${args.join(', ')}]`);
+export function parseCommandDetails(input: string): { command: string, args: string[] } {
+    debug('Parsing command details from input: ' + input);
+    const [command, ...args] = input.split(' ');
+    debug('Parsed command: ' + command + ', args: ' + args.join(', '));
     return { command, args };
 }
