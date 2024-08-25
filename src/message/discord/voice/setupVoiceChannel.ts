@@ -4,20 +4,23 @@ import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorTy
 import constants from '@config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
+import Debug from 'debug';
+const debug = Debug('app:voice:setupVoiceChannel');
+
 /**
  * Sets up the voice channel by joining it and configuring the connection to handle audio streams.
  * Ensures the bot has the necessary permissions and logs relevant information for debugging.
  */
 export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
-    const VOICE_CHANNEL_ID = ConfigurationManager.getConfig("VOICE_CHANNEL_ID", "default_voice_channel_id");
-    debug.debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
+    const VOICE_CHANNEL_ID = ConfigurationManager.getConfig('VOICE_CHANNEL_ID', 'default_voice_channel_id');
+    debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
     if (!VOICE_CHANNEL_ID) {
         debug('VOICE_CHANNEL_ID is not set in the environment variables.');
         return;
     }
     try {
         const channel = await client.channels.fetch(VOICE_CHANNEL_ID);
-        debug.debug('Fetched channel: ' + (channel ? channel.id : 'null'));
+        debug('Fetched channel: ' + (channel ? channel.id : 'null'));
         if (!channel || !(channel instanceof VoiceChannel)) {
             debug('Channel with ID ' + VOICE_CHANNEL_ID + ' is not a valid voice channel.');
             return;
@@ -27,7 +30,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
             return;
         }
         const permissions = channel.permissionsFor(client.user);
-        debug.debug('Permissions for channel: ' + (permissions ? permissions.bitfield : 'null'));
+        debug('Permissions for channel: ' + (permissions ? permissions.bitfield : 'null'));
         if (!permissions) {
             debug('Unable to fetch permissions for channel: ' + channel.name);
             return;
@@ -50,7 +53,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
             guildId: channel.guild.id,
             adapterCreator: channel.guild.voiceAdapterCreator,
         });
-        debug.debug('Voice connection object:'  connection);
+        debug('Voice connection object: ' + JSON.stringify(connection));
         connection.on(VoiceConnectionStatus.Ready, async () => {
             debug('Successfully connected to the voice channel: ' + channel.name);
             await playWelcomeMessage(connection);
