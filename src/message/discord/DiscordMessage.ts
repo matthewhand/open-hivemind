@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { Message, Client, TextChannel } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:message:discord');
@@ -9,9 +9,9 @@ const debug = Debug('app:message:discord');
  */
 export default class DiscordMessage implements IMessage {
   public content: string;
-  public client: Client;
+  public client: Message['client'];
   public channelId: string;
-  public data: string;
+  protected data: string;
   public role: string;
 
   private readonly message: Message;
@@ -55,6 +55,17 @@ export default class DiscordMessage implements IMessage {
    */
   getChannelId(): string {
     return this.message.channelId;
+  }
+
+  /**
+   * Gets the topic of the channel where the message was sent.
+   * @returns {string} - The channel topic.
+   */
+  getChannelTopic(): string {
+    if (this.message.channel instanceof TextChannel) {
+      return this.message.channel.topic || '';
+    }
+    return '';
   }
 
   /**

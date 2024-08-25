@@ -38,10 +38,13 @@ export class DiscordService implements IMessengerService {
 
   /**
    * Initializes the Discord service by logging in and setting up event handlers.
-   * Exits the process if initialization fails.
    */
-  public async initialize(token: string): Promise<void> {
+  public async initialize(): Promise<void> {
     try {
+      const token = process.env.DISCORD_TOKEN;
+      if (!token) {
+        throw new Error('DISCORD_TOKEN is not set');
+      }
       await this.client.login(token);
       this.client.once('ready', () => {
         logger.info(`Logged in as ${this.client.user?.tag}!`);
