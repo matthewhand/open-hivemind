@@ -1,15 +1,20 @@
-import { OpenAiManager } from '../llm/openai/manager/OpenAiManager';
+import OpenAiManager from '@src/llm/openai/manager/OpenAiManager';
+import { IMessage } from '@src/types/IMessage';
 import logger from '@src/utils/logger';
 
-export function prepareMessageBody(prompt: string): { model: string, prompt: string, max_tokens: number } {
+export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {
     try {
-        return {
+        const manager = OpenAiManager.getInstance();
+        const requestBody = {
             model: 'text-davinci-003',
             prompt: prompt,
-            max_tokens: 100,
+            max_tokens: 150,
+            messages: historyMessages.map(msg => ({ role: msg.role, content: msg.getText() })),
         };
+        logger.info('[prepareMessageBody] Request body prepared successfully.');
+        return requestBody;
     } catch (error: any) {
-        logger.error('Failed to prepare message body:', error);
+        logger.error('[prepareMessageBody] Error preparing request body:', error);
         throw error;
     }
 }

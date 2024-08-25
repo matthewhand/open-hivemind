@@ -4,6 +4,12 @@ import { processAIResponse } from '@src/message/handlers/processAIResponse';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
 import logger from '@src/utils/logger';
 
+/**
+ * Handles an incoming message, validating it, processing commands, and managing AI responses.
+ *
+ * @param originalMsg - The original message object.
+ * @param historyMessages - The history of previous messages for context.
+ */
 export async function messageHandler(
   originalMsg: IMessage,
   historyMessages: IMessage[] = []
@@ -57,4 +63,5 @@ export async function messageHandler(
     logger.debug('[messageHandler] processed command');
 
     await processAIResponse(originalMsg, historyMessages, startTime);
+    logger.debug('[messageHandler] processed AI response');
 }

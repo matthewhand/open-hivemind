@@ -1,9 +1,17 @@
 export interface IMessage {
-    data: any;
-    role: string;
-    getMessageId(): string;
-    getText(): string;
+    id: string;
     content: string;
-    client: any;
     channelId: string;
+    authorId: string;
+    timestamp: number;
+    client: any;
+    role: string;
+    isFromBot: boolean;
+
+    getText(): string;
+    getUserMentions(): string[];
+    getChannelUsers(): string[];
+    getChannelTopic(): string;
+    getAuthorId(): string;
+    getMessageId(): string;
 }

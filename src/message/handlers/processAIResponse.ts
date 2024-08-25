@@ -1,4 +1,4 @@
-import { IMessage } from '@src/message/types/IMessage';
+import { IMessage } from '@src/types/IMessage';
 import { shouldReplyToMessage } from '@src/message/responseManager/shouldReplyToMessage';
 import { LLMInterface } from '@src/llm/LLMInterface';
 import logger from '@src/utils/logger';
@@ -100,7 +100,7 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
 
         if (constants.FOLLOW_UP_ENABLED) {
             try {
-                await sendFollowUp(message, topic || 'General Discussion');
+                await sendFollowUp(message, message.getChannelId(), topic || 'General Discussion');
                 logger.debug('[messageHandler] Follow-up interaction initiated.');
             } catch (error: any) {
                 logger.error('[messageHandler] Error initiating follow-up interaction: ' + error.message, { error });
