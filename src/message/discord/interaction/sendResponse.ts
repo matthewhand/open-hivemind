@@ -1,6 +1,6 @@
 import { Client, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
-import { splitMessage } from './splitMessage';
+import { splitMessage } from '../processing/splitMessage';
 
 /**
  * Sends a response message to a specified Discord channel,

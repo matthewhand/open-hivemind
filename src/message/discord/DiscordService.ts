@@ -68,7 +68,7 @@ export class DiscordService implements IMessengerService {
      * preparing the request, and sending the response.
      * @param message - The incoming message.
      */
-    public async handleMessage(message: Message<boolean>): Promise<void> {
+    public async handleMessage(message: IMessage): Promise<void> {
         await handleMessage(message);
     }
 }

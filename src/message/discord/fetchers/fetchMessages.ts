@@ -1,7 +1,7 @@
 import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import logger from '@src/utils/logger';
 import { fetchChannel } from './fetchChannel';
-import DiscordMessage from './DiscordMessage';
+import DiscordMessage from '../DiscordMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 /**

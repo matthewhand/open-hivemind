@@ -1,3 +1,4 @@
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { GuildMember, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 import ConfigurationManager from '@config/ConfigurationManager';
@@ -8,7 +9,7 @@ import ConfigurationManager from '@config/ConfigurationManager';
  * providing methods to access its content, channel ID, author ID, and more,
  * with added error handling and logging for robustness.
  */
-export default class DiscordMessage {
+export default class DiscordMessage implements IMessage {
     private message: Message;
     private repliedMessage: Message | null;
     private isBotExplicitlySet: boolean | null;
@@ -46,7 +47,6 @@ export default class DiscordMessage {
         this.channelId = message.channel.id;
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
-
     }
 
     /**

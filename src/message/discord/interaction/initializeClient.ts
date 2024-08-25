@@ -1,6 +1,6 @@
 import { Client, Message } from 'discord.js';
 import logger from '@src/utils/logger';
-import { loginToDiscord } from '../login/loginToDiscord';
+import { loginToDiscord } from '../auth/loginToDiscord';
 import { setMessageHandler } from './setMessageHandler';
 
 /**
