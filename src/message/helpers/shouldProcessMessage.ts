@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 import { getLastMessageTimestamp } from './timestampFunctions';
 
@@ -18,24 +18,24 @@ export function shouldProcessMessage(
     authorId: string,
     messageTimestamps: Map<string, number>
 ): boolean {
-    logger.debug('[shouldProcessMessage] Checking if message in channel ' + channelId + ' should be processed.');
+    debug.debug('[shouldProcessMessage] Checking if message in channel ' + channelId + ' should be processed.');
 
     // Skip processing if the author is the bot itself
     if (authorId === constants.BOT_USER_ID) {
-        logger.debug('[shouldProcessMessage] Skipping message from bot itself in channel ' + channelId + '.');
+        debug.debug('[shouldProcessMessage] Skipping message from bot itself in channel ' + channelId + '.');
         return false;
     }
 
     const lastMessageTimestamp = getLastMessageTimestamp(messageTimestamps, channelId);
     const timeSinceLastMessage = messageTimestamp - lastMessageTimestamp;
-    logger.debug('[shouldProcessMessage] Time since last message in channel ' + channelId + ': ' + timeSinceLastMessage + 'ms.');
+    debug.debug('[shouldProcessMessage] Time since last message in channel ' + channelId + ': ' + timeSinceLastMessage + 'ms.');
 
     // Skip processing if the message was sent too soon after the last one
     if (timeSinceLastMessage < constants.MIN_MESSAGE_INTERVAL_MS) {
-        logger.debug('[shouldProcessMessage] Skipping message in channel ' + channelId + ' due to short interval: ' + timeSinceLastMessage + 'ms.');
+        debug.debug('[shouldProcessMessage] Skipping message in channel ' + channelId + ' due to short interval: ' + timeSinceLastMessage + 'ms.');
         return false;
     }
 
-    logger.debug('[shouldProcessMessage] Message in channel ' + channelId + ' will be processed.');
+    debug.debug('[shouldProcessMessage] Message in channel ' + channelId + ' will be processed.');
     return true;
 }

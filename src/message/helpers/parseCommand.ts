@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Parses a command string and extracts the command name, action, and arguments.
@@ -8,11 +8,11 @@ import logger from '@src/operations/logger';
  */
 export function parseCommand(commandContent: string): { commandName: string, action: string, args: string } | null {
     if (!commandContent) {
-        logger.warn('[parseCommand] No command content provided.');
+        debug.warn('[parseCommand] No command content provided.');
         return null;
     }
 
-    logger.debug('[parseCommand] Attempting to parse command content: ' + commandContent + '');
+    debug.debug('[parseCommand] Attempting to parse command content: ' + commandContent + '');
 
     const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
     const matches = commandContent.match(commandRegex);
@@ -20,7 +20,7 @@ export function parseCommand(commandContent: string): { commandName: string, act
     if (matches) {
         const [, commandName, action = '', args = ''] = matches.map(match => match.trim());
 
-        logger.debug('[parseCommand] Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
+        debug.debug('[parseCommand] Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
 
         return {
             commandName: commandName.toLowerCase(),
@@ -29,6 +29,6 @@ export function parseCommand(commandContent: string): { commandName: string, act
         };
     }
 
-    logger.debug('[parseCommand] CommandHandler content did not match expected pattern.');
+    debug.debug('[parseCommand] CommandHandler content did not match expected pattern.');
     return null;
 }

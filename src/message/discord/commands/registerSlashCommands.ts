@@ -1,6 +1,6 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Registers slash commands with Discord for a specific guild.
@@ -12,17 +12,17 @@ export async function registerSlashCommands(token: string, guildId: string, comm
     const clientId = process.env.CLIENT_ID;
 
     if (!clientId) {
-        logger.error('Client ID is not defined. Cannot register slash commands.');
+        debug.error('Client ID is not defined. Cannot register slash commands.');
         return;
     }
 
     const rest = new REST({ version: '9' }).setToken(token);
 
     try {
-        logger.info('Registering ' + commands.length + ' slash commands.');
+        debug.info('Registering ' + commands.length + ' slash commands.');
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
-        logger.info('Successfully registered slash commands.');
+        debug.info('Successfully registered slash commands.');
     } catch (error: any) {
-        logger.error('Failed to register slash commands: ' + (error instanceof Error ? error.message : String(error)));
+        debug.error('Failed to register slash commands: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

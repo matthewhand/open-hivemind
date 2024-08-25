@@ -1,6 +1,6 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import { getRandomErrorMessage } from '@src/operations/commonUtils';
 
 /**
@@ -23,7 +23,7 @@ export class OAICommand implements ICommand {
      */
     async execute(args: string[]): Promise<{ success: boolean, message: string, error?: string }> {
         const prompt = args.join(' ');  // Combining all arguments to form the prompt
-        logger.info('OAICommand: Generating response for prompt: ' + prompt);
+        debug.info('OAICommand: Generating response for prompt: ' + prompt);
 
         try {
             const response = await axios.post('https://api.openai.com/v1/engines/davinci/completions', {
@@ -37,14 +37,14 @@ export class OAICommand implements ICommand {
 
             if (response.data.choices && response.data.choices.length > 0) {
                 const generatedText = response.data.choices[0].text.trim();
-                logger.info('OAICommand: Response generated successfully');
+                debug.info('OAICommand: Response generated successfully');
                 return { success: true, message: generatedText };
             } else {
-                logger.warn('OAICommand: No response generated.');
+                debug.warn('OAICommand: No response generated.');
                 return { success: false, message: 'Failed to generate response.' };
             }
         } catch (error: any) {
-            logger.error('OAICommand execute error: ' + error.message);
+            debug.error('OAICommand execute error: ' + error.message);
             return { success: false, message: getRandomErrorMessage(), error: error.message };
         }
     }

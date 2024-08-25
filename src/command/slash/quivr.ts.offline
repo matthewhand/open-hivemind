@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import axios from 'axios';
-import { logger } from '@operations/logger';
+import { debug } from '@operations/debug';
 
 export const quivrCommand = {
     data: new SlashCommandBuilder()
@@ -25,19 +25,19 @@ export const quivrCommand = {
         const quivrBaseUrl = process.env.QUIVR_BASE_URL;
         if (!quivrBaseUrl) {
             await interaction.reply({ content: 'Error: Quivr base URL is not set in the environment.', ephemeral: true });
-            logger.error('Quivr base URL is undefined.');
+            debug.error('Quivr base URL is undefined.');
             return;
         }
 
         // Guard: Ensure quivrChatId is defined
         if (!quivrChatId) {
             await interaction.reply({ content: 'Error: Quivr chat ID is missing.', ephemeral: true });
-            logger.error('Quivr chat ID is undefined.');
+            debug.error('Quivr chat ID is undefined.');
             return;
         }
 
         // Debug: Log values being used
-        logger.debug('Quivr command executed with:', { quivrBaseUrl, quivrChatId, quivrBrainId });
+        debug.debug('Quivr command executed with:', { quivrBaseUrl, quivrChatId, quivrBrainId });
 
         try {
             const quivrUrl = `${quivrBaseUrl}/${quivrChatId}/question?brain_id=${quivrBrainId}`;
@@ -45,7 +45,7 @@ export const quivrCommand = {
 
             await interaction.reply({ content: 'Request sent to Quivr successfully.', ephemeral: true });
         } catch (error: any) {
-            logger.error('Failed to send request to Quivr:', error);
+            debug.error('Failed to send request to Quivr:', error);
             await interaction.reply({ content: 'Error: Failed to send request to Quivr.', ephemeral: true });
         }
     }

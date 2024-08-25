@@ -1,7 +1,7 @@
 import ICommand from '../interfaces/ICommand';
 import { CommandInteraction } from 'discord.js';
 import { muteUser } from '@src/command/common/mute';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 const muteCommand: ICommand = {
   name: 'mute',
@@ -12,7 +12,7 @@ const muteCommand: ICommand = {
 
     if (target) {
       await muteUser(interaction, target);
-      logger.info('User ' + target.user.tag + ' has been muted.');
+      debug.info('User ' + target.user.tag + ' has been muted.');
       await interaction.reply('User ' + target.user.tag + ' has been muted.');
     } else {
       await interaction.reply('Could not find the specified user.');

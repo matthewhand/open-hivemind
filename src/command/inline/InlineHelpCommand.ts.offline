@@ -1,6 +1,6 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { COMMAND_PREFIX } from '@config/environment';
-import { logger } from '@operations/logger';
+import { debug } from '@operations/debug';
 import { getAvailableCommands } from '../operations/commandUtils';
 
 /**
@@ -14,12 +14,12 @@ export function executeHelpCommand(message: IMessage, args: string[]): void {
 
     // Guard clause to check if the message object is valid
     if (!message) {
-        logger.warn('[executeHelpCommand] No message object provided.');
+        debug.warn('[executeHelpCommand] No message object provided.');
         return;
     }
 
     // Log the command execution attempt
-    logger.debug('[executeHelpCommand] Attempting to execute help command with prefix: ' + prefix);
+    debug.debug('[executeHelpCommand] Attempting to execute help command with prefix: ' + prefix);
 
     // Retrieve the list of available commands
     const availableCommands = getAvailableCommands();
@@ -29,6 +29,6 @@ export function executeHelpCommand(message: IMessage, args: string[]): void {
 
     // Respond with the list of available commands
     message.sendMessage('Here are the available commands:\n' + commandList) // Assuming IMessage has a sendMessage method
-        .then(() => logger.debug('[executeHelpCommand] Help command executed successfully.'))
-        .catch(error => logger.error('[executeHelpCommand] Error sending help message: ' + error));
+        .then(() => debug.debug('[executeHelpCommand] Help command executed successfully.'))
+        .catch(error => debug.error('[executeHelpCommand] Error sending help message: ' + error));
 }

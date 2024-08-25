@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 class ReplyManager {
     private replyMetrics: Record<string, { lastReplyTime: number; replyCount: number }> = {};
@@ -11,7 +11,7 @@ class ReplyManager {
             this.replyMetrics[channelId].lastReplyTime = currentTime;
             this.replyMetrics[channelId].replyCount += 1;
         }
-        logger.info('Logged reply for channel ' + channelId + ' at ' + currentTime);
+        debug.info('Logged reply for channel ' + channelId + ' at ' + currentTime);
     }
 
     getTimeSinceLastReply(channelId: string): number {

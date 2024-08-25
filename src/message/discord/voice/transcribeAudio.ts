@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import fs from 'fs';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**
@@ -20,13 +20,13 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
             response_format: 'text'
         });
 
-        logger.debug('transcribeAudio: Full response:', response);
+        debug.debug('transcribeAudio: Full response:', response);
         return response.text;
     } catch (error: any) {
-        logger.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
+        debug.error('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
-            logger.debug('transcribeAudio: Response status: ' + error.response.status);
-            logger.debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
+            debug.debug('transcribeAudio: Response status: ' + error.response.status);
+            debug.debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
         }
         throw error;
     }

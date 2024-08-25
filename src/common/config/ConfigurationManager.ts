@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import { getConfigOrWarn } from '@operations/configUtils';
 
 class ConfigurationManager {

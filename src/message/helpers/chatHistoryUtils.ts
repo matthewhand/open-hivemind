@@ -1,5 +1,5 @@
 import { encode } from 'gpt-tokenizer';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 interface Message {
     content: string;
@@ -15,12 +15,12 @@ interface Message {
  */
 export function trimMessagesByTokenCount(messages: Message[], newPrompt: string, maxTokens: number): Message[] {
     if (!messages || messages.length === 0) {
-        logger.warn('[trimMessagesByTokenCount] No messages provided.');
+        debug.warn('[trimMessagesByTokenCount] No messages provided.');
         return [];
     }
 
     if (!newPrompt || maxTokens <= 0) {
-        logger.warn('[trimMessagesByTokenCount] Invalid prompt or maxTokens provided.');
+        debug.warn('[trimMessagesByTokenCount] Invalid prompt or maxTokens provided.');
         return [];
     }
 
@@ -34,6 +34,6 @@ export function trimMessagesByTokenCount(messages: Message[], newPrompt: string,
         totalTokens += messageTokens.length;
     }
 
-    logger.debug('[trimMessagesByTokenCount] Trimmed history based on token count: ' + trimmedMessages.length + ' messages retained');
+    debug.debug('[trimMessagesByTokenCount] Trimmed history based on token count: ' + trimmedMessages.length + ' messages retained');
     return trimmedMessages;
 }

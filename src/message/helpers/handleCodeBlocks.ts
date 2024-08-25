@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Handles code blocks within a message, including labels.
@@ -13,7 +13,7 @@ export function handleCodeBlocks(message: string): Array<{ label: string | null,
     while ((match = codeBlockPattern.exec(message)) !== null) {
         const label = match[1] ? match[1].trim() : null;
         const content = match[2].trim();
-        logger.debug(`Found code block with label: ${label || 'none'}`);
+        debug.debug(`Found code block with label: ${label || 'none'}`);
         codeBlocks.push({ label, content });
     }
 

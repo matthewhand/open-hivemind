@@ -1,6 +1,6 @@
 import ICommand from '../interfaces/ICommand';
 import { analyzeImage } from '@src/command/common/replicate';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 export class ReplicateCommand implements ICommand {
     name = 'replicate';
@@ -34,7 +34,7 @@ export class ReplicateCommand implements ICommand {
                 return { success: false, message: `Failed to analyze image: ${result.message}` };
             }
         } catch (error) {
-            logger.error('Error analyzing image:', error);
+            debug.error('Error analyzing image:', error);
             return { success: false, message: 'Error analyzing image.', error: error.message };
         }
     }

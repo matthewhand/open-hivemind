@@ -1,6 +1,6 @@
 import util from 'util';
 import fs from 'fs';
-import logger from './logger';
+import debug from './debug';
 
 /**
  * Executes a shell command and returns the result.
@@ -9,13 +9,13 @@ import logger from './logger';
  * @returns A promise that resolves to the command output.
  */
 export async function executeCommand(command: string): Promise<string> {
-    logger.debug('Executing command: ' + command);
+    debug.debug('Executing command: ' + command);
     const exec = util.promisify(require('child_process').exec);
     const { stdout, stderr } = await exec(command);
     if (stderr) {
-        logger.error('Error executing command: ' + stderr);
+        debug.error('Error executing command: ' + stderr);
     }
-    logger.debug('CommandHandler output: ' + stdout);
+    debug.debug('CommandHandler output: ' + stdout);
     return stdout;
 }
 
@@ -26,9 +26,9 @@ export async function executeCommand(command: string): Promise<string> {
  * @returns A promise that resolves to the file content.
  */
 export async function readFile(filePath: string): Promise<string> {
-    logger.debug('Reading file: ' + filePath);
+    debug.debug('Reading file: ' + filePath);
     const readFile = util.promisify(fs.readFile);
     const content = await readFile(filePath, 'utf8');
-    logger.debug('File content: ' + content);
+    debug.debug('File content: ' + content);
     return content;
 }

@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import configManager from '@config/ConfigurationManager';
 
 interface ParsedCommand {
@@ -16,11 +16,11 @@ interface ParsedCommand {
  */
 export function parseCommand(commandContent: string): ParsedCommand | null {
     if (!commandContent) {
-        logger.warn('No command content provided to parseCommand');
+        debug.warn('No command content provided to parseCommand');
         return null;
     }
 
-    logger.debug('Attempting to parse command content: ' + commandContent);
+    debug.debug('Attempting to parse command content: ' + commandContent);
 
     // Define regex for command parsing: !commandName:action args
     const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
@@ -29,18 +29,18 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
     if (matches) {
         const [, commandName, action = '', args = ''] = matches.map(match => match?.trim() || '');
 
-        logger.debug('Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
+        debug.debug('Parsed command - Name: ' + commandName + ', Action: ' + action + ', Args: ' + args);
         return { commandName: commandName.toLowerCase(), action, args };
     } else {
         const defaultCommand = configManager.getConfig('defaultCommand', 'oai');
         const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
 
         if (defaultCommand && argsWithoutMention) {
-            logger.debug('Fallback to default command: ' + defaultCommand + ' with args: ' + argsWithoutMention);
+            debug.debug('Fallback to default command: ' + defaultCommand + ' with args: ' + argsWithoutMention);
             return { commandName: defaultCommand, action: '', args: argsWithoutMention };
         }
     }
 
-    logger.debug('CommandHandler content did not match expected pattern and no default command could be applied.');
+    debug.debug('CommandHandler content did not match expected pattern and no default command could be applied.');
     return null;
 }

@@ -1,6 +1,6 @@
 import pino from 'pino';
 
-const logger = pino({
+const debug = pino({
     level: process.env.DEBUG === 'true' ? 'debug' : 'info',
     transport: {
         target: 'pino-pretty',
@@ -11,8 +11,8 @@ const logger = pino({
 });
 
 // Add missing log levels
-if (!logger.warn) {
-    logger.warn = logger.info.bind(logger);
+if (!debug.warn) {
+    debug.warn = debug.info.bind(debug);
 }
 
-export default logger;
+export default debug;

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import ICommand from '../interfaces/ICommand';
 
 /**
@@ -25,18 +25,18 @@ commandFiles.forEach(file => {
     } else if (typeof commandModule === 'object' && commandModule !== null && commandModule.execute) {
         commandInstance = commandModule;
     } else {
-        logger.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
+        debug.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
         return;
     }
 
     if (commandInstance && commandInstance.name && typeof commandInstance.execute === 'function') {
         commands[commandInstance.name] = commandInstance;
-        logger.info('Dynamically loaded command: ' + commandInstance.name);
+        debug.info('Dynamically loaded command: ' + commandInstance.name);
     } else {
-        logger.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
+        debug.warn('File ' + file + ' does not export a valid CommandHandler instance or class.');
     }
 });
 
-logger.info('Dynamically loaded commands:', Object.keys(commands));
+debug.info('Dynamically loaded commands:', Object.keys(commands));
 
 export default commands;

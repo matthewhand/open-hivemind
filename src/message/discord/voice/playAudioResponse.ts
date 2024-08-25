@@ -2,7 +2,7 @@ import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnect
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**
@@ -14,11 +14,11 @@ import constants from '@config/ConfigurationManager';
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
     const narrationEndpointUrl = constants.NARRATION_ENDPOINT_URL;
     if (!narrationEndpointUrl) {
-        logger.error('NARRATION_ENDPOINT_URL is not set in the environment variables.');
+        debug.error('NARRATION_ENDPOINT_URL is not set in the environment variables.');
         return;
     }
 
-    logger.debug('NARRATION_ENDPOINT_URL: ' + narrationEndpointUrl);
+    debug.debug('NARRATION_ENDPOINT_URL: ' + narrationEndpointUrl);
 
     try {
         const response = await axios.post(narrationEndpointUrl, {
@@ -46,9 +46,9 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         });
 
         player.on('error', (error) => {
-            logger.error('Error playing audio response: ' + error.message);
+            debug.error('Error playing audio response: ' + error.message);
         });
     } catch (error: any) {
-        logger.error('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
+        debug.error('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

@@ -1,7 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Handles an incoming message, validating it, processing commands, and managing AI responses.
@@ -13,15 +13,15 @@ export async function messageHandler(
   historyMessages: IMessage[] = []
 ): Promise<void> {
   if (!originalMsg) {
-    logger.error('[messageHandler] No original message provided.');
+    debug.error('[messageHandler] No original message provided.');
     return;
   }
 
   const startTime = Date.now();
-  logger.debug('[messageHandler] originalMsg: ' + JSON.stringify(originalMsg));
+  debug.debug('[messageHandler] originalMsg: ' + JSON.stringify(originalMsg));
 
   const messageId = originalMsg.getMessageId();
-  logger.debug(
+  debug.debug(
     '[messageHandler] Started processing message ID: ' +
     messageId +
     ' at ' +
@@ -30,33 +30,33 @@ export async function messageHandler(
 
   // Type guard to ensure originalMsg is a valid instance of IMessage
   if (!(originalMsg && 'getMessageId' in originalMsg)) {
-    logger.error('[messageHandler] originalMsg is not a valid IMessage instance.');
+    debug.error('[messageHandler] originalMsg is not a valid IMessage instance.');
     return;
   }
 
-  logger.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
+  debug.debug('[messageHandler] originalMsg is a valid instance of IMessage.');
 
   // Validate getText method
   if (typeof originalMsg.getText !== 'function') {
-    logger.error('[messageHandler] originalMsg does not have a valid getText method.');
+    debug.error('[messageHandler] originalMsg does not have a valid getText method.');
     return;
   }
 
-  logger.debug('[messageHandler] originalMsg has a valid getText method.');
+  debug.debug('[messageHandler] originalMsg has a valid getText method.');
 
   if (!originalMsg.getText().trim()) {
-    logger.info('[messageHandler] Received empty message.');
+    debug.info('[messageHandler] Received empty message.');
     return;
   }
 
   if (!validateMessage(originalMsg)) {
-    logger.debug('[messageHandler] Message validation failed.');
+    debug.debug('[messageHandler] Message validation failed.');
     return;
   }
 
-  logger.debug('[messageHandler] validated message');
+  debug.debug('[messageHandler] validated message');
 
   // Process command without checking for return value (processCommand returns void)
   await processCommand(originalMsg.getText(), (result) => originalMsg.reply(result));
-  logger.debug('[messageHandler] processed command');
+  debug.debug('[messageHandler] processed command');
 }

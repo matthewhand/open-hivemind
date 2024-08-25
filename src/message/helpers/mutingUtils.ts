@@ -1,5 +1,5 @@
 import { TextChannel, EmbedBuilder } from "discord.js";
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Mutes a user in the specified channel.
@@ -8,18 +8,18 @@ import logger from '@src/operations/logger';
  * @returns {Promise<void>} Resolves when the user is muted.
  */
 export async function muteUser(channel: TextChannel, userId: string): Promise<void> {
-    logger.debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
+    debug.debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
 
     const member = await channel.guild.members.fetch(userId);
     const role = channel.guild.roles?.cache.find(role => role.name === 'Muted');
 
     if (!role) {
-        logger.error('Mute role not found');
+        debug.error('Mute role not found');
         return;
     }
 
     await member.roles.add(role);
-    logger.debug('User muted successfully');
+    debug.debug('User muted successfully');
 
     const embed = new EmbedBuilder()
         .setTitle('User Muted')
@@ -28,5 +28,5 @@ export async function muteUser(channel: TextChannel, userId: string): Promise<vo
         .setColor('#FF0000');
 
     await channel.send({ embeds: [embed] });
-    logger.debug('Mute confirmation message sent');
+    debug.debug('Mute confirmation message sent');
 }

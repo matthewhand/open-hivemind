@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Abstract class representing a standardized message format.
@@ -17,7 +17,7 @@ export abstract class IMessage {
         }
         this.data = data;
         this.role = role;
-        logger.debug('IMessage initialized with data: ' + JSON.stringify(data));
+        debug.debug('IMessage initialized with data: ' + JSON.stringify(data));
     }
 
     /**

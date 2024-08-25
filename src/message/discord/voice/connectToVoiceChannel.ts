@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import { VoiceConnection } from '@discordjs/voice';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import { setupVoiceChannel } from '../voice/setupVoiceChannel';
 import { playWelcomeMessage } from '../voice/playWelcomeMessage';
 
@@ -12,9 +12,9 @@ import { playWelcomeMessage } from '../voice/playWelcomeMessage';
  * @returns A promise that resolves to the VoiceConnection object.
  */
 export async function connectToVoiceChannel(client: Client, channelId: string): Promise<VoiceConnection> {
-    logger.info(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
+    debug.info(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
     const connection = await setupVoiceChannel(client);
-    logger.info('DiscordManager: Playing welcome message');
+    debug.info('DiscordManager: Playing welcome message');
     if (connection) {
         playWelcomeMessage(connection);
     }

@@ -2,7 +2,7 @@
 
 import { spawn } from 'child_process';
 import { Readable } from 'stream';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Converts Opus audio buffer to WAV format using FFmpeg.
@@ -24,7 +24,7 @@ export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
 
         ffmpeg.stdout.on('data', (chunk) => {
             output.push(chunk);
-            logger.debug('convertOpusToWav: Received chunk of size ' + chunk.length);
+            debug.debug('convertOpusToWav: Received chunk of size ' + chunk.length);
         });
 
         ffmpeg.stderr.on('data', (data) => {
@@ -34,21 +34,21 @@ export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
         ffmpeg.stdout.on('end', () => {
             const wavBuffer = Buffer.concat(output);
             if (wavBuffer.length === 0) {
-                logger.error('convertOpusToWav: Conversion resulted in empty buffer. Error output: ' + errorOutput);
+                debug.error('convertOpusToWav: Conversion resulted in empty buffer. Error output: ' + errorOutput);
                 reject(new Error('Conversion to WAV resulted in empty buffer'));
             } else {
-                logger.debug('convertOpusToWav: Converted buffer size ' + wavBuffer.length);
+                debug.debug('convertOpusToWav: Converted buffer size ' + wavBuffer.length);
                 resolve(wavBuffer);
             }
         });
 
         ffmpeg.stdout.on('error', (error) => {
-            logger.error('convertOpusToWav: ffmpeg stdout error: ' + error.message);
+            debug.error('convertOpusToWav: ffmpeg stdout error: ' + error.message);
             reject(error);
         });
 
         ffmpeg.stdin.on('error', (error) => {
-            logger.error('convertOpusToWav: ffmpeg stdin error: ' + error.message);
+            debug.error('convertOpusToWav: ffmpeg stdin error: ' + error.message);
             reject(error);
         });
 

@@ -1,2 +1,2 @@
-declare const logger: any;
-export default logger;
+declare const debug: any;
+export default debug;

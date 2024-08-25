@@ -1,7 +1,7 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 export function handleError(error: Error): void {
-    logger.warn('[handleError]: DEPRECATED - use operations/commonUtils instead!');
-    logger.error('An error occurred: ' + error.message);
-    logger.error('Error Stack Trace: ' + error.stack);
+    debug.warn('[handleError]: DEPRECATED - use operations/commonUtils instead!');
+    debug.error('An error occurred: ' + error.message);
+    debug.error('Error Stack Trace: ' + error.stack);
 }

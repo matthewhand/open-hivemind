@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from './sendCompletionsRequest';
@@ -16,7 +16,7 @@ export async function summarizeText(
     const response = await sendCompletionsRequest(manager, JSON.stringify(requestBody));
 
     const summary = extractContent(response);
-    logger.info('[summarizeText] Summary processed successfully.');
+    debug.info('[summarizeText] Summary processed successfully.');
 
     return new LLMResponse(summary, 'completed');
 }

@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import { getLastTypingTimestamp } from './timestampFunctions';
 
 /**
@@ -19,11 +19,11 @@ export function getInitialDelay(
 ): number {
     const lastTyping = getLastTypingTimestamp(typingTimestamps, channelId);
     const timeSinceLastTyping = Date.now() - lastTyping;
-    logger.debug('[getInitialDelay] Time since last typing in channel ' + channelId + ': ' + timeSinceLastTyping + 'ms.');
+    debug.debug('[getInitialDelay] Time since last typing in channel ' + channelId + ': ' + timeSinceLastTyping + 'ms.');
 
     // Calculate delay proportionally between minDelay and maxDelay based on timeSinceLastTyping
     const delay = Math.min(maxDelay, Math.max(minDelay, timeSinceLastTyping));
-    logger.debug('[getInitialDelay] Calculated delay for channel ' + channelId + ': ' + delay + 'ms.');
+    debug.debug('[getInitialDelay] Calculated delay for channel ' + channelId + ': ' + delay + 'ms.');
 
     return delay;
 }

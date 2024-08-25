@@ -2,7 +2,7 @@ import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerSta
 import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**
@@ -11,7 +11,7 @@ import constants from '@config/ConfigurationManager';
  */
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
     const welcomeMessage = constants.WELCOME_MESSAGE;
-    logger.info('Playing welcome message: ' + welcomeMessage);
+    debug.info('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
         apiKey: constants.NARRATION_API_KEY
@@ -43,14 +43,14 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         });
 
         player.on('error', (error) => {
-            logger.error('Error playing welcome message: ' + error.message);
+            debug.error('Error playing welcome message: ' + error.message);
         });
 
     } catch (error: any) {
-        logger.error('Error generating welcome message: ' + error.message);
+        debug.error('Error generating welcome message: ' + error.message);
         if (error.response) {
-            logger.error('Response status: ' + error.response.status);
-            logger.error('Response data: ' + JSON.stringify(error.response.data));
+            debug.error('Response status: ' + error.response.status);
+            debug.error('Response data: ' + JSON.stringify(error.response.data));
         }
     }
 }

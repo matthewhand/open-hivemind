@@ -1,4 +1,4 @@
-import logger from './logger';
+import debug from './debug';
 
 const errorMessages: string[] = [
     'Oops, my circuits got tangled in digital spaghetti! 🍝🤖',
@@ -16,7 +16,7 @@ const errorMessages: string[] = [
 export function getRandomErrorMessage(): string {
     const randomIndex = Math.floor(Math.random() * errorMessages.length);
     if (randomIndex < 0 || randomIndex >= errorMessages.length) {
-        logger.error('Error selecting a random message: Index out of bounds.');
+        debug.error('Error selecting a random message: Index out of bounds.');
         return 'An unexpected error occurred.';
     }
     return errorMessages[randomIndex];
@@ -24,7 +24,7 @@ export function getRandomErrorMessage(): string {
 
 export function redactSensitiveInfo(key: string, value: any): string {
     if (typeof key !== 'string') {
-        logger.error(`Invalid key type: ${typeof key}. Key must be a string.`);
+        debug.error(`Invalid key type: ${typeof key}. Key must be a string.`);
         return 'Invalid key: [Key must be a string]';
     }
 
@@ -34,7 +34,7 @@ export function redactSensitiveInfo(key: string, value: any): string {
         try {
             value = JSON.stringify(value);
         } catch (error: any) {
-            logger.error(`Error stringifying value: ${error.message}`);
+            debug.error(`Error stringifying value: ${error.message}`);
             value = '[Complex value cannot be stringified]';
         }
     }
@@ -52,8 +52,8 @@ export function redactSensitiveInfo(key: string, value: any): string {
 }
 
 export function handleError(error: Error, messageChannel: any = null): void {
-    logger.error(`Error Mesage: ${error.message}`);
-    logger.error(`Error Stack Trace: ${error.stack}`);
+    debug.error(`Error Mesage: ${error.message}`);
+    debug.error(`Error Stack Trace: ${error.stack}`);
     if (messageChannel && typeof messageChannel.send === 'function') {
         const errorMsg = getRandomErrorMessage();
         messageChannel.send(errorMsg);

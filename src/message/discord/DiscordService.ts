@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
 import { IMessage } from '../interfaces/IMessage';
@@ -18,11 +18,11 @@ export class DiscordService implements IMessengerService {
    * Initializes the Discord client with the necessary intents.
    */
   private constructor() {
-    logger.info('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
+    debug.info('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = new Client({
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates],
     });
-    logger.info('DiscordService: Client initialized successfully');
+    debug.info('DiscordService: Client initialized successfully');
   }
 
   /**
@@ -31,7 +31,7 @@ export class DiscordService implements IMessengerService {
    */
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
-      logger.info('DiscordService: Creating a new instance of DiscordService');
+      debug.info('DiscordService: Creating a new instance of DiscordService');
       DiscordService.instance = new DiscordService();
     }
     return DiscordService.instance;
@@ -48,11 +48,11 @@ export class DiscordService implements IMessengerService {
       }
       await this.client.login(token);
       this.client.once('ready', () => {
-        logger.info(`Logged in as ${this.client.user?.tag}!`);
+        debug.info(`Logged in as ${this.client.user?.tag}!`);
       });
       initializeClient(this.client);
     } catch (error: any) {
-      logger.error('Failed to start DiscordService:', error);
+      debug.error('Failed to start DiscordService:', error);
       process.exit(1);
     }
   }
@@ -71,7 +71,7 @@ export class DiscordService implements IMessengerService {
    * @param message - The incoming message.
    */
   public async handleMessage(message: Message<boolean>): Promise<void> {
-    logger.debug('DiscordService: Handling message with ID ' + message.id);
+    debug.debug('DiscordService: Handling message with ID ' + message.id);
     await handleMessage(message);
   }
 
@@ -88,9 +88,9 @@ export class DiscordService implements IMessengerService {
         throw new Error('Channel not found');
       }
       await channel.send(message);
-      logger.info(`Message sent to channel ${channelId}: ${message}`);
+      debug.info(`Message sent to channel ${channelId}: ${message}`);
     } catch (error: any) {
-      logger.error(`Failed to send message to channel ${channelId}:`, error);
+      debug.error(`Failed to send message to channel ${channelId}:`, error);
       throw error;
     }
   }

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import constants from '@config/ConfigurationManager';
 
 /**
@@ -14,7 +14,7 @@ export async function completeSentence(
     partialContent: string,
     config: typeof constants
 ): Promise<string> {
-    logger.info('[completeSentence] Completing sentence using OpenAI API.');
+    debug.info('[completeSentence] Completing sentence using OpenAI API.');
     const requestBody = {
         model: config.LLM_MODEL,
         prompt: partialContent,

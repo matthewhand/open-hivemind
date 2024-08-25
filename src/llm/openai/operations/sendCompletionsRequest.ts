@@ -1,4 +1,4 @@
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
@@ -8,12 +8,12 @@ import constants from '@config/ConfigurationManager';
 
 export async function sendCompletionsRequest(manager: OpenAiService, message: string, dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {
-        logger.warn('[sendCompletionsRequest] Manager is currently busy.');
+        debug.warn('[sendCompletionsRequest] Manager is currently busy.');
         return new LLMResponse('', 'busy');
     }
 
     manager.setBusy(true);
-    logger.debug('[sendCompletionsRequest] Sending request to OpenAI');
+    debug.debug('[sendCompletionsRequest] Sending request to OpenAI');
 
     try {
         const requestBody = {
@@ -25,7 +25,7 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
         };
 
         if (dryRun) {
-            logger.debug('[sendCompletionsRequest] Dry run mode - returning request body only');
+            debug.debug('[sendCompletionsRequest] Dry run mode - returning request body only');
             return new LLMResponse(JSON.stringify(requestBody), 'dry-run');
         }
 
@@ -39,16 +39,16 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
             constants.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
-            logger.info('[sendCompletionsRequest] Completing response due to token limit or incomplete sentence.');
+            debug.info('[sendCompletionsRequest] Completing response due to token limit or incomplete sentence.');
             content = await completeSentence(manager.getClient(), content, constants);
         }
 
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
-        logger.error('[sendCompletionsRequest] Error during OpenAI API request: ' + error.message);
+        debug.error('[sendCompletionsRequest] Error during OpenAI API request: ' + error.message);
         return new LLMResponse('', 'error');
     } finally {
         manager.setBusy(false);
-        logger.debug('[sendCompletionsRequest] Manager set to not busy.');
+        debug.debug('[sendCompletionsRequest] Manager set to not busy.');
     }
 }

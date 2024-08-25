@@ -5,7 +5,7 @@ import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
 import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
 import { handleError, redactSensitiveInfo } from '@src/operations/commonUtils';
-import logger from '@src/operations/logger';
+import debug from '@src/operations/debug';
 
 /**
  * Sends a request to the OpenAiService API and processes the response.
@@ -27,13 +27,13 @@ export async function sendRequest(
     }
 ): Promise<LLMResponse> {
     if (openAiManager.isBusy()) {
-        logger.warn('[OpenAiService.sendRequest] The manager is currently busy with another request.');
+        debug.warn('[OpenAiService.sendRequest] The manager is currently busy with another request.');
         return new LLMResponse('', 'busy');
     }
 
     openAiManager.setBusy(true);
-    logger.debug('[OpenAiService.sendRequest] Sending request to OpenAiService');
-    logger.debug('[OpenAiService.sendRequest] Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
+    debug.debug('[OpenAiService.sendRequest] Sending request to OpenAiService');
+    debug.debug('[OpenAiService.sendRequest] Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
 
     try {
         const response = await openAiManager.getClient().chat.completions.create(requestBody);
@@ -46,7 +46,7 @@ export async function sendRequest(
             constants.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
-            logger.info('[OpenAiService.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
+            debug.info('[OpenAiService.sendRequest] Completing the response due to reaching the token limit or incomplete sentence.');
             content = await completeSentence(openAiManager.getClient(), content, constants);
         }
 
@@ -56,6 +56,6 @@ export async function sendRequest(
         return new LLMResponse('', 'error');
     } finally {
         openAiManager.setBusy(false);
-        logger.debug('[OpenAiService.sendRequest] Set busy to false after processing the request.');
+        debug.debug('[OpenAiService.sendRequest] Set busy to false after processing the request.');
     }
 }
