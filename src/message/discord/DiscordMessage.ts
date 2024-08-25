@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { GuildMember, Message, TextChannel, Client } from 'discord.js';
+import { Message, TextChannel, Client } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:message:discord');
@@ -10,18 +10,11 @@ const debug = Debug('app:message:discord');
  * providing methods to access its content, channel ID, author ID, and more,
  * with added error handling and logging for robustness.
  */
-export default class DiscordMessage implements IMessage {
-    private message: Message;
-    private repliedMessage: Message | null;
-    private isBotExplicitlySet: boolean | null;
-    public id: string;
-    public content: string;
-    public channelId: string;
-    public authorId: string;
-    public isBot: boolean;
+export default class DiscordMessage extends IMessage {
+    public message: Message;
+    public repliedMessage: Message | null;
+    public isBotExplicitlySet: boolean | null;
     public client: Client;
-    protected data: any;
-    public role: string;
 
     /**
      * Constructs an instance of DiscordMessage.
@@ -29,25 +22,13 @@ export default class DiscordMessage implements IMessage {
      * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
      * @param {boolean | null} [isBot=null] - Indicates explicitly if the message is from a bot.
      */
-    constructor(message: Message, repliedMessage: Message | null = null, isBot: boolean | null = null) {
-        if (!message) {
-            debug('DiscordMessage constructor: message parameter is undefined or null.');
-            throw new Error('Message parameter is required');
-        }
-
-        debug('[DiscordMessage] Initializing with message ID: ' + message.id);
-
+    constructor(message: Message, role: string, repliedMessage: Message | null = null, isBot: boolean | null = null) {
+        super(message, role);
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.isBotExplicitlySet = isBot;
-        this.id = message.id;
-        this.content = message.content;
-        this.channelId = message.channel.id;
-        this.authorId = message.author ? message.author.id : 'unknown';
-        this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
         this.client = message.client;
-        this.data = message;
-        this.role = message.member?.roles.highest.name || 'unknown';
+        debug('[DiscordMessage] Initializing with message ID: ' + message.id);
     }
 
     /**

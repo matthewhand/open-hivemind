@@ -1,19 +1,20 @@
-import DiscordManager from '@src/message/discord/DiscordManager';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { Message } from 'discord.js';
+import { processAIResponse } from '@src/message/interaction/processAIResponse';
+import Debug from 'debug';
+
+const debug = Debug('app:message:processCommand');
 
 /**
- * Processes a command within a message and triggers the appropriate responses.
- *
- * @param message - The message containing the command.
+ * Processes a command from a message.
+ * @param message The message containing the command.
+ * @param args The arguments for the command.
  */
-export async function processCommand(message: IMessage): Promise<void> {
-    try {
-        const content = message.content.toLowerCase();
-        if (content.startsWith('!ai')) {
-            const discordManager = DiscordManager.getInstance(message.client);
-            await discordManager.processAIResponse(message, [], Date.now());
-        }
-    } catch (error: any) {
-        console.error('[processCommand] Error processing command:', error);
+export async function processCommand(message: Message, args: string[]) {
+    debug('Processing command from message: ' + message.content);
+    const response = await processAIResponse(message, args);
+    if (response) {
+        message.channel.send(response);
+    } else {
+        debug('No response generated for command.');
     }
 }

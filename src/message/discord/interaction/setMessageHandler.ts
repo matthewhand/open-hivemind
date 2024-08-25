@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
+import DiscordMessage from '../DiscordMessage';
 
 const debug = Debug('app:discord:setMessageHandler');
 
