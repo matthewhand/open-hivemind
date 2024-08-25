@@ -1,5 +1,5 @@
 import OpenAiManager from '@src/llm/openai/manager/OpenAiManager';
-import { IMessage } from '@src/types/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import logger from '@src/utils/logger';
 
 export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {

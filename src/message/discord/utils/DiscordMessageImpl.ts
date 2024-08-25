@@ -1,6 +1,6 @@
 import { IMessage } from '@message/types/IMessage';
 
-class DiscordMessageImpl implements IMessage {
+class DiscordMessageImpl extends IMessage {
     constructor(private msg: any) {
         super(msg, 'user');
     }

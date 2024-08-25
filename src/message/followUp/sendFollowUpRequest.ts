@@ -1,12 +1,10 @@
-import { sendResponse } from '@src/message/discord/utils/sendResponse';
-import logger from '@src/utils/logger';
-import { Client } from 'discord.js';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import { sendFollowUp } from './sendFollowUp';
 
-export async function sendFollowUpRequest(client: Client<boolean>, channelId: string, originalMessage: string, followUpMessage: string): Promise<void> {
-    try {
-        await sendResponse(client, channelId, followUpMessage);
-        logger.info(`Follow-up message sent: ${followUpMessage}`);
-    } catch (error: any) {
-        logger.error('Failed to send follow-up request:', error);
-    }
+export async function followUpRequest(message: IMessage, channelId: string, topic: string): Promise<void> {
+  try {
+    await sendFollowUp(message, channelId, topic);
+  } catch (error: any) {
+    console.error('[followUpRequest] Error sending follow-up request:', error);
+  }
 }
