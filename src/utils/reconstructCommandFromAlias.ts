@@ -7,13 +7,11 @@ export function reconstructCommandFromAlias(alias: string): string | null {
     if (!foundAlias) {
         return null;
     }
-    
     const command = foundAlias.command;
-    const action = foundAlias.action;
 
-    if (!command || !action) {
+    if (!command || !command) {
         return null;
     }
 
-    return command + ' ' + action;
+    return command + ' ' + command;
 }

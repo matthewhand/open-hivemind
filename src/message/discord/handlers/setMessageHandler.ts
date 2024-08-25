@@ -1,0 +1,1 @@
+import { Client, Message } from "discord.js"; import logger from "@src/utils/logger"; export function setMessageHandler(client: Client, handler: (message: Message) => void): void { logger.info("DiscordManager: Setting message handler"); }

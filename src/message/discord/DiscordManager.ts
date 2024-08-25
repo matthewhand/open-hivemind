@@ -41,10 +41,13 @@ class DiscordManager {
             await loginToDiscord(this.client, token);
 
             logger.info('DiscordManager: Setting up event handlers');
-            setMessageHandler(this.client, async (message: Message<boolean>, history) => { await await this.return Promise.resolve(); }, new Map<string, number>(), async (channelId) => []);
+            setMessageHandler(this.client, async (message: Message, history: Message<boolean>[]): Promise<void> => {
+                await this.handleMessage(message);
+                return Promise.resolve();
+            }, new Map<string, number>(), async (channelId) => Promise.resolve([]));
 
         } catch (error: any) {
-            const errorMessage = `Error during Discord initialization: ${(error instanceof Error) ? error.message : String(error)}`;
+            const errorMessage = 'Error during Discord initialization: ' + ((error instanceof Error) ? error.message : String(error));
             logger.error(errorMessage);
             process.exit(1);  // Exits the process if the initialization fails
         }
@@ -54,7 +57,7 @@ class DiscordManager {
         try {
             await this.client.login(clientId);
             this.client.once('ready', () => {
-                console.log(`Logged in as ${this.client.user?.tag}!`);
+                console.log('Logged in as ' + this.client.user?.tag + '!');
             });
 
             this.client.on('error', (error) => {
@@ -66,22 +69,22 @@ class DiscordManager {
         }
     }
 
-    private handleMessage(message: Message): void {
-        logger.info(`DiscordManager: Received message: ${message.content}`);
+    private async handleMessage(message: Message): Promise<void> {
+        logger.info('DiscordManager: Received message: ' + message.content);
     }
 
-    public setMessageHandler(handler: (message: Message) => void): void {
+    public setMessageHandler(handler: (message: Message) => Promise<void>): void {
         logger.info('DiscordManager: Setting message handler');
-        setMessageHandler(this.client, handler, new Map<string, number>(), async (channelId) => []);;
+        setMessageHandler(this.client, async (message: Message) => Promise.resolve(), new Map<string, number>(), async (channelId: string) => []);
     }
 
     public async sendMessageToChannel(channelId: string, message: string): Promise<Message> {
-        logger.info(`DiscordManager: Sending a message to channel ID: ${channelId}. Message: ${message}`);
+        logger.info('DiscordManager: Sending a message to channel ID: ' + channelId + '. Message: ' + message);
         return sendMessageToChannel(this.client, channelId, message);
     }
 
     public async connectToVoiceChannel(channelId: string): Promise<VoiceConnection> {
-        logger.info(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
+        logger.info('DiscordManager: Connecting to voice channel ID: ' + channelId);
         const connection = await setupVoiceChannel(this.client);
         logger.info('DiscordManager: Playing welcome message');
         if (connection) { playWelcomeMessage(connection); }

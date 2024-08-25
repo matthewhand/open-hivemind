@@ -1,0 +1,1 @@
+import { Message } from "discord.js"; import logger from "@src/utils/logger"; export function handleMessage(message: Message): void { logger.info(`DiscordManager: Received message: ${message.content}`); }

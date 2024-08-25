@@ -1,19 +1,16 @@
 import { Client, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
-import { DiscordMessage } from '../types/DiscordMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
 
 /**
  * Sets up message and typing event handlers for the Discord client.
  * @param {Client} client - The Discord client instance.
- * @param {(processedMessage: DiscordMessage, historyMessages: Message[]) => Promise<void>} messageHandler - The message handler callback function.
  * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
  * @param {(channelId: string) => Promise<Message[]>} fetchMessages - Function to fetch messages.
  */
 export function setMessageHandler(
     client: Client,
-    messageHandler: (processedMessage: DiscordMessage, historyMessages: Message[]) => Promise<void>,
     typingTimestamps: Map<string, number>,
     fetchMessages: (channelId: string) => Promise<Message[]>
 ): void {
@@ -30,21 +27,20 @@ export function setMessageHandler(
                 return;
             }
 
-            const processedMessage = new DiscordMessage(discordMessage);
 
-            if (!processedMessage.getMessageId() || !processedMessage.getText()) {
-                logger.error('[DiscordManager] Invalid or incomplete message received: ID: ' + processedMessage.getMessageId() + ', Content: ' + processedMessage.getText());
+            if (!message.getMessageId() || !message.getText()) {
+                logger.error('[DiscordManager] Invalid or incomplete message received: ID: ' + message.getMessageId() + ', Content: ' + message.getText());
                 return;
             }
 
-            if (processedMessage.getAuthorId() === constants.CLIENT_ID) {
-                logger.debug('[DiscordManager] Skipping response to own message ID: ' + processedMessage.getMessageId());
+            if (message.getAuthorId() === constants.CLIENT_ID) {
+                logger.debug('[DiscordManager] Skipping response to own message ID: ' + message.getMessageId());
                 return;
             }
 
-            logger.debug('[DiscordManager] Processed message ID: ' + processedMessage.getMessageId());
+            logger.debug('[DiscordManager] Processed message ID: ' + message.getMessageId());
 
-            const channelId = processedMessage.getChannelId();
+            const channelId = message.getChannelId();
             if (!channelId) {
                 logger.error('[DiscordManager] Processed message has no valid channel ID.');
                 return;
@@ -68,7 +64,7 @@ export function setMessageHandler(
 
                 if (messageHandler) {
                     logger.debug('Executing message handler on channel ' + channel.id);
-                    await messageHandler(processedMessage, historyMessages);
+                    await messageHandler(message, historyMessages);
                 }
             } else {
                 logger.debug('[DiscordManager] Channel ID: ' + channelId + ' does not support topics.');
