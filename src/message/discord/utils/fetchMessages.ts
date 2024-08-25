@@ -1,7 +1,7 @@
 import { Client, TextChannel, Message as DiscordJSMessage } from 'discord.js';
 import logger from '@src/utils/logger';
 import { fetchChannel } from './fetchChannel';
-import DiscordMessageImpl from './DiscordMessageImpl';
+import DiscordMessage from './DiscordMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 /**
@@ -21,7 +21,7 @@ export async function fetchMessages(client: Client, channelId: string, limit: nu
         }
 
         const messages = await channel.messages.fetch({ limit });
-        const fetchedMessages: IMessage[] = messages.map((msg: DiscordJSMessage) => new DiscordMessageImpl(msg));
+        const fetchedMessages: IMessage[] = messages.map((msg: DiscordJSMessage) => new DiscordMessage(msg));
 
         logger.debug('Fetched ' + fetchedMessages.length + ' messages from channel ' + channelId);
 

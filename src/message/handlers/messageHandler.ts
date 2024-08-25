@@ -1,6 +1,6 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
-import { processAIResponse } from '@src/message/handlers/processAIResponse';
+import { processAIResponse } from '@src/message/interaction/processAIResponse';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
 import logger from '@src/utils/logger';
 

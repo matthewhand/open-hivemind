@@ -1,6 +1,6 @@
 import { IMessage } from '@message/interfaces/IMessage';
 
-class DiscordMessageImpl extends IMessage {
+class DiscordMessage extends IMessage {
     constructor(private msg: any) {
         super(msg, 'user');
     }
@@ -42,4 +42,4 @@ class DiscordMessageImpl extends IMessage {
     }
 }
 
-export default DiscordMessageImpl;
+export default DiscordMessage;

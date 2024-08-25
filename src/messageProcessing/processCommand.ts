@@ -1,5 +1,5 @@
 import { sendResponse } from '@src/message/helpers/sendResponse';
-import { processAIResponse } from '@src/message/handlers/processAIResponse';
+import { processAIResponse } from '@src/message/interaction/processAIResponse';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 export async function processCommand(message: IMessage): Promise<void> {

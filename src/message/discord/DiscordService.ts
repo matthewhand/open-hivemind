@@ -8,32 +8,32 @@ import { IMessengerService } from '../interfaces/IMessengerService';
  * Service implementation for managing Discord interactions, including message handling,
  * voice channel connections, and AI response processing.
  */
-export class DiscordServiceImpl implements IMessengerService {
+export class DiscordService implements IMessengerService {
     private client: Client;
-    private static instance: DiscordServiceImpl;
+    private static instance: DiscordService;
 
     /**
      * Private constructor to enforce singleton pattern.
      * Initializes the Discord client with the necessary intents.
      */
     private constructor() {
-        logger.info('DiscordServiceImpl: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
+        logger.info('DiscordService: Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
         this.client = new Client({
             intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates],
         });
-        logger.info('DiscordServiceImpl: Client initialized successfully');
+        logger.info('DiscordService: Client initialized successfully');
     }
 
     /**
-     * Returns the singleton instance of DiscordServiceImpl, creating it if necessary.
-     * @returns The singleton instance of DiscordServiceImpl.
+     * Returns the singleton instance of DiscordService, creating it if necessary.
+     * @returns The singleton instance of DiscordService.
      */
-    public static getInstance(): DiscordServiceImpl {
-        if (!DiscordServiceImpl.instance) {
-            logger.info('DiscordServiceImpl: Creating a new instance of DiscordServiceImpl');
-            DiscordServiceImpl.instance = new DiscordServiceImpl();
+    public static getInstance(): DiscordService {
+        if (!DiscordService.instance) {
+            logger.info('DiscordService: Creating a new instance of DiscordService');
+            DiscordService.instance = new DiscordService();
         }
-        return DiscordServiceImpl.instance;
+        return DiscordService.instance;
     }
 
     /**
@@ -59,7 +59,7 @@ export class DiscordServiceImpl implements IMessengerService {
                 logger.error('Discord client error:', error);
             });
         } catch (error: any) {
-            logger.error('Failed to start DiscordServiceImpl:', error);
+            logger.error('Failed to start DiscordService:', error);
         }
     }
 
