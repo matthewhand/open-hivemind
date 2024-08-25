@@ -1,8 +1,7 @@
 import { Message } from 'discord.js';
 import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
-import DiscordMessage from '../DiscordMessage';
 import { fetchChannel } from '../fetchers/fetchChannel';
+import { generateResponse } from '../interaction/generateResponse';
 import { processAIResponse } from '../interaction/processAIResponse';
 
 const debug = Debug('app:discord:handleMessage');
@@ -12,11 +11,10 @@ const debug = Debug('app:discord:handleMessage');
  * @param {Message} message - The incoming Discord message.
  */
 export async function handleMessage(
-  message: Message
+  message: Message<boolean>
 ): Promise<void> {
   try {
     debug('[handleMessage] Processing message with ID ' + message.id);
-    const discordMessage = new DiscordMessage(message);
     const channel = await fetchChannel(message.client, message.channelId);
 
     if (!channel) {
@@ -24,11 +22,8 @@ export async function handleMessage(
       return;
     }
 
-    const commandCallback = async (result: string) => {
-      await processAIResponse(result, discordMessage);
-    };
-
-    await processCommand(discordMessage, commandCallback);
+    const response = await generateResponse(message.content);
+    await processAIResponse(response, message);
   } catch (error: any) {
     debug('[handleMessage] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });
   }

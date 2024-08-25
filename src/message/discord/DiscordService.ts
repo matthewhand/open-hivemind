@@ -58,20 +58,12 @@ export class DiscordService implements IMessengerService {
   }
 
   /**
-   * Starts the Discord service, initializing the client.
-   * @param token - The Discord bot token.
-   */
-  public async start(token: string): Promise<void> {
-    await this.initialize(token);
-  }
-
-  /**
    * Handles incoming messages, determining if an AI response is needed,
    * preparing the request, and sending the response.
    * @param message - The incoming message.
    */
-  public async handleMessage(message: IMessage): Promise<void> {
-    logger.debug('DiscordService: Handling message with ID ' + message.getMessageId());
+  public async handleMessage(message: Message<boolean>): Promise<void> {
+    logger.debug('DiscordService: Handling message with ID ' + message.id);
     await handleMessage(message);
   }
 }
