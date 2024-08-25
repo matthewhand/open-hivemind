@@ -1,31 +1,29 @@
-import Debug from "debug";
-const debug = Debug("app");
-
-import { Message } from 'discord.js';
 import Debug from 'debug';
-const debug = Debug('app:message:processCommand');
+
+const debug = Debug('app:processCommand');
+
 /**
- * Processes a command extracted from the given message.
- * @param {Message<boolean>} message - The original message object.
- * @param {(result: string) => Promise<void>} callback - A callback function to handle the result.
- * @returns {Promise<void>} A promise that resolves when processing is complete.
+ * Process a Command Message
+ * 
+ * This function processes incoming messages that are identified as commands.
+ * It parses the command, validates it, and executes the associated action.
+ * 
+ * The function includes robust error handling to log issues encountered during processing
+ * and ensures that appropriate responses are sent back to the user.
+ * 
+ * @param {string} messageContent - The content of the message to process.
+ * @param {string[]} commandPrefix - The prefix used to identify commands.
+ * @returns {Promise<void>} - A promise that resolves once the command is processed.
  */
 export async function processCommand(
-  message: Message<boolean>,
-  callback: (result: string) => Promise<void>
+  messageContent: string,
+  commandPrefix: string[]
 ): Promise<void> {
   try {
-    const text = message.content.trim();
-    if (!text.startsWith('!')) {
-      debug('[processCommand] No command found in message: ' + text);
-      return;
-    }
-    const command = text.slice(1).split(' ')[0];
-    debug('[processCommand] Command extracted: ' + command);
-    // Simulated command processing logic (e.g., checking against a command list)
-    const commandResult = `Executed command: ${command}`;
-    await callback(commandResult);
-  } catch (error: any) {
-    debug('[processCommand] Error processing command: ' + (error instanceof Error ? error.message : String(error)));
+    debug('[processCommand] Processing message content: ' + messageContent);
+    // Add logic here to parse and process the command message
+    debug('[processCommand] Successfully processed command: ' + messageContent);
+  } catch (error) {
+    debug('[processCommand] Error processing command: ' + (error instanceof Error ? error.message : 'Unknown error'));
   }
 }

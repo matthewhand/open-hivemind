@@ -1,13 +1,10 @@
-import Debug from "debug";
-const debug = Debug("app");
+import Debug from 'debug';
+const debug = Debug('app:llm:OpenAiService');
 
 import { OpenAIApi, Configuration } from 'openai';
-import Debug from 'debug';
 import { LlmService } from '@src/llm/interfaces/LlmService';
 import { buildRequestBody } from '@src/llm/openai/operations/buildRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
-
-const debug = Debug('app:llm:OpenAiService');
 
 /**
  * OpenAiService implements LlmService to interact with the OpenAI API.
