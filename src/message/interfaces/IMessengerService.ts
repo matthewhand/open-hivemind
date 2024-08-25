@@ -1,28 +1,25 @@
-import logger from '@src/utils/logger';
+import { Message } from 'discord.js';
 
 /**
- * Abstract class representing a messenger service interface.
+ * Interface representing a messenger service for handling Discord interactions.
  */
-export abstract class IMessengerService {
-    constructor() {
-        if (new.target === IMessengerService) {
-            throw new TypeError('Cannot construct IMessengerService instances directly');
-        }
-        logger.debug('IMessengerService instantiated');
-    }
+export interface IMessengerService {
+    /**
+     * Initializes the service by logging in and setting up event handlers.
+     * Exits the process if initialization fails.
+     */
+    initialize(): Promise<void>;
 
     /**
-     * Fetches the chat history for a given channel.
-     * @param {string} channelId - The ID of the channel.
-     * @returns {Promise<any>} The chat history.
+     * Starts the Discord client and logs in with the provided client ID.
+     * @param clientId - The Discord client ID.
      */
-    abstract fetchChatHistory(channelId: string): Promise<any>;
+    start(clientId: string): Promise<void>;
 
     /**
-     * Sends a response message to a given channel.
-     * @param {string} channelId - The ID of the channel.
-     * @param {string} message - The message to send.
-     * @returns {Promise<any>} The result of sending the message.
+     * Handles incoming messages, determining if an AI response is needed,
+     * preparing the request, and sending the response.
+     * @param message - The incoming message.
      */
-    abstract sendMessageToChannel(channelId: string, message: string): Promise<any>;
+    handleMessage(message: Message): Promise<void>;
 }
