@@ -1,4 +1,4 @@
-// src/message/discord/utils/convertOpusToWav.ts
+// src/message/discord/voice/convertOpusToWav.ts
 
 import { spawn } from 'child_process';
 import { Readable } from 'stream';

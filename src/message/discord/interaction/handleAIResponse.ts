@@ -2,8 +2,8 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { LLMInterface } from '@src/llm/LLMInterface';
 import { prepareMessageBody } from '../processing/prepareMessageBody';
 import { summarizeMessage } from '../processing/summarizeMessage';
-import { sendFollowUp } from '../utils/sendFollowUp';
-import { sendMessageToChannel } from '../utils/sendMessageToChannel';
+import { sendFollowUp } from '../interaction/sendFollowUp';
+import { sendMessageToChannel } from '../interaction/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
 import logger from '@src/utils/logger';
 

@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits, Message } from 'discord.js';
 import logger from '@src/utils/logger';
-import { initializeClient } from './handlers/initializeClient';
-import { handleMessage } from './handlers/handleMessage';
+import { initializeClient } from './interaction/initializeClient';
+import { handleMessage } from './interaction/handleMessage';
 import { IMessengerService } from '../interfaces/IMessengerService';
 
 /**
@@ -68,7 +68,7 @@ export class DiscordService implements IMessengerService {
      * preparing the request, and sending the response.
      * @param message - The incoming message.
      */
-    public async handleMessage(message: Message): Promise<void> {
+    public async handleMessage(message: Message<boolean>): Promise<void> {
         await handleMessage(message);
     }
 }
