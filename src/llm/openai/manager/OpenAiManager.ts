@@ -3,6 +3,7 @@ import constants from '@config/ConfigurationManager';
 import { sendCompletionsRequest } from './sendCompletionsRequest';
 import { sendChatCompletionsRequest } from './sendChatCompletionsRequest';
 import { summarizeText } from './summarizeText';
+import LLMResponse from '../../LLMResponse';
 
 class OpenAiManager {
     private static instance: OpenAiManager;

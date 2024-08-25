@@ -16,7 +16,14 @@ export async function sendChatCompletionsRequest(manager: OpenAiManager, history
     logger.debug('[sendChatCompletionsRequest] Sending request to OpenAI');
 
     try {
-        const requestBody = await manager.buildChatCompletionsRequest(historyMessages);
+        const requestBody = {
+            model: constants.LLM_MODEL,
+            messages: historyMessages.map((msg) => ({
+                role: manager.isValidRole(msg.role) ? msg.role : 'user',
+                content: msg.content,
+                name: constants.INCLUDE_USERNAME_IN_CHAT_COMPLETION ? 'assistant' : undefined,
+            })),
+        };
 
         if (dryRun) {
             logger.debug('[sendChatCompletionsRequest] Dry run mode - returning request body only');
