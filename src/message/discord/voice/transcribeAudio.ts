@@ -1,6 +1,10 @@
 import OpenAI from 'openai';
 import fs from 'fs';
+import Debug from 'debug';
 import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:voice:transcribeAudio');
+
 /**
  * Transcribes audio using the OpenAI API.
  * @param {string} audioFilePath - The path to the audio file to be transcribed.
@@ -16,13 +20,13 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
             model: 'whisper-1',
             response_format: 'text'
         });
-        debug.debug('transcribeAudio: Full response:'  response);
+        debug('transcribeAudio: Full response: ' + JSON.stringify(response));
         return response.text;
     } catch (error: any) {
         debug('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
         if (error.response) {
-            debug.debug('transcribeAudio: Response status: ' + error.response.status);
-            debug.debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
+            debug('transcribeAudio: Response status: ' + error.response.status);
+            debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
         }
         throw error;
     }
