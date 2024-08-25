@@ -1,3 +1,4 @@
+import { Message } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:message:processAIResponse');

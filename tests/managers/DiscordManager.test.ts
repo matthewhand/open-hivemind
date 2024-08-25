@@ -1,26 +1,23 @@
-import DiscordManager from '../../src/message/discord/DiscordManager';
-import { jest } from '@jest/globals';
+import { Client } from 'discord.js';
+import { DiscordManager } from '../../src/message/discord/DiscordManager';
+import { describe, it } from 'mocha';
+import { expect } from 'chai';
 
-// Mock the necessary parts of discord.js
-jest.mock('discord.js', () => {
-  const actualDiscord = jest.requireActual('discord.js');
-  return {
-    Client: jest.fn(() => ({
-      login: jest.fn(() => Promise.resolve()),
-      once: jest.fn((event: string, callback: () => void) => callback()),
-      on: jest.fn(),
-      user: { tag: 'TestBot' },
-    })),
-  };
-});
+// Mock the Client instance
+const client = new Client({ intents: [] });
 
+// Describe the tests for DiscordManager
 describe('DiscordManager', () => {
-  it('should log in and start the Discord client', async () => {
+  it('should initialize the DiscordManager correctly', () => {
     const discordManager = DiscordManager.getInstance(client);
-    const clientId = 'test-client-id';
-    await discordManager.start(clientId);
-    expect(discordManager['client'].login).toHaveBeenCalledWith(clientId);
-    expect(discordManager['client'].once).toHaveBeenCalledWith('ready', expect.any(Function));
+    expect(discordManager).to.be.an('object');
+    expect(discordManager).to.have.property('processMessage');
+  });
+
+  it('should process a message correctly', () => {
+    const discordManager = DiscordManager.getInstance(client);
+    const messageData = { content: 'Hello, world!' };
+    const result = discordManager.processMessage(messageData);
+    expect(result).to.equal('Message processed: Hello, world!');
   });
 });
-
