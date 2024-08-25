@@ -5,6 +5,7 @@ import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import DiscordMessage from '../DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
+import { startTypingIndicator } from '@src/utils/startTypingIndicator';
 
 const debug = Debug('app:discord:setMessageHandler');
 

@@ -1,20 +1,33 @@
-import { Client } from 'discord.js';
-import { VoiceConnection } from '@discordjs/voice';
-import { setupVoiceChannel } from '../voice/setupVoiceChannel';
-import { playWelcomeMessage } from '../voice/playWelcomeMessage';
+import { VoiceChannel, Client } from 'discord.js';
+import Debug from 'debug';
+import { getRandomDelay } from '@src/utils/getRandomDelay';
+
+const debug = Debug('app:voice:connectToVoiceChannel');
+
 /**
- * Connects to a specified voice channel and plays a welcome message.
+ * Connects the bot to a voice channel and returns the connection instance.
  * 
- * @param client - The Discord client instance.
- * @param channelId - The ID of the voice channel to connect to.
- * @returns A promise that resolves to the VoiceConnection object.
+ * @param {Client} client - The Discord client instance.
+ * @param {string} channelId - The ID of the voice channel to connect to.
+ * @returns {Promise<VoiceChannel>} - The connected voice channel instance.
  */
-export async function connectToVoiceChannel(client: Client, channelId: string): Promise<VoiceConnection> {
-    debug(`DiscordManager: Connecting to voice channel ID: ${channelId}`);
-    const connection = await setupVoiceChannel(client);
-    debug('DiscordManager: Playing welcome message');
-    if (connection) {
-        playWelcomeMessage(connection);
+export async function connectToVoiceChannel(
+  client: Client,
+  channelId: string
+): Promise<VoiceChannel> {
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel || !(channel instanceof VoiceChannel)) {
+      debug('Failed to fetch or invalid channel for ID: ' + channelId);
+      throw new Error('Invalid voice channel ID');
     }
-    return connection!;
+    debug('Connecting to voice channel: ' + channel.name);
+    const delay = getRandomDelay(1000, 5000);
+    debug('Simulating connection delay of ' + delay + 'ms');
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return channel;
+  } catch (error: any) {
+    debug('Error connecting to voice channel: ' + (error instanceof Error ? error.message : String(error)));
+    throw error;
+  }
 }
