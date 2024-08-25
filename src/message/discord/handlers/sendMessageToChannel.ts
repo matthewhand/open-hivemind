@@ -1,2 +1,0 @@
-import { TextChannel } from "discord.js";
-import { Client, Message } from "discord.js"; import logger from "@src/utils/logger"; export async function sendMessageToChannel(client: Client, channelId: string, message: string): Promise<Message> { logger.info(`DiscordManager: Sending a message to channel ID: ${channelId}. Message: ${message}`); return await (client.channels.cache.get(channelId) as TextChannel)?.send(message); }
