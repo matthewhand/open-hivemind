@@ -1,2 +1,3 @@
-import { Message } from "discord.js";
-export type MessageHandler = (processedMessage: Message, historyMessages: Message<boolean>[]) => Promise<void>;
+import { IMessage } from '@src/types/IMessage';
+
+export type MessageHandler = (processedMessage: IMessage, historyMessages: IMessage[]) => Promise<void>;

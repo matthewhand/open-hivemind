@@ -43,7 +43,7 @@ class DiscordManager {
             logger.info('DiscordManager: Setting up event handlers');
             setMessageHandler(this.client, async (message: Message): Promise<void> => {
                 await this.handleMessage(message);
-            });
+            }, new Map<string, number>(), async (channelId: string) => []);
 
         } catch (error: any) {
             const errorMessage = 'Error during Discord initialization: ' + ((error instanceof Error) ? error.message : String(error));
@@ -74,7 +74,7 @@ class DiscordManager {
 
     public setMessageHandler(handler: (message: Message) => Promise<void>): void {
         logger.info('DiscordManager: Setting message handler');
-        setMessageHandler(this.client, handler);
+        setMessageHandler(this.client, handler, new Map<string, number>(), async (channelId: string) => []);
     }
 
     public async sendMessageToChannel(channelId: string, message: string): Promise<Message | void> {
