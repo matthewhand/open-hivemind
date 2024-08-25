@@ -1,16 +1,20 @@
-import Debug from "debug";
-const debug = Debug("app");
-
-import { Message } from 'discord.js';
 import Debug from 'debug';
+import { Message } from 'discord.js';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import { generateResponse } from '../interaction/generateResponse';
 import { processAIResponse } from '@src/message/interaction/processAIResponse';
+
 const debug = Debug('app:discord:handleMessage');
 
 /**
- * Handles an incoming message, generating a response if necessary.
- * @param {Message} message - The incoming Discord message.
+ * Handle Discord Message Event
+ * 
+ * This function processes incoming Discord messages. It fetches the corresponding channel,
+ * generates a response if needed, and handles the response using an AI processing function.
+ * 
+ * The function includes robust error handling to log issues encountered during processing.
+ * 
+ * @param {Message} message - The incoming Discord message to handle.
  */
 export async function handleMessage(
   message: Message<boolean>
