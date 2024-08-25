@@ -1,9 +1,18 @@
-import Debug from "debug";
-const debug = Debug("app");
-
-import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
+
 const debug = Debug('app:command:server');
+
+/**
+ * Execute Server Command
+ * 
+ * Handles the execution of server-related commands received through Discord messages.
+ * Provides detailed logging for each step, including the receipt of the command, execution logic,
+ * and any errors encountered during the process.
+ * 
+ * @param message - The message that triggered the command.
+ * @param args - The arguments passed with the command.
+ */
 export async function executeServerCommand(message: IMessage, args: string[]): Promise<void> {
     debug('executeServerCommand: Received command with message ID ' + message.getMessageId() + ' and args: ' + args.join('  '));
     try {

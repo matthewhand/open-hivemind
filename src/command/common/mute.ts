@@ -1,12 +1,15 @@
-import Debug from "debug";
-const debug = Debug("app");
-
-import { CommandInteraction, GuildMember } from 'discord.js';
 import Debug from 'debug';
+import { CommandInteraction, GuildMember } from 'discord.js';
+
 const debug = Debug('app:command:muteUser');
 
 /**
- * Mute a user in the guild using a bot command.
+ * Mute a User in Discord via Command
+ * 
+ * Provides functionality to mute a user in a Discord guild through a bot command.
+ * Validates the interaction and target user, checks if the user is in a voice channel, and mutes them.
+ * Replies to the interaction with the result of the operation.
+ * 
  * @param interaction - The command interaction that triggered the mute.
  * @param target - The target guild member to mute.
  */
