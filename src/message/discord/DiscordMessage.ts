@@ -1,7 +1,8 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { GuildMember, Message, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
-import ConfigurationManager from '@config/ConfigurationManager';
+import Debug from 'debug';
+
+const debug = Debug('app:message:discord');
 
 /**
  * Represents a Discord message, extending a generic message interface.
@@ -27,18 +28,18 @@ export default class DiscordMessage implements IMessage {
      */
     constructor(message: Message, repliedMessage: Message | null = null, isBot: boolean | null = null) {
         if (!message) {
-            logger.error('DiscordMessage constructor: message parameter is undefined or null.');
+            debug('DiscordMessage constructor: message parameter is undefined or null.');
             throw new Error('Message parameter is required');
         }
 
-        logger.debug('[DiscordMessage] Initializing with message ID: ' + message.id);
+        debug('[DiscordMessage] Initializing with message ID: ' + message.id);
 
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.isBotExplicitlySet = isBot;
 
         if (!this.message.content) {
-            logger.error('[DiscordMessage]: message content is undefined or null.');
+            debug('[DiscordMessage]: message content is undefined or null.');
             throw new Error('Message content is required');
         }
 

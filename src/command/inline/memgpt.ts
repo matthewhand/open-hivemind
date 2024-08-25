@@ -1,7 +1,9 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 import { getRandomErrorMessage } from '@src/utils/commonUtils';
+
+const debug = Debug('app:command:memgpt');
 
 /**
  * CommandHandler to interact with the MemGPT service.
@@ -37,12 +39,12 @@ export class MemGPTCommand implements ICommand {
                 message: messageContent
             }, { headers });
 
-            logger.debug('MemGPTCommand: Request sent to MemGPT for agent ' + action + ' with message: ' + messageContent);
-            logger.debug('MemGPTCommand: Response received from MemGPT with data: ' + response.data);
+            debug('MemGPTCommand: Request sent to MemGPT for agent ' + action + ' with message: ' + messageContent);
+            debug('MemGPTCommand: Response received from MemGPT with data: ' + response.data);
 
             return { success: true, message: response.data };
         } catch (error: any) {
-            logger.error('MemGPTCommand execute error: ' + error.message);
+            debug('MemGPTCommand execute error: ' + error.message);
             return { success: false, message: getRandomErrorMessage(), error: error.message };
         }
     }

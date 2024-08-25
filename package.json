@@ -27,6 +27,7 @@
     "are-we-there-yet": "^3.0.1",
     "axios": "^1.6.5",
     "config": "^3.3.12",
+    "debug": "^4.3.6",
     "discord-api-types": "^0.37.67",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.4",
