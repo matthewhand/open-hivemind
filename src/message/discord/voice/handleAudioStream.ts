@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
-import logger from '../../../utils/logger';
+import logger from '../../../operations/logger';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
 import { generateResponse } from '../interaction/generateResponse';

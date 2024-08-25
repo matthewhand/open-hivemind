@@ -1,4 +1,4 @@
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 /**
  * Abstract class representing a standardized message format.

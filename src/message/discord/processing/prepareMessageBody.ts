@@ -1,4 +1,4 @@
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 /**
  * Prepares the body of the message to be sent to the LLM for processing.

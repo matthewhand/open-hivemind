@@ -1,18 +1,18 @@
 import { Message } from 'discord.js';
 import Debug from 'debug';
-import { OpenAiManager } from '@src/openai/OpenAiManager';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
 
 const debug = Debug('app:message:sendAiGeneratedMessage');
 
 /**
  * Handles the sending of AI-generated messages.
- * @param {OpenAiManager} aiManager - The OpenAI manager instance.
+ * @param {OpenAiService} aiManager - The OpenAI manager instance.
  * @param {Message} originalMessage - The original message that triggered the AI response.
  * @param {string} prompt - The prompt for the AI to generate a response to.
  * @returns {Promise<void>} A promise that resolves when the AI response is sent.
  */
 export async function sendAiGeneratedMessage(
-  aiManager: OpenAiManager,
+  aiManager: OpenAiService,
   originalMessage: Message,
   prompt: string
 ): Promise<void> {

@@ -1,5 +1,5 @@
 import { Client, TextChannel, NewsChannel } from 'discord.js';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 export async function startTyping(client: Client, channelId: string): Promise<void> {
     try {

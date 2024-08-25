@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { LLMInterface } from '@src/llm/LLMInterface';
+import { LlmService } from '@src/llm/interfaces/LlmService';
 import { prepareMessageBody } from '../processing/prepareMessageBody';
 import { summarizeMessage } from '../processing/summarizeMessage';
 import { sendFollowUp } from '../interaction/sendFollowUp';
@@ -16,7 +16,7 @@ const debug = Debug('app:discord:handleAIResponse');
  * @param message - The incoming message.
  */
 export async function handleAIResponse(client: Client, message: IMessage): Promise<void> {
-    const llmManager = LLMInterface.getManager();
+    const llmManager = LlmService.getManager();
     if (llmManager.isBusy()) {
         debug('LLM Manager is busy.');
         return;

@@ -1,12 +1,12 @@
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 import LLMResponse from '@src/llm/LLMResponse';
-import { extractContent } from '@src/llm/openai/utils/extractContent';
-import { completeSentence } from '@src/llm/openai/utils/completeSentence';
-import { needsCompletion } from '@src/llm/openai/utils/needsCompletion';
-import OpenAiManager from './OpenAiManager';
+import { extractContent } from '@src/llm/openai/operations/extractContent';
+import { completeSentence } from '@src/llm/openai/operations/completeSentence';
+import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
+import OpenAiService from './OpenAiService';
 import constants from '@config/ConfigurationManager';
 
-export async function sendCompletionsRequest(manager: OpenAiManager, message: string, dryRun: boolean = false): Promise<LLMResponse> {
+export async function sendCompletionsRequest(manager: OpenAiService, message: string, dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {
         logger.warn('[sendCompletionsRequest] Manager is currently busy.');
         return new LLMResponse('', 'busy');

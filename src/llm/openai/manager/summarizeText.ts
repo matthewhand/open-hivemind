@@ -1,12 +1,12 @@
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 import LLMResponse from '@src/llm/LLMResponse';
-import { extractContent } from '@src/llm/openai/utils/extractContent';
+import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from './sendCompletionsRequest';
-import OpenAiManager from './OpenAiManager';
+import OpenAiService from './OpenAiService';
 import constants from '@config/ConfigurationManager';
 
 export async function summarizeText(
-    manager: OpenAiManager,
+    manager: OpenAiService,
     userMessage: string,
     systemMessageContent: string = constants.LLM_SYSTEM_PROMPT,
     maxTokens: number = constants.LLM_RESPONSE_MAX_TOKENS

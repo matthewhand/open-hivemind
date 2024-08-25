@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 interface CommandHandler {
     data: {

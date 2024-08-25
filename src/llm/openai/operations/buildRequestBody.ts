@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { getEmoji } from '@src/utils/getEmoji';
+import { getEmoji } from '@src/operations/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 /**

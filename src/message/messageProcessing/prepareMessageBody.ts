@@ -1,10 +1,10 @@
-import OpenAiManager from '@src/llm/openai/manager/OpenAiManager';
+import OpenAiService from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {
     try {
-        const manager = OpenAiManager.getInstance();
+        const manager = OpenAiService.getInstance();
         const requestBody = {
             model: 'text-davinci-003',
             prompt: prompt,

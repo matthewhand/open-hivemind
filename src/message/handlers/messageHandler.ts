@@ -1,7 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 /**
  * Handles an incoming message, validating it, processing commands, and managing AI responses.

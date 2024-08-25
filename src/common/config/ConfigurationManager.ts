@@ -1,5 +1,5 @@
-import logger from '@src/utils/logger';
-import { getConfigOrWarn } from '@utils/configUtils';
+import logger from '@src/operations/logger';
+import { getConfigOrWarn } from '@operations/configUtils';
 
 class ConfigurationManager {
     // LLM Configuration

@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
 import { IMessage } from '../interfaces/IMessage';

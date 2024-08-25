@@ -1,7 +1,7 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
 import Debug from 'debug';
-import { getRandomErrorMessage } from '@src/utils/commonUtils';
+import { getRandomErrorMessage } from '@src/operations/commonUtils';
 
 const debug = Debug('app:command:memgpt');
 

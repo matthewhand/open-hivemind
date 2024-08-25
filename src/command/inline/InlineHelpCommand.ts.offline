@@ -1,7 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { COMMAND_PREFIX } from '@config/environment';
-import { logger } from '@utils/logger';
-import { getAvailableCommands } from '../utils/commandUtils';
+import { logger } from '@operations/logger';
+import { getAvailableCommands } from '../operations/commandUtils';
 
 /**
  * Executes the help command, providing a list of available commands.

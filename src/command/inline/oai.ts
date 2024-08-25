@@ -1,7 +1,7 @@
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import logger from '@src/utils/logger';
-import { getRandomErrorMessage } from '@src/utils/commonUtils';
+import logger from '@src/operations/logger';
+import { getRandomErrorMessage } from '@src/operations/commonUtils';
 
 /**
  * CommandHandler to interact with the OpenAI API for generating text responses.

@@ -1,4 +1,4 @@
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 import constants from '@config/ConfigurationManager';
 import { getLastMessageTimestamp } from './timestampFunctions';
 

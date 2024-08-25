@@ -2,8 +2,8 @@ import { Client } from 'discord.js';
 import Debug from 'debug';
 import { setMessageHandler } from './setMessageHandler';
 import { fetchMessages } from '../fetchers/fetchMessages';
-import { sendFollowUpMessage } from '../followUp/sendFollowUpMessage';
-import { sendAiGeneratedMessage } from '../followUp/sendAiGeneratedMessage';
+import { sendFollowUpMessage } from '@src/message/followUp/sendFollowUpMessage';
+import { sendAiGeneratedMessage } from '@src/message/followUp/sendAiGeneratedMessage';
 
 const debug = Debug('app:discord:initializeClient');
 

@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import logger from '@src/utils/logger';
+import logger from '@src/operations/logger';
 
 export function validateMessage(message: IMessage): boolean {
     try {
