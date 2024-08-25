@@ -1,7 +1,9 @@
 import { Client, Message, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from './fetchChannel';
+
+const debug = Debug('app:discord:setMessageHandler');
 
 /**
  * Sets up Message and typing event handlers for the Discord client.
@@ -21,47 +23,47 @@ export function setMessageHandler(
 
     client.on('messageCreate', async (discordMessage: Message) => {
         try {
-            logger.debug('[DiscordManager] Received Message object: ' + JSON.stringify(discordMessage));
+            debug('[DiscordManager] Received Message object: ' + JSON.stringify(discordMessage));
 
             if (!client) {
-                logger.error('[DiscordManager] Discord client is not initialized.');
+                debug('[DiscordManager] Discord client is not initialized.');
                 return;
             }
 
             if (!discordMessage.id || !discordMessage.content) {
-                logger.error('[DiscordManager] Invalid or incomplete Message received: ID: ' + discordMessage.id + ', Content: ' + discordMessage.content);
+                debug('[DiscordManager] Invalid or incomplete Message received: ID: ' + discordMessage.id + ', Content: ' + discordMessage.content);
                 return;
             }
 
             if (discordMessage.author.id === constants.CLIENT_ID) {
-                logger.debug('[DiscordManager] Skipping response to own Message ID: ' + discordMessage.id);
+                debug('[DiscordManager] Skipping response to own Message ID: ' + discordMessage.id);
                 return;
             }
 
-            logger.debug('[DiscordManager] Processed Message ID: ' + discordMessage.id);
+            debug('[DiscordManager] Processed Message ID: ' + discordMessage.id);
 
             const channel = await fetchChannel(client, discordMessage.channelId);
             if (!channel) {
-                logger.error('[DiscordManager] Could not fetch channel with ID: ' + discordMessage.channelId);
+                debug('[DiscordManager] Could not fetch channel with ID: ' + discordMessage.channelId);
                 return;
             }
 
-            logger.debug('[DiscordManager] Fetched channel: ' + channel);
+            debug('[DiscordManager] Fetched channel: ' + channel);
 
             if ((channel as TextChannel).topic) {
                 const historyMessages = await fetchMessages(channel.id);
 
                 if (historyMessages) {
-                    logger.info('Channel topic: ' + ((channel as TextChannel).topic || 'No topic') + '. History messages count: ' + historyMessages.length);
+                    debug('Channel topic: ' + ((channel as TextChannel).topic || 'No topic') + '. History messages count: ' + historyMessages.length);
                 }
 
-                logger.debug('Executing Message handler on channel ' + channel.id);
+                debug('Executing Message handler on channel ' + channel.id);
                 await handler(discordMessage, historyMessages);
             } else {
-                logger.debug('[DiscordManager] Channel ID: ' + channel.id + ' does not support topics.');
+                debug('[DiscordManager] Channel ID: ' + channel.id + ' does not support topics.');
             }
         } catch (error: any) {
-            logger.error('[DiscordManager] Error processing Message: ' + (error instanceof Error ? error.message : String(error)), { error });
+            debug('[DiscordManager] Error processing Message: ' + (error instanceof Error ? error.message : String(error)), { error });
         }
     });
 }

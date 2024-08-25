@@ -1,5 +1,5 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { GuildMember, Message, TextChannel } from 'discord.js';
+import { GuildMember, Message, TextChannel, Client } from 'discord.js';
 import Debug from 'debug';
 
 const debug = Debug('app:message:discord');
@@ -19,6 +19,9 @@ export default class DiscordMessage implements IMessage {
     public channelId: string;
     public authorId: string;
     public isBot: boolean;
+    public client: Client;
+    protected data: any;
+    public role: string;
 
     /**
      * Constructs an instance of DiscordMessage.
@@ -37,17 +40,14 @@ export default class DiscordMessage implements IMessage {
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.isBotExplicitlySet = isBot;
-
-        if (!this.message.content) {
-            debug('[DiscordMessage]: message content is undefined or null.');
-            throw new Error('Message content is required');
-        }
-
         this.id = message.id;
         this.content = message.content;
         this.channelId = message.channel.id;
         this.authorId = message.author ? message.author.id : 'unknown';
         this.isBot = (isBot !== null) ? isBot : !!message.author.bot;
+        this.client = message.client;
+        this.data = message;
+        this.role = message.member?.roles.highest.name || 'unknown';
     }
 
     /**
@@ -59,7 +59,7 @@ export default class DiscordMessage implements IMessage {
     }
 
     /**
-     * Retrieves the content of the message.
+     * Retrieves the text content of the message.
      * @returns {string} The text content of the message.
      */
     getText(): string {
@@ -97,24 +97,18 @@ export default class DiscordMessage implements IMessage {
      * Retrieves the user mentions in the message.
      * @returns {Array<{ id: string, displayName: string }>} An array of user mentions.
      */
-    getUserMentions(): Array<{ id: string, displayName: string }> {
-        return this.message.mentions.users.map(user => ({
-            id: user.id,
-            displayName: user.username,
-        }));
+    getUserMentions(): string[] {
+        return this.message.mentions.users.map(user => user.id);
     }
 
     /**
      * Retrieves the users in the channel where the message was sent.
      * @returns {Array<{ id: string, displayName: string }>} An array of users in the channel.
      */
-    getChannelUsers(): Array<{ id: string, displayName: string }> {
+    getChannelUsers(): string[] {
         if (this.message.channel instanceof TextChannel) {
             const members = this.message.channel.members as Map<string, GuildMember>;
-            return Array.from(members.values()).map(member => ({
-                id: member.user.id,
-                displayName: member.user.username,
-            }));
+            return Array.from(members.values()).map(member => member.user.id);
         }
         return [];
     }
@@ -125,5 +119,22 @@ export default class DiscordMessage implements IMessage {
      */
     isFromBot(): boolean {
         return this.message.author.bot;
+    }
+
+    /**
+     * Checks if the message is a reply to the bot.
+     * @returns {boolean} True if the message is a reply to the bot, false otherwise.
+     */
+    isReplyToBot(): boolean {
+        return !!this.repliedMessage && this.repliedMessage.author.bot;
+    }
+
+    /**
+     * Checks if the message mentions a specific user.
+     * @param {string} userId - The ID of the user to check for mentions.
+     * @returns {boolean} True if the user is mentioned, false otherwise.
+     */
+    mentionsUsers(userId: string): boolean {
+        return this.message.mentions.users.has(userId);
     }
 }

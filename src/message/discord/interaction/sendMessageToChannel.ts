@@ -1,5 +1,7 @@
 import { Client, Message, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
+
+const debug = Debug('app:discord:sendMessageToChannel');
 
 /**
  * Sends a message to a specific Discord channel.
@@ -11,15 +13,15 @@ import logger from '@src/utils/logger';
 export async function sendMessageToChannel(client: Client, channelId: string, messageContent: string): Promise<Message | void> {
     const channel = client.channels.cache.get(channelId) as TextChannel;
     if (!channel) {
-        logger.error(`Channel with ID ${channelId} not found.`);
+        debug('Channel with ID ' + channelId + ' not found.');
         return;
     }
 
     try {
         const sentMessage = await channel.send(messageContent);
-        logger.info(`Message sent to channel ID ${channelId}: ${messageContent}`);
+        debug('Message sent to channel ID ' + channelId + ': ' + messageContent);
         return sentMessage;
     } catch (error: any) {
-        logger.error(`Error sending message to channel ID ${channelId}:`, error);
+        debug('Error sending message to channel ID ' + channelId + ': ' + error);
     }
 }
