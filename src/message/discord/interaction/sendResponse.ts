@@ -1,6 +1,8 @@
 import { Client, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 import { splitMessage } from '../processing/splitMessage';
+
+const debug = Debug('app:discord:sendResponse');
 
 /**
  * Sends a response message to a specified Discord channel,
@@ -12,19 +14,19 @@ import { splitMessage } from '../processing/splitMessage';
  */
 export async function sendResponse(client: Client, channelId: string, messageText: string): Promise<void> {
     if (!messageText) {
-        logger.error('sendResponse was called with an undefined or null messageText.');
+        debug('sendResponse was called with an undefined or null messageText.');
         return;
     }
 
     if (!channelId) {
-        logger.error('sendResponse was called with an undefined or null channelId.');
+        debug('sendResponse was called with an undefined or null channelId.');
         return;
     }
 
     try {
         const channel = await client.channels.fetch(channelId) as TextChannel;
         if (!channel) {
-            logger.error('Failed to fetch channel with ID: ' + channelId);
+            debug('Failed to fetch channel with ID: ' + channelId);
             return;
         }
 
@@ -32,9 +34,9 @@ export async function sendResponse(client: Client, channelId: string, messageTex
 
         for (const part of messageParts) {
             await channel.send(part);
-            logger.debug('Message sent to channel ID: ' + channelId);
+            debug('Message sent to channel ID: ' + channelId);
         }
     } catch (error: any) {
-        logger.error('Error sending message to channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error sending message to channel ID ' + channelId + ': ' + (error instanceof Error ? error.message : String(error)));
     }
 }

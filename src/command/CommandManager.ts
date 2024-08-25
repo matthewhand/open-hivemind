@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 import { isCommand } from './isCommand';
 import { parseCommandDetails } from './parseCommandDetails';
 import { executeParsedCommand } from './executeParsedCommand';
@@ -13,11 +13,13 @@ import ICommand from '@src/command/interfaces/ICommand';
 export class CommandManager {
     private commands: Record<string, ICommand>;
     private aliases: Record<string, string>;
+    private debug: Debug.Debugger;
 
     constructor() {
         this.commands = this.loadCommands(path.join(__dirname, '../command/inline'));
         this.aliases = require('@config/aliases');
-        logger.debug('CommandManager initialized with commands and aliases.');
+        this.debug = Debug('app:command:CommandManager');
+        this.debug('CommandManager initialized with commands and aliases.');
     }
 
     /**
@@ -46,7 +48,7 @@ export class CommandManager {
                     }
                     if (commandInstance && typeof commandInstance.execute === 'function') {
                         commands[commandName] = commandInstance;
-                        logger.debug('CommandHandler loaded: ' + commandName);
+                        this.debug('CommandHandler loaded: ' + commandName);
                     } else {
                         logger.error('The command module ' + file + ' does not export a valid command instance. Export type: ' + typeof CommandModule);
                     }
@@ -68,7 +70,7 @@ export class CommandManager {
 
         // Check if the message is a command
         if (!isCommand(text)) {
-            logger.debug("Text does not start with '!', not a command.");
+            this.debug("Text does not start with '!', not a command.");
             return { success: false, message: 'Not a command.', error: 'Invalid command syntax' };
         }
 
@@ -79,14 +81,14 @@ export class CommandManager {
             return { success: false, message: 'Parsing error.', error: 'Invalid command format' };
         }
 
-        logger.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join(', ') + ']');
+        this.debug('Executing command: ' + commandDetails.command + ' with arguments: [' + commandDetails.args.join(', ') + ']');
 
         // Execute the parsed command
         const executionResult = await executeParsedCommand(commandDetails, this.commands, this.aliases);
         if (!executionResult.success) {
             logger.error('CommandHandler execution failed: ' + executionResult.error);
         } else {
-            logger.debug('CommandHandler executed successfully: ' + executionResult.result);
+            this.debug('CommandHandler executed successfully: ' + executionResult.result);
         }
 
         // Ensure `message` is always a string

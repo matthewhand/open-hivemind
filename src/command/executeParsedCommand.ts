@@ -1,4 +1,4 @@
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 
 interface CommandDetails {
     command: string;
@@ -17,6 +17,8 @@ interface AliasMapping {
     [key: string]: string;
 }
 
+const debug = Debug('app:command:executeParsedCommand');
+
 /**
  * Executes the command using the provided command details, commands repository, and aliases.
  * @param {CommandDetails} commandDetails - An object containing the command and its arguments.
@@ -30,7 +32,7 @@ export async function executeParsedCommand(
     aliases: AliasMapping
 ): Promise<{ success: boolean; message?: string; error?: string; result?: any }> {
     if (!commandDetails) {
-        logger.error('executeParsedCommand: commandDetails not provided');
+        console.error('executeParsedCommand: commandDetails not provided');
         return { success: false, message: 'Invalid command syntax.', error: 'No command details provided.' };
     }
 
@@ -39,16 +41,16 @@ export async function executeParsedCommand(
     const commandInstance = commands[commandName];
 
     if (!commandInstance) {
-        logger.error(`executeParsedCommand: CommandHandler not found - ${commandName}`);
+        console.error(`executeParsedCommand: CommandHandler not found - ${commandName}`);
         return { success: false, message: 'CommandHandler not available.', error: 'CommandHandler implementation missing.' };
     }
 
     try {
         const result = await commandInstance.execute(args);
-        logger.debug(`executeParsedCommand: Executed command - ${commandName}, Result - ${result}`);
+        debug(`executeParsedCommand: Executed command - ${commandName}, Result - ${result}`);
         return { success: true, result };
     } catch (error: any) {
-        logger.error(`executeParsedCommand: Error executing command - ${commandName}, Error - ${error.message}`);
+        console.error(`executeParsedCommand: Error executing command - ${commandName}, Error - ${error.message}`);
         return { success: false, message: 'Error executing command.', error: error.message };
     }
 }

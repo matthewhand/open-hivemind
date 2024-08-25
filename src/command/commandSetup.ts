@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
 
 interface CommandModule {
     data: {
@@ -13,6 +13,7 @@ interface CommandModule {
 
 const commandExecutors: Record<string, Function> = {};
 const commandDataArray: CommandModule['data'][] = [];
+const debug = Debug('app:command:commandSetup');
 
 // Dynamically load command modules
 const commandsDirectory = path.join(__dirname, 'commands');
@@ -26,9 +27,9 @@ commandFiles.forEach(file => {
     if (commandModule.data && typeof commandModule.execute === 'function') {
         commandExecutors[commandModule.data.name] = commandModule.execute;
         commandDataArray.push(commandModule.data);
-        logger.debug('Dynamically loaded command: ' + commandModule.data.name + ' with data:', commandModule.data);
+        debug('Dynamically loaded command: ' + commandModule.data.name + ' with data:', commandModule.data);
     } else {
-        logger.warn('[WARNING] CommandHandler module ' + file + ' is missing required properties.');
+        console.warn('[WARNING] CommandHandler module ' + file + ' is missing required properties.');
     }
 });
 

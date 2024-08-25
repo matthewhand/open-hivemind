@@ -5,7 +5,9 @@ import { summarizeMessage } from '../processing/summarizeMessage';
 import { sendFollowUp } from '../interaction/sendFollowUp';
 import { sendMessageToChannel } from '../interaction/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
-import logger from '@src/utils/logger';
+import Debug from 'debug';
+
+const debug = Debug('app:discord:handleAIResponse');
 
 /**
  * Handles the logic for processing an AI response to a message.
@@ -14,7 +16,7 @@ import logger from '@src/utils/logger';
 export async function handleAIResponse(message: IMessage): Promise<void> {
     const llmManager = LLMInterface.getManager();
     if (llmManager.isBusy()) {
-        logger.info('LLM Manager is busy.');
+        debug('LLM Manager is busy.');
         return;
     }
 
@@ -25,33 +27,33 @@ export async function handleAIResponse(message: IMessage): Promise<void> {
             message.getChannelId(),
             []
         );
-        logger.debug(`Prepared requestBody: ${JSON.stringify(requestBody)}`);
+        debug('Prepared requestBody: ' + JSON.stringify(requestBody));
     } catch (error: any) {
-        logger.error('Error preparing LLM request body:', error);
+        debug('Error preparing LLM request body: ' + error);
         return;
     }
 
     let llmResponse;
     try {
         llmResponse = await llmManager.sendRequest(requestBody);
-        logger.debug('LLM request sent successfully.');
+        debug('LLM request sent successfully.');
     } catch (error: any) {
-        logger.error('Error sending LLM request:', error);
+        debug('Error sending LLM request: ' + error);
         return;
     }
 
     let responseContent;
     try {
         responseContent = llmResponse.getContent();
-        logger.debug(`LLM response content: ${responseContent}`);
+        debug('LLM response content: ' + responseContent);
 
         if (typeof responseContent !== 'string') {
-            throw new Error(`Expected string from LLM response, received: ${typeof responseContent}`);
+            throw new Error('Expected string from LLM response, received: ' + typeof responseContent);
         }
 
         const finishReason = llmResponse.getFinishReason();
         if (finishReason !== 'stop') {
-            throw new Error(`LLM response finished with reason: ${finishReason}`);
+            throw new Error('LLM response finished with reason: ' + finishReason);
         }
 
         if (!responseContent.trim()) {
@@ -60,27 +62,27 @@ export async function handleAIResponse(message: IMessage): Promise<void> {
 
         if (responseContent.length > constants.MAX_MESSAGE_LENGTH) {
             responseContent = await summarizeMessage(responseContent);
-            logger.info('LLM response summarized due to length.');
+            debug('LLM response summarized due to length.');
         }
     } catch (error: any) {
-        logger.error('Error processing LLM response content:', error);
+        debug('Error processing LLM response content: ' + error);
         return;
     }
 
     try {
         await sendMessageToChannel(message.getChannelId(), responseContent);
-        logger.info('Sent message to channel successfully.');
+        debug('Sent message to channel successfully.');
     } catch (error: any) {
-        logger.error('Error sending response to channel:', error);
+        debug('Error sending response to channel: ' + error);
         return;
     }
 
     if (constants.FOLLOW_UP_ENABLED) {
         try {
             await sendFollowUp(message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
-            logger.debug('Follow-up interaction initiated.');
+            debug('Follow-up interaction initiated.');
         } catch (error: any) {
-            logger.error('Error initiating follow-up interaction:', error);
+            debug('Error initiating follow-up interaction: ' + error);
         }
     }
 }
