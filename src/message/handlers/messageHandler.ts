@@ -58,7 +58,7 @@ export async function messageHandler(
     logger.debug('[messageHandler] validated message');
 
     // Process command without checking for return value (processCommand returns void)
-    await processCommand(originalMsg);
+    await processCommand(originalMsg, historyMessages);
     logger.debug('[messageHandler] processed command');
 
     await processAIResponse(originalMsg, historyMessages, startTime);

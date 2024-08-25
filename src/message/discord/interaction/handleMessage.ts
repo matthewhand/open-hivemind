@@ -3,18 +3,16 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '../DiscordMessage';
 import { fetchChannel } from '../fetchers/fetchChannel';
-import { generateResponse } from '../generateResponse';
+import { processAIResponse } from '../interaction/processAIResponse';
 
 const debug = Debug('app:discord:handleMessage');
 
 /**
  * Handles an incoming message, generating a response if necessary.
  * @param {Message} message - The incoming Discord message.
- * @param {(message: IMessage, history: IMessage[]) => Promise<void>} handler - Function to handle messages.
  */
 export async function handleMessage(
-  message: Message,
-  handler: (message: IMessage, history: IMessage[]) => Promise<void>
+  message: Message
 ): Promise<void> {
   try {
     debug('[handleMessage] Processing message with ID ' + message.id);
@@ -26,8 +24,11 @@ export async function handleMessage(
       return;
     }
 
-    const response = await generateResponse(discordMessage);
-    await handler(discordMessage, response.history);
+    const commandCallback = async (result: string) => {
+      await processAIResponse(result, discordMessage);
+    };
+
+    await processCommand(discordMessage, commandCallback);
   } catch (error: any) {
     debug('[handleMessage] Error processing message: ' + (error instanceof Error ? error.message : String(error)), { error });
   }

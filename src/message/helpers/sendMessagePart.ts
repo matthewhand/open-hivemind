@@ -1,18 +1,24 @@
-import { Client, Message, TextChannel } from 'discord.js';
-import logger from '@src/utils/logger';
-import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
+import { TextChannel } from 'discord.js';
+import Debug from 'debug';
 
-export async function sendMessagePart(client: Client, channelId: string, content: string): Promise<Message | void> {
-    try {
-        const channel = client.channels.cache.get(channelId) as TextChannel;
-        if (!channel) {
-            throw new Error(`Channel with ID ${channelId} not found.`);
-        }
+const debug = Debug('app:message:sendMessagePart');
 
-        logger.info('Sending message part to channel ID: ' + channelId);
-        const sentMessage = await sendMessageToChannel(client, channelId, content);
-        return sentMessage;
-    } catch (error: any) {
-        logger.error('Failed to send message part:', error);
-    }
+/**
+ * Sends a part of a message to a specified text channel.
+ * @param {TextChannel} channel - The text channel to send the message to.
+ * @param {string} content - The content of the message part to send.
+ * @param {string} originalMessageId - The ID of the original message being followed up.
+ * @returns {Promise<void>} A promise that resolves when the message part is sent.
+ */
+export async function sendMessagePart(
+  channel: TextChannel,
+  content: string,
+  originalMessageId: string
+): Promise<void> {
+  try {
+    const sentMessage = await channel.send(content);
+    debug('Message part sent: ' + content + ' as reply to ' + originalMessageId);
+  } catch (error: any) {
+    debug('Error sending message part: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }

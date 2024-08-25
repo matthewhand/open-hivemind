@@ -1,118 +1,109 @@
-import OpenAiManager from '../../llm/openai/manager/OpenAiManager';
-import { DiscordService } from '@src/message/discord/DiscordService';
+import { Message } from 'discord.js';
+import { OpenAiManager } from '@src/openai/OpenAiManager';
+import Debug from 'debug';
 import logger from '@src/utils/logger';
 import constants from '@config/ConfigurationManager';
-import commands from '@src/command/inline';
 
-export async function sendMessageToChannel(messageContent: string, channelId: string, startTime: number): Promise<void> {
-    try {
-        const isValidString = typeof messageContent === 'string';
-        if (!isValidString) {
-            throw new Error('Invalid messageContent type: ' + typeof messageContent);
-        }
+const debug = Debug('app:message:messageSendingUtils');
 
-        const isChannelIdValid = typeof channelId === 'string' && channelId.trim() !== '';
-        if (!isChannelIdValid) {
-            throw new Error('No channelId provided or channelId is not a valid string.');
-        }
-
-        const parts = splitMessageContent(messageContent, constants.MAX_MESSAGE_LENGTH);
-        for (let i = 0; i < parts.length; i++) {
-            if (i > 0) {
-                await delay(constants.INTER_PART_DELAY);
-            }
-            logger.debug('[sendMessageToChannel] Sending part ' + (i + 1) + ' to channel ' + channelId + '. Part content: ' + parts[i]);
-            await sendMessagePart(parts[i], channelId);
-            logger.debug('[sendMessageToChannel] Sent part ' + (i + 1) + ' of ' + parts.length + ' to channel ' + channelId + '.');
-        }
-
-        const processingTime = Date.now() - startTime;
-        logger.info('[sendMessageToChannel] Message processing complete. Total time: ' + processingTime + 'ms.');
-    } catch (error: any) {
-        logger.error('[sendMessageToChannel] Failed to send message to channel ' + channelId + '. Error: ' + error.message, { error });
-        throw new Error('Failed to send message: ' + error.message);
-    }
-}
-
+/**
+ * Splits a long message into multiple parts.
+ * @param {string} messageContent - The message content to split.
+ * @param {number} maxPartLength - The maximum length of each part.
+ * @returns {string[]} An array of message parts.
+ */
 function splitMessageContent(messageContent: string, maxPartLength: number): string[] {
-    const parts: string[] = [];
-    let currentPart = '';
+  const parts: string[] = [];
+  let currentPart = '';
+  const words = messageContent.split(' ');
 
-    const words = messageContent.split(' ');
-    for (let word of words) {
-        if (currentPart.length + word.length + 1 > maxPartLength) {
-            parts.push(currentPart);
-            currentPart = word;
-        } else {
-            currentPart += (currentPart.length > 0 ? ' ' : '') + word;
-        }
+  for (let word of words) {
+    if (currentPart.length + word.length + 1 > maxPartLength) {
+      parts.push(currentPart);
+      currentPart = word;
+    } else {
+      currentPart += (currentPart.length > 0 ? ' ' : '') + word;
     }
-    if (currentPart) {
-        parts.push(currentPart);
-    }
+  }
 
-    logger.debug('[splitMessageContent] Split message into ' + parts.length + ' parts.');
-    return parts;
+  if (currentPart) {
+    parts.push(currentPart);
+  }
+
+  logger.debug('[splitMessageContent] Split message into ' + parts.length + ' parts.');
+  return parts;
 }
 
+/**
+ * Sends a part of a message to a specified text channel.
+ * @param {string} part - The content of the message part to send.
+ * @param {string} channelId - The ID of the channel to send the message to.
+ * @returns {Promise<void>} A promise that resolves when the message part is sent.
+ */
 async function sendMessagePart(part: string, channelId: string): Promise<void> {
-    try {
-        const isValidPartString = typeof part === 'string';
-        if (!isValidPartString) {
-            throw new Error('Invalid part type: ' + typeof part);
-        }
+  try {
+    logger.debug('[sendMessagePart] Sending message part to channel ' + channelId + '. Content length: ' + part.length);
+    // Simulate sending the message part (replace this with actual send logic)
+    logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content: ' + part);
+  } catch (error: any) {
+    logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
+    throw new Error('Failed to send message part: ' + error.message);
+  }
+}
 
-        logger.debug('[sendMessagePart] Sent message part to channel ' + channelId + '. Content length: ' + part.length + '.');
-    } catch (error: any) {
-        logger.error('[sendMessagePart] Failed to send message part to channel ' + channelId + '. Error: ' + error.message, { error });
-        throw new Error('Failed to send message part: ' + error.message);
+/**
+ * Sends a follow-up message with the given content to the specified channel.
+ * @param {Message} originalMessage - The original message that triggered the follow-up.
+ * @param {string} content - The content of the follow-up message.
+ * @returns {Promise<void>} A promise that resolves when the message is sent.
+ */
+export async function sendFollowUpMessage(
+  originalMessage: Message,
+  content: string
+): Promise<void> {
+  try {
+    const channel = originalMessage.channel;
+    const parts = splitMessageContent(content, constants.MAX_MESSAGE_LENGTH);
+
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) {
+        await delay(constants.INTER_PART_DELAY);
+      }
+      await sendMessagePart(parts[i], channel.id);
     }
+
+    debug('Follow-up message sent: ' + content);
+  } catch (error: any) {
+    debug('Error sending follow-up message: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }
 
+/**
+ * Handles the sending of AI-generated messages.
+ * @param {OpenAiManager} aiManager - The OpenAI manager instance.
+ * @param {Message} originalMessage - The original message that triggered the AI response.
+ * @param {string} prompt - The prompt for the AI to generate a response to.
+ * @returns {Promise<void>} A promise that resolves when the AI response is sent.
+ */
+export async function sendAiGeneratedMessage(
+  aiManager: OpenAiManager,
+  originalMessage: Message,
+  prompt: string
+): Promise<void> {
+  try {
+    const response = await aiManager.generateResponse(prompt);
+    await originalMessage.reply(response);
+    debug('AI-generated message sent: ' + response);
+  } catch (error: any) {
+    debug('Error sending AI-generated message: ' + (error instanceof Error ? error.message : String(error)));
+  }
+}
+
+/**
+ * Utility function to introduce a delay.
+ * @param {number} duration - The duration of the delay in milliseconds.
+ * @returns {Promise<void>} A promise that resolves after the delay.
+ */
 function delay(duration: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, duration));
-}
-
-export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
-    logger.debug('Handling follow-up for message ID: ' + originalMessage.id);
-
-    const channelTopic = topic || 'General conversation';
-    const followUpDelay = 5 * 60 * 1000; // 5 minutes delay
-
-    setTimeout(async () => {
-        try {
-            logger.debug('Commands loaded for follow-up.');
-            const commandDescriptions = Object.values(commands).map(cmd => cmd.name + ': ' + cmd.description).join('; ');
-            logger.debug('CommandHandler descriptions compiled: ' + commandDescriptions);
-
-            const prompt = 'Inform user about a relevant command based on the discussion and topic, "' + channelTopic + '" from the built-in commands: ' + commandDescriptions + '. Suggest one command to user.';
-
-            const requestBody = {
-                model: constants.LLM_MODEL,
-                prompt: prompt,
-                max_tokens: 420,
-                stop: ['\n', ' END'],
-            };
-
-            const responseContent = await makeOpenAiRequest(OpenAiManager, requestBody);
-            if (!responseContent || responseContent.length === 0) {
-                logger.error('Received empty or invalid response from OpenAI for follow-up.');
-                return;
-            }
-
-            const followUpMessage = Array.isArray(responseContent) && typeof responseContent[0] === 'string' ? responseContent[0].trim() : '';
-            if (followUpMessage) {
-                await sendMessageToChannel(followUpMessage, originalMessage.getChannelId(), Date.now());
-            } else {
-                logger.warn('No follow-up action suggested for message ID: ' + originalMessage.id);
-            }
-        } catch (error: any) {
-            logger.error('Error during follow-up handling: ' + error);
-        }
-    }, followUpDelay);
-}
-
-export async function makeOpenAiRequest(OpenAiManager: OpenAiManager, requestBody: { model: string, prompt: string }): Promise<string> {
-    const response = await OpenAiManager.getClient().completions.create(requestBody);
-    return response.choices[0].text.trim();
+  return new Promise((resolve) => setTimeout(resolve, duration));
 }

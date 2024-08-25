@@ -4,17 +4,22 @@ import fs from 'fs';
 import logger from '../../../utils/logger';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
-import { generateResponse } from './generateResponse';
+import { generateResponse } from '../interaction/generateResponse';
 import { playAudioResponse } from './playAudioResponse';
+import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
+
+const debug = Debug('app:discord:handleAudioStream');
 
 /**
  * Handles audio streaming to a Discord voice connection.
  * @param {Readable} stream - The audio stream to handle.
- * @param {string} userId - The ID of the user sending the audio.
  * @param {VoiceConnection} connection - The voice connection to stream to.
+ * @param {IMessage} message - The original message object.
  */
-export const handleAudioStream = async (stream: Readable, userId: string, connection: VoiceConnection): Promise<void> => {
+export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage): Promise<void> => {
     const audioChunks: Buffer[] = [];
+    const userId = message.getAuthorId();
     logger.debug('handleAudioStream: Initialized for user ' + userId);
 
     stream.on('data', (chunk: Buffer) => {

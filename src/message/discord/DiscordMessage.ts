@@ -7,11 +7,11 @@ const debug = Debug('app:message:discord');
 /**
  * Represents a Discord message, implementing the IMessage interface.
  */
-export default class DiscordMessage implements IMessage {
+export default class DiscordMessage extends IMessage {
   public content: string;
   public client: Message['client'];
   public channelId: string;
-  protected data: string;
+  public data: string;
   public role: string;
 
   private readonly message: Message;
@@ -23,6 +23,7 @@ export default class DiscordMessage implements IMessage {
    * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
    */
   constructor(message: Message, repliedMessage: Message | null = null) {
+    super(message, '');
     this.message = message;
     this.repliedMessage = repliedMessage;
     this.content = message.content;

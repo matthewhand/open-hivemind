@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Message } from 'discord.js';
 import logger from '@src/utils/logger';
 import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
+import { IMessage } from '../interfaces/IMessage';
 import { IMessengerService } from '../interfaces/IMessengerService';
 
 /**
@@ -54,6 +55,14 @@ export class DiscordService implements IMessengerService {
       logger.error('Failed to start DiscordService:', error);
       process.exit(1);
     }
+  }
+
+  /**
+   * Starts the Discord service, initializing the client.
+   * @param token - The Discord bot token.
+   */
+  public async start(token: string): Promise<void> {
+    await this.initialize(token);
   }
 
   /**
