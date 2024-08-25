@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Message } from 'discord.js';
+import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
 import logger from '@src/utils/logger';
 import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
@@ -73,5 +73,25 @@ export class DiscordService implements IMessengerService {
   public async handleMessage(message: Message<boolean>): Promise<void> {
     logger.debug('DiscordService: Handling message with ID ' + message.id);
     await handleMessage(message);
+  }
+
+  /**
+   * Sends a message to a specified channel.
+   * @param {string} channelId - The ID of the channel to send the message to.
+   * @param {string} message - The message content to send.
+   * @returns {Promise<void>} A promise that resolves when the message is sent.
+   */
+  public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
+    try {
+      const channel = this.client.channels.cache.get(channelId) as TextChannel;
+      if (!channel) {
+        throw new Error('Channel not found');
+      }
+      await channel.send(message);
+      logger.info(`Message sent to channel ${channelId}: ${message}`);
+    } catch (error: any) {
+      logger.error(`Failed to send message to channel ${channelId}:`, error);
+      throw error;
+    }
   }
 }

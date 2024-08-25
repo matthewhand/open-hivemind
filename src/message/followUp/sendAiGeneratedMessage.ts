@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
-import { OpenAiManager } from '@src/openai/OpenAiManager';
 import Debug from 'debug';
+import { OpenAiManager } from '@src/openai/OpenAiManager';
 
 const debug = Debug('app:message:sendAiGeneratedMessage');
 
@@ -21,6 +21,6 @@ export async function sendAiGeneratedMessage(
     await originalMessage.reply(response);
     debug('AI-generated message sent: ' + response);
   } catch (error: any) {
-    debug('Error sending AI-generated message: ' + (error instanceof Error ? error.message : String(error)));
+    debug('Error sending AI-generated message: ' + (error instanceof Error ? error.message : String(error)), { error });
   }
 }
