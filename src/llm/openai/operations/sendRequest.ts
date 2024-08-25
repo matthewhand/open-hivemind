@@ -1,4 +1,4 @@
-import OpenAiService from '@src/llm/openai/manager/OpenAiService';
+import OpenAiService from '@src/llm/openai/operations/OpenAiService';
 import constants from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
