@@ -13,7 +13,7 @@ export function setMessageHandler(
     client: Client,
     typingTimestamps: Map<string, number>,
     fetchMessages: (channel: string) => Promise<Message[]>
-): Message {
+): voMessage {
     client.on('typingStart', (typing) => {
         typingTimestamps.set(typing.channel, Date.now());
     });
@@ -28,25 +28,25 @@ export function setMessageHandler(
             }
 
 
-            if (!discordMessage.id || !discordMessage.content) {
-                logger.error('[DiscordManager] InvalMessage<any> or incomplete Message received: ID: ' + discordMessage.id + ', Content: ' + Message.text);
+            if (!Message.Message || !Message.text) {
+                logger.error('[DiscordManager] InvalMessage or incomplete Message received: ID: ' + Message.Message + ', Content: ' + Message.text);
                 return;
             }
 
-            if (Message.author.id === constants.CLIENT_ID) {
-                logger.debug('[DiscordManager] Skipping response to own Message ID: ' + discordMessage.id);
+            if (Message.authorId === constants.CLIENT_ID) {
+                logger.debug('[DiscordManager] Skipping response to own Message ID: ' + Message.Message);
                 return;
             }
 
-            logger.debug('[DiscordManager] Processed Message ID: ' + discordMessage.id);
+            logger.debug('[DiscordManager] Processed Message ID: ' + Message.Message);
 
-            const channel = discordMessage.channel;
+            const channel = Message.channel;
             if (!channel) {
                 logger.error('[DiscordManager] Processed Message has no valMessage channel ID.');
                 return;
             }
 
-            const channel = await fetchChannel(client, discordChannel);
+            const channel = await fetchChannel(client, channel);
             if (!channel) {
                 logger.error('[DiscordManager] Could not fetch channel with ID: ' + channel);
                 return;
@@ -62,7 +62,7 @@ export function setMessageHandler(
                     logger.info('Channel topic: ' + ((channel as TextChannel).topic || 'No topic') + '. History messages count: ' + historyMessages.length);
                 }
 
-                if (setMessageHandler) {
+                if (messageHandler) {
                     logger.debug('Executing Message handler on channel ' + channel);
                     await messageHandler(Message, historyMessages);
                 }

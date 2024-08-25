@@ -3,23 +3,11 @@ import { processAIResponse } from './processAIResponse';
 import { sendMessagePart } from '@src/message/helpers/sendMessagePart';
 import logger from '@src/utils/logger';
 
-export async function processCommand(message: IMessage): Promise<void> {
+export async function processCommand(command: IMessage): Promise<void> {
     try {
-        const command = message.getText().split(' ')[0]; // Adjusted to extract command
-        if (!command) {
-            throw new Error('Command not found in the message.');
-        }
-
-        const response = await executeCommand(command);
-        await sendMessagePart(response, message.getChannelId());
-        logger.info('Command processed successfully.');
+        const aiResponse = await someOpenAiManagerFunction(command.content);
+        await processAIResponse(command.client, command.channelId, aiResponse);
     } catch (error: any) {
-        logger.error('Failed to process command: ' + error.message);
-        await processAIResponse(message);
+        logger.error('Failed to process command:', error);
     }
-}
-
-async function executeCommand(command: string): Promise<string> {
-    // Logic to execute the command and return a response
-    return 'Executed command: ' + command;
 }

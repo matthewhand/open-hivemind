@@ -1,26 +1,18 @@
-import OpenAiManager from '@src/llm/openai/manager/OpenAiManager';
+import OpenAiManager from '../../llm/openai/manager/OpenAiManager';
 import logger from '@src/utils/logger';
-import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
-import constants from '@config/ConfigurationManager';
-import { makeOpenAiRequest } from '@src/message/followUp/messageSendingUtils';
+import { sendMessageToChannel } from './messageSendingUtils';
 
-export async function sendFollowUp(originalMessage: any, topic: string): Promise<void> {
+export async function sendFollowUp(manager: OpenAiManager, channelId: string, originalMessage: string): Promise<void> {
     try {
+        const prompt = `User asked: ${originalMessage}. Suggest a follow-up response.`;
         const requestBody = {
-            model: constants.LLM_MODEL,
-            prompt: topic,
-            max_tokens: 420,
-            stop: ['\n', ' END'],
+            model: 'text-davinci-003',
+            prompt: prompt,
+            max_tokens: 100,
         };
-        const followUpText = await makeOpenAiRequest(OpenAiManager.getInstance(), requestBody);
-
-        if (followUpText) {
-            await sendMessageToChannel(followUpText, originalMessage.channel.id, Date.now());
-            logger.info('[sendFollowUp] Follow-up message sent successfully.');
-        } else {
-            logger.warn('[sendFollowUp] No follow-up text generated.');
-        }
+        const response = await manager.getClient().completions.create(requestBody);
+        await sendMessageToChannel(response.choices[0].text.trim(), channelId, Date.now());
     } catch (error: any) {
-        logger.error('[sendFollowUp] Failed to send follow-up message. Error: ' + error.message, { error });
+        logger.error('Failed to send follow-up message:', error);
     }
 }
