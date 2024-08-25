@@ -18,5 +18,5 @@ export async function summarizeText(
     const summary = extractContent(response);
     logger.info('[summarizeText] Summary processed successfully.');
 
-    return new LLMResponse(summary, 'completed', response.usage?.total_tokens);
+    return new LLMResponse(summary, 'completed');
 }
