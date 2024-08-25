@@ -1,20 +1,32 @@
-import { Message } from 'discord.js';
-import { processAIResponse } from '@src/message/interaction/processAIResponse';
-import Debug from 'debug';
-
-const debug = Debug('app:message:processCommand');
+import { IMessage } from '@src/message/interfaces/IMessage';
+import logger from '@src/utils/logger';
 
 /**
- * Processes a command from a message.
- * @param message The message containing the command.
- * @param args The arguments for the command.
+ * Processes a command extracted from the given message.
+ * @param {IMessage} message - The original message object.
+ * @param {(result: string) => Promise<void>} callback - A callback function to handle the result.
+ * @returns {Promise<void>} A promise that resolves when processing is complete.
  */
-export async function processCommand(message: Message, args: string[]) {
-    debug('Processing command from message: ' + message.content);
-    const response = await processAIResponse(message, args);
-    if (response) {
-        message.channel.send(response);
-    } else {
-        debug('No response generated for command.');
+export async function processCommand(
+  message: IMessage,
+  callback: (result: string) => Promise<void>
+): Promise<void> {
+  try {
+    const text = message.getText().trim();
+
+    if (!text.startsWith('!')) {
+      logger.debug('[processCommand] No command found in message: ' + text);
+      return;
     }
+
+    const command = text.slice(1).split(' ')[0];
+    logger.debug('[processCommand] Command extracted: ' + command);
+
+    // Simulated command processing logic (e.g., checking against a command list)
+    const commandResult = `Executed command: ${command}`;
+
+    await callback(commandResult);
+  } catch (error: any) {
+    logger.error('[processCommand] Error processing command: ' + (error instanceof Error ? error.message : String(error)));
+  }
 }
