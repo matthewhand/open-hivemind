@@ -8,6 +8,13 @@ import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessag
 import { sendMessageToChannel } from '@src/message/discord/utils/sendMessageToChannel';
 import { sendFollowUp } from '@src/message/followUp/sendFollowUp';
 
+/**
+ * Processes the AI response based on the provided message and message history.
+ *
+ * @param message - The original message that triggered the AI response.
+ * @param historyMessages - The history of previous messages.
+ * @param startTime - The timestamp when the processing started.
+ */
 export async function processAIResponse(message: IMessage, historyMessages: IMessage[], startTime: number): Promise<void> {
   logger.debug('[messageHandler] process ai response');
 
@@ -35,7 +42,7 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
     try {
       requestBody = await prepareMessageBody(
         constants.LLM_SYSTEM_PROMPT,
-        message.channelId,
+        message.getChannelId(),
         historyMessages
       );
       logger.debug('[messageHandler] LLM request body prepared: ' + JSON.stringify(requestBody));
@@ -91,7 +98,7 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
     }
 
     try {
-      await sendMessageToChannel(responseContent, message.channelId, startTime);
+      await sendMessageToChannel(responseContent, message.getChannelId(), startTime);
       logger.info('[messageHandler] LLM response sent to the channel successfully.');
     } catch (error: any) {
       logger.error('[messageHandler] Error sending response to channel: ' + error.message, { error });
@@ -100,7 +107,7 @@ export async function processAIResponse(message: IMessage, historyMessages: IMes
 
     if (constants.FOLLOW_UP_ENABLED) {
       try {
-        await sendFollowUp(message, message.channelId, topic || 'General Discussion');
+        await sendFollowUp(message, message.getChannelId(), topic || 'General Discussion');
         logger.debug('[messageHandler] Follow-up interaction initiated.');
       } catch (error: any) {
         logger.error('[messageHandler] Error initiating follow-up interaction: ' + error.message, { error });

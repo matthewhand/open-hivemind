@@ -5,9 +5,9 @@ import logger from '@src/utils/logger';
  * This class is intended to be extended with specific implementations as needed.
  */
 export abstract class IMessage {
-    public content: string;  // Added content property
+    public content: string = "";  // Added content property
     public client: any;      // Added client property
-    public channelId: string;  // Added channelId property
+    public channelId: string = "";  // Added channelId property
     protected data: any;
     public role: string;  // Added role property
 

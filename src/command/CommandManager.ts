@@ -4,7 +4,7 @@ import logger from '@src/utils/logger';
 import { isCommand } from './isCommand';
 import { parseCommandDetails } from './parseCommandDetails';
 import { executeParsedCommand } from './executeParsedCommand';
-import { IMessage } from '../message/types/IMessage';
+import { IMessage } from '../message/interfaces/IMessage';
 import ICommand from '@src/command/interfaces/ICommand';
 
 /**
