@@ -1,6 +1,8 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
+
+const debug = Debug('app:fetchChannel');
+
 /**
  * Fetches a text channel by its ID.
  * @param {Client} client - The Discord client instance.
