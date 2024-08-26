@@ -1,10 +1,10 @@
-import Debug from 'debug';
-import { Configuration, OpenAI } from 'openai';
-import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
-import { sendRequest } from '@src/llm/openai/operations/sendRequest';
+import Debug from "debug";
+import { Configuration, OpenAI } from "openai";
+import { LlmService } from "@src/llm/interfaces/LlmService";
+import { buildChatCompletionRequestBody } from "@src/llm/openai/operations/buildChatCompletionRequestBody";
+import { sendRequest } from "@src/llm/openai/operations/sendRequest";
 
-const debug = Debug('app:OpenAiService');
+const debug = Debug("app:OpenAiService");
 
 /**
  * OpenAiService Class
@@ -19,12 +19,25 @@ const debug = Debug('app:OpenAiService');
  * - Error handling and logging
  */
 export class OpenAiService implements LlmService {
+  private static instance: OpenAiService;
   private api: OpenAI;
   private isProcessing: boolean = false;
 
-  constructor(apiKey: string) {
+  private constructor(apiKey: string) {
     const configuration = new Configuration({ apiKey });
     this.api = new OpenAI(configuration);
+  }
+
+  /**
+   * Gets the singleton instance of OpenAiService.
+   * @param apiKey The API key for authenticating with OpenAI.
+   * @returns The singleton instance of OpenAiService.
+   */
+  public static getInstance(apiKey: string): OpenAiService {
+    if (!OpenAiService.instance) {
+      OpenAiService.instance = new OpenAiService(apiKey);
+    }
+    return OpenAiService.instance;
   }
 
   /**
@@ -34,11 +47,11 @@ export class OpenAiService implements LlmService {
    */
   buildChatCompletionRequestBody(historyMessages: any[]): Promise<object> {
     if (!Array.isArray(historyMessages)) {
-      debug('Invalid input: historyMessages must be an array');
-      throw new Error('Invalid input: historyMessages must be an array');
+      debug("Invalid input: historyMessages must be an array");
+      throw new Error("Invalid input: historyMessages must be an array");
     }
 
-    debug('Building request body for history messages: ' + JSON.stringify(historyMessages));
+    debug("Building request body for history messages: " + JSON.stringify(historyMessages));
     return buildChatCompletionRequestBody(historyMessages);
   }
 
@@ -49,11 +62,11 @@ export class OpenAiService implements LlmService {
    */
   async sendRequest(requestBody: object): Promise<any> {
     if (!requestBody) {
-      debug('No requestBody provided for sendRequest');
+      debug("No requestBody provided for sendRequest");
       return {};
     }
 
-    debug('Sending request to OpenAI API with body: ' + JSON.stringify(requestBody));
+    debug("Sending request to OpenAI API with body: " + JSON.stringify(requestBody));
     return sendRequest(this.api, requestBody);
   }
 
