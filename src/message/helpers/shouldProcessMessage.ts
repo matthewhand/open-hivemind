@@ -2,6 +2,9 @@ import Debug from "debug";
 
 import constants from '@config/ConfigurationManager';
 import { getLastMessageTimestamp } from './timestampFunctions';
+
+const debug = Debug('app:shouldProcessMessage');
+
 /**
  * Determines if a message should be processed based on specific criteria, such as recent activity in the channel
  * and whether the message author is the bot itself.
