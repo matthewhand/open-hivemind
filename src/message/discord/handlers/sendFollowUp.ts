@@ -1,6 +1,8 @@
-import Debug from "debug";
-// Import necessary modules
+import Debug from 'debug';
 import { Message } from 'discord.js';
+
+const debug = Debug('app:sendFollowUp');
+
 /**
  * Send Follow-Up Message
  *
@@ -27,7 +29,7 @@ export const sendFollowUp = async (
     if (!message || !followUpText) {
       throw new Error('Invalid message or follow-up text provided');
     }
-    debug('Sending follow-up message to channel:', message.channel.id);
+    debug('Sending follow-up message to channel: ' + message.channel.id);
     await message.channel.send(followUpText);
     debug('Follow-up message sent successfully');
   } catch (error: any) {
