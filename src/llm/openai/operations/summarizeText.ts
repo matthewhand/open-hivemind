@@ -3,8 +3,8 @@ import Debug from 'debug';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { sendCompletionsRequest } from '@src/llm/openai/operations/sendCompletionsRequest';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
 
 const debug = Debug('app:summarizeText');
 
@@ -23,8 +23,7 @@ export async function summarizeText(
     maxTokens: number = constants.LLM_RESPONSE_MAX_TOKENS
 ): Promise<LLMResponse> {
     const prompt = systemMessageContent + '\nUser: ' + userMessage + '\nAssistant:';
-    const requestBody = await manager.buildCompletionsRequest(prompt);
-    const response = await sendCompletionsRequest(manager, JSON.stringify(requestBody));
+    const response = await sendCompletionsRequest(manager, prompt);
     const summary = extractContent(response);
     debug('[summarizeText] Summary processed successfully.');
     return new LLMResponse(summary, 'completed');

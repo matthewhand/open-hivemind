@@ -1,6 +1,8 @@
-import Debug from "debug";
-// Import necessary modules
+import Debug from 'debug';
 import { Message } from 'discord.js';
+
+const debug = Debug('app:sendResponse');
+
 /**
  * Send Response
  *
@@ -27,7 +29,7 @@ export const sendResponse = async (
     if (!message || !responseText) {
       throw new Error('Invalid message or response text provided');
     }
-    debug('Sending response message to channel:', message.channel.id);
+    debug('Sending response message to channel: ' + message.channel.id);
     await message.channel.send(responseText);
     debug('Response message sent successfully');
   } catch (error: any) {
