@@ -1,6 +1,8 @@
-import Debug from "debug";
-// Import necessary modules
+import Debug from 'debug';
 import { Message } from 'discord.js';
+
+const debug = Debug('app:handleAIResponse');
+
 /**
  * Handle AI Response
  *
@@ -27,7 +29,7 @@ export const handleAIResponse = async (
     if (!message || !response) {
       throw new Error('Invalid message or response provided');
     }
-    debug('Sending AI response to channel:', message.channel.id);
+    debug('Sending AI response to channel: ' + message.channel.id);
     await message.channel.send(response);
     debug('AI response sent successfully');
   } catch (error: any) {
