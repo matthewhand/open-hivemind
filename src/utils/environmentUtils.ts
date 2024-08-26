@@ -1,5 +1,7 @@
 import Debug from "debug";
 
+const debug = Debug('app:utils:environmentUtils');
+
 /**
  * Redacts sensitive parts of environment variable values.
  *
@@ -45,9 +47,10 @@ export function debugEnvVars(): void {
     const redactSuffixes = ['_TOKEN', '_KEY'];
 
     if (process.env.BOT_DEBUG_MODE && process.env.BOT_DEBUG_MODE.toLowerCase() === 'true') {
+        [...requiredEnvVars, ...optionalEnvVars].forEach(varName => {
             const value = process.env[varName];
             const redactedValue = redactSuffixes.some(suffix => varName.endsWith(suffix)) ? redactValue(value) : value;
-            console.log(`${varName}: ${redactedValue}`);
+            debug(`${varName}: ${redactedValue}`);
         });
     }
 
