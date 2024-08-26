@@ -1,4 +1,7 @@
-import Debug from "debug";
+import Debug from 'debug';
+
+const debug = Debug('app:rateLimiter');
+
 /**
  * Rate Limiter for Discord Bot Messages
  *
@@ -11,7 +14,6 @@ import Debug from "debug";
  * - Conditional guards to prevent over-sending
  * - Flexible configuration via environment variables
  */
-
 
 /**
  * RateLimiter class manages the rate-limiting logic.
@@ -28,7 +30,7 @@ class RateLimiter {
     this.messagesLastHour.push(now);
     this.messagesLastDay.push(now);
 
-    debug('Added message timestamp:', now);
+    debug('Added message timestamp: ' + now);
 
     // Filter timestamps to keep only those within the last hour
     const oneHourAgo = new Date(now.getTime() - 3600000);
@@ -46,7 +48,7 @@ class RateLimiter {
   canSendMessage(): boolean {
     const canSend = this.messagesLastHour.length < parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '60') 
                       && this.messagesLastDay.length < parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000');
-    debug('canSendMessage result:', canSend);
+    debug('canSendMessage result: ' + canSend);
     return canSend;
   }
 }
