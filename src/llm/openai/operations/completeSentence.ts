@@ -1,7 +1,9 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import OpenAI from 'openai';
 import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:completeSentence');
+
 /**
  * Completes a sentence by making an additional request to the OpenAI API.
  * @param openaiClient - The initialized OpenAI client instance.

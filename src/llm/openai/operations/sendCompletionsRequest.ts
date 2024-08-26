@@ -1,12 +1,13 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
 import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
-
-import { OpenAiService } from './OpenAiService';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:sendCompletionsRequest');
+
 export async function sendCompletionsRequest(manager: OpenAiService, message: string, dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {
         debug('[sendCompletionsRequest] Manager is currently busy.');
