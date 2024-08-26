@@ -1,8 +1,19 @@
 import Debug from "debug";
-
 import { Message } from 'discord.js';
+
+const debug = Debug('app:sendFollowUpMessage');
+
 /**
- * Sends a follow-up message with the given content to the specified channel.
+ * Send Follow-Up Message
+ *
+ * This function sends a follow-up message to a specified channel, typically used to add context or provide additional value after
+ * the initial conversation. It ensures that the follow-up is relevant and timely, based on the original interaction.
+ *
+ * Key Features:
+ * - Sends follow-up messages to enhance the conversation.
+ * - Handles errors robustly, ensuring that issues are logged and can be traced.
+ * - Logs detailed information about the message-sending process.
+ *
  * @param {Message} originalMessage - The original message that triggered the follow-up.
  * @param {string} content - The content of the follow-up message.
  * @returns {Promise<void>} A promise that resolves when the message is sent.

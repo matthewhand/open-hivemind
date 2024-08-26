@@ -5,16 +5,15 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 const debug = Debug('app:prepareMessageBody');
 
 /**
- * Prepares the request body for the OpenAI service by formatting the prompt and message history.
+ * Prepare Message Body for OpenAI Chat Completion
  *
- * This function takes in a prompt, a Discord channel ID, and a history of messages to create a request body
- * that the OpenAiService can use to generate a response. It handles message formatting, ensures the history
- * is correctly structured, and prepares everything for API interaction.
+ * This function prepares the request body specifically for OpenAI's chat completion API.
+ * It formats the prompt and message history into the required structure for chat completions.
  *
  * Key Features:
- * - Formats the prompt and history messages into a structured request body
- * - Provides detailed logging for successful preparation and error handling
- * - Validates input to ensure that the prompt and history messages are correctly structured
+ * - Formats the prompt and message history for OpenAI's chat completion.
+ * - Delegates to OpenAiService for API-specific processing.
+ * - Logs detailed information about the preparation process.
  *
  * @param {string} prompt - The prompt for the AI to generate a response to.
  * @param {string} channelId - The ID of the Discord channel.
@@ -28,12 +27,7 @@ export async function prepareMessageBody(prompt: string, channelId: string, hist
     }
     try {
         const manager = OpenAiService.getInstance();
-        const requestBody = {
-            model: 'text-davinci-003',
-            prompt: prompt,
-            max_tokens: 150,
-            messages: historyMessages.map(msg => ({ role: msg.role, content: msg.getText() })),
-        };
+        const requestBody = await manager.buildRequestBody(historyMessages);
         debug('[prepareMessageBody] Request body prepared successfully.');
         return requestBody;
     } catch (error: any) {
