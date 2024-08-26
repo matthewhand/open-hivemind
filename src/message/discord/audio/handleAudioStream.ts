@@ -1,6 +1,9 @@
-import Debug from "debug";
+import Debug from 'debug';
 // Import necessary modules
 import { VoiceConnection, AudioPlayer, createAudioPlayer, createAudioResource } from '@discordjs/voice';
+
+const debug = Debug('app:handleAudioStream');
+
 /**
  * Handle Audio Stream
  *
@@ -28,7 +31,7 @@ export const handleAudioStream = async (
     if (!connection || !audioFilePath) {
       throw new Error('Invalid voice connection or audio file path provided');
     }
-    debug('Creating audio player and resource for file:', audioFilePath);
+    debug('Creating audio player and resource for file: ' + audioFilePath);
     const player: AudioPlayer = createAudioPlayer();
     const resource = createAudioResource(audioFilePath);
     player.play(resource);
