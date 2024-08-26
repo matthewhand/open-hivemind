@@ -1,5 +1,4 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
@@ -7,12 +6,23 @@ import DiscordMessage from '../DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
 import { startTypingIndicator } from '@src/utils/startTypingIndicator';
 
+const debug = Debug('app:setMessageHandler');
+
 /**
- * Sets up Message and typing event handlers for the Discord client.
- * @param {Client} client - The Discord client instance.
- * @param {(message: IMessage, history: IMessage[]) => Promise<void>} handler - Function to handle incoming messages.
- * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.
- * @param {(channel: string) => Promise<IMessage[]>} fetchMessages - Function to fetch messages.
+ * Set Message Handler
+ *
+ * This function sets up the message handler for the Discord client. It listens for incoming messages,
+ * processes them based on specific criteria, and triggers appropriate responses or actions.
+ *
+ * Key Features:
+ * - Listens to messages on the Discord client.
+ * - Processes messages to determine if they should be handled by the bot.
+ * - Provides logging for message handling and processing.
+ *
+ * @param client - The Discord client instance.
+ * @param handler - The function to handle incoming messages.
+ * @param typingTimestamps - Map to store typing timestamps.
+ * @param fetchMessages - Function to fetch messages.
  */
 export function setMessageHandler(
   client: Client,
