@@ -1,15 +1,22 @@
 import Debug from "debug";
-
 import { getLastTypingTimestamp } from './timestampFunctions';
+
+const debug = Debug('app:getInitialDelay');
+
 /**
  * Calculates the initial delay before sending a message based on recent activity in the channel.
- * The delay simulates the bot 'reading' the previous messages before responding.
+ * This delay simulates the bot 'reading' the previous messages before responding, providing a more natural interaction.
+ * 
+ * Key Features:
+ * - Considers the time since the last typing activity in the channel.
+ * - Dynamically adjusts the delay within a specified range (minDelay to maxDelay).
+ * - Logs important steps, such as the time since the last activity and the calculated delay.
  *
  * @param typingTimestamps - A map storing the last typing timestamps for channels.
  * @param channelId - The ID of the channel where the message will be sent.
  * @param minDelay - The minimum delay before responding (in milliseconds).
  * @param maxDelay - The maximum delay before responding (in milliseconds).
- * @returns The calculated delay time (in milliseconds).
+ * @returns {number} The calculated delay time (in milliseconds).
  */
 export function getInitialDelay(
     typingTimestamps: Map<string, number>,

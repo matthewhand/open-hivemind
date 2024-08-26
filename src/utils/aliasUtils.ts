@@ -1,6 +1,20 @@
 import Debug from "debug";
-
 import { aliases } from '@command/aliases';
+
+const debug = Debug('app:aliasUtils');
+
+/**
+ * Utility functions for managing and resolving command aliases.
+ *
+ * This module provides functions to handle command aliases within the application. 
+ * It allows for the resolution of commands based on user-defined aliases, enabling more flexible interactions.
+ *
+ * Key Features:
+ * - Resolves commands based on a predefined alias map.
+ * - Logs important steps in the alias resolution process for debugging.
+ * - Handles scenarios where no aliases are available.
+ */
+
 /**
  * Returns a random command prefixed with '!'.
  * 
@@ -17,6 +31,7 @@ export function getRandomAliasCommand(): string {
     debug('Generated random alias command: ' + randomCommand);
     return randomCommand;
 }
+
 /**
  * Fetches the description for a given alias.
  * 
@@ -29,6 +44,7 @@ export function getAliasDescription(commandName: string): string {
     debug('Fetched alias description for command: ' + commandName + '  description: ' + description);
     return description;
 }
+
 /**
  * Lists all aliases with their descriptions, formatted as a string.
  * 
@@ -41,6 +57,7 @@ export function listAllAliases(): string {
     debug('Listing all aliases');
     return allAliases;
 }
+
 /**
  * Finds aliases by category (if your aliases are categorized).
  * 
@@ -57,6 +74,7 @@ export function findAliasesByCategory(category: string): Record<string, string> 
     debug('Found aliases by category: ' + category);
     return categorizedAliases;
 }
+
 /**
  * Gets detailed info for an alias, optionally formatted for display.
  * 
