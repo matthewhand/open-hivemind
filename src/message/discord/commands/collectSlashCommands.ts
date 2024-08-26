@@ -1,12 +1,15 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
+
+const debug = Debug('app:collectSlashCommands');
+
 interface CommandHandler {
     data: {
         toJSON: () => any;
     };
 }
+
 /**
  * Collects slash commands from a specified directory.
  * 
