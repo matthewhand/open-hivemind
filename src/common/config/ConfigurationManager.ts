@@ -1,5 +1,6 @@
-import Debug from "debug";
-import { getConfigOrWarn } from '@operations/configUtils';
+import Debug from 'debug';
+
+const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
     // LLM Configuration
@@ -51,7 +52,12 @@ class ConfigurationManager {
 
     // New getConfig method wrapping around getConfigOrWarn
     public getConfig<T>(key: string, defaultValue: T): T {
-        return getConfigOrWarn<T>(key, defaultValue);
+        const value = process.env[key.toUpperCase().replace('.', '_')];
+        if (value !== undefined) {
+            return value as unknown as T;
+        }
+        debug('Warning: Configuration key not found: ' + key + '. Using default value: ' + defaultValue);
+        return defaultValue;
     }
 }
 
