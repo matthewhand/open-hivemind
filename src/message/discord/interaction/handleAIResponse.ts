@@ -1,50 +1,39 @@
 import Debug from "debug";
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { LlmService } from '@src/llm/interfaces/LlmService';
-import { prepareMessageBody } from '../processing/prepareMessageBody';
-import { summarizeMessage } from '../processing/summarizeMessage';
-import { sendFollowUp } from '../interaction/sendFollowUp';
-import { sendMessageToChannel } from '../interaction/sendMessageToChannel';
+import { Client } from 'discord.js';
+import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
+import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
+import { sendFollowUp } from '@src/message/discord/interaction/sendFollowUp';
+import { sendMessageToChannel } from '@src/message/discord/interaction/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
 
-const debug = Debug('app:interaction:handleAIResponse');
+const debug = Debug('app:handleAIResponse');
 
 /**
- * Handles the logic for processing an AI response to a message.
- * It first prepares a message body and sends it to the LLM (Large Language Model).
- * If the LLM response is valid, it sends the response to the Discord channel.
- * Optionally, it initiates follow-up interactions if enabled in the configuration.
+ * Handles the AI-generated response and sends it to the Discord channel.
+ *
+ * This function processes the AI response, formats the message, and sends it to the appropriate Discord channel.
+ * It uses the OpenAI API to generate responses and ensures the response is sent correctly.
+ *
+ * Key Features:
+ * - Prepares message body for AI processing
+ * - Sends the request to OpenAI API
+ * - Logs important steps for debugging and monitoring
  *
  * @param {Client} client - The Discord client instance.
  * @param {IMessage} message - The incoming message.
- * @returns {Promise<void>} - The function returns a promise that resolves when the process is complete.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
  */
 export async function handleAIResponse(client: Client, message: IMessage): Promise<void> {
-    const llmManager = LlmService.getManager();
-    if (llmManager.isBusy()) {
-        debug('LLM Manager is busy.');
-        return;
-    }
-
-    let requestBody;
-    try {
-        requestBody = await prepareMessageBody(
-            constants.LLM_SYSTEM_PROMPT,
-            message.getChannelId(),
-            []
-        );
-        debug('Prepared requestBody: ' + JSON.stringify(requestBody));
-    } catch (error: any) {
-        debug('Error preparing LLM request body: ' + error);
-        return;
-    }
+    const requestBody = await prepareMessageBody(message.getText(), message.getChannelId(), []);
+    debug('Prepared requestBody: ' + JSON.stringify(requestBody));
 
     let llmResponse;
     try {
-        llmResponse = await llmManager.sendRequest(requestBody);
+        llmResponse = await sendRequest(requestBody);
         debug('LLM request sent successfully.');
     } catch (error: any) {
-        debug('Error sending LLM request: ' + error);
+        debug('Error sending LLM request: ' + error.message);
         return;
     }
 
@@ -71,7 +60,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
             debug('LLM response summarized due to length.');
         }
     } catch (error: any) {
-        debug('Error processing LLM response content: ' + error);
+        debug('Error processing LLM response content: ' + error.message);
         return;
     }
 
@@ -79,7 +68,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
         await sendMessageToChannel(client, message.getChannelId(), responseContent);
         debug('Sent message to channel successfully.');
     } catch (error: any) {
-        debug('Error sending response to channel: ' + error);
+        debug('Error sending response to channel: ' + error.message);
         return;
     }
 
@@ -88,7 +77,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
             await sendFollowUp(client, message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
             debug('Follow-up interaction initiated.');
         } catch (error: any) {
-            debug('Error initiating follow-up interaction: ' + error);
+            debug('Error initiating follow-up interaction: ' + error.message);
         }
     }
 }
