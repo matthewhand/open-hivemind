@@ -1,4 +1,11 @@
-import Debug from "debug";
+import Debug from 'debug';
+import { Configuration, OpenAI } from 'openai';
+import { LlmService } from '@src/llm/interfaces/LlmService';
+import { buildRequestBody } from '@src/llm/openai/operations/buildRequestBody';
+import { sendRequest } from '@src/llm/openai/operations/sendRequest';
+
+const debug = Debug('app:OpenAiService');
+
 /**
  * OpenAiService Class
  *
@@ -11,35 +18,28 @@ import Debug from "debug";
  * - Request body building and response processing
  * - Error handling and logging
  */
-
-
-import { OpenAIApi, Configuration } from 'openai';
-import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildRequestBody } from '@src/llm/openai/operations/buildRequestBody';
-import { sendRequest } from '@src/llm/openai/operations/sendRequest';
-
 export class OpenAiService implements LlmService {
-  private api: OpenAIApi;
+  private api: OpenAI;
   private isProcessing: boolean = false;
 
   constructor(apiKey: string) {
     const configuration = new Configuration({ apiKey });
-    this.api = new OpenAIApi(configuration);
+    this.api = new OpenAI(configuration);
   }
 
   /**
    * Builds the request body for the OpenAI API.
-   * @param prompt The input prompt for generating a response.
+   * @param historyMessages The input history messages for generating a response.
    * @returns The built request body.
    */
-  buildRequestBody(prompt: string): object {
-    if (!prompt) {
-      debug('No prompt provided for buildRequestBody');
-      return {};
+  buildRequestBody(historyMessages: any[]): Promise<object> {
+    if (!Array.isArray(historyMessages)) {
+      debug('Invalid input: historyMessages must be an array');
+      throw new Error('Invalid input: historyMessages must be an array');
     }
 
-    debug('Building request body for prompt:', prompt);
-    return buildRequestBody(prompt);
+    debug('Building request body for history messages: ' + JSON.stringify(historyMessages));
+    return buildRequestBody(historyMessages);
   }
 
   /**
@@ -53,7 +53,7 @@ export class OpenAiService implements LlmService {
       return {};
     }
 
-    debug('Sending request to OpenAI API with body:', requestBody);
+    debug('Sending request to OpenAI API with body: ' + JSON.stringify(requestBody));
     return sendRequest(this.api, requestBody);
   }
 
