@@ -1,7 +1,7 @@
+// Import necessary modules
 import Debug from "debug";
 const debug = Debug("app");
 
-import debug from 'debug';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import fs from 'fs';
