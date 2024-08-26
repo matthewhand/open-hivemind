@@ -1,13 +1,23 @@
 import Debug from "debug";
-
-// src/message/discord/voice/convertOpusToWav.ts
 import { spawn } from 'child_process';
 import { Readable } from 'stream';
+
+const debug = Debug('app:convertOpusToWav');
+
 /**
- * Converts Opus audio buffer to WAV format using FFmpeg.
- * Handles errors during conversion and ensures a valid WAV buffer is returned.
- * @param {Buffer} opusBuffer - The buffer containing Opus audio data.
- * @returns {Promise<Buffer>} The buffer containing WAV audio data.
+ * Convert Opus to WAV
+ *
+ * This function converts an Opus audio buffer to WAV format using FFmpeg. It handles the streaming of audio data between 
+ * the bot and FFmpeg, capturing errors, and ensuring that the output is a valid WAV buffer.
+ *
+ * Key Features:
+ * - Utilizes FFmpeg to convert Opus audio to WAV format, ensuring compatibility with various audio processing tasks.
+ * - Handles errors during the conversion process, logging them for debugging and providing meaningful feedback.
+ * - Streams data efficiently between the bot and FFmpeg, minimizing latency and memory usage.
+ * - Returns a promise that resolves to the converted WAV buffer or rejects with an error if conversion fails.
+ *
+ * @param opusBuffer - The buffer containing Opus audio data.
+ * @returns A promise that resolves to a Buffer containing WAV audio data.
  */
 export async function convertOpusToWav(opusBuffer: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
