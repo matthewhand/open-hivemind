@@ -7,9 +7,22 @@ import constants from '@config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
 
+const debug = Debug('app:setupVoiceChannel');
+
 /**
- * Sets up the voice channel by joining it and configuring the connection to handle audio streams.
- * Ensures the bot has the necessary permissions and logs relevant information for debugging.
+ * Setup Voice Channel
+ *
+ * This function is responsible for setting up and managing the bot's connection to a Discord voice channel.
+ * It handles permissions checks, voice connection events, and manages audio streams.
+ *
+ * Key Features:
+ * - Ensures the bot has the necessary permissions to join and interact within the voice channel.
+ * - Manages voice connection events, including handling errors and disconnections.
+ * - Plays a welcome message upon successfully connecting to the voice channel.
+ * - Logs all critical steps and potential issues for easier debugging and maintenance.
+ *
+ * @param client - The Discord client instance.
+ * @returns A promise that resolves to the voice connection, or void if setup fails.
  */
 export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
     const VOICE_CHANNEL_ID = ConfigurationManager.getConfig('VOICE_CHANNEL_ID', 'default_voice_channel_id');
