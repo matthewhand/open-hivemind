@@ -1,4 +1,6 @@
-import Debug from "debug";
+import Debug from 'debug';
+
+const debug = Debug('app:generateResponse');
 
 /**
  * Generates an AI response for a given message.
