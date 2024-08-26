@@ -1,7 +1,9 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
+
+const debug = Debug('app:registerSlashCommands');
+
 /**
  * Registers slash commands with Discord for a specific guild.
  * @param {string} token - The bot token used for authentication with the Discord API.
