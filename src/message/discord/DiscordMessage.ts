@@ -1,7 +1,9 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { Message, TextChannel } from 'discord.js';
+
+const debug = Debug('app:DiscordMessage');
+
 /**
  * Represents a Discord message, implementing the IMessage interface.
  */
@@ -13,6 +15,7 @@ export default class DiscordMessage extends IMessage {
   public role: string;
   private readonly message: Message;
   private readonly repliedMessage: Message | null;
+
   /**
    * Constructs an instance of DiscordMessage.
    * @param {Message} message - The raw message object from Discord.
@@ -29,6 +32,7 @@ export default class DiscordMessage extends IMessage {
     this.role = '';  // Set this to the appropriate value based on your application's needs
     debug('[DiscordMessage] Initializing with message ID: ' + message.id);
   }
+
   /**
    * Gets the ID of the message.
    * @returns {string} - The message ID.
@@ -36,6 +40,7 @@ export default class DiscordMessage extends IMessage {
   getMessageId(): string {
     return this.message.id;
   }
+
   /**
    * Gets the text content of the message.
    * @returns {string} - The message content.
@@ -43,6 +48,7 @@ export default class DiscordMessage extends IMessage {
   getText(): string {
     return this.message.content;
   }
+
   /**
    * Gets the ID of the channel where the message was sent.
    * @returns {string} - The channel ID.
@@ -50,6 +56,7 @@ export default class DiscordMessage extends IMessage {
   getChannelId(): string {
     return this.message.channelId;
   }
+
   /**
    * Gets the topic of the channel where the message was sent.
    * @returns {string} - The channel topic.
@@ -60,6 +67,7 @@ export default class DiscordMessage extends IMessage {
     }
     return '';
   }
+
   /**
    * Gets the ID of the author of the message.
    * @returns {string} - The author's ID.
@@ -67,6 +75,7 @@ export default class DiscordMessage extends IMessage {
   getAuthorId(): string {
     return this.message.author.id;
   }
+
   /**
    * Retrieves the user mentions in the message.
    * @returns {string[]} An array of user IDs mentioned in the message.
@@ -74,6 +83,7 @@ export default class DiscordMessage extends IMessage {
   getUserMentions(): string[] {
     return this.message.mentions.users.map(user => user.id);
   }
+
   /**
    * Retrieves the users in the channel where the message was sent.
    * @returns {string[]} An array of user IDs in the channel.
@@ -85,6 +95,7 @@ export default class DiscordMessage extends IMessage {
     }
     return [];
   }
+
   /**
    * Checks if the message is from a bot.
    * @returns {boolean} True if the message is from a bot, false otherwise.
@@ -92,6 +103,7 @@ export default class DiscordMessage extends IMessage {
   isFromBot(): boolean {
     return this.message.author.bot;
   }
+
   /**
    * Checks if the message is a reply to the bot.
    * @returns {boolean} - True if the message is a reply to the bot.
@@ -99,6 +111,7 @@ export default class DiscordMessage extends IMessage {
   isReplyToBot(): boolean {
     return !!this.repliedMessage && this.repliedMessage.author.bot;
   }
+
   /**
    * Checks if the message mentions a specific user.
    * @param {string} userId - The ID of the user to check for mentions.
@@ -107,6 +120,7 @@ export default class DiscordMessage extends IMessage {
   mentionsUsers(userId: string): boolean {
     return this.message.mentions.users.has(userId);
   }
+
   /**
    * Gets the original `discord.js` Message object.
    * This method is specific to the Discord implementation and is not part of the `IMessage` interface.
