@@ -1,8 +1,17 @@
 import Debug from "debug";
-
 import { Client, GatewayIntentBits, Message } from 'discord.js';
+
+const debug = Debug('app:initializeClient');
+
 /**
  * Initializes and returns a new Discord client instance.
+ * 
+ * This function sets up the Discord client with the necessary intents and event listeners.
+ * It ensures the client is ready to interact with the Discord API, handle messages, and maintain voice state.
+ * 
+ * Key Features:
+ * - Configures client intents to manage guilds, messages, and voice states.
+ * - Logs client readiness and message events for monitoring and debugging.
  * 
  * @returns {Client} The initialized Discord client.
  */

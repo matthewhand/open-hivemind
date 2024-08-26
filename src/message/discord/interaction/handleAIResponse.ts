@@ -5,6 +5,7 @@ import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessag
 import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
 import { sendFollowUp } from '@src/message/discord/interaction/sendFollowUp';
 import { sendMessageToChannel } from '@src/message/discord/interaction/sendMessageToChannel';
+import { sendChatCompletionsRequest } from '@src/llm/openai/operations/sendChatCompletionsRequest';
 import constants from '@config/ConfigurationManager';
 
 const debug = Debug('app:handleAIResponse');
@@ -30,7 +31,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
 
     let llmResponse;
     try {
-        llmResponse = await sendRequest(requestBody);
+        llmResponse = await sendChatCompletionsRequest(client, requestBody);
         debug('LLM request sent successfully.');
     } catch (error: any) {
         debug('Error sending LLM request: ' + error.message);
