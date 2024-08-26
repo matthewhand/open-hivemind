@@ -1,11 +1,14 @@
-import Debug from "debug";
-import { OpenAiService } from '../llm/openai/OpenAiService';
+import Debug from 'debug';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
 import { completeSentence } from '@src/llm/openai/operations/completeSentence';
 import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
-import { handleError, redactSensitiveInfo } from '../../utils/commonUtils';
+import { handleError, redactSensitiveInfo } from '@src/utils/commonUtils';
+
+const debug = Debug('app:sendRequest');
+
 /**
  * Sends a request to the OpenAiService API and processes the response.
  * 
