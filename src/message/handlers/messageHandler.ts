@@ -1,12 +1,25 @@
 import Debug from "debug";
-
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
+
+const debug = Debug('app:messageHandler');
+
 /**
- * Handles an incoming message, validating it, processing commands, and managing AI responses.
- * @param originalMsg - The original message object.
- * @param historyMessages - The history of previous messages for context.
+ * Message Handler
+ *
+ * This function is responsible for handling incoming messages, validating them, processing any commands they contain, 
+ * and managing AI responses. It ensures that each message is appropriately handled based on the context provided 
+ * by previous messages and the validation logic.
+ *
+ * Key Features:
+ * - Validates incoming messages to ensure they meet the necessary criteria before processing.
+ * - Processes commands within the message and generates appropriate responses.
+ * - Manages the history of previous messages to provide context for more accurate processing.
+ * - Logs important steps and potential issues for debugging purposes.
+ *
+ * @param originalMsg - The original message object implementing the IMessage interface.
+ * @param historyMessages - The history of previous messages for context, defaults to an empty array.
  */
 export async function messageHandler(
   originalMsg: IMessage,
