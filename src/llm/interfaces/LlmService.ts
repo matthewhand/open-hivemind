@@ -40,7 +40,7 @@ export abstract class LlmService {
      * @param {any[]} historyMessages - The history of messages to include in the request.
      * @returns {Promise<object>} The request body object.
      */
-    abstract buildRequestBody(historyMessages: any[]): Promise<object>;
+    abstract buildChatCompletionRequestBody(historyMessages: any[]): Promise<object>;
 
     /**
      * Sends the request to the LLM and returns the response.

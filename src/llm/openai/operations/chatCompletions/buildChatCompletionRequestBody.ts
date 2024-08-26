@@ -20,9 +20,9 @@ import ConfigurationManager from "@src/common/config/ConfigurationManager";
  * @returns A request body object ready for OpenAI API consumption.
  */
 
-const debug = Debug("app:buildRequestBody");
+const debug = Debug("app:buildChatCompletionRequestBody");
 
-export function buildRequestBody(
+export function buildChatCompletionRequestBody(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS

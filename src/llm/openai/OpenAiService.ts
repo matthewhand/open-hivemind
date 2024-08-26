@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { Configuration, OpenAI } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildRequestBody } from '@src/llm/openai/operations/buildRequestBody';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 
 const debug = Debug('app:OpenAiService');
@@ -32,14 +32,14 @@ export class OpenAiService implements LlmService {
    * @param historyMessages The input history messages for generating a response.
    * @returns The built request body.
    */
-  buildRequestBody(historyMessages: any[]): Promise<object> {
+  buildChatCompletionRequestBody(historyMessages: any[]): Promise<object> {
     if (!Array.isArray(historyMessages)) {
       debug('Invalid input: historyMessages must be an array');
       throw new Error('Invalid input: historyMessages must be an array');
     }
 
     debug('Building request body for history messages: ' + JSON.stringify(historyMessages));
-    return buildRequestBody(historyMessages);
+    return buildChatCompletionRequestBody(historyMessages);
   }
 
   /**
