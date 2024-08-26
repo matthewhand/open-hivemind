@@ -5,9 +5,22 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
 import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:playWelcomeMessage');
+
 /**
- * Plays a welcome message in the voice channel.
- * @param {VoiceConnection} connection - The voice connection to use.
+ * Play Welcome Message
+ *
+ * This function generates and plays a welcome message in the connected Discord voice channel using OpenAI's text-to-speech API.
+ * It handles the generation of speech, saving the audio file, and playing it in the voice channel.
+ *
+ * Key Features:
+ * - Integrates with OpenAI's text-to-speech API to generate dynamic welcome messages.
+ * - Saves the generated audio to a file, which is then played in the voice channel.
+ * - Manages audio playback, including error handling and cleanup after playback.
+ *
+ * @param {VoiceConnection} connection - The voice connection to use for playing the welcome message.
+ * @returns A promise that resolves when the welcome message has been played.
  */
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
     const welcomeMessage = constants.WELCOME_MESSAGE;
