@@ -1,4 +1,7 @@
-import Debug from "debug";
+import Debug from 'debug';
+import { CommandInteraction, GuildMember } from 'discord.js';
+
+const debug = Debug('app:muteUser');
 
 /**
  * Mute a User in Discord via Command
@@ -28,7 +31,7 @@ export async function muteUser(
     // Check if the target is in a voice channel and can be muted
     if (!target.voice.channel) {
       debug('Target user ' + target.user.tag + ' is not in a voice channel in guild ' + interaction.guildId);
-      await interaction.reply(`User ${target.user.tag} is not in a voice channel.`);
+      await interaction.reply('User ' + target.user.tag + ' is not in a voice channel.');
       return;
     }
 
@@ -37,10 +40,10 @@ export async function muteUser(
     debug('User ' + target.user.tag + ' has been muted in guild ' + interaction.guildId);
 
     // Confirm the mute operation
-    await interaction.reply(`User ${target.user.tag} has been muted.`);
-  } catch (error) {
+    await interaction.reply('User ' + target.user.tag + ' has been muted.');
+  } catch (error: any) {
     const targetInfo = target ? target.user.tag : 'unknown user';
-    debug('Failed to mute user ' + targetInfo + ' in guild ' + interaction.guildId + ': ' + error);
-    await interaction.reply(`Failed to mute ${target ? target.user.tag : 'the user'}.`);
+    debug('Failed to mute user ' + targetInfo + ' in guild ' + interaction.guildId + ': ' + error.message);
+    await interaction.reply('Failed to mute ' + (target ? target.user.tag : 'the user') + '.');
   }
 }
