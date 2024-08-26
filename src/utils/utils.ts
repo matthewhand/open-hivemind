@@ -1,10 +1,12 @@
-import Debug from "debug";
-
+import Debug from 'debug';
 import util from 'util';
 import fs from 'fs';
+
+const debug = Debug('app:utils');
+
 /**
  * Executes a shell command and returns the result.
- * 
+ *
  * @param command - The command to execute.
  * @returns A promise that resolves to the command output.
  */
@@ -15,12 +17,13 @@ export async function executeCommand(command: string): Promise<string> {
     if (stderr) {
         debug('Error executing command: ' + stderr);
     }
-    debug('CommandHandler output: ' + stdout);
+    debug('Command output: ' + stdout);
     return stdout;
 }
+
 /**
  * Reads a file and returns its content.
- * 
+ *
  * @param filePath - The path to the file.
  * @returns A promise that resolves to the file content.
  */
