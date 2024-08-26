@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';

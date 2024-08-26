@@ -1,14 +1,9 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import Debug from 'debug';
-import constants from '@config/ConfigurationManager';
-
-const debug = Debug('app:discord:playAudioResponse');
 
 /**
  * Plays the audio response back in the voice channel.

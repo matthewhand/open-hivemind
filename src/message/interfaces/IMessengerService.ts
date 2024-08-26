@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { Message } from 'discord.js';
 
 /**

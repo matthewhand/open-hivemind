@@ -1,9 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
-
-import Debug from 'debug';
-
-const debug = Debug('app:message:chatHistoryUtils');
 
 /**
  * Processes chat history and retrieves relevant context.

@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 /**
  * Abstract class representing a standardized message format.

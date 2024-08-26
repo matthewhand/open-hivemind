@@ -1,8 +1,5 @@
-import Debug from 'debug';
-import axios from 'axios';
+import Debug from "debug";
 import ICommand from '@src/command/interfaces/ICommand';
-
-const debug = Debug('app:command:OAICommand');
 
 /**
  * Returns a random error message from a predefined set.

@@ -1,9 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
-
-import Debug from 'debug';
-
-const debug = Debug('app:message:commandParser');
 
 /**
  * Parses and validates command input from the user.

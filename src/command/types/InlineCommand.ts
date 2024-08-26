@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { BaseCommand } from './BaseCommand';
 
 export abstract class InlineCommand extends BaseCommand {

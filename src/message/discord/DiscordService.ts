@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';

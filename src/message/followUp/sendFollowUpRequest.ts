@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendFollowUp } from './sendFollowUp';
 

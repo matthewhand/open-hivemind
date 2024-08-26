@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { aliases } from '@command/aliases';
 /**

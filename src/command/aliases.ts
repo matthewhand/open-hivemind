@@ -1,3 +1,4 @@
+import Debug from "debug";
 export interface Alias {
     handler: string;
     description: string;

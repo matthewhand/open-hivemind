@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Error Handling Utility
  *
@@ -11,8 +12,6 @@
  * - Integration with debug logging
  */
 
-import Debug from 'debug';
-const debug = Debug('app:handleError');
 
 /**
  * Handles an error by logging it and optionally throwing it.

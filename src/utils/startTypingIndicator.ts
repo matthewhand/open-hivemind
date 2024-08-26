@@ -1,8 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
-const debug = Debug('app:utils:startTypingIndicator');
 
 /**
  * Starts a typing indicator in a Discord channel, refreshing every 15 seconds.

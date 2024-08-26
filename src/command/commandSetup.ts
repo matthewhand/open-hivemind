@@ -1,5 +1,4 @@
-import Debug from 'debug';
-import fs from 'fs';
+import Debug from "debug";
 import path from 'path';
 
 interface CommandModule {
@@ -13,8 +12,6 @@ interface CommandModule {
 
 const commandExecutors: Record<string, Function> = {};
 const commandDataArray: CommandModule['data'][] = [];
-const debug = Debug('app:command:commandSetup');
-
 /**
  * Dynamically load command modules from the commands directory.
  * Each module is expected to export a data object and an execute function.

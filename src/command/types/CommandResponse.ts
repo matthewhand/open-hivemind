@@ -1,3 +1,4 @@
+import Debug from "debug";
 export class CommandResponse {
     success: boolean;
     message: string;

@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 class ReplyManager {
     private replyMetrics: Record<string, { lastReplyTime: number; replyCount: number }> = {};

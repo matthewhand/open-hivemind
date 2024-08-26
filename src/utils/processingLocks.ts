@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 class ProcessingLocks {
     private locks: Map<string, boolean>;

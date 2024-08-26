@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '../utils/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';

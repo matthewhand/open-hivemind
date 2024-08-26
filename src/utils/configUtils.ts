@@ -1,3 +1,4 @@
+import Debug from "debug";
 import ConfigurationManager from '@config/ConfigurationManager';
 
 export function getConfigOrWarn<T>(configKey: string, defaultValue: T): T {

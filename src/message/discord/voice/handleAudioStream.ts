@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Readable } from 'stream';
 import { VoiceConnection } from '@discordjs/voice';
@@ -8,10 +7,6 @@ import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
 import { generateResponse } from '../interaction/generateResponse';
 import { playAudioResponse } from './playAudioResponse';
-import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
-const debug = Debug('app:discord:handleAudioStream');
-/**
  * Handles audio streaming to a Discord voice connection.
  * @param {Readable} stream - The audio stream to handle.
  * @param {VoiceConnection} connection - The voice connection to stream to.

@@ -1,8 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
-const debug = Debug('app:utils:splitMessage');
 
 /**
  * Splits a message into chunks that are within a specified character limit,

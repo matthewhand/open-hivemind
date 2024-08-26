@@ -1,7 +1,4 @@
-import Debug from 'debug';
-import { CommandInteraction, GuildMember } from 'discord.js';
-
-const debug = Debug('app:command:muteUser');
+import Debug from "debug";
 
 /**
  * Mute a User in Discord via Command

@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import util from 'util';
 import fs from 'fs';

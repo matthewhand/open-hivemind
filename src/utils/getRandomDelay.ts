@@ -1,8 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
-const debug = Debug('app:utils:getRandomDelay');
 
 /**
  * Generates a random delay between a specified minimum and maximum value.

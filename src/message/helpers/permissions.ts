@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 /**
  * Checks if a user is allowed based on their user ID.

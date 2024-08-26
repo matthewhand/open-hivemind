@@ -1,12 +1,7 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import constants from '@config/ConfigurationManager';
 import OpenAiService from '../../llm/openai/OpenAiService';
-import Debug from 'debug';
-
-const debug = Debug('app:message:summarizeMessage');
-
 /**
  * Summarizes a given text to a specified target size using the OpenAiService API.
  * This function reduces the length of responses that exceed Discord's message length limits.

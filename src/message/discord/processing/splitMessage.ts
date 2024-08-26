@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Splits a message into chunks that are within Discord's character limit,
  * appending an ellipsis to indicate continuation where necessary.

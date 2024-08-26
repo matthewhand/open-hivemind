@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { BanCommand } from '@command/common/ban';
 import { IMessage } from '@src/message/interfaces/IMessage';
 

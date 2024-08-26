@@ -1,10 +1,7 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
+
 import { getRandomErrorMessage } from './getRandomErrorMessage';
-const debug = Debug('app:utils:handleError');
-
 /**
  * Handles errors by logging them and optionally sending a random error message to a message channel.
  * 

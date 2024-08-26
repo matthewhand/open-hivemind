@@ -1,3 +1,4 @@
+import Debug from "debug";
 import ConfigurationManager from "@config/ConfigurationManager";
 
 const clientId = ConfigurationManager.getConfig<string>('discord.clientId', 'default_client_id');

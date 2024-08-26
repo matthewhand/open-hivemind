@@ -1,10 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
-import configManager from '../common/config/ConfigurationManager';
-
-const debug = Debug('app:message:parseCommand');
 
 interface ParsedCommand {
     commandName: string;

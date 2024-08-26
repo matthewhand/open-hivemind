@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Client, TextChannel, NewsChannel } from 'discord.js';
 export async function startTyping(client: Client, channelId: string): Promise<void> {

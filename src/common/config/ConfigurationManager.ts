@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { getConfigOrWarn } from '@operations/configUtils';
 
 class ConfigurationManager {

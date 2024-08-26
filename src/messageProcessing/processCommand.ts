@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Command Processing Module
  *
@@ -11,8 +12,6 @@
  * - Flexible command structure
  */
 
-import Debug from 'debug';
-const debug = Debug('app:processCommand');
 
 /**
  * Processes a command message.

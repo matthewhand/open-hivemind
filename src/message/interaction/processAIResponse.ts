@@ -1,9 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Message } from 'discord.js';
-import Debug from 'debug';
-const debug = Debug('app:message:processAIResponse');
 
 /**
  * Processes an AI response to a given result and replies to the original message.

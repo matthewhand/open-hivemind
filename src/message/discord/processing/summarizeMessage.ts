@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Summarizes a long message to fit within Discord's message limit.
  * @param message - The message text to summarize.

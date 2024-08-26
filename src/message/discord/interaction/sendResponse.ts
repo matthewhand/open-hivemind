@@ -1,11 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Client, TextChannel } from 'discord.js';
-import Debug from 'debug';
-import { splitMessage } from '../processing/splitMessage';
-const debug = Debug('app:discord:sendResponse');
-/**
  * Sends a response message to a specified Discord channel,
  * automatically handling messages that exceed Discord's character limit.
  * @param {Client} client - The Discord client instance.

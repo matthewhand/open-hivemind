@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug('app:utils:reconstructCommandFromAlias');
 
 export interface Alias {
     command: string;

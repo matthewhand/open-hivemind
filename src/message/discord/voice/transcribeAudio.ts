@@ -1,12 +1,7 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import OpenAI from 'openai';
 import fs from 'fs';
-import Debug from 'debug';
-import constants from '@config/ConfigurationManager';
-
-const debug = Debug('app:voice:transcribeAudio');
 
 /**
  * Transcribes audio using the OpenAI API.

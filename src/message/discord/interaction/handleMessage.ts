@@ -1,10 +1,7 @@
-import Debug from 'debug';
-import { Message } from 'discord.js';
+import Debug from "debug";
 import { fetchChannel } from '../fetchers/fetchChannel';
 import { generateResponse } from '../interaction/generateResponse';
 import { processAIResponse } from '@src/message/interaction/processAIResponse';
-
-const debug = Debug('app:discord:handleMessage');
 
 /**
  * Handle Discord Message Event

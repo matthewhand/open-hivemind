@@ -1,9 +1,6 @@
+import Debug from "debug";
 // Import necessary modules
 import { VoiceConnection, AudioPlayer, createAudioPlayer, createAudioResource } from '@discordjs/voice';
-import Debug from 'debug';
-
-const debug = Debug('app:handleAudioStream');
-
 /**
  * Handle Audio Stream
  *

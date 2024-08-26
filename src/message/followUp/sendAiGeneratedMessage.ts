@@ -1,11 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Message } from 'discord.js';
-import Debug from 'debug';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
-
-const debug = Debug('app:message:sendAiGeneratedMessage');
 
 /**
  * Handles the sending of AI-generated messages.

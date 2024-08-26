@@ -1,3 +1,4 @@
+import Debug from "debug";
 import ICommand from '../interfaces/ICommand';
 
 export abstract class BaseCommand implements ICommand {

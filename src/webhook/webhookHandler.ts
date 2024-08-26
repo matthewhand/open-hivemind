@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Webhook Handler Module
  *
@@ -11,8 +12,6 @@
  * - Robust error handling and logging
  */
 
-import Debug from 'debug';
-const debug = Debug('app:webhook');
 
 import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';

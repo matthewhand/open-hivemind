@@ -1,12 +1,7 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import OpenAiService from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import Debug from 'debug';
-
-const debug = Debug('app:message:prepareMessageBody');
-
 /**
  * Prepares the request body for the OpenAI service by formatting the prompt and message history.
  * 

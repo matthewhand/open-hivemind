@@ -1,10 +1,7 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import constants from '@config/ConfigurationManager';
-import Debug from 'debug';
-const debug = Debug('app:llm:LlmService');
-/**
+
  * Abstract class representing the interface for Large Language Models (LLM).
  * Subclasses must implement the abstract methods defined here.
  */

@@ -1,3 +1,4 @@
+import Debug from "debug";
 export interface IMessage {
     id: string;
     content: string;

@@ -1,7 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
 interface CommandDetails {
     command: string;
     args: string[];
@@ -15,8 +13,6 @@ interface CommandRepository {
 interface AliasMapping {
     [key: string]: string;
 }
-const debug = Debug('app:command:executeParsedCommand');
-/**
  * Executes the command using the provided command details, commands repository, and aliases.
  * @param {CommandDetails} commandDetails - An object containing the command and its arguments.
  * @param {CommandRepository} commands - A repository of available command instances.
@@ -48,3 +44,4 @@ export async function executeParsedCommand(
         return { success: false, message: 'Error executing command.', error: error.message };
     }
 }
+

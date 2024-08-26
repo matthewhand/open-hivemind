@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 /**
  * Simulates the process of starting a voting process for banning a user.

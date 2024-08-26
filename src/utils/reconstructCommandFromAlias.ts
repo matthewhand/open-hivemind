@@ -1,3 +1,4 @@
+import Debug from "debug";
 import ConfigurationManager from '@config/ConfigurationManager';
 import Alias from '@command/interfaces/ICommand';
 

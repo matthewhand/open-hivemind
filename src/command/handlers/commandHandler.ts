@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug('app:command:commandHandler');
 
 export interface CommandDetails {
     command: string;

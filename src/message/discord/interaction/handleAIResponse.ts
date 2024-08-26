@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { LlmService } from '@src/llm/interfaces/LlmService';
@@ -8,10 +7,6 @@ import { summarizeMessage } from '../processing/summarizeMessage';
 import { sendFollowUp } from '../interaction/sendFollowUp';
 import { sendMessageToChannel } from '../interaction/sendMessageToChannel';
 import constants from '@config/ConfigurationManager';
-import Debug from 'debug';
-import { Client } from 'discord.js';
-const debug = Debug('app:discord:handleAIResponse');
-/**
  * Handles the logic for processing an AI response to a message.
  * @param client - The Discord client instance.
  * @param message - The incoming message.

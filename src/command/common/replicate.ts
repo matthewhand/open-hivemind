@@ -1,3 +1,4 @@
+import Debug from "debug";
 import ConfigurationManager from '@config/ConfigurationManager';
 import axios from 'axios';
 

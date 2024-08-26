@@ -1,3 +1,4 @@
+import Debug from "debug";
 class LLMResponse {
     private content: string;
     private finish_reason: string;

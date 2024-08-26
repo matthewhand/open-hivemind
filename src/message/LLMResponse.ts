@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Class representing an LLM (Large Language Model) response.
  */

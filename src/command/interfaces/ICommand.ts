@@ -1,3 +1,4 @@
+import Debug from "debug";
 export default interface ICommand {
     name: string;
     description: string;

@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * OpenAiService Class
  *
@@ -11,8 +12,6 @@
  * - Error handling and logging
  */
 
-import Debug from 'debug';
-const debug = Debug('app:openai');
 
 import { OpenAIApi, Configuration } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';

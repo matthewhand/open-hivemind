@@ -1,3 +1,4 @@
+import Debug from "debug";
 export default class DiscordMessage {
     constructor(content: string, author: string);
     public content: string;

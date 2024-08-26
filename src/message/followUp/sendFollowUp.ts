@@ -1,3 +1,4 @@
+import Debug from "debug";
 import { TextChannel } from 'discord.js';
 import { IMessage } from '@src/message/interfaces/IMessage';
 

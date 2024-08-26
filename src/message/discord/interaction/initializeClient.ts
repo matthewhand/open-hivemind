@@ -1,11 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Client, GatewayIntentBits, Message } from 'discord.js';
-import Debug from 'debug';
-
-const debug = Debug('app:discord:initializeClient');
-
 /**
  * Initializes and returns a new Discord client instance.
  * 

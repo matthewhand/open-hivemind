@@ -1,9 +1,6 @@
+import Debug from "debug";
 // Import necessary modules
 import { Client, TextChannel } from 'discord.js';
-import Debug from 'debug';
-
-const debug = Debug('app:fetchMessages');
-
 /**
  * Fetch Messages from a Discord Channel
  *

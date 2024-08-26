@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import ConfigurationManager from '@config/ConfigurationManager';
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
@@ -7,8 +6,6 @@ import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorTy
 import constants from '@config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
-import Debug from 'debug';
-const debug = Debug('app:voice:setupVoiceChannel');
 
 /**
  * Sets up the voice channel by joining it and configuring the connection to handle audio streams.

@@ -1,5 +1,4 @@
-import Debug from 'debug';
-import path from 'path';
+import Debug from "debug";
 import fs from 'fs';
 import { isCommand } from './isCommand';
 import { parseCommandDetails } from './parseCommandDetails';
@@ -7,16 +6,12 @@ import { executeParsedCommand } from './executeParsedCommand';
 import { IMessage } from '../message/interfaces/IMessage';
 import ICommand from '@src/command/interfaces/ICommand';
 
-const debug = Debug('app:command:CommandManager');
-
 /**
  * Manages command operations including loading commands, parsing input texts, and executing commands.
  */
 export class CommandManager {
     private commands: Record<string, ICommand>;
     private aliases: Record<string, string>;
-    private debug: Debug.Debugger;
-
     constructor() {
         this.commands = this.loadCommands(path.join(__dirname, '../command/inline'));
         this.aliases = require('@config/aliases');

@@ -1,9 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import axios from 'axios';
-import Debug from 'debug';
-const debug = Debug('app:command:flowise');
 export class FlowiseCommand {
     name = 'flowise';
     description = 'Interact with the Flowise API to retrieve information based on the provided endpoint ID.';

@@ -1,9 +1,6 @@
+import Debug from "debug";
 // Import necessary modules
 import { Message } from 'discord.js';
-import Debug from 'debug';
-
-const debug = Debug('app:handleAIResponse');
-
 /**
  * Handle AI Response
  *

@@ -1,3 +1,4 @@
+import Debug from "debug";
 import crypto from 'crypto';
 
 const secretKey = process.env.ENCRYPTION_SECRET_KEY || '';

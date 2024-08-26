@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';

@@ -1,9 +1,6 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { TextChannel } from 'discord.js';
-import Debug from 'debug';
-const debug = Debug('app:message:sendMessagePart');
 /**
  * Sends a part of a message to a specified text channel.
  * @param {TextChannel} channel - The text channel to send the message to.

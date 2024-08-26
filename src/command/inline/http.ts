@@ -1,5 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import ICommand from '../interfaces/ICommand';
 import fetch from 'node-fetch';

@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Determines whether a response needs further completion based on certain conditions.
  * @param maxTokensReached - Boolean indicating if the max token limit was reached in the response.

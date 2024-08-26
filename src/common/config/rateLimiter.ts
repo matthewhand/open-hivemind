@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Rate Limiter for Discord Bot Messages
  *
@@ -11,8 +12,6 @@
  * - Flexible configuration via environment variables
  */
 
-import Debug from 'debug';
-const debug = Debug('app:rateLimiter');
 
 /**
  * RateLimiter class manages the rate-limiting logic.

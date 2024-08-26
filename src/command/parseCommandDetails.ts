@@ -1,9 +1,4 @@
 import Debug from "debug";
-const debug = Debug("app");
-
-import Debug from 'debug';
-
-const debug = Debug('app:command:parseCommandDetails');
 
 /**
  * Parses the command details from a given input string.

@@ -1,8 +1,5 @@
 import Debug from "debug";
-const debug = Debug("app");
 
-import Debug from 'debug';
-const debug = Debug('app:utils:redactSensitiveInfo');
 
 /**
  * Redacts sensitive information from a key-value pair.

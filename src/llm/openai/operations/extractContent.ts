@@ -1,3 +1,4 @@
+import Debug from "debug";
 /**
  * Extracts the content from the response choice provided by OpenAI.
  * @param choice - The response choice object from OpenAI.

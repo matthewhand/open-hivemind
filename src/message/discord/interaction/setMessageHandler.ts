@@ -1,16 +1,11 @@
 import Debug from "debug";
-const debug = Debug("app");
 
 import { Client, TextChannel } from 'discord.js';
-import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import DiscordMessage from '../DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
 import { startTypingIndicator } from '@src/utils/startTypingIndicator';
-
-const debug = Debug('app:discord:setMessageHandler');
 
 /**
  * Sets up Message and typing event handlers for the Discord client.

@@ -1,7 +1,4 @@
-import Debug from 'debug';
-import { CommandInteraction, GuildMember } from 'discord.js';
-
-const debug = Debug('app:command:banUser');
+import Debug from "debug";
 
 /**
  * Ban a User in Discord via Command
