@@ -1,10 +1,21 @@
 import Debug from "debug";
-
 import OpenAI from 'openai';
 import fs from 'fs';
+import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:transcribeAudio');
 
 /**
- * Transcribes audio using the OpenAI API.
+ * Transcribe Audio
+ *
+ * This function handles the transcription of audio files using the OpenAI API. It reads the audio file, sends it to the API,
+ * and returns the transcribed text. The function also handles errors and logs detailed information for troubleshooting.
+ *
+ * Key Features:
+ * - Integrates with OpenAI's transcription service to convert audio files to text.
+ * - Handles file reading, API request, and response parsing.
+ * - Logs detailed information about the transcription process, including error handling.
+ *
  * @param {string} audioFilePath - The path to the audio file to be transcribed.
  * @returns {Promise<string>} The transcribed text.
  */
