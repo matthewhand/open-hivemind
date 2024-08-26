@@ -56,6 +56,14 @@ export class OpenAiService implements LlmService {
   }
 
   /**
+   * Indicates that history is required for chat completions.
+   * @returns True since the OpenAI API requires history in chat completion requests.
+   */
+  requiresHistory(): boolean {
+    return true;
+  }
+
+  /**
    * Sends the request to the OpenAI API and processes the response.
    * @param requestBody The prepared request body.
    * @returns The API response.
