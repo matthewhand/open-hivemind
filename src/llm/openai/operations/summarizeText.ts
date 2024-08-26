@@ -1,11 +1,21 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/llm/openai/operations/extractContent';
-import { sendCompletionsRequest } from './sendCompletionsRequest';
-
-import { OpenAiService } from './OpenAiService';
+import { sendCompletionsRequest } from '@src/llm/openai/operations/sendCompletionsRequest';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:summarizeText');
+
+/**
+ * Summarizes a given user message using the OpenAI API.
+ * @param manager - The OpenAiService instance to manage the request.
+ * @param userMessage - The message content to be summarized.
+ * @param systemMessageContent - The system prompt to guide the summarization.
+ * @param maxTokens - The maximum number of tokens for the response.
+ * @returns A promise that resolves to an LLMResponse containing the summary.
+ */
 export async function summarizeText(
     manager: OpenAiService,
     userMessage: string,
