@@ -1,4 +1,7 @@
-import Debug from "debug";
+import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
+
+const debug = Debug('app:serverCommand');
 
 /**
  * Execute Server Command
