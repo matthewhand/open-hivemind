@@ -3,6 +3,21 @@ import { Client, TextChannel, NewsChannel } from 'discord.js';
 
 const debug = Debug('app:startTyping');
 
+/**
+ * Start Typing Indicator
+ *
+ * This function triggers the typing indicator in a specified Discord text or news channel.
+ * It fetches the channel by its ID and starts the typing indicator if the channel supports it.
+ *
+ * Key Features:
+ * - Fetches the channel by ID using the Discord client.
+ * - Verifies if the channel supports typing indicators.
+ * - Logs detailed information for debugging purposes.
+ *
+ * @param client - The Discord client instance.
+ * @param channelId - The ID of the channel where the typing indicator should be started.
+ * @returns {Promise<void>} A promise that resolves when the typing indicator is started.
+ */
 export async function startTyping(client: Client, channelId: string): Promise<void> {
     try {
         debug('Fetching channel ID: ' + channelId);
