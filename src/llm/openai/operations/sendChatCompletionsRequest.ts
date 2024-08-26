@@ -1,10 +1,10 @@
-import Debug from "debug";
-import LLMResponse from "@src/llm/LLMResponse";
-import { extractContent } from "@src/llm/openai/operations/extractContent";
-import { completeSentence } from "@src/llm/openai/operations/completeSentence";
-import { needsCompletion } from "@src/llm/openai/operations/needsCompletion";
-import { OpenAiService } from "@src/llm/openai/OpenAiService";
-import constants from "@config/ConfigurationManager";
+import Debug from 'debug';
+import LLMResponse from '@src/llm/LLMResponse';
+import { extractContent } from '@src/llm/openai/operations/extractContent';
+import { completeSentence } from '@src/llm/openai/operations/completeSentence';
+import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import constants from '@config/ConfigurationManager';
 
 /**
  * Handles sending chat completion requests to the OpenAI API.
@@ -24,7 +24,7 @@ import constants from "@config/ConfigurationManager";
  * @returns A promise resolving to an LLMResponse object containing the API response or error information.
  */
 
-const debug = Debug("app:sendChatCompletionsRequest");
+const debug = Debug('app:sendChatCompletionsRequest');
 
 export async function sendChatCompletionsRequest(
   manager: OpenAiService,
@@ -32,23 +32,23 @@ export async function sendChatCompletionsRequest(
   dryRun: boolean = false
 ): Promise<LLMResponse> {
   if (manager.isBusy()) {
-    debug("[sendChatCompletionsRequest] Manager is currently busy.");
-    return new LLMResponse("", "busy");
+    debug('Manager is currently busy.');
+    return new LLMResponse('', 'busy');
   }
   manager.setBusy(true);
-  debug("[sendChatCompletionsRequest] Sending request to OpenAI");
+  debug('Sending request to OpenAI');
   try {
     const requestBody = {
       model: constants.LLM_MODEL,
       messages: historyMessages.map((msg) => ({
-        role: manager.isValidRole(msg.role) ? msg.role : "user",
+        role: manager.isValidRole(msg.role) ? msg.role : 'user',
         content: msg.content,
-        name: constants.INCLUDE_USERNAME_IN_CHAT_COMPLETION ? "assistant" : undefined,
+        name: constants.INCLUDE_USERNAME_IN_CHAT_COMPLETION ? 'assistant' : undefined,
       })),
     };
     if (dryRun) {
-      debug("[sendChatCompletionsRequest] Dry run mode - returning request body only");
-      return new LLMResponse(JSON.stringify(requestBody), "dry-run");
+      debug('Dry run mode - returning request body only');
+      return new LLMResponse(JSON.stringify(requestBody), 'dry-run');
     }
     const response = await manager.getClient().chat.completions.create(requestBody);
     let content = extractContent(response.choices[0]);
@@ -59,16 +59,15 @@ export async function sendChatCompletionsRequest(
       constants.LLM_SUPPORTS_COMPLETIONS &&
       needsCompletion(maxTokensReached, finishReason, content)
     ) {
-      debug("[sendChatCompletionsRequest] Completing response due to token limit or incomplete sentence.");
+      debug('Completing response due to token limit or incomplete sentence.');
       content = await completeSentence(manager.getClient(), content, constants);
     }
     return new LLMResponse(content, finishReason, tokensUsed);
   } catch (error: any) {
-    debug("[sendChatCompletionsRequest] Error during OpenAI API request: " + error.message);
-    return new LLMResponse("", "error");
+    debug('Error during OpenAI API request: ' + error.message);
+    return new LLMResponse('', 'error');
   } finally {
     manager.setBusy(false);
-    debug("[sendChatCompletionsRequest] Manager set to not busy.");
+    debug('Manager set to not busy.');
   }
 }
-
