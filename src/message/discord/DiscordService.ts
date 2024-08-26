@@ -1,17 +1,23 @@
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
 import { handleMessage } from './interaction/handleMessage';
-import { IMessage } from '../interfaces/IMessage';
-import { IMessengerService } from '../interfaces/IMessengerService';
 import debug from 'debug';
 
 const log = debug('app:discord-service');
 
 /**
- * Service implementation for managing Discord interactions, including message handling,
- * voice channel connections, and AI response processing.
+ * DiscordService Class
+ *
+ * Manages Discord interactions, including message handling, voice channel connections,
+ * and AI response processing. This service is implemented as a singleton to ensure
+ * consistent and centralized management of the Discord client.
+ *
+ * Key Features:
+ * - Singleton pattern for centralized client management
+ * - Handles message interactions and responses
+ * - Supports sending messages to channels and managing voice states
  */
-export class DiscordService implements IMessengerService {
+export class DiscordService {
   private client: Client;
   private static instance: DiscordService;
 
@@ -73,6 +79,10 @@ export class DiscordService implements IMessengerService {
    * @param message - The incoming message.
    */
   public async handleMessage(message: Message<boolean>): Promise<void> {
+    if (!message) {
+      log('No message provided to handleMessage');
+      return;
+    }
     log('Handling message with ID ' + message.id);
     await handleMessage(message);
   }
@@ -89,8 +99,9 @@ export class DiscordService implements IMessengerService {
       if (!channel) {
         throw new Error('Channel not found');
       }
+      log(`Sending message to channel ${channelId}: ${message}`);
       await channel.send(message);
-      log(`Message sent to channel ${channelId}: ${message}`);
+      log(`Message sent to channel ${channelId} successfully`);
     } catch (error: any) {
       log(`Failed to send message to channel ${channelId}: ` + error.message);
       throw error;
