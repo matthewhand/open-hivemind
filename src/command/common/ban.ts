@@ -1,4 +1,7 @@
-import Debug from "debug";
+import Debug from 'debug';
+import { CommandInteraction, GuildMember } from 'discord.js';
+
+const debug = Debug('app:banUser');
 
 /**
  * Ban a User in Discord via Command
@@ -28,7 +31,7 @@ export async function banUser(
     // Check if the target can be banned
     if (!target.bannable) {
       debug('Target user ' + target.user.tag + ' cannot be banned in guild ' + interaction.guildId);
-      await interaction.reply(`User ${target.user.tag} cannot be banned.`);
+      await interaction.reply('User ' + target.user.tag + ' cannot be banned.');
       return;
     }
 
@@ -37,10 +40,10 @@ export async function banUser(
     debug('User ' + target.user.tag + ' has been banned in guild ' + interaction.guildId);
 
     // Confirm the ban operation
-    await interaction.reply(`User ${target.user.tag} has been banned.`);
-  } catch (error) {
+    await interaction.reply('User ' + target.user.tag + ' has been banned.');
+  } catch (error: any) {
     const targetInfo = target ? target.user.tag : 'unknown user';
-    debug('Failed to ban user ' + targetInfo + ' in guild ' + interaction.guildId + ': ' + error);
-    await interaction.reply(`Failed to ban ${target ? target.user.tag : 'the user'}.`);
+    debug('Failed to ban user ' + targetInfo + ' in guild ' + interaction.guildId + ': ' + error.message);
+    await interaction.reply('Failed to ban ' + (target ? target.user.tag : 'the user') + '.');
   }
 }
