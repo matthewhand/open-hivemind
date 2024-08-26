@@ -1,4 +1,6 @@
-import Debug from "debug";
+import Debug from 'debug';
+
+const debug = Debug('app:commandHandler');
 
 export interface CommandDetails {
     command: string;
@@ -33,15 +35,15 @@ export async function executeParsedCommand(
     const commandName = aliases[command] || command;
     const commandInstance = commands[commandName];
     if (!commandInstance) {
-        debug(`executeParsedCommand: Command not found - ${commandName}`);
+        debug('executeParsedCommand: Command not found - ' + commandName);
         return { success: false, message: 'Command not found.', error: 'Command implementation missing.' };
     }
     try {
         const result = await commandInstance.execute(args);
-        debug(`executeParsedCommand: Command executed - ${commandName}`);
+        debug('executeParsedCommand: Command executed - ' + commandName);
         return { success: true, result };
     } catch (error: any) {
-        debug(`executeParsedCommand: Error executing command - ${commandName}: ${error.message}`);
+        debug('executeParsedCommand: Error executing command - ' + commandName + ': ' + error.message);
         return { success: false, message: 'Error executing command.', error: error.message };
     }
 }
