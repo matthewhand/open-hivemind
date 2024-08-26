@@ -1,15 +1,26 @@
 import Debug from "debug";
-
 import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
+import constants from '@config/ConfigurationManager';
+
+const debug = Debug('app:playAudioResponse');
 
 /**
- * Plays the audio response back in the voice channel.
- * @param {VoiceConnection} connection - The voice connection object.
+ * Play Audio Response
+ *
+ * This function converts a given text to speech using a remote narration service and plays the resulting audio in the connected
+ * Discord voice channel. It manages the conversion request, handles errors, and ensures the audio is played back smoothly.
+ *
+ * Key Features:
+ * - Integrates with a remote text-to-speech service to generate dynamic audio responses.
+ * - Saves the generated audio to a file, which is then played in the voice channel.
+ * - Manages audio playback, including error handling and cleanup after playback.
+ *
+ * @param {VoiceConnection} connection - The voice connection to use for playing the audio response.
  * @param {string} text - The text to convert to speech and play.
- * @returns {Promise<void>}
+ * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
     const narrationEndpointUrl = constants.NARRATION_ENDPOINT_URL;
