@@ -1,7 +1,7 @@
 import { OpenAIApi, Configuration } from 'openai';
 import Debug from 'debug';
 import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from './operations/chatCompletions/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
