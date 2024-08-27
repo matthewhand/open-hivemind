@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
+import { sendCompletionsRequest } from '@src/llm/openai/operations/sendCompletionsRequest';
 
 /**
  * OpenAiService class interacts with OpenAI's API to perform tasks such as generating completions.
@@ -78,5 +79,15 @@ export class OpenAiService {
       throw new Error('Missing required properties in requestBody');
     }
     return this.openai.chat.completions.create(requestBody);
+  }
+
+  /**
+   * Creates a completion using OpenAI's API.
+   *
+   * @param prompt - The prompt to send to OpenAI for completion.
+   * @returns A Promise resolving to the response object from OpenAI.
+   */
+  public async createCompletion(prompt: string): Promise<any> {
+    return sendCompletionsRequest(this, prompt);
   }
 }
