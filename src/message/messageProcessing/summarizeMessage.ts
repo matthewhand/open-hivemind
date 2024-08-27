@@ -1,35 +1,38 @@
 import Debug from "debug";
 import constants from '@config/ConfigurationManager';
 import { OpenAiService } from '../../llm/openai/OpenAiService';
+import { summarizeText } from '@src/llm/openai/operations/summarizeText';
 
 const debug = Debug('app:summarizeMessage');
 
 /**
- * Summarizes a given text to a specified target size using the OpenAiService API.
+ * Summarizes a given text using the OpenAiService.
+ *
  * This function reduces the length of responses that exceed Discord's message length limits.
+ * It uses the OpenAiService to generate a summary based on the provided content.
  *
  * Key Features:
  * - Validates input content to ensure it's a string.
- * - Uses OpenAiService to generate a summary.
- * - Provides detailed logging for debugging and monitoring.
+ * - Utilizes the summarizeText function from OpenAiService.
+ * - Logs detailed information about the summarization process.
  *
  * @param {string} content - The content to be summarized.
  * @param {number} [targetSize=constants.LLM_RESPONSE_MAX_TOKENS] - The target size for the summary.
- * @returns {Promise<string>} - The summarized text if successful, the original text otherwise.
+ * @returns {Promise<string>} The summarized text.
  */
 export async function summarizeMessage(content: string, targetSize: number = constants.LLM_RESPONSE_MAX_TOKENS): Promise<string> {
     if (typeof content !== 'string') {
-        debug('[summarizeMessage] Invalid content type: ' + typeof content + ' - Content: ' + content);
+        debug('Invalid content type: ' + typeof content + ' - Content: ' + content);
         throw new Error('Content must be a string.');
     }
-    const openAiService = OpenAiService.getInstance(constants.OPENAI_API_KEY);
+
     try {
-        const response = await openAiService.summarizeText(content);
-        const summary = typeof response === 'string' ? response : JSON.stringify(response);
-        debug('[summarizeMessage] Content summarized to ' + summary.length + ' characters. Summary: ' + summary);
-        return summary;
+        const openAiService = OpenAiService.getInstance(constants.LLM_API_KEY);
+        const response = await summarizeText(openAiService, content);
+        debug('Summarization completed successfully.');
+        return response.getContent();
     } catch (error: any) {
-        debug('[summarizeMessage] Failed to summarize content: ' + error.message + '. Returning original content.', { error });
-        return content;  // Return the original content if summarization fails
+        debug('Error summarizing message: ' + (error instanceof Error ? error.message : String(error)));
+        throw error;
     }
 }
