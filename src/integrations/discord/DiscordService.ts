@@ -1,7 +1,8 @@
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
-import { handleMessage as processMessage } from './interaction/handleMessage';
 import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import DiscordMessage from '@src/integrations/discord/DiscordMessage'; // Import your DiscordMessage implementation
 
 const log = Debug('app:discord-service');
 
@@ -20,6 +21,7 @@ const log = Debug('app:discord-service');
 export class DiscordService {
   private client: Client;
   private static instance: DiscordService;
+  private messageHandler: ((message: IMessage) => void) | null = null;
 
   /**
    * Private constructor to enforce singleton pattern.
@@ -44,6 +46,14 @@ export class DiscordService {
   }
 
   /**
+   * Sets a custom message handler for processing incoming messages.
+   * @param handler - The function to handle incoming messages.
+   */
+  public setMessageHandler(handler: (message: IMessage) => void): void {
+    this.messageHandler = handler;
+  }
+
+  /**
    * Initializes the Discord service by logging in and setting up event handlers.
    */
   public async initialize(token?: string): Promise<void> {
@@ -56,6 +66,22 @@ export class DiscordService {
       this.client.once('ready', () => {
         log(`Logged in as ${this.client.user?.tag}!`);
       });
+
+      // Set up the message event handler if provided
+      if (this.messageHandler) {
+        log('Setting up custom message handler');
+        this.client.on('messageCreate', (message: Message<boolean>) => {
+          log(`Received a message with ID: ${message.id}`);
+
+          // Convert the Discord.js message to your IMessage implementation
+          const iMessage: IMessage = new DiscordMessage(message);
+
+          // Call the handler with the converted IMessage
+          this.messageHandler!(iMessage);
+        });
+      } else {
+        log('No custom message handler set');
+      }
     } catch (error: any) {
       log('Failed to start DiscordService: ' + error.message);
       process.exit(1);
@@ -68,20 +94,6 @@ export class DiscordService {
    */
   public async start(token: string): Promise<void> {
     await this.initialize(token);
-  }
-
-  /**
-   * Handles incoming messages, determining if an AI response is needed,
-   * preparing the request, and sending the response.
-   * @param message - The incoming message.
-   */
-  public async handleMessage(message: Message<boolean>): Promise<void> {
-    if (!message) {
-      log('No message provided to handleMessage');
-      return;
-    }
-    log('Handling message with ID ' + message.id);
-    await processMessage(message);
   }
 
   /**

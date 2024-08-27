@@ -63,7 +63,7 @@ export async function messageHandler(
   // Handle the response correctly for IMessage
   await processCommand(originalMsg, async (result: string) => {
     if (typeof originalMsg.reply === 'function') {
-      await originalMsg.reply(result.getText());
+      await originalMsg.reply(result);
       debug('[messageHandler] Sent reply using originalMsg.reply');
     } else {
       debug('[messageHandler] originalMsg.reply is not a function, handling differently');
