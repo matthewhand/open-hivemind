@@ -18,13 +18,12 @@ export class OpenAiService {
 
   private constructor() {
     this.openai = new OpenAI({
-      apiKey: ConfigurationManager.getConfig('openai_api_key', 'default-api-key'),
-      baseURL: ConfigurationManager.getConfig('openai_base_url', 'https://api.openai.com'),
-      timeout: ConfigurationManager.getConfig('openai_timeout', 10000),
-      headers: ConfigurationManager.getConfig('openai_headers', {}),
-      organization: ConfigurationManager.getConfig('openai_organization', undefined),
-      retry: ConfigurationManager.getConfig('openai_retry', { retries: 3 }),
-      proxy: ConfigurationManager.getConfig('proxy', undefined),
+      apiKey: ConfigurationManager.OPENAI_API_KEY,
+      baseURL: ConfigurationManager.OPENAI_BASE_URL,
+      timeout: ConfigurationManager.OPENAI_TIMEOUT,
+      organization: ConfigurationManager.OPENAI_ORGANIZATION,
+      retry: ConfigurationManager.OPENAI_RETRY,
+      proxy: ConfigurationManager.PROXY,
     });
     this.busy = false;
   }
