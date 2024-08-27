@@ -6,7 +6,8 @@ import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessag
 import { sendFollowUp } from '@src/message/discord/interaction/sendFollowUp';
 import { sendMessageToChannel } from '@src/message/discord/interaction/sendMessageToChannel';
 import { sendChatCompletionsRequest } from '@src/llm/openai/operations/sendChatCompletionsRequest';
-import constants from '@config/ConfigurationManager';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';  // Correctly import OpenAiService
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 const debug = Debug('app:handleAIResponse');
 
@@ -25,13 +26,15 @@ const debug = Debug('app:handleAIResponse');
  * @param {IMessage} message - The incoming message.
  * @returns {Promise<void>} A promise that resolves when the response is sent.
  */
-export async function handleAIResponse(client: Client, message: IMessage): Promise<void> {
+export async function handleAIResponse(client: Client<boolean>, message: IMessage): Promise<void> {
+    const openAiService = OpenAiService.getInstance(ConfigurationManager.LLM_API_KEY);  // Use OpenAiService for LLM operations
+
     const requestBody = await prepareMessageBody(message.getText(), message.getChannelId(), []);
     debug('Prepared requestBody: ' + JSON.stringify(requestBody));
 
     let llmResponse;
     try {
-        llmResponse = await sendChatCompletionsRequest(client, requestBody);
+        llmResponse = await sendChatCompletionsRequest(openAiService, requestBody);  // Pass OpenAiService instance
         debug('LLM request sent successfully.');
     } catch (error: any) {
         debug('Error sending LLM request: ' + error.message);
@@ -56,7 +59,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
             throw new Error('LLM provided an empty or invalid response.');
         }
 
-        if (responseContent.length > constants.MAX_MESSAGE_LENGTH) {
+        if (responseContent.length > ConfigurationManager.MAX_MESSAGE_LENGTH) {  // Use correct reference to ConfigurationManager
             responseContent = await summarizeMessage(responseContent);
             debug('LLM response summarized due to length.');
         }
@@ -73,7 +76,7 @@ export async function handleAIResponse(client: Client, message: IMessage): Promi
         return;
     }
 
-    if (constants.FOLLOW_UP_ENABLED) {
+    if (ConfigurationManager.FOLLOW_UP_ENABLED) {  // Use correct reference to ConfigurationManager
         try {
             await sendFollowUp(client, message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
             debug('Follow-up interaction initiated.');
