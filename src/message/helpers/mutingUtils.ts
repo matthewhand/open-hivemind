@@ -1,8 +1,14 @@
 import Debug from "debug";
-
 import { TextChannel, EmbedBuilder } from "discord.js";
+
+const debug = Debug('app:mutingUtils');
+
 /**
- * Mutes a user in the specified channel.
+ * Mutes a user in the specified channel by adding the 'Muted' role.
+ *
+ * This function fetches the member using their user ID, then finds and applies the 'Muted' role.
+ * If the role does not exist, it logs an appropriate message and exits.
+ *
  * @param {TextChannel} channel - The channel where the user will be muted.
  * @param {string} userId - The ID of the user to be muted.
  * @returns {Promise<void>} Resolves when the user is muted.
