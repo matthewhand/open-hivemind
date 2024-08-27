@@ -5,14 +5,14 @@ import { redactSensitiveInfo } from '@src/utils/redactSensitiveInfo';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
+n    public readonly MESSAGE: string = this.getConfig<string>('message.provider', process.env.MESSAGE || 'discord');
     // LLM Configuration
     public readonly LLM_API_KEY: string = this.getConfig<string>('llm.apiKey', process.env.LLM_API_KEY || 'DUMMY-KEY-OOBABOOGAFTW');
-    public readonly LLM_ENDPOINT_URL: string = this.getConfig<string>('llm.endpointUrl', process.env.LLM_ENDPOINT_URL || 'http://10.0.0.160:11434/v1');
     public readonly LLM_SYSTEM_PROMPT: string = this.getConfig<string>('llm.systemPrompt', 'default_system_prompt');
     public readonly LLM_MAX_TOKENS: number = this.getConfig<number>('llm.maxTokens', 150);
     public readonly LLM_RESPONSE_MAX_TOKENS: number = this.getConfig<number>('llm.responseMaxTokens', 100);
     public readonly LLM_TEMPERATURE: number = this.getConfig<number>('llm.temperature', 0.7);
-    public readonly LLM_MODEL: string = this.getConfig<string>('llm.model', 'default_model');
+    public readonly OPENAI_MODEL: string = this.getConfig<string>('llm.model', 'default_model');
     public readonly LLM_MESSAGE_LIMIT_PER_HOUR: number = this.getConfig<number>('llm.messageLimitPerHour', 1000);
     public readonly LLM_MESSAGE_LIMIT_PER_DAY: number = this.getConfig<number>('llm.messageLimitPerDay', 24000);
     public readonly LLM_PROVIDER: string = this.getConfig<string>('llm.provider', 'default_provider');

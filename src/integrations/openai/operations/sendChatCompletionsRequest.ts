@@ -39,7 +39,7 @@ export async function sendChatCompletionsRequest(
   debug('Sending request to OpenAI');
   try {
     const requestBody = {
-      model: constants.LLM_MODEL,
+      model: constants.OPENAI_MODEL,
       messages: historyMessages.map((msg) => ({
         role: manager.isValidRole(msg.role) ? msg.role : 'user',
         content: msg.content,

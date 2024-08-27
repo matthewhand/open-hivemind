@@ -98,7 +98,7 @@ function appendFallbackUserMessage(messages: ChatCompletionMessageParam[]): void
  */
 function createRequestBody(messages: ChatCompletionMessageParam[], maxTokens: number): ChatCompletionCreateParamsNonStreaming {
     const requestBody: ChatCompletionCreateParamsNonStreaming = {
-        model: ConfigurationManager.LLM_MODEL,
+        model: ConfigurationManager.OPENAI_MODEL,
         messages,
         max_tokens: maxTokens,
         temperature: ConfigurationManager.LLM_TEMPERATURE,

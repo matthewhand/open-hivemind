@@ -18,7 +18,7 @@ export async function completeSentence(
 ): Promise<string> {
     debug('[completeSentence] Completing sentence using OpenAI API.');
     const requestBody = {
-        model: config.LLM_MODEL,
+        model: config.OPENAI_MODEL,
         prompt: partialContent,
         max_tokens: config.LLM_RESPONSE_MAX_TOKENS,
         temperature: config.LLM_TEMPERATURE,

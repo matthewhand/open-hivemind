@@ -69,7 +69,7 @@ export class OpenAiService {
    * Returns the current model used by the service.
    */
   public getModel(): string {
-    return ConfigurationManager.LLM_MODEL;
+    return ConfigurationManager.OPENAI_MODEL;
   }
 
   /**

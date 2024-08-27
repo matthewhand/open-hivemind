@@ -33,7 +33,7 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
     debug('Sending request to OpenAI');
     try {
         const requestBody = {
-            model: constants.LLM_MODEL,
+            model: constants.OPENAI_MODEL,
             prompt: message,
             max_tokens: constants.LLM_RESPONSE_MAX_TOKENS,
             temperature: constants.LLM_TEMPERATURE,
