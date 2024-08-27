@@ -8,13 +8,29 @@ import constants from '@config/ConfigurationManager';
 
 const debug = Debug('app:sendCompletionsRequest');
 
+/**
+ * Sends a completion request to the OpenAI API.
+ *
+ * Manages the preparation and sending of a completion request to the API,
+ * including dry run support, and handles potential issues like token limits or incomplete sentences.
+ *
+ * Key Features:
+ * - Handles dry runs for testing the request body
+ * - Supports completion of responses if they are incomplete or exceed token limits
+ * - Logs the process and handles errors gracefully
+ *
+ * @param manager - The OpenAiService managing the API interactions.
+ * @param message - The message prompt for the completion request.
+ * @param dryRun - If true, returns the request body without sending it to the API.
+ * @returns A promise resolving to an LLMResponse object containing the API response or error information.
+ */
 export async function sendCompletionsRequest(manager: OpenAiService, message: string, dryRun: boolean = false): Promise<LLMResponse> {
     if (manager.isBusy()) {
-        debug('[sendCompletionsRequest] Manager is currently busy.');
+        debug('Manager is currently busy.');
         return new LLMResponse('', 'busy');
     }
     manager.setBusy(true);
-    debug('[sendCompletionsRequest] Sending request to OpenAI');
+    debug('Sending request to OpenAI');
     try {
         const requestBody = {
             model: constants.LLM_MODEL,
@@ -24,7 +40,7 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
             user: constants.INCLUDE_USERNAME_IN_COMPLETION ? 'assistant' : undefined,
         };
         if (dryRun) {
-            debug('[sendCompletionsRequest] Dry run mode - returning request body only');
+            debug('Dry run mode - returning request body only');
             return new LLMResponse(JSON.stringify(requestBody), 'dry-run');
         }
         const response = await manager.getClient().completions.create(requestBody);
@@ -36,15 +52,15 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
             constants.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
-            debug('[sendCompletionsRequest] Completing response due to token limit or incomplete sentence.');
+            debug('Completing response due to token limit or incomplete sentence.');
             content = await completeSentence(manager.getClient(), content, constants);
         }
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
-        debug('[sendCompletionsRequest] Error during OpenAI API request: ' + error.message);
+        debug('Error during OpenAI API request: ' + error.message);
         return new LLMResponse('', 'error');
     } finally {
         manager.setBusy(false);
-        debug('[sendCompletionsRequest] Manager set to not busy.');
+        debug('Manager set to not busy.');
     }
 }
