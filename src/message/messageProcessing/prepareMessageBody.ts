@@ -1,6 +1,8 @@
 import Debug from "debug";
 import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
+import ConfigurationManager from '@config/ConfigurationManager';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 
 const debug = Debug('app:prepareMessageBody');
 
@@ -22,16 +24,16 @@ const debug = Debug('app:prepareMessageBody');
  */
 export async function prepareMessageBody(prompt: string, channelId: string, historyMessages: IMessage[]): Promise<any> {
     if (typeof prompt !== 'string' || !Array.isArray(historyMessages)) {
-        debug('[prepareMessageBody] Invalid input: Prompt must be a string and historyMessages must be an array.');
+        debug('Invalid input: Prompt must be a string and historyMessages must be an array.');
         throw new Error('Invalid input: Prompt must be a string and historyMessages must be an array.');
     }
     try {
-        const manager = OpenAiService.getInstance();
-        const requestBody = await manager.buildRequestBody(historyMessages);
-        debug('[prepareMessageBody] Request body prepared successfully.');
+        // Use buildChatCompletionRequestBody instead of buildRequestBody
+        const requestBody = buildChatCompletionRequestBody(historyMessages);
+        debug('Request body prepared successfully.');
         return requestBody;
     } catch (error: any) {
-        debug('[prepareMessageBody] Error preparing request body: ' + (error instanceof Error ? error.message : String(error)));
+        debug('Error preparing request body: ' + (error instanceof Error ? error.message : String(error)));
         throw error;
     }
 }
