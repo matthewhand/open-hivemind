@@ -22,7 +22,7 @@ const debug = Debug('app:transcribeAudio');
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
         const openai = new OpenAI({
-            apiKey: constants.TRANSCRIBE_API_KEY
+            apiKey: constants.OPENAI_API_KEY
         });
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),

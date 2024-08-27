@@ -25,11 +25,11 @@ export async function generateResponse(aiService: OpenAiService, transcript: str
         const response: LLMResponse = await sendRequest(aiService, {
             model: aiService.getModel(),
             messages: [{ role: 'user', content: transcript }],
-            max_tokens: ConfigurationManager.LLM_MAX_TOKENS,
-            temperature: ConfigurationManager.LLM_TEMPERATURE,
+            max_tokens: ConfigurationManager.OPENAI_MAX_TOKENS,
+            temperature: ConfigurationManager.OPENAI_TEMPERATURE,
             top_p: ConfigurationManager.LLM_TOP_P,
-            frequency_penalty: ConfigurationManager.LLM_FREQUENCY_PENALTY,
-            presence_penalty: ConfigurationManager.LLM_PRESENCE_PENALTY,
+            frequency_penalty: ConfigurationManager.OPENAI_FREQUENCY_PENALTY,
+            presence_penalty: ConfigurationManager.OPENAI_PRESENCE_PENALTY,
         });
         return response.getContent();
     } catch (error: any) {

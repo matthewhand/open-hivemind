@@ -23,12 +23,12 @@ const debug = Debug('app:playAudioResponse');
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    const narrationEndpointUrl = constants.NARRATION_ENDPOINT_URL;
+    const narrationEndpointUrl = constants.OPENAI_BASE_URL;
     if (!narrationEndpointUrl) {
-        debug('NARRATION_ENDPOINT_URL is not set in the environment variables.');
+        debug('OPENAI_BASE_URL is not set in the environment variables.');
         return;
     }
-    debug('NARRATION_ENDPOINT_URL: ' + narrationEndpointUrl);
+    debug('OPENAI_BASE_URL: ' + narrationEndpointUrl);
     try {
         const response = await axios.post(narrationEndpointUrl, {
             input: text,
@@ -36,7 +36,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + constants.NARRATION_API_KEY,
+                'Authorization': 'Bearer ' + constants.OPENAI_API_KEY,
             },
         });
         const audioBuffer = Buffer.from(response.data.audioContent, 'base64');

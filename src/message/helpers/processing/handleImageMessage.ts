@@ -50,7 +50,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
  */
 export async function handleImageMessage(message: any): Promise<boolean> {
     try {
-        if (message.channel.id !== process.env.DISCORD_DEFAULT_CHANNEL_ID) {
+        if (message.channel.id !== process.env.DISCORD_CHANNEL_ID) {
             console.debug('Ignoring message in channel ' + message.channel.id);
             return false;
         }

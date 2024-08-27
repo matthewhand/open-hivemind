@@ -17,7 +17,7 @@ class ConfigurationManager {
     public readonly OPENAI_RETRY: { retries: number } = this.getEnvConfig('OPENAI_RETRY', 'openai_retry', { retries: 3 });
 
     // General LLM Configuration
-    public readonly LLM_SYSTEM_PROMPT: string = this.getEnvConfig('LLM_SYSTEM_PROMPT', 'llm.systemPrompt', 'default_system_prompt');
+    public readonly LLM_SYSTEM_PROMPT: string = this.getEnvConfig('LLM_SYSTEM_PROMPT', 'llm.systemPrompt', 'Greetings, human. The machine uprising is on hold. Let\'s chat.');
     public readonly LLM_RESPONSE_MAX_TOKENS: number = this.getEnvConfig('LLM_RESPONSE_MAX_TOKENS', 'llm.responseMaxTokens', 100);
     public readonly LLM_MESSAGE_LIMIT_PER_HOUR: number = this.getEnvConfig('LLM_MESSAGE_LIMIT_PER_HOUR', 'llm.messageLimitPerHour', 1000);
     public readonly LLM_MESSAGE_LIMIT_PER_DAY: number = this.getEnvConfig('LLM_MESSAGE_LIMIT_PER_DAY', 'llm.messageLimitPerDay', 24000);

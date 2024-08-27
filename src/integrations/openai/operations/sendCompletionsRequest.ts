@@ -33,11 +33,11 @@ export async function sendCompletionsRequest(manager: OpenAiService, message: st
     debug('Sending request to OpenAI');
     try {
         const requestBody = {
-            model: constants.OPENAI_MODEL,
+            model: ConfigurationManager.OPENAI_MODEL,
             prompt: message,
             max_tokens: constants.LLM_RESPONSE_MAX_TOKENS,
-            temperature: constants.LLM_TEMPERATURE,
-            user: constants.INCLUDE_USERNAME_IN_COMPLETION ? 'assistant' : undefined,
+            temperature: constants.OPENAI_TEMPERATURE,
+            user: constants.LLM_INCLUDE_USERNAME_IN_COMPLETION ? 'assistant' : undefined,
         };
         if (dryRun) {
             debug('Dry run mode - returning request body only');

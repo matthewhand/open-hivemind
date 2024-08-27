@@ -21,7 +21,7 @@ export async function completeSentence(
         model: config.OPENAI_MODEL,
         prompt: partialContent,
         max_tokens: config.LLM_RESPONSE_MAX_TOKENS,
-        temperature: config.LLM_TEMPERATURE,
+        temperature: config.OPENAI_TEMPERATURE,
     };
     const response = await openaiClient.completions.create(requestBody);
     return response.choices[0].text.trim();

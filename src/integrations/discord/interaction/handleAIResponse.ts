@@ -59,7 +59,7 @@ export async function handleAIResponse(client: Client<boolean>, message: IMessag
             throw new Error('LLM provided an empty or invalid response.');
         }
 
-        if (responseContent.length > ConfigurationManager.MAX_MESSAGE_LENGTH) {  // Use correct reference to ConfigurationManager
+        if (responseContent.length > ConfigurationManager.DISCORD_MAX_MESSAGE_LENGTH) {  // Use correct reference to ConfigurationManager
             responseContent = await summarizeMessage(responseContent);
             debug('LLM response summarized due to length.');
         }
@@ -76,7 +76,7 @@ export async function handleAIResponse(client: Client<boolean>, message: IMessag
         return;
     }
 
-    if (ConfigurationManager.FOLLOW_UP_ENABLED) {  // Use correct reference to ConfigurationManager
+    if (ConfigurationManager.MESSAGE_FOLLOW_UP_ENABLED) {  // Use correct reference to ConfigurationManager
         try {
             await sendFollowUp(client, message, message.getChannelId(), message.getChannelTopic() || 'General Discussion');
             debug('Follow-up interaction initiated.');

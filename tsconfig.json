@@ -15,7 +15,6 @@
       "@llm/*": ["src/llm/*"],
       "@message/*": ["src/message/*"],
       "@discord/*": ["src/message/discord/*"],
-      "@utils/*": ["src/utils/*"],
       "@types/*": ["src/types/*"],
       "@src/*": ["src/*"]
     },

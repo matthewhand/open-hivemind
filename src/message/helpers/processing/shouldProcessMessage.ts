@@ -23,7 +23,7 @@ export function shouldProcessMessage(
 ): boolean {
     debug('[shouldProcessMessage] Checking if message in channel ' + channelId + ' should be processed.');
     // Skip processing if the author is the bot itself
-    if (authorId === constants.BOT_USER_ID) {
+    if (authorId === ConfigurationManager.DISCORD_BOT_USER_ID) {
         debug('[shouldProcessMessage] Skipping message from bot itself in channel ' + channelId + '.');
         return false;
     }
@@ -31,7 +31,7 @@ export function shouldProcessMessage(
     const timeSinceLastMessage = messageTimestamp - lastMessageTimestamp;
     debug('[shouldProcessMessage] Time since last message in channel ' + channelId + ': ' + timeSinceLastMessage + 'ms.');
     // Skip processing if the message was sent too soon after the last one
-    if (timeSinceLastMessage < constants.MIN_MESSAGE_INTERVAL_MS) {
+    if (timeSinceLastMessage < constants.MESSAGE_MIN_INTERVAL_MS) {
         debug('[shouldProcessMessage] Skipping message in channel ' + channelId + ' due to short interval: ' + timeSinceLastMessage + 'ms.');
         return false;
     }

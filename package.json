@@ -24,7 +24,6 @@
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
     "@discord": "dist/src/message/discord",
-    "@utils": "dist/src/utils",
     "@types": "dist/src/types",
     "@src": "dist/src"
   },
