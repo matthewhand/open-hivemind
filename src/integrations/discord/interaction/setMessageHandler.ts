@@ -4,7 +4,7 @@ import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
-import { startTypingIndicator } from '@src/utils/startTypingIndicator';
+import { startTypingIndicator } from '@src/integrations/discord/startTypingIndicator';
 
 import { IMessage } from '@src/message/interfaces/IMessage';
 
