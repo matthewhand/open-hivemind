@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { ChatCompletionCreateParamsBase } from 'openai';
+import { ChatCompletionCreateParams } from 'openai';
 
 /**
  * Builds the request body for OpenAI API calls.
@@ -22,7 +22,7 @@ export function buildChatCompletionRequestBody(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
-): ChatCompletionCreateParamsBase {
+): ChatCompletionCreateParams {
     // Guard clause for input validation
     if (!Array.isArray(historyMessages)) {
         debug('Invalid input: historyMessages must be an array');
@@ -69,7 +69,7 @@ export function buildChatCompletionRequestBody(
         messages.push({ role: 'user', content: getEmoji() });
     }
 
-    const requestBody: ChatCompletionCreateParamsBase = {
+    const requestBody: ChatCompletionCreateParams = {
         model: ConfigurationManager.LLM_MODEL,
         messages: messages,
         max_tokens: maxTokens,

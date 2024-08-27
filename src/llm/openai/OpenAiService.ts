@@ -17,7 +17,7 @@ export class OpenAiService {
   private static instance: OpenAiService;
 
   private constructor() {
-    this.openai = new OpenAI(ConfigurationManager.getConfig('openai_api_key', 'default-api-key'));
+    this.openai = new OpenAI({ apiKey: ConfigurationManager.getConfig('openai_api_key', 'default-api-key') });
     this.busy = false;
   }
 
