@@ -44,14 +44,12 @@ export function buildChatCompletionRequestBody(
 
     historyMessages.forEach((message) => {
         const currentRole = message.isFromBot() ? 'assistant' : 'user';
-        const authorName = message.getAuthorId();
 
         if (supportNameField) {
             if (
-                messages[messages.length - 1].role !== currentRole ||
-                messages[messages.length - 1].name !== authorName
+                messages[messages.length - 1].role !== currentRole
             ) {
-                messages.push({ role: currentRole, content: message.getText(), name: authorName });
+                messages.push({ role: currentRole, content: message.getText() });
             } else {
                 messages[messages.length - 1].content += ' ' + message.getText();
             }
