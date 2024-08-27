@@ -21,8 +21,7 @@ export class OpenAiService {
       apiKey: ConfigurationManager.OPENAI_API_KEY,
       baseURL: ConfigurationManager.OPENAI_BASE_URL,
       timeout: ConfigurationManager.OPENAI_TIMEOUT,
-      organization: ConfigurationManager.OPENAI_ORGANIZATION,
-      proxy: ConfigurationManager.PROXY,
+      organization: ConfigurationManager.OPENAI_ORGANIZATION
     });
     this.busy = false;
   }
