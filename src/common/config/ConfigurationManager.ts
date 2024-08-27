@@ -5,7 +5,7 @@ import { redactSensitiveInfo } from '@src/utils/redactSensitiveInfo';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
-n    public readonly MESSAGE: string = this.getConfig<string>('message.provider', process.env.MESSAGE || 'discord');
+    public readonly MESSAGE: string = this.getConfig<string>('message.provider', process.env.MESSAGE || 'discord');
     // LLM Configuration
     public readonly LLM_API_KEY: string = this.getConfig<string>('llm.apiKey', process.env.LLM_API_KEY || 'DUMMY-KEY-OOBABOOGAFTW');
     public readonly LLM_SYSTEM_PROMPT: string = this.getConfig<string>('llm.systemPrompt', 'default_system_prompt');
