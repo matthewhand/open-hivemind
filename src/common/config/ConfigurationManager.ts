@@ -1,6 +1,6 @@
 import config from 'config';
 import Debug from 'debug';
-import { redactSensitiveInfo } from '@src/utils/redactSensitiveInfo';
+import { redactSensitiveInfo } from '@src/util../common/redactSensitiveInfo';
 
 const debug = Debug('app:ConfigurationManager');
 
