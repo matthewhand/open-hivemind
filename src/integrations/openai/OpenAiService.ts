@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
-import { sendCompletionsRequest } from '@src/llm/openai/operations/sendCompletionsRequest';
+import { buildChatCompletionRequestBody } from '@src/integrations/openai/operations/chatCompletions/buildChatCompletionRequestBody';
+import { sendCompletionsRequest } from '@src/integrations/openai/operations/sendCompletionsRequest';
 
 /**
  * OpenAiService class interacts with OpenAI's API to perform tasks such as generating completions.

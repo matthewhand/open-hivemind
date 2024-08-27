@@ -25,7 +25,7 @@ export abstract class LlmService {
         debug('getManager called with LLM_PROVIDER: ' + constants.LLM_PROVIDER);
         switch (constants.LLM_PROVIDER) {
             case 'OpenAI': {
-                const { OpenAiService } = require('@src/llm/openai/OpenAiService');
+                const { OpenAiService } = require('@src/integrations/openai/OpenAiService');
                 return OpenAiService.getInstance();
             }
             default:

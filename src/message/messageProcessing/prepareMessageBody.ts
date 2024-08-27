@@ -1,8 +1,8 @@
 import Debug from "debug";
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import ConfigurationManager from '@config/ConfigurationManager';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from '@src/integrations/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 
 const debug = Debug('app:prepareMessageBody');
 

@@ -1,10 +1,10 @@
 import Debug from 'debug';
 
 import LLMResponse from '@src/llm/LLMResponse';
-import { extractContent } from '@src/llm/openai/operations/extractContent';
-import { sendCompletionsRequest } from '@src/llm/openai/operations/sendCompletionsRequest';
+import { extractContent } from '@src/integrations/openai/operations/extractContent';
+import { sendCompletionsRequest } from '@src/integrations/openai/operations/sendCompletionsRequest';
 import constants from '@config/ConfigurationManager';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 
 const debug = Debug('app:summarizeText');
 

@@ -2,11 +2,10 @@ import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
-import DiscordMessage from '../DiscordMessage';
+import DiscordMessage from '@src/message/implementations/DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
 import { startTypingIndicator } from '@src/utils/startTypingIndicator';
 
-// Import IMessage interface
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:setMessageHandler');

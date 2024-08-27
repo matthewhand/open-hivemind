@@ -1,7 +1,7 @@
 import Debug from "debug";
 import constants from '@config/ConfigurationManager';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
-import { summarizeText } from '@src/llm/openai/operations/summarizeText';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import { summarizeText } from '@src/integrations/openai/operations/summarizeText';
 
 const debug = Debug('app:summarizeMessage');
 

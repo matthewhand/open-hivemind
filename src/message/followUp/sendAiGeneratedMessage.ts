@@ -1,7 +1,7 @@
 import Debug from "debug";
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { Message } from 'discord.js';
-import { generateResponse } from '@src/message/discord/processing/generateResponse';
+import { generateResponse } from '@src/integrations/discord/processing/generateResponse';
 
 const debug = Debug('app:sendAiGeneratedMessage');
 

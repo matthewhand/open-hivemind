@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/LLMResponse';
-import { extractContent } from '@src/llm/openai/operations/extractContent';
-import { completeSentence } from '@src/llm/openai/operations/completeSentence';
-import { needsCompletion } from '@src/llm/openai/operations/needsCompletion';
+import { extractContent } from '@src/integrations/openai/operations/extractContent';
+import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
+import { needsCompletion } from '@src/integrations/openai/operations/needsCompletion';
 import { redactSensitiveInfo } from '@src/utils/redactSensitiveInfo';
 import { handleError } from '@src/common/errors/handleError';
 

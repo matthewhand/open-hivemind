@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { DiscordMessage } from '@src/message/implementations/DiscordMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
 

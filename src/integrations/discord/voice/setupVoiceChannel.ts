@@ -1,4 +1,4 @@
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 
 /**
  * Sets up a voice channel and interacts with the AI service.

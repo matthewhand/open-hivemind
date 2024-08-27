@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
-import { sendRequest } from '@src/llm/openai/operations/sendRequest';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import { sendRequest } from '@src/integrations/openai/operations/sendRequest';
 import LLMResponse from '@src/llm/LLMResponse';
 import ConfigurationManager from '@config/ConfigurationManager';
 

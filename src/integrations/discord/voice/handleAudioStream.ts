@@ -7,7 +7,7 @@ import { transcribeAudio } from './transcribeAudio';
 import { generateResponse } from '../processing/generateResponse';
 import { playAudioResponse } from './playAudioResponse';
 import { IMessage } from '@src/message/interfaces/IMessage'; // Assuming IMessage is defined here
-import { OpenAiService } from '@src/llm/openai/OpenAiService'; // Import OpenAiService
+import { OpenAiService } from '@src/integrations/openai/OpenAiService'; // Import OpenAiService
 
 const debug = Debug('app:message:handleAudioStream');
 

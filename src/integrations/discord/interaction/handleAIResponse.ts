@@ -3,10 +3,10 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { Client } from 'discord.js';
 import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
 import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';
-import { sendFollowUp } from '@src/message/discord/interaction/sendFollowUp';
-import { sendMessageToChannel } from '@src/message/discord/interaction/sendMessageToChannel';
-import { sendChatCompletionsRequest } from '@src/llm/openai/operations/sendChatCompletionsRequest';
-import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { sendFollowUp } from '@src/integrations/discord/interaction/sendFollowUp';
+import { sendMessageToChannel } from '@src/integrations/discord/interaction/sendMessageToChannel';
+import { sendChatCompletionsRequest } from '@src/integrations/openai/operations/sendChatCompletionsRequest';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 const debug = Debug('app:handleAIResponse');
