@@ -5,14 +5,15 @@ import { redactSensitiveInfo } from '@src/common/redactSensitiveInfo';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
+    public readonly LLM: string = this.getConfig<string>('llm.provider', process.env.LLM || 'openai');
     public readonly MESSAGE: string = this.getConfig<string>('message.provider', process.env.MESSAGE || 'discord');
+
     // LLM Configuration
     public readonly LLM_API_KEY: string = this.getConfig<string>('llm.apiKey', process.env.LLM_API_KEY || 'DUMMY-KEY-OOBABOOGAFTW');
     public readonly LLM_SYSTEM_PROMPT: string = this.getConfig<string>('llm.systemPrompt', 'default_system_prompt');
     public readonly LLM_MAX_TOKENS: number = this.getConfig<number>('llm.maxTokens', 150);
     public readonly LLM_RESPONSE_MAX_TOKENS: number = this.getConfig<number>('llm.responseMaxTokens', 100);
     public readonly LLM_TEMPERATURE: number = this.getConfig<number>('llm.temperature', 0.7);
-    public readonly OPENAI_MODEL: string = this.getConfig<string>('llm.model', 'default_model');
     public readonly LLM_MESSAGE_LIMIT_PER_HOUR: number = this.getConfig<number>('llm.messageLimitPerHour', 1000);
     public readonly LLM_MESSAGE_LIMIT_PER_DAY: number = this.getConfig<number>('llm.messageLimitPerDay', 24000);
     public readonly LLM_PROVIDER: string = this.getConfig<string>('llm.provider', 'default_provider');
@@ -63,6 +64,7 @@ class ConfigurationManager {
     public readonly OPENAI_TIMEOUT: number = this.getConfig<number>('openai_timeout', 10000);
     public readonly OPENAI_ORGANIZATION: string | undefined = this.getConfig<string>('openai_organization', "");
     public readonly OPENAI_RETRY: { retries: number } = this.getConfig<{ retries: number }>('openai_retry', { retries: 3 });
+    public readonly OPENAI_MODEL: string = this.getConfig<string>('llm.model', 'default_model');
 
     // Generic getConfig method with redaction
     public getConfig<T>(key: string, defaultValue: T): T {
