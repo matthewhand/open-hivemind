@@ -4,9 +4,10 @@ import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
-import { generateResponse } from '../interaction/generateResponse';
+import { generateResponse } from '../processing/generateResponse';
 import { playAudioResponse } from './playAudioResponse';
 import { IMessage } from '../interfaces/IMessage'; // Assuming IMessage is defined here
+import { OpenAiService } from '@src/llm/openai/OpenAiService'; // Import OpenAiService
 
 const debug = Debug('app:message:handleAudioStream');
 
@@ -19,9 +20,10 @@ const debug = Debug('app:message:handleAudioStream');
  * @param {Readable} stream - The audio stream to process.
  * @param {VoiceConnection} connection - The Discord voice connection to stream to.
  * @param {IMessage} message - The original message object associated with the stream.
+ * @param {OpenAiService} aiService - The OpenAI service instance for generating responses.
  * @returns {Promise<void>} - A promise that resolves when the audio processing is complete.
  */
-export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage): Promise<void> => {
+export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage, aiService: OpenAiService): Promise<void> => {
     const audioChunks: Buffer[] = [];
     const userId = message.getAuthorId();
 
@@ -60,7 +62,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             if (transcript) {
                 debug('Transcription successful', { transcript });
-                const response = await generateResponse(transcript);
+                const response = await generateResponse(aiService, transcript); // Pass both aiService and transcript
 
                 if (response) {
                     debug('Generated response', { response });
@@ -81,5 +83,3 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
         debug('handleAudioStream: Error in audio stream', { userId, error: error.message, stack: error.stack });
     });
 };
-
-
