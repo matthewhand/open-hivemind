@@ -85,4 +85,20 @@ export class OpenAiService implements LlmService {
   isBusy(): boolean {
     return this.isProcessing;
   }
+
+  /**
+   * Sets the busy state of the service.
+   * @param state The busy state to set.
+   */
+  public setBusy(state: boolean): void {
+    this.isProcessing = state;
+  }
+
+  /**
+   * Returns the OpenAIApi client instance.
+   * @returns The OpenAIApi client.
+   */
+  public getClient(): OpenAIApi {
+    return this.api;
+  }
 }
