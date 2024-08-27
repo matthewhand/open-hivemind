@@ -1,11 +1,12 @@
 import Debug from "debug";
-
 import ConfigurationManager from '@config/ConfigurationManager';
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
 import constants from '@config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
+import { OpenAiService } from '@src/llm/openai/OpenAiService';
+import { IMessage } from '../interfaces/IMessage'; // Ensure IMessage is available
 
 const debug = Debug('app:setupVoiceChannel');
 
@@ -25,7 +26,7 @@ const debug = Debug('app:setupVoiceChannel');
  * @returns A promise that resolves to the voice connection, or void if setup fails.
  */
 export async function setupVoiceChannel(client: Client): Promise<VoiceConnection | void> {
-    const VOICE_CHANNEL_ID = ConfigurationManager.getConfig('VOICE_CHANNEL_ID', 'default_voice_channel_id');
+    const VOICE_CHANNEL_ID = ConfigurationManager.VOICE_CHANNEL_ID;
     debug('VOICE_CHANNEL_ID: ' + VOICE_CHANNEL_ID);
     if (!VOICE_CHANNEL_ID) {
         debug('VOICE_CHANNEL_ID is not set in the environment variables.');
@@ -67,6 +68,7 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
             adapterCreator: channel.guild.voiceAdapterCreator,
         });
         debug('Voice connection object: ' + JSON.stringify(connection));
+        const aiService = OpenAiService.getInstance(ConfigurationManager.LLM_API_KEY);
         connection.on(VoiceConnectionStatus.Ready, async () => {
             debug('Successfully connected to the voice channel: ' + channel.name);
             await playWelcomeMessage(connection);
@@ -83,7 +85,8 @@ export async function setupVoiceChannel(client: Client): Promise<VoiceConnection
         connection.receiver.speaking.on('start', (userId) => {
             debug('User ' + userId + ' started speaking');
             const audioStream = connection.receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: 5000 } });
-            handleAudioStream(audioStream, userId, connection);
+            const message = {}; // Placeholder for the actual message object; replace with the actual message instance.
+            handleAudioStream(audioStream, connection, message as IMessage, aiService); // Pass message and aiService
         });
         return connection;
     } catch (error: any) {
