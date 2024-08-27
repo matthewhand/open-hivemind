@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IMessage } from '@src/interfaces/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { Client } from 'discord.js';
 import { prepareMessageBody } from '@src/message/messageProcessing/prepareMessageBody';
 import { summarizeMessage } from '@src/message/messageProcessing/summarizeMessage';

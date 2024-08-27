@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IMessage } from '@src/interfaces/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 /**

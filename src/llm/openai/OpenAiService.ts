@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { IMessage } from '@src/interfaces/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 
 /**
@@ -74,6 +74,9 @@ export class OpenAiService {
    */
   public async createChatCompletion(messages: IMessage[]): Promise<any> {
     const requestBody = buildChatCompletionRequestBody(messages);
+    if (!requestBody.messages || !requestBody.model) {
+      throw new Error('Missing required properties in requestBody');
+    }
     return this.openai.chat.completions.create(requestBody);
   }
 }

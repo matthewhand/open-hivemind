@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IMessage } from '@src/interfaces/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
 
@@ -61,9 +61,9 @@ export async function messageHandler(
   debug('[messageHandler] validated message');
 
   // Handle the response correctly for IMessage
-  await processCommand(originalMsg.getText(), (result) => {
+  await processCommand(originalMsg, (result: IMessage) => {
     if (typeof originalMsg.reply === 'function') {
-      originalMsg.reply(result);
+      originalMsg.reply(result.getText());
       debug('[messageHandler] Sent reply using originalMsg.reply');
     } else {
       debug('[messageHandler] originalMsg.reply is not a function, handling differently');
