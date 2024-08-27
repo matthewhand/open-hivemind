@@ -2,17 +2,13 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import { ChatCompletionCreateParamsBase } from 'openai';
 
 /**
  * Builds the request body for OpenAI API calls.
  *
  * Prepares a structured request body by processing message history and applying
  * specific configurations for interaction with the OpenAI API.
- *
- * Key Features:
- * - Processes message history to align with API requirements
- * - Handles special cases such as role and author name assignment
- * - Incorporates system prompts and other configuration settings
  *
  * @param historyMessages - Array of IMessage representing the message history.
  * @param systemMessageContent - Content for the system prompt.
@@ -26,7 +22,7 @@ export function buildChatCompletionRequestBody(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
-): Record<string, any> {
+): ChatCompletionCreateParamsBase {
     // Guard clause for input validation
     if (!Array.isArray(historyMessages)) {
         debug('Invalid input: historyMessages must be an array');
@@ -73,7 +69,7 @@ export function buildChatCompletionRequestBody(
         messages.push({ role: 'user', content: getEmoji() });
     }
 
-    const requestBody: Record<string, any> = {
+    const requestBody: ChatCompletionCreateParamsBase = {
         model: ConfigurationManager.LLM_MODEL,
         messages: messages,
         max_tokens: maxTokens,
