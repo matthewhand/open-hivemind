@@ -61,7 +61,7 @@ export async function messageHandler(
   debug('[messageHandler] validated message');
 
   // Handle the response correctly for IMessage
-  await processCommand(originalMsg.getText(), async (result: IMessage) => {
+  await processCommand(originalMsg, async (result: string) => {
     if (typeof originalMsg.reply === 'function') {
       await originalMsg.reply(result.getText());
       debug('[messageHandler] Sent reply using originalMsg.reply');
