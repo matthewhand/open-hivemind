@@ -1,9 +1,9 @@
 import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
-import { handleMessage } from './interaction/handleMessage';
-import debug from 'debug';
+import { handleMessage as processMessage } from './interaction/handleMessage';
+import Debug from 'debug';
 
-const log = debug('app:discord-service');
+const log = Debug('app:discord-service');
 
 /**
  * DiscordService Class
@@ -27,9 +27,7 @@ export class DiscordService {
    */
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
-    this.client = new Client({
-      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates],
-    });
+    this.client = initializeClient();
     log('Client initialized successfully');
   }
 
@@ -58,7 +56,6 @@ export class DiscordService {
       this.client.once('ready', () => {
         log(`Logged in as ${this.client.user?.tag}!`);
       });
-      initializeClient(this.client);
     } catch (error: any) {
       log('Failed to start DiscordService: ' + error.message);
       process.exit(1);
@@ -84,7 +81,7 @@ export class DiscordService {
       return;
     }
     log('Handling message with ID ' + message.id);
-    await handleMessage(message);
+    await processMessage(message);
   }
 
   /**
