@@ -3,6 +3,7 @@ import { Configuration, OpenAIApi } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
 import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 const debug = Debug('app:OpenAiService');
 
@@ -100,5 +101,13 @@ export class OpenAiService implements LlmService {
    */
   public getClient(): OpenAIApi {
     return this.api;
+  }
+
+  /**
+   * Returns the model name used by the service.
+   * @returns The model name.
+   */
+  public getModel(): string {
+    return ConfigurationManager.LLM_MODEL; // Fetch from ConfigurationManager
   }
 }
