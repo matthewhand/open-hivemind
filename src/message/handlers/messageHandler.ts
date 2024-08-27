@@ -59,7 +59,16 @@ export async function messageHandler(
     return;
   }
   debug('[messageHandler] validated message');
-  // Process command without checking for return value (processCommand returns void)
-  await processCommand(originalMsg.getText(), (result) => originalMsg.reply(result));
+
+  // Handle the response correctly for IMessage
+  await processCommand(originalMsg.getText(), (result) => {
+    if (typeof originalMsg.reply === 'function') {
+      originalMsg.reply(result);
+      debug('[messageHandler] Sent reply using originalMsg.reply');
+    } else {
+      debug('[messageHandler] originalMsg.reply is not a function, handling differently');
+      // Add alternative handling if needed
+    }
+  });
   debug('[messageHandler] processed command');
 }

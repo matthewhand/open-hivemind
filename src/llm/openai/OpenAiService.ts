@@ -21,12 +21,12 @@ const debug = Debug('app:OpenAiService');
  */
 export class OpenAiService implements LlmService {
   private static instance: OpenAiService;
-  private api: OpenAIApi;
+  private api: OpenAI;
   private isProcessing: boolean = false;
 
   private constructor(apiKey: string) {
-    const configuration = new Configuration({ apiKey });
-    this.api = new OpenAIApi(configuration);
+    const configuration = { apiKey };
+    this.api = new OpenAI(configuration);
   }
 
   /**
@@ -63,7 +63,7 @@ export class OpenAiService implements LlmService {
    */
   async sendCompletion(prompt: string): Promise<string> {
     try {
-      const response = await this.api.createCompletion({
+      const response = await this.api.createChatCompletion({
         model: 'text-davinci-003',
         prompt,
         temperature: 0.9,
@@ -90,7 +90,7 @@ export class OpenAiService implements LlmService {
     }
 
     debug('Sending request to OpenAI API with body: ' + JSON.stringify(requestBody));
-    return sendRequest(this.api, requestBody);
+    return sendRequest(this, requestBody);
   }
 
   /**
@@ -128,10 +128,10 @@ export class OpenAiService implements LlmService {
   }
 
   /**
-   * Returns the OpenAIApi client instance.
-   * @returns The OpenAIApi client.
+   * Returns the OpenAI client instance.
+   * @returns The OpenAI client.
    */
-  public getClient(): OpenAIApi {
+  public getClient(): OpenAI {
     return this.api;
   }
 
