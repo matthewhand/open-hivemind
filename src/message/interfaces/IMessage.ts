@@ -82,4 +82,9 @@ export abstract class IMessage {
         debug('Replying with content: ' + content);
         // Implementation logic for replying to a message
     }
+    /**
+     * Retrieves the author's name.
+     * @returns {string} The author's name.
+     */
+    abstract getAuthorName(): string;
 }
