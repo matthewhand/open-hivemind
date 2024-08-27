@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { IMessage } from '@src/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
 import { processCommand } from '@src/message/messageProcessing/processCommand';
 

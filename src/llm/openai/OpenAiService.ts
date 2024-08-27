@@ -41,6 +41,24 @@ export class OpenAiService {
   }
 
   /**
+   * Checks if the service is busy.
+   */
+  public isBusy(): boolean {
+    return this.busy;
+  }
+
+  /**
+   * Checks if the role provided is valid for OpenAI chat completion.
+   *
+   * @param role - The role to validate (e.g., 'user', 'system', 'assistant').
+   * @returns True if the role is valid, otherwise false.
+   */
+  public isValidRole(role: string): boolean {
+    const validRoles = ['user', 'system', 'assistant'];
+    return validRoles.includes(role);
+  }
+
+  /**
    * Returns the current model used by the service.
    */
   public getModel(): string {
