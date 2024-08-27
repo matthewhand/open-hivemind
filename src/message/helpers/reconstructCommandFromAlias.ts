@@ -1,7 +1,32 @@
+/**
+ * @file reconstructCommandFromAlias.ts
+ * @description This utility module provides functions to resolve, reconstruct, and describe commands based on aliases.
+ * 
+ * The module is used primarily for processing user-input commands that may be provided in shorthand (aliases).
+ * It allows the bot to interpret these aliases by mapping them to their full command equivalents, reconstructing 
+ * the full command string, and providing descriptions or lists of available aliases.
+ * 
+ * Key Functions:
+ * - `resolveAlias`: Resolves a given alias to its corresponding command.
+ * - `reconstructCommand`: Reconstructs a full command string using the resolved alias and provided arguments.
+ * - `getAliasDescription`: Retrieves a description for a specific alias.
+ * - `listAliases`: Lists all available aliases.
+ * 
+ * Debug logging is utilized to provide insights into the alias resolution and command reconstruction process.
+ * 
+ * Note: This file is currently under review for potential consolidation with a similar module in `src/utils/`.
+ * If redundancy is found, the files may be merged or one of them deprecated.
+ * 
+ * @module reconstructCommandFromAlias
+ * @category Utilities
+ * @see {@link src/utils/reconstructCommandFromAlias.ts}
+ */
+
 import Debug from "debug";
 
 const debug = Debug('app:reconstructCommandFromAlias');
 
+// Type definitions for alias mapping
 export interface Alias {
     command: string;
     description: string;
@@ -9,33 +34,13 @@ export interface Alias {
 
 export type AliasMapping = Record<string, Alias>;
 
-/**
- * Resolves a command from an alias.
- *
- * This function takes an alias provided by the user and looks it up in the alias mapping object.
- * If the alias is found, it returns the corresponding command; otherwise, it returns the alias itself.
- *
- * @param alias - The alias provided by the user.
- * @param aliases - The alias mapping object.
- * @returns The resolved command string.
- */
+// Function implementations
 export function resolveAlias(alias: string, aliases: AliasMapping): string {
     const resolvedCommand = aliases[alias]?.command || alias;
     debug(`resolveAlias: Resolved alias '${alias}' to command '${resolvedCommand}'`);
     return resolvedCommand;
 }
 
-/**
- * Reconstructs a full command string from an alias and its arguments.
- *
- * This function takes an alias and its arguments, resolves the alias to the full command, and
- * reconstructs the full command string to be executed.
- *
- * @param alias - The alias provided by the user.
- * @param args - The arguments passed with the alias.
- * @param aliases - The alias mapping object.
- * @returns The reconstructed command string.
- */
 export function reconstructCommand(alias: string, args: string[], aliases: AliasMapping): string {
     const resolvedCommand = resolveAlias(alias, aliases);
     const reconstructedCommand = `${resolvedCommand} ${args.join(' ')}`;
@@ -43,30 +48,12 @@ export function reconstructCommand(alias: string, args: string[], aliases: Alias
     return reconstructedCommand;
 }
 
-/**
- * Retrieves the description for a given alias.
- *
- * This function looks up the provided alias in the alias mapping object and returns its description.
- * If the alias is not found, it returns a default message indicating that no description is available.
- *
- * @param alias - The alias to look up.
- * @param aliases - The alias mapping object.
- * @returns The description of the alias.
- */
 export function getAliasDescription(alias: string, aliases: AliasMapping): string {
     const description = aliases[alias]?.description || 'No description available';
     debug(`getAliasDescription: Description for alias '${alias}' is '${description}'`);
     return description;
 }
 
-/**
- * Lists all available aliases.
- *
- * This function returns an array of all the alias names defined in the alias mapping object.
- *
- * @param aliases - The alias mapping object.
- * @returns An array of alias names.
- */
 export function listAliases(aliases: AliasMapping): string[] {
     const aliasList = Object.keys(aliases);
     debug(`listAliases: Available aliases - ${aliasList.join(', ')}`);

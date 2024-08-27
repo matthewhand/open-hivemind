@@ -1,7 +1,7 @@
-import { OpenAIApi, Configuration } from 'openai';
+import { OpenAI } from 'openai';
 import Debug from 'debug';
 import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildChatCompletionRequestBody } from './operations/chatCompletions/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
@@ -46,7 +46,7 @@ export class OpenAiService implements LlmService {
    * @param historyMessages The input history messages for generating a response.
    * @returns The built request body.
    */
-  buildChatCompletionRequestBody(historyMessages: any[]): Promise<object> {
+  async buildChatCompletionRequestBody(historyMessages: any[]): Promise<object> {
     if (!Array.isArray(historyMessages)) {
       debug('Invalid input: historyMessages must be an array');
       throw new Error('Invalid input: historyMessages must be an array');
@@ -83,7 +83,7 @@ export class OpenAiService implements LlmService {
    * @param requestBody The prepared request body.
    * @returns The API response.
    */
-  async sendRequest(requestBody: object): Promise<any> {
+  async sendRequest(requestBody: { model: string; messages: { role: "user" | "system" | "assistant"; content: string }[]; max_tokens?: number; temperature?: number; top_p?: number; frequency_penalty?: number; presence_penalty?: number }): Promise<any> {
     if (!requestBody) {
       debug('No requestBody provided for sendRequest');
       return {};
@@ -115,6 +115,16 @@ export class OpenAiService implements LlmService {
    */
   public setBusy(state: boolean): void {
     this.isProcessing = state;
+  }
+
+  /**
+   * Validates if the given role is a valid one.
+   * @param role The role to validate.
+   * @returns True if the role is valid, false otherwise.
+   */
+  public isValidRole(role: string): boolean {
+    const validRoles = ['user', 'system', 'assistant'];
+    return validRoles.includes(role);
   }
 
   /**

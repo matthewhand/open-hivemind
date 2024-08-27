@@ -1,12 +1,12 @@
 import Debug from "debug";
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 import { Client, PermissionsBitField, VoiceChannel } from 'discord.js';
 import { joinVoiceChannel, VoiceConnection, VoiceConnectionStatus, EndBehaviorType } from '@discordjs/voice';
-import constants from '@config/ConfigurationManager';
+import constants from '@src/common/config/ConfigurationManager';
 import { playWelcomeMessage } from './playWelcomeMessage';
 import { handleAudioStream } from './handleAudioStream';
 import { OpenAiService } from '@src/llm/openai/OpenAiService';
-import { IMessage } from '../interfaces/IMessage'; // Ensure IMessage is available
+import { IMessage } from '@src/message/interfaces/IMessage'; // Ensure IMessage is available
 
 const debug = Debug('app:setupVoiceChannel');
 
