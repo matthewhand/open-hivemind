@@ -1,3 +1,4 @@
+import ConfigurationManager from "@src/common/config/ConfigurationManager";
 import Debug from "debug";
 
 import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
@@ -23,10 +24,10 @@ const debug = Debug('app:playWelcomeMessage');
  * @returns A promise that resolves when the welcome message has been played.
  */
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
-    const welcomeMessage = constants.WELCOME_MESSAGE;
+    const welcomeMessage = ConfigurationManager.DISCORD_WELCOME_MESSAGE;
     debug('Playing welcome message: ' + welcomeMessage);
     const openai = new OpenAI({
-        apiKey: constants.NARRATION_API_KEY
+        apiKey: constants.OPENAI_API_KEY
     });
     try {
         // Generate speech using OpenAI's text-to-speech API
