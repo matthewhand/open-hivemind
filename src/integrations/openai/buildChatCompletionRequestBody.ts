@@ -33,7 +33,7 @@ export function buildChatCompletionRequestBody(
         { role: 'system', content: systemMessageContent },
     ];
 
-    const supportNameField = process.env.LLM_SUPPORT_NAME_FIELD !== 'false';
+    const supportNameField = ConfigurationManager.getConfig("LLM_SUPPORT_NAME_FIELD", true);
 
     if (
         historyMessages.length > 0 &&
@@ -46,7 +46,9 @@ export function buildChatCompletionRequestBody(
     historyMessages.forEach((message) => {
         const currentRole = message.isFromBot() ? 'assistant' : 'user';
 
-        if (supportNameField) {
+            if (supportNameField && message.getAuthorName()) {
+                messages.push({ role: currentRole, content: message.getText(), name: message.getAuthorName() });
+            } else {
             if (
                 messages[messages.length - 1].role !== currentRole
             ) {
