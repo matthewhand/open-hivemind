@@ -1,6 +1,7 @@
 import Debug from "debug";
 import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import { Message } from 'discord.js';
+import { generateResponse } from '@src/message/discord/processing/generateResponse';
 
 const debug = Debug('app:sendAiGeneratedMessage');
 
@@ -27,7 +28,7 @@ export async function sendAiGeneratedMessage(
 ): Promise<void> {
   try {
     // Generate a response using the OpenAiService
-    const response = await aiManager.generateResponse(prompt);
+    const response = await generateResponse(aiManager, prompt);
 
     // Validate the AI response before proceeding
     if (!response || typeof response !== 'string' || response.trim() === '') {

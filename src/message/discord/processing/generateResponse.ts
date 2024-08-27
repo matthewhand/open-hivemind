@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { OpenAiService } from '@src/llm/openai/OpenAiService';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 import LLMResponse from '@src/llm/LLMResponse';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:generateResponse');
 
@@ -22,11 +23,15 @@ const debug = Debug('app:generateResponse');
 export async function generateResponse(aiService: OpenAiService, transcript: string): Promise<string | undefined> {
     try {
         const response: LLMResponse = await sendRequest(aiService, {
-            model: aiService.getModel(), // Use getModel to fetch the model name dynamically
+            model: aiService.getModel(),
             messages: [{ role: 'user', content: transcript }],
-            max_tokens: 20,
+            max_tokens: ConfigurationManager.LLM_MAX_TOKENS,
+            temperature: ConfigurationManager.LLM_TEMPERATURE,
+            top_p: ConfigurationManager.LLM_TOP_P,
+            frequency_penalty: ConfigurationManager.LLM_FREQUENCY_PENALTY,
+            presence_penalty: ConfigurationManager.LLM_PRESENCE_PENALTY,
         });
-        return response.getContent(); // Use getter method to access content
+        return response.getContent();
     } catch (error: any) {
         debug('Error generating response: ' + (error instanceof Error ? error.message : String(error)));
         return undefined;
