@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { IMessage } from '@src/interfaces/IMessage';
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
 /**
  * Builds the request body for OpenAI API calls.
