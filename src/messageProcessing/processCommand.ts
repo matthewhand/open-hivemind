@@ -1,4 +1,7 @@
 import Debug from "debug";
+
+const debug = Debug('app:processCommand');
+
 /**
  * Command Processing Module
  *
@@ -12,7 +15,6 @@ import Debug from "debug";
  * - Flexible command structure
  */
 
-
 /**
  * Processes a command message.
  * @param messageContent The content of the message to process.
@@ -24,7 +26,7 @@ export async function processCommand(messageContent: string, commandPrefix: stri
     return;
   }
 
-  debug('Processing command message:', messageContent);
+  debug('Processing command message: ' + messageContent);
   // Command processing logic
   debug('Command processed successfully.');
 }
