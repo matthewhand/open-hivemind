@@ -1,7 +1,7 @@
 import Debug from 'debug';
-import { Configuration, OpenAIApi } from 'openai';
+import { Configuration, OpenAI } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
@@ -21,12 +21,12 @@ const debug = Debug('app:OpenAiService');
  */
 export class OpenAiService implements LlmService {
   private static instance: OpenAiService;
-  private api: OpenAIApi;
+  private api: OpenAI;
   private isProcessing: boolean = false;
 
   private constructor(apiKey: string) {
     const configuration = new Configuration({ apiKey });
-    this.api = new OpenAIApi(configuration);
+    this.api = new OpenAI(configuration);
   }
 
   /**
@@ -69,7 +69,7 @@ export class OpenAiService implements LlmService {
    * @param requestBody The prepared request body.
    * @returns The API response.
    */
-  async sendRequest(requestBody: object): Promise<any> {
+  public async sendRequest(requestBody: object): Promise<any> {
     if (!requestBody) {
       debug('No requestBody provided for sendRequest');
       return {};
@@ -83,7 +83,7 @@ export class OpenAiService implements LlmService {
    * Checks if the service is currently processing a request.
    * @returns True if the service is processing, false otherwise.
    */
-  isBusy(): boolean {
+  public isBusy(): boolean {
     return this.isProcessing;
   }
 
@@ -96,10 +96,10 @@ export class OpenAiService implements LlmService {
   }
 
   /**
-   * Returns the OpenAIApi client instance.
-   * @returns The OpenAIApi client.
+   * Returns the OpenAI client instance.
+   * @returns The OpenAI client.
    */
-  public getClient(): OpenAIApi {
+  public getClient(): OpenAI {
     return this.api;
   }
 
@@ -108,6 +108,6 @@ export class OpenAiService implements LlmService {
    * @returns The model name.
    */
   public getModel(): string {
-    return ConfigurationManager.LLM_MODEL; // Fetch from ConfigurationManager
+    return ConfigurationManager.LLM_MODEL;
   }
 }
