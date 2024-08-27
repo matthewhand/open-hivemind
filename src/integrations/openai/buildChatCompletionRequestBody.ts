@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources';
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam } from 'openai/resources';
 
 // Initialize the debug logger for this file with a specific namespace.
 const debug = Debug('app:buildChatCompletionRequestBody');
@@ -15,7 +15,6 @@ const debug = Debug('app:buildChatCompletionRequestBody');
  */
 function validateMessages(historyMessages: IMessage[]): void {
     if (!Array.isArray(historyMessages)) {
-        // Log an error if the validation fails.
         debug('Invalid input: historyMessages must be an array');
         throw new Error('Invalid input: historyMessages must be an array');
     }
@@ -27,29 +26,53 @@ function validateMessages(historyMessages: IMessage[]): void {
  * @param systemMessageContent - The content of the system message to be included first in the array.
  * @returns An array starting with the system message object.
  */
-function initializeMessages(systemMessageContent: string): Array<{ role: string; content: string, name?: string }> {
+function initializeMessages(systemMessageContent: string): ChatCompletionMessageParam[] {
     return [{ role: 'system', content: systemMessageContent }];
 }
 
 /**
  * Processes the array of history messages to build the messages array for the OpenAI API.
- * Each message is examined to determine its role (user or assistant) and is added to the messages array.
+ * Each message is examined to determine its role (user, assistant, or system) and is added to the messages array.
  * Consecutive messages from the same role are concatenated.
  * @param historyMessages - The array of historical messages to process.
  * @param messages - The array that will be sent to the OpenAI API, built up with processed messages.
  * @param supportNameField - A boolean indicating whether to include the author's name in the message objects.
  */
-function processHistoryMessages(historyMessages: IMessage[], messages: Array<{ role: string; content: string, name?: string }>, supportNameField: boolean): void {
-    historyMessages.forEach((message) => {
-        const currentRole = message.isFromBot() ? 'assistant' : 'user'; // Determine whether the message is from the bot or the user.
-        const name = supportNameField ? message.getAuthorName() : undefined; // Optionally include the author's name if the configuration allows.
+function processHistoryMessages(historyMessages: IMessage[], messages: ChatCompletionMessageParam[], supportNameField: boolean): void {
+    historyMessages.forEach((message, index) => {
+        debug(`Processing message ${index + 1}/${historyMessages.length} with ID: ${message.getMessageId()}`);
+        
+        let newMessage: ChatCompletionMessageParam;
+        const currentRole: 'user' | 'assistant' | 'system' = message.isFromBot() ? 'assistant' : 'user';
+        debug(`Message role determined as: ${currentRole}`);
 
-        // If the current message role differs from the last message, push a new message object.
-        // Otherwise, append the text to the last message's content.
-        if (messages[messages.length - 1].role !== currentRole) {
-            messages.push({ role: currentRole, content: message.getText(), name: name || "Unknown" });
+        if (currentRole === 'user') {
+            newMessage = { role: 'user', content: message.getText() } as ChatCompletionUserMessageParam;
+            if (supportNameField) {
+                (newMessage as ChatCompletionUserMessageParam).name = message.getAuthorName();
+            }
+        } else if (currentRole === 'assistant') {
+            newMessage = { role: 'assistant', content: message.getText() } as ChatCompletionAssistantMessageParam;
+            if (supportNameField) {
+                (newMessage as ChatCompletionAssistantMessageParam).name = message.getAuthorName();
+            }
         } else {
-            messages[messages.length - 1].content += ' ' + message.getText();
+            newMessage = { role: 'system', content: message.getText() } as ChatCompletionSystemMessageParam;
+            if (supportNameField) {
+                (newMessage as ChatCompletionSystemMessageParam).name = message.getAuthorName();
+            }
+        }
+
+        debug(`Constructed message: ${JSON.stringify(newMessage)}`);
+
+        if (messages[messages.length - 1].role !== currentRole) {
+            messages.push(newMessage);
+            debug(`New message added to array. Total messages: ${messages.length}`);
+        } else {
+            if (newMessage.content) {
+                messages[messages.length - 1].content += ' ' + newMessage.content;
+                debug(`Appended content to previous message. Updated content: ${messages[messages.length - 1].content}`);
+            }
         }
     });
 }
@@ -59,10 +82,10 @@ function processHistoryMessages(historyMessages: IMessage[], messages: Array<{ r
  * This is to ensure the conversation always ends with a user input before querying the AI.
  * @param messages - The array of messages that will be sent to the OpenAI API.
  */
-function appendFallbackUserMessage(messages: Array<{ role: string; content: string, name?: string }>): void {
-    // Check if the last message is from the user, and if not, append a default user message with an emoji.
+function appendFallbackUserMessage(messages: ChatCompletionMessageParam[]): void {
     if (messages[messages.length - 1].role !== 'user') {
         messages.push({ role: 'user', content: getEmoji() });
+        debug('Appended fallback user message with emoji.');
     }
 }
 
@@ -73,19 +96,18 @@ function appendFallbackUserMessage(messages: Array<{ role: string; content: stri
  * @param maxTokens - The maximum number of tokens to generate in the response.
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
-function createRequestBody(messages: Array<{ role: string; content: string, name?: string }>, maxTokens: number): ChatCompletionCreateParamsNonStreaming {
-    // Assemble the request body using the configuration settings and the processed messages.
+function createRequestBody(messages: ChatCompletionMessageParam[], maxTokens: number): ChatCompletionCreateParamsNonStreaming {
     const requestBody: ChatCompletionCreateParamsNonStreaming = {
         model: ConfigurationManager.LLM_MODEL,
         messages,
         max_tokens: maxTokens,
         temperature: ConfigurationManager.LLM_TEMPERATURE,
     };
-    // Optionally include stop sequences if they are configured in the system settings.
     const llmStop = ConfigurationManager.LLM_STOP.length > 0 ? ConfigurationManager.LLM_STOP : null;
     if (llmStop) {
         requestBody.stop = llmStop;
     }
+    debug('Created request body for OpenAI API.');
     return requestBody;
 }
 
@@ -102,27 +124,12 @@ export function buildChatCompletionRequestBody(
     systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
 ): ChatCompletionCreateParamsNonStreaming {
-    // Step 1: Validate that the input messages array is an array.
     validateMessages(historyMessages);
-
-    // Step 2: Initialize the messages array with a system message to set the context.
     const messages = initializeMessages(systemMessageContent);
-
-    // Step 3: Determine whether to support the name field in the messages, based on configuration.
     const supportNameField = ConfigurationManager.getConfig('LLM_SUPPORT_NAME_FIELD', true);
-
-    // Step 4: Process the history messages to build up the array of messages for the API call.
     processHistoryMessages(historyMessages, messages, supportNameField);
-
-    // Step 5: Append a fallback user message if necessary, ensuring the last message is user input.
     appendFallbackUserMessage(messages);
-
-    // Step 6: Create the final request body, including all necessary parameters for the API.
-    const requestBody = createRequestBody([], maxTokens);
-
-    // Step 7: Log the built request body for debugging purposes.
+    const requestBody = createRequestBody(messages, maxTokens);
     debug('Built request body: ', requestBody);
-
-    // Step 8: Return the completed request body, ready to be sent to the OpenAI API.
     return requestBody;
 }
