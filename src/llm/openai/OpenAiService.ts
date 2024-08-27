@@ -1,7 +1,7 @@
+import { OpenAIApi, Configuration } from 'openai';
 import Debug from 'debug';
-import { Configuration, OpenAI } from 'openai';
 import { LlmService } from '@src/llm/interfaces/LlmService';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/buildChatCompletionRequestBody';
 import { sendRequest } from '@src/llm/openai/operations/sendRequest';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
@@ -21,12 +21,12 @@ const debug = Debug('app:OpenAiService');
  */
 export class OpenAiService implements LlmService {
   private static instance: OpenAiService;
-  private api: OpenAI;
+  private api: OpenAIApi;
   private isProcessing: boolean = false;
 
   private constructor(apiKey: string) {
     const configuration = new Configuration({ apiKey });
-    this.api = new OpenAI(configuration);
+    this.api = new OpenAIApi(configuration);
   }
 
   /**
@@ -57,19 +57,33 @@ export class OpenAiService implements LlmService {
   }
 
   /**
-   * Indicates that history is required for chat completions.
-   * @returns True since the OpenAI API requires history in chat completion requests.
+   * Sends a completion request to the OpenAI API.
+   * @param prompt The text prompt for generating a response.
+   * @returns The API response.
    */
-  requiresHistory(): boolean {
-    return true;
+  async sendCompletion(prompt: string): Promise<string> {
+    try {
+      const response = await this.api.createCompletion({
+        model: 'text-davinci-003',
+        prompt,
+        temperature: 0.9,
+        max_tokens: 150,
+        stop: [' Human:', ' AI:'],
+      });
+
+      return response.data.choices[0].text.trim();
+    } catch (error: any) {
+      debug('Error sending completion request: ' + error.message);
+      throw new Error('Failed to get completion from OpenAI API');
+    }
   }
 
   /**
-   * Sends the request to the OpenAI API and processes the response.
+   * Sends a chat completion request to the OpenAI API and processes the response.
    * @param requestBody The prepared request body.
    * @returns The API response.
    */
-  public async sendRequest(requestBody: object): Promise<any> {
+  async sendRequest(requestBody: object): Promise<any> {
     if (!requestBody) {
       debug('No requestBody provided for sendRequest');
       return {};
@@ -80,10 +94,18 @@ export class OpenAiService implements LlmService {
   }
 
   /**
+   * Indicates that history is required for chat completions.
+   * @returns True since the OpenAI API requires history in chat completion requests.
+   */
+  requiresHistory(): boolean {
+    return true;
+  }
+
+  /**
    * Checks if the service is currently processing a request.
    * @returns True if the service is processing, false otherwise.
    */
-  public isBusy(): boolean {
+  isBusy(): boolean {
     return this.isProcessing;
   }
 
@@ -96,10 +118,10 @@ export class OpenAiService implements LlmService {
   }
 
   /**
-   * Returns the OpenAI client instance.
-   * @returns The OpenAI client.
+   * Returns the OpenAIApi client instance.
+   * @returns The OpenAIApi client.
    */
-  public getClient(): OpenAI {
+  public getClient(): OpenAIApi {
     return this.api;
   }
 
