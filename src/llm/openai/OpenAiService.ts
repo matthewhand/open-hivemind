@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import ConfigurationManager from '@src/config/ConfigurationManager';
-import { buildChatCompletionRequestBody } from '@src/utils/buildChatCompletionRequestBody';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/buildChatCompletionRequestBody';
 
 /**
  * OpenAiService class interacts with OpenAI's API to perform tasks such as generating completions.
@@ -11,9 +11,40 @@ import { buildChatCompletionRequestBody } from '@src/utils/buildChatCompletionRe
  */
 export class OpenAiService {
   private openai: OpenAI;
+  private busy: boolean;
+  private static instance: OpenAiService;
 
-  constructor() {
+  private constructor() {
     this.openai = new OpenAI(ConfigurationManager.getConfig('openai_api_key'));
+    this.busy = false;
+  }
+
+  public static getInstance(): OpenAiService {
+    if (!OpenAiService.instance) {
+      OpenAiService.instance = new OpenAiService();
+    }
+    return OpenAiService.instance;
+  }
+
+  /**
+   * Gets the OpenAI client instance.
+   */
+  public getClient(): OpenAI {
+    return this.openai;
+  }
+
+  /**
+   * Sets the busy state of the service.
+   */
+  public setBusy(state: boolean): void {
+    this.busy = state;
+  }
+
+  /**
+   * Returns the current model used by the service.
+   */
+  public getModel(): string {
+    return ConfigurationManager.LLM_MODEL;
   }
 
   /**
