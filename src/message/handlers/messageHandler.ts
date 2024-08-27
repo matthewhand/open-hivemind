@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/validators/validateMessage';
-import { processCommand } from '@src/message/messageProcessing/processCommand';
+import { processCommand } from '@src/message/processing/processCommand';
 
 const debug = Debug('app:messageHandler');
 
