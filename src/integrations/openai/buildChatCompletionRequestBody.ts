@@ -101,7 +101,7 @@ function createRequestBody(messages: ChatCompletionMessageParam[], maxTokens: nu
         model: ConfigurationManager.OPENAI_MODEL,
         messages,
         max_tokens: maxTokens,
-        temperature: ConfigurationManager.LLM_TEMPERATURE,
+        temperature: ConfigurationManager.OPENAI_TEMPERATURE,
     };
     const llmStop = ConfigurationManager.LLM_STOP.length > 0 ? ConfigurationManager.LLM_STOP : null;
     if (llmStop) {
