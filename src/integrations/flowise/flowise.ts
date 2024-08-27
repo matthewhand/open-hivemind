@@ -16,7 +16,7 @@ export class FlowiseCommand {
         const { endpointId } = args;
 
         // Guard: Check if the API base URL is defined in the environment variables
-        const apiUrl = process.env.FLOWISE_API_BASE_URL;
+        const apiUrl = process.env.FLOWISE_BASE_URL;
         if (!apiUrl) {
             const errorMessage = 'Flowise API base URL is not defined in the environment variables.';
             debug(errorMessage);

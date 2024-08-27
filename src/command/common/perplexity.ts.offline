@@ -1,7 +1,7 @@
 import ConfigurationManager from '@config/ConfigurationManager';
 import { PerplexityApiService } from '@src/services/perplexity/PerplexityApiService';
 
-const perplexityApiUrl = ConfigurationManager.getConfig<string>('perplexity.apiUrl', 'https://api.perplexity.ai');
+const perplexityApiUrl = ConfigurationManager.PERPLEXITY_BASE_URL;
 
 export async function performPerplexitySearch(query: string): Promise<any> {
     const apiService = new PerplexityApiService(perplexityApiUrl);

@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
-import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam, ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam } from 'openai/resources';
 
 // Initialize the debug logger for this file with a specific namespace.
@@ -126,7 +126,7 @@ export function buildChatCompletionRequestBody(
 ): ChatCompletionCreateParamsNonStreaming {
     validateMessages(historyMessages);
     const messages = initializeMessages(systemMessageContent);
-    const supportNameField = ConfigurationManager.getConfig('LLM_SUPPORT_NAME_FIELD', true);
+    const supportNameField = ConfigurationManager.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
     processHistoryMessages(historyMessages, messages, supportNameField);
     appendFallbackUserMessage(messages);
     const requestBody = createRequestBody(messages, maxTokens);
