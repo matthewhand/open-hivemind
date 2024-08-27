@@ -32,10 +32,13 @@ export function redactSensitiveInfo(key: string, value: any): string {
             value = '[Complex value cannot be stringified]';
         }
     }
-    const lowerKey = key.toLowerCase();
-    const sensitiveKeys = ['password', 'secret', 'apikey', 'access_token', 'auth_token'];
+
+    // Updated sensitive keys list to cover variations like API_KEY and APIKEY
+    const sensitiveKeys = ['password', 'secret', 'apikey', 'api_key', 'access_token', 'auth_token'];
     const sensitivePhrases = ['bearer', 'token'];
-    if (sensitiveKeys.includes(lowerKey) || sensitivePhrases.some(phrase => value.includes(phrase))) {
+
+    const lowerKey = key.toLowerCase();
+    if (sensitiveKeys.includes(lowerKey) || sensitivePhrases.some(phrase => value.toLowerCase().includes(phrase))) {
         const redactedPart = value.length > 10 ? value.substring(0, 5) + '...' + value.slice(-5) : '[REDACTED]';
         return `${key}: ${redactedPart}`;
     }

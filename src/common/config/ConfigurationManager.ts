@@ -1,18 +1,13 @@
 import config from 'config';
 import Debug from 'debug';
+import { redactSensitiveInfo } from '@src/utils/redactSensitiveInfo';
 
 const debug = Debug('app:ConfigurationManager');
 
-/**
- * ConfigurationManager
- *
- * Manages global configuration settings for the application.
- * This includes API-related constants, limits, and other configuration details.
- */
 class ConfigurationManager {
     // LLM Configuration
-    public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';
-    public readonly LLM_ENDPOINT_URL: string = process.env.LLM_ENDPOINT_URL || 'default_endpoint_url';
+    public readonly LLM_API_KEY: string = this.getConfig<string>('llm.apiKey', process.env.LLM_API_KEY || 'DUMMY-KEY-OOBABOOGAFTW');
+    public readonly LLM_ENDPOINT_URL: string = this.getConfig<string>('llm.endpointUrl', process.env.LLM_ENDPOINT_URL || 'http://10.0.0.160:11434/v1');
     public readonly LLM_SYSTEM_PROMPT: string = this.getConfig<string>('llm.systemPrompt', 'default_system_prompt');
     public readonly LLM_MAX_TOKENS: number = this.getConfig<number>('llm.maxTokens', 150);
     public readonly LLM_RESPONSE_MAX_TOKENS: number = this.getConfig<number>('llm.responseMaxTokens', 100);
@@ -30,7 +25,7 @@ class ConfigurationManager {
     public readonly INCLUDE_USERNAME_IN_CHAT_COMPLETION: boolean = this.getConfig<boolean>('llm.includeUsernameInChatCompletion', false);
 
     // Discord Configuration
-    public readonly DISCORD_TOKEN: string = this.getConfig<string>('discord.token', process.env.DISCORD_TOKEN || 'default_discord_token');
+    public readonly DISCORD_TOKEN: string = this.getConfig<string>('discord.token', process.env.DISCORD_TOKEN || 'YOUR_DEV_DISCORD_TOKEN');
     public readonly DISCORD_CLIENT_ID: string = this.getConfig<string>('discord.clientId', process.env.DISCORD_CLIENT_ID || 'default_client_id');
     public readonly BOT_USER_ID: string = this.getConfig<string>('discord.botUserId', 'default_bot_user_id');
     public readonly VOICE_CHANNEL_ID: string = this.getConfig<string>('discord.voiceChannelId', 'default_voice_channel_id');
@@ -69,13 +64,14 @@ class ConfigurationManager {
     public readonly OPENAI_ORGANIZATION: string | undefined = this.getConfig<string>('openai_organization', "");
     public readonly OPENAI_RETRY: { retries: number } = this.getConfig<{ retries: number }>('openai_retry', { retries: 3 });
 
-    // Generic getConfig method
+    // Generic getConfig method with redaction
     public getConfig<T>(key: string, defaultValue: T): T {
         try {
             const value = config.get<T>(key);
+            debug(redactSensitiveInfo(key, value));
             return value !== undefined ? value : defaultValue;
         } catch (error) {
-            debug(`Configuration key not found: ${key}. Using default value: ${defaultValue}`);
+            debug(redactSensitiveInfo(key, defaultValue));
             return defaultValue;
         }
     }
