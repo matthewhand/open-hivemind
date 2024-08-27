@@ -62,6 +62,14 @@ class ConfigurationManager {
     public readonly CHANNEL_ID: string = this.getConfig<string>('discord.channelId', 'default_channel_id');
     public readonly MIN_MESSAGE_INTERVAL_MS: number = this.getConfig<number>('message.minMessageIntervalMs', 1000);
 
+    // OpenAI Configuration
+    public readonly OPENAI_API_KEY: string = process.env.OPENAI_API_KEY || config.get<string>('openai_api_key') || 'default-api-key';
+    public readonly OPENAI_BASE_URL: string = process.env.OPENAI_BASE_URL || config.get<string>('openai_base_url') || 'https://api.openai.com';
+    public readonly OPENAI_TIMEOUT: number = parseInt(process.env.OPENAI_TIMEOUT || config.get<string>('openai_timeout') || '10000', 10);
+    public readonly OPENAI_ORGANIZATION: string | undefined = process.env.OPENAI_ORGANIZATION || config.get<string>('openai_organization');
+    public readonly OPENAI_RETRY: { retries: number } = JSON.parse(process.env.OPENAI_RETRY || JSON.stringify(config.get<{ retries: number }>('openai_retry')) || '{"retries": 3}');
+    public readonly PROXY: string | undefined = process.env.PROXY || config.get<string>('proxy');
+
     // Generic getConfig method
     public getConfig<T>(key: string, defaultValue: T): T {
         const value = process.env[key.toUpperCase().replace('.', '_')];
