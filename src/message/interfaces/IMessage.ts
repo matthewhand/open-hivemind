@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:IMessage');
 
@@ -73,4 +73,13 @@ export abstract class IMessage {
      * @returns {boolean} True if the message is from a bot, false otherwise.
      */
     abstract isFromBot(): boolean;
+    /**
+     * Sends a reply to the message.
+     * @param {string} content - The content of the reply.
+     * @returns {Promise<void>} A promise that resolves when the reply is sent.
+     */
+    async reply(content: string): Promise<void> {
+        debug('Replying with content: ' + content);
+        // Implementation logic for replying to a message
+    }
 }

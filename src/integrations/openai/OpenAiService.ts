@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { buildChatCompletionRequestBody } from '@src/integrations/openai/operations/chatCompletions/buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from '@src/integrations/openai/buildChatCompletionRequestBody';
 import { sendCompletionsRequest } from '@src/integrations/openai/operations/sendCompletionsRequest';
 
 /**

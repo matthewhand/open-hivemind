@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
 import constants from '@config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
-import DiscordMessage from '@src/message/implementations/DiscordMessage';
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
 import { startTypingIndicator } from '@src/utils/startTypingIndicator';
 
