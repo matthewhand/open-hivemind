@@ -27,3 +27,35 @@ export async function sendChatCompletionsRequest(messages: IMessage[]): Promise<
 
     return client.chat.completions.create(requestBody);
 }
+
+/**
+ * Additional utility function to manage request payloads.
+ * @param messages - Array of IMessage objects.
+ * @param maxTokens - Maximum tokens to generate in the completion.
+ * @returns A structured request body for OpenAI API.
+ */
+export function buildChatRequestBody(messages: IMessage[], maxTokens: number = 100): ChatCompletionCreateParamsNonStreaming {
+    const requestBody: ChatCompletionCreateParamsNonStreaming = {
+        model: ConfigurationManager.OPENAI_MODEL,
+        messages: messages.map(message => ({ role: message.getRole(), content: message.getText() })),
+        max_tokens: maxTokens,
+        temperature: ConfigurationManager.OPENAI_TEMPERATURE,
+        stop: ConfigurationManager.LLM_STOP,
+        top_p: ConfigurationManager.LLM_TOP_P,
+    };
+    return requestBody;
+}
+
+/**
+ * Processes the chat completion response and logs relevant details.
+ * @param response - The response object returned from the OpenAI API.
+ * @returns Extracted text content from the response.
+ */
+export function processChatResponse(response: any): string {
+    if (!response || !response.choices || response.choices.length === 0) {
+        throw new Error('Invalid response from OpenAI API. No choices returned.');
+    }
+
+    const choice = response.choices[0];
+    return choice.text.trim();
+}

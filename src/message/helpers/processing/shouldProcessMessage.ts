@@ -17,3 +17,22 @@ export function shouldProcessMessage(messageLength: number): boolean {
 
     return false;
 }
+
+/**
+ * Checks if the current message count exceeds the limit per hour.
+ * @param messageCount - The current count of messages sent in the hour.
+ * @returns True if the message count is within the limit, false otherwise.
+ */
+export function isWithinMessageLimit(messageCount: number): boolean {
+    return messageCount < ConfigurationManager.LLM_MESSAGE_LIMIT_PER_HOUR;
+}
+
+/**
+ * Adjusts the processing threshold based on dynamic conditions.
+ * @param baseThreshold - The base threshold value.
+ * @param factor - A multiplier to adjust the threshold.
+ * @returns The adjusted threshold value.
+ */
+export function adjustProcessingThreshold(baseThreshold: number, factor: number): number {
+    return baseThreshold * factor;
+}

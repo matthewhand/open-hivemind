@@ -27,3 +27,28 @@ export async function sendCompletionsRequest(prompt: string): Promise<any> {
 
     return client.completions.create(requestBody);
 }
+
+/**
+ * Validates the OpenAI completion response and ensures that it contains valid data.
+ * @param response - The response object returned by OpenAI.
+ * @returns Extracted text content from the response.
+ */
+export function validateCompletionResponse(response: any): string {
+    if (!response || !response.choices || response.choices.length === 0) {
+        throw new Error('Invalid response from OpenAI API. No choices returned.');
+    }
+
+    const choice = response.choices[0];
+    return choice.text.trim();
+}
+
+/**
+ * Enhances the completion prompt with additional context if required.
+ * @param prompt - The original prompt to be completed.
+ * @param context - Additional context to enhance the prompt.
+ * @returns The enhanced prompt string.
+ */
+export function enhancePrompt(prompt: string, context: string): string {
+    return `${context}
+${prompt}`;
+}
