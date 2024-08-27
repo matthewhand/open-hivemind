@@ -1,3 +1,10 @@
+/**
+ * ConfigurationManager
+ *
+ * Manages global configuration settings for the application.
+ * This includes API-related constants, limits, and other configuration details.
+ */
+
 import Debug from 'debug';
 
 const debug = Debug('app:ConfigurationManager');
@@ -64,4 +71,5 @@ class ConfigurationManager {
     }
 }
 
+// Exporting ConfigurationManager as the default export
 export default new ConfigurationManager();

@@ -1,21 +1,41 @@
 import Debug from "debug";
-import * as votingUtils from '../message/helpers/votingUtils';
-import ConfigurationManager from '@config/ConfigurationManager';
+import aliasUtils from './aliasUtils';
+import configUtils from './configUtils';
+import encryptionUtils from './encryptionUtils';
+import environmentUtils from './environmentUtils';
+import getEmoji from './getEmoji';
+import getRandomDelay from './getRandomDelay';
+import getRandomErrorMessage from './getRandomErrorMessage';
+import handleError from './handleError';
+import initializeFetch from './initializeFetch';
+import logger from './logger';
+import processingLocks from './processingLocks';
+import reconstructCommandFromAlias from './reconstructCommandFromAlias';
+import redactSensitiveInfo from './redactSensitiveInfo';
+import sendLlmRequestUtils from './sendLlmRequestUtils';
+import splitMessage from './splitMessage';
+import startTypingIndicator from './startTypingIndicator';
+import utils from './utils';
 
-/**
- * Handles errors by logging them and potentially performing other actions.
- * This is a simplified placeholder for the previous handleError function.
- * 
- * @param {Error} error - The error to handle.
- */
-function handleError(error: Error): void {
-    debug('Error:', error.message);
-}
+const debug = Debug('app:index');
 
 export {
     aliasUtils,
+    configUtils,
+    encryptionUtils,
+    environmentUtils,
+    getEmoji,
+    getRandomDelay,
+    getRandomErrorMessage,
     handleError,
-    debug,
-    votingUtils,
-    ConfigurationManager
+    initializeFetch,
+    logger,
+    processingLocks,
+    reconstructCommandFromAlias,
+    redactSensitiveInfo,
+    sendLlmRequestUtils,
+    splitMessage,
+    startTypingIndicator,
+    utils,
+    debug
 };
