@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { buildChatCompletionRequestBody } from '@src/llm/openai/buildChatCompletionRequestBody';
+import { IMessage } from '@src/interfaces/IMessage';
+import { buildChatCompletionRequestBody } from '@src/llm/openai/operations/chatCompletions/buildChatCompletionRequestBody';
 
 /**
  * OpenAiService class interacts with OpenAI's API to perform tasks such as generating completions.
@@ -15,7 +16,7 @@ export class OpenAiService {
   private static instance: OpenAiService;
 
   private constructor() {
-    this.openai = new OpenAI(ConfigurationManager.getConfig('openai_api_key'));
+    this.openai = new OpenAI(ConfigurationManager.getConfig('openai_api_key', 'default-api-key'));
     this.busy = false;
   }
 
@@ -68,10 +69,10 @@ export class OpenAiService {
   /**
    * Creates a chat completion using OpenAI's API.
    *
-   * @param messages - Array of message objects to send to OpenAI.
+   * @param messages - Array of IMessage objects to send to OpenAI.
    * @returns A Promise resolving to the response object from OpenAI.
    */
-  public async createChatCompletion(messages: Array<{ role: string; content: string }>): Promise<any> {
+  public async createChatCompletion(messages: IMessage[]): Promise<any> {
     const requestBody = buildChatCompletionRequestBody(messages);
     return this.openai.chat.completions.create(requestBody);
   }
