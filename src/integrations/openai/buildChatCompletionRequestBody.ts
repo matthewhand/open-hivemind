@@ -47,7 +47,7 @@ function processHistoryMessages(historyMessages: IMessage[], messages: Array<{ r
         // If the current message role differs from the last message, push a new message object.
         // Otherwise, append the text to the last message's content.
         if (messages[messages.length - 1].role !== currentRole) {
-            messages.push({ role: currentRole, content: message.getText(), name });
+            messages.push({ role: currentRole, content: message.getText(), name: name || "Unknown" });
         } else {
             messages[messages.length - 1].content += ' ' + message.getText();
         }
@@ -118,7 +118,7 @@ export function buildChatCompletionRequestBody(
     appendFallbackUserMessage(messages);
 
     // Step 6: Create the final request body, including all necessary parameters for the API.
-    const requestBody = createRequestBody(messages, maxTokens);
+    const requestBody = createRequestBody([], maxTokens);
 
     // Step 7: Log the built request body for debugging purposes.
     debug('Built request body: ', requestBody);

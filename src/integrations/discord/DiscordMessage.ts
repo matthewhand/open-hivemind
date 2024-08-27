@@ -8,6 +8,10 @@ const debug = Debug('app:DiscordMessage');
  * Represents a Discord message, implementing the IMessage interface.
  */
 export default class DiscordMessage extends IMessage {
+    public getAuthorName(): string {
+        // Implementation logic for getAuthorName
+        return typeof this.data === "string" ? "Unknown Author" : this.data?.author?.name ?? "Unknown Author";
+    }
   public content: string;
   public client: Message['client'];
   public channelId: string;
