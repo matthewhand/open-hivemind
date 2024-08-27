@@ -26,11 +26,11 @@ export function debugEnvVars(): void {
     const requiredEnvVars = [
         'CLIENT_ID',
         'DISCORD_TOKEN',
-        'GUILD_ID'
+        'DISCORD_GUILD_ID'
     ];
 
     const optionalEnvVars = [
-        'CHANNEL_ID', 'BOT_ALLOWED_USERS', 'BOT_ALLOWED_ROLES', 'BOT_DEBUG_MODE',
+        'DISCORD_DEFAULT_CHANNEL_ID', 'BOT_ALLOWED_USERS', 'BOT_ALLOWED_ROLES', 'BOT_DEBUG_MODE',
         'LLM_API_KEY', 'LLM_ENDPOINT_URL', 'LLM_SYSTEM_PROMPT',
         'PERPLEXITY_API_KEY', 'PERPLEXITY_URL', 'PERPLEXITY_MODEL', 'PERPLEXITY_SYSTEM_PROMPT',
         'QUIVR_API_KEY', 'QUIVR_URL',

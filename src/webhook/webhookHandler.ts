@@ -12,11 +12,11 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 // Retrieve required configurations from ConfigurationManager
 const DISCORD_TOKEN = ConfigurationManager.DISCORD_CLIENT_ID;
-const CHANNEL_ID = ConfigurationManager.CHANNEL_ID;
+const DISCORD_DEFAULT_CHANNEL_ID = ConfigurationManager.DISCORD_DEFAULT_CHANNEL_ID;
 
 // Ensure necessary configurations are present
-if (!DISCORD_TOKEN || !CHANNEL_ID) {
-  debug('Missing required configurations: DISCORD_TOKEN and/or CHANNEL_ID');
+if (!DISCORD_TOKEN || !DISCORD_DEFAULT_CHANNEL_ID) {
+  debug('Missing required configurations: DISCORD_TOKEN and/or DISCORD_DEFAULT_CHANNEL_ID');
   process.exit(1);
 }
 
@@ -47,7 +47,7 @@ export const startWebhookServer = (port: number): void => {
     const imageUrl = predictionImageMap.get(predictionId);
     debug('Image URL:', imageUrl);
 
-    const channel = client.channels.cache.get(CHANNEL_ID) as TextChannel;
+    const channel = client.channels.cache.get(DISCORD_DEFAULT_CHANNEL_ID) as TextChannel;
 
     if (channel) {
       let resultMessage: string;
@@ -68,7 +68,7 @@ export const startWebhookServer = (port: number): void => {
 
       predictionImageMap.delete(predictionId);
     } else {
-      debug('Channel not found for ID:', CHANNEL_ID);
+      debug('Channel not found for ID:', DISCORD_DEFAULT_CHANNEL_ID);
     }
 
     res.setHeader('Content-Type', 'application/json');
@@ -108,7 +108,7 @@ export const startWebhookServer = (port: number): void => {
     }
 
     try {
-      await DiscordService.getInstance().sendMessageToChannel(CHANNEL_ID, message);
+      await DiscordService.getInstance().sendMessageToChannel(DISCORD_DEFAULT_CHANNEL_ID, message);
       debug('Message sent to Discord:', message);
       res.status(200).send({ message: 'Message sent to Discord.' });
     } catch (error: any) {

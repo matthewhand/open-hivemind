@@ -28,7 +28,7 @@ class ConfigurationManager {
     public readonly DISCORD_TOKEN: string = this.getConfig<string>('discord.token', process.env.DISCORD_TOKEN || 'YOUR_DEV_DISCORD_TOKEN');
     public readonly DISCORD_CLIENT_ID: string = this.getConfig<string>('discord.clientId', process.env.DISCORD_CLIENT_ID || 'default_client_id');
     public readonly BOT_USER_ID: string = this.getConfig<string>('discord.botUserId', 'default_bot_user_id');
-    public readonly VOICE_CHANNEL_ID: string = this.getConfig<string>('discord.voiceChannelId', 'default_voice_channel_id');
+    public readonly DISCORD_DEFAULT_VOICE_CHANNEL_ID: string = this.getConfig<string>('discord.voiceChannelId', 'default_voice_channel_id');
     public readonly MAX_MESSAGE_LENGTH: number = this.getConfig<number>('discord.maxMessageLength', 2000);
     public readonly INTER_PART_DELAY: number = this.getConfig<number>('discord.interPartDelayMs', 1000);
     public readonly BOT_TYPING_DELAY_MAX_MS: number = this.getConfig<number>('discord.typingDelayMaxMs', 5000);
@@ -54,7 +54,7 @@ class ConfigurationManager {
     public readonly FOLLOW_UP_ENABLED: boolean = this.getConfig<boolean>('followUp.enabled', false);
 
     // Custom Configurations
-    public readonly CHANNEL_ID: string = this.getConfig<string>('discord.channelId', 'default_channel_id');
+    public readonly DISCORD_DEFAULT_CHANNEL_ID: string = this.getConfig<string>('discord.channelId', 'default_channel_id');
     public readonly MIN_MESSAGE_INTERVAL_MS: number = this.getConfig<number>('message.minMessageIntervalMs', 1000);
 
     // OpenAI Configuration
