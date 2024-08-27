@@ -1,4 +1,5 @@
 import 'module-alias/register';  // Allows for tsconfig @alias to work at runtime with js
+import 'dotenv/config';  // Load environment variables from .env
 
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import ConfigurationManager from "@config/ConfigurationManager";
