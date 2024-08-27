@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import LLMResponse from '@src/llm/LLMResponse';
+import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { extractContent } from '@src/integrations/openai/operations/extractContent';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { needsCompletion } from '@src/integrations/openai/operations/needsCompletion';

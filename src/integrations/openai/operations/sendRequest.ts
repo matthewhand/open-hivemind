@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import constants from '@config/ConfigurationManager';
-import LLMResponse from '@src/llm/LLMResponse';
+import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { extractContent } from '@src/integrations/openai/operations/extractContent';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { needsCompletion } from '@src/integrations/openai/operations/needsCompletion';

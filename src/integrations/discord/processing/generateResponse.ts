@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { sendRequest } from '@src/integrations/openai/operations/sendRequest';
-import LLMResponse from '@src/llm/LLMResponse';
+import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:generateResponse');

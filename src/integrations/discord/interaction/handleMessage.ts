@@ -2,7 +2,7 @@ import Debug from "debug";
 import { Message } from 'discord.js';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import { generateResponse } from '../interaction/generateResponse';
-import { processAIResponse } from '@src/message/interaction/processAIResponse';
+import { processAIResponse } from '@src/message/handlers/processAIResponse';
 
 const debug = Debug('app:handleMessage');
 

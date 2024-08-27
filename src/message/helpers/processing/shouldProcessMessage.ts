@@ -1,7 +1,7 @@
 import Debug from "debug";
 
 import constants from '@config/ConfigurationManager';
-import { getLastMessageTimestamp } from './timestampFunctions';
+import { getLastMessageTimestamp } from '../timing/timestampFunctions';
 
 const debug = Debug('app:shouldProcessMessage');
 

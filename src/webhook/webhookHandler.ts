@@ -1,7 +1,7 @@
 import Debug from "debug";
 import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
-import { predictionImageMap } from '../message/helpers/handleImageMessage';
+import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 

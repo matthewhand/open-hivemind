@@ -1,6 +1,6 @@
 import Debug from "debug";
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { sendFollowUpRequest } from '@src/message/followUp/sendFollowUpRequest';
+import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
 /**
  * Handles the follow-up request by sending a follow-up message.

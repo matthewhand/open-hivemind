@@ -1,6 +1,6 @@
 import Debug from "debug";
 import { Message } from 'discord.js';
-import { splitMessage } from '@src/message/processing/splitMessage';
+import { splitMessage } from '@src/message/helpers/processing/splitMessage';
 
 const debug = Debug('app:sendResponse');
 
