@@ -7,7 +7,7 @@ class ConfigurationManager {
     public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';
     public readonly LLM_ENDPOINT_URL: string = process.env.LLM_ENDPOINT_URL || 'default_endpoint_url';
     public readonly LLM_SYSTEM_PROMPT: string = this.getConfig<string>('llm.systemPrompt', 'default_system_prompt');
-    public readonly LLM_RESPONSE_MAX_TOKENS: number = this.getConfig<number>('llm.responseMaxTokens', 100);
+    public readonly LLM_MAX_TOKENS: number = this.getConfig<number>('llm.maxTokens', 150); // Added LLM_MAX_TOKENS
     public readonly LLM_TEMPERATURE: number = this.getConfig<number>('llm.temperature', 0.7);
     public readonly LLM_MODEL: string = this.getConfig<string>('llm.model', 'default_model');
     public readonly LLM_MESSAGE_LIMIT_PER_HOUR: number = this.getConfig<number>('llm.messageLimitPerHour', 1000);
@@ -15,6 +15,9 @@ class ConfigurationManager {
     public readonly LLM_PROVIDER: string = this.getConfig<string>('llm.provider', 'default_provider');
     public readonly LLM_SUPPORTS_COMPLETIONS: boolean = this.getConfig<boolean>('llm.supportsCompletions', true);
     public readonly LLM_STOP: string[] = this.getConfig<string[]>('llm.stop', []);
+    public readonly LLM_TOP_P: number = this.getConfig<number>('llm.topP', 0.9);
+    public readonly LLM_FREQUENCY_PENALTY: number = this.getConfig<number>('llm.frequencyPenalty', 0.1);
+    public readonly LLM_PRESENCE_PENALTY: number = this.getConfig<number>('llm.presencePenalty', 0.05);
     public readonly INCLUDE_USERNAME_IN_COMPLETION: boolean = this.getConfig<boolean>('llm.includeUsernameInCompletion', false);
     public readonly INCLUDE_USERNAME_IN_CHAT_COMPLETION: boolean = this.getConfig<boolean>('llm.includeUsernameInChatCompletion', false);
 
