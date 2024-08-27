@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import axios from 'axios';
 import ICommand from '@src/command/interfaces/ICommand';
-import { getRandomErrorMessage } from '@src/utils/getRandomErrorMessage';
+import { getRandomErrorMessage } from '@src/common/errors/getRandomErrorMessage';
 
 const debug = Debug('app:memGPTCommand');
 

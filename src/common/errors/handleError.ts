@@ -1,44 +1,20 @@
-import Debug from 'debug';
+import Debug from "debug";
+import { getRandomErrorMessage } from './getRandomErrorMessage';
 
 const debug = Debug('app:handleError');
 
 /**
- * Error Handling Utility
- *
- * Provides a centralized mechanism for handling errors within the application.
- * This module ensures that errors are logged appropriately and that sensitive
- * information is redacted from logs.
- *
- * Key Features:
- * - Centralized error handling
- * - Sensitive information redaction
- * - Integration with debug logging
+ * Handles errors by logging them and optionally sending a random error message to a message channel.
+ * 
+ * @param error - The error object to be handled.
+ * @param messageChannel - The message channel to send the error message to.
  */
+export function handleError(error: Error, messageChannel: any = null): void {
+  debug(`Error Message: ${error.message}`);
+  debug(`Error Stack Trace: ${error.stack}`);
 
-/**
- * Handles an error by logging it and optionally throwing it.
- * @param error The error object to handle.
- * @param throwError Whether to rethrow the error after handling (default: false).
- */
-export function handleError(error: Error, throwError: boolean = false): void {
-  if (!error) {
-    debug('handleError called without an error object');
-    return;
-  }
-
-  debug('Handling error: ' + error.message);
-
-  // Redact sensitive information from the error message
-  const redactedMessage = error.message.replace(/password=\S+/g, 'password=REDACTED');
-  debug('Redacted error message: ' + redactedMessage);
-
-  // Log the stack trace if available
-  if (error.stack) {
-    debug('Error stack trace: ' + error.stack);
-  }
-
-  // Optionally rethrow the error
-  if (throwError) {
-    throw error;
+  if (messageChannel && typeof messageChannel.send === 'function') {
+    const errorMsg = getRandomErrorMessage();
+    messageChannel.send(errorMsg);
   }
 }

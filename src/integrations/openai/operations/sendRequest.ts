@@ -5,7 +5,7 @@ import LLMResponse from '@src/llm/LLMResponse';
 import { extractContent } from '@src/integrations/openai/operations/extractContent';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { needsCompletion } from '@src/integrations/openai/operations/needsCompletion';
-import { redactSensitiveInfo } from '@src/util../common/redactSensitiveInfo';
+import { redactSensitiveInfo } from '@src/common/redactSensitiveInfo';
 import { handleError } from '@src/common/errors/handleError';
 
 const debug = Debug('app:sendRequest');
