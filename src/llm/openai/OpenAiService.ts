@@ -22,7 +22,6 @@ export class OpenAiService {
       baseURL: ConfigurationManager.OPENAI_BASE_URL,
       timeout: ConfigurationManager.OPENAI_TIMEOUT,
       organization: ConfigurationManager.OPENAI_ORGANIZATION,
-      retry: ConfigurationManager.OPENAI_RETRY,
       proxy: ConfigurationManager.PROXY,
     });
     this.busy = false;

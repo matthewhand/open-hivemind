@@ -1,14 +1,14 @@
+import config from 'config';
+import Debug from 'debug';
+
+const debug = Debug('app:ConfigurationManager');
+
 /**
  * ConfigurationManager
  *
  * Manages global configuration settings for the application.
  * This includes API-related constants, limits, and other configuration details.
  */
-
-import Debug from 'debug';
-
-const debug = Debug('app:ConfigurationManager');
-
 class ConfigurationManager {
     // LLM Configuration
     public readonly LLM_API_KEY: string = process.env.LLM_API_KEY || 'default_api_key';
@@ -68,7 +68,6 @@ class ConfigurationManager {
     public readonly OPENAI_TIMEOUT: number = parseInt(process.env.OPENAI_TIMEOUT || config.get<string>('openai_timeout') || '10000', 10);
     public readonly OPENAI_ORGANIZATION: string | undefined = process.env.OPENAI_ORGANIZATION || config.get<string>('openai_organization');
     public readonly OPENAI_RETRY: { retries: number } = JSON.parse(process.env.OPENAI_RETRY || JSON.stringify(config.get<{ retries: number }>('openai_retry')) || '{"retries": 3}');
-    public readonly PROXY: string | undefined = process.env.PROXY || config.get<string>('proxy');
 
     // Generic getConfig method
     public getConfig<T>(key: string, defaultValue: T): T {

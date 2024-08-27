@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/utils/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { ChatCompletionCreateParams } from 'openai';
+import { ChatCompletionCreateParams } from 'openai/dist/api';
 
 /**
  * Builds the request body for OpenAI API calls.
