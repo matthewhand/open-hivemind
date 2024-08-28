@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { Configuration, OpenAIApi } from 'openai';
+import { Configuration, OpenAI } from 'openai';
 import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:sendFollowUpRequest');
@@ -31,10 +31,10 @@ export async function sendFollowUpRequest(message: string): Promise<any> {
         return null;
     }
 
-    const openai = new OpenAIApi(new Configuration({ apiKey: API_KEY }));
+    const openai = new OpenAI(new Configuration({ apiKey: API_KEY }));
 
     try {
-        const response = await openai.createChatCompletion({
+        const response = await openai.chat.completions.create({
             model: OPENAI_MODEL,
             messages: [{ role: 'user', content: message }],
         });
