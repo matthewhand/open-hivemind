@@ -70,22 +70,14 @@ class ConfigurationManager {
             }
             return envValue as unknown as T;
         }
-    
-        const configValue = config.get<T>(configKey);
-        return configValue !== undefined ? configValue : defaultValue;
-    }
-    
-    // Generic getConfig method with redaction
-    public getConfig<T>(key: string, defaultValue: T): T {
         try {
-            const value = config.get<T>(key);
-            debug(redactSensitiveInfo(key, value));
-            return value !== undefined ? value : defaultValue;
-        } catch (error) {
-            debug(redactSensitiveInfo(key, defaultValue));
+            const configValue = config.get(configKey);
+            return configValue !== undefined ? configValue : defaultValue;
+        } catch (e) {
+            debug(`Configuration key "${configKey}" not found. Using default value: ${defaultValue}`);
             return defaultValue;
         }
     }
 }
 
-export default new ConfigurationManager();
+export default ConfigurationManager;
