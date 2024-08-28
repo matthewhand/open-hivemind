@@ -13,7 +13,8 @@
       "@common/*": ["src/common/*"],
       "@llm/*": ["src/llm/*"],
       "@message/*": ["src/message/*"],
-      "@discord/*": ["src/message/discord/*"],
+      "@discord/*": ["src/integrations/discord/*"],
+      "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
       "@src/*": ["src/*"]
     },

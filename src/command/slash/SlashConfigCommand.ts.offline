@@ -4,7 +4,7 @@ const debug = Debug("app");
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction, GuildMemberRoleManager } from 'discord.js';
 import { isUserAllowed, isRoleAllowed } from '@message/helpers/permissions';
-import configManager from '@config/ConfigurationManager';
+import configManager from '@common/config/ConfigurationManager';
 // Allowed users and roles from environment variables
 const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];
 const allowedRoles = process.env.BOT_ALLOWED_ROLES ? process.env.BOT_ALLOWED_ROLES.split(',') : [];

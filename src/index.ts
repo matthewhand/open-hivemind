@@ -2,7 +2,7 @@ require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 require('dotenv/config'); // Loads environment variables from .env
 
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
-const ConfigurationManager = require('@config/ConfigurationManager').default;
+const ConfigurationManager = require('@common/config/ConfigurationManager').default;
 const Debug = require('debug');
 const { messageHandler } = require('@src/message/handlers/messageHandler');
 
@@ -19,7 +19,7 @@ async function main() {
         debug('Message handler set up successfully.');
 
         // Retrieve the client ID from the configuration manager
-        const clientId = ConfigurationManager.getConfig('discord.clientId', 'UNCONFIGURED_DISCORD_CLIENT_ID');
+        const clientId = new ConfigurationManager().DISCORD_CLIENT_ID;
         debug('Client ID retrieved:', clientId);
 
         // Guard clause: Ensure client ID is properly configured

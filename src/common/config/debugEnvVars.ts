@@ -4,7 +4,7 @@ const debug = Debug('app:utils:environmentUtils');
 
 export function debugEnvVars(): void {
     const messageProvider = process.env.MESSAGE || 'discord';
-    const llmProvider = process.env.LLM || 'openai';
+    const llmProvider = process.env.LLM_PROVIDER || 'openai';
 
     // Required environment variables based on MESSAGE and LLM values
     const requiredEnvVars: string[] = [];
