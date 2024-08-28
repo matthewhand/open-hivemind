@@ -6,10 +6,19 @@ const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
 
 /**
- * OpenAI Service handles interaction with OpenAI's API.
- * This service provides methods to create chat completions and other related functionalities.
+ * OpenAiService Class
+ *
+ * This service manages interactions with OpenAI's API, including creating chat
+ * completions and listing available models. It is implemented as a singleton to
+ * ensure that only one instance of the service is used throughout the application.
+ *
+ * Key Features:
+ * - Singleton pattern for centralized management
+ * - Handles API requests for chat completions
+ * - Manages service state, including busy status
  */
 export class OpenAiService {
+    private static instance: OpenAiService; // Singleton instance
     private readonly apiKey: string;
     private readonly baseUrl: string;
     private readonly timeout: number;
@@ -17,12 +26,24 @@ export class OpenAiService {
     private readonly model: string;
     private busy: boolean = false;
 
-    constructor() {
+    // Private constructor to enforce singleton pattern
+    private constructor() {
         this.apiKey = configManager.OPENAI_API_KEY;
         this.baseUrl = configManager.OPENAI_BASE_URL;
         this.timeout = configManager.OPENAI_TIMEOUT;
         this.organization = configManager.OPENAI_ORGANIZATION;
         this.model = configManager.OPENAI_MODEL;
+    }
+
+    /**
+     * Static method to get the singleton instance of OpenAiService.
+     * @returns {OpenAiService} The singleton instance.
+     */
+    public static getInstance(): OpenAiService {
+        if (!OpenAiService.instance) {
+            OpenAiService.instance = new OpenAiService();
+        }
+        return OpenAiService.instance;
     }
 
     /**
@@ -92,13 +113,5 @@ export class OpenAiService {
      */
     public setBusy(status: boolean): void {
         this.busy = status;
-    }
-
-    /**
-     * Returns the OpenAI client instance.
-     * @returns {OpenAiService} The OpenAI client instance.
-     */
-    public getClient(): OpenAiService {
-        return this;
     }
 }

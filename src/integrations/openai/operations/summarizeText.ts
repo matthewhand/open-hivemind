@@ -15,7 +15,7 @@ const configManager = new ConfigurationManager();
  */
 export async function summarizeText(content: string): Promise<string> {
     try {
-        const openAiService = new OpenAiService();
+        const openAiService = OpenAiService.getInstance();
         const response = await openAiService.createChatCompletion(JSON.stringify({
             model: configManager.OPENAI_MODEL,
             messages: [{ role: 'user', content }],

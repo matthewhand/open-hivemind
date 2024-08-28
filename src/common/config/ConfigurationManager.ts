@@ -60,7 +60,7 @@ class ConfigurationManager {
     public readonly FLOWISE_API_KEY: string = this.getEnvConfig('FLOWISE_API_KEY', 'flowise.apiKey', 'default-flowise-api-key');
 
     // Message and LLM Integrations
-    public readonly MESSAGE: string = this.getEnvConfig('MESSAGE', 'message', 'discord');
+    public readonly MESSAGE_PROVIDER: string = this.getEnvConfig('MESSAGE_PROVIDER', 'message', 'discord');
     public readonly MESSAGE_MIN_INTERVAL_MS: number = this.getEnvConfig('MESSAGE_MIN_INTERVAL_MS', 'message.minMessageIntervalMs', 1000);
     public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'followUp.enabled', false);
 
