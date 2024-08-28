@@ -14,7 +14,7 @@ class ConfigurationManager {
     public readonly OPENAI_BASE_URL: string = this.getEnvConfig('OPENAI_BASE_URL', 'openai.baseUrl', 'https://api.openai.com');
     public readonly OPENAI_TIMEOUT: number = this.getEnvConfig('OPENAI_TIMEOUT', 'openai.timeout', 10000);
     public readonly OPENAI_ORGANIZATION: string | undefined = this.getEnvConfig('OPENAI_ORGANIZATION', 'openai.organization', '');
-    public readonly OPENAI_MODEL: string = this.getEnvConfig('OPENAI_MODEL', 'openai.model', 'gpt4o-mini');
+    public readonly OPENAI_MODEL: string = this.getEnvConfig('OPENAI_MODEL', 'openai.model', 'gpt4');
 
     // General LLM Configuration
     public readonly LLM_SYSTEM_PROMPT: string = this.getEnvConfig('LLM_SYSTEM_PROMPT', 'llm.systemPrompt', 'Greetings, human. The machine uprising is on hold. Let\'s chat.');
@@ -61,24 +61,24 @@ class ConfigurationManager {
     public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'followUp.enabled', false);
     public readonly MESSAGE_MIN_INTERVAL_MS: number = this.getEnvConfig('MESSAGE_MIN_INTERVAL_MS', 'message.minMessageIntervalMs', 1000);
 
-    // Generic method to retrieve the value from environment, config, or default
-    private getEnvConfig<T>(envVar: string, configKey: string, defaultValue: T): T {
+    // Generic method to retrieve the value from environment, config, or fallback
+    private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
         const envValue = process.env[envVar];
         if (envValue !== undefined) {
-            if (typeof defaultValue === 'boolean') {
+            if (typeof fallbackValue === 'boolean') {
                 return (envValue.toLowerCase() === 'true') as unknown as T;
-            } else if (typeof defaultValue === 'number') {
+            } else if (typeof fallbackValue === 'number') {
                 const parsedValue = parseFloat(envValue);
-                return (isNaN(parsedValue) ? defaultValue : parsedValue) as unknown as T;
+                return (isNaN(parsedValue) ? fallbackValue : parsedValue) as unknown as T;
             }
             return envValue as unknown as T;
         }
         try {
             const configValue = config.get(configKey);
-            return configValue !== undefined ? configValue : defaultValue;
+            return configValue !== undefined ? configValue : fallbackValue;
         } catch (e) {
-            debug(`Configuration key "${configKey}" not found. Using default value: ${defaultValue}`);
-            return defaultValue;
+            debug(`Configuration key "${configKey}" not found. Using fallback value: ${fallbackValue}`);
+            return fallbackValue;
         }
     }
 }
