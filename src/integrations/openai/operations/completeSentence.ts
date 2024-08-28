@@ -1,28 +1,37 @@
 import Debug from 'debug';
-import OpenAI from 'openai';
-import constants from '@config/ConfigurationManager';
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:completeSentence');
+const configManager = new ConfigurationManager();
 
 /**
- * Completes a sentence by making an additional request to the OpenAI API.
- * @param openaiClient - The initialized OpenAI client instance.
- * @param partialContent - The partially completed sentence that needs completion.
- * @param config - The configuration constants for the API call.
- * @returns The completed content as a string.
+ * Completes a sentence using the OpenAI API.
+ *
+ * @param client - The OpenAiService instance.
+ * @param content - The content to complete.
+ * @param configManager - The configuration manager instance for accessing configurations.
+ * @returns The completed sentence.
  */
 export async function completeSentence(
-    openaiClient: OpenAI,
-    partialContent: string,
-    config: typeof constants
+    client: OpenAiService,
+    content: string,
+    configManager: ConfigurationManager
 ): Promise<string> {
-    debug('[completeSentence] Completing sentence using OpenAI API.');
-    const requestBody = {
-        model: config.OPENAI_MODEL,
-        prompt: partialContent,
-        max_tokens: config.LLM_RESPONSE_MAX_TOKENS,
-        temperature: config.OPENAI_TEMPERATURE,
-    };
-    const response = await openaiClient.completions.create(requestBody);
-    return response.choices[0].text.trim();
+    try {
+        const response = await client.createChatCompletion({
+            model: configManager.OPENAI_MODEL,
+            messages: [{ role: 'user', content }],
+            max_tokens: configManager.OPENAI_MAX_TOKENS,
+            temperature: configManager.OPENAI_TEMPERATURE,
+            top_p: configManager.LLM_TOP_P,
+            frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
+            presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
+            stop: configManager.LLM_STOP
+        });
+        return response.choices[0].message.content.trim();
+    } catch (error: any) {
+        debug('Error completing sentence:', error);
+        return ''; // Return an empty string in case of failure
+    }
 }

@@ -1,7 +1,8 @@
-import Debug from "debug";
-import configManager from '@src/common/config/ConfigurationManager';
+import Debug from 'debug';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:parseCommand');
+const configManager = new ConfigurationManager();
 
 interface ParsedCommand {
     commandName: string;
