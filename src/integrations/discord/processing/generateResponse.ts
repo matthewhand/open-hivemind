@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { sendRequest } from '@src/integrations/openai/operations/sendRequest';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:createAiResponse');
 const configManager = new ConfigurationManager();

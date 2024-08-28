@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:parseCommand');
 const configManager = new ConfigurationManager();

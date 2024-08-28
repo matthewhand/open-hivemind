@@ -1,7 +1,7 @@
 import Debug from "debug";
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import { Message } from 'discord.js';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:sendAiGeneratedMessage');
 const configManager = new ConfigurationManager();  // Ensure configManager is instantiated

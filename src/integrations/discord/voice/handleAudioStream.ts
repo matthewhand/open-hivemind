@@ -7,7 +7,7 @@ import { transcribeAudio } from './transcribeAudio';
 import { playAudioResponse } from './playAudioResponse';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:message:handleAudioStream');
 const configManager = new ConfigurationManager();  // Ensure configManager is instantiated

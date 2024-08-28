@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@common/config/ConfigurationManager';
 import { fetchChannel } from '../fetchers/fetchChannel';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { fetchMessages } from '../fetchers/fetchMessages';
