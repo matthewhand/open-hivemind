@@ -14,12 +14,12 @@ const configManager = new ConfigurationManager();
 /**
  * Sends a request to the OpenAiService API and processes the response.
  * 
- * @param openAiManager - The OpenAiService instance managing the request.
+ * @param openAiService - The OpenAiService instance managing the request.
  * @param requestBody - The prepared request body for OpenAiService API.
  * @returns A Promise resolving to an LLMResponse.
  */
 export async function sendRequest(
-    openAiManager: OpenAiService,
+    openAiService: OpenAiService,
     requestBody: {
         model: string;
         messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>,
@@ -30,15 +30,15 @@ export async function sendRequest(
         presence_penalty?: number
     }
 ): Promise<LLMResponse> {
-    if (openAiManager.isBusy()) {
-        debug('The manager is currently busy with another request.');
+    if (openAiService.isBusy()) {
+        debug('The service is currently busy with another request.');
         return new LLMResponse('', 'busy');
     }
-    openAiManager.setBusy(true);
+    openAiService.setBusy(true);
     debug('Sending request to OpenAiService');
     debug('Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
     try {
-        const response = await openAiManager.getClient().createChatCompletion(requestBody);
+        const response = await openAiService.createChatCompletion(requestBody);
         let content = extractContent(response.choices[0]);
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
@@ -48,7 +48,7 @@ export async function sendRequest(
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
             debug('Completing the response due to reaching the token limit or incomplete sentence.');
-            content = await completeSentence(openAiManager.getClient(), content, configManager);
+            content = await completeSentence(openAiService, content, configManager);
         }
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
@@ -56,7 +56,7 @@ export async function sendRequest(
         debug('Error occurred while processing request: ' + error.message);
         return new LLMResponse('', 'error');
     } finally {
-        openAiManager.setBusy(false);
+        openAiService.setBusy(false);
         debug('Set busy to false after processing the request.');
     }
 }
