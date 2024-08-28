@@ -40,19 +40,19 @@ async function main() {
         discordService.setMessageHandler(messageHandler);
         debug('Message handler set up successfully.');
 
-        // Retrieve the client ID from the configuration manager
-        const clientId = new ConfigurationManager().DISCORD_CLIENT_ID;
-        debug('Client ID retrieved:', clientId);
+        // Retrieve the bot token from the configuration manager
+        const botToken = new ConfigurationManager().DISCORD_TOKEN;
+        debug('Bot Token retrieved:', botToken);
 
-        // Guard clause: Ensure client ID is properly configured
-        if (!clientId || clientId === 'UNCONFIGURED_DISCORD_CLIENT_ID') {
-            console.error('Client ID is not configured correctly.');
+        // Guard clause: Ensure bot token is properly configured
+        if (!botToken || botToken === 'UNCONFIGURED_DISCORD_TOKEN') {
+            console.error('Bot Token is not configured correctly.');
             process.exit(1);
         }
 
-        // Start the Discord service with the client ID
-        await discordService.start(clientId);
-        debug('Discord service started successfully with Client ID:', clientId);
+        // Start the Discord service with the bot token
+        await discordService.start(botToken);
+        debug('Discord service started successfully with Bot Token.');
 
     } catch (error) {
         // Log the error if the Discord service fails to start
