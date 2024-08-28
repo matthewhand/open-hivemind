@@ -1,11 +1,12 @@
-import Debug from "debug";
+import Debug from 'debug';
 import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import constants from '@config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:playAudioResponse');
+const configManager = new ConfigurationManager();
 
 /**
  * Play Audio Response
@@ -23,7 +24,7 @@ const debug = Debug('app:playAudioResponse');
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    const narrationEndpointUrl = constants.OPENAI_BASE_URL;
+    const narrationEndpointUrl = configManager.OPENAI_BASE_URL;
     if (!narrationEndpointUrl) {
         debug('OPENAI_BASE_URL is not set in the environment variables.');
         return;
@@ -36,7 +37,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + constants.OPENAI_API_KEY,
+                'Authorization': 'Bearer ' + configManager.OPENAI_API_KEY,
             },
         });
         const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
