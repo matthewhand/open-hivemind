@@ -1,22 +1,33 @@
-import Debug from "debug";
-import ConfigurationManager from '@config/ConfigurationManager';
+import Debug from 'debug';
 import axios from 'axios';
+import ConfigurationManager from '@config/ConfigurationManager';
 
-export async function replicateImageAnalysis(imageUrl: string): Promise<any> {
-    const replicateApiUrl = ConfigurationManager.REPLICATE_BASE_URL;
-    const replicateApiToken = ConfigurationManager.REPLICATE_API_TOKEN;
-    const replicateModelVersion = ConfigurationManager.REPLICATE_MODEL_VERSION;
-    const replicateWebhookUrl = ConfigurationManager.REPLICATE_WEBHOOK_URL;
+const debug = Debug('app:replicate');
+const configManager = new ConfigurationManager();
 
-    const response = await axios.post(`${replicateApiUrl}/predictions`, {
-        version: replicateModelVersion,
-        webhook: replicateWebhookUrl,
-        input: { image: imageUrl },
-    }, {
-        headers: {
-            'Authorization': `Token ${replicateApiToken}`
-        }
-    });
+export async function replicateRequest(input: string): Promise<any> {
+    const baseUrl = configManager.REPLICATE_BASE_URL;
+    const apiToken = configManager.REPLICATE_API_TOKEN;
+    const modelVersion = configManager.REPLICATE_MODEL_VERSION;
+    const webhookUrl = configManager.WEBHOOK_URL;
 
-    return response.data;
+    if (!baseUrl || !apiToken || !modelVersion) {
+        debug('Missing required configurations for Replicate API');
+        return null;
+    }
+
+    try {
+        const response = await axios.post(`${baseUrl}/predictions`, {
+            version: modelVersion,
+            input: { prompt: input },
+            webhook: webhookUrl,
+        }, {
+            headers: { Authorization: `Token ${apiToken}` }
+        });
+
+        return response.data;
+    } catch (error: any) {
+        debug('Error in replicateRequest:', error);
+        return null;
+    }
 }
