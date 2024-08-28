@@ -1,13 +1,9 @@
 import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import OpenAI from 'openai';
-import { createChatCompletionRequestBody } from './operations/createChatCompletionRequestBody';
-import { completeSentence } from './operations/completeSentence';
-
-// Import necessary types from OpenAI SDK
-import {
-    OpenAI as OpenAITypes,
-} from 'openai';
+import { createChatCompletionRequestBody } from './chat/createChatCompletionRequestBody';
+import { completeSentence } from './completion/completeSentence';
+import { OpenAI as OpenAITypes } from 'openai';
 
 const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
@@ -20,10 +16,6 @@ export class OpenAiService {
     private readonly finishReasonRetry: string;
     private readonly maxRetries: number;
 
-    /**
-     * Private constructor to enforce the singleton pattern.
-     * Initializes the OpenAI API client and configuration settings.
-     */
     private constructor() {
         const clientOptions: OpenAITypes.ClientOptions = {
             apiKey: configManager.OPENAI_API_KEY,
@@ -40,10 +32,6 @@ export class OpenAiService {
         this.maxRetries = configManager.OPENAI_MAX_RETRIES;
     }
 
-    /**
-     * Static method to get the singleton instance of OpenAiService.
-     * @returns {OpenAiService} The singleton instance.
-     */
     public static getInstance(): OpenAiService {
         if (!OpenAiService.instance) {
             OpenAiService.instance = new OpenAiService();
@@ -51,32 +39,17 @@ export class OpenAiService {
         return OpenAiService.instance;
     }
 
-    /**
-     * Checks if the service is currently busy.
-     * @returns {boolean} True if the service is busy, false otherwise.
-     */
     public isBusy(): boolean {
         return this.busy;
     }
 
-    /**
-     * Sets the busy status of the service.
-     * @param status - The busy status to set.
-     */
     public setBusy(status: boolean): void {
         this.busy = status;
     }
 
-    /**
-     * Generates a chat response using the OpenAI API.
-     * Builds the request body, sends it to the API, and handles retries if necessary.
-     * @param message - The user message that requires a response.
-     * @param historyMessages - The array of previous conversation messages for context.
-     * @returns {Promise<any>} - The OpenAI API's response, or null if an error occurs.
-     */
     public async generateChatResponse(
         message: string, 
-        historyMessages: OpenAITypes.ChatCompletionMessage[]
+        historyMessages: IMessage[]
     ): Promise<any> {
         if (!this.openai.apiKey) {
             debug('generateChatResponse: API key is missing');
