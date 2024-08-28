@@ -15,6 +15,7 @@ export class OpenAiService {
     private readonly timeout: number;
     private readonly organization?: string;
     private readonly model: string;
+    private busy: boolean = false;
 
     constructor() {
         this.apiKey = configManager.OPENAI_API_KEY;
@@ -75,5 +76,29 @@ export class OpenAiService {
             debug('Error listing models:', error);
             return null;
         }
+    }
+
+    /**
+     * Checks if the service is currently busy.
+     * @returns {boolean} True if the service is busy, false otherwise.
+     */
+    public isBusy(): boolean {
+        return this.busy;
+    }
+
+    /**
+     * Sets the busy status of the service.
+     * @param status - The busy status to set.
+     */
+    public setBusy(status: boolean): void {
+        this.busy = status;
+    }
+
+    /**
+     * Returns the OpenAI client instance.
+     * @returns {OpenAiService} The OpenAI client instance.
+     */
+    public getClient(): OpenAiService {
+        return this;
     }
 }
