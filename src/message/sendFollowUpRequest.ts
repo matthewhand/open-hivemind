@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { OpenAI, ChatCompletionRequestMessage, CreateChatCompletionResponse } from 'openai';
+import OpenAI from 'openai';
 import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:sendFollowUpRequest');
@@ -15,9 +15,9 @@ const configManager = new ConfigurationManager();
  * Debugging logs are included for better traceability of the request process.
  *
  * @param message - The input message to send to the OpenAI API.
- * @returns {Promise<CreateChatCompletionResponse | null>} - The response data from the OpenAI API, or null if an error occurred.
+ * @returns {Promise<any>} - The response data from the OpenAI API, or null if an error occurred.
  */
-export async function sendFollowUpRequest(message: string): Promise<CreateChatCompletionResponse | null> {
+export async function sendFollowUpRequest(message: string): Promise<any> {
     const API_KEY = configManager.OPENAI_API_KEY;
     const OPENAI_MODEL = configManager.OPENAI_MODEL;
 
@@ -36,7 +36,7 @@ export async function sendFollowUpRequest(message: string): Promise<CreateChatCo
     try {
         const response = await openai.chat.completions.create({
             model: OPENAI_MODEL,
-            messages: [{ role: 'user', content: message } as ChatCompletionRequestMessage],
+            messages: [{ role: 'user', content: message }],
         });
 
         debug('Received response:', response);

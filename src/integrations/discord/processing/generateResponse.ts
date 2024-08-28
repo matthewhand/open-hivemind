@@ -5,6 +5,7 @@ import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:createAiResponse');
+const configManager = new ConfigurationManager();
 
 /**
  * Creates a response using the OpenAiService.
@@ -25,11 +26,11 @@ export async function createAiResponse(aiService: OpenAiService, transcript: str
         const response: LLMResponse = await sendRequest(aiService, {
             model: aiService.getModel(),
             messages: [{ role: 'user', content: transcript }],
-            max_tokens: ConfigurationManager.OPENAI_MAX_TOKENS,
-            temperature: ConfigurationManager.OPENAI_TEMPERATURE,
-            top_p: ConfigurationManager.LLM_TOP_P,
-            frequency_penalty: ConfigurationManager.OPENAI_FREQUENCY_PENALTY,
-            presence_penalty: ConfigurationManager.OPENAI_PRESENCE_PENALTY,
+            max_tokens: configManager.OPENAI_MAX_TOKENS,
+            temperature: configManager.OPENAI_TEMPERATURE,
+            top_p: configManager.LLM_TOP_P,
+            frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
+            presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
         });
         return response.getContent();
     } catch (error: any) {

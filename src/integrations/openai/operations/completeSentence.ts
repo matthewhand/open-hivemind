@@ -10,13 +10,11 @@ const configManager = new ConfigurationManager();
  *
  * @param client - The OpenAiService instance.
  * @param content - The content to complete.
- * @param configManager - The configuration manager instance for accessing configurations.
  * @returns The completed sentence.
  */
 export async function completeSentence(
     client: OpenAiService,
-    content: string,
-    configManager: ConfigurationManager
+    content: string
 ): Promise<string> {
     try {
         const response = await client.createChatCompletion({

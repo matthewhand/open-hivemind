@@ -48,7 +48,7 @@ export async function sendRequest(
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
             debug('Completing the response due to reaching the token limit or incomplete sentence.');
-            content = await completeSentence(openAiService, content, configManager);
+            content = await completeSentence(openAiService, content);
         }
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
