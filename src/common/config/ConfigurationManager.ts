@@ -40,15 +40,18 @@ class ConfigurationManager {
     public readonly DISCORD_TYPING_DELAY_MAX_MS: number = this.getEnvConfig('DISCORD_TYPING_DELAY_MAX_MS', 'discord.typingDelayMaxMs', 5000);
     public readonly DISCORD_WELCOME_MESSAGE: string = this.getEnvConfig('DISCORD_WELCOME_MESSAGE', 'discord.welcomeMessage', 'Welcome to the server!');
 
+    // Webhook Configuration
+    public readonly WEBHOOK_URL: string = this.getEnvConfig('WEBHOOK_URL', 'webhook.url', 'https://example.com/webhook');
+
     // Replicate Configuration
     public readonly REPLICATE_API_TOKEN: string = this.getEnvConfig('REPLICATE_API_TOKEN', 'replicate.apiToken', 'default_replicate_api_token');
     public readonly REPLICATE_BASE_URL: string = this.getEnvConfig('REPLICATE_BASE_URL', 'replicate.apiUrl', 'https://api.replicate.com/v1');
     public readonly REPLICATE_MODEL_VERSION: string = this.getEnvConfig('REPLICATE_MODEL_VERSION', 'replicate.modelVersion', 'default_version');
-    public readonly REPLICATE_WEBHOOK_URL: string = this.getEnvConfig('REPLICATE_WEBHOOK_URL', 'replicate.webhookUrl', 'https://example.com/webhook');
 
     // Perplexity Configuration
-    public readonly PERPLEXITY_BASE_URL: string = this.getEnvConfig('PERPLEXITY_BASE_URL', 'perplexity.apiUrl', 'https://api.perplexity.ai/v1');
     public readonly PERPLEXITY_API_TOKEN: string = this.getEnvConfig('PERPLEXITY_API_TOKEN', 'perplexity.apiToken', 'your-perplexity-api-token-here');
+    public readonly PERPLEXITY_MODEL: string = this.getEnvConfig('PERPLEXITY_MODEL', 'perplexity.model', 'sonar-huge');
+
 
     // Flowise Configuration
     public readonly FLOWISE_BASE_URL: string = this.getEnvConfig('FLOWISE_BASE_URL', 'flowise.apiBaseUrl', 'http://localhost:3000/api/v1');
