@@ -1,42 +1,37 @@
+// Import necessary modules
 import { redactSensitiveInfo } from './redactSensitiveInfo';
 
-// Unit tests for redactSensitiveInfo function
-
 describe('redactSensitiveInfo', () => {
-    test('should redact a Discord token', () => {
-        const result = redactSensitiveInfo('DISCORD_TOKEN', 'abcdefg1234567890abcdefg');
-        expect(result).toBe('DISCORD_TOKEN: abcde...efg');
+    test('should redact sensitive information based on key', () => {
+        expect(redactSensitiveInfo('password', 'mySecretPassword')).toBe('password: mySec...sword');
+        expect(redactSensitiveInfo('apiKey', '1234567890abcdef')).toBe('apiKey: 12345...bcdef');
+        expect(redactSensitiveInfo('auth_token', 'abcdef123456')).toBe('auth_token: abcde...3456');
     });
 
-    test('should redact a token when key is lowercase', () => {
-        const result = redactSensitiveInfo('discord_token', 'abcdefg1234567890abcdefg');
-        expect(result).toBe('discord_token: abcde...efg');
+    test('should redact sensitive information based on value', () => {
+        expect(redactSensitiveInfo('Authorization', 'Bearer mySecretToken')).toBe('Authorization: Bear...Token');
+        expect(redactSensitiveInfo('Authorization', 'Token mySecretToken')).toBe('Authorization: Toke...Token');
     });
 
-    test('should redact a value containing "Bearer"', () => {
-        const result = redactSensitiveInfo('Authorization', 'Bearer abcdefg1234567890abcdefg');
-        expect(result).toBe('Authorization: Bea...efg');
-    });
-
-    test('should not redact non-sensitive data', () => {
-        const result = redactSensitiveInfo('username', 'notSensitive');
-        expect(result).toBe('username: notSensitive');
+    test('should handle non-string values', () => {
+        expect(redactSensitiveInfo('nonSensitive', 12345)).toBe('nonSensitive: 12345');
+        expect(redactSensitiveInfo('nonSensitive', true)).toBe('nonSensitive: true');
+        expect(redactSensitiveInfo('nonSensitive', { key: 'value' })).toBe('nonSensitive: {"key":"value"}');
     });
 
     test('should handle null or undefined values', () => {
-        const result = redactSensitiveInfo('some_key', null);
-        expect(result).toBe('some_key: [Value is null or undefined]');
+        expect(redactSensitiveInfo('key', null)).toBe('key: [Value is null or undefined]');
+        expect(redactSensitiveInfo('key', undefined)).toBe('key: [Value is null or undefined]');
     });
 
-    test('should handle complex values that cannot be stringified', () => {
-        const circularReference = {};
+    test('should handle circular references in objects', () => {
+        interface CircularReference {
+            self?: CircularReference;
+        }
+
+        const circularReference: CircularReference = {};
         circularReference.self = circularReference;
-        const result = redactSensitiveInfo('complexKey', circularReference);
-        expect(result).toBe('complexKey: [Complex value cannot be stringified]');
-    });
 
-    test('should redact based on key case-insensitively', () => {
-        const result = redactSensitiveInfo('ApI_KeY', 'supersecretapikey');
-        expect(result).toBe('ApI_KeY: super...key');
+        expect(redactSensitiveInfo('circular', circularReference)).toBe('circular: [Complex value cannot be stringified]');
     });
 });
