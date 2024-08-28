@@ -5,15 +5,17 @@ import fs from 'fs';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
 import { playAudioResponse } from './playAudioResponse';
-import { IMessage } from '@src/message/interfaces/IMessage'; 
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:message:handleAudioStream');
+const configManager = new ConfigurationManager();  // Ensure configManager is instantiated
 
 /**
  * Handles the streaming of audio from a Discord voice connection.
  * Processes incoming audio streams, transcribes them, generates a response, and plays it back.
- * 
+ *
  * @param {Readable} stream - The audio stream to process.
  * @param {VoiceConnection} connection - The Discord voice connection to stream to.
  * @param {IMessage} message - The original message object associated with the stream.
@@ -59,16 +61,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             if (transcript) {
                 debug('Transcription successful', { transcript });
-                const response = await aiService.createChatCompletion({
-                    model: configManager.OPENAI_MODEL,
-                    messages: [{ role: 'user', content: transcript }],
-                    max_tokens: configManager.OPENAI_MAX_TOKENS,
-                    temperature: configManager.OPENAI_TEMPERATURE,
-                    top_p: configManager.LLM_TOP_P,
-                    frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
-                    presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
-                    stop: configManager.LLM_STOP
-                });
+                const response = await aiService.createChatCompletion(transcript);  // Pass just the transcript
 
                 if (response) {
                     debug('Generated response', { response });
