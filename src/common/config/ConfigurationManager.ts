@@ -4,6 +4,21 @@ import { redactSensitiveInfo } from '@src/common/redactSensitiveInfo';
 
 const debug = Debug('app:ConfigurationManager');
 
+/**
+ * ConfigurationManager
+ * 
+ * This class serves as a centralized configuration manager for the application. 
+ * It retrieves and manages environment variables, configuration file values, 
+ * and default fallback values for various settings across the system. The priority 
+ * order for configuration values is:
+ * 
+ * 1. **Environment Variables**: If an environment variable is set, it takes precedence.
+ * 2. **Configuration Files**: If an environment variable is not set, the value from the `config` library (which reads from files like `default.json`) is used.
+ * 3. **Fallback Values**: If neither an environment variable nor a configuration file value is available, a specified fallback value is used.
+ * 
+ * This manager includes configurations for OpenAI, LLMs, Discord, Webhooks, 
+ * and other integrated services.
+ */
 class ConfigurationManager {
     // OpenAI Configuration
     public readonly OPENAI_API_KEY: string = this.getEnvConfig('OPENAI_API_KEY', 'openai.apiKey', process.env.OPENAI_API_KEY || 'DUMMY-KEY-OOBABOOGAFTW');
@@ -27,6 +42,9 @@ class ConfigurationManager {
     public readonly LLM_TOP_P: number = this.getEnvConfig('LLM_TOP_P', 'llm.topP', 0.9);
     public readonly LLM_INCLUDE_USERNAME_IN_COMPLETION: boolean = this.getEnvConfig('LLM_INCLUDE_USERNAME_IN_COMPLETION', 'llm.includeUsernameInCompletion', false);
     public readonly LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION: boolean = this.getEnvConfig('LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION', 'llm.includeUsernameInChatCompletion', false);
+    public readonly LLM_PARALLEL_EXECUTION: boolean = this.getEnvConfig('LLM_PARALLEL_EXECUTION', 'llm.openai.chatCompletions.parallelExecution', false);
+    public readonly OPENAI_FINISH_REASON_RETRY: string = this.getEnvConfig('OPENAI_FINISH_REASON_RETRY', 'openai.finishReasonRetry', 'length');
+    public readonly OPENAI_MAX_RETRIES: number = this.getEnvConfig('OPENAI_MAX_RETRIES', 'openai.maxRetries', 3);
 
     // Discord Configuration
     public readonly DISCORD_TOKEN: string = this.getEnvConfig('DISCORD_TOKEN', 'discord.token', process.env.DISCORD_TOKEN || 'YOUR_DEV_DISCORD_TOKEN');
@@ -73,7 +91,15 @@ class ConfigurationManager {
     public readonly MESSAGE_COMMAND_SLASH: boolean = this.getEnvConfig('MESSAGE_COMMAND_SLASH', 'message.command.slash', true);
     public readonly MESSAGE_COMMAND_AUTHORISED_USERS: string = this.getEnvConfig('MESSAGE_COMMAND_AUTHORISED_USERS', 'message.command.authorised_users', '');
 
-    // Generic method to retrieve the value from environment, config, or fallback
+    /**
+     * Retrieves the configuration value by first checking the environment variables,
+     * then checking the configuration files, and finally falling back to the default value.
+     *
+     * @param envVar - The environment variable name to check.
+     * @param configKey - The configuration file key to check.
+     * @param fallbackValue - The fallback value to use if neither the environment variable nor the configuration file key is set.
+     * @returns The resolved configuration value.
+     */
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
         const envValue = process.env[envVar];
         if (envValue !== undefined) {
