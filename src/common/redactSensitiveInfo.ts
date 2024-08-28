@@ -33,7 +33,6 @@ export function redactSensitiveInfo(key: string, value: any): string {
         }
     }
 
-    // Updated sensitive keys list to cover variations like API_KEY and APIKEY
     const sensitiveKeys = ['password', 'secret', 'apikey', 'api_key', 'access_token', 'auth_token'];
     const sensitivePhrases = ['bearer', 'token'];
 
