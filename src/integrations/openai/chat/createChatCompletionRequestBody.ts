@@ -2,9 +2,25 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import ChatCompletionMessage from 'openai';
-import ChatCompletionCreateParams from 'openai';
-import ChatCompletionRole from 'openai';
+
+// Custom type definitions
+interface ChatCompletionMessage {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+    name?: string;
+}
+
+interface ChatCompletionCreateParams {
+    model: string;
+    messages: ChatCompletionMessage[];
+    max_tokens: number;
+    temperature?: number;
+    stop?: string[];
+}
+
+interface ChatCompletionRole {
+    role: 'system' | 'user' | 'assistant';
+}
 
 const debug = Debug('app:createChatCompletionRequestBody');
 const configManager = new ConfigurationManager();
@@ -31,7 +47,7 @@ function validateMessages(historyMessages: IMessage[]): void {
  * @returns An array starting with the system message.
  */
 function initializeMessages(systemMessageContent: string): ChatCompletionMessage[] {
-    return [{ role: 'system' as ChatCompletionRole, content: systemMessageContent }];
+    return [{ role: 'system', content: systemMessageContent }];
 }
 
 /**
@@ -46,7 +62,7 @@ function processHistoryMessages(historyMessages: IMessage[], messages: ChatCompl
     historyMessages.forEach((message, index) => {
         debug(`Processing message ${index + 1}/${historyMessages.length} with ID: ${message.getMessageId()}`);
 
-        const role: ChatCompletionRole = message.isFromBot()
+        const role: ChatCompletionMessage['role'] = message.isFromBot()
             ? 'assistant'
             : 'user';
 
