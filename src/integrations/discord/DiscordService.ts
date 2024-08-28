@@ -58,7 +58,6 @@ export class DiscordService {
 
   /**
    * Initializes the Discord service by logging in and setting up event handlers.
-   * @param token - The Discord bot token.
    */
   public async initialize(token?: string): Promise<void> {
     try {
@@ -96,7 +95,6 @@ export class DiscordService {
 
   /**
    * Starts the Discord service, initializing the client.
-   * @param token - The Discord bot token.
    */
   public async start(token: string): Promise<void> {
     await this.initialize(token);
