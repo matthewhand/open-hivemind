@@ -23,7 +23,7 @@
   "@common": "dist/src/common",
   "@llm": "dist/src/llm",
   "@message": "dist/src/message",
-  "@discord": "dist/src/integrations/discord",
+  "@integrations/discord": "dist/src/integrations/discord",
   "@types": "dist/src/types"
 },
   "keywords": [],
@@ -34,8 +34,7 @@
     "@babel/traverse": "^7.24.7",
     "@discordjs/opus": "^0.8.0",
     "@discordjs/rest": "^2.0.0",
-    "@discordjs/voice": "^0.17.0",
-    "@eslint/config-array": "^0.17.1",
+    "@discordjs/voice": "^0.17.0",    "@eslint/config-array": "^0.17.1",
     "@eslint/object-schema": "^2.1.4",
     "@rollup/plugin-inject": "^5.0.5",
     "@types/pino": "^7.0.4",
