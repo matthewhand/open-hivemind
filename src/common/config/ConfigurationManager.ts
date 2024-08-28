@@ -52,6 +52,9 @@ class ConfigurationManager {
     public readonly PERPLEXITY_API_TOKEN: string = this.getEnvConfig('PERPLEXITY_API_TOKEN', 'perplexity.apiToken', 'your-perplexity-api-token-here');
     public readonly PERPLEXITY_MODEL: string = this.getEnvConfig('PERPLEXITY_MODEL', 'perplexity.model', 'sonar-huge');
 
+    // N8N Configuration
+    public readonly N8N_API_BASE_URL: string = this.getEnvConfig('N8N_API_BASE_URL', 'n8n.apiBaseUrl', 'http://localhost:5678/api/v1');
+    public readonly N8N_API_KEY: string = this.getEnvConfig('N8N_API_KEY', 'n8n.apiKey', 'default-n8n-api-key');
 
     // Flowise Configuration
     public readonly FLOWISE_BASE_URL: string = this.getEnvConfig('FLOWISE_BASE_URL', 'flowise.apiBaseUrl', 'http://localhost:3000/api/v1');
