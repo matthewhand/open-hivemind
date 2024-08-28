@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { string } from '@src/message/interfaces/IMessage';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/processing/validateMessage';
 import { processCommand } from '@src/message/helpers/processing/processCommand';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
@@ -10,7 +10,6 @@ import ConfigurationManager from '@common/config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
 const debug = Debug('app:messageHandler');
-
 const configManager = new ConfigurationManager();
 
 /**
@@ -21,13 +20,13 @@ const configManager = new ConfigurationManager();
  * processed accurately based on its content and context, while also considering response timing and 
  * follow-up logic.
  *
- * @param msg - The original message object implementing the string interface.
+ * @param msg - The original message object implementing the IMessage interface.
  * @param historyMessages - The history of previous messages for context, defaults to an empty array.
  * @returns {Promise<void>}
  */
 export async function messageHandler(
-  msg: string,
-  historyMessages: string[] = []
+  msg: IMessage,
+  historyMessages: IMessage[] = []
 ): Promise<void> {
   // Guard: Ensure a valid message object is provided
   if (!msg) {
@@ -38,13 +37,13 @@ export async function messageHandler(
   const startTime = Date.now();
   debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
 
-  // Type Guard: Ensure msg implements string and has necessary methods
+  // Type Guard: Ensure msg implements IMessage and has necessary methods
   if (!(msg && 'getMessageId' in msg && typeof msg.getMessageId === 'function')) {
-    debug('msg is not a valid string instance.');
+    debug('msg is not a valid IMessage instance.');
     return;
   }
 
-  debug('msg is a valid instance of string.');
+  debug('msg is a valid instance of IMessage.');
 
   // Guard: Check that getText method exists and is valid
   if (typeof msg.getText !== 'function') {
