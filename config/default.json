@@ -11,7 +11,8 @@
                 "stopSequences": ["\n", ".", "?", "!", "<|endoftext|>"],
                 "topP": 0.9,
                 "frequencyPenalty": 0.1,
-                "presencePenalty": 0.05
+                "presencePenalty": 0.05,
+                "parallelExecution": false
             },
             "completions": {
                 "endpointUrl": "http://localhost:5000/v1/completions",
@@ -25,7 +26,9 @@
             "embeddings": {
                 "endpointUrl": "http://localhost:5000/v1/embeddings",
                 "model": "text-embedding-ada-002"
-            }
+            },
+            "finishReasonRetry": "length",
+            "maxRetries": 3
         }
     },
     "messagePlatform": {
@@ -41,14 +44,14 @@
             "interPartDelayMs": 20000
         },
         "llm": {
-            "chat": "true",
-            "complete_sentence": "true",
-            "follow_up": "true",
-            "summarise": "true"
+            "chat": true,
+            "complete_sentence": true,
+            "follow_up": true,
+            "summarise": true
         },
         "command": {
-            "inline": "true",
-            "slash": "true",
+            "inline": true,
+            "slash": true,
             "authorised_users": ""
         }
     },

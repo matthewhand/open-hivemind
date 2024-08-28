@@ -2,11 +2,8 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import {
-    ChatCompletionRequestMessage,
-} from 'openai';
+import { OpenAI as OpenAITypes } from 'openai';
 
-// Initialize the debug logger for this file with a specific namespace.
 const debug = Debug('app:createChatCompletionRequestBody');
 
 /**
@@ -30,7 +27,7 @@ function validateMessages(historyMessages: IMessage[]): void {
  * @param systemMessageContent - The content of the system message to be included at the start.
  * @returns An array starting with the system message.
  */
-function initializeMessages(systemMessageContent: string): ChatCompletionRequestMessage[] {
+function initializeMessages(systemMessageContent: string): OpenAITypes.ChatCompletionMessage[] {
     return [{ role: 'system', content: systemMessageContent }];
 }
 
@@ -42,15 +39,15 @@ function initializeMessages(systemMessageContent: string): ChatCompletionRequest
  * @param messages - The array being constructed for the OpenAI API request.
  * @param supportNameField - Whether to include the author's name in the message object.
  */
-function processHistoryMessages(historyMessages: IMessage[], messages: ChatCompletionRequestMessage[], supportNameField: boolean): void {
+function processHistoryMessages(historyMessages: IMessage[], messages: OpenAITypes.ChatCompletionMessage[], supportNameField: boolean): void {
     historyMessages.forEach((message, index) => {
         debug(`Processing message ${index + 1}/${historyMessages.length} with ID: ${message.getMessageId()}`);
 
-        const role: 'user' | 'assistant' | 'system' = message.isFromBot()
+        const role: OpenAITypes.ChatCompletionMessage['role'] = message.isFromBot()
             ? 'assistant'
             : 'user';
 
-        let newMessage: ChatCompletionRequestMessage = {
+        let newMessage: OpenAITypes.ChatCompletionMessage = {
             role,
             content: message.getText()
         };
@@ -78,7 +75,7 @@ function processHistoryMessages(historyMessages: IMessage[], messages: ChatCompl
  * 
  * @param messages - The array of messages that will be sent to the OpenAI API.
  */
-function appendFallbackUserMessage(messages: ChatCompletionRequestMessage[]): void {
+function appendFallbackUserMessage(messages: OpenAITypes.ChatCompletionMessage[]): void {
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
         messages.push({ role: 'user', content: getEmoji() });
         debug('Appended fallback user message with emoji.');
@@ -92,8 +89,8 @@ function appendFallbackUserMessage(messages: ChatCompletionRequestMessage[]): vo
  * @param maxTokens - The maximum number of tokens allowed in the AI's response.
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
-function createRequestBody(messages: ChatCompletionRequestMessage[], maxTokens: number): any {
-    const requestBody = {
+function createRequestBody(messages: OpenAITypes.ChatCompletionMessage[], maxTokens: number): OpenAITypes.ChatCompletionCreateParams {
+    const requestBody: OpenAITypes.ChatCompletionCreateParams = {
         model: ConfigurationManager.OPENAI_MODEL,
         messages,
         max_tokens: maxTokens,
@@ -122,10 +119,10 @@ export function createChatCompletionRequestBody(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
-): any {
+): OpenAITypes.ChatCompletionCreateParams {
     validateMessages(historyMessages);
 
-    const messages = initializeMessages(systemMessageContent);
+    const messages: OpenAITypes.ChatCompletionMessage[] = initializeMessages(systemMessageContent);
     const supportNameField = ConfigurationManager.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
 
     processHistoryMessages(historyMessages, messages, supportNameField);
