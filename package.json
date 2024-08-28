@@ -17,16 +17,15 @@
     "test:monitor": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "ncu": "ncu"
   },
-  "_moduleAliases": {
-    "@command": "dist/src/command",
-    "@common": "dist/src/common",
-    "@config": "dist/src/common/config",
-    "@llm": "dist/src/llm",
-    "@message": "dist/src/message",
-    "@discord": "dist/src/message/discord",
-    "@types": "dist/src/types",
-    "@src": "dist/src"
-  },
+"_moduleAliases": {
+  "@src": "src",
+  "@command": "src/command",
+  "@common": "src/common",
+  "@llm": "src/llm",
+  "@message": "src/message",
+  "@discord": "src/message/discord",
+  "@types": "src/types"
+},
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
   "license": "MIT",
