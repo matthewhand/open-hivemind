@@ -1,8 +1,9 @@
-import { Client, GatewayIntentBits, Message, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, Message, TextChannel, PermissionsBitField } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage'; // Import your DiscordMessage implementation
+import ConfigurationManager from '@common/config/ConfigurationManager';  // Properly import ConfigurationManager
 
 const log = Debug('app:discord-service');
 
@@ -22,14 +23,16 @@ export class DiscordService {
   private client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage) => void) | null = null;
+  private configManager: ConfigurationManager;
 
   /**
    * Private constructor to enforce singleton pattern.
-   * Initializes the Discord client with the necessary intents.
+   * Initializes the Discord client with the necessary intents and ConfigurationManager.
    */
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = initializeClient();
+    this.configManager = new ConfigurationManager();  // Instantiate ConfigurationManager
     log('Client initialized successfully');
   }
 
@@ -55,16 +58,19 @@ export class DiscordService {
 
   /**
    * Initializes the Discord service by logging in and setting up event handlers.
+   * @param token - The Discord bot token.
    */
   public async initialize(token?: string): Promise<void> {
     try {
-      token = token || process.env.DISCORD_TOKEN;
+      // Use ConfigurationManager to retrieve the Discord token if not provided directly
+      token = token || this.configManager.DISCORD_TOKEN;
       if (!token) {
         throw new Error('DISCORD_TOKEN is not set');
       }
       await this.client.login(token);
-      this.client.once('ready', () => {
+      this.client.once('ready', async () => {
         log(`Logged in as ${this.client.user?.tag}!`);
+        await this.debugPermissions();  // Added permission debugging after bot is ready
       });
 
       // Set up the message event handler if provided
@@ -115,5 +121,38 @@ export class DiscordService {
       log(`Failed to send message to channel ${channelId}: ` + error.message);
       throw error;
     }
+  }
+
+  /**
+   * Debugs the bot's permissions in each guild it is a part of.
+   * Logs warnings for any missing permissions.
+   */
+  private async debugPermissions(): Promise<void> {
+    this.client.guilds.cache.forEach(guild => {
+      const botMember = guild.members.cache.get(this.client.user?.id!);
+      if (!botMember) {
+        log(`Bot not found in guild: ${guild.name}`);
+        return;
+      }
+
+      const permissions = botMember.permissions;
+
+      // List of permissions the bot should have (adjust as needed)
+      const requiredPermissions = [
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.ReadMessageHistory,
+      ];
+
+      // Check for each required permission
+      requiredPermissions.forEach(permission => {
+        if (!permissions.has(permission)) {
+          log(`Bot lacks permission ${permission.toString()} in guild: ${guild.name}`);
+        }
+      });
+
+      // Log a summary of permissions for each guild
+      log(`Permissions in guild "${guild.name}":`, permissions.toArray().map(perm => perm.toString()));
+    });
   }
 }
