@@ -1,9 +1,10 @@
-import Debug from "debug";
+import Debug from 'debug';
 import OpenAI from 'openai';
 import fs from 'fs';
-import constants from '@config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:transcribeAudio');
+const configManager = new ConfigurationManager();
 
 /**
  * Transcribe Audio
@@ -22,7 +23,7 @@ const debug = Debug('app:transcribeAudio');
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
         const openai = new OpenAI({
-            apiKey: constants.OPENAI_API_KEY
+            apiKey: configManager.OPENAI_API_KEY
         });
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),
