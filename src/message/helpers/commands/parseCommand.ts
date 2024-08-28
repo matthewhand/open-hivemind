@@ -39,7 +39,7 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
         debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args);
         return { commandName: commandName.toLowerCase(), action, args };
     } else {
-        const defaultCommand = configManager.getConfig('defaultCommand', 'oai');
+        const defaultCommand = configManager.LLM;
         const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
         if (defaultCommand && argsWithoutMention) {
             debug('Fallback to default command: ' + defaultCommand + ' with args: ' + argsWithoutMention);
