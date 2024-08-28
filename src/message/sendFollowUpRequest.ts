@@ -1,6 +1,6 @@
 import Debug from "debug";
-import { Configuration, OpenAIApi } from 'openai';
-import ConfigurationManager from '@config/ConfigurationManager';
+import { Configuration, OpenAI } from 'openai';
+import configurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -17,8 +17,8 @@ const debug = Debug('app:sendFollowUpRequest');
  * @returns {Promise<any>} - The response data from the OpenAI API, or null if an error occurred.
  */
 export async function sendFollowUpRequest(message: string): Promise<any> {
-    const API_KEY = ConfigurationManager.OPENAI_API_KEY;
-    const OPENAI_MODEL = ConfigurationManager.OPENAI_MODEL;
+    const API_KEY = configurationManager.OPENAI_API_KEY;
+    const OPENAI_MODEL = configurationManager.OPENAI_MODEL;
 
     debug('Sending follow-up request with the following configuration:');
     debug('OPENAI_MODEL:', OPENAI_MODEL);
@@ -30,7 +30,7 @@ export async function sendFollowUpRequest(message: string): Promise<any> {
         return null;
     }
 
-    const openai = new OpenAIApi(new Configuration({ apiKey: API_KEY }));
+    const openai = new OpenAI({ apiKey: API_KEY });
 
     try {
         const response = await openai.createChatCompletion({

@@ -1,66 +1,79 @@
-import OpenAI from 'openai';
-import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { IMessage } from '@src/message/interfaces/IMessage';
-import { buildChatCompletionRequestBody } from '@src/integrations/openai/buildChatCompletionRequestBody';
+import Debug from 'debug';
+import axios from 'axios';
+import ConfigurationManager from '@config/ConfigurationManager';
+
+const debug = Debug('app:OpenAiService');
+const configManager = new ConfigurationManager();
 
 /**
- * OpenAiService class interacts with OpenAI's API to perform tasks such as generating completions.
- * 
- * This class uses the official OpenAI SDK to manage API calls and is configurable through
- * the ConfigurationManager. It handles the request-building process and manages responses from
- * OpenAI's services.
+ * OpenAI Service handles interaction with OpenAI's API.
+ * This service provides methods to create chat completions and other related functionalities.
  */
 export class OpenAiService {
-    private openai: OpenAI;
-    private busy: boolean;
-    private static instance: OpenAiService;
+    private readonly apiKey: string;
+    private readonly baseUrl: string;
+    private readonly timeout: number;
+    private readonly organization?: string;
+    private readonly model: string;
 
-    private constructor() {
-        this.openai = new OpenAI({
-            apiKey: ConfigurationManager.OPENAI_API_KEY,
-            baseURL: ConfigurationManager.OPENAI_BASE_URL,
-            timeout: ConfigurationManager.OPENAI_TIMEOUT,
-            organization: ConfigurationManager.OPENAI_ORGANIZATION,
-        });
-        this.busy = false;
+    constructor() {
+        this.apiKey = configManager.OPENAI_API_KEY;
+        this.baseUrl = configManager.OPENAI_BASE_URL;
+        this.timeout = configManager.OPENAI_TIMEOUT;
+        this.organization = configManager.OPENAI_ORGANIZATION;
+        this.model = configManager.OPENAI_MODEL;
     }
 
-    public static getInstance(): OpenAiService {
-        if (!OpenAiService.instance) {
-            OpenAiService.instance = new OpenAiService();
+    /**
+     * Creates a chat completion request to OpenAI API.
+     * @param message - The message to send to OpenAI's model.
+     * @returns The response data from OpenAI.
+     */
+    public async createChatCompletion(message: string): Promise<any> {
+        if (!this.apiKey) {
+            debug('API key is missing');
+            return null;
         }
-        return OpenAiService.instance;
+
+        try {
+            const response = await axios.post(`${this.baseUrl}/v1/chat/completions`, {
+                model: this.model,
+                messages: [{ role: 'user', content: message }],
+                max_tokens: configManager.OPENAI_MAX_TOKENS,
+                temperature: configManager.OPENAI_TEMPERATURE,
+                top_p: configManager.LLM_TOP_P,
+                frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
+                presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
+                stop: configManager.LLM_STOP
+            }, {
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    ...(this.organization && { 'OpenAI-Organization': this.organization })
+                },
+                timeout: this.timeout
+            });
+
+            return response.data;
+        } catch (error: any) {
+            debug('Error creating chat completion:', error);
+            return null;
+        }
     }
 
-    public getClient(): OpenAI {
-        return this.openai;
-    }
+    /**
+     * Retrieves the list of models available for the API key.
+     * @returns The list of available models.
+     */
+    public async listModels(): Promise<any> {
+        try {
+            const response = await axios.get(`${this.baseUrl}/v1/models`, {
+                headers: { Authorization: `Bearer ${this.apiKey}` }
+            });
 
-    public setBusy(state: boolean): void {
-        this.busy = state;
-    }
-
-    public isBusy(): boolean {
-        return this.busy;
-    }
-
-    public isValidRole(role: string): boolean {
-        const validRoles = ['user', 'system', 'assistant'];
-        return validRoles.includes(role);
-    }
-
-    public getModel(): string {
-        return ConfigurationManager.OPENAI_MODEL;
-    }
-
-    public async createChatCompletion(prompt: string): Promise<any> {
-        return this.openai.completions.create({
-            model: this.getModel(),
-            prompt,
-            max_tokens: ConfigurationManager.OPENAI_MAX_TOKENS,
-            temperature: ConfigurationManager.OPENAI_TEMPERATURE,
-            frequency_penalty: ConfigurationManager.OPENAI_FREQUENCY_PENALTY,
-            presence_penalty: ConfigurationManager.OPENAI_PRESENCE_PENALTY,
-        });
+            return response.data;
+        } catch (error: any) {
+            debug('Error listing models:', error);
+            return null;
+        }
     }
 }

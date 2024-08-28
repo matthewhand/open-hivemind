@@ -58,7 +58,7 @@
     "lru-cache": "^11.0.0",
     "node-fetch": "^2.6.1",
     "npmlog": "^6.0.2",
-    "openai": "^4.28.4",
+    "openai": "^4.56.1",
     "pino": "^9.3.2",
     "pino-pretty": "^11.2.2",
     "rimraf": "^4.4.1",
