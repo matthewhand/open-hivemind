@@ -20,53 +20,57 @@ export async function messageHandler(
 ): Promise<void> {
   // Guard: Ensure a valid message object is provided
   if (!originalMsg) {
-    debug('[messageHandler] No original message provided.');
+    debug('No original message provided.');
     return;
   }
 
   const startTime = Date.now();
-  debug('[messageHandler] Received message with ID:', originalMsg.getMessageId(), 'at', new Date(startTime).toISOString());
+  debug('Received message with ID:', originalMsg.getMessageId(), 'at', new Date(startTime).toISOString());
 
   // Type Guard: Ensure originalMsg implements IMessage and has necessary methods
   if (!(originalMsg && 'getMessageId' in originalMsg && typeof originalMsg.getMessageId === 'function')) {
-    debug('[messageHandler] originalMsg is not a valid IMessage instance.');
+    debug('originalMsg is not a valid IMessage instance.');
     return;
   }
 
-  debug('[messageHandler] originalMsg is a valid instance of IMessage.');
+  debug('originalMsg is a valid instance of IMessage.');
 
   // Guard: Check that getText method exists and is valid
   if (typeof originalMsg.getText !== 'function') {
-    debug('[messageHandler] originalMsg does not have a valid getText method.');
+    debug('originalMsg does not have a valid getText method.');
     return;
   }
 
-  debug('[messageHandler] originalMsg has a valid getText method.');
+  debug('originalMsg has a valid getText method.');
 
   // Guard: Ensure the message is not empty
   if (!originalMsg.getText().trim()) {
-    debug('[messageHandler] Received an empty message.');
+    debug('Received an empty message.');
     return;
   }
 
   // Validate the message
   if (!validateMessage(originalMsg)) {
-    debug('[messageHandler] Message validation failed.');
+    debug('Message validation failed.');
     return;
   }
 
-  debug('[messageHandler] Message validated successfully.');
+  debug('Message validated successfully.');
 
   // Process the command within the message
   await processCommand(originalMsg, async (result: string) => {
-    if (typeof originalMsg.reply === 'function') {
-      await originalMsg.reply(result);
-      debug('[messageHandler] Reply sent successfully.');
-    } else {
-      debug('[messageHandler] originalMsg.reply is not a function, alternative handling needed.');
-      // Alternative handling logic if necessary
+    try {
+      if (typeof originalMsg.reply === 'function') {
+        await originalMsg.reply(result);
+        debug('Reply sent successfully.');
+      } else {
+        debug('originalMsg.reply is not a function, alternative handling needed.');
+        // Alternative handling logic if necessary
+      }
+    } catch (replyError) {
+      debug('Failed to send reply:', replyError);
     }
   });
 
-  debug('[messageHandler] Command processed successfully.');
+  debug('Command processed successfully.');
 }
