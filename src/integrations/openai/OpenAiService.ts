@@ -1,32 +1,43 @@
 import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
-import OpenAI from 'openai';
+import { OpenAI, ClientOptions } from 'openai';
 import { createChatCompletionRequestBody } from './chat/createChatCompletionRequestBody';
-import { completeSentence } from './completion/completeSentence';
-import { OpenAI as OpenAITypes } from 'openai';
+import { completeSentence } from './operations/completeSentence';
 
 const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
 
+/**
+ * OpenAiService Class
+ *
+ * This service manages interactions with OpenAI's API, including creating chat completions
+ * and listing available models. It is implemented as a singleton to ensure that only one
+ * instance of the service is used throughout the application.
+ *
+ * Key Features:
+ * - Singleton pattern for centralized management
+ * - Handles API requests for chat completions
+ * - Manages service state, including busy status
+ * - Supports generating chat responses with history management
+ */
 export class OpenAiService {
-    private static instance: OpenAiService;
-    private readonly openai: OpenAI;
+    private static instance: OpenAiService; // Singleton instance
+    private readonly openai: OpenAI; // Instance of the OpenAI API client
     private busy: boolean = false;
-    private readonly parallelExecution: boolean;
-    private readonly finishReasonRetry: string;
-    private readonly maxRetries: number;
+    private readonly parallelExecution: boolean; // Configurable option for parallel execution
+    private readonly finishReasonRetry: string; // Configurable finish reason for retry
+    private readonly maxRetries: number; // Configurable maximum retries
 
+    // Private constructor to enforce singleton pattern
     private constructor() {
-        const clientOptions: OpenAITypes.ClientOptions = {
+        const options: ClientOptions = {
             apiKey: configManager.OPENAI_API_KEY,
-            organization: configManager.OPENAI_ORGANIZATION,
+            organization: configManager.OPENAI_ORGANIZATION || undefined,
             baseURL: configManager.OPENAI_BASE_URL,
             timeout: configManager.OPENAI_TIMEOUT,
-            maxRetries: configManager.OPENAI_MAX_RETRIES,
         };
 
-        this.openai = new OpenAI(clientOptions);
-
+        this.openai = new OpenAI(options);
         this.parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
         this.finishReasonRetry = configManager.OPENAI_FINISH_REASON_RETRY;
         this.maxRetries = configManager.OPENAI_MAX_RETRIES;
@@ -47,10 +58,16 @@ export class OpenAiService {
         this.busy = status;
     }
 
-    public async generateChatResponse(
-        message: string, 
-        historyMessages: IMessage[]
-    ): Promise<any> {
+    /**
+     * Generates a chat response using the OpenAI API.
+     * This method wraps the process of building a request body and sending it to the API,
+     * ensuring that the service is not busy before making the request.
+     *
+     * @param message - The user message that requires a response.
+     * @param historyMessages - The array of previous conversation messages for context.
+     * @returns {Promise<any>} - The OpenAI API's response, or null if an error occurs.
+     */
+    public async generateChatResponse(message: string, historyMessages: any[]): Promise<any> {
         if (!this.openai.apiKey) {
             debug('generateChatResponse: API key is missing');
             return null;
@@ -59,7 +76,7 @@ export class OpenAiService {
         debug('generateChatResponse: Building request body');
         const requestBody = await createChatCompletionRequestBody([
             ...historyMessages,
-            { role: 'user', content: message } as OpenAITypes.ChatCompletionUserMessageParam,
+            { role: 'user', content: message },
         ]);
 
         if (!this.parallelExecution && this.isBusy()) {
@@ -73,19 +90,18 @@ export class OpenAiService {
             }
 
             debug('generateChatResponse: Sending request to OpenAI API');
-            let response = await this.openai.chat.completions.create(requestBody);
-            let finishReason = response.choices[0].finish_reason;
+            const response = await this.openai.chat.completions.create(requestBody);
 
+            let finishReason = response.choices[0].finish_reason;
+            let content = response.choices[0].message.content;
+
+            // Retry logic based on finish reason
             for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
-                debug(`generateChatResponse: Attempt ${attempt} to complete the response`);
-                const completionResult = await completeSentence(this, response.choices[0].message.content);
-                if (completionResult) {
-                    response.choices[0].message.content = completionResult;
-                    finishReason = response.choices[0].finish_reason;
-                }
+                debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
+                content = await completeSentence(this.openai, content);
+                finishReason = finishReason === 'stop' ? 'completed' : finishReason;
             }
 
-            debug('generateChatResponse: Received response from OpenAI API');
             return response.data;
         } catch (error: any) {
             debug('generateChatResponse: Error occurred:', error);

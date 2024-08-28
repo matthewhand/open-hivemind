@@ -42,6 +42,8 @@ class ConfigurationManager {
     public readonly LLM_TOP_P: number = this.getEnvConfig('LLM_TOP_P', 'llm.topP', 0.9);
     public readonly LLM_INCLUDE_USERNAME_IN_COMPLETION: boolean = this.getEnvConfig('LLM_INCLUDE_USERNAME_IN_COMPLETION', 'llm.includeUsernameInCompletion', false);
     public readonly LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION: boolean = this.getEnvConfig('LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION', 'llm.includeUsernameInChatCompletion', false);
+    
+    // New properties
     public readonly LLM_PARALLEL_EXECUTION: boolean = this.getEnvConfig('LLM_PARALLEL_EXECUTION', 'llm.openai.chatCompletions.parallelExecution', false);
     public readonly OPENAI_FINISH_REASON_RETRY: string = this.getEnvConfig('OPENAI_FINISH_REASON_RETRY', 'openai.finishReasonRetry', 'length');
     public readonly OPENAI_MAX_RETRIES: number = this.getEnvConfig('OPENAI_MAX_RETRIES', 'openai.maxRetries', 3);

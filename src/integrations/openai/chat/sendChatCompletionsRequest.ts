@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
-import { extractContent } from './extractContent';
 import { completeSentence } from '../completion/completeSentence';
 import { needsCompletion } from '../completion/needsCompletion';
 
@@ -29,18 +28,20 @@ export async function sendChatCompletionsRequest(
         presence_penalty?: number
     }
 ): Promise<LLMResponse> {
-    if (!openAiService.parallelExecution && openAiService.isBusy()) {
+    const parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
+
+    if (!parallelExecution && openAiService.isBusy()) {
         debug('The service is currently busy with another request.');
         return new LLMResponse('', 'busy');
     }
-    if (!openAiService.parallelExecution) {
+    if (!parallelExecution) {
         openAiService.setBusy(true);
     }
     debug('Sending request to OpenAiService');
     debug('Request body: ' + JSON.stringify(requestBody, null, 2));
     try {
         const response = await openAiService.openai.chat.completions.create(requestBody);
-        let content = extractContent(response.choices[0]);
+        let content = response.choices[0]?.message?.content?.trim() || '';
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
         let maxTokensReached = tokensUsed >= configManager.LLM_RESPONSE_MAX_TOKENS;
@@ -56,7 +57,7 @@ export async function sendChatCompletionsRequest(
         debug('Error occurred while processing request: ' + error.message);
         return new LLMResponse('', 'error');
     } finally {
-        if (!openAiService.parallelExecution) {
+        if (!parallelExecution) {
             openAiService.setBusy(false);
             debug('Set busy to false after processing the request.');
         }
