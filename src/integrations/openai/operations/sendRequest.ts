@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import constants from '@config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { extractContent } from '@src/integrations/openai/operations/extractContent';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
@@ -9,6 +9,7 @@ import { redactSensitiveInfo } from '@src/common/redactSensitiveInfo';
 import { handleError } from '@src/common/errors/handleError';
 
 const debug = Debug('app:sendRequest');
+const configManager = new ConfigurationManager();
 
 /**
  * Sends a request to the OpenAiService API and processes the response.
@@ -37,17 +38,17 @@ export async function sendRequest(
     debug('Sending request to OpenAiService');
     debug('Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
     try {
-        const response = await openAiManager.getClient().chat.completions.create(requestBody);
+        const response = await openAiManager.getClient().createChatCompletion(requestBody);
         let content = extractContent(response.choices[0]);
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
-        let maxTokensReached = tokensUsed >= constants.LLM_RESPONSE_MAX_TOKENS;
+        let maxTokensReached = tokensUsed >= configManager.LLM_RESPONSE_MAX_TOKENS;
         if (
-            constants.LLM_SUPPORTS_COMPLETIONS &&
+            configManager.LLM_SUPPORTS_COMPLETIONS &&
             needsCompletion(maxTokensReached, finishReason, content)
         ) {
             debug('Completing the response due to reaching the token limit or incomplete sentence.');
-            content = await completeSentence(openAiManager.getClient(), content, constants);
+            content = await completeSentence(openAiManager.getClient(), content, configManager);
         }
         return new LLMResponse(content, finishReason, tokensUsed);
     } catch (error: any) {
