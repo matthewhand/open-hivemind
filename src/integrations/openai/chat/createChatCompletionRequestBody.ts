@@ -2,9 +2,12 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
-import { OpenAI as OpenAITypes } from 'openai';
+import ChatCompletionMessage from 'openai';
+import ChatCompletionCreateParams from 'openai';
+import ChatCompletionRole from 'openai';
 
 const debug = Debug('app:createChatCompletionRequestBody');
+const configManager = new ConfigurationManager();
 
 /**
  * Validates that the input is an array of IMessage objects.
@@ -27,8 +30,8 @@ function validateMessages(historyMessages: IMessage[]): void {
  * @param systemMessageContent - The content of the system message to be included at the start.
  * @returns An array starting with the system message.
  */
-function initializeMessages(systemMessageContent: string): OpenAITypes.ChatCompletionMessage[] {
-    return [{ role: 'system', content: systemMessageContent }];
+function initializeMessages(systemMessageContent: string): ChatCompletionMessage[] {
+    return [{ role: 'system' as ChatCompletionRole, content: systemMessageContent }];
 }
 
 /**
@@ -39,20 +42,20 @@ function initializeMessages(systemMessageContent: string): OpenAITypes.ChatCompl
  * @param messages - The array being constructed for the OpenAI API request.
  * @param supportNameField - Whether to include the author's name in the message object.
  */
-function processHistoryMessages(historyMessages: IMessage[], messages: OpenAITypes.ChatCompletionMessage[], supportNameField: boolean): void {
+function processHistoryMessages(historyMessages: IMessage[], messages: ChatCompletionMessage[], supportNameField: boolean): void {
     historyMessages.forEach((message, index) => {
         debug(`Processing message ${index + 1}/${historyMessages.length} with ID: ${message.getMessageId()}`);
 
-        const role: OpenAITypes.ChatCompletionMessage['role'] = message.isFromBot()
+        const role: ChatCompletionRole = message.isFromBot()
             ? 'assistant'
             : 'user';
 
-        let newMessage: OpenAITypes.ChatCompletionMessage = {
+        let newMessage: ChatCompletionMessage = {
             role,
             content: message.getText()
         };
 
-        if (supportNameField) {
+        if (supportNameField && message.getAuthorName) {
             newMessage.name = message.getAuthorName();
         }
 
@@ -75,7 +78,7 @@ function processHistoryMessages(historyMessages: IMessage[], messages: OpenAITyp
  * 
  * @param messages - The array of messages that will be sent to the OpenAI API.
  */
-function appendFallbackUserMessage(messages: OpenAITypes.ChatCompletionMessage[]): void {
+function appendFallbackUserMessage(messages: ChatCompletionMessage[]): void {
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
         messages.push({ role: 'user', content: getEmoji() });
         debug('Appended fallback user message with emoji.');
@@ -89,15 +92,15 @@ function appendFallbackUserMessage(messages: OpenAITypes.ChatCompletionMessage[]
  * @param maxTokens - The maximum number of tokens allowed in the AI's response.
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
-function createRequestBody(messages: OpenAITypes.ChatCompletionMessage[], maxTokens: number): OpenAITypes.ChatCompletionCreateParams {
-    const requestBody: OpenAITypes.ChatCompletionCreateParams = {
-        model: ConfigurationManager.OPENAI_MODEL,
+function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number): ChatCompletionCreateParams {
+    const requestBody: ChatCompletionCreateParams = {
+        model: configManager.OPENAI_MODEL,
         messages,
         max_tokens: maxTokens,
-        temperature: ConfigurationManager.OPENAI_TEMPERATURE
+        temperature: configManager.OPENAI_TEMPERATURE
     };
 
-    const llmStop = ConfigurationManager.LLM_STOP.length > 0 ? ConfigurationManager.LLM_STOP : undefined;
+    const llmStop = configManager.LLM_STOP.length > 0 ? configManager.LLM_STOP : undefined;
     if (llmStop !== undefined) {
         requestBody.stop = llmStop;
     }
@@ -117,13 +120,13 @@ function createRequestBody(messages: OpenAITypes.ChatCompletionMessage[], maxTok
  */
 export function createChatCompletionRequestBody(
     historyMessages: IMessage[] = [],
-    systemMessageContent: string = ConfigurationManager.LLM_SYSTEM_PROMPT,
-    maxTokens: number = ConfigurationManager.LLM_RESPONSE_MAX_TOKENS
-): OpenAITypes.ChatCompletionCreateParams {
+    systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
+    maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS
+): ChatCompletionCreateParams {
     validateMessages(historyMessages);
 
-    const messages: OpenAITypes.ChatCompletionMessage[] = initializeMessages(systemMessageContent);
-    const supportNameField = ConfigurationManager.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
+    const messages: ChatCompletionMessage[] = initializeMessages(systemMessageContent);
+    const supportNameField = configManager.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
 
     processHistoryMessages(historyMessages, messages, supportNameField);
     appendFallbackUserMessage(messages);
