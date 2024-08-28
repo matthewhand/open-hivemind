@@ -1,6 +1,8 @@
 import Debug from 'debug';
 import axios from 'axios';
 import ConfigurationManager from '@common/config/ConfigurationManager';
+import { sendChatCompletionsRequest } from './operations/sendChatCompletionsRequest';
+import { buildChatCompletionRequestBody } from './buildChatCompletionRequestBody';
 
 const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
@@ -8,14 +10,15 @@ const configManager = new ConfigurationManager();
 /**
  * OpenAiService Class
  *
- * This service manages interactions with OpenAI's API, including creating chat
- * completions and listing available models. It is implemented as a singleton to
- * ensure that only one instance of the service is used throughout the application.
+ * This service manages interactions with OpenAI's API, including creating chat completions
+ * and listing available models. It is implemented as a singleton to ensure that only one
+ * instance of the service is used throughout the application.
  *
  * Key Features:
  * - Singleton pattern for centralized management
  * - Handles API requests for chat completions
  * - Manages service state, including busy status
+ * - Supports generating chat responses with history management
  */
 export class OpenAiService {
     private static instance: OpenAiService; // Singleton instance
@@ -113,5 +116,51 @@ export class OpenAiService {
      */
     public setBusy(status: boolean): void {
         this.busy = status;
+    }
+
+    /**
+     * Generates a chat response using the OpenAI API.
+     * This method wraps the process of building a request body and sending it to the API,
+     * ensuring that the service is not busy before making the request.
+     *
+     * @param message - The user message that requires a response.
+     * @param historyMessages - The array of previous conversation messages for context.
+     * @returns {Promise<any>} - The OpenAI API's response, or null if an error occurs.
+     */
+    public async generateChatResponse(message: string, historyMessages: any[]): Promise<any> {
+        if (!this.apiKey) {
+            debug('generateChatResponse: API key is missing');
+            return null;
+        }
+
+        if (this.isBusy()) {
+            debug('generateChatResponse: Service is busy');
+            return null;
+        }
+
+        try {
+            this.setBusy(true); // Set service to busy to prevent other requests
+            debug('generateChatResponse: Building request body');
+
+            // Build the request body including the conversation history and the new message
+            const requestBody = await buildChatCompletionRequestBody([
+                ...historyMessages,
+                { role: 'user', content: message },
+            ]);
+
+            debug('generateChatResponse: Sending request to OpenAI API');
+            
+            // Send the request using the helper function
+            const response = await sendChatCompletionsRequest(requestBody);
+
+            debug('generateChatResponse: Received response from OpenAI API');
+            return response;
+        } catch (error: any) {
+            debug('generateChatResponse: Error occurred:', error);
+            return null; // Return null in case of an error
+        } finally {
+            this.setBusy(false); // Reset the busy status
+            debug('generateChatResponse: Service busy status reset');
+        }
     }
 }
