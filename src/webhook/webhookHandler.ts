@@ -10,9 +10,12 @@ const debug = Debug('app:webhookHandler');
 // Initialize Discord client with necessary intents
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
+// Create an instance of ConfigurationManager
+const configManager = new ConfigurationManager();
+
 // Retrieve required configurations from ConfigurationManager
-const DISCORD_TOKEN = ConfigurationManager.DISCORD_CLIENT_ID;
-const DISCORD_CHANNEL_ID = ConfigurationManager.DISCORD_CHANNEL_ID;
+const DISCORD_TOKEN = configManager.DISCORD_TOKEN;
+const DISCORD_CHANNEL_ID = configManager.DISCORD_CHANNEL_ID;
 
 // Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHANNEL_ID) {
