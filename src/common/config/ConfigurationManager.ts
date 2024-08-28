@@ -64,6 +64,15 @@ class ConfigurationManager {
     public readonly MESSAGE_MIN_INTERVAL_MS: number = this.getEnvConfig('MESSAGE_MIN_INTERVAL_MS', 'message.minIntervalMs', 1000);
     public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'message.followUpEnabled', false);
 
+    // New Configuration
+    public readonly MESSAGE_LLM_CHAT: boolean = this.getEnvConfig('MESSAGE_LLM_CHAT', 'message.llm.chat', true);
+    public readonly MESSAGE_LLM_COMPLETE_SENTENCE: boolean = this.getEnvConfig('MESSAGE_LLM_COMPLETE_SENTENCE', 'message.llm.complete_sentence', true);
+    public readonly MESSAGE_LLM_FOLLOW_UP: boolean = this.getEnvConfig('MESSAGE_LLM_FOLLOW_UP', 'message.llm.follow_up', true);
+    public readonly MESSAGE_LLM_SUMMARISE: boolean = this.getEnvConfig('MESSAGE_LLM_SUMMARISE', 'message.llm.summarise', true);
+    public readonly MESSAGE_COMMAND_INLINE: boolean = this.getEnvConfig('MESSAGE_COMMAND_INLINE', 'message.command.inline', true);
+    public readonly MESSAGE_COMMAND_SLASH: boolean = this.getEnvConfig('MESSAGE_COMMAND_SLASH', 'message.command.slash', true);
+    public readonly MESSAGE_COMMAND_AUTHORISED_USERS: string = this.getEnvConfig('MESSAGE_COMMAND_AUTHORISED_USERS', 'message.command.authorised_users', '');
+
     // Generic method to retrieve the value from environment, config, or fallback
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
         const envValue = process.env[envVar];
