@@ -1,19 +1,44 @@
 import Debug from "debug";
-import axios from 'axios';
-import configurationManager from '@config/ConfigurationManager';
+import { Configuration, OpenAIApi } from 'openai';
+import ConfigurationManager from '@config/ConfigurationManager';
 
+const debug = Debug('app:sendFollowUpRequest');
+
+/**
+ * Sends a follow-up request to the OpenAI service using the official client.
+ * 
+ * This function sends a request to the OpenAI API, passing the provided message as input.
+ * It uses the configured API key, model, and other settings from the ConfigurationManager.
+ * 
+ * Guards are implemented to handle cases where critical configuration values are missing.
+ * Debugging logs are included for better traceability of the request process.
+ *
+ * @param message - The input message to send to the OpenAI API.
+ * @returns {Promise<any>} - The response data from the OpenAI API, or null if an error occurred.
+ */
 export async function sendFollowUpRequest(message: string): Promise<any> {
-    const OPENAI_BASE_URL = configurationManager.getConfig('OPENAI_BASE_URL', 'https://api.default-llm.com');
-    const OPENAI_MODEL = configurationManager.getConfig('OPENAI_MODEL', 'default-model');
-    const API_KEY = configurationManager.getConfig('API_KEY', 'default-api-key');
+    const API_KEY = ConfigurationManager.OPENAI_API_KEY;
+    const OPENAI_MODEL = ConfigurationManager.OPENAI_MODEL;
+
+    debug('Sending follow-up request with the following configuration:');
+    debug('OPENAI_MODEL:', OPENAI_MODEL);
+    debug('API_KEY:', API_KEY);
+
+    // Guard against missing API key
+    if (!API_KEY) {
+        console.error('Critical configuration missing: API_KEY');
+        return null;
+    }
+
+    const openai = new OpenAIApi(new Configuration({ apiKey: API_KEY }));
 
     try {
-        const response = await axios.post(OPENAI_BASE_URL, {
+        const response = await openai.createChatCompletion({
             model: OPENAI_MODEL,
-            api_key: API_KEY,
-            input: message,
+            messages: [{ role: 'user', content: message }],
         });
 
+        debug('Received response:', response.data);
         return response.data;
     } catch (error: any) {
         console.error('Error sending follow-up request:', error);
