@@ -7,22 +7,16 @@ const configManager = new ConfigurationManager();
 
 /**
  * Summarize Text
- *
- * This function summarizes a given text using the OpenAiService. It sends the text to the OpenAI API
- * and returns the summarized version.
- *
- * Key Features:
- * - Integrates with OpenAiService to summarize large texts.
- * - Handles the request and response flow for text summarization.
- * - Provides detailed logging for debugging purposes.
- *
+ * 
+ * This function summarizes a given text using the OpenAiService.
+ * 
  * @param content - The content to summarize.
  * @returns {Promise<string>} - The summarized text.
  */
 export async function summarizeText(content: string): Promise<string> {
     try {
         const openAiService = new OpenAiService();
-        const response = await openAiService.createChatCompletion({
+        const response = await openAiService.createChatCompletion(JSON.stringify({
             model: configManager.OPENAI_MODEL,
             messages: [{ role: 'user', content }],
             max_tokens: configManager.OPENAI_MAX_TOKENS,
@@ -31,7 +25,7 @@ export async function summarizeText(content: string): Promise<string> {
             frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
             presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
             stop: configManager.LLM_STOP
-        });
+        }));
         debug('summarizeText: Full response: ' + JSON.stringify(response));
         return response.choices[0].message.content;
     } catch (error: any) {

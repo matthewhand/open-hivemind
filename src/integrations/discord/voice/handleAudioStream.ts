@@ -4,18 +4,15 @@ import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
 import { convertOpusToWav } from './convertOpusToWav';
 import { transcribeAudio } from './transcribeAudio';
-import { generateResponse } from '../processing/generateResponse';
 import { playAudioResponse } from './playAudioResponse';
-import { IMessage } from '@src/message/interfaces/IMessage'; // Assuming IMessage is defined here
-import { OpenAiService } from '@src/integrations/openai/OpenAiService'; // Import OpenAiService
+import { IMessage } from '@src/message/interfaces/IMessage'; 
+import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 
 const debug = Debug('app:message:handleAudioStream');
 
 /**
  * Handles the streaming of audio from a Discord voice connection.
- * 
- * This function processes incoming audio streams, transcribes them, 
- * generates a response, and plays it back in the same voice connection.
+ * Processes incoming audio streams, transcribes them, generates a response, and plays it back.
  * 
  * @param {Readable} stream - The audio stream to process.
  * @param {VoiceConnection} connection - The Discord voice connection to stream to.
@@ -62,7 +59,16 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             if (transcript) {
                 debug('Transcription successful', { transcript });
-                const response = await generateResponse(aiService, transcript); // Pass both aiService and transcript
+                const response = await aiService.createChatCompletion({
+                    model: configManager.OPENAI_MODEL,
+                    messages: [{ role: 'user', content: transcript }],
+                    max_tokens: configManager.OPENAI_MAX_TOKENS,
+                    temperature: configManager.OPENAI_TEMPERATURE,
+                    top_p: configManager.LLM_TOP_P,
+                    frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
+                    presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
+                    stop: configManager.LLM_STOP
+                });
 
                 if (response) {
                     debug('Generated response', { response });

@@ -38,7 +38,7 @@ export async function sendRequest(
     debug('Sending request to OpenAiService');
     debug('Request body: ' + JSON.stringify(requestBody, redactSensitiveInfo, 2));
     try {
-        const response = await openAiService.createChatCompletion(requestBody);
+        const response = await openAiService.createChatCompletion(JSON.stringify(requestBody));
         let content = extractContent(response.choices[0]);
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
