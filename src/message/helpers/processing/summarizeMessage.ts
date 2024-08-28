@@ -1,38 +1,22 @@
-import Debug from "debug";
-import constants from '@config/ConfigurationManager';
+import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import { summarizeText } from '@src/integrations/openai/operations/summarizeText';
 
 const debug = Debug('app:summarizeMessage');
 
 /**
- * Summarizes a given text using the OpenAiService.
- *
- * This function reduces the length of responses that exceed Discord's message length limits.
- * It uses the OpenAiService to generate a summary based on the provided content.
- *
- * Key Features:
- * - Validates input content to ensure it's a string.
- * - Utilizes the summarizeText function from OpenAiService.
- * - Logs detailed information about the summarization process.
- *
- * @param {string} content - The content to be summarized.
- * @param {number} [targetSize=constants.LLM_RESPONSE_MAX_TOKENS] - The target size for the summary.
- * @returns {Promise<string>} The summarized text.
+ * Summarizes the given message using OpenAI's completion service.
+ * 
+ * @param message - The message to summarize.
+ * @returns A promise that resolves with the summary text.
  */
-export async function summarizeMessage(content: string, targetSize: number = constants.LLM_RESPONSE_MAX_TOKENS): Promise<string> {
-    if (typeof content !== 'string') {
-        debug('Invalid content type: ' + typeof content + ' - Content: ' + content);
-        throw new Error('Content must be a string.');
-    }
+export async function summarizeMessage(message: IMessage): Promise<string> {
+    const openAiService = OpenAiService.getInstance();
+    const text = message.getText();
+    debug('Summarizing message ID: ' + message.getMessageId());
 
-    try {
-        const openAiService = OpenAiService.getInstance();
-        const response = await summarizeText(openAiService, content);
-        debug('Summarization completed successfully.');
-        return response.getContent();
-    } catch (error: any) {
-        debug('Error summarizing message: ' + (error instanceof Error ? error.message : String(error)));
-        throw error;
-    }
+    const summary = await openAiService.createChatCompletion(text);
+    debug('Generated summary: ' + summary);
+
+    return summary;
 }
