@@ -59,31 +59,38 @@ class ConfigurationManager {
     public readonly FLOWISE_BASE_URL: string = this.getEnvConfig('FLOWISE_BASE_URL', 'flowise.apiBaseUrl', 'http://localhost:3000/api/v1');
     public readonly FLOWISE_API_KEY: string = this.getEnvConfig('FLOWISE_API_KEY', 'flowise.apiKey', 'default-flowise-api-key');
 
-    // Message and LLM Integrations
-    public readonly MESSAGE_PROVIDER: string = this.getEnvConfig('MESSAGE_PROVIDER', 'message', 'discord');
-    public readonly MESSAGE_MIN_INTERVAL_MS: number = this.getEnvConfig('MESSAGE_MIN_INTERVAL_MS', 'message.minMessageIntervalMs', 1000);
-    public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'followUp.enabled', false);
+    // Message Integration Configuration
+    public readonly MESSAGE_PROVIDER: string = this.getEnvConfig('MESSAGE_PROVIDER', 'message.provider', 'discord');
+    public readonly MESSAGE_MIN_INTERVAL_MS: number = this.getEnvConfig('MESSAGE_MIN_INTERVAL_MS', 'message.minIntervalMs', 1000);
+    public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'message.followUpEnabled', false);
 
     // Generic method to retrieve the value from environment, config, or fallback
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
         const envValue = process.env[envVar];
         if (envValue !== undefined) {
             if (typeof fallbackValue === 'boolean') {
-                return (envValue.toLowerCase() === 'true') as unknown as T;
+                const result = (envValue.toLowerCase() === 'true') as unknown as T;
+                debug(`ENV [${envVar}] = ${result}`);
+                return result;
             } else if (typeof fallbackValue === 'number') {
                 const parsedValue = parseFloat(envValue);
-                return (isNaN(parsedValue) ? fallbackValue : parsedValue) as unknown as T;
+                const result = (isNaN(parsedValue) ? fallbackValue : parsedValue) as unknown as T;
+                debug(`ENV [${envVar}] = ${result}`);
+                return result;
             }
+            debug(`ENV [${envVar}] = ${envValue}`);
             return envValue as unknown as T;
         }
         try {
             const configValue = config.get(configKey);
             if (configValue !== undefined && configValue !== null) {
+                debug(`CONFIG [${configKey}] = ${redactSensitiveInfo(configKey, configValue)}`);
                 return configValue as T;
             }
+            debug(`CONFIG [${configKey}] not found. Using fallback value: ${fallbackValue}`);
             return fallbackValue;
         } catch (e) {
-            debug(`Configuration key "${configKey}" not found. Using fallback value: ${fallbackValue}`);
+            debug(`Error fetching CONFIG [${configKey}]. Using fallback value: ${fallbackValue}`);
             return fallbackValue;
         }
     }

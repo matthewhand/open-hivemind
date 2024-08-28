@@ -39,6 +39,17 @@
             "typingDelayMinMs": 1000,
             "typingDelayMaxMs": 15000,
             "interPartDelayMs": 20000
+        },
+        "llm": {
+            "chat": "true",
+            "complete_sentence": "true",
+            "follow_up": "true",
+            "summarise": "true"
+        },
+        "command": {
+            "inline": "true",
+            "slash": "true",
+            "authorised_users": ""
         }
     },
     "enabledModules": {
