@@ -11,10 +11,9 @@ class ConfigurationManager {
     public readonly OPENAI_MAX_TOKENS: number = this.getEnvConfig('OPENAI_MAX_TOKENS', 'openai.maxTokens', 150);
     public readonly OPENAI_FREQUENCY_PENALTY: number = this.getEnvConfig('OPENAI_FREQUENCY_PENALTY', 'openai.frequencyPenalty', 0.1);
     public readonly OPENAI_PRESENCE_PENALTY: number = this.getEnvConfig('OPENAI_PRESENCE_PENALTY', 'openai.presencePenalty', 0.05);
-    public readonly OPENAI_BASE_URL: string = this.getEnvConfig('OPENAI_BASE_URL', 'openai_base_url', 'https://api.openai.com');
-    public readonly OPENAI_TIMEOUT: number = this.getEnvConfig('OPENAI_TIMEOUT', 'openai_timeout', 10000);
-    public readonly OPENAI_ORGANIZATION: string | undefined = this.getEnvConfig('OPENAI_ORGANIZATION', 'openai_organization', '');
-    public readonly OPENAI_RETRY: { retries: number } = this.getEnvConfig('OPENAI_RETRY', 'openai_retry', { retries: 3 });
+    public readonly OPENAI_BASE_URL: string = this.getEnvConfig('OPENAI_BASE_URL', 'openai.baseUrl', 'https://api.openai.com');
+    public readonly OPENAI_TIMEOUT: number = this.getEnvConfig('OPENAI_TIMEOUT', 'openai.timeout', 10000);
+    public readonly OPENAI_ORGANIZATION: string | undefined = this.getEnvConfig('OPENAI_ORGANIZATION', 'openai.organization', '');
     public readonly OPENAI_MODEL: string = this.getEnvConfig('OPENAI_MODEL', 'openai.model', 'gpt4o-mini');
 
     // General LLM Configuration
@@ -53,6 +52,10 @@ class ConfigurationManager {
     // Flowise Configuration
     public readonly FLOWISE_BASE_URL: string = this.getEnvConfig('FLOWISE_BASE_URL', 'flowise.apiBaseUrl', 'http://localhost:3000/api/v1');
     public readonly FLOWISE_API_KEY: string = this.getEnvConfig('FLOWISE_API_KEY', 'flowise.apiKey', 'default-flowise-api-key');
+
+    // Message and LLM Integrations
+    public readonly MESSAGE: string = this.getEnvConfig('MESSAGE', 'message', 'discord');
+    public readonly LLM: string = this.getEnvConfig('LLM', 'llm', 'openai');
 
     // Message Configuration
     public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean = this.getEnvConfig('MESSAGE_FOLLOW_UP_ENABLED', 'followUp.enabled', false);
