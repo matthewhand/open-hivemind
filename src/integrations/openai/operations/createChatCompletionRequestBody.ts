@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
-import ConfigurationManager from '@config/ConfigurationManager';
+import ConfigurationManager from '@src/common/config/ConfigurationManager';
 import {
     ChatCompletionRequestMessage,
 } from 'openai';
@@ -101,7 +101,7 @@ function createRequestBody(messages: ChatCompletionRequestMessage[], maxTokens: 
     };
 
     const llmStop = ConfigurationManager.LLM_STOP.length > 0 ? ConfigurationManager.LLM_STOP : undefined;
-    if (llmStop) {
+    if (llmStop !== undefined) {
         requestBody.stop = llmStop;
     }
 

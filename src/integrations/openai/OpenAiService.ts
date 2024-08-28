@@ -2,7 +2,7 @@ import Debug from 'debug';
 import axios from 'axios';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import { sendChatCompletionsRequest } from './operations/sendChatCompletionsRequest';
-import { buildChatCompletionRequestBody } from './buildChatCompletionRequestBody';
+import { buildChatCompletionRequestBody } from './operations/createChatCompletionRequestBody';
 
 const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
