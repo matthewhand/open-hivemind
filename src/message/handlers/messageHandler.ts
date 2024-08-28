@@ -8,15 +8,8 @@ const debug = Debug('app:messageHandler');
 /**
  * Message Handler
  *
- * This function is responsible for handling incoming messages, validating them, processing any commands they contain, 
- * and managing AI responses. It ensures that each message is appropriately handled based on the context provided 
- * by previous messages and the validation logic.
- *
- * Key Features:
- * - Validates incoming messages to ensure they meet the necessary criteria before processing.
- * - Processes commands within the message and generates appropriate responses.
- * - Manages the history of previous messages to provide context for more accurate processing.
- * - Logs important steps and potential issues for debugging purposes.
+ * Handles incoming messages, validating them, processing commands, and managing AI responses.
+ * Ensures that each message is appropriately processed based on its content and context.
  *
  * @param originalMsg - The original message object implementing the IMessage interface.
  * @param historyMessages - The history of previous messages for context, defaults to an empty array.
@@ -25,50 +18,55 @@ export async function messageHandler(
   originalMsg: IMessage,
   historyMessages: IMessage[] = []
 ): Promise<void> {
+  // Guard: Ensure a valid message object is provided
   if (!originalMsg) {
     debug('[messageHandler] No original message provided.');
     return;
   }
+
   const startTime = Date.now();
-  debug('[messageHandler] originalMsg: ' + JSON.stringify(originalMsg));
-  const messageId = originalMsg.getMessageId();
-  debug(
-    '[messageHandler] Started processing message ID: ' +
-    messageId +
-    ' at ' +
-    new Date(startTime).toISOString()
-  );
-  // Type guard to ensure originalMsg is a valid instance of IMessage
-  if (!(originalMsg && 'getMessageId' in originalMsg)) {
+  debug('[messageHandler] Received message with ID:', originalMsg.getMessageId(), 'at', new Date(startTime).toISOString());
+
+  // Type Guard: Ensure originalMsg implements IMessage and has necessary methods
+  if (!(originalMsg && 'getMessageId' in originalMsg && typeof originalMsg.getMessageId === 'function')) {
     debug('[messageHandler] originalMsg is not a valid IMessage instance.');
     return;
   }
+
   debug('[messageHandler] originalMsg is a valid instance of IMessage.');
-  // Validate getText method
+
+  // Guard: Check that getText method exists and is valid
   if (typeof originalMsg.getText !== 'function') {
     debug('[messageHandler] originalMsg does not have a valid getText method.');
     return;
   }
+
   debug('[messageHandler] originalMsg has a valid getText method.');
+
+  // Guard: Ensure the message is not empty
   if (!originalMsg.getText().trim()) {
-    debug('[messageHandler] Received empty message.');
+    debug('[messageHandler] Received an empty message.');
     return;
   }
+
+  // Validate the message
   if (!validateMessage(originalMsg)) {
     debug('[messageHandler] Message validation failed.');
     return;
   }
-  debug('[messageHandler] validated message');
 
-  // Handle the response correctly for IMessage
+  debug('[messageHandler] Message validated successfully.');
+
+  // Process the command within the message
   await processCommand(originalMsg, async (result: string) => {
     if (typeof originalMsg.reply === 'function') {
       await originalMsg.reply(result);
-      debug('[messageHandler] Sent reply using originalMsg.reply');
+      debug('[messageHandler] Reply sent successfully.');
     } else {
-      debug('[messageHandler] originalMsg.reply is not a function, handling differently');
-      // Add alternative handling if needed
+      debug('[messageHandler] originalMsg.reply is not a function, alternative handling needed.');
+      // Alternative handling logic if necessary
     }
   });
-  debug('[messageHandler] processed command');
+
+  debug('[messageHandler] Command processed successfully.');
 }
