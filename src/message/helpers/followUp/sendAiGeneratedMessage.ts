@@ -4,7 +4,7 @@ import { Message } from 'discord.js';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:sendAiGeneratedMessage');
-const configManager = ConfigurationManager.getInstance();  // Ensure configManager is instantiated
+const configManager = ConfigurationManager.getInstance()();  // Ensure configManager is instantiated
 
 /**
  * Send AI-Generated Message

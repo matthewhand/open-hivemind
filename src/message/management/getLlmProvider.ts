@@ -15,7 +15,7 @@ const debug = Debug('app:getLlmProvider');
  * @throws An error if the configured LLM provider is unsupported.
  */
 export function getLlmProvider() {
-  const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
+  const configManager = ConfigurationManager.getInstance()(); // Instantiate ConfigurationManager
   const llmProvider = configManager.LLM_PROVIDER;
 
   debug('Configured LLM provider:', llmProvider);
@@ -28,7 +28,7 @@ export function getLlmProvider() {
   // Return the appropriate LLM provider based on configuration
   switch (llmProvider.toLowerCase()) {
     case 'openai':
-      return OpenAiService.getInstance(); // Assuming OpenAiService is a singleton
+      return OpenAiService.getInstance()(); // Assuming OpenAiService is a singleton
     // Add additional cases for other providers here
     default:
       throw new Error(`Unsupported LLM provider: ${llmProvider}`);

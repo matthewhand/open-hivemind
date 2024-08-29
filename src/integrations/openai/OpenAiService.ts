@@ -6,7 +6,7 @@ import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 /**
  * OpenAiService Class
@@ -44,7 +44,7 @@ export class OpenAiService {
         this.maxRetries = configManager.OPENAI_MAX_RETRIES;
     }
 
-    public static getInstance(): OpenAiService {
+    public static getInstance()(): OpenAiService {
         if (!OpenAiService.instance) {
             OpenAiService.instance = new OpenAiService();
         }

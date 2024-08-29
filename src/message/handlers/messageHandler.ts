@@ -10,7 +10,7 @@ import ConfigurationManager from '@common/config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
 const debug = Debug('app:messageHandler');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 /**
  * Message Handler
@@ -102,7 +102,7 @@ export async function messageHandler(
     const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
     if (llmResponse) {
       // Schedule the message with ResponseTimingManager
-      const timingManager = ResponseTimingManager.getInstance();
+      const timingManager = ResponseTimingManager.getInstance()();
       timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content) => {
         try {
           await messageProvider.sendMessageToChannel(channelId, content);

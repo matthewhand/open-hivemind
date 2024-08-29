@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:sendFollowUpRequest');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 /**
  * Sends a follow-up request to the OpenAI service using the official client.

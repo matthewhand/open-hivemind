@@ -4,7 +4,7 @@ import fs from 'fs';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:transcribeAudio');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 /**
  * Transcribe Audio

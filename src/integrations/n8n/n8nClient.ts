@@ -1,6 +1,6 @@
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 export class N8nClient {
     private readonly baseURL: string;

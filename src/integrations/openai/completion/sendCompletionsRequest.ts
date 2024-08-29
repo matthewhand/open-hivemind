@@ -1,6 +1,6 @@
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 export async function sendCompletionsRequest(prompt: string): Promise<any> {
     const apiKey = configManager.OPENAI_API_KEY;

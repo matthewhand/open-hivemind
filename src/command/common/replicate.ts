@@ -3,7 +3,7 @@ import axios from 'axios';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:replicate');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 export async function replicateRequest(input: string): Promise<any> {
     const baseUrl = configManager.REPLICATE_BASE_URL;

@@ -33,7 +33,7 @@ envKeys.forEach(key => {
 async function main() {
     try {
         // Get the singleton instance of DiscordService
-        const discordService = DiscordService.getInstance();
+        const discordService = DiscordService.getInstance()();
         debug('DiscordService instance retrieved with options:', discordService.options);
 
         // Set up the message handler
@@ -41,7 +41,7 @@ async function main() {
         debug('Message handler set up successfully.');
 
         // Retrieve the bot token from the configuration manager
-        const botToken = ConfigurationManager.getInstance().DISCORD_TOKEN;
+        const botToken = ConfigurationManager.getInstance()().DISCORD_TOKEN;
         debug('Bot Token retrieved:', botToken);
 
         // Guard clause: Ensure bot token is properly configured

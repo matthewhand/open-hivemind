@@ -4,7 +4,7 @@ class MessageResponseManager {
 
     private constructor() {}
 
-    public static getInstance(): MessageResponseManager {
+    public static getInstance()(): MessageResponseManager {
         if (!MessageResponseManager.instance) {
             MessageResponseManager.instance = new MessageResponseManager();
         }

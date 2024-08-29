@@ -1,7 +1,12 @@
-import ConfigurationManager from '../ConfigurationManager';
+import { getEnvConfig } from '../configUtils';
 
-class ZepConfig extends ConfigurationManager {
-    public readonly ZEP_API_URL: string = this.getEnvConfig('ZEP_API_URL', 'llm.zep.apiUrl', 'https://api.zep.com');
+class ZepConfig {
+    public readonly ZEP_API_URL: string = getEnvConfig('ZEP_API_URL', 'llm.zep.apiUrl', 'https://api.zep.com');
+    public readonly ZEP_API_KEY: string = getEnvConfig('ZEP_API_KEY', 'llm.zep.apiKey', 'your-zep-api-key');
+
+    constructor() {
+        console.log('ZepConfig initialized');
+    }
 }
 
 export default ZepConfig;

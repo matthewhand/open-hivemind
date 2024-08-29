@@ -6,7 +6,7 @@ import util from 'util';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:playAudioResponse');
-const configManager = ConfigurationManager.getInstance();
+const configManager = ConfigurationManager.getInstance()();
 
 /**
  * Play Audio Response
