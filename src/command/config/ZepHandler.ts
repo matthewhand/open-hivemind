@@ -1,4 +1,4 @@
-import ZepConfig from '../llm/ZepConfig';
+import ZepConfig from '../../integrations/zep/ZepConfig';
 
 export default class ZepHandler {
     private config: ZepConfig;

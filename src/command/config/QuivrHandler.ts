@@ -1,4 +1,4 @@
-import QuivrConfig from '../llm/QuivrConfig';
+import QuivrConfig from '../../integrations/quivr/QuivrConfig';
 
 export default class QuivrHandler {
     private config: QuivrConfig;
