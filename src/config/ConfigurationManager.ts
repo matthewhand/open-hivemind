@@ -8,6 +8,7 @@ class ConfigurationManager {
 
     private constructor() {
         debug('Loading core configurations...');
+        this.loadEnabledIntegrations();
     }
 
     public static getInstance(): ConfigurationManager {
@@ -17,7 +18,7 @@ class ConfigurationManager {
         return ConfigurationManager.instance;
     }
 
-    public loadEnabledIntegrations() {
+    private loadEnabledIntegrations() {
         const integrations = this.getEnvConfig<any>('INTEGRATIONS', 'commands.integrations', {});
         for (const integration in integrations) {
             if (integrations[integration].enabled) {
