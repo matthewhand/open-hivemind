@@ -13,7 +13,7 @@ class ConfigurationManager {
         this.loadEnabledIntegrations();
     }
 
-    public static getInstance()(): ConfigurationManager {
+    public static getInstance(): ConfigurationManager {
         if (!ConfigurationManager.instance) {
             ConfigurationManager.instance = new ConfigurationManager();
         }
