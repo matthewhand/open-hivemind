@@ -10,7 +10,7 @@ import ConfigurationManager from '@common/config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
 const debug = Debug('app:messageHandler');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Message Handler

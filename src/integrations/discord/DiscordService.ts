@@ -32,7 +32,7 @@ export class DiscordService {
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = initializeClient();
-    this.configManager = new ConfigurationManager();  // Instantiate ConfigurationManager
+    this.configManager = ConfigurationManager.getInstance();  // Instantiate ConfigurationManager
     log('Client initialized successfully');
   }
 

@@ -19,7 +19,7 @@ interface ChatCompletionCreateParams {
 }
 
 const debug = Debug('app:createChatCompletion');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Validates that the input is an array of IMessage objects.

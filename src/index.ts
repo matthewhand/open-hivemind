@@ -41,7 +41,7 @@ async function main() {
         debug('Message handler set up successfully.');
 
         // Retrieve the bot token from the configuration manager
-        const botToken = new ConfigurationManager().DISCORD_TOKEN;
+        const botToken = ConfigurationManager.getInstance().DISCORD_TOKEN;
         debug('Bot Token retrieved:', botToken);
 
         // Guard clause: Ensure bot token is properly configured

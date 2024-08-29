@@ -1,0 +1,4 @@
+{
+  "PERPLEXITY_API_TOKEN": "your-perplexity-api-token-here",
+  "PERPLEXITY_MODEL": "sonar-huge"
+}

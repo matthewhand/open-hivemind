@@ -1,6 +1,6 @@
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Retrieves the configuration value for a given key, or returns a default value with a warning.

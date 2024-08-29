@@ -6,7 +6,7 @@ import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * OpenAiService Class

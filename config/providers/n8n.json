@@ -1,0 +1,4 @@
+{
+  "N8N_API_BASE_URL": "http://localhost:5678/api/v1",
+  "N8N_API_KEY": "default-n8n-api-key"
+}

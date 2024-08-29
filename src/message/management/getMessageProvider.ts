@@ -15,7 +15,7 @@ const debug = Debug('app:getMessageProvider');
  * @throws An error if the configured message provider is unsupported.
  */
 export function getMessageProvider() {
-  const configManager = new ConfigurationManager(); // Instantiate ConfigurationManager
+  const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
   const messageProvider = configManager.MESSAGE_PROVIDER;
 
   debug('Configured message provider:', messageProvider);

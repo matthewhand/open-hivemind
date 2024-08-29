@@ -1,0 +1,13 @@
+{
+  "discord": {
+    "token": "YOUR_DEV_DISCORD_TOKEN",
+    "clientId": "default_client_id",
+    "channelId": "default_channel_id",
+    "botUserId": "default_bot_user_id",
+    "voiceChannelId": "default_voice_channel_id",
+    "maxMessageLength": 2000,
+    "interPartDelayMs": 1000,
+    "typingDelayMaxMs": 5000,
+    "welcomeMessage": "Welcome to the server!"
+  }
+}

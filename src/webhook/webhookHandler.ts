@@ -11,7 +11,7 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Create an instance of ConfigurationManager
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 // Retrieve required configurations from ConfigurationManager
 const DISCORD_TOKEN = configManager.DISCORD_TOKEN;

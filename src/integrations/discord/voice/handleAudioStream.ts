@@ -10,7 +10,7 @@ import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:message:handleAudioStream');
-const configManager = new ConfigurationManager();  // Ensure configManager is instantiated
+const configManager = ConfigurationManager.getInstance();  // Ensure configManager is instantiated
 
 /**
  * Handles the streaming of audio from a Discord voice connection.

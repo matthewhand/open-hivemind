@@ -3,7 +3,7 @@ import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:completeSentence');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Completes a sentence using the OpenAI API.

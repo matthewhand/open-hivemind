@@ -2,7 +2,7 @@ import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:llm:LlmService');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Abstract class representing the interface for Large Language Models (LLM).
