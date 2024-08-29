@@ -11,7 +11,12 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/',
-    '^@discord/(.*)$': '<rootDir>/src/message/discord/',
+    '^@command/(.*)$': '<rootDir>/src/command/$1',
+    '^@common/(.*)$': '<rootDir>/src/common/$1',
+    '^@llm/(.*)$': '<rootDir>/src/llm/$1',
+    '^@message/(.*)$': '<rootDir>/src/message/$1',
+    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
   setupFiles: ['module-alias/register'],
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],

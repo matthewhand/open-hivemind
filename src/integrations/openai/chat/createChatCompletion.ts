@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@src/common/getEmoji';
-import ConfigurationManager from '@src/common/config/ConfigurationManager';
+import ConfigurationManager from "@src/common/config/ConfigurationManager";
 
 // Custom type definitions
 interface ChatCompletionMessage {
