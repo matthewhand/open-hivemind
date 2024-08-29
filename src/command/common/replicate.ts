@@ -6,9 +6,10 @@ const debug = Debug('app:replicate');
 const configManager = ConfigurationManager.getInstance();
 
 export async function replicateRequest(input: string): Promise<any> {
-    const baseUrl = configManager.replicateConfig.REPLICATE_BASE_URL;
-    const apiToken = configManager.replicateConfig.REPLICATE_API_TOKEN;
-    const modelVersion = configManager.replicateConfig.REPLICATE_MODEL_VERSION;
+    const replicateConfig = configManager.getConfig('replicateConfig');
+    const baseUrl = replicateConfig.REPLICATE_BASE_URL;
+    const apiToken = replicateConfig.REPLICATE_API_TOKEN;
+    const modelVersion = replicateConfig.REPLICATE_MODEL_VERSION;
     const webhookUrl = configManager.SERVICE_WEBHOOK_URL;
 
     if (!baseUrl || !apiToken || !modelVersion) {
