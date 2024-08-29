@@ -4,7 +4,7 @@ import fs from 'fs';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:transcribeAudio');
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 /**
  * Transcribe Audio
@@ -23,7 +23,7 @@ const configManager = ConfigurationManager.getInstance()();
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
         const openai = new OpenAI({
-            apiKey: configManager.OPENAI_API_KEY
+            apiKey: configManager.openaiConfig.OPENAI_API_KEY
         });
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),

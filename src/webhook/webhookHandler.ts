@@ -11,7 +11,7 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Create an instance of ConfigurationManager
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 // Retrieve required configurations from ConfigurationManager
 const DISCORD_TOKEN = configManager.DISCORD_TOKEN;
@@ -111,7 +111,7 @@ export const startWebhookServer = (port: number): void => {
     }
 
     try {
-      await DiscordService.getInstance()().sendMessageToChannel(DISCORD_CHANNEL_ID, message);
+      await DiscordService.getInstance().sendMessageToChannel(DISCORD_CHANNEL_ID, message);
       debug('Message sent to Discord:', message);
       res.status(200).send({ message: 'Message sent to Discord.' });
     } catch (error: any) {

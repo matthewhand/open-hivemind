@@ -6,7 +6,7 @@ import util from 'util';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:playAudioResponse');
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 /**
  * Play Audio Response
@@ -37,7 +37,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + configManager.OPENAI_API_KEY,
+                'Authorization': 'Bearer ' + configManager.openaiConfig.OPENAI_API_KEY,
             },
         });
         const audioBuffer = Buffer.from(response.data.audioContent, 'base64');

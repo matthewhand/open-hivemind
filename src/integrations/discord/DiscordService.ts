@@ -32,7 +32,7 @@ export class DiscordService {
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = initializeClient();
-    this.configManager = ConfigurationManager.getInstance()();  // Instantiate ConfigurationManager
+    this.configManager = new ConfigurationManager();  // Instantiate ConfigurationManager
     log('Client initialized successfully');
   }
 
@@ -40,7 +40,7 @@ export class DiscordService {
    * Returns the singleton instance of DiscordService, creating it if necessary.
    * @returns The singleton instance of DiscordService.
    */
-  public static getInstance()(): DiscordService {
+  public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
       log('Creating a new instance of DiscordService');
       DiscordService.instance = new DiscordService();

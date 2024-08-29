@@ -38,7 +38,7 @@ class ResponseTimingManager {
      *
      * @returns The singleton instance of ResponseTimingManager.
      */
-    public static getInstance()(): ResponseTimingManager {
+    public static getInstance(): ResponseTimingManager {
         if (!ResponseTimingManager.instance) {
             ResponseTimingManager.instance = new ResponseTimingManager({});
         }

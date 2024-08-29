@@ -1,6 +1,6 @@
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 /**
  * Determines whether a message should be processed based on configuration settings.

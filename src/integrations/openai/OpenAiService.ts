@@ -6,7 +6,7 @@ import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 /**
  * OpenAiService Class
@@ -32,7 +32,7 @@ export class OpenAiService {
     // Private constructor to enforce singleton pattern
     private constructor() {
         const options: ClientOptions = {
-            apiKey: configManager.OPENAI_API_KEY,
+            apiKey: configManager.openaiConfig.OPENAI_API_KEY,
             organization: configManager.OPENAI_ORGANIZATION || undefined,
             baseURL: configManager.OPENAI_BASE_URL,
             timeout: configManager.OPENAI_TIMEOUT,
@@ -44,7 +44,7 @@ export class OpenAiService {
         this.maxRetries = configManager.OPENAI_MAX_RETRIES;
     }
 
-    public static getInstance()(): OpenAiService {
+    public static getInstance(): OpenAiService {
         if (!OpenAiService.instance) {
             OpenAiService.instance = new OpenAiService();
         }

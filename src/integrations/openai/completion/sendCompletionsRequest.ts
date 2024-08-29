@@ -1,9 +1,9 @@
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 export async function sendCompletionsRequest(prompt: string): Promise<any> {
-    const apiKey = configManager.OPENAI_API_KEY;
+    const apiKey = configManager.openaiConfig.OPENAI_API_KEY;
     const baseURL = configManager.OPENAI_BASE_URL;
     const timeout = configManager.OPENAI_TIMEOUT;
     const organization = configManager.OPENAI_ORGANIZATION;

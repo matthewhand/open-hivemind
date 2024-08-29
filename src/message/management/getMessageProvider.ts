@@ -15,7 +15,7 @@ const debug = Debug('app:getMessageProvider');
  * @throws An error if the configured message provider is unsupported.
  */
 export function getMessageProvider() {
-  const configManager = ConfigurationManager.getInstance()(); // Instantiate ConfigurationManager
+  const configManager = new ConfigurationManager(); // Instantiate ConfigurationManager
   const messageProvider = configManager.MESSAGE_PROVIDER;
 
   debug('Configured message provider:', messageProvider);
@@ -28,7 +28,7 @@ export function getMessageProvider() {
   // Return the appropriate message provider based on configuration
   switch (messageProvider.toLowerCase()) {
     case 'discord':
-      return DiscordService.getInstance()();
+      return DiscordService.getInstance();
     // Add additional cases for other providers here
     default:
       throw new Error(`Unsupported message provider: ${messageProvider}`);

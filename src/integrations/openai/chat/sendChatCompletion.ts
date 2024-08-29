@@ -7,7 +7,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 
 const debug = Debug('app:sendChatCompletion');
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 /**
  * Handles the process of sending a chat completion request to the OpenAI API.

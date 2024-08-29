@@ -1,6 +1,6 @@
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance()();
+const configManager = new ConfigurationManager();
 
 export function shouldProcessMessage(lastMessageTime: number): boolean {
     const minInterval = configManager.MESSAGE_MIN_INTERVAL_MS;
