@@ -16,7 +16,7 @@ const debug = Debug('app:getLlmProvider');
  */
 export function getLlmProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const llmProvider = configManager.LLM_PROVIDER;
+  const llmProvider = configManager.getConfig("llm").LLM_PROVIDER;
 
   debug('Configured LLM provider:', llmProvider);
 
