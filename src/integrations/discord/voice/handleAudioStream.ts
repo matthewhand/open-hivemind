@@ -61,7 +61,9 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             if (transcript) {
                 debug('Transcription successful', { transcript });
-                const response = await aiService.createChatCompletion(transcript);  // Pass just the transcript
+
+                // TODO: Track and pass transcribed history in future.
+                const response = await aiService.generateChatResponse(transcript, []);
 
                 if (response) {
                     debug('Generated response', { response });
