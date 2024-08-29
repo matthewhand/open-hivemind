@@ -40,6 +40,8 @@ export class MockMessage implements IMessage {
     messageReference = null;
 
     role = 'user';
-    isReplyToBot = false;
-    reply = () => 'Reply content';
+    isReplyToBot = () => false;
+    reply = async (content: string): Promise<void> => {
+        console.log('Replying with:', content);
+    };
 }
