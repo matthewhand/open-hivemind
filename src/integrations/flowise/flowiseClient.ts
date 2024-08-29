@@ -7,7 +7,7 @@ export class FlowiseClient {
     private readonly apiKey: string;
 
     constructor() {
-        this.baseURL = configManager.flowiseConfig.FLOWISE_BASE_URL;
+        this.baseURL = configManager.getConfig("flowise").FLOWISE_BASE_URL;
         this.apiKey = configManager.getConfig("flowise").FLOWISE_API_KEY;
     }
 
