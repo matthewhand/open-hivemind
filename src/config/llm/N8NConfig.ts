@@ -1,8 +1,13 @@
 import ConfigurationManager from '../ConfigurationManager';
 
-class N8NConfig extends ConfigurationManager {
-    public readonly N8N_API_BASE_URL: string = this.getEnvConfig('N8N_API_BASE_URL', 'n8n.apiBaseUrl', 'http://localhost:5678/api/v1');
-    public readonly N8N_API_KEY: string = this.getEnvConfig('N8N_API_KEY', 'n8n.apiKey', 'default-n8n-api-key');
+class N8NConfig {
+    private configManager = ConfigurationManager.getInstance();
+    public readonly N8N_API_URL: string = this.configManager.getConfig('llm.n8n.apiUrl', 'https://api.n8n.io');
+    public readonly N8N_API_KEY: string = this.configManager.getConfig('llm.n8n.apiKey', 'your-n8n-api-key');
+
+    constructor() {
+        console.log('N8NConfig initialized');
+    }
 }
 
 export default N8NConfig;

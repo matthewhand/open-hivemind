@@ -1,8 +1,13 @@
 import ConfigurationManager from '../ConfigurationManager';
 
-class PerplexityConfig extends ConfigurationManager {
-    public readonly PERPLEXITY_API_TOKEN: string = this.getEnvConfig('PERPLEXITY_API_TOKEN', 'perplexity.apiToken', 'your-perplexity-api-token-here');
-    public readonly PERPLEXITY_MODEL: string = this.getEnvConfig('PERPLEXITY_MODEL', 'perplexity.model', 'sonar-huge');
+class PerplexityConfig {
+    private configManager = ConfigurationManager.getInstance();
+    public readonly PERPLEXITY_API_URL: string = this.configManager.getConfig('llm.perplexity.apiUrl', 'https://api.perplexity.ai');
+    public readonly PERPLEXITY_API_KEY: string = this.configManager.getConfig('llm.perplexity.apiKey', 'your-perplexity-api-key');
+
+    constructor() {
+        console.log('PerplexityConfig initialized');
+    }
 }
 
 export default PerplexityConfig;

@@ -1,8 +1,13 @@
 import ConfigurationManager from '../ConfigurationManager';
 
-class FlowiseConfig extends ConfigurationManager {
-    public readonly FLOWISE_BASE_URL: string = this.getEnvConfig('FLOWISE_BASE_URL', 'flowise.apiBaseUrl', 'http://localhost:3000/api/v1');
-    public readonly FLOWISE_API_KEY: string = this.getEnvConfig('FLOWISE_API_KEY', 'flowise.apiKey', 'default-flowise-api-key');
+class FlowiseConfig {
+    private configManager = ConfigurationManager.getInstance();
+    public readonly FLOWISE_API_URL: string = this.configManager.getConfig('llm.flowise.apiUrl', 'https://api.flowise.com');
+    public readonly FLOWISE_API_KEY: string = this.configManager.getConfig('llm.flowise.apiKey', 'your-flowise-api-key');
+
+    constructor() {
+        console.log('FlowiseConfig initialized');
+    }
 }
 
 export default FlowiseConfig;
