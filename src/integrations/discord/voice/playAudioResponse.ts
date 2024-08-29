@@ -24,12 +24,16 @@ const configManager = ConfigurationManager.getInstance();
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    const narrationEndpointUrl = configManager.openaiConfig.OPENAI_BASE_URL;
+    const openaiConfig = configManager.getConfig('openaiConfig');
+    const narrationEndpointUrl = openaiConfig.OPENAI_BASE_URL;
+    
     if (!narrationEndpointUrl) {
-        debug('OPENAI_BASE_URL is not set in the environment variables.');
+        debug('OPENAI_BASE_URL is not set in the configuration.');
         return;
     }
+    
     debug('OPENAI_BASE_URL: ' + narrationEndpointUrl);
+    
     try {
         const response = await axios.post(narrationEndpointUrl, {
             input: text,
@@ -37,19 +41,23 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + configManager.openaiConfig.OPENAI_API_KEY,
+                'Authorization': 'Bearer ' + openaiConfig.OPENAI_API_KEY,
             },
         });
+        
         const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
         const writeFile = util.promisify(fs.writeFile);
         await writeFile('output.mp3', audioBuffer);
+        
         const player = createAudioPlayer();
         const resource = createAudioResource('output.mp3');
         player.play(resource);
         connection.subscribe(player);
+        
         player.on(AudioPlayerStatus.Idle, () => {
             fs.unlinkSync('output.mp3');
         });
+        
         player.on('error', (error) => {
             debug('Error playing audio response: ' + error.message);
         });
