@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
-import { createChatCompletionRequest } from './chat/createChatCompletionRequest';
+import { createChatCompletion } from './chat/createChatCompletion';
 import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
@@ -74,7 +74,7 @@ export class OpenAiService {
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             // Create the request body using the helper function
-            const requestBody = createChatCompletionRequest(historyMessages, systemMessageContent, maxTokens);
+            const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
 
             // Send the request to OpenAI
             const response = await this.openai.chat.completions.create(requestBody) as OpenAI.Chat.ChatCompletion;
@@ -101,7 +101,7 @@ export class OpenAiService {
         }
 
         debug('generateChatResponse: Building request body');
-        const requestBody = await createChatCompletionRequest([
+        const requestBody = await createChatCompletion([
             ...historyMessages,
             { role: 'user', content: message },
         ]);
