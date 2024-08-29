@@ -32,16 +32,16 @@ export class OpenAiService {
     // Private constructor to enforce singleton pattern
     private constructor() {
         const options: ClientOptions = {
-            apiKey: configManager.openaiConfig.OPENAI_API_KEY,
+            apiKey: configManager.getConfig("openaiConfig").OPENAI_API_KEY,
             organization: configManager.OPENAI_ORGANIZATION || undefined,
-            baseURL: configManager.openaiConfig.OPENAI_BASE_URL,
+            baseURL: configManager.getConfig("openaiConfig").OPENAI_BASE_URL,
             timeout: configManager.OPENAI_TIMEOUT,
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = configManager.openaiConfig.LLM_PARALLEL_EXECUTION;
-        this.finishReasonRetry = configManager.openaiConfig.OPENAI_FINISH_REASON_RETRY;
-        this.maxRetries = configManager.openaiConfig.OPENAI_MAX_RETRIES;
+        this.parallelExecution = configManager.getConfig("openaiConfig").LLM_PARALLEL_EXECUTION;
+        this.finishReasonRetry = configManager.getConfig("openaiConfig").OPENAI_FINISH_REASON_RETRY;
+        this.maxRetries = configManager.getConfig("openaiConfig").OPENAI_MAX_RETRIES;
     }
 
     public static getInstance(): OpenAiService {
@@ -69,8 +69,8 @@ export class OpenAiService {
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = configManager.openaiConfig.OPENAI_SYSTEM_PROMPT,
-        maxTokens: number = configManager.openaiConfig.OPENAI_RESPONSE_MAX_TOKENS
+        systemMessageContent: string = configManager.getConfig("openaiConfig").OPENAI_SYSTEM_PROMPT,
+        maxTokens: number = configManager.getConfig("openaiConfig").OPENAI_RESPONSE_MAX_TOKENS
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             // Create the request body using the helper function

@@ -2,6 +2,6 @@
   "service": {
     "LLM_PROVIDER": "openai",
     "MESSAGE_PROVIDER": "discord",
-    "COMMAND_PROVIDER": "default_command"
+    "COMMAND_PROVIDERS": "typescript,python,bash"
   }
 }
