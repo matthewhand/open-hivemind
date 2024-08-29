@@ -106,7 +106,7 @@ export class OpenAiService {
             { role: 'user', content: message },
         ]);
 
-        if (!this.parallelExecution && this isBusy()) {
+        if (!this.parallelExecution && this.isBusy()) {
             debug('generateChatResponse: Service is busy');
             return null;
         }
