@@ -32,9 +32,9 @@ export async function sendChatCompletionsRequest(
     openAiService.setBusy(true);
   }
 
-  debug('Converting IMessage[] to ChatCompletionCreateParams...');
+  debug('Preparing messages for OpenAI API...');
   
-  // Create the request body
+  // Create the request body from IMessage[]
   const requestBody: OpenAI.Chat.ChatCompletionCreateParams = createChatCompletionRequest(
     messages,
     configManager.LLM_SYSTEM_PROMPT,
@@ -44,7 +44,7 @@ export async function sendChatCompletionsRequest(
   debug('Sending request to OpenAI API...');
   try {
     // Send the request and receive the response
-    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(requestBody);  
+    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(requestBody);
     debug('API response received:', response);
 
     // Process the response to extract content, token usage, and finish reason
