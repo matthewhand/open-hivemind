@@ -10,7 +10,7 @@ export async function replicateRequest(input: string): Promise<any> {
     const baseUrl = replicateConfig.REPLICATE_BASE_URL;
     const apiToken = replicateConfig.REPLICATE_API_TOKEN;
     const modelVersion = replicateConfig.REPLICATE_MODEL_VERSION;
-    const webhookUrl = configManager.SERVICE_WEBHOOK_URL;
+    const webhookUrl = configManager.getConfig("webhook").WEBHOOK_URL;
 
     if (!baseUrl || !apiToken || !modelVersion) {
         debug('Missing required configurations for Replicate API');
