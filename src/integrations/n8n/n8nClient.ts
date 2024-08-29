@@ -7,8 +7,8 @@ export class N8nClient {
     private readonly apiKey: string;
 
     constructor() {
-        this.baseURL = configManager.n8nConfig.N8N_API_BASE_URL;
-        this.apiKey = configManager.N8N_API_KEY;
+        this.baseURL = configManager.getConfig('n8nConfig').N8N_API_BASE_URL;
+        this.apiKey = configManager.getConfig('n8nConfig').N8N_API_KEY;
     }
 
     // Additional logic for N8nClient
