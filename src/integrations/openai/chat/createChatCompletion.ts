@@ -132,13 +132,13 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
  */
 export function createChatCompletion(
     historyMessages: IMessage[] = [],
-    systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
-    maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS
+    systemMessageContent: string = configManager.getConfig("llm").LLM_SYSTEM_PROMPT,
+    maxTokens: number = configManager.getConfig("llm").LLM_RESPONSE_MAX_TOKENS
 ): ChatCompletionCreateParams {
     validateMessages(historyMessages);
 
     const messages: ChatCompletionMessage[] = initializeMessages(systemMessageContent);
-    const supportNameField = configManager.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
+    const supportNameField = configManager.getConfig("llm").LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
 
     processHistoryMessages(historyMessages, messages, supportNameField);
     appendFallbackUserMessage(messages);
