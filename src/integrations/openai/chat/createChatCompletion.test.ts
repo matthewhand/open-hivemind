@@ -21,6 +21,18 @@ class MockMessage extends IMessage {
     getAuthorId() {
         return '54321';
     }
+    getChannelTopic() {
+        return 'General Discussion';
+    }
+    getUserMentions() {
+        return ['TestUser1', 'TestUser2'];
+    }
+    getChannelUsers() {
+        return ['User1', 'User2', 'User3'];
+    }
+    mentionsUsers() {
+        return true;
+    }
 }
 
 // Test case for createChatCompletion
