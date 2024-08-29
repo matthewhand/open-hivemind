@@ -17,17 +17,17 @@ export async function completeSentence(
     content: string
 ): Promise<string> {
     try {
-        const response = await client.createChatCompletion(JSON.stringify({
-            model: configManager.OPENAI_MODEL,
-            messages: [{ role: 'user', content }],
-            max_tokens: configManager.OPENAI_MAX_TOKENS,
-            temperature: configManager.OPENAI_TEMPERATURE,
-            top_p: configManager.LLM_TOP_P,
-            frequency_penalty: configManager.OPENAI_FREQUENCY_PENALTY,
-            presence_penalty: configManager.OPENAI_PRESENCE_PENALTY,
-            stop: configManager.LLM_STOP
-        }));
-        return response.choices[0].message.content.trim();
+        // Using generateChatResponse to get the completion
+        const response = await client.generateChatResponse(content, []);
+
+        // Ensure response is valid and trim any extra whitespace
+        const trimmedResponse = response?.trim();
+        if (trimmedResponse) {
+            return trimmedResponse;
+        } else {
+            debug('Empty or invalid response received.');
+            return ''; // Return an empty string if no valid response
+        }
     } catch (error: any) {
         debug('Error completing sentence:', error);
         return ''; // Return an empty string in case of failure

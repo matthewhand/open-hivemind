@@ -65,9 +65,9 @@ export class OpenAiService {
      *
      * @param message - The user message that requires a response.
      * @param historyMessages - The array of previous conversation messages for context.
-     * @returns {Promise<any>} - The OpenAI API's response, or null if an error occurs.
+     * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
      */
-    public async generateChatResponse(message: string, historyMessages: any[]): Promise<any> {
+    public async generateChatResponse(message: string, historyMessages: any[]): Promise<string | null> {
         if (!this.openai.apiKey) {
             debug('generateChatResponse: API key is missing');
             return null;
@@ -98,11 +98,11 @@ export class OpenAiService {
             // Retry logic based on finish reason
             for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
                 debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
-                content = await completeSentence(this.openai, content);
-                finishReason = finishReason === 'stop' ? 'completed' : finishReason;
+                content = await completeSentence(this, content);
+                finishReason = finishReason === 'stop' ? 'stop' : finishReason;
             }
 
-            return response.data;
+            return content;
         } catch (error: any) {
             debug('generateChatResponse: Error occurred:', error);
             return null;
