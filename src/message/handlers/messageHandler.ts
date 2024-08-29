@@ -99,7 +99,7 @@ export async function messageHandler(
   // Process LLM chat response if enabled
   if (configManager.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider();
-    const llmResponse = await llmProvider.generateChatResponse(msg, historyMessages);
+    const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
     if (llmResponse) {
       // Schedule the message with ResponseTimingManager
       const timingManager = ResponseTimingManager.getInstance();
