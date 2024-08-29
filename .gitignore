@@ -130,3 +130,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .vscode/settings.json
+build_errors.log

@@ -1,32 +1,21 @@
-import config from 'config';
+import fs from 'fs';
+import path from 'path';
 import Debug from 'debug';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import OpenAIConfig from './llm/OpenAIConfig';
-import DiscordConfig from './message/DiscordConfig';
-import FlowiseConfig from './llm/FlowiseConfig';
-import N8NConfig from './llm/N8NConfig';
-import PerplexityConfig from './llm/PerplexityConfig';
-import ReplicateConfig from './commandConfig/ReplicateConfig';
+import { getConfigOrWarn } from './getConfigOrWarn';
 
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
     private static instance: ConfigurationManager;
+    private configs: Map<string, any> = new Map();
 
-    public readonly openaiConfig: OpenAIConfig;
-    public readonly discordConfig: DiscordConfig;
-    public readonly flowiseConfig: FlowiseConfig;
-    public readonly n8nConfig: N8NConfig;
-    public readonly perplexityConfig: PerplexityConfig;
-    public readonly replicateConfig: ReplicateConfig;
+    public readonly LLM_PROVIDER: string = getConfigOrWarn('LLM_PROVIDER', 'llm.provider', 'openai');
+    public readonly MESSAGE_PROVIDER: string = getConfigOrWarn('MESSAGE_PROVIDER', 'message.provider', 'discord');
+    public readonly SERVICE_WEBHOOK_URL: string = getConfigOrWarn('SERVICE_WEBHOOK_URL', 'service.webhook.url', 'https://example.com/webhook');
+    public readonly WEBHOOK_URL: string = getConfigOrWarn('WEBHOOK_URL', 'service.webhook.url', 'https://your-webhook-url');
 
     private constructor() {
-        this.openaiConfig = new OpenAIConfig();
-        this.discordConfig = new DiscordConfig();
-        this.flowiseConfig = new FlowiseConfig();
-        this.n8nConfig = new N8NConfig();
-        this.perplexityConfig = new PerplexityConfig();
-        this.replicateConfig = new ReplicateConfig();
+        this.loadConfigurations();
     }
 
     public static getInstance(): ConfigurationManager {
@@ -36,21 +25,28 @@ class ConfigurationManager {
         return ConfigurationManager.instance;
     }
 
-    private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
-        const envValue = process.env[envVar];
-        if (envValue !== undefined) {
-            return envValue as unknown as T;
-        }
-        try {
-            const configValue = config.get(configKey);
-            if (configValue !== undefined) {
-                return configValue as T;
+    private loadConfigurations() {
+        const configDir = path.join(__dirname, 'integrations'); // Adjust this path as necessary
+        const files = fs.readdirSync(configDir);
+
+        for (const file of files) {
+            const fullPath = path.join(configDir, file);
+            if (fs.statSync(fullPath).isDirectory()) {
+                const configFile = path.join(fullPath, 'config', `${path.basename(fullPath)}Config.ts`);
+                if (fs.existsSync(configFile)) {
+                    import(configFile).then((module) => {
+                        const configInstance = new module.default();
+                        this.configs.set(path.basename(fullPath), configInstance);
+                    }).catch((error) => {
+                        debug(`Error loading configuration from ${configFile}: ${error.message}`);
+                    });
+                }
             }
-            return fallbackValue;
-        } catch (e) {
-            debug(`Error fetching CONFIG [${configKey}]. Using fallback value: ${fallbackValue}`);
-            return fallbackValue;
         }
+    }
+
+    public getConfig(name: string) {
+        return this.configs.get(name);
     }
 }
 
