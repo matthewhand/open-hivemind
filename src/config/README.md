@@ -17,7 +17,7 @@ The `ConfigurationManager` dynamically loads the appropriate configuration for t
 ```typescript
 import ConfigurationManager from './config/ConfigurationManager';
 
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 const llmConfig = configManager.loadLLMConfig('openai');
 console.log(llmConfig.OPENAI_API_KEY);
 ```

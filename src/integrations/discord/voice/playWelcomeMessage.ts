@@ -1,6 +1,6 @@
 import ConfigurationManager from '@src/common/config/ConfigurationManager';
 
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 export function playWelcomeMessage() {
     const welcomeMessage = configManager.DISCORD_WELCOME_MESSAGE;

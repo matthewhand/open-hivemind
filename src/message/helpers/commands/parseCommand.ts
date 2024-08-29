@@ -2,7 +2,7 @@ import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:parseCommand');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 interface ParsedCommand {
     commandName: string;

@@ -8,7 +8,7 @@ import { startTypingIndicator } from '@src/integrations/discord/startTypingIndic
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:setMessageHandler');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * Set Message Handler

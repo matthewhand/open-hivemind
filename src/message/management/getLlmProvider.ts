@@ -15,7 +15,7 @@ const debug = Debug('app:getLlmProvider');
  * @throws An error if the configured LLM provider is unsupported.
  */
 export function getLlmProvider() {
-  const configManager = new ConfigurationManager(); // Instantiate ConfigurationManager
+  const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
   const llmProvider = configManager.LLM_PROVIDER;
 
   debug('Configured LLM provider:', llmProvider);

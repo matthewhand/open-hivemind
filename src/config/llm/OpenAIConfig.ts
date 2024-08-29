@@ -15,6 +15,9 @@ class OpenAIConfig {
     public readonly OPENAI_TOP_P: number = getEnvConfig('OPENAI_TOP_P', 'openai.topP', 0.9);
     public readonly OPENAI_SYSTEM_PROMPT: string = getEnvConfig('OPENAI_SYSTEM_PROMPT', 'openai.systemPrompt', 'Greetings, human...');
     public readonly OPENAI_RESPONSE_MAX_TOKENS: number = getEnvConfig('OPENAI_RESPONSE_MAX_TOKENS', 'openai.responseMaxTokens', 100);
+    public readonly LLM_PARALLEL_EXECUTION: boolean = getEnvConfig('LLM_PARALLEL_EXECUTION', 'openai.parallelExecution', false);
+    public readonly OPENAI_FINISH_REASON_RETRY: string = getEnvConfig('OPENAI_FINISH_REASON_RETRY', 'openai.finishReasonRetry', 'length');
+    public readonly OPENAI_MAX_RETRIES: number = getEnvConfig('OPENAI_MAX_RETRIES', 'openai.maxRetries', 3);
 }
 
 export default OpenAIConfig;

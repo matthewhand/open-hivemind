@@ -11,12 +11,7 @@ import ReplicateConfig from '../command/common/replicate';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
-    public readonly LLM_PROVIDER: string = this.getEnvConfig('LLM_PROVIDER', 'llm.provider', 'default_provider');
-    public readonly MESSAGE_PROVIDER: string = this.getEnvConfig('MESSAGE_PROVIDER', 'message.provider', 'discord');
-    public readonly SERVICE_WEBHOOK_URL: string = this.getEnvConfig('WEBHOOK_URL', 'service.WEBHOOK_URL', '');
-    public readonly LOG_LEVEL: string = this.getEnvConfig('LOG_LEVEL', 'service.logLevel', 'debug');
-    public readonly RATE_LIMIT_REQUESTS: number = this.getEnvConfig('RATE_LIMIT_REQUESTS', 'service.rateLimitRequests', 1000);
-    public readonly RATE_LIMIT_DURATION: number = this.getEnvConfig('RATE_LIMIT_DURATION', 'service.rateLimitDuration', 60);
+    private static instance: ConfigurationManager;
 
     public readonly openaiConfig: OpenAIConfig;
     public readonly discordConfig: DiscordConfig;
@@ -25,13 +20,20 @@ class ConfigurationManager {
     public readonly perplexityConfig: PerplexityConfig;
     public readonly replicateConfig: ReplicateConfig;
 
-    constructor() {
+    private constructor() {
         this.openaiConfig = new OpenAIConfig();
         this.discordConfig = new DiscordConfig();
         this.flowiseConfig = new FlowiseConfig();
         this.n8nConfig = new N8NConfig();
         this.perplexityConfig = new PerplexityConfig();
         this.replicateConfig = new ReplicateConfig();
+    }
+
+    public static getInstance(): ConfigurationManager {
+        if (!ConfigurationManager.instance) {
+            ConfigurationManager.instance = ConfigurationManager.getInstance();
+        }
+        return ConfigurationManager.instance;
     }
 
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {

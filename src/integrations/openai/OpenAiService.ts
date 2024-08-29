@@ -6,7 +6,7 @@ import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 /**
  * OpenAiService Class
@@ -39,9 +39,9 @@ export class OpenAiService {
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
-        this.finishReasonRetry = configManager.OPENAI_FINISH_REASON_RETRY;
-        this.maxRetries = configManager.OPENAI_MAX_RETRIES;
+        this.parallelExecution = configManager.openaiConfig.LLM_PARALLEL_EXECUTION;
+        this.finishReasonRetry = configManager.openaiConfig.OPENAI_FINISH_REASON_RETRY;
+        this.maxRetries = configManager.openaiConfig.OPENAI_MAX_RETRIES;
     }
 
     public static getInstance(): OpenAiService {
@@ -69,8 +69,8 @@ export class OpenAiService {
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
-        maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS
+        systemMessageContent: string = configManager.openaiConfig.OPENAI_SYSTEM_PROMPT,
+        maxTokens: number = configManager.openaiConfig.OPENAI_RESPONSE_MAX_TOKENS
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             // Create the request body using the helper function
