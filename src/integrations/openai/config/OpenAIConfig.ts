@@ -30,7 +30,7 @@ class OpenAIConfig {
         if (envValue !== undefined) {
             return envValue;
         }
-        return getConfigOrWarn(configKey, configKey, fallbackValue);
+        return getConfigOrWarn(configKey, fallbackValue);
     }
 }
 
