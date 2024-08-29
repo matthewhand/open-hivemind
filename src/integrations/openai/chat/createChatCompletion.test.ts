@@ -1,3 +1,6 @@
+import { createChatCompletion } from './createChatCompletion';
+import { MockMessage } from './MockMessage';
+
 test('should process messages with getMessageId method', () => {
     const mockMessage = new MockMessage();
     const messages = [mockMessage];
