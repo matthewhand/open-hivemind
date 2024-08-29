@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
-import { createChatCompletionRequestBody } from './chat/createChatCompletionRequestBody';
+import { createChatCompletionRequest } from './chat/createChatCompletionRequest';
 import { completeSentence } from './operations/completeSentence';
 
 const debug = Debug('app:OpenAiService');
@@ -74,7 +74,7 @@ export class OpenAiService {
         }
 
         debug('generateChatResponse: Building request body');
-        const requestBody = await createChatCompletionRequestBody([
+        const requestBody = await createChatCompletionRequest([
             ...historyMessages,
             { role: 'user', content: message },
         ]);

@@ -4,7 +4,7 @@ import ConfigurationManager from '@common/config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { needsCompletion } from '../completion/needsCompletion';
-import { createChatCompletionRequestBody } from '@src/integrations/openai/chat/createChatCompletionRequestBody';
+import { createChatCompletionRequest } from '@src/integrations/openai/chat/createChatCompletionRequest';
 
 const debug = Debug('app:sendChatCompletionsRequest');
 const configManager = new ConfigurationManager();
@@ -42,7 +42,7 @@ export async function sendChatCompletionsRequest(
     debug('Request body: ' + JSON.stringify(requestBody, null, 2));
     try {
         // Directly call the utility function
-        const response = await createChatCompletionRequestBody(requestBody);
+        const response = await createChatCompletionRequest(requestBody);
         let content = response.choices[0]?.message?.content?.trim() || '';
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
