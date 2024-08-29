@@ -98,7 +98,7 @@ export class OpenAiService {
             // Retry logic based on finish reason
             for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
                 debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
-                content = await completeSentence(this, content);
+                content = await completeSentence(this, content ?? '');
                 finishReason = finishReason === 'stop' ? 'stop' : finishReason;
             }
 
