@@ -1,7 +1,7 @@
 import ConfigurationManager from '../ConfigurationManager';
 
 class WebhookConfig {
-    private configManager = ConfigurationManager.getInstance()();
+    private configManager = new ConfigurationManager();
     public readonly WEBHOOK_URL: string = this.configManager.getConfig('service.webhook.url', 'https://your-webhook-url');
 
     constructor() {

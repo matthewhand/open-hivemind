@@ -5,9 +5,12 @@ import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
-    public readonly OPENAI_API_KEY: string = this.getEnvConfig('OPENAI_API_KEY', 'openai.apiKey', '');
-    public readonly LLM_PROVIDER: string = this.getEnvConfig('LLM_PROVIDER', 'service.LLM_PROVIDER', 'default_provider');
-    public readonly DISCORD_TOKEN: string = this.getEnvConfig('DISCORD_TOKEN', 'discord.token', '');
+    public readonly LLM_PROVIDER: string = this.getEnvConfig('LLM_PROVIDER', 'llm.provider', 'default_provider');
+    public readonly MESSAGE_PROVIDER: string = this.getEnvConfig('MESSAGE_PROVIDER', 'message.provider', 'discord');
+    public readonly SERVICE_WEBHOOK_URL: string = this.getEnvConfig('WEBHOOK_URL', 'service.WEBHOOK_URL', '');
+    public readonly LOG_LEVEL: string = this.getEnvConfig('LOG_LEVEL', 'service.logLevel', 'debug');
+    public readonly RATE_LIMIT_REQUESTS: number = this.getEnvConfig('RATE_LIMIT_REQUESTS', 'service.rateLimitRequests', 1000);
+    public readonly RATE_LIMIT_DURATION: number = this.getEnvConfig('RATE_LIMIT_DURATION', 'service.rateLimitDuration', 60);
 
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
         const envValue = process.env[envVar];
