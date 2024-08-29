@@ -1,17 +1,33 @@
 import config from 'config';
 import Debug from 'debug';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import OpenAIConfig from '@integrations/openai/config/OpenAIConfig';
+import DiscordConfig from '@integrations/discord/config/DiscordConfig';
+import FlowiseConfig from '@integrations/flowise/config/FlowiseConfig';
+import N8NConfig from './llm/N8NConfig';
+import PerplexityConfig from './llm/PerplexityConfig';
+import ReplicateConfig from '@integrations/replicate/config/ReplicateConfig';
 
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
     private static instance: ConfigurationManager;
 
-    public readonly OPENAI_API_KEY: string = this.getEnvConfig('OPENAI_API_KEY', 'openai.apiKey', '');
-    public readonly LLM_PROVIDER: string = this.getEnvConfig('LLM_PROVIDER', 'service.LLM_PROVIDER', 'default_provider');
-    public readonly DISCORD_TOKEN: string = this.getEnvConfig('DISCORD_TOKEN', 'discord.token', '');
+    public readonly openaiConfig: OpenAIConfig;
+    public readonly discordConfig: DiscordConfig;
+    public readonly flowiseConfig: FlowiseConfig;
+    public readonly n8nConfig: N8NConfig;
+    public readonly perplexityConfig: PerplexityConfig;
+    public readonly replicateConfig: ReplicateConfig;
 
-    private constructor() {}
+    private constructor() {
+        this.openaiConfig = new OpenAIConfig();
+        this.discordConfig = new DiscordConfig();
+        this.flowiseConfig = new FlowiseConfig();
+        this.n8nConfig = new N8NConfig();
+        this.perplexityConfig = new PerplexityConfig();
+        this.replicateConfig = new ReplicateConfig();
+    }
 
     public static getInstance(): ConfigurationManager {
         if (!ConfigurationManager.instance) {

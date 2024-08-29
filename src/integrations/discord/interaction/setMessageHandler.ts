@@ -50,7 +50,7 @@ export function setMessageHandler(
         return;
       }
 
-      if (discordMessage.author.id === configManager.DISCORD_CLIENT_ID) {
+      if (discordMessage.author.id === configManager.discordConfig.DISCORD_CLIENT_ID) {
         debug('Skipping response to own Message ID: ' + discordMessage.id);
         return;
       }

@@ -6,7 +6,7 @@ import DiscordConfig from './message/DiscordConfig';
 import FlowiseConfig from './llm/FlowiseConfig';
 import N8NConfig from './llm/N8NConfig';
 import PerplexityConfig from './llm/PerplexityConfig';
-import ReplicateConfig from '../command/common/replicate';
+import ReplicateConfig from './commandConfig/ReplicateConfig';
 
 const debug = Debug('app:ConfigurationManager');
 
@@ -31,7 +31,7 @@ class ConfigurationManager {
 
     public static getInstance(): ConfigurationManager {
         if (!ConfigurationManager.instance) {
-            ConfigurationManager.instance = ConfigurationManager.getInstance();
+            ConfigurationManager.instance = new ConfigurationManager();
         }
         return ConfigurationManager.instance;
     }
