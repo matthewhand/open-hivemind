@@ -1,16 +1,13 @@
 import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
-class PerplexityConfig {
-    public readonly PERPLEXITY_API_TOKEN: string = getConfigOrWarn('PERPLEXITY_API_TOKEN', 'llm.perplexity.apiToken', 'your-perplexity-api-token');
-    public readonly PERPLEXITY_MODEL: string = getConfigOrWarn('PERPLEXITY_MODEL', 'llm.perplexity.model', 'sonar-huge');
+export default class PerplexityConfig {
+    public readonly PERPLEXITY_API_KEY: string = getConfigOrWarn('PERPLEXITY_API_KEY', '');
+    public readonly PERPLEXITY_MODEL: string = getConfigOrWarn('PERPLEXITY_MODEL', 'gpt3');
+    public readonly PERPLEXITY_TIMEOUT: number = getConfigOrWarn('PERPLEXITY_TIMEOUT', 10000);
 
     constructor() {
-        // Validate essential configurations
-        if (!this.PERPLEXITY_API_TOKEN || !this.PERPLEXITY_MODEL) {
-            throw new Error('Missing critical Perplexity configuration. Please check your environment variables or config files.');
+        if (!this.PERPLEXITY_API_KEY) {
+            throw new Error('Missing critical Perplexity API Key configuration.');
         }
-        console.log('PerplexityConfig initialized');
     }
 }
-
-export default PerplexityConfig;
