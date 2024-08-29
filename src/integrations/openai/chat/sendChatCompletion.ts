@@ -20,7 +20,7 @@ export async function sendChatCompletion(
   openAiService: OpenAiService,
   messages: IMessage[]
 ): Promise<LLMResponse> {
-  const parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
+  const parallelExecution = configManager.getConfig("llm").LLM_PARALLEL_EXECUTION;
 
   if (!parallelExecution && openAiService.isBusy()) {
     debug('Service is busy with another request.');
@@ -49,7 +49,7 @@ export async function sendChatCompletion(
     debug('Finish reason:', finishReason);
 
     if (finishReason === 'length') {
-      for (let attempt = 1; attempt <= configManager.OPENAI_MAX_RETRIES; attempt++) {
+      for (let attempt = 1; attempt <= configManager.getConfig("openai").OPENAI_MAX_RETRIES; attempt++) {
         debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
         const newContent = await completeSentence(openAiService, content);
         content = newContent || content; // Update content if new content is returned
