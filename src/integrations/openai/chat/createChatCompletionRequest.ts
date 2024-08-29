@@ -22,7 +22,7 @@ interface ChatCompletionRole {
     role: 'system' | 'user' | 'assistant';
 }
 
-const debug = Debug('app:createChatCompletionRequestBody');
+const debug = Debug('app:createChatCompletionRequest');
 const configManager = new ConfigurationManager();
 
 /**
@@ -134,7 +134,7 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
  * @param maxTokens - The maximum number of tokens to generate in the AI's response.
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
-export function createChatCompletionRequestBody(
+export function createChatCompletionRequest(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS
