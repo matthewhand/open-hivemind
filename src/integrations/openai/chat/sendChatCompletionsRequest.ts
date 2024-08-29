@@ -3,65 +3,76 @@ import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
-import { needsCompletion } from '../completion/needsCompletion';
 import { createChatCompletionRequest } from '@src/integrations/openai/chat/createChatCompletionRequest';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import { OpenAI } from 'openai';
 
 const debug = Debug('app:sendChatCompletionsRequest');
 const configManager = new ConfigurationManager();
 
 /**
- * Sends a chat completion request to the OpenAI API and processes the response.
- * Handles retries in case of incomplete responses.
- * 
- * @param openAiService - The OpenAiService instance managing the request.
- * @param requestBody - The prepared request body for OpenAiService API.
- * @returns A Promise resolving to an LLMResponse.
+ * Handles the process of sending a chat completion request to the OpenAI API.
+ *
+ * @param openAiService - Instance of OpenAiService to interact with the OpenAI API.
+ * @param messages - Array of IMessage objects representing the conversation history.
+ * @returns {Promise<LLMResponse>} - The response from the OpenAI API wrapped in an LLMResponse.
  */
 export async function sendChatCompletionsRequest(
-    openAiService: OpenAiService,
-    requestBody: {
-        model: string;
-        messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>,
-        max_tokens?: number,
-        temperature?: number,
-        top_p?: number,
-        frequency_penalty?: number,
-        presence_penalty?: number
-    }
+  openAiService: OpenAiService,
+  messages: IMessage[]
 ): Promise<LLMResponse> {
-    const parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
+  const parallelExecution = configManager.LLM_PARALLEL_EXECUTION;
 
-    if (!parallelExecution && openAiService.isBusy()) {
-        debug('The service is currently busy with another request.');
-        return new LLMResponse('', 'busy');
+  if (!parallelExecution && openAiService.isBusy()) {
+    debug('Service is busy with another request.');
+    return new LLMResponse('', 'busy');
+  }
+
+  if (!parallelExecution) {
+    openAiService.setBusy(true);
+  }
+
+  debug('Converting IMessage[] to ChatCompletionCreateParams...');
+  
+  // Create the request body
+  const requestBody: OpenAI.Chat.ChatCompletionCreateParams = createChatCompletionRequest(
+    messages,
+    configManager.LLM_SYSTEM_PROMPT,
+    configManager.LLM_RESPONSE_MAX_TOKENS
+  );
+
+  debug('Sending request to OpenAI API...');
+  try {
+    // Send the request and receive the response
+    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(requestBody);  
+    debug('API response received:', response);
+
+    // Process the response to extract content, token usage, and finish reason
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    const tokensUsed = response.usage?.total_tokens || 0;
+    let finishReason: OpenAI.Chat.ChatCompletion['choices'][0]['finish_reason'] = response.choices[0]?.finish_reason || 'unknown';
+
+    debug('Content:', content);
+    debug('Tokens used:', tokensUsed);
+    debug('Finish reason:', finishReason);
+
+    if (finishReason === 'length') {
+      for (let attempt = 1; attempt <= configManager.OPENAI_MAX_RETRIES; attempt++) {
+        debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
+        const newContent = await completeSentence(openAiService, content);
+        content = newContent || content; // Update content if new content is returned
+        finishReason = 'completed'; // Set finish reason after successful retry
+      }
     }
+
+    return new LLMResponse(content, finishReason, tokensUsed);
+  } catch (error: any) {
+    debug('Error during API call:', error.message);
+    return new LLMResponse('', 'error');
+  } finally {
     if (!parallelExecution) {
-        openAiService.setBusy(true);
+      openAiService.setBusy(false);
+      debug('Service marked as not busy after processing the request.');
     }
-    debug('Sending request to OpenAiService');
-    debug('Request body: ' + JSON.stringify(requestBody, null, 2));
-    try {
-        // Directly call the utility function
-        const response = await createChatCompletionRequest(requestBody);
-        let content = response.choices[0]?.message?.content?.trim() || '';
-        let tokensUsed = response.usage ? response.usage.total_tokens : 0;
-        let finishReason = response.choices[0].finish_reason;
-        let maxTokensReached = tokensUsed >= configManager.LLM_RESPONSE_MAX_TOKENS;
-        
-        for (let attempt = 1; attempt <= configManager.OPENAI_MAX_RETRIES && finishReason === configManager.OPENAI_FINISH_REASON_RETRY; attempt++) {
-            debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
-            content = await completeSentence(openAiService, content);
-            finishReason = finishReason === 'stop' ? 'completed' : finishReason;
-        }
-
-        return new LLMResponse(content, finishReason, tokensUsed);
-    } catch (error: any) {
-        debug('Error occurred while processing request: ' + error.message);
-        return new LLMResponse('', 'error');
-    } finally {
-        if (!parallelExecution) {
-            openAiService.setBusy(false);
-            debug('Set busy to false after processing the request.');
-        }
-    }
+  }
 }

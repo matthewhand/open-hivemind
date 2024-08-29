@@ -18,10 +18,6 @@ interface ChatCompletionCreateParams {
     stop?: string[];
 }
 
-interface ChatCompletionRole {
-    role: 'system' | 'user' | 'assistant';
-}
-
 const debug = Debug('app:createChatCompletionRequest');
 const configManager = new ConfigurationManager();
 
