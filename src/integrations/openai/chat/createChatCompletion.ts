@@ -18,7 +18,7 @@ interface ChatCompletionCreateParams {
     stop?: string[];
 }
 
-const debug = Debug('app:createChatCompletionRequest');
+const debug = Debug('app:createChatCompletion');
 const configManager = new ConfigurationManager();
 
 /**
@@ -130,7 +130,7 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
  * @param maxTokens - The maximum number of tokens to generate in the AI's response.
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
-export function createChatCompletionRequest(
+export function createChatCompletion(
     historyMessages: IMessage[] = [],
     systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
     maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS

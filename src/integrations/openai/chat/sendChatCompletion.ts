@@ -3,7 +3,6 @@ import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
-import { createChatCompletion } from '@src/integrations/openai/chat/createChatCompletion';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 
@@ -33,21 +32,11 @@ export async function sendChatCompletion(
   }
 
   debug('Preparing messages for OpenAI API...');
-  
-  // Use the IMessage[] directly, instead of ChatCompletionCreateParams
-  const historyMessages: IMessage[] = messages;
-
-  // Create the request body
-  const requestBody: OpenAI.Chat.ChatCompletionCreateParams = createChatCompletion(
-    historyMessages,
-    configManager.LLM_SYSTEM_PROMPT,
-    configManager.LLM_RESPONSE_MAX_TOKENS
-  );
 
   debug('Sending request to OpenAI API...');
   try {
-    // Send the request and receive the response
-    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(requestBody);
+    // Pass IMessage[] directly to createChatCompletion
+    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(messages);
     debug('API response received:', response);
 
     // Process the response to extract content, token usage, and finish reason
