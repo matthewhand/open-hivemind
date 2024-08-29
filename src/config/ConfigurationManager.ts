@@ -6,6 +6,7 @@ import DiscordConfig from './message/DiscordConfig';
 import FlowiseConfig from './llm/FlowiseConfig';
 import N8NConfig from './llm/N8NConfig';
 import PerplexityConfig from './llm/PerplexityConfig';
+import ReplicateConfig from '../command/common/replicate';
 
 const debug = Debug('app:ConfigurationManager');
 
@@ -22,6 +23,7 @@ class ConfigurationManager {
     public readonly flowiseConfig: FlowiseConfig;
     public readonly n8nConfig: N8NConfig;
     public readonly perplexityConfig: PerplexityConfig;
+    public readonly replicateConfig: ReplicateConfig;
 
     constructor() {
         this.openaiConfig = new OpenAIConfig();
@@ -29,6 +31,7 @@ class ConfigurationManager {
         this.flowiseConfig = new FlowiseConfig();
         this.n8nConfig = new N8NConfig();
         this.perplexityConfig = new PerplexityConfig();
+        this.replicateConfig = new ReplicateConfig();
     }
 
     private getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {

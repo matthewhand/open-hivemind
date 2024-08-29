@@ -3,13 +3,13 @@ import axios from 'axios';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 
 const debug = Debug('app:replicate');
-const configManager = new ConfigurationManager();
+const configManager = ConfigurationManager.getInstance();
 
 export async function replicateRequest(input: string): Promise<any> {
-    const baseUrl = configManager.REPLICATE_BASE_URL;
-    const apiToken = configManager.REPLICATE_API_TOKEN;
-    const modelVersion = configManager.REPLICATE_MODEL_VERSION;
-    const webhookUrl = configManager.WEBHOOK_URL;
+    const baseUrl = configManager.replicateConfig.REPLICATE_BASE_URL;
+    const apiToken = configManager.replicateConfig.REPLICATE_API_TOKEN;
+    const modelVersion = configManager.replicateConfig.REPLICATE_MODEL_VERSION;
+    const webhookUrl = configManager.SERVICE_WEBHOOK_URL;
 
     if (!baseUrl || !apiToken || !modelVersion) {
         debug('Missing required configurations for Replicate API');
