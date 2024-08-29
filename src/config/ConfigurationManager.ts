@@ -4,8 +4,38 @@ import Debug from 'debug';
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
-    constructor() {
+    private static instance: ConfigurationManager;
+
+    private constructor() {
         debug('Loading core configurations...');
+    }
+
+    public static getInstance(): ConfigurationManager {
+        if (!ConfigurationManager.instance) {
+            ConfigurationManager.instance = new ConfigurationManager();
+        }
+        return ConfigurationManager.instance;
+    }
+
+    public loadEnabledIntegrations() {
+        const integrations = this.getEnvConfig<any>('INTEGRATIONS', 'commands.integrations', {});
+        for (const integration in integrations) {
+            if (integrations[integration].enabled) {
+                const integrationConfig = this.loadIntegrationConfig(integration);
+                config.util.extendDeep(config[integration], integrationConfig);
+            }
+        }
+    }
+
+    private loadIntegrationConfig(integration: string) {
+        const configPath = `./integrations/${integration}Config`;
+        try {
+            const IntegrationConfig = require(configPath).default;
+            const integrationInstance = new IntegrationConfig();
+            return integrationInstance;
+        } catch (error) {
+            throw new Error(`Failed to load config for integration: ${integration}. Error: ${error.message}`);
+        }
     }
 
     protected getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
@@ -26,63 +56,6 @@ class ConfigurationManager {
         } catch (e) {
             debug(`Error fetching CONFIG [${configKey}]. Using fallback value: ${fallbackValue}`);
             return fallbackValue;
-        }
-    }
-
-    /**
-     * Dynamically loads the command handler based on the provider category (search/execution).
-     */
-    public loadCommandHandlers() {
-        const commandProviders = this.getEnvConfig<{ search: string[], execution: string[] }>('COMMAND_PROVIDERS', 'commands.commandProvider', { search: [], execution: [] });
-        const handlers = {
-            search: commandProviders.search.map(provider => this.loadCommandHandler(provider)),
-            execution: commandProviders.execution.map(provider => this.loadCommandHandler(provider))
-        };
-        return handlers;
-    }
-
-    /**
-     * Loads a command handler for a specific provider.
-     */
-    private loadCommandHandler(provider: string) {
-        const handlerPath = `./commands/${provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase()}Handler`;
-        try {
-            const HandlerClass = require(handlerPath).default;
-            return new HandlerClass();
-        } catch (error) {
-            throw new Error(`Unsupported or missing command provider: ${provider}. Could not load ${handlerPath}.`);
-        }
-    }
-
-    /**
-     * Dynamically loads the LLM configuration based on the provider.
-     */
-    public loadLLMConfig(provider: string) {
-        switch (provider.toLowerCase()) {
-            case 'openai':
-                return new (require('./llm/OpenAIConfig').default)();
-            case 'replicate':
-                return new (require('./llm/ReplicateConfig').default)();
-            case 'perplexity':
-                return new (require('./llm/PerplexityConfig').default)();
-            case 'n8n':
-                return new (require('./llm/N8NConfig').default)();
-            case 'flowise':
-                return new (require('./llm/FlowiseConfig').default)();
-            default:
-                throw new Error(`Unsupported LLM provider: ${provider}`);
-        }
-    }
-
-    /**
-     * Dynamically loads service configurations.
-     */
-    public loadServiceConfig(service: string) {
-        switch (service.toLowerCase()) {
-            case 'webhook':
-                return new (require('./service/WebhookConfig').default)();
-            default:
-                throw new Error(`Unsupported service: ${service}`);
         }
     }
 }
