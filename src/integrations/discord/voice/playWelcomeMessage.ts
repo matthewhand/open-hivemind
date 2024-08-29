@@ -9,11 +9,14 @@ import path from 'path';
 const debug = Debug('app:playWelcomeMessage');
 const configManager = ConfigurationManager.getInstance();
 
-const defaultPath = './data/';
-const audioFilePath = configManager.getConfig('discordConfig').WELCOME_AUDIO_PATH || defaultPath;
+const defaultDir = './data/';
+const defaultFileName = 'welcome.mp3';
+const audioDir = configManager.getConfig('discordConfig').WELCOME_AUDIO_DIR || defaultDir;
+const audioFileName = configManager.getConfig('discordConfig').WELCOME_AUDIO_FILENAME || defaultFileName;
+const outputPath = path.join(audioDir, audioFileName);
 
-if (!fs.existsSync(audioFilePath)) {
-    fs.mkdirSync(audioFilePath, { recursive: true });
+if (!fs.existsSync(audioDir)) {
+    fs.mkdirSync(audioDir, { recursive: true });
 }
 
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
@@ -21,21 +24,22 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
     const openaiConfig = configManager.getConfig('openaiConfig');
 
     const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE;
+    const model = openaiConfig.OPENAI_MODEL;
+    const voice = openaiConfig.OPENAI_VOICE;
+
     debug('Playing welcome message: ' + welcomeMessage);
-    
+
     const openai = new OpenAI({
         apiKey: openaiConfig.OPENAI_API_KEY
     });
-
-    const outputPath = path.join(audioFilePath, 'welcome.mp3');
 
     if (fs.existsSync(outputPath)) {
         debug(`File ${outputPath} already exists. Playing existing file.`);
     } else {
         try {
             const response = await openai.audio.speech.create({
-                model: 'tts-1',
-                voice: 'nova',
+                model: model,
+                voice: voice,
                 input: welcomeMessage,
             });
             const buffer = Buffer.from(await response.arrayBuffer());

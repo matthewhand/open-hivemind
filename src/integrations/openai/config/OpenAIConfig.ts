@@ -9,7 +9,8 @@ class OpenAIConfig {
     public readonly OPENAI_BASE_URL: string = getConfigOrWarn('OPENAI_BASE_URL', 'https://api.openai.com');
     public readonly OPENAI_TIMEOUT: number = getConfigOrWarn('OPENAI_TIMEOUT', 10000);
     public readonly OPENAI_ORGANIZATION: string | undefined = getConfigOrWarn('OPENAI_ORGANIZATION', '');
-    public readonly OPENAI_MODEL: string = getConfigOrWarn('OPENAI_MODEL', 'gpt4');
+    public readonly OPENAI_MODEL: string = this.getEnvOrConfig('OPENAI_MODEL', 'openai.model', 'gpt4');
+    public readonly OPENAI_VOICE: string = this.getEnvOrConfig('OPENAI_VOICE', 'openai.voice', 'nova');
 
     public readonly OPENAI_STOP: string[] = getConfigOrWarn('OPENAI_STOP', []);
     public readonly OPENAI_TOP_P: number = getConfigOrWarn('OPENAI_TOP_P', 0.9);
@@ -22,6 +23,14 @@ class OpenAIConfig {
             throw new Error('Missing critical OpenAI configuration. Please check your environment variables or config files.');
         }
         console.log('OpenAIConfig initialized');
+    }
+
+    private getEnvOrConfig(envVar: string, configKey: string, fallbackValue: string): string {
+        const envValue = process.env[envVar];
+        if (envValue !== undefined) {
+            return envValue;
+        }
+        return getConfigOrWarn(configKey, configKey, fallbackValue);
     }
 }
 

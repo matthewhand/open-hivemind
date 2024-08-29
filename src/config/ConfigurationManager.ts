@@ -1,21 +1,25 @@
-import fs from 'fs';
-import path from 'path';
+import config from 'config';
 import Debug from 'debug';
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { getConfigOrWarn } from './getConfigOrWarn';
+import { loadIntegrationConfigs } from './loadIntegrationConfigs';
 
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
     private static instance: ConfigurationManager;
-    private configs: Map<string, any> = new Map();
 
+    // Public properties
     public readonly LLM_PROVIDER: string = getConfigOrWarn('LLM_PROVIDER', 'llm.provider', 'openai');
     public readonly MESSAGE_PROVIDER: string = getConfigOrWarn('MESSAGE_PROVIDER', 'message.provider', 'discord');
     public readonly SERVICE_WEBHOOK_URL: string = getConfigOrWarn('SERVICE_WEBHOOK_URL', 'service.webhook.url', 'https://example.com/webhook');
-    public readonly WEBHOOK_URL: string = getConfigOrWarn('WEBHOOK_URL', 'service.webhook.url', 'https://your-webhook-url');
+    public readonly WEBHOOK_URL: string = getConfigOrWarn('WEBHOOK_URL', 'webhook.url', 'https://your-webhook-url');
+
+    // Integration configs
+    public readonly integrationConfigs: Record<string, any>;
 
     private constructor() {
-        this.loadConfigurations();
+        this.integrationConfigs = loadIntegrationConfigs();
     }
 
     public static getInstance(): ConfigurationManager {
@@ -25,28 +29,25 @@ class ConfigurationManager {
         return ConfigurationManager.instance;
     }
 
-    private loadConfigurations() {
-        const configDir = path.join(__dirname, 'integrations'); // Adjust this path as necessary
-        const files = fs.readdirSync(configDir);
-
-        for (const file of files) {
-            const fullPath = path.join(configDir, file);
-            if (fs.statSync(fullPath).isDirectory()) {
-                const configFile = path.join(fullPath, 'config', `${path.basename(fullPath)}Config.ts`);
-                if (fs.existsSync(configFile)) {
-                    import(configFile).then((module) => {
-                        const configInstance = new module.default();
-                        this.configs.set(path.basename(fullPath), configInstance);
-                    }).catch((error) => {
-                        debug(`Error loading configuration from ${configFile}: ${error.message}`);
-                    });
-                }
-            }
-        }
+    public getConfig(configName: string): any {
+        return this.integrationConfigs[configName];
     }
 
-    public getConfig(name: string) {
-        return this.configs.get(name);
+    public getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
+        const envValue = process.env[envVar];
+        if (envValue !== undefined) {
+            return envValue as unknown as T;
+        }
+        try {
+            const configValue = config.get(configKey);
+            if (configValue !== undefined) {
+                return configValue as T;
+            }
+            return fallbackValue;
+        } catch (e) {
+            debug(`Error fetching CONFIG [${configKey}]. Using fallback value: ${fallbackValue}`);
+            return fallbackValue;
+        }
     }
 }
 
