@@ -62,7 +62,7 @@ export class DiscordService {
   public async initialize(token?: string): Promise<void> {
     try {
       // Use ConfigurationManager to retrieve the Discord token if not provided directly
-      token = token || this.configManager.discordConfig.DISCORD_TOKEN;
+      token = token || this.configManager.getConfig("discord").DISCORD_TOKEN;
       if (!token) {
         throw new Error('DISCORD_TOKEN is not set');
       }
