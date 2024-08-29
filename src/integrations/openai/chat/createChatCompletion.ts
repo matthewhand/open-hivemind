@@ -106,13 +106,13 @@ function appendFallbackUserMessage(messages: ChatCompletionMessage[]): void {
  */
 function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number): ChatCompletionCreateParams {
     const requestBody: ChatCompletionCreateParams = {
-        model: configManager.OPENAI_MODEL,
+        model: configManager.getConfig("openai").OPENAI_MODEL,
         messages,
         max_tokens: maxTokens,
-        temperature: configManager.OPENAI_TEMPERATURE
+        temperature: configManager.getConfig("openai").OPENAI_TEMPERATURE
     };
 
-    const llmStop = configManager.LLM_STOP.length > 0 ? configManager.LLM_STOP : undefined;
+    const llmStop = configManager.getConfig("llm").LLM_STOP.length > 0 ? configManager.getConfig("llm").LLM_STOP : undefined;
     if (llmStop !== undefined) {
         requestBody.stop = llmStop;
     }
