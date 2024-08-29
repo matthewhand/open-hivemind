@@ -22,8 +22,8 @@ export async function sendAiGeneratedMessage(
   prompt: string
 ): Promise<void> {
   try {
-    // Generate a response using the OpenAiService
-    const response = await aiManager.createChatCompletion(prompt);  // Pass only the prompt string
+    // TODO: Track and pass transcribed history in future.
+    const response = await aiManager.generateChatResponse(prompt, []);
 
     // Validate the AI response before proceeding
     if (!response || typeof response !== 'string' || response.trim() === '') {
