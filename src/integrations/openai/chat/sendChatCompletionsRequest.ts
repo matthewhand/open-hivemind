@@ -2,9 +2,9 @@ import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@common/config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
-import { completeSentence } from '@src/integrations/openai/completion/completeSentence';  // Corrected path
+import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { needsCompletion } from '../completion/needsCompletion';
-import { createChatCompletionRequest } from '@src/integrations/openai/requests/createChatCompletionRequest'; // Import the utility function
+import { createChatCompletionRequestBody } from '@src/integrations/openai/chat/createChatCompletionRequestBody';
 
 const debug = Debug('app:sendChatCompletionsRequest');
 const configManager = new ConfigurationManager();
@@ -42,7 +42,7 @@ export async function sendChatCompletionsRequest(
     debug('Request body: ' + JSON.stringify(requestBody, null, 2));
     try {
         // Directly call the utility function
-        const response = await createChatCompletionRequest(requestBody);
+        const response = await createChatCompletionRequestBody(requestBody);
         let content = response.choices[0]?.message?.content?.trim() || '';
         let tokensUsed = response.usage ? response.usage.total_tokens : 0;
         let finishReason = response.choices[0].finish_reason;
