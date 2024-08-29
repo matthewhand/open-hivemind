@@ -1,3 +1,4 @@
+const messageConfig = configManager.getConfig("message");
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/processing/validateMessage';
