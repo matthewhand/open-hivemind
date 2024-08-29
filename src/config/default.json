@@ -41,13 +41,34 @@
             "botUserId": "YOUR_BOT_USER_ID",
             "voiceChannelId": "YOUR_VOICE_CHANNEL_ID",
             "maxMessageLength": 2000,
-            "typingDelayMaxMs": 5000,
-            "welcomeMessage": "Welcome to the server!"
+            "welcomeMessage": "Welcome to the server!",
+            "followUpHandler": {
+                "enabled": true,
+                "delayBeforeFollowUpMs": 10000
+            },
+            "unsolicitedResponseHandler": {
+                "enabled": true,
+                "responseTriggerWords": ["help", "support"],
+                "responseRateLimitMs": 60000
+            },
+            "responseTimingManager": {
+                "initialDelayMs": 500,
+                "maxDelayMs": 10000,
+                "minDelayMs": 500,
+                "randomizeDelay": true,
+                "typingDelayMaxMs": 5000
+            }
         }
     },
     "service": {
         "webhook": {
             "url": "https://example.com/webhook"
+        }
+    },
+    "commands": {
+        "commandProvider": {
+            "search": ["perplexity", "zep", "quivr"],
+            "execution": ["python", "bash"]
         }
     }
 }

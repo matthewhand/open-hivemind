@@ -30,6 +30,31 @@ class ConfigurationManager {
     }
 
     /**
+     * Dynamically loads the command handler based on the provider category (search/execution).
+     */
+    public loadCommandHandlers() {
+        const commandProviders = this.getEnvConfig<{ search: string[], execution: string[] }>('COMMAND_PROVIDERS', 'commands.commandProvider', { search: [], execution: [] });
+        const handlers = {
+            search: commandProviders.search.map(provider => this.loadCommandHandler(provider)),
+            execution: commandProviders.execution.map(provider => this.loadCommandHandler(provider))
+        };
+        return handlers;
+    }
+
+    /**
+     * Loads a command handler for a specific provider.
+     */
+    private loadCommandHandler(provider: string) {
+        const handlerPath = `./commands/${provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase()}Handler`;
+        try {
+            const HandlerClass = require(handlerPath).default;
+            return new HandlerClass();
+        } catch (error) {
+            throw new Error(`Unsupported or missing command provider: ${provider}. Could not load ${handlerPath}.`);
+        }
+    }
+
+    /**
      * Dynamically loads the LLM configuration based on the provider.
      */
     public loadLLMConfig(provider: string) {
