@@ -13,6 +13,7 @@ module.exports = {
     '^@src/(.*)$': '<rootDir>/src/',
     '^@command/(.*)$': '<rootDir>/src/command/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@llm/(.*)$': '<rootDir>/src/llm/$1',
     '^@message/(.*)$': '<rootDir>/src/message/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',

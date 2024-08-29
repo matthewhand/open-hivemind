@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:sendFollowUpRequest');
 const configManager = ConfigurationManager.getInstance();

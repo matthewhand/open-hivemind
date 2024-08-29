@@ -6,7 +6,7 @@ import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import ResponseTimingManager from '@src/message/helpers/timing/ResponseTimingManager';
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
 const debug = Debug('app:messageHandler');

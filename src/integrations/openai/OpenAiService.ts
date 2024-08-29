@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
 import { createChatCompletion } from './chat/createChatCompletion';
 import { completeSentence } from './operations/completeSentence';

@@ -1,4 +1,4 @@
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import Debug from 'debug';
 

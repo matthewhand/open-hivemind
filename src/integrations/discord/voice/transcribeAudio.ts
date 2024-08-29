@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
 import fs from 'fs';
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:transcribeAudio');
 const configManager = ConfigurationManager.getInstance();

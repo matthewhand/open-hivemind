@@ -1,4 +1,4 @@
-import { getConfigOrWarn } from '@common/config/getConfigOrWarn';
+import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
 class FlowiseConfig {
     public readonly FLOWISE_API_URL: string = getConfigOrWarn('FLOWISE_API_URL', 'https://api.flowise.com');

@@ -11,6 +11,7 @@
     "paths": {
       "@command/*": ["src/command/*"],
       "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
       "@llm/*": ["src/llm/*"],
       "@message/*": ["src/message/*"],
       "@integrations/*": ["src/integrations/*"],

@@ -21,6 +21,7 @@
     "@src": "dist/src",
     "@command": "dist/src/command",
     "@common": "dist/src/common",
+    "@config": "dist/src/config",
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
     "@integrations/discord": "dist/src/integrations/discord",

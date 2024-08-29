@@ -2,7 +2,7 @@ require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 require('dotenv/config'); // Loads environment variables from .env
 
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
-const ConfigurationManager = require('@common/config/ConfigurationManager').default;
+const ConfigurationManager = require('@config/ConfigurationManager').default;
 const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 const Debug = require('debug');
 const { messageHandler } = require('@src/message/handlers/messageHandler');

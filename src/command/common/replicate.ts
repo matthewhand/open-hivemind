@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import axios from 'axios';
-import ConfigurationManager from '@common/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:replicate');
 const configManager = ConfigurationManager.getInstance();

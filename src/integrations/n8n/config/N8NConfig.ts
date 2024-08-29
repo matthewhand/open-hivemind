@@ -1,4 +1,4 @@
-import { getConfigOrWarn } from '@common/config/getConfigOrWarn';
+import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
 class N8NConfig {
     public readonly N8N_API_KEY: string = getConfigOrWarn('N8N_API_KEY', 'llm.n8n.apiKey', 'default-n8n-api-key');

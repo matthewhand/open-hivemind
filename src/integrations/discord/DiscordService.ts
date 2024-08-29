@@ -3,7 +3,7 @@ import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage'; // Import your DiscordMessage implementation
-import ConfigurationManager from '@common/config/ConfigurationManager';  // Properly import ConfigurationManager
+import ConfigurationManager from '@config/ConfigurationManager';  // Properly import ConfigurationManager
 
 const log = Debug('app:discord-service');
 

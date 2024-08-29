@@ -1,4 +1,4 @@
-import { getConfigOrWarn } from '@common/config/getConfigOrWarn';
+import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
 class DiscordConfig {
     public readonly DISCORD_TOKEN: string = getConfigOrWarn('DISCORD_TOKEN', '');

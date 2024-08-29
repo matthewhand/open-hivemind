@@ -1,4 +1,4 @@
-import { getConfigOrWarn } from '@common/config/getConfigOrWarn';
+import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
 class PerplexityConfig {
     public readonly PERPLEXITY_API_TOKEN: string = getConfigOrWarn('PERPLEXITY_API_TOKEN', 'llm.perplexity.apiToken', 'your-perplexity-api-token');
