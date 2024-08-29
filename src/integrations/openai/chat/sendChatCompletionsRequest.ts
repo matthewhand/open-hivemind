@@ -48,7 +48,7 @@ export async function sendChatCompletionsRequest(
     debug('API response received:', response);
 
     // Process the response to extract content, token usage, and finish reason
-    const content = response.choices[0]?.message?.content?.trim() || '';
+    let content = response.choices[0]?.message?.content?.trim() || '';
     const tokensUsed = response.usage?.total_tokens || 0;
     let finishReason: OpenAI.Chat.ChatCompletion['choices'][0]['finish_reason'] = response.choices[0]?.finish_reason || 'unknown';
 
@@ -61,7 +61,7 @@ export async function sendChatCompletionsRequest(
         debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
         const newContent = await completeSentence(openAiService, content);
         content = newContent || content; // Update content if new content is returned
-        finishReason = 'completed'; // Set finish reason after successful retry
+        finishReason = 'stop'; // Set finish reason after successful retry
       }
     }
 
