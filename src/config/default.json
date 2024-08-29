@@ -1,0 +1,53 @@
+{
+    "llm": {
+        "openai": {
+            "apiKey": "YOUR_OPENAI_API_KEY",
+            "temperature": 0.7,
+            "maxTokens": 150,
+            "frequencyPenalty": 0.1,
+            "presencePenalty": 0.05,
+            "baseUrl": "https://api.openai.com",
+            "timeout": 10000,
+            "organization": "",
+            "model": "gpt4",
+            "stop": ["\n", ".", "?", "!"],
+            "topP": 0.9,
+            "systemPrompt": "Greetings, human...",
+            "responseMaxTokens": 100
+        },
+        "replicate": {
+            "apiToken": "YOUR_REPLICATE_API_TOKEN",
+            "apiUrl": "https://api.replicate.com/v1",
+            "modelVersion": "default_version"
+        },
+        "perplexity": {
+            "apiToken": "YOUR_PERPLEXITY_API_TOKEN",
+            "model": "sonar-huge"
+        },
+        "n8n": {
+            "apiBaseUrl": "http://localhost:5678/api/v1",
+            "apiKey": "YOUR_N8N_API_KEY"
+        },
+        "flowise": {
+            "apiBaseUrl": "http://localhost:3000/api/v1",
+            "apiKey": "YOUR_FLOWISE_API_KEY"
+        }
+    },
+    "message": {
+        "discord": {
+            "token": "YOUR_DISCORD_TOKEN",
+            "clientId": "YOUR_CLIENT_ID",
+            "channelId": "YOUR_CHANNEL_ID",
+            "botUserId": "YOUR_BOT_USER_ID",
+            "voiceChannelId": "YOUR_VOICE_CHANNEL_ID",
+            "maxMessageLength": 2000,
+            "typingDelayMaxMs": 5000,
+            "welcomeMessage": "Welcome to the server!"
+        }
+    },
+    "service": {
+        "webhook": {
+            "url": "https://example.com/webhook"
+        }
+    }
+}
