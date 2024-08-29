@@ -14,7 +14,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 const configManager = ConfigurationManager.getInstance();
 
 // Retrieve required configurations from ConfigurationManager
-const DISCORD_TOKEN = configManager.DISCORD_TOKEN;
+const DISCORD_TOKEN = configManager.discordConfig.DISCORD_TOKEN;
 const DISCORD_CHANNEL_ID = configManager.DISCORD_CHANNEL_ID;
 
 // Ensure necessary configurations are present

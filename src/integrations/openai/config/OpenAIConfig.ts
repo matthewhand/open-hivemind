@@ -1,4 +1,4 @@
-import { getConfigOrWarn } from '@common/config/configUtils';
+import { getConfigOrWarn } from '@common/config/getConfigOrWarn';
 
 class OpenAIConfig {
     public readonly OPENAI_API_KEY: string = getConfigOrWarn('OPENAI_API_KEY', '');

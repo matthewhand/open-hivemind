@@ -16,7 +16,7 @@ const debug = Debug('app:getMessageProvider');
  */
 export function getMessageProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const messageProvider = configManager.MESSAGE_PROVIDER;
+  const messageProvider = configManager.discordConfig.MESSAGE_PROVIDER;
 
   debug('Configured message provider:', messageProvider);
 

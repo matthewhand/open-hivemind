@@ -4,7 +4,7 @@ const configManager = ConfigurationManager.getInstance();
 
 export async function sendCompletionsRequest(prompt: string): Promise<any> {
     const apiKey = configManager.openaiConfig.OPENAI_API_KEY;
-    const baseURL = configManager.OPENAI_BASE_URL;
+    const baseURL = configManager.openaiConfig.OPENAI_BASE_URL;
     const timeout = configManager.OPENAI_TIMEOUT;
     const organization = configManager.OPENAI_ORGANIZATION;
     const model = configManager.OPENAI_MODEL;

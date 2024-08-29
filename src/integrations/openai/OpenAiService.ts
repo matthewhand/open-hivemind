@@ -34,7 +34,7 @@ export class OpenAiService {
         const options: ClientOptions = {
             apiKey: configManager.openaiConfig.OPENAI_API_KEY,
             organization: configManager.OPENAI_ORGANIZATION || undefined,
-            baseURL: configManager.OPENAI_BASE_URL,
+            baseURL: configManager.openaiConfig.OPENAI_BASE_URL,
             timeout: configManager.OPENAI_TIMEOUT,
         };
 

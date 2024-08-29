@@ -24,7 +24,7 @@ const configManager = ConfigurationManager.getInstance();
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    const narrationEndpointUrl = configManager.OPENAI_BASE_URL;
+    const narrationEndpointUrl = configManager.openaiConfig.OPENAI_BASE_URL;
     if (!narrationEndpointUrl) {
         debug('OPENAI_BASE_URL is not set in the environment variables.');
         return;
