@@ -1,9 +1,12 @@
 import { getEnvConfig } from '@config/configUtils';
 
 class ReplicateConfig {
-    public readonly REPLICATE_BASE_URL: string = getEnvConfig('REPLICATE_BASE_URL', 'replicate.apiUrl', 'https://api.replicate.com/v1');
-    public readonly REPLICATE_API_TOKEN: string = getEnvConfig('REPLICATE_API_TOKEN', 'replicate.apiToken', 'default_replicate_api_token');
-    public readonly REPLICATE_MODEL_VERSION: string = getEnvConfig('REPLICATE_MODEL_VERSION', 'replicate.modelVersion', 'default_version');
+    public readonly REPLICATE_API_URL: string = getEnvConfig('REPLICATE_API_URL', 'llm.replicate.apiUrl', 'https://api.replicate.com');
+    public readonly REPLICATE_API_KEY: string = getEnvConfig('REPLICATE_API_KEY', 'llm.replicate.apiKey', 'your-replicate-api-key');
+
+    constructor() {
+        console.log('ReplicateConfig initialized');
+    }
 }
 
 export default ReplicateConfig;
