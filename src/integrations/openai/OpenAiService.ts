@@ -3,32 +3,19 @@ import ConfigurationManager from '@common/config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
 import { createChatCompletionRequest } from './chat/createChatCompletionRequest';
 import { completeSentence } from './operations/completeSentence';
+import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
 const configManager = new ConfigurationManager();
 
-/**
- * OpenAiService Class
- *
- * This service manages interactions with OpenAI's API, including creating chat completions
- * and listing available models. It is implemented as a singleton to ensure that only one
- * instance of the service is used throughout the application.
- *
- * Key Features:
- * - Singleton pattern for centralized management
- * - Handles API requests for chat completions
- * - Manages service state, including busy status
- * - Supports generating chat responses with history management
- */
 export class OpenAiService {
-    private static instance: OpenAiService; // Singleton instance
-    private readonly openai: OpenAI; // Instance of the OpenAI API client
+    private static instance: OpenAiService;
+    private readonly openai: OpenAI;
     private busy: boolean = false;
-    private readonly parallelExecution: boolean; // Configurable option for parallel execution
-    private readonly finishReasonRetry: string; // Configurable finish reason for retry
-    private readonly maxRetries: number; // Configurable maximum retries
+    private readonly parallelExecution: boolean;
+    private readonly finishReasonRetry: string;
+    private readonly maxRetries: number;
 
-    // Private constructor to enforce singleton pattern
     private constructor() {
         const options: ClientOptions = {
             apiKey: configManager.OPENAI_API_KEY,
@@ -58,59 +45,20 @@ export class OpenAiService {
         this.busy = status;
     }
 
-    /**
-     * Generates a chat response using the OpenAI API.
-     * This method wraps the process of building a request body and sending it to the API,
-     * ensuring that the service is not busy before making the request.
-     *
-     * @param message - The user message that requires a response.
-     * @param historyMessages - The array of previous conversation messages for context.
-     * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
-     */
-    public async generateChatResponse(message: string, historyMessages: any[]): Promise<string | null> {
-        if (!this.openai.apiKey) {
-            debug('generateChatResponse: API key is missing');
-            return null;
-        }
-
-        debug('generateChatResponse: Building request body');
-        const requestBody = await createChatCompletionRequest([
-            ...historyMessages,
-            { role: 'user', content: message },
-        ]);
-
-        if (!this.parallelExecution && this.isBusy()) {
-            debug('generateChatResponse: Service is busy');
-            return null;
-        }
-
+    public async createChatCompletion(
+        historyMessages: IMessage[],
+        systemMessageContent: string = configManager.LLM_SYSTEM_PROMPT,
+        maxTokens: number = configManager.LLM_RESPONSE_MAX_TOKENS
+    ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
-            if (!this.parallelExecution) {
-                this.setBusy(true);
-            }
-
-            debug('generateChatResponse: Sending request to OpenAI API');
-            const response = await this.openai.chat.completions.create(requestBody);
-
-            let finishReason = response.choices[0].finish_reason;
-            let content = response.choices[0].message.content;
-
-            // Retry logic based on finish reason
-            for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
-                debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
-                content = await completeSentence(this, content ?? '');
-                finishReason = finishReason === 'stop' ? 'stop' : finishReason;
-            }
-
-            return content;
+            const requestBody = createChatCompletionRequest(historyMessages, systemMessageContent, maxTokens);
+            const response = await this.openai.chat.completions.create(requestBody) as OpenAI.Chat.ChatCompletion;
+            return response;
         } catch (error: any) {
-            debug('generateChatResponse: Error occurred:', error);
-            return null;
-        } finally {
-            if (!this.parallelExecution) {
-                this.setBusy(false);
-                debug('generateChatResponse: Service busy status reset');
-            }
+            debug('createChatCompletion: Error occurred:', error);
+            throw error;
         }
     }
+
+    // Rest of the class...
 }
