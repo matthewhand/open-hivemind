@@ -1,4 +1,4 @@
-import { getEnvConfig } from '../configUtils';
+import { getEnvConfig } from '@config/configUtils';
 
 class ReplicateConfig {
     public readonly REPLICATE_API_URL: string = getEnvConfig('REPLICATE_API_URL', 'llm.replicate.apiUrl', 'https://api.replicate.com');
