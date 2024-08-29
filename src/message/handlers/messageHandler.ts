@@ -75,8 +75,8 @@ export async function messageHandler(
   await processCommand(msg, async (result: string) => {
     try {
       // Check if command is allowed and if MESSAGE_COMMAND_AUTHORISED_USERS is configured
-      if (configManager.MESSAGE_COMMAND_AUTHORISED_USERS) {
-        const allowedUsers = configManager.MESSAGE_COMMAND_AUTHORISED_USERS.split(',');
+      if (messageConfig.MESSAGE_COMMAND_AUTHORISED_USERS) {
+        const allowedUsers = messageConfig.MESSAGE_COMMAND_AUTHORISED_USERS.split(',');
         if (!allowedUsers.includes(msg.getAuthorId())) {
           debug('Command not authorized for user:', msg.getAuthorId());
           return;
@@ -97,7 +97,7 @@ export async function messageHandler(
   }
 
   // Process LLM chat response if enabled
-  if (configManager.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
+  if (messageConfig.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
     if (llmResponse) {
@@ -115,9 +115,9 @@ export async function messageHandler(
   }
 
   // Implement follow-up logic if both LLM_CHAT and FOLLOW_UP are enabled
-  if (configManager.MESSAGE_LLM_CHAT && configManager.MESSAGE_LLM_FOLLOW_UP) {
+  if (messageConfig.MESSAGE_LLM_CHAT && messageConfig.MESSAGE_LLM_FOLLOW_UP) {
     // Guard: Ensure command processing is enabled
-    if (!configManager.MESSAGE_COMMAND_INLINE && !configManager.MESSAGE_COMMAND_SLASH) {
+    if (!messageConfig.MESSAGE_COMMAND_INLINE && !messageConfig.MESSAGE_COMMAND_SLASH) {
       debug('Follow-up logic is skipped because command processing is not enabled.');
       return;
     }

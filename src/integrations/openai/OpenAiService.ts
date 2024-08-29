@@ -33,9 +33,9 @@ export class OpenAiService {
     private constructor() {
         const options: ClientOptions = {
             apiKey: configManager.getConfig("openaiConfig").OPENAI_API_KEY,
-            organization: configManager.OPENAI_ORGANIZATION || undefined,
+            organization: configManager.getConfig("openaiConfig").OPENAI_ORGANIZATION || undefined,
             baseURL: configManager.getConfig("openaiConfig").OPENAI_BASE_URL,
-            timeout: configManager.OPENAI_TIMEOUT,
+            timeout: configManager.getConfig("openaiConfig").OPENAI_TIMEOUT,
         };
 
         this.openai = new OpenAI(options);

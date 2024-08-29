@@ -8,8 +8,8 @@ const configManager = ConfigurationManager.getInstance();
  * @returns Whether the message should be processed or not.
  */
 export function shouldProcessMessage(messageLength: number): boolean {
-    const minIntervalMs = configManager.MESSAGE_MIN_INTERVAL_MS;
-    const followUpEnabled = configManager.MESSAGE_FOLLOW_UP_ENABLED;
+    const minIntervalMs = messageConfig.MESSAGE_MIN_INTERVAL_MS;
+    const followUpEnabled = messageConfig.MESSAGE_FOLLOW_UP_ENABLED;
     const limitPerHour = configManager.LLM_MESSAGE_LIMIT_PER_HOUR;
 
     // Example logic: Only process messages if follow-up is enabled and the length exceeds a certain threshold.

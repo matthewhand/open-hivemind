@@ -1,19 +1,14 @@
 import config from 'config';
 import Debug from 'debug';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { getConfigOrWarn } from './getConfigOrWarn';
 import { loadIntegrationConfigs } from './loadIntegrationConfigs';
+import MessageConfig from '@src/message/config/MessageConfig';
+import LlmConfig from '@src/llm/config/LlmConfig';  // Import the LlmConfig class
 
 const debug = Debug('app:ConfigurationManager');
 
 class ConfigurationManager {
     private static instance: ConfigurationManager;
-
-    // Public properties
-    public readonly LLM_PROVIDER: string = getConfigOrWarn('LLM_PROVIDER', 'llm.provider', 'openai');
-    public readonly MESSAGE_PROVIDER: string = getConfigOrWarn('MESSAGE_PROVIDER', 'message.provider', 'discord');
-    public readonly SERVICE_WEBHOOK_URL: string = getConfigOrWarn('SERVICE_WEBHOOK_URL', 'service.webhook.url', 'https://example.com/webhook');
-    public readonly WEBHOOK_URL: string = getConfigOrWarn('WEBHOOK_URL', 'webhook.url', 'https://your-webhook-url');
 
     // Integration configs
     public readonly integrationConfigs: Record<string, any>;
@@ -30,6 +25,15 @@ class ConfigurationManager {
     }
 
     public getConfig(configName: string): any {
+        if (configName === 'message') {
+            return new MessageConfig();
+        }
+
+        if (configName === 'llm') {
+            return new LlmConfig();
+        }
+
+        // Fallback to integration configs
         return this.integrationConfigs[configName];
     }
 
