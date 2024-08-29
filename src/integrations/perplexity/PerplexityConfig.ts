@@ -1,4 +1,4 @@
-import { getEnvConfig } from '../configUtils';
+import { getEnvConfig } from '@config/configUtils';
 
 class PerplexityConfig {
     public readonly PERPLEXITY_API_URL: string = getEnvConfig('PERPLEXITY_API_URL', 'llm.perplexity.apiUrl', 'https://api.perplexity.com');

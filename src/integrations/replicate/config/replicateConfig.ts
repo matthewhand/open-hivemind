@@ -1,4 +1,4 @@
-import { getEnvConfig } from '../configUtils';
+import { getEnvConfig } from '@conf@config/configUtils';
 
 class ReplicateConfig {
     public readonly REPLICATE_BASE_URL: string = getEnvConfig('REPLICATE_BASE_URL', 'replicate.apiUrl', 'https://api.replicate.com/v1');

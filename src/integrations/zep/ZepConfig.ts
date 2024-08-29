@@ -1,4 +1,4 @@
-import { getEnvConfig } from '../configUtils';
+import { getEnvConfig } from '@config/configUtils';
 
 class ZepConfig {
     public readonly ZEP_API_URL: string = getEnvConfig('ZEP_API_URL', 'llm.zep.apiUrl', 'https://api.zep.com');

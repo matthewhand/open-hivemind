@@ -1,4 +1,4 @@
-import { getEnvConfig } from '../configUtils';
+import { getEnvConfig } from '@config/configUtils';
 
 class QuivrConfig {
     public readonly QUIVR_API_URL: string = getEnvConfig('QUIVR_API_URL', 'llm.quivr.apiUrl', 'https://api.quivr.com');
