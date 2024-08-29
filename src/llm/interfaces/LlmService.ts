@@ -3,6 +3,7 @@ import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:llm:LlmService');
 const configManager = ConfigurationManager.getInstance();
+const llmConfig = configManager.getConfig('llm');  // Properly initializing llmConfig
 
 /**
  * Abstract class representing the interface for Large Language Models (LLM).
@@ -22,15 +23,15 @@ export abstract class LlmService {
      * @returns {LlmService} An instance of the LLM provider.
      */
     static getManager(): LlmService {
-        debug('getManager called with LLM_PROVIDER: ' + configManager.LLM_PROVIDER);
-        switch (configManager.LLM_PROVIDER) {
+        debug('getManager called with LLM_PROVIDER: ' + llmConfig.LLM_PROVIDER);
+        switch (llmConfig.LLM_PROVIDER) {
             case 'OpenAI': {
                 const { OpenAiService } = require('@src/integrations/openai/OpenAiService');
                 return OpenAiService.getInstance();
             }
             default:
-                debug('Unsupported LLM Provider: ' + configManager.LLM_PROVIDER);
-                throw new Error('Unsupported LLM Provider specified in constants: ' + configManager.LLM_PROVIDER);
+                debug('Unsupported LLM Provider: ' + llmConfig.LLM_PROVIDER);
+                throw new Error('Unsupported LLM Provider specified in constants: ' + llmConfig.LLM_PROVIDER);
         }
     }
 

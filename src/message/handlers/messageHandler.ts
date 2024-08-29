@@ -1,4 +1,3 @@
-const messageConfig = configManager.getConfig("message");
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/processing/validateMessage';
@@ -12,6 +11,7 @@ import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpR
 
 const debug = Debug('app:messageHandler');
 const configManager = ConfigurationManager.getInstance();
+const messageConfig = configManager.getConfig('message');  // Properly initializing messageConfig
 
 /**
  * Message Handler
