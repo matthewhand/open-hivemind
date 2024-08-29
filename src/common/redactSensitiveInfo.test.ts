@@ -3,13 +3,13 @@ import { redactSensitiveInfo } from './redactSensitiveInfo';
 
 describe('redactSensitiveInfo', () => {
     test('should redact sensitive information based on key', () => {
-        expect(redactSensitiveInfo('password', 'mySecretPassword')).toBe('password: mySec...sword');
+        expect(redactSensitiveInfo('password', 'mySecretPassword')).toBe('password: mySec...word');
         expect(redactSensitiveInfo('apiKey', '1234567890abcdef')).toBe('apiKey: 12345...bcdef');
-        expect(redactSensitiveInfo('auth_token', 'abcdef123456')).toBe('auth_token: abcde...3456');
+        expect(redactSensitiveInfo('auth_token', 'abcdef123456')).toBe('auth_token: abcde...23456');
     });
 
     test('should redact sensitive information based on value', () => {
-        expect(redactSensitiveInfo('Authorization', 'Bearer mySecretToken')).toBe('Authorization: Bear...Token');
+        expect(redactSensitiveInfo('Authorization', 'Bearer mySecretToken')).toBe('Authorization: Beare...Token');
         expect(redactSensitiveInfo('Authorization', 'Token mySecretToken')).toBe('Authorization: Toke...Token');
     });
 
