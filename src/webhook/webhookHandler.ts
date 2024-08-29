@@ -12,14 +12,15 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 // Create an instance of ConfigurationManager
 const configManager = ConfigurationManager.getInstance();
+const discordConfig = configManager.getConfig('discordConfig');
 
 // Retrieve required configurations from ConfigurationManager
-const DISCORD_TOKEN = configManager.discordConfig.DISCORD_TOKEN;
-const DISCORD_CHANNEL_ID = configManager.DISCORD_CHANNEL_ID;
+const DISCORD_TOKEN = discordConfig.DISCORD_TOKEN;
+const DISCORD_CHANNEL_ID = discordConfig.DISCORD_CHANNEL_ID;
 
-// Ensure necessary configurations are present
+// Guard: Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHANNEL_ID) {
-  debug('Missing required configurations: DISCORD_TOKEN and/or DISCORD_CHANNEL_ID');
+  debug('Missing required configurations: DISCORD_TOKEN and/or DISCORD_CHANNEL_ID', { DISCORD_TOKEN, DISCORD_CHANNEL_ID });
   process.exit(1);
 }
 
@@ -44,31 +45,44 @@ export const startWebhookServer = (port: number): void => {
   // Webhook route to handle predictions and send results to Discord
   app.post('/webhook', async (req: Request, res: Response) => {
     debug('Received webhook:', JSON.stringify(req.body));
+    
+    // Extract necessary fields from the webhook payload
     const predictionId = req.body.id;
     const predictionStatus = req.body.status;
     const resultArray = req.body.output;
     const imageUrl = predictionImageMap.get(predictionId);
+
+    // Guard: Ensure the predictionId and predictionStatus are present
+    if (!predictionId || !predictionStatus) {
+      debug('Missing predictionId or predictionStatus:', { predictionId, predictionStatus });
+      return res.status(400).send({ error: 'Missing predictionId or predictionStatus' });
+    }
+
     debug('Image URL:', imageUrl);
 
+    // Fetch the Discord channel
     const channel = client.channels.cache.get(DISCORD_CHANNEL_ID) as TextChannel;
 
     if (channel) {
       let resultMessage: string;
 
+      // Process prediction result based on status
       if (predictionStatus === 'succeeded') {
         const resultText = resultArray.join(' ');
-        resultMessage = resultText + '\nImage URL: ' + imageUrl;
+        resultMessage = `${resultText}\nImage URL: ${imageUrl}`;
       } else if (predictionStatus === 'processing') {
         debug('Processing:', predictionId);
         return res.sendStatus(200);
       } else {
-        resultMessage = 'Prediction ID: ' + predictionId + '\nStatus: ' + predictionStatus;
+        resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
       }
 
+      // Send the result message to the Discord channel
       await channel.send(resultMessage).catch(error => {
         debug('Failed to send message to channel:', error.message);
       });
 
+      // Clean up the image map after processing
       predictionImageMap.delete(predictionId);
     } else {
       debug('Channel not found for ID:', DISCORD_CHANNEL_ID);
@@ -86,8 +100,10 @@ export const startWebhookServer = (port: number): void => {
 
   // Uptime check route
   app.get('/uptime', (req: Request, res: Response) => {
-    debug('Uptime check received');
-    res.sendStatus(200);
+    const uptimeSeconds = process.uptime();
+    const uptime = new Date(uptimeSeconds * 1000).toISOString().substr(11, 8); // Convert seconds to HH:MM:SS format
+    debug('Uptime check received:', uptime);
+    res.status(200).send({ uptime });
   });
 
   // Error handling middleware to catch unhandled errors
@@ -105,6 +121,7 @@ export const startWebhookServer = (port: number): void => {
   app.post('/post', async (req: Request, res: Response) => {
     const message = req.body.message;
 
+    // Guard: Ensure a message is provided
     if (!message) {
       debug('No message provided in request body');
       return res.status(400).send({ error: 'Message is required' });

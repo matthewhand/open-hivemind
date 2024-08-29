@@ -22,8 +22,9 @@ const configManager = ConfigurationManager.getInstance();
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
+        const openaiConfig = configManager.getConfig('openaiConfig');
         const openai = new OpenAI({
-            apiKey: configManager.openaiConfig.OPENAI_API_KEY
+            apiKey: openaiConfig.OPENAI_API_KEY
         });
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),
