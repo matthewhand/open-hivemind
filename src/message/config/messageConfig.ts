@@ -1,6 +1,6 @@
 import config from 'config';
 
-class MessageConfig {
+class messageConfig {
     public readonly MESSAGE_PROVIDER: string;
     public readonly MESSAGE_MIN_INTERVAL_MS: number;
     public readonly MESSAGE_FOLLOW_UP_ENABLED: boolean;
@@ -26,4 +26,4 @@ class MessageConfig {
     }
 }
 
-export default MessageConfig;
+export default messageConfig;

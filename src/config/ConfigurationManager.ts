@@ -2,7 +2,7 @@ import config from 'config';
 import Debug from 'debug';
 import { getConfigOrWarn } from './getConfigOrWarn';
 import { loadIntegrationConfigs } from './loadIntegrationConfigs';
-import MessageConfig from '@src/message/config/MessageConfig';
+import messageConfig from '@src/message/config/messageConfig';
 import LlmConfig from '@src/llm/config/LlmConfig';  // Import the LlmConfig class
 
 const debug = Debug('app:ConfigurationManager');
@@ -26,7 +26,7 @@ class ConfigurationManager {
 
     public getConfig(configName: string): any {
         if (configName === 'message') {
-            return new MessageConfig();
+            return new messageConfig();
         }
 
         if (configName === 'llm') {

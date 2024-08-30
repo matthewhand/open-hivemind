@@ -5,10 +5,10 @@ The `ConfigurationManager` class serves as a centralized manager for environment
 ## Components
 - **OpenAIConfig**: Manages all OpenAI-specific settings.
 - **ReplicateConfig**: Manages Replicate API settings.
-- **PerplexityConfig**: Manages Perplexity AI settings.
+- **perplexityConfig**: Manages Perplexity AI settings.
 - **N8NConfig**: Manages N8N API settings.
 - **FlowiseConfig**: Manages Flowise API settings.
-- **DiscordConfig**: Handles Discord-related settings.
+- **discordConfig**: Handles Discord-related settings.
 
 ## Dynamic Loading
 
