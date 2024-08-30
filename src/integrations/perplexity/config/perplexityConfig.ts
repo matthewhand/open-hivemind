@@ -1,13 +1,8 @@
-import { configManager.getEnvConfig } from '@config/configManager.getEnvConfig';
+import ConfigurationManager from '@config/ConfigurationManager';
+const configManager = ConfigurationManager.getInstance();
 
-export default class perplexityConfig {
-    public readonly PERPLEXITY_API_KEY: string = configManager.getEnvConfig('PERPLEXITY_API_KEY', '');
-    public readonly PERPLEXITY_MODEL: string = configManager.getEnvConfig('PERPLEXITY_MODEL', 'gpt3');
-    public readonly PERPLEXITY_TIMEOUT: number = configManager.getEnvConfig('PERPLEXITY_TIMEOUT', 10000);
-
-    constructor() {
-        if (!this.PERPLEXITY_API_KEY) {
-            throw new Error('Missing critical Perplexity API Key configuration.');
-        }
-    }
+export class PerplexityConfig {
+    public readonly PERPLEXITY_API_KEY: string = configManager.getEnvConfig('PERPLEXITY_API_KEY', 'llm.perplexity.apiKey', '');
+    public readonly PERPLEXITY_MODEL: string = configManager.getEnvConfig('PERPLEXITY_MODEL', 'llm.perplexity.model', 'gpt3');
+    public readonly PERPLEXITY_TIMEOUT: number = configManager.getEnvConfig('PERPLEXITY_TIMEOUT', 'llm.perplexity.timeout', 10000);
 }
