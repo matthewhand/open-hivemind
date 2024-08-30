@@ -1,11 +1,12 @@
 require('dotenv/config'); // Loads environment variables from .env
 require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 
-console.log("process.env.DISCORD_TOKEN:", redactSensitiveInfo("DISCORD_TOKEN", process.env.DISCORD_TOKEN)); // Now correctly logs after dotenv has loaded
+const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
+
+console.log("process.env.DISCORD_TOKEN:", redactSensitiveInfo("DISCORD_TOKEN", process.env.DISCORD_TOKEN)); // Redacted token
 
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
 const ConfigurationManager = require('@config/ConfigurationManager').default;
-const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 const { debugEnvVars } = require('@config/debugEnvVars');
 const Debug = require('debug');
 const { messageHandler } = require('@src/message/handlers/messageHandler');

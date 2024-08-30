@@ -14,6 +14,7 @@ class discordConfig {
 
     constructor() {
         // Validate essential configurations
+        console.log("DISCORD_TOKEN:", this.DISCORD_TOKEN); // Debug statement
         if (!this.DISCORD_TOKEN || !this.DISCORD_CLIENT_ID || !this.DISCORD_CHANNEL_ID) {
             throw new Error('Missing critical Discord configuration. Please check your environment variables or config files.');
         }

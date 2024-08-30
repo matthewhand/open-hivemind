@@ -22,7 +22,7 @@ const openaiConfig = convict({
   },
   OPENAI_BASE_URL: {
     doc: 'OpenAI API Base URL',
-    format: 'url',
+    format: String,
     default: 'https://api.openai.com',
     env: 'OPENAI_BASE_URL',
   },
