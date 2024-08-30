@@ -1,6 +1,6 @@
 import { getConfigOrWarn } from '@config/getConfigOrWarn';
 
-class discordConfig {
+class DiscordConfig {
     public readonly DISCORD_TOKEN: string = getConfigOrWarn('DISCORD_TOKEN', '');
     public readonly DISCORD_CLIENT_ID: string = getConfigOrWarn('DISCORD_CLIENT_ID', '');
     public readonly DISCORD_GUILD_ID: string = getConfigOrWarn('DISCORD_GUILD_ID', '');
@@ -15,8 +15,8 @@ class discordConfig {
         if (!this.DISCORD_TOKEN || !this.DISCORD_CLIENT_ID || !this.DISCORD_CHANNEL_ID) {
             throw new Error('Missing critical Discord configuration. Please check your environment variables or config files.');
         }
-        console.log('discordConfig initialized');
+        console.log('DiscordConfig initialized');
     }
 }
 
-export default discordConfig;
+export default DiscordConfig;
