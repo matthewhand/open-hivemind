@@ -9,6 +9,17 @@ const { messageHandler } = require('@src/message/handlers/messageHandler');
 
 const debug = Debug('app:index');
 
+// Initialize configuration manager
+const configManager = ConfigurationManager.getInstance();
+
+// Debug: Check if discord configuration is loaded
+const discordConfig = configManager.getConfig('discord');
+if (!discordConfig) {
+    console.error('Discord configuration not found');
+} else {
+    debug('Discord configuration loaded:', discordConfig);
+}
+
 // Iterate over all .env variables and log them with redaction
 const envKeys = [
     'MESSAGE_PROVIDER', 
@@ -41,8 +52,8 @@ async function main() {
         debug('Message handler set up successfully.');
 
         // Retrieve the bot token from the configuration manager
-        const botToken = ConfigurationManager.getInstance().DISCORD_TOKEN;
-        debug('Bot Token retrieved:', botToken);
+        const botToken = discordConfig ? discordConfig.DISCORD_TOKEN : null;
+        debug('Bot Token retrieved:', redactSensitiveInfo('DISCORD_TOKEN', botToken));
 
         // Guard clause: Ensure bot token is properly configured
         if (!botToken || botToken === 'UNCONFIGURED_DISCORD_TOKEN') {
