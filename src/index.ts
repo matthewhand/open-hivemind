@@ -4,6 +4,7 @@ require('dotenv/config'); // Loads environment variables from .env
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
 const ConfigurationManager = require('@config/ConfigurationManager').default;
 const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
+const { debugEnvVars } = require('@config/debugEnvVars');
 const Debug = require('debug');
 const { messageHandler } = require('@src/message/handlers/messageHandler');
 
@@ -12,6 +13,9 @@ const debug = Debug('app:index');
 // Initialize configuration manager
 const configManager = ConfigurationManager.getInstance();
 
+// Debug environment variables
+debugEnvVars();
+
 // Debug: Check if discord configuration is loaded
 const discordConfig = configManager.getConfig('discord');
 if (!discordConfig) {
@@ -19,27 +23,6 @@ if (!discordConfig) {
 } else {
     debug('Discord configuration loaded:', discordConfig);
 }
-
-// Iterate over all .env variables and log them with redaction
-const envKeys = [
-    'MESSAGE_PROVIDER', 
-    'LLM_PROVIDER', 
-    'DISCORD_TOKEN', 
-    'DISCORD_CLIENT_ID', 
-    'DISCORD_GUILD_ID', 
-    'OPENAI_API_KEY', 
-    'OPENAI_BASE_URL', 
-    'OPENAI_MODEL',
-    'FLOWISE_API_KEY',
-    'FLOWISE_BASE_URL',
-    'REPLICATE_API_TOKEN',
-    'REPLICATE_BASE_URL'
-];
-
-envKeys.forEach(key => {
-    const value = process.env[key];
-    debug(redactSensitiveInfo(key, value));
-});
 
 async function main() {
     try {
