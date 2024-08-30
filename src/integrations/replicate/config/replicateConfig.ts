@@ -1,5 +1,5 @@
-const configManager = ConfigurationManager.getInstance();
 import ConfigurationManager from '@config/ConfigurationManager';
+const configManager = ConfigurationManager.getInstance();
 
 class ReplicateConfig {
     public readonly REPLICATE_API_URL: string = configManager.getEnvConfig('REPLICATE_API_URL', 'llm.replicate.apiUrl', 'https://api.replicate.com');
