@@ -58,6 +58,7 @@ async function main() {
         // Guard clause: Ensure bot token is properly configured
         if (!botToken || botToken === 'UNCONFIGURED_DISCORD_TOKEN') {
             console.error('Bot Token is not configured correctly.');
+            debug('Full discordConfig:', discordConfig); // Dump full config for debugging
             process.exit(1);
         }
 

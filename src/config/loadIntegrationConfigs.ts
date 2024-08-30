@@ -1,22 +1,31 @@
-import { readdirSync } from 'fs';
-import { join } from 'path';
+import fs from 'fs';
+import path from 'path';
 import Debug from 'debug';
 
 const debug = Debug('app:loadIntegrationConfigs');
 
 export function loadIntegrationConfigs(): Record<string, any> {
-  const integrationsPath = join(__dirname, '../integrations');
-  const configFiles = readdirSync(integrationsPath);
-  const integrationConfigs: Record<string, any> = {};
+    const integrationsPath = path.resolve(__dirname, '../integrations');
+    const integrationConfigs: Record<string, any> = {};
 
-  configFiles.forEach((file) => {
-    try {
-      const config = require(join(integrationsPath, file, 'config'));
-      integrationConfigs[file] = config.default;
-    } catch (error: any) {
-      debug(`Error loading config for integration ${file}: ${error.message}`);
-    }
-  });
+    // Read all subdirectories in the integrations directory
+    const integrationDirs = fs.readdirSync(integrationsPath);
 
-  return integrationConfigs;
+    integrationDirs.forEach((dirName) => {
+        const configPath = path.join(integrationsPath, dirName, 'config');
+        const jsConfigPath = path.join(configPath, 'index.js');
+        if (fs.existsSync(jsConfigPath)) {
+            try {
+                const config = require(jsConfigPath);
+                integrationConfigs[dirName] = config;
+                debug(`Loaded config for integration: ${dirName}`);
+            } catch (error) {
+                debug(`Error loading config for integration ${dirName}:`, error);
+            }
+        } else {
+            debug(`Config not found for integration: ${dirName}`);
+        }
+    });
+
+    return integrationConfigs;
 }
