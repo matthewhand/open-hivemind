@@ -1,5 +1,7 @@
-require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 require('dotenv/config'); // Loads environment variables from .env
+require('module-alias/register'); // Enables tsconfig @alias paths at runtime
+
+console.log("process.env.DISCORD_TOKEN:", redactSensitiveInfo("DISCORD_TOKEN", process.env.DISCORD_TOKEN)); // Now correctly logs after dotenv has loaded
 
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
 const ConfigurationManager = require('@config/ConfigurationManager').default;
