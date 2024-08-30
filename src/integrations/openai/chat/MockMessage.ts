@@ -1,7 +1,6 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 
-export class MockMessage implements IMessage {
-  data: any;
+export class MockMessage extends IMessage {
   userMentions: string[] = ['TestUser1', 'TestUser2'];
   messageReference: string | null = null;
   content = 'Test message';
@@ -11,7 +10,7 @@ export class MockMessage implements IMessage {
   isReplyToBot = () => false;
 
   constructor(data: any) {
-    this.data = data;
+    super(data, 'user');
   }
 
   getMessageId(): string {
