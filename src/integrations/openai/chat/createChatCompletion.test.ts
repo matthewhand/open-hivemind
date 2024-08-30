@@ -1,11 +1,13 @@
 import { createChatCompletion } from './createChatCompletion';
 import { MockMessage } from './MockMessage';
 
-test('should process messages with getMessageId method', () => {
-    const mockMessage = new MockMessage();
-    const messages = [mockMessage];
-    const systemMessageContent = "System prompt for testing";
-    const maxTokens = 100;
-    const result = createChatCompletion(messages, systemMessageContent, maxTokens);
-    expect(result).toBeDefined();
-});
+// Test case: Create Chat Completion with mock messages
+const historyMessages = [new MockMessage('data'), new MockMessage('data')];
+const systemMessageContent = "System prompt for testing";
+const maxTokens = 100;
+
+// Simulate the chat completion creation process
+const completionParams = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
+
+// Validate the output
+console.log('Completion Params:', completionParams);

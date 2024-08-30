@@ -1,47 +1,60 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 export class MockMessage implements IMessage {
-    getMessageId() {
-        return '12345';
-    }
-    getText() {
-        return 'Test message';
-    }
-    getAuthorName() {
-        return 'TestUser';
-    }
-    isFromBot() {
-        return false;
-    }
-    getChannelId() {
-        return '67890';
-    }
-    getAuthorId() {
-        return '54321';
-    }
-    getChannelTopic() {
-        return 'General Discussion';
-    }
-    getUserMentions() {
-        return ['TestUser1', 'TestUser2'];
-    }
-    getChannelUsers() {
-        return ['User1', 'User2', 'User3'];
-    }
-    mentionsUsers() {
-        return true;
-    }
+  data: any;
+  userMentions: string[] = ['TestUser1', 'TestUser2'];
+  messageReference: string | null = null;
+  content = 'Test message';
+  client = {};
+  channelId = '12345';
+  role = 'user';
+  isReplyToBot = () => false;
 
-    content = 'Test message';
-    client = {};
-    channelId = '67890';
-    data = {};
-    userMentions = ['TestUser1', 'TestUser2'];
-    messageReference = null;
+  constructor(data: any) {
+    this.data = data;
+  }
 
-    role = 'user';
-    isReplyToBot = () => false;
-    reply = async (content: string): Promise<void> => {
-        console.log('Replying with:', content);
-    };
+  getMessageId(): string {
+    return 'test-id';
+  }
+
+  getText(): string {
+    return this.content;
+  }
+
+  getChannelId(): string {
+    return this.channelId;
+  }
+
+  getAuthorId(): string {
+    return 'author-id';
+  }
+
+  getChannelTopic(): string {
+    return 'Test Channel Topic';
+  }
+
+  getUserMentions(): string[] {
+    return this.userMentions;
+  }
+
+  getChannelUsers(): string[] {
+    return ['User1', 'User2'];
+  }
+
+  mentionsUsers(): boolean {
+    return this.userMentions.length > 0;
+  }
+
+  isFromBot(): boolean {
+    return false;
+  }
+
+  getAuthorName(): string {
+    return 'Test Author';
+  }
+
+  reply = async (content: string): Promise<void> => {
+    console.log('Replying with:', content);
+  };
 }
