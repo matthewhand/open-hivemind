@@ -22,11 +22,13 @@ class ConfigurationManager {
     private static instance: ConfigurationManager;
 
     // Holds integration-specific configurations
-    public readonly integrationConfigs: Record<string, any>;
+    private integrationConfigs: Record<string, any> | null = null;
 
     private constructor() {
-        // Load integration configurations upon initialization
-        this.integrationConfigs = loadIntegrationConfigs();
+        // Load integration configurations only if they haven't been loaded yet
+        if (!this.integrationConfigs) {
+            this.integrationConfigs = loadIntegrationConfigs();
+        }
     }
 
     // Singleton pattern to ensure only one instance of ConfigurationManager exists
@@ -39,7 +41,7 @@ class ConfigurationManager {
 
     // Retrieve a specific configuration by name from the loaded integration configurations
     public getConfig(configName: string): any {
-        return this.integrationConfigs[configName];
+        return this.integrationConfigs ? this.integrationConfigs[configName] : null;
     }
 
     /**
@@ -64,7 +66,7 @@ class ConfigurationManager {
         const envValue = process.env[envVar];
         
         // Log the value using redacted information to avoid sensitive data exposure
-        debug(`Fetching configuration for ${envVar}: ${redactSensitiveInfo(envVar, envValue)}, config key: ${configKey}, fallback: ${fallbackValue}`);
+        console.log(`Fetching configuration for ${envVar}: ${redactSensitiveInfo(envVar, envValue)}, config key: ${configKey}, fallback: ${fallbackValue}`);
 
         // If the environment variable is defined, return it
         if (envValue !== undefined) {

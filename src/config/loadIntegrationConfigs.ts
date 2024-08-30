@@ -9,7 +9,7 @@ export function loadIntegrationConfigs(): Record<string, any> {
     const integrationConfigs: Record<string, any> = {};
 
     // Debug: Log contents of the integrations directory
-    debug('Integrations directory contents:', fs.readdirSync(integrationsPath));
+    // debug('Integrations directory contents:', fs.readdirSync(integrationsPath));
 
     // Read all subdirectories in the integrations directory
     const integrationDirs = fs.readdirSync(integrationsPath);

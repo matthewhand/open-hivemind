@@ -13,8 +13,10 @@ class discordConfig {
     public readonly DISCORD_WELCOME_MESSAGE: string = configManager.getEnvConfig('DISCORD_WELCOME_MESSAGE', 'llm.discord.welcomeMessage', 'Welcome to the server!');
 
     constructor() {
+        // Debug: Log the retrieved DISCORD_TOKEN
+        // console.log("Retrieved DISCORD_TOKEN from configManager:", this.DISCORD_TOKEN);
+
         // Validate essential configurations
-        console.log("DISCORD_TOKEN:", this.DISCORD_TOKEN); // Debug statement
         if (!this.DISCORD_TOKEN || !this.DISCORD_CLIENT_ID || !this.DISCORD_CHANNEL_ID) {
             throw new Error('Missing critical Discord configuration. Please check your environment variables or config files.');
         }
