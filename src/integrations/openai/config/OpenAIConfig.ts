@@ -9,7 +9,7 @@ class OpenAIConfig {
     public readonly OPENAI_PRESENCE_PENALTY: number = configManager.getEnvConfig('OPENAI_PRESENCE_PENALTY', 'llm.openai.presencePenalty', 0.05);
     public readonly OPENAI_BASE_URL: string = configManager.getEnvConfig('OPENAI_BASE_URL', 'llm.openai.apiUrl', 'https://api.openai.com');
     public readonly OPENAI_TIMEOUT: number = configManager.getEnvConfig('OPENAI_TIMEOUT', 'llm.openai.timeout', 10000);
-    public readonly OPENAI_ORGANIZATION: string | undefined = configManager.getEnvConfig('OPENAI_ORGANIZATION', 'llm.openai.organization');
+    public readonly OPENAI_ORGANIZATION: string | undefined = configManager.getEnvConfig('OPENAI_ORGANIZATION', 'llm.openai.organization', undefined);
     public readonly OPENAI_MODEL: string = configManager.getEnvConfig('OPENAI_MODEL', 'llm.openai.model', 'gpt4');
     public readonly OPENAI_VOICE: string = configManager.getEnvConfig('OPENAI_VOICE', 'llm.openai.voice', 'nova');
     public readonly OPENAI_STOP: string[] = configManager.getEnvConfig('OPENAI_STOP', 'llm.openai.stop', []);
