@@ -1,8 +1,8 @@
-import { getConfigOrWarn } from '@config/getConfigOrWarn';
+import { configManager.getEnvConfig } from '@config/configManager.getEnvConfig';
 
 class FlowiseConfig {
-    public readonly FLOWISE_API_URL: string = getConfigOrWarn('FLOWISE_API_URL', 'https://api.flowise.com');
-    public readonly FLOWISE_API_KEY: string = getConfigOrWarn('FLOWISE_API_KEY', 'your-flowise-api-key');
+    public readonly FLOWISE_API_URL: string = configManager.getEnvConfig('FLOWISE_API_URL', 'https://api.flowise.com');
+    public readonly FLOWISE_API_KEY: string = configManager.getEnvConfig('FLOWISE_API_KEY', 'your-flowise-api-key');
 
     constructor() {
         // Validate essential configurations
