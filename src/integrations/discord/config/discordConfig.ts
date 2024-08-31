@@ -3,6 +3,8 @@ const configManager = ConfigurationManager.getInstance();
 
 class discordConfig {
     public readonly DISCORD_TOKEN: string = configManager.getEnvConfig('DISCORD_TOKEN', 'llm.discord.token', '');
+    // console.log("[DEBUG] Before calling getEnvConfig for DISCORD_TOKEN");
+    //  console.log("[DEBUG] After calling getEnvConfig for DISCORD_TOKEN:", this.DISCORD_TOKEN);
     public readonly DISCORD_CLIENT_ID: string = configManager.getEnvConfig('DISCORD_CLIENT_ID', 'llm.discord.clientId', '');
     public readonly DISCORD_CHANNEL_ID: string = configManager.getEnvConfig('DISCORD_CHANNEL_ID', 'llm.discord.channelId', 'default_channel_id');
     public readonly DISCORD_BOT_USER_ID: string = configManager.getEnvConfig('DISCORD_BOT_USER_ID', 'llm.discord.botUserId', 'default_bot_user_id');

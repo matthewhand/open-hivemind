@@ -20,6 +20,7 @@ const debug = Debug('app:ConfigurationManager');
  */
 class ConfigurationManager {
     private static instance: ConfigurationManager;
+    private initialized: boolean = false;
 
     // Holds integration-specific configurations
     private integrationConfigs: Record<string, any> | null = null;
@@ -29,6 +30,7 @@ class ConfigurationManager {
         if (!this.integrationConfigs) {
             this.integrationConfigs = loadIntegrationConfigs();
         }
+        this.initialized = true; // Mark as initialized
     }
 
     // Singleton pattern to ensure only one instance of ConfigurationManager exists
@@ -54,6 +56,12 @@ class ConfigurationManager {
      * @returns The resolved configuration value.
      */
     public getEnvConfig<T>(envVar: string, configKey: string, fallbackValue: T): T {
+        console.log("[DEBUG] getEnvConfig function invoked with envVar:", envVar, "configKey:", configKey);
+
+        if (!this.initialized) {
+            throw new Error('ConfigurationManager not fully initialized');
+        }
+
         // Guard: Ensure envVar and configKey are provided
         if (!envVar) {
             throw new Error('Environment variable name (envVar) must be provided');
@@ -77,6 +85,7 @@ class ConfigurationManager {
             // Attempt to fetch the value from the config file
             const configValue = config.get(configKey);
             if (configValue !== undefined) {
+                debug(`... ${configValue}`);
                 return configValue as T;
             }
 
