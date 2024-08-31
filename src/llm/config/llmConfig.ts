@@ -1,6 +1,6 @@
 import config from 'config';
 
-class LlmConfig {
+class llmConfig {
     public readonly LLM_PROVIDER: string;
     public readonly LLM_MODEL: string;
     public readonly LLM_TEMPERATURE: number;
@@ -22,4 +22,4 @@ class LlmConfig {
     }
 }
 
-export default LlmConfig;
+export default llmConfig;

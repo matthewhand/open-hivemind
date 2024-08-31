@@ -2,6 +2,8 @@ import config from 'config';
 import Debug from 'debug';
 import { loadIntegrationConfigs } from './loadIntegrationConfigs';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import messageConfig from '@src/message/config/messageConfig';
+import llmConfig from '@src/llm/config/llmConfig';
 
 const debug = Debug('app:ConfigurationManager');
 
@@ -29,6 +31,9 @@ class ConfigurationManager {
         // Load integration configurations only if they haven't been loaded yet
         if (!this.integrationConfigs) {
             this.integrationConfigs = loadIntegrationConfigs();
+            // Add messageConfig and llmConfig to the integrationConfigs
+            this.integrationConfigs['message'] = new messageConfig();
+            this.integrationConfigs['llm'] = new llmConfig();
         }
         this.initialized = true; // Mark as initialized
     }
