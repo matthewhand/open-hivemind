@@ -12,6 +12,9 @@ const configManager = ConfigurationManager.getInstance();
 const openaiConfig = configManager.getConfig('openai') as any;
 const llmConfig = configManager.getConfig('llm');
 
+// Log the structure of openaiConfig for debugging purposes
+debug('openaiConfig structure:', openaiConfig);
+
 if (typeof openaiConfig?.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
 }
@@ -141,7 +144,7 @@ export class OpenAiService {
 
         try {
             if (!this.parallelExecution) {
-                this.setBusy(true);
+                this setBusy(true);
             }
 
             debug('generateChatResponse: Sending request to OpenAI API');
@@ -162,7 +165,7 @@ export class OpenAiService {
             return null;
         } finally {
             if (!this.parallelExecution) {
-                this.setBusy(false);
+                this setBusy(false);
                 debug('generateChatResponse: Service busy status reset');
             }
         }
