@@ -27,6 +27,7 @@ export async function sendCompletions(prompt: string): Promise<any> {
     }
 
     try {
+        // @ts-ignore: Suppressing deep instantiation issue
         const response = await openai.completions.create({
             model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
             prompt,
@@ -38,12 +39,10 @@ export async function sendCompletions(prompt: string): Promise<any> {
             top_p: openaiConfig.get('OPENAI_TOP_P'),
         });
 
-        // Handle the response correctly, ensuring the 'data' property is accessible
-        // @ts-expect-error: Suppressing deep instantiation issue for now
-        if (!response?.data) {
-            throw new Error('Response data is missing or undefined.');
+        if (!response?.choices) {
+            throw new Error('Response choices are missing or undefined.');
         }
-        return response.data;
+        return response.choices;
     } catch (error: any) {
         throw new Error(`Failed to send completion request: ${error.message}`);
     }
