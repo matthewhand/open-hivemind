@@ -9,11 +9,12 @@ if (!llmConfig) {
     throw new Error('LLM configuration not found. Please ensure the LLM config is loaded.');
 }
 
+// Corrected export to use CreateChatCompletionRequestMessage
 export function createChatCompletion(
     historyMessages: IMessage[],
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
-): OpenAI.Chat.CreateChatCompletionRequest {
+): OpenAI.Chat.CreateChatCompletionRequestMessage {
     return {
         model: llmConfig?.get('LLM_MODEL') || 'gpt-4o-mini',
         messages: [
