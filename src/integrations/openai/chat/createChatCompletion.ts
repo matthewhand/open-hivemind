@@ -20,13 +20,15 @@ if (!llmConfig) {
 export function createChatCompletion(
     historyMessages: IMessage[],
     systemMessageContent: string = '',
-    maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
+    maxTokens: number = 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
     // Simplifying retrieval by using a temporary variable
     const systemMessageContentConfig = llmConfig?.get('LLM_SYSTEM_PROMPT') || '';
+    const maxTokensConfig = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150;
 
     // Applying the temporary variable
     systemMessageContent = systemMessageContentConfig;
+    maxTokens = maxTokensConfig;
 
     const systemMessage = { role: 'system', content: systemMessageContent };
     const mappedHistoryMessages = historyMessages.map(msg => ({ role: msg.role, content: msg.content }));
