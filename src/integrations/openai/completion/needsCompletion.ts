@@ -1,4 +1,7 @@
 import Debug from "debug";
+
+const debug = Debug('app:needsCompletion');
+
 /**
  * Determines whether a response needs further completion based on certain conditions.
  * @param maxTokensReached - Boolean indicating if the max token limit was reached in the response.
@@ -12,5 +15,9 @@ export function needsCompletion(
     content: string
 ): boolean {
     const endsInPunctuation = /[.!?]$/.test(content.trim());
-    return maxTokensReached && finishReason !== 'stop' && !endsInPunctuation;
+
+    const needsMore = maxTokensReached && finishReason !== 'stop' && !endsInPunctuation;
+    debug('Needs Completion Check:', { maxTokensReached, finishReason, content, needsMore });
+
+    return needsMore;
 }
