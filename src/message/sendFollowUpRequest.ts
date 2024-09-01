@@ -18,8 +18,16 @@ const configManager = ConfigurationManager.getInstance();
  * @returns {Promise<any>} - The response data from the OpenAI API, or null if an error occurred.
  */
 export async function sendFollowUpRequest(message: string): Promise<any> {
-    const API_KEY = configManager.getConfig("openai").OPENAI_API_KEY;
-    const OPENAI_MODEL = configManager.getConfig("openai").OPENAI_MODEL;
+    const openaiConfig = configManager.getConfig("openai");
+
+    // Guard: Ensure openaiConfig is loaded
+    if (!openaiConfig) {
+        console.error('OpenAI configuration is not loaded.');
+        return null;
+    }
+
+    const API_KEY = openaiConfig.get('OPENAI_API_KEY') as string;
+    const OPENAI_MODEL = openaiConfig.get('OPENAI_MODEL') as string;
 
     debug('Sending follow-up request with the following configuration:');
     debug('OPENAI_MODEL:', OPENAI_MODEL);

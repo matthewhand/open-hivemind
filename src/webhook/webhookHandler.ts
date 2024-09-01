@@ -12,11 +12,16 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 // Create an instance of ConfigurationManager
 const configManager = ConfigurationManager.getInstance();
-const discordConfig = configManager.getConfig('discordConfig');
+const discordConfig = configManager.getConfig('discord');
+
+// Guard: Ensure discordConfig is loaded
+if (!discordConfig) {
+  throw new Error('Discord configuration is not loaded.');
+}
 
 // Retrieve required configurations from ConfigurationManager
-const DISCORD_TOKEN = discordConfig.DISCORD_TOKEN;
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.DISCORD_CHAT_CHANNEL_ID;
+const DISCORD_TOKEN = discordConfig.get('DISCORD_TOKEN') as string;
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.get('DISCORD_CHAT_CHANNEL_ID') as string;
 
 // Guard: Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
