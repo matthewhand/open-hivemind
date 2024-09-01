@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, VoiceBasedChannel, Channel } from 'discord.js';
+import { Client, GatewayIntentBits, VoiceBasedChannel, ChannelType, VoiceChannel } from 'discord.js';
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
 
@@ -15,18 +15,12 @@ const configManager = ConfigurationManager.getInstance();
  * @param channelId - The ID of the channel to set up.
  * @returns The configured voice channel object.
  */
-export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceBasedChannel | null> {
+export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceChannel | null> {
     try {
-        const channel = await client.channels.fetch(channelId) as VoiceBasedChannel | null;
+        const channel = await client.channels.fetch(channelId) as VoiceChannel | null;
 
-        if (!channel) {
-            debug('Channel not found');
-            return null;
-        }
-
-        // Check if the channel is a voice channel
-        if (!channel.isVoiceBased()) {
-            debug('Channel is not a voice-based channel');
+        if (!channel || channel.type !== ChannelType.GuildVoice) {
+            debug('Channel not found or is not a voice channel');
             return null;
         }
 
