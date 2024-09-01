@@ -1,13 +1,20 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-const configManager = ConfigurationManager.getInstance();
+import convict from 'convict';
 
-class N8NConfig {
-    public readonly N8N_API_URL: string = configManager.getEnvConfig('N8N_API_URL', 'llm.n8n.apiUrl', 'https://api.n8n.com');
-    public readonly N8N_API_KEY: string = configManager.getEnvConfig('N8N_API_KEY', 'llm.n8n.apiKey', 'your-n8n-api-key');
-
-    constructor() {
-        console.log('N8NConfig initialized');
+const n8nConfig = convict({
+    N8N_API_URL: {
+        doc: 'N8N API URL',
+        format: String,
+        default: 'http://localhost:5678/',
+        env: 'N8N_API_URL'
+    },
+    N8N_API_KEY: {
+        doc: 'N8N API Key',
+        format: String,
+        default: '',
+        env: 'N8N_API_KEY'
     }
-}
+});
 
-export default N8NConfig;
+n8nConfig.validate({ allowed: 'strict' });
+
+export default n8nConfig;
