@@ -98,7 +98,7 @@ export class OpenAiService {
         try {
             const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
             // @ts-ignore
-            const response = await this.openai.chat.completions.create(requestBody) as OpenAI.Chat.ChatCompletion;
+            const response = await this.openai.chat.completions.create(requestBody) as unknown as OpenAI.Chat.ChatCompletion;
             return response;
         } catch (error: any) {
             debug('createChatCompletion: Error occurred:', error);
