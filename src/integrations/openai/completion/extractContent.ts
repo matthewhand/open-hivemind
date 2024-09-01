@@ -1,4 +1,4 @@
-import { CreateChatCompletionResponseChoicesInner } from 'openai';
+import CreateChatCompletionResponseChoicesInner from 'openai';
 
 /**
  * Extracts the content from the response choice provided by OpenAI.
