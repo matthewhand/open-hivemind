@@ -4,10 +4,12 @@ import ConfigurationManager from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
+import { createChatCompletion } from './createChatCompletion';
 
 const debug = Debug('app:sendChatCompletion');
 const configManager = ConfigurationManager.getInstance();
 const llmConfig = configManager.getConfig('llm');
+const openaiConfig = configManager.getConfig('openai');
 
 /**
  * Handles the process of sending a chat completion request to the OpenAI API.
