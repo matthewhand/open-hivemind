@@ -21,7 +21,7 @@ export function createChatCompletion(
     historyMessages: IMessage[],
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
-): OpenAI.Chat.ChatCompletionRequestMessage {
+): OpenAI.Chat.CreateChatCompletionRequestMessage {
     return {
         messages: [
             { role: 'system', content: systemMessageContent },
