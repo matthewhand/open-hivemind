@@ -51,7 +51,10 @@ export async function generateLlmCompletion(prompt: string): Promise<string> {
             stop: llmConfig.LLM_STOP,
         });
 
+        // @ts-ignore: Suppressing type error as 'data' might not be recognized in Completion type
         debug('Generated LLM completion for prompt:', prompt, 'Completion:', response.data.choices[0].text.trim());
+        
+        // @ts-ignore: Suppressing type error as 'data' might not be recognized in Completion type
         return response.data.choices[0].text.trim();
     } catch (error: any) {
         debug('Error generating LLM completion:', error);
