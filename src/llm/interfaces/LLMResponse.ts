@@ -1,4 +1,3 @@
-import Debug from 'debug';
 /**
  * Class representing an LLM (Large Language Model) response.
  */
@@ -18,10 +17,6 @@ class LLMResponse {
      * @returns {string} The response content.
      */
     getContent(): string {
-        if (typeof this.content !== 'string') {
-            console.error('Expected the content to be a string, but received:', typeof this.content);
-            return 'Error: Response content is not in string format';
-        }
         return this.content;
     }
 
