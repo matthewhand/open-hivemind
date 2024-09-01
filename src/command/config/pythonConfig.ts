@@ -1,10 +1,14 @@
-import config from 'config';
+import convict from 'convict';
 
-export default class PythonConfig {
-    public readonly PYTHON_EXEC_PATH: string;
-
-    constructor() {
-        this.PYTHON_EXEC_PATH = process.env.PYTHON_EXEC_PATH || (config.has('python.PYTHON_EXEC_PATH') ? config.get<string>('python.PYTHON_EXEC_PATH') : '/usr/bin/python3');
-        console.log('PythonConfig initialized');
+const pythonConfig = convict({
+    PYTHON_EXEC_PATH: {
+        doc: 'Path to the Python executable',
+        format: String,
+        default: '/usr/bin/python3',
+        env: 'PYTHON_EXEC_PATH'
     }
-}
+});
+
+pythonConfig.validate({ allowed: 'strict' });
+
+export default pythonConfig;
