@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
+import { generateChatResponse } from './chat/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
 import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
@@ -126,49 +127,13 @@ export class OpenAiService {
      * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
      */
     public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
-        if (!this.openai.apiKey) {
-            debug('generateChatResponse: API key is missing');
-            return null;
-        }
-
-        debug('generateChatResponse: Building request body');
-        const requestBody = await createChatCompletion([
-            ...historyMessages,
-            { role: 'user', content: message } as IMessage,
-        ]);
-
-        if (!this.parallelExecution && this isBusy()) {
-            debug('generateChatResponse: Service is busy');
-            return null;
-        }
-
-        try {
-            if (!this.parallelExecution) {
-                this setBusy(true);
-            }
-
-            debug('generateChatResponse: Sending request to OpenAI API');
-            const response = await this.createChatCompletion(historyMessages);
-
-            let finishReason = response.choices[0].finish_reason;
-            let content = response.choices[0].message.content;
-
-            for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
-                debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
-                content = await completeSentence(this, content ?? '');
-                finishReason = finishReason === 'stop' ? 'stop' : finishReason;
-            }
-
-            return content;
-        } catch (error: any) {
-            debug('generateChatResponse: Error occurred:', error);
-            return null;
-        } finally {
-            if (!this.parallelExecution) {
-                this setBusy(false);
-                debug('generateChatResponse: Service busy status reset');
-            }
-        }
+        return generateChatResponse(this.openai, message, historyMessages, {
+            parallelExecution: this.parallelExecution,
+            maxRetries: this.maxRetries,
+            finishReasonRetry: this.finishReasonRetry,
+            isBusy: this.isBusy.bind(this),
+            setBusy: this.setBusy.bind(this),
+        });
     }
 
     /**
