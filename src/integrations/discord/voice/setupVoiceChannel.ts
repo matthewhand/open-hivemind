@@ -1,38 +1,41 @@
+import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
 import Debug from 'debug';
-import { VoiceConnection, joinVoiceChannel } from '@discordjs/voice';
-import { Client, GatewayIntentBits } from 'discord.js';
 import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:setupVoiceChannel');
 const configManager = ConfigurationManager.getInstance();
-const discordConfig = configManager.getConfig('discord');
 
 /**
- * Sets up a voice channel connection and returns the connection object.
+ * Setup Voice Channel
+ *
+ * This function handles the setup of a voice channel in Discord.
+ * It ensures that the channel is ready for use and manages any necessary configurations.
  *
  * @param client - The Discord client instance.
- * @param channelId - The ID of the voice channel to connect to.
- * @returns {Promise<VoiceConnection>} The voice connection object.
+ * @param channelId - The ID of the channel to set up.
+ * @returns The configured voice channel object.
  */
-export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceConnection> {
-    if (!discordConfig) {
-        throw new Error('Discord configuration is not loaded.');
-    }
-
-    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
-    const guildId = discordConfig.get<string>('DISCORD_GUILD_ID');
+export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceChannel | null> {
+  try {
     const channel = await client.channels.fetch(channelId);
 
-    if (!channel || !channel.isVoice()) {
-        throw new Error('The specified channel is not a voice channel.');
+    if (!channel || channel.type !== ChannelType.GuildVoice) {
+      debug('Channel not found or is not a voice channel');
+      return null;
     }
 
-    const connection = joinVoiceChannel({
-        channelId: channel.id,
-        guildId,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-    });
+    const guildChannel = channel as GuildChannel;
+    const voiceChannel = channel as VoiceChannel;
 
-    debug('Connected to voice channel:', channelId);
-    return connection;
+    if (!('guild' in guildChannel)) {
+      debug('Voice channel does not belong to a guild');
+      return null;
+    }
+
+    debug('Voice channel setup complete.');
+    return voiceChannel;
+  } catch (error: any) {
+    debug('Error setting up voice channel: ' + error.message);
+    return null;
+  }
 }

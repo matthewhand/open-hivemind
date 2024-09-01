@@ -86,9 +86,8 @@ export class OpenAiService {
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
      * 
-     * @param historyMessages - Array of IMessage objects representing the conversation history.
-     * @param systemMessageContent - System message to provide context for the chat.
-     * @param maxTokens - Maximum tokens for the AI response.
+     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '', maxTokens: number = openaiConfig?.get<number>('OPENAI_RESPONSE_MAX_TOKENS') || 150
+     * 
      * @returns {Promise<OpenAI.Chat.ChatCompletion>} - The API response.
      */
     public async createChatCompletion(
@@ -111,11 +110,10 @@ export class OpenAiService {
      * This method wraps the process of building a request body and sending it to the API,
      * ensuring that the service is not busy before making the request.
      *
-     * @param message - The user message that requires a response.
-     * @param historyMessages - The array of previous conversation messages for context.
+     * @param message: string, historyMessages: IMessage[]
      * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
      */
-    public async generateChatResponse(message: string, historyMessages: any[]): Promise<string | null> {
+    public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
         if (!this.openai.apiKey) {
             debug('generateChatResponse: API key is missing');
             return null;
