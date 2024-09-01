@@ -1,11 +1,14 @@
-import config from 'config';
+import convict from 'convict';
 
-class perplexityConfig {
-    public readonly PERPLEXITY_CHAT_COMPLETION_URL: string;
-
-    constructor() {
-        this.PERPLEXITY_CHAT_COMPLETION_URL = process.env.PERPLEXITY_CHAT_COMPLETION_URL || (config.has('perplexity.PERPLEXITY_CHAT_COMPLETION_URL') ? config.get<string>('perplexity.PERPLEXITY_CHAT_COMPLETION_URL') : 'https://api.perplexity.ai/chat/completions');
+const perplexityConfig = convict({
+    PERPLEXITY_CHAT_COMPLETION_URL: {
+        doc: 'Perplexity Chat Completion API URL',
+        format: String,
+        default: 'https://api.perplexity.ai/chat/completions',
+        env: 'PERPLEXITY_CHAT_COMPLETION_URL'
     }
-}
+});
+
+perplexityConfig.validate({ allowed: 'strict' });
 
 export default perplexityConfig;
