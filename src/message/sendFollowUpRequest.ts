@@ -26,8 +26,9 @@ export async function sendFollowUpRequest(message: string): Promise<any> {
         return null;
     }
 
-    const API_KEY = openaiConfig.get('OPENAI_API_KEY') as string;
-    const OPENAI_MODEL = openaiConfig.get('OPENAI_MODEL') as string;
+    // Simplified type assertions
+    const API_KEY: string = openaiConfig.get<string>('OPENAI_API_KEY');
+    const OPENAI_MODEL: string = openaiConfig.get<string>('OPENAI_MODEL');
 
     debug('Sending follow-up request with the following configuration:');
     debug('OPENAI_MODEL:', OPENAI_MODEL);

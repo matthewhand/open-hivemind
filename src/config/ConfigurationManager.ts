@@ -19,12 +19,12 @@ const schema = convict({
 
 /**
  * ConfigurationManager Class
- *
+ * 
  * This singleton class is responsible for managing the application's configurations.
  * It loads configurations from integration-specific modules and validates them using convict.
  * The configurations are accessed through the getConfig method.
  */
-class ConfigurationManager {
+export default class ConfigurationManager {
     private static instance: ConfigurationManager; // Singleton instance
     private configs: Record<string, convict.Config<any>> | null = null; // Stores integration configurations
 
@@ -39,6 +39,7 @@ class ConfigurationManager {
         // Debug the current environment setting
         const currentEnv = schema.get('NODE_ENV');
         debug(`ConfigurationManager initialized in ${currentEnv} environment`);
+        this.loadConfig();
     }
 
     /**
@@ -107,5 +108,3 @@ class ConfigurationManager {
         return config || null;
     }
 }
-
-export default ConfigurationManager;

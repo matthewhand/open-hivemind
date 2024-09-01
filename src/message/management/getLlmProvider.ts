@@ -16,7 +16,14 @@ const debug = Debug('app:getLlmProvider');
  */
 export function getLlmProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const llmProvider = configManager.getConfig("llm").LLM_PROVIDER;
+  const llmConfig = configManager.getConfig("llm");
+
+  // Guard: Ensure llmConfig is loaded
+  if (!llmConfig) {
+    throw new Error('LLM configuration is not loaded.');
+  }
+
+  const llmProvider = llmConfig.get<string>('LLM_PROVIDER');
 
   debug('Configured LLM provider:', llmProvider);
 

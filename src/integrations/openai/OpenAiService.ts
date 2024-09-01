@@ -38,9 +38,9 @@ export class OpenAiService {
         }
 
         const options: ClientOptions = {
-            apiKey: openaiConfig.get<string>('OPENAI_API_KEY') as string,
+            apiKey: openaiConfig.get<string>('OPENAI_API_KEY')!,
             organization: openaiConfig.get<string>('OPENAI_ORGANIZATION') || undefined,
-            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') as string || 'https://api.openai.com',
+            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
             timeout: openaiConfig.get<number>('OPENAI_TIMEOUT') || 30000,
         };
 

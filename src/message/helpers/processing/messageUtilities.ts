@@ -10,9 +10,16 @@ const llmConfig = configManager.getConfig("llm");
  * @returns Whether the message should be processed or not.
  */
 export function shouldProcessMessage(messageLength: number): boolean {
-    const minIntervalMs = messageConfig.MESSAGE_MIN_INTERVAL_MS;
-    const followUpEnabled = messageConfig.MESSAGE_FOLLOW_UP_ENABLED;
-    const limitPerHour = llmConfig.LLM_MESSAGE_LIMIT_PER_HOUR;
+    if (!messageConfig || !llmConfig) {
+        throw new Error('Message or LLM configuration is not loaded.');
+    }
+
+    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+    const minIntervalMs = messageConfig.get<number>('MESSAGE_MIN_INTERVAL_MS');
+    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+    const followUpEnabled = messageConfig.get<boolean>('MESSAGE_FOLLOW_UP_ENABLED');
+    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+    const limitPerHour = llmConfig.get<number>('LLM_MESSAGE_LIMIT_PER_HOUR');
 
     // Example logic: Only process messages if follow-up is enabled and the length exceeds a certain threshold.
     if (followUpEnabled && messageLength > minIntervalMs) {
@@ -28,7 +35,11 @@ export function shouldProcessMessage(messageLength: number): boolean {
  * @returns True if the message count is within the limit, false otherwise.
  */
 export function isWithinMessageLimit(messageCount: number): boolean {
-    return messageCount < llmConfig.LLM_MESSAGE_LIMIT_PER_HOUR;
+    if (!llmConfig) {
+        throw new Error('LLM configuration is not loaded.');
+    }
+    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+    return messageCount < llmConfig.get<number>('LLM_MESSAGE_LIMIT_PER_HOUR');
 }
 
 /**
