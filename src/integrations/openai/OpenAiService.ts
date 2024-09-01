@@ -44,7 +44,7 @@ export class OpenAiService {
             timeout: openaiConfig?.get<number>('OPENAI_TIMEOUT') || 30000,
         };
 
-        // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+        // @ts-expect-error: Type instantiation is excessively deep and possibly infinite
         this.openai = new OpenAI(options);
         this.parallelExecution = llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION') || false;
         this.finishReasonRetry = openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
@@ -122,7 +122,7 @@ export class OpenAiService {
         debug('generateChatResponse: Building request body');
         const requestBody = await createChatCompletion([
             ...historyMessages,
-            { role: 'user', content: message },
+            { role: 'user', content: message } as IMessage,
         ]);
 
         if (!this.parallelExecution && this.isBusy()) {
