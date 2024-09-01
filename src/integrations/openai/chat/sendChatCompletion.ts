@@ -53,7 +53,7 @@ export async function sendChatCompletion(
     debug('Finish reason:', finishReason);
 
     if (finishReason === 'length') {
-      const maxRetries = configManager.getConfig('openai')?.get<number>('OPENAI_MAX_RETRIES') || 3;
+      const maxRetries = parseInt(configManager.getConfig('openai')?.get<string>('OPENAI_MAX_RETRIES')) || 3;
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
         const newContent = await completeSentence(openAiService, content);
