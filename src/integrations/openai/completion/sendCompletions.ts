@@ -1,6 +1,5 @@
 import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI } from 'openai';
-import axios from 'axios';
 
 const configManager = ConfigurationManager.getInstance();
 
@@ -20,6 +19,10 @@ interface OpenAiConfig {
 }
 
 const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
+
+if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
+    throw new Error('OpenAI configuration is missing or incomplete.');
+}
 
 const openai = new OpenAI({
     apiKey: openaiConfig.OPENAI_API_KEY!,
