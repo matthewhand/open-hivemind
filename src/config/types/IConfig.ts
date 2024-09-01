@@ -1,9 +1,14 @@
+/**
+ * Interface representing the configuration structure.
+ *
+ * This interface is designed to provide type safety for accessing configuration values.
+ */
 export interface IConfig {
-    // Define common properties here
-    API_URL?: string;
-    API_KEY?: string;
-    EXEC_PATH?: string;
-
-    // Define common methods if needed
-    initialize?(): void;
+    /**
+     * Retrieves a configuration value by its key.
+     *
+     * @param key - The key of the configuration value to retrieve.
+     * @returns The configuration value associated with the specified key, or undefined if not found.
+     */
+    get<T>(key: string): T | undefined;
 }
