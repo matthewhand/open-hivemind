@@ -41,7 +41,7 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
             return null;
         }
 
-        const defaultCommand = llmConfig.LLM_PROVIDER;
+        const defaultCommand = llmConfig.LLM_PROVIDER as string;
         const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
         if (defaultCommand && argsWithoutMention) {
             debug('Fallback to default command: ' + defaultCommand + ' with args: ' + argsWithoutMention);
