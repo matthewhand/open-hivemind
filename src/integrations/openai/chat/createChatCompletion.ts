@@ -23,6 +23,8 @@ export function createChatCompletion(
     maxTokens: number = 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
     // Simplifying retrieval by using a temporary variable
+    // @ts-ignore: Suppressing deep type instantiation issue
+
     const systemMessageContentConfig = llmConfig?.get('LLM_SYSTEM_PROMPT') || '';
     const maxTokensConfig = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150;
 
