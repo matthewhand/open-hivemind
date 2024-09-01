@@ -32,16 +32,16 @@ export class OpenAiService {
     // Private constructor to enforce singleton pattern
     private constructor() {
         const options: ClientOptions = {
-            apiKey: configManager.getConfig("openaiConfig").OPENAI_API_KEY,
-            organization: configManager.getConfig("openaiConfig").OPENAI_ORGANIZATION || undefined,
-            baseURL: configManager.getConfig("openaiConfig").OPENAI_BASE_URL,
-            timeout: configManager.getConfig("openaiConfig").OPENAI_TIMEOUT,
+            apiKey: configManager.getConfig("openai").OPENAI_API_KEY,
+            organization: configManager.getConfig("openai").OPENAI_ORGANIZATION || undefined,
+            baseURL: configManager.getConfig("openai").OPENAI_BASE_URL,
+            timeout: configManager.getConfig("openai").OPENAI_TIMEOUT,
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = configManager.getConfig("openaiConfig").LLM_PARALLEL_EXECUTION;
-        this.finishReasonRetry = configManager.getConfig("openaiConfig").OPENAI_FINISH_REASON_RETRY;
-        this.maxRetries = configManager.getConfig("openaiConfig").OPENAI_MAX_RETRIES;
+        this.parallelExecution = configManager.getConfig("openai").LLM_PARALLEL_EXECUTION;
+        this.finishReasonRetry = configManager.getConfig("openai").OPENAI_FINISH_REASON_RETRY;
+        this.maxRetries = configManager.getConfig("openai").OPENAI_MAX_RETRIES;
     }
 
     public static getInstance(): OpenAiService {
@@ -69,8 +69,8 @@ export class OpenAiService {
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = configManager.getConfig("openaiConfig").OPENAI_SYSTEM_PROMPT,
-        maxTokens: number = configManager.getConfig("openaiConfig").OPENAI_RESPONSE_MAX_TOKENS
+        systemMessageContent: string = configManager.getConfig("openai").OPENAI_SYSTEM_PROMPT,
+        maxTokens: number = configManager.getConfig("openai").OPENAI_RESPONSE_MAX_TOKENS
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             // Create the request body using the helper function
