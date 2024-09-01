@@ -16,14 +16,14 @@ const debug = Debug('app:getMessageProvider');
  */
 export function getMessageProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const messageConfig = configManager.getConfig("message");
+  const messageConfig = configManager.getConfig('message');
 
   // Guard: Ensure messageConfig is loaded
   if (!messageConfig) {
     throw new Error('Message configuration is not loaded.');
   }
 
-  const messageProvider = messageConfig.get('MESSAGE_PROVIDER') as string;
+  const messageProvider = messageConfig.get<string>('MESSAGE_PROVIDER') as string;
 
   debug('Configured message provider:', messageProvider);
 

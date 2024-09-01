@@ -38,16 +38,16 @@ export class OpenAiService {
         }
 
         const options: ClientOptions = {
-            apiKey: openaiConfig.get('OPENAI_API_KEY'),
-            organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
-            baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: openaiConfig.get('OPENAI_TIMEOUT') || 30000,
+            apiKey: openaiConfig.get<string>('OPENAI_API_KEY') as string,
+            organization: openaiConfig.get<string>('OPENAI_ORGANIZATION') || undefined,
+            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') as string || 'https://api.openai.com',
+            timeout: openaiConfig.get<number>('OPENAI_TIMEOUT') || 30000,
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = openaiConfig.get('LLM_PARALLEL_EXECUTION') || false;
-        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
-        this.maxRetries = openaiConfig.get('OPENAI_MAX_RETRIES') || 3;
+        this.parallelExecution = openaiConfig.get<boolean>('LLM_PARALLEL_EXECUTION') || false;
+        this.finishReasonRetry = openaiConfig.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = openaiConfig.get<number>('OPENAI_MAX_RETRIES') || 3;
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -92,14 +92,11 @@ export class OpenAiService {
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = configManager.getConfig("openai")?.get('OPENAI_SYSTEM_PROMPT') || '',
-        maxTokens: number = configManager.getConfig("openai")?.get('OPENAI_RESPONSE_MAX_TOKENS') || 150
+        systemMessageContent: string = configManager.getConfig("openai")?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
+        maxTokens: number = configManager.getConfig("openai")?.get<number>('OPENAI_RESPONSE_MAX_TOKENS') || 150
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
-            // Create the request body using the helper function
             const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
-
-            // Send the request to OpenAI
             const response = await this.openai.chat.completions.create(requestBody) as OpenAI.Chat.ChatCompletion;
             return response;
         } catch (error: any) {
@@ -145,7 +142,6 @@ export class OpenAiService {
             let finishReason = response.choices[0].finish_reason;
             let content = response.choices[0].message.content;
 
-            // Retry logic based on finish reason
             for (let attempt = 1; attempt <= this.maxRetries && finishReason === this.finishReasonRetry; attempt++) {
                 debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
                 content = await completeSentence(this, content ?? '');

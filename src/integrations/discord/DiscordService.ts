@@ -2,22 +2,22 @@ import { Client, GatewayIntentBits, Message, TextChannel, PermissionsBitField } 
 import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage'; // Import your DiscordMessage implementation
-import ConfigurationManager from '@config/ConfigurationManager';  // Properly import ConfigurationManager
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const log = Debug('app:discord-service');
 
 /**
  * DiscordService Class
- *
- * Manages Discord interactions, including message handling, voice channel connections,
- * and AI response processing. This service is implemented as a singleton to ensure
- * consistent and centralized management of the Discord client.
- *
+ * 
+ * This service handles interactions with the Discord API, managing message handling,
+ * user authentication, and other Discord-related operations. It follows the singleton
+ * pattern to ensure that only one instance of the service is used throughout the application.
+ * 
  * Key Features:
- * - Singleton pattern for centralized client management
- * - Handles message interactions and responses
- * - Supports sending messages to channels and managing voice states
+ * - Singleton pattern for centralized management
+ * - Handles user authentication and message interactions
+ * - Manages Discord client initialization and event handling
  */
 export class DiscordService {
   private client: Client;
@@ -25,20 +25,18 @@ export class DiscordService {
   private messageHandler: ((message: IMessage) => void) | null = null;
   private configManager: ConfigurationManager;
 
-  /**
-   * Private constructor to enforce singleton pattern.
-   * Initializes the Discord client with the necessary intents and ConfigurationManager.
-   */
+  // Private constructor to enforce singleton pattern
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = initializeClient();
-    this.configManager = ConfigurationManager.getInstance();  // Instantiate ConfigurationManager
+    this.configManager = ConfigurationManager.getInstance();
     log('Client initialized successfully');
   }
 
   /**
-   * Returns the singleton instance of DiscordService, creating it if necessary.
-   * @returns The singleton instance of DiscordService.
+   * Retrieves the singleton instance of DiscordService.
+   * 
+   * @returns {DiscordService} The singleton instance of DiscordService.
    */
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
@@ -49,39 +47,46 @@ export class DiscordService {
   }
 
   /**
-   * Sets a custom message handler for processing incoming messages.
-   * @param handler - The function to handle incoming messages.
+   * Sets a custom message handler for incoming messages.
+   * 
+   * @param handler - The message handler to set.
    */
   public setMessageHandler(handler: (message: IMessage) => void): void {
     this.messageHandler = handler;
   }
 
   /**
-   * Initializes the Discord service by logging in and setting up event handlers.
+   * Initializes the Discord client and logs in with the provided token.
+   * 
+   * @param token - The token to use for logging in. If not provided, the token will be retrieved from the configuration.
    */
   public async initialize(token?: string): Promise<void> {
     try {
-      // Use ConfigurationManager to retrieve the Discord token if not provided directly
-      token = token || this.configManager.getConfig("discord").DISCORD_TOKEN;
+      const discordConfig = this.configManager.getConfig("discord");
+
+      if (!discordConfig) {
+        throw new Error('Discord configuration is not loaded.');
+      }
+
+      token = token || discordConfig.get<string>('DISCORD_TOKEN') as string;
+
       if (!token) {
         throw new Error('DISCORD_TOKEN is not set');
       }
+
       await this.client.login(token);
       this.client.once('ready', async () => {
         log(`Logged in as ${this.client.user?.tag}!`);
-        await this.debugPermissions();  // Added permission debugging after bot is ready
+        await this.debugPermissions();
       });
 
-      // Set up the message event handler if provided
       if (this.messageHandler) {
         log('Setting up custom message handler');
         this.client.on('messageCreate', (message: Message<boolean>) => {
           log(`Received a message with ID: ${message.id}`);
 
-          // Convert the Discord.js message to your IMessage implementation
           const iMessage: IMessage = new DiscordMessage(message);
 
-          // Call the handler with the converted IMessage
           this.messageHandler!(iMessage);
         });
       } else {
@@ -94,17 +99,19 @@ export class DiscordService {
   }
 
   /**
-   * Starts the Discord service, initializing the client.
+   * Starts the Discord service by initializing and logging in the client.
+   * 
+   * @param token - The token to use for logging in.
    */
   public async start(token: string): Promise<void> {
     await this.initialize(token);
   }
 
   /**
-   * Sends a message to a specified channel.
-   * @param {string} channelId - The ID of the channel to send the message to.
-   * @param {string} message - The message content to send.
-   * @returns {Promise<void>} A promise that resolves when the message is sent.
+   * Sends a message to a specified Discord channel.
+   * 
+   * @param channelId - The ID of the channel to send the message to.
+   * @param message - The message content to send.
    */
   public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
     try {
@@ -122,8 +129,7 @@ export class DiscordService {
   }
 
   /**
-   * Debugs the bot's permissions in each guild it is a part of.
-   * Logs warnings for any missing permissions.
+   * Debugs and logs the bot's permissions in each guild it is part of.
    */
   private async debugPermissions(): Promise<void> {
     this.client.guilds.cache.forEach(guild => {
@@ -134,22 +140,18 @@ export class DiscordService {
       }
 
       const permissions = botMember.permissions;
-
-      // List of permissions the bot should have (adjust as needed)
       const requiredPermissions = [
         PermissionsBitField.Flags.SendMessages,
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.ReadMessageHistory,
       ];
 
-      // Check for each required permission
       requiredPermissions.forEach(permission => {
         if (!permissions.has(permission)) {
           log(`Bot lacks permission ${permission.toString()} in guild: ${guild.name}`);
         }
       });
 
-      // Log a summary of permissions for each guild
       log(`Permissions in guild "${guild.name}":`, permissions.toArray().map(perm => perm.toString()));
     });
   }

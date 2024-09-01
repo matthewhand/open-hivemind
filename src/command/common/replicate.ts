@@ -11,10 +11,11 @@ export async function replicateRequest(input: string): Promise<any> {
         throw new Error('Replicate configuration is not loaded.');
     }
 
-    const baseUrl = replicateConfig.get<string>('REPLICATE_BASE_URL');
-    const apiToken = replicateConfig.get<string>('REPLICATE_API_TOKEN');
-    const modelVersion = replicateConfig.get<string>('REPLICATE_MODEL_VERSION');
-    const webhookUrl = configManager.getConfig("webhook")?.get<string>('WEBHOOK_URL');
+    // Use simpler type assertions
+    const baseUrl = replicateConfig.get<string>('REPLICATE_BASE_URL') as string;
+    const apiToken = replicateConfig.get<string>('REPLICATE_API_TOKEN') as string;
+    const modelVersion = replicateConfig.get<string>('REPLICATE_MODEL_VERSION') as string;
+    const webhookUrl = configManager.getConfig("webhook")?.get<string>('WEBHOOK_URL') as string;
 
     if (!baseUrl || !apiToken || !modelVersion) {
         debug('Missing required configurations for Replicate API');
