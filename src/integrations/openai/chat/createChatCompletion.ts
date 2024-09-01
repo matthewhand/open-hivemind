@@ -19,15 +19,19 @@ if (!llmConfig) {
  */
 export function createChatCompletion(
     historyMessages: IMessage[],
-    systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
+    systemMessageContent: string = '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
-    // Split up the variable preparation into more steps
+    // Simplifying retrieval by using a temporary variable
+    const systemMessageContentConfig = llmConfig?.get('LLM_SYSTEM_PROMPT') || '';
+
+    // Applying the temporary variable
+    systemMessageContent = systemMessageContentConfig;
 
     const systemMessage = { role: 'system', content: systemMessageContent };
     const mappedHistoryMessages = historyMessages.map(msg => ({ role: msg.role, content: msg.content }));
     const messages = [systemMessage, ...mappedHistoryMessages];
-    
+
     const max_tokens = maxTokens;
 
     // @ts-ignore: Suppressing deep type instantiation issues for temperature
