@@ -45,8 +45,10 @@ export class OpenAiService {
         };
 
         this.openai = new OpenAI(options);
+        // @ts-ignore: Suppressing deep type instantiation issues
         this.parallelExecution = Boolean(llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION')) || false;
-        this.finishReasonRetry = parseInt(openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY')) || 'stop';
+        // Ensuring finishReasonRetry is a string
+        this.finishReasonRetry = openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
         this.maxRetries = parseInt(openaiConfig?.get<string>('OPENAI_MAX_RETRIES')) || 3;
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
