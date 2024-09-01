@@ -23,7 +23,6 @@ export function createChatCompletion(
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
     return {
-        model: llmConfig?.get('LLM_MODEL') || 'gpt-4o-mini',
         messages: [
             { role: 'system', content: systemMessageContent },
             ...historyMessages.map(msg => ({ role: msg.role, content: msg.content })),
