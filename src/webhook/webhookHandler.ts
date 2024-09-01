@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
@@ -20,8 +20,10 @@ if (!discordConfig) {
 }
 
 // Retrieve required configurations from ConfigurationManager
-const DISCORD_TOKEN = discordConfig.get('DISCORD_TOKEN') as string;
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.get('DISCORD_CHAT_CHANNEL_ID') as string;
+// @ts-ignore: Type instantiation is excessively deep and possibly infinite
+const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_TOKEN');
+// @ts-ignore: Type instantiation is excessively deep and possibly infinite
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
 // Guard: Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
@@ -74,12 +76,14 @@ export const startWebhookServer = (port: number): void => {
       // Process prediction result based on status
       if (predictionStatus === 'succeeded') {
         const resultText = resultArray.join(' ');
-        resultMessage = `${resultText}\nImage URL: ${imageUrl}`;
+        resultMessage = `${resultText}
+Image URL: ${imageUrl}`;
       } else if (predictionStatus === 'processing') {
         debug('Processing:', predictionId);
         return res.sendStatus(200);
       } else {
-        resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+        resultMessage = `Prediction ID: ${predictionId}
+Status: ${predictionStatus}`;
       }
 
       // Send the result message to the Discord channel
