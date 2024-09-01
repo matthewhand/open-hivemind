@@ -7,8 +7,14 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
 const configManager = ConfigurationManager.getInstance();
-const openaiConfig = configManager.getConfig('openai');
+
+// Ensure openaiConfig is properly initialized and has a get method
+const openaiConfig = configManager.getConfig('openai') as any;
 const llmConfig = configManager.getConfig('llm');
+
+if (typeof openaiConfig?.get !== 'function') {
+    throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
+}
 
 /**
  * OpenAiService Class
@@ -128,7 +134,7 @@ export class OpenAiService {
             { role: 'user', content: message } as IMessage,
         ]);
 
-        if (!this.parallelExecution && this.isBusy()) {
+        if (!this.parallelExecution && this isBusy()) {
             debug('generateChatResponse: Service is busy');
             return null;
         }
