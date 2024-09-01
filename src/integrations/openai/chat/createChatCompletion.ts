@@ -109,7 +109,7 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
     const llmConfig = configManager.getConfig("llmConfig") as unknown as { LLM_MAX_TOKENS: number; LLM_STOP?: string[] };
 
     const requestBody: ChatCompletionCreateParams = {
-        model: openaiConfig?.OPENAI_MODEL || 'text-davinci-003',
+        model: openaiConfig?.OPENAI_MODEL || 'gpt-4o-mini',
         messages,
         max_tokens: llmConfig?.LLM_MAX_TOKENS || maxTokens,
         temperature: openaiConfig?.OPENAI_TEMPERATURE || 0.7
