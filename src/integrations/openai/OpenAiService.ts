@@ -38,16 +38,17 @@ export class OpenAiService {
         }
 
         const options: ClientOptions = {
-            apiKey: openaiConfig.get<string>('OPENAI_API_KEY')!,
-            organization: openaiConfig.get<string>('OPENAI_ORGANIZATION') || undefined,
-            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: openaiConfig.get<number>('OPENAI_TIMEOUT') || 30000,
+            apiKey: openaiConfig?.get<string>('OPENAI_API_KEY')!,
+            organization: openaiConfig?.get<string>('OPENAI_ORGANIZATION') || undefined,
+            baseURL: openaiConfig?.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
+            timeout: openaiConfig?.get<number>('OPENAI_TIMEOUT') || 30000,
         };
 
+        // @ts-ignore: Type instantiation is excessively deep and possibly infinite
         this.openai = new OpenAI(options);
-        this.parallelExecution = llmConfig.getConfig<boolean>('LLM_PARALLEL_EXECUTION') || false;
-        this.finishReasonRetry = openaiConfig.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
-        this.maxRetries = openaiConfig.get<number>('OPENAI_MAX_RETRIES') || 3;
+        this.parallelExecution = llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION') || false;
+        this.finishReasonRetry = openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = openaiConfig?.get<number>('OPENAI_MAX_RETRIES') || 3;
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }

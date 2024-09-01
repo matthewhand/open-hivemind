@@ -1,4 +1,4 @@
-import { Client, VoiceChannel, ChannelType } from 'discord.js';
+import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
 
@@ -24,9 +24,10 @@ export async function setupVoiceChannel(client: Client, channelId: string): Prom
       return null;
     }
 
+    const guildChannel = channel as GuildChannel;
     const voiceChannel = channel as VoiceChannel;
 
-    if (!voiceChannel.guild) {
+    if (!guildChannel.guild) {
       debug('Voice channel does not belong to a guild');
       return null;
     }

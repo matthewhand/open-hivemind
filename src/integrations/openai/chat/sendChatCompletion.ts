@@ -17,10 +17,15 @@ const llmConfig = configManager.getConfig('llm');
  * @returns {Promise<LLMResponse>} - The response from the OpenAI API wrapped in an LLMResponse.
  */
 export async function sendChatCompletion(
-  openAiService: OpenAiService,
+  openAiService: typeof OpenAiService,
   messages: IMessage[]
 ): Promise<LLMResponse> {
-  const parallelExecution = llmConfig.getConfig('LLM_PARALLEL_EXECUTION');
+  if (!llmConfig) {
+    debug('LLM config is missing.');
+    return new LLMResponse('', 'config_error');
+  }
+  // @ts-ignore: Type instantiation is excessively deep and possibly infinite
+  const parallelExecution = llmConfig.get<boolean>('LLM_PARALLEL_EXECUTION');
 
   if (!parallelExecution && openAiService.isBusy()) {
     debug('Service is busy with another request.');
@@ -46,7 +51,8 @@ export async function sendChatCompletion(
     debug('Finish reason:', finishReason);
 
     if (finishReason === 'length') {
-      for (let attempt = 1; attempt <= configManager.getConfig('openai.OPENAI_MAX_RETRIES'); attempt++) {
+      const maxRetries = configManager.getConfig('openai')?.get<number>('OPENAI_MAX_RETRIES') || 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
         const newContent = await completeSentence(openAiService, content);
         content = newContent || content;

@@ -2,17 +2,21 @@ import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI } from 'openai';
 
 const configManager = ConfigurationManager.getInstance();
-const openaiConfig = configManager.get('openai');
+const openaiConfig = configManager.getConfig('openai');
 
-if (!openaiConfig.OPENAI_API_KEY) {
+if (!openaiConfig) {
+    throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
+}
+
+if (!openaiConfig.get('OPENAI_API_KEY')) {
     throw new Error('OpenAI API key is missing from the configuration.');
 }
 
 const openai = new OpenAI({
-    apiKey: openaiConfig.OPENAI_API_KEY,
-    baseURL: openaiConfig.OPENAI_BASE_URL || 'https://api.openai.com',
-    organization: openaiConfig.OPENAI_ORGANIZATION,
-    timeout: openaiConfig.OPENAI_TIMEOUT || 30000,
+    apiKey: openaiConfig.get('OPENAI_API_KEY'),
+    baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
+    organization: openaiConfig.get('OPENAI_ORGANIZATION'),
+    timeout: openaiConfig.get('OPENAI_TIMEOUT') || 30000,
 });
 
 /**
@@ -24,14 +28,14 @@ const openai = new OpenAI({
 export async function sendCompletions(prompt: string): Promise<any> {
     try {
         const response = await openai.completions.create({
-            model: openaiConfig.OPENAI_MODEL || 'gpt-4o-mini',
+            model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
             prompt,
-            max_tokens: openaiConfig.OPENAI_MAX_TOKENS || 100,
-            temperature: openaiConfig.OPENAI_TEMPERATURE || 0.7,
-            frequency_penalty: openaiConfig.OPENAI_FREQUENCY_PENALTY,
-            presence_penalty: openaiConfig.OPENAI_PRESENCE_PENALTY,
-            stop: openaiConfig.OPENAI_STOP,
-            top_p: openaiConfig.OPENAI_TOP_P,
+            max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 100,
+            temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+            frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
+            presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
+            stop: openaiConfig.get('OPENAI_STOP'),
+            top_p: openaiConfig.get('OPENAI_TOP_P'),
         });
 
         return response.data;
