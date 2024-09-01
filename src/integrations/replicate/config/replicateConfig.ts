@@ -1,13 +1,20 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-const configManager = ConfigurationManager.getInstance();
+import convict from 'convict';
 
-class ReplicateConfig {
-    public readonly REPLICATE_API_URL: string = configManager.getEnvConfig('REPLICATE_API_URL', 'llm.replicate.apiUrl', 'https://api.replicate.com');
-    public readonly REPLICATE_API_KEY: string = configManager.getEnvConfig('REPLICATE_API_KEY', 'llm.replicate.apiKey', 'your-replicate-api-key');
-
-    constructor() {
-        console.log('ReplicateConfig initialized');
+const replicateConfig = convict({
+    REPLICATE_API_URL: {
+        doc: 'Replicate API URL',
+        format: String,
+        default: 'https://api.replicate.com',
+        env: 'REPLICATE_API_URL'
+    },
+    REPLICATE_API_KEY: {
+        doc: 'Replicate API Key',
+        format: String,
+        default: '',
+        env: 'REPLICATE_API_KEY'
     }
-}
+});
 
-export default ReplicateConfig;
+replicateConfig.validate({ allowed: 'strict' });
+
+export default replicateConfig;
