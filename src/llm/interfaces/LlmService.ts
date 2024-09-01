@@ -35,23 +35,23 @@ export function getLlmProvider(): string {
  * @returns {Promise<string>} - The generated completion from the LLM.
  */
 export async function generateLlmCompletion(prompt: string): Promise<string> {
-    if (!llmConfig.LLM_PROVIDER) {
-        throw new Error('LLM provider API key is missing. Please ensure the API key is configured.');
+    if (!llmConfig.LLM_PROVIDER || !llmConfig.LLM_SYSTEM_PROMPT || !llmConfig.LLM_RESPONSE_MAX_TOKENS) {
+        throw new Error('LLM provider configuration is incomplete. Please ensure all required configurations are set.');
     }
 
     const openai = new OpenAI({
-        apiKey: llmConfig.LLM_PROVIDER!,
+        apiKey: llmConfig.LLM_PROVIDER,
     });
 
     try {
         const response = await openai.completions.create({
-            model: llmConfig.LLM_SYSTEM_PROMPT || 'gpt-4o-mini',
+            model: llmConfig.LLM_SYSTEM_PROMPT,
             prompt,
-            max_tokens: llmConfig.LLM_RESPONSE_MAX_TOKENS || 150,
+            max_tokens: llmConfig.LLM_RESPONSE_MAX_TOKENS,
             stop: llmConfig.LLM_STOP,
         });
 
-        debug('Generated LLM completion:', response.data.choices[0].text.trim());
+        debug('Generated LLM completion for prompt:', prompt, 'Completion:', response.data.choices[0].text.trim());
         return response.data.choices[0].text.trim();
     } catch (error: any) {
         debug('Error generating LLM completion:', error);
