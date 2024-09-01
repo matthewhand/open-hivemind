@@ -35,6 +35,10 @@ export function getLlmProvider(): string {
  * @returns {Promise<string>} - The generated completion from the LLM.
  */
 export async function generateLlmCompletion(prompt: string): Promise<string> {
+    if (!llmConfig.LLM_PROVIDER) {
+        throw new Error('LLM provider API key is missing. Please ensure the API key is configured.');
+    }
+
     const openai = new OpenAI({
         apiKey: llmConfig.LLM_PROVIDER!,
     });
