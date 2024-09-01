@@ -1,17 +1,20 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-const configManager = ConfigurationManager.getInstance();
+import convict from 'convict';
 
-class FlowiseConfig {
-    public readonly FLOWISE_API_URL: string = configManager.getEnvConfig('FLOWISE_API_URL', 'llm.flowise.apiUrl', 'https://api.flowise.com');
-    public readonly FLOWISE_API_KEY: string = configManager.getEnvConfig('FLOWISE_API_KEY', 'llm.flowise.apiKey', 'your-flowise-api-key');
-
-    constructor() {
-        // Validate essential configurations
-        if (!this.FLOWISE_API_URL || !this.FLOWISE_API_KEY) {
-            throw new Error('Missing critical Flowise configuration. Please check your environment variables or config files.');
-        }
-        console.log('FlowiseConfig initialized');
+const flowiseConfig = convict({
+    FLOWISE_API_URL: {
+        doc: 'Flowise API URL',
+        format: String,
+        default: 'http://localhost:3002/',
+        env: 'FLOWISE_API_URL'
+    },
+    FLOWISE_API_KEY: {
+        doc: 'Flowise API Key',
+        format: String,
+        default: '',
+        env: 'FLOWISE_API_KEY'
     }
-}
+});
 
-export default FlowiseConfig;
+flowiseConfig.validate({ allowed: 'strict' });
+
+export default flowiseConfig;
