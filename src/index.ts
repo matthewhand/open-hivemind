@@ -2,9 +2,6 @@ require('dotenv/config'); // Loads environment variables from .env
 require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 
 const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
-
-console.log("[DEBUG] process.env.DISCORD_TOKEN after dotenv load:", redactSensitiveInfo('DISCORD_TOKEN', process.env.DISCORD_TOKEN)); // Redacted token
-
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
 const ConfigurationManager = require('@config/ConfigurationManager').default;
 const { debugEnvVars } = require('@config/debugEnvVars');
@@ -40,15 +37,15 @@ async function main() {
         discordService.setMessageHandler(messageHandler);
         debug('[DEBUG] Message handler set up successfully.');
 
-        // Retrieve the bot token from the configuration manager
-        const botToken = configManager.getEnvConfig('DISCORD_TOKEN', 'discord.DISCORD_TOKEN', '');  // Force call to test
+        // Retrieve the bot token directly using convict
+        const botToken = discordConfig?.get('DISCORD_TOKEN') || '';  // Convict-based access
 
         debug('[DEBUG] Bot Token retrieved:', redactSensitiveInfo('DISCORD_TOKEN', botToken));
 
         // Guard clause: Ensure bot token is properly configured
         if (!botToken || botToken === 'UNCONFIGURED_DISCORD_TOKEN') {
             console.error('[DEBUG] Bot Token is not configured correctly.');
-            debug('[DEBUG] Full discordConfig:', discordConfig); // Dump full config for debugging
+            debug('[DEBUG] Full discordConfig:', discordConfig.getProperties()); // Dump full config for debugging
             process.exit(1);
         }
 
