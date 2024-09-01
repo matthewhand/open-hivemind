@@ -8,10 +8,6 @@ if (!openaiConfig) {
     throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
 }
 
-if (!openaiConfig.get('OPENAI_API_KEY')) {
-    throw new Error('OpenAI API key is missing from the configuration.');
-}
-
 const openai = new OpenAI({
     apiKey: openaiConfig.get('OPENAI_API_KEY'),
     baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
@@ -26,6 +22,10 @@ const openai = new OpenAI({
  * @returns {Promise<any>} - The response from the OpenAI API.
  */
 export async function sendCompletions(prompt: string): Promise<any> {
+    if (!openaiConfig) {
+        throw new Error('OpenAI configuration is not loaded.');
+    }
+
     try {
         const response = await openai.completions.create({
             model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
@@ -38,7 +38,7 @@ export async function sendCompletions(prompt: string): Promise<any> {
             top_p: openaiConfig.get('OPENAI_TOP_P'),
         });
 
-        return response.data;
+        return response?.data;
     } catch (error: any) {
         throw new Error(`Failed to send completion request: ${error.message}`);
     }
