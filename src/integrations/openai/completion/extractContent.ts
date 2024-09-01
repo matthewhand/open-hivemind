@@ -1,4 +1,4 @@
-import CreateChatCompletionResponseChoicesInner from 'openai';
+import { CreateChatCompletionResponseChoicesInner } from 'openai';
 
 /**
  * Extracts the content from the response choice provided by OpenAI.
@@ -6,5 +6,5 @@ import CreateChatCompletionResponseChoicesInner from 'openai';
  * @returns The extracted content as a string.
  */
 export function extractContent(choice: CreateChatCompletionResponseChoicesInner): string {
-    return choice.message?.content?.trim() || '';
+    return choice.text?.trim() || '';
 }
