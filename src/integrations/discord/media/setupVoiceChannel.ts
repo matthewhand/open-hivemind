@@ -1,4 +1,4 @@
-import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
+import { Client, VoiceChannel, ChannelType } from 'discord.js';
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
 
@@ -17,10 +17,10 @@ const configManager = ConfigurationManager.getInstance();
  */
 export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceChannel | null> {
     try {
-        const channel = await client.channels.fetch(channelId) as VoiceChannel | GuildChannel | null;
+        const channel = await client.channels.fetch(channelId) as VoiceChannel | null;
 
-        if (!channel || channel.type !== ChannelType.GuildVoice || !('guild' in channel)) {
-            debug('Channel not found or is not a guild voice channel');
+        if (!channel || channel.type !== ChannelType.GuildVoice) {
+            debug('Channel not found or is not a voice channel');
             return null;
         }
 
