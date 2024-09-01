@@ -40,7 +40,10 @@ export async function sendCompletions(prompt: string): Promise<any> {
 
         // Handle the response correctly, ensuring the 'data' property is accessible
         // @ts-expect-error: Suppressing deep instantiation issue for now
-        return response?.data;
+        if (!response?.data) {
+            throw new Error('Response data is missing or undefined.');
+        }
+        return response.data;
     } catch (error: any) {
         throw new Error(`Failed to send completion request: ${error.message}`);
     }
