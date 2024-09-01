@@ -105,15 +105,18 @@ function appendFallbackUserMessage(messages: ChatCompletionMessage[]): void {
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
 function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number): ChatCompletionCreateParams {
+    const openaiConfig = configManager.getConfig("openaiConfig");
+    const llmConfig = configManager.getConfig("llmConfig");
+
     const requestBody: ChatCompletionCreateParams = {
-        model: configManager.getConfig("openai").OPENAI_MODEL,
+        model: openaiConfig?.OPENAI_MODEL || 'text-davinci-003',
         messages,
         max_tokens: maxTokens,
-        temperature: configManager.getConfig("openai").OPENAI_TEMPERATURE
+        temperature: openaiConfig?.OPENAI_TEMPERATURE || 0.7
     };
 
-    const llmStop = configManager.getConfig("llm").LLM_STOP.length > 0 ? configManager.getConfig("llm").LLM_STOP : undefined;
-    if (llmStop !== undefined) {
+    const llmStop = llmConfig?.LLM_STOP?.length > 0 ? llmConfig.LLM_STOP : undefined;
+    if (llmStop) {
         requestBody.stop = llmStop;
     }
 
@@ -132,13 +135,13 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
  */
 export function createChatCompletion(
     historyMessages: IMessage[] = [],
-    systemMessageContent: string = configManager.getConfig("llm").LLM_SYSTEM_PROMPT,
-    maxTokens: number = configManager.getConfig("llm").LLM_RESPONSE_MAX_TOKENS
+    systemMessageContent: string = configManager.getConfig("llmConfig")?.LLM_SYSTEM_PROMPT || 'Welcome to the conversation',
+    maxTokens: number = configManager.getConfig("llmConfig")?.LLM_RESPONSE_MAX_TOKENS || 150
 ): ChatCompletionCreateParams {
     validateMessages(historyMessages);
 
     const messages: ChatCompletionMessage[] = initializeMessages(systemMessageContent);
-    const supportNameField = configManager.getConfig("llm").LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION;
+    const supportNameField = configManager.getConfig("llmConfig")?.LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION || false;
 
     processHistoryMessages(historyMessages, messages, supportNameField);
     appendFallbackUserMessage(messages);
