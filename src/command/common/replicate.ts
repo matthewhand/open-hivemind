@@ -7,10 +7,14 @@ const configManager = ConfigurationManager.getInstance();
 
 export async function replicateRequest(input: string): Promise<any> {
     const replicateConfig = configManager.getConfig('replicateConfig');
-    const baseUrl = replicateConfig.REPLICATE_BASE_URL;
-    const apiToken = replicateConfig.REPLICATE_API_TOKEN;
-    const modelVersion = replicateConfig.REPLICATE_MODEL_VERSION;
-    const webhookUrl = configManager.getConfig("webhook").WEBHOOK_URL;
+    if (!replicateConfig) {
+        throw new Error('Replicate configuration is not loaded.');
+    }
+
+    const baseUrl = replicateConfig.get<string>('REPLICATE_BASE_URL');
+    const apiToken = replicateConfig.get<string>('REPLICATE_API_TOKEN');
+    const modelVersion = replicateConfig.get<string>('REPLICATE_MODEL_VERSION');
+    const webhookUrl = configManager.getConfig("webhook")?.get<string>('WEBHOOK_URL');
 
     if (!baseUrl || !apiToken || !modelVersion) {
         debug('Missing required configurations for Replicate API');
