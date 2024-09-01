@@ -1,8 +1,32 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-const configManager = ConfigurationManager.getInstance();
+import convict from 'convict';
 
-export class perplexityConfig {
-    public readonly PERPLEXITY_API_KEY: string = configManager.getEnvConfig('PERPLEXITY_API_KEY', 'llm.perplexity.apiKey', '');
-    public readonly PERPLEXITY_MODEL: string = configManager.getEnvConfig('PERPLEXITY_MODEL', 'llm.perplexity.model', 'gpt3');
-    public readonly PERPLEXITY_TIMEOUT: number = configManager.getEnvConfig('PERPLEXITY_TIMEOUT', 'llm.perplexity.timeout', 10000);
-}
+const perplexityConfig = convict({
+    PERPLEXITY_CHAT_COMPLETION_URL: {
+        doc: 'Perplexity Chat Completion API URL',
+        format: String,
+        default: 'https://api.perplexity.ai/chat/completions',
+        env: 'PERPLEXITY_CHAT_COMPLETION_URL'
+    },
+    PERPLEXITY_API_KEY: {
+        doc: 'Perplexity API Key',
+        format: String,
+        default: '',
+        env: 'PERPLEXITY_API_KEY'
+    },
+    PERPLEXITY_MODEL: {
+        doc: 'Perplexity Model',
+        format: String,
+        default: 'llama-3.1-sonar-small-128k-chat',
+        env: 'PERPLEXITY_MODEL'
+    },
+    PERPLEXITY_TIMEOUT: {
+        doc: 'Timeout for Perplexity requests (ms)',
+        format: 'nat',
+        default: 10000,
+        env: 'PERPLEXITY_TIMEOUT'
+    }
+});
+
+perplexityConfig.validate({ allowed: 'strict' });
+
+export default perplexityConfig;
