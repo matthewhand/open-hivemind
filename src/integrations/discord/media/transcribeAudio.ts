@@ -2,6 +2,7 @@ import Debug from 'debug';
 import OpenAI from 'openai';
 import fs from 'fs';
 import ConfigurationManager from '@config/ConfigurationManager';
+import { OpenAiConfig } from '@config/types';
 
 const debug = Debug('app:transcribeAudio');
 const configManager = ConfigurationManager.getInstance();
@@ -22,7 +23,7 @@ const configManager = ConfigurationManager.getInstance();
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
-        const openaiConfig = configManager.getConfig('openaiConfig');
+        const openaiConfig = configManager.getConfig('openaiConfig') as unknown as OpenAiConfig;
 
         if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
             throw new Error('OpenAI configuration is missing or incomplete.');
