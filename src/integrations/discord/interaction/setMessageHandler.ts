@@ -8,7 +8,13 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:setMessageHandler');
 const configManager = ConfigurationManager.getInstance();
-const discordConfig = configManager.getConfig('discordConfig');
+
+// Define explicit type for discordConfig
+interface DiscordConfig {
+    DISCORD_CLIENT_ID?: string;
+}
+
+const discordConfig = configManager.getConfig('discordConfig') as DiscordConfig;
 
 /**
  * Set Message Handler
@@ -50,7 +56,8 @@ export function setMessageHandler(
         return;
       }
 
-      if (discordMessage.author.id === discordConfig.DISCORD_CLIENT_ID) {
+      // Guard: Ensure discordConfig is not null
+      if (discordConfig && discordMessage.author.id === discordConfig.DISCORD_CLIENT_ID) {
         debug('Skipping response to own Message ID: ' + discordMessage.id);
         return;
       }
