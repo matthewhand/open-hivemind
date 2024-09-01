@@ -1,71 +1,56 @@
-import Debug from 'debug';
+import { OpenAI } from 'openai';
 import ConfigurationManager from '@config/ConfigurationManager';
+import Debug from 'debug';
 
-const debug = Debug('app:llm:LlmService');
+const debug = Debug('app:LlmService');
 const configManager = ConfigurationManager.getInstance();
-const llmConfig = configManager.getConfig('llm');  // Properly initializing llmConfig
+
+interface LlmConfig {
+    LLM_PROVIDER?: string;
+    LLM_SYSTEM_PROMPT?: string;
+    LLM_RESPONSE_MAX_TOKENS?: number;
+    LLM_INCLUDE_USERNAME_IN_CHAT_COMPLETION?: boolean;
+    LLM_STOP?: string[];
+}
+
+const llmConfig = configManager.getConfig('llmConfig') as LlmConfig;
+
+if (!llmConfig) {
+    throw new Error('LLM configuration is missing or incomplete.');
+}
 
 /**
- * Abstract class representing the interface for Large Language Models (LLM).
- * Subclasses must implement the abstract methods defined here.
+ * Retrieves the LLM provider name.
+ *
+ * @returns {string} The LLM provider name.
  */
-export abstract class LlmService {
-    constructor() {
-        if (new.target === LlmService) {
-            throw new Error('Abstract class LlmService cannot be instantiated directly.');
-        }
-        debug('LlmService instantiated');
-    }
+export function getLlmProvider(): string {
+    return llmConfig.LLM_PROVIDER || 'default-provider';
+}
 
-    /**
-     * Returns an instance of the LLM provider specified in the configuration.
-     * Currently supports only OpenAI as the LLM provider.
-     * @returns {LlmService} An instance of the LLM provider.
-     */
-    static getManager(): LlmService {
-        debug('getManager called with LLM_PROVIDER: ' + llmConfig.LLM_PROVIDER);
-        switch (llmConfig.LLM_PROVIDER) {
-            case 'OpenAI': {
-                const { OpenAiService } = require('@src/integrations/openai/OpenAiService');
-                return OpenAiService.getInstance();
-            }
-            default:
-                debug('Unsupported LLM Provider: ' + llmConfig.LLM_PROVIDER);
-                throw new Error('Unsupported LLM Provider specified in constants: ' + llmConfig.LLM_PROVIDER);
-        }
-    }
+/**
+ * Generates a chat completion using the LLM provider.
+ *
+ * @param {string} prompt - The prompt for the LLM to complete.
+ * @returns {Promise<string>} - The generated completion from the LLM.
+ */
+export async function generateLlmCompletion(prompt: string): Promise<string> {
+    const openai = new OpenAI({
+        apiKey: llmConfig.LLM_PROVIDER!,
+    });
 
-    /**
-     * Builds the request body to be sent to the LLM.
-     * Must be implemented by subclasses.
-     * @param {any[]} historyMessages - The history of messages to include in the request.
-     * @returns {Promise<object>} The request body object.
-     */
-    abstract buildChatCompletionRequestBody(historyMessages: any[]): Promise<object>;
+    try {
+        const response = await openai.completions.create({
+            model: llmConfig.LLM_SYSTEM_PROMPT || 'gpt-4o-mini',
+            prompt,
+            max_tokens: llmConfig.LLM_RESPONSE_MAX_TOKENS || 150,
+            stop: llmConfig.LLM_STOP,
+        });
 
-    /**
-     * Sends the request to the LLM and returns the response.
-     * Must be implemented by subclasses.
-     * @param {any} message - The message to send to the LLM.
-     * @param {any[]} [history] - Optional history of previous messages.
-     * @returns {Promise<any>} The response from the LLM.
-     */
-    abstract sendRequest(message: any, history?: any[]): Promise<any>;
-
-    /**
-     * Checks if the LLM is currently busy processing a request.
-     * Must be implemented by subclasses.
-     * @returns {boolean} True if the LLM is busy, false otherwise.
-     */
-    abstract isBusy(): boolean;
-
-    /**
-     * Indicates whether the LLM requires message history.
-     * Can be overridden by subclasses if history is required.
-     * @returns {boolean} False by default, indicating history is not required.
-     */
-    requiresHistory(): boolean {
-        debug('requiresHistory called');
-        return false;
+        debug('Generated LLM completion:', response.data.choices[0].text.trim());
+        return response.data.choices[0].text.trim();
+    } catch (error: any) {
+        debug('Error generating LLM completion:', error);
+        throw new Error(`Failed to generate LLM completion: ${error.message}`);
     }
 }
