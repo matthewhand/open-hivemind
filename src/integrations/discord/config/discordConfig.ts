@@ -1,29 +1,68 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-const configManager = ConfigurationManager.getInstance();
+import convict from 'convict';
 
-class discordConfig {
-    public readonly DISCORD_TOKEN: string = configManager.getEnvConfig('DISCORD_TOKEN', 'llm.discord.token', '');
-    // console.log("[DEBUG] Before calling getEnvConfig for DISCORD_TOKEN");
-    //  console.log("[DEBUG] After calling getEnvConfig for DISCORD_TOKEN:", this.DISCORD_TOKEN);
-    public readonly DISCORD_CLIENT_ID: string = configManager.getEnvConfig('DISCORD_CLIENT_ID', 'llm.discord.clientId', '');
-    public readonly DISCORD_CHANNEL_ID: string = configManager.getEnvConfig('DISCORD_CHANNEL_ID', 'llm.discord.channelId', 'default_channel_id');
-    public readonly DISCORD_BOT_USER_ID: string = configManager.getEnvConfig('DISCORD_BOT_USER_ID', 'llm.discord.botUserId', 'default_bot_user_id');
-    public readonly DISCORD_VOICE_CHANNEL_ID: string = configManager.getEnvConfig('DISCORD_VOICE_CHANNEL_ID', 'llm.discord.voiceChannelId', 'default_voice_channel_id');
-    public readonly DISCORD_MAX_MESSAGE_LENGTH: number = configManager.getEnvConfig('DISCORD_MAX_MESSAGE_LENGTH', 'llm.discord.maxMessageLength', 2000);
-    public readonly DISCORD_INTER_PART_DELAY_MS: number = configManager.getEnvConfig('DISCORD_INTER_PART_DELAY_MS', 'llm.discord.interPartDelayMs', 1000);
-    public readonly DISCORD_TYPING_DELAY_MAX_MS: number = configManager.getEnvConfig('DISCORD_TYPING_DELAY_MAX_MS', 'llm.discord.typingDelayMaxMs', 5000);
-    public readonly DISCORD_WELCOME_MESSAGE: string = configManager.getEnvConfig('DISCORD_WELCOME_MESSAGE', 'llm.discord.welcomeMessage', 'Welcome to the server!');
-
-    constructor() {
-        // Debug: Log the retrieved DISCORD_TOKEN
-        // console.log("Retrieved DISCORD_TOKEN from configManager:", this.DISCORD_TOKEN);
-
-        // Validate essential configurations
-        if (!this.DISCORD_TOKEN || !this.DISCORD_CLIENT_ID || !this.DISCORD_CHANNEL_ID) {
-            throw new Error('Missing critical Discord configuration. Please check your environment variables or config files.');
-        }
-        console.log('discordConfig initialized');
+const discordConfig = convict({
+    DISCORD_TOKEN: {
+        doc: 'Discord Bot Token',
+        format: String,
+        default: '',
+        env: 'DISCORD_TOKEN'
+    },
+    DISCORD_CLIENT_ID: {
+        doc: 'Discord Client ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_CLIENT_ID'
+    },
+    DISCORD_CHAT_CHANNEL_ID: {
+        doc: 'Discord Chat Channel ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_CHAT_CHANNEL_ID'
+    },
+    DISCORD_ADMIN_CHANNEL_ID: {
+        doc: 'Discord Admin Channel ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_ADMIN_CHANNEL_ID'
+    },
+    DISCORD_BOT_USER_ID: {
+        doc: 'Discord Bot User ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_BOT_USER_ID'
+    },
+    DISCORD_VOICE_CHANNEL_ID: {
+        doc: 'Discord Voice Channel ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_VOICE_CHANNEL_ID'
+    },
+    DISCORD_MAX_MESSAGE_LENGTH: {
+        doc: 'Maximum Message Length',
+        format: Number,
+        default: 2000,
+        env: 'DISCORD_MAX_MESSAGE_LENGTH'
+    },
+    DISCORD_INTER_PART_DELAY_MS: {
+        doc: 'Inter-part Delay in Milliseconds',
+        format: Number,
+        default: 1000,
+        env: 'DISCORD_INTER_PART_DELAY_MS'
+    },
+    DISCORD_TYPING_DELAY_MAX_MS: {
+        doc: 'Maximum Typing Delay in Milliseconds',
+        format: Number,
+        default: 5000,
+        env: 'DISCORD_TYPING_DELAY_MAX_MS'
+    },
+    DISCORD_WELCOME_MESSAGE: {
+        doc: 'Welcome Message',
+        format: String,
+        default: 'Welcome to the server!',
+        env: 'DISCORD_WELCOME_MESSAGE'
     }
-}
+});
+
+discordConfig.validate({ allowed: 'strict' });
 
 export default discordConfig;

@@ -16,11 +16,11 @@ const discordConfig = configManager.getConfig('discordConfig');
 
 // Retrieve required configurations from ConfigurationManager
 const DISCORD_TOKEN = discordConfig.DISCORD_TOKEN;
-const DISCORD_CHANNEL_ID = discordConfig.DISCORD_CHANNEL_ID;
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.DISCORD_CHAT_CHANNEL_ID;
 
 // Guard: Ensure necessary configurations are present
-if (!DISCORD_TOKEN || !DISCORD_CHANNEL_ID) {
-  debug('Missing required configurations: DISCORD_TOKEN and/or DISCORD_CHANNEL_ID', { DISCORD_TOKEN, DISCORD_CHANNEL_ID });
+if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
+  debug('Missing required configurations: DISCORD_TOKEN and/or DISCORD_CHAT_CHANNEL_ID', { DISCORD_TOKEN, DISCORD_CHAT_CHANNEL_ID });
   process.exit(1);
 }
 
@@ -61,7 +61,7 @@ export const startWebhookServer = (port: number): void => {
     debug('Image URL:', imageUrl);
 
     // Fetch the Discord channel
-    const channel = client.channels.cache.get(DISCORD_CHANNEL_ID) as TextChannel;
+    const channel = client.channels.cache.get(DISCORD_CHAT_CHANNEL_ID) as TextChannel;
 
     if (channel) {
       let resultMessage: string;
@@ -85,7 +85,7 @@ export const startWebhookServer = (port: number): void => {
       // Clean up the image map after processing
       predictionImageMap.delete(predictionId);
     } else {
-      debug('Channel not found for ID:', DISCORD_CHANNEL_ID);
+      debug('Channel not found for ID:', DISCORD_CHAT_CHANNEL_ID);
     }
 
     res.setHeader('Content-Type', 'application/json');
@@ -128,7 +128,7 @@ export const startWebhookServer = (port: number): void => {
     }
 
     try {
-      await DiscordService.getInstance().sendMessageToChannel(DISCORD_CHANNEL_ID, message);
+      await DiscordService.getInstance().sendMessageToChannel(DISCORD_CHAT_CHANNEL_ID, message);
       debug('Message sent to Discord:', message);
       res.status(200).send({ message: 'Message sent to Discord.' });
     } catch (error: any) {
