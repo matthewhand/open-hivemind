@@ -1,5 +1,6 @@
 import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI } from 'openai';
+import axios from 'axios';
 
 const configManager = ConfigurationManager.getInstance();
 
