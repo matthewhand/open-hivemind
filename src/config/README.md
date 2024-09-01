@@ -3,7 +3,7 @@
 The `ConfigurationManager` class serves as a centralized manager for environment variables and configuration file values. It dynamically loads specific configurations based on the selected LLM provider.
 
 ## Components
-- **OpenAIConfig**: Manages all OpenAI-specific settings.
+- **openaiConfig**: Manages all OpenAI-specific settings.
 - **ReplicateConfig**: Manages Replicate API settings.
 - **perplexityConfig**: Manages Perplexity AI settings.
 - **N8NConfig**: Manages N8N API settings.
