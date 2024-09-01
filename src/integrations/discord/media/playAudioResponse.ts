@@ -8,6 +8,14 @@ import ConfigurationManager from '@config/ConfigurationManager';
 const debug = Debug('app:playAudioResponse');
 const configManager = ConfigurationManager.getInstance();
 
+// Define explicit type for openaiConfig
+interface OpenAiConfig {
+    OPENAI_BASE_URL?: string;
+    OPENAI_API_KEY?: string;
+}
+
+const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
+
 /**
  * Play Audio Response
  *
@@ -19,8 +27,6 @@ const configManager = ConfigurationManager.getInstance();
  * @returns A promise that resolves when the audio response has been played.
  */
 export async function playAudioResponse(connection: VoiceConnection, text: string): Promise<void> {
-    const openaiConfig = configManager.getConfig('openaiConfig');
-    
     if (!openaiConfig) {
         debug('OpenAI configuration is not loaded.');
         return;
