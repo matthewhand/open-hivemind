@@ -1,12 +1,20 @@
-import config from 'config';
+import convict from 'convict';
 
-export default class ZepConfig {
-    public readonly ZEP_API_URL: string;
-    public readonly ZEP_API_KEY: string;
-
-    constructor() {
-        this.ZEP_API_URL = process.env.ZEP_API_URL || (config.has('zep.ZEP_API_URL') ? config.get<string>('zep.ZEP_API_URL') : 'https://api.zep.com');
-        this.ZEP_API_KEY = process.env.ZEP_API_KEY || (config.has('zep.ZEP_API_KEY') ? config.get<string>('zep.ZEP_API_KEY') : 'your-zep-api-key');
-        console.log('ZepConfig initialized');
+const zepConfig = convict({
+    ZEP_API_URL: {
+        doc: 'Zep API URL',
+        format: String,
+        default: 'https://api.zep.com',
+        env: 'ZEP_API_URL'
+    },
+    ZEP_API_KEY: {
+        doc: 'Zep API Key',
+        format: String,
+        default: '',
+        env: 'ZEP_API_KEY'
     }
-}
+});
+
+zepConfig.validate({ allowed: 'strict' });
+
+export default zepConfig;
