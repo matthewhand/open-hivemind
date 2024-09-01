@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
 import ConfigurationManager from '@config/ConfigurationManager';
-import { fetchChannel } from '../fetchers/fetchChannel';
+import { fetchChannel } from '@src/integrations/discord/fetchers/fetchChannel';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-import { fetchMessages } from '../fetchers/fetchMessages';
+import { fetchMessages } from '@src/integrations/discord/fetchers/fetchMessages';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:setMessageHandler');
