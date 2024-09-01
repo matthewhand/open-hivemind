@@ -11,7 +11,17 @@ import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpR
 
 const debug = Debug('app:messageHandler');
 const configManager = ConfigurationManager.getInstance();
-const messageConfig = configManager.getConfig('message');  // Properly initializing messageConfig
+
+// Define explicit type for messageConfig
+interface MessageConfig {
+  MESSAGE_LLM_CHAT?: boolean;
+  MESSAGE_LLM_FOLLOW_UP?: boolean;
+  MESSAGE_COMMAND_INLINE?: boolean;
+  MESSAGE_COMMAND_SLASH?: boolean;
+  MESSAGE_COMMAND_AUTHORISED_USERS?: string;
+}
+
+const messageConfig = configManager.getConfig('message') as MessageConfig;  // Properly initializing messageConfig
 
 /**
  * Message Handler

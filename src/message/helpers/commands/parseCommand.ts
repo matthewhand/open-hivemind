@@ -3,7 +3,13 @@ import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:parseCommand');
 const configManager = ConfigurationManager.getInstance();
-const llmConfig = configManager.getConfig('llm');  // Properly initializing llmConfig
+
+// Define explicit type for llmConfig
+interface LlmConfig {
+    LLM_PROVIDER?: string;
+}
+
+const llmConfig = configManager.getConfig('llm') as LlmConfig;  // Properly initializing llmConfig
 
 interface ParsedCommand {
     commandName: string;
