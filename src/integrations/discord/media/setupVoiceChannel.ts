@@ -1,27 +1,39 @@
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import { Client, GatewayIntentBits, VoiceBasedChannel, Channel } from 'discord.js';
+import Debug from 'debug';
+import ConfigurationManager from '@config/ConfigurationManager';
 
-// Define explicit types for discordConfig and openaiConfig
-interface DiscordConfig {
-    DISCORD_WELCOME_MESSAGE?: string;
-}
+const debug = Debug('app:setupVoiceChannel');
+const configManager = ConfigurationManager.getInstance();
 
-interface OpenAiConfig {
-    OPENAI_API_KEY?: string;
-    OPENAI_MODEL?: string;
-}
+/**
+ * Setup Voice Channel
+ *
+ * This function handles the setup of a voice channel in Discord.
+ * It ensures that the channel is ready for use and manages any necessary configurations.
+ *
+ * @param client - The Discord client instance.
+ * @param channelId - The ID of the channel to set up.
+ * @returns The configured voice channel object.
+ */
+export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceBasedChannel | null> {
+    try {
+        const channel = await client.channels.fetch(channelId) as Channel | null;
 
-export function setupVoiceChannel(configManager: ConfigurationManager) {
-    const discordConfig = configManager.getConfig('discord') as DiscordConfig;
-    const openaiConfig = configManager.getConfig('openai') as OpenAiConfig;
-    
-    if (!discordConfig || !openaiConfig) {
-        console.error('Configuration is not properly loaded.');
-        return;
+        if (!channel) {
+            debug('Channel not found');
+            return null;
+        }
+
+        // Check if the channel is a voice channel
+        if (!('isVoiceBased' in channel && channel.isVoiceBased())) {
+            debug('Channel is not a voice-based channel');
+            return null;
+        }
+
+        debug('Voice channel setup complete.');
+        return channel;
+    } catch (error: any) {
+        debug('Error setting up voice channel: ' + error.message);
+        return null;
     }
-    
-    const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE;
-    const apiKey = openaiConfig.OPENAI_API_KEY;
-    const model = openaiConfig.OPENAI_MODEL;
-    
-    // Logic to set up the voice channel using the configuration values
 }
