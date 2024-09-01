@@ -9,6 +9,8 @@ if (!openaiConfig) {
 }
 
 const openai = new OpenAI({
+    // @ts-ignore: Suppressing deep type instantiation issues
+
     apiKey: openaiConfig.get('OPENAI_API_KEY'),
     baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
     organization: openaiConfig.get('OPENAI_ORGANIZATION'),
