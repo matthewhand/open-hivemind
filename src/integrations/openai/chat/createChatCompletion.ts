@@ -1,5 +1,5 @@
 import ConfigurationManager from '@config/ConfigurationManager';
-import { OpenAI, CreateChatCompletionRequest } from 'openai';
+import { OpenAI } from 'openai';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const configManager = ConfigurationManager.getInstance();
@@ -21,7 +21,7 @@ export function createChatCompletion(
     historyMessages: IMessage[],
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
-): CreateChatCompletionRequest {
+): OpenAI.Chat.CreateChatCompletionRequest {
     return {
         model: llmConfig?.get('LLM_MODEL') || 'gpt-4o-mini',
         messages: [
