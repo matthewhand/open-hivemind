@@ -1,12 +1,11 @@
 import config from 'config';
 
-export default class PerplexityConfig {
-    public readonly PERPLEXITY_API_URL: string;
-    public readonly PERPLEXITY_API_KEY: string;
+class perplexityConfig {
+    public readonly PERPLEXITY_CHAT_COMPLETION_URL: string;
 
     constructor() {
-        this.PERPLEXITY_API_URL = process.env.PERPLEXITY_API_URL || (config.has('perplexity.PERPLEXITY_API_URL') ? config.get<string>('perplexity.PERPLEXITY_API_URL') : 'https://api.perplexity.ai');
-        this.PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY || (config.has('perplexity.PERPLEXITY_API_KEY') ? config.get<string>('perplexity.PERPLEXITY_API_KEY') : 'your-perplexity-api-key');
-        console.log('PerplexityConfig initialized');
+        this.PERPLEXITY_CHAT_COMPLETION_URL = process.env.PERPLEXITY_CHAT_COMPLETION_URL || (config.has('perplexity.PERPLEXITY_CHAT_COMPLETION_URL') ? config.get<string>('perplexity.PERPLEXITY_CHAT_COMPLETION_URL') : 'https://api.perplexity.ai/chat/completions');
     }
 }
+
+export default perplexityConfig;
