@@ -11,8 +11,25 @@ const configManager = ConfigurationManager.getInstance();
 
 const defaultDir = './data/';
 const defaultFileName = 'welcome.mp3';
-const audioDir = configManager.getConfig('discordConfig').WELCOME_AUDIO_DIR || defaultDir;
-const audioFileName = configManager.getConfig('discordConfig').WELCOME_AUDIO_FILENAME || defaultFileName;
+
+// Define explicit types for discordConfig and openaiConfig
+interface DiscordConfig {
+    WELCOME_AUDIO_DIR?: string;
+    WELCOME_AUDIO_FILENAME?: string;
+    DISCORD_WELCOME_MESSAGE?: string;
+}
+
+interface OpenAiConfig {
+    OPENAI_API_KEY?: string;
+    OPENAI_MODEL?: string;
+    OPENAI_VOICE?: string;
+}
+
+const discordConfig = configManager.getConfig('discordConfig') as DiscordConfig;
+const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
+
+const audioDir = discordConfig.WELCOME_AUDIO_DIR || defaultDir;
+const audioFileName = discordConfig.WELCOME_AUDIO_FILENAME || defaultFileName;
 const outputPath = path.join(audioDir, audioFileName);
 
 if (!fs.existsSync(audioDir)) {
@@ -20,8 +37,10 @@ if (!fs.existsSync(audioDir)) {
 }
 
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
-    const discordConfig = configManager.getConfig('discordConfig');
-    const openaiConfig = configManager.getConfig('openaiConfig');
+    if (!discordConfig || !openaiConfig) {
+        debug('Configuration is not properly loaded.');
+        return;
+    }
 
     const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE;
     const model = openaiConfig.OPENAI_MODEL;
