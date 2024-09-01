@@ -17,7 +17,7 @@ const configManager = ConfigurationManager.getInstance();
  */
 export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceBasedChannel | null> {
     try {
-        const channel = await client.channels.fetch(channelId) as Channel | null;
+        const channel = await client.channels.fetch(channelId) as VoiceBasedChannel | null;
 
         if (!channel) {
             debug('Channel not found');
@@ -25,7 +25,7 @@ export async function setupVoiceChannel(client: Client, channelId: string): Prom
         }
 
         // Check if the channel is a voice channel
-        if (!('isVoiceBased' in channel && channel.isVoiceBased())) {
+        if (!channel.isVoiceBased()) {
             debug('Channel is not a voice-based channel');
             return null;
         }
