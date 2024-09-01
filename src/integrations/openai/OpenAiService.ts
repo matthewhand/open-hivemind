@@ -85,7 +85,7 @@ export class OpenAiService {
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
      *
-     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '', maxTokens: number = openaiConfig?.get<number>('OPENAI_RESPONSE_MAX_TOKENS') || 150
+     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '', maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
      *
      * @returns {Promise<OpenAI.Chat.ChatCompletion>} - The API response.
      */
@@ -93,7 +93,7 @@ export class OpenAiService {
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
-        maxTokens: number = openaiConfig?.get<number>('OPENAI_RESPONSE_MAX_TOKENS') || 150
+        maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
