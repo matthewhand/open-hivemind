@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, VoiceBasedChannel, ChannelType, VoiceChannel } from 'discord.js';
+import { Client, VoiceChannel, ChannelType } from 'discord.js';
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
 
