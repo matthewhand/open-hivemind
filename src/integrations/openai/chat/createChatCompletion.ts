@@ -22,21 +22,26 @@ export function createChatCompletion(
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
-    // Prepare the messages array
-    const messages = [
-        { role: 'system', content: systemMessageContent },
-        ...historyMessages.map(msg => ({ role: msg.role, content: msg.content })),
-    ];
+    // Split up the variable preparation into more steps
 
-    // Prepare additional parameters
+    const systemMessage = { role: 'system', content: systemMessageContent };
+    const mappedHistoryMessages = historyMessages.map(msg => ({ role: msg.role, content: msg.content }));
+    const messages = [systemMessage, ...mappedHistoryMessages];
+    
     const max_tokens = maxTokens;
+
+    // @ts-ignore: Suppressing deep type instantiation issues for temperature
     const temperature = llmConfig?.get('LLM_TEMPERATURE') || 0.7;
+
+    // @ts-ignore: Suppressing deep type instantiation issues for frequency_penalty
     const frequency_penalty = llmConfig?.get('LLM_FREQUENCY_PENALTY') || 0;
+
+    // @ts-ignore: Suppressing deep type instantiation issues for presence_penalty
     const presence_penalty = llmConfig?.get('LLM_PRESENCE_PENALTY') || 0;
+
     const stop = llmConfig?.get('LLM_STOP') || undefined;
     const top_p = llmConfig?.get('LLM_TOP_P') || 1;
 
-    // @ts-ignore: Suppressing deep type instantiation issues
     const chatCompletionRequest = {
         messages,
         max_tokens,
