@@ -36,20 +36,31 @@ if (!fs.existsSync(audioDir)) {
     fs.mkdirSync(audioDir, { recursive: true });
 }
 
+const allowedVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] as const;
+type AllowedVoice = typeof allowedVoices[number];
+
+function isAllowedVoice(voice: string): voice is AllowedVoice {
+    return allowedVoices.includes(voice as AllowedVoice);
+}
+
 export async function playWelcomeMessage(connection: VoiceConnection): Promise<void> {
     if (!discordConfig || !openaiConfig) {
         debug('Configuration is not properly loaded.');
         return;
     }
 
-    const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE;
-    const model = openaiConfig.OPENAI_MODEL;
-    const voice = openaiConfig.OPENAI_VOICE;
+    const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE || 'Welcome to the server!';
+    const model = openaiConfig.OPENAI_MODEL || 'text-davinci-003';
+    let voice: AllowedVoice = 'fable'; // Updated default voice
+
+    if (openaiConfig.OPENAI_VOICE && isAllowedVoice(openaiConfig.OPENAI_VOICE)) {
+        voice = openaiConfig.OPENAI_VOICE;
+    }
 
     debug('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
-        apiKey: openaiConfig.OPENAI_API_KEY
+        apiKey: openaiConfig.OPENAI_API_KEY || ''
     });
 
     if (fs.existsSync(outputPath)) {

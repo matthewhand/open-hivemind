@@ -23,6 +23,11 @@ const configManager = ConfigurationManager.getInstance();
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
         const openaiConfig = configManager.getConfig('openaiConfig');
+
+        if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
+            throw new Error('OpenAI configuration is missing or incomplete.');
+        }
+
         const openai = new OpenAI({
             apiKey: openaiConfig.OPENAI_API_KEY
         });
