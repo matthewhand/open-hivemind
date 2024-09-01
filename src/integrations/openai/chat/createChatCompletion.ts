@@ -105,8 +105,8 @@ function appendFallbackUserMessage(messages: ChatCompletionMessage[]): void {
  * @returns The structured request body ready to be sent to the OpenAI API.
  */
 function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number): ChatCompletionCreateParams {
-    const openaiConfig = configManager.getConfig("openaiConfig");
-    const llmConfig = configManager.getConfig("llmConfig");
+    const openaiConfig = configManager.getConfig("openaiConfig") as unknown as { OPENAI_MODEL: string; OPENAI_TEMPERATURE?: number; };
+    const llmConfig = configManager.getConfig("llmConfig") as unknown as { LLM_MAX_TOKENS: number; LLM_STOP?: string[] };
 
     const requestBody: ChatCompletionCreateParams = {
         model: openaiConfig?.OPENAI_MODEL || 'text-davinci-003',
