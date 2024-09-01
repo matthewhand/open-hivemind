@@ -12,11 +12,11 @@ const llmConfig = configManager.getConfig('llm');
 
 /**
  * OpenAiService Class
- * 
- * This service manages interactions with OpenAI's API, including creating chat completions 
- * and listing available models. It is implemented as a singleton to ensure that only one 
+ *
+ * This service manages interactions with OpenAI's API, including creating chat completions
+ * and listing available models. It is implemented as a singleton to ensure that only one
  * instance of the service is used throughout the application.
- * 
+ *
  * Key Features:
  * - Singleton pattern for centralized management
  * - Handles API requests for chat completions
@@ -54,7 +54,7 @@ export class OpenAiService {
 
     /**
      * Retrieves the singleton instance of OpenAiService.
-     * 
+     *
      * @returns {OpenAiService} The singleton instance of OpenAiService.
      */
     public static getInstance(): OpenAiService {
@@ -66,7 +66,7 @@ export class OpenAiService {
 
     /**
      * Checks if the service is currently busy.
-     * 
+     *
      * @returns {boolean} True if the service is busy, false otherwise.
      */
     public isBusy(): boolean {
@@ -75,7 +75,7 @@ export class OpenAiService {
 
     /**
      * Sets the busy status of the service.
-     * 
+     *
      * @param {boolean} status - The busy status to set.
      */
     public setBusy(status: boolean): void {
@@ -84,11 +84,12 @@ export class OpenAiService {
 
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
-     * 
+     *
      * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '', maxTokens: number = openaiConfig?.get<number>('OPENAI_RESPONSE_MAX_TOKENS') || 150
-     * 
+     *
      * @returns {Promise<OpenAI.Chat.ChatCompletion>} - The API response.
      */
+    // @ts-ignore
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
@@ -96,11 +97,12 @@ export class OpenAiService {
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
+            // @ts-ignore
             const response = await this.openai.chat.completions.create(requestBody) as OpenAI.Chat.ChatCompletion;
             return response;
         } catch (error: any) {
             debug('createChatCompletion: Error occurred:', error);
-            throw error;
+            throw new Error(`Failed to create chat completion: ${error.message}`);
         }
     }
 
@@ -160,7 +162,7 @@ export class OpenAiService {
 
     /**
      * Lists all available models from OpenAI.
-     * 
+     *
      * @returns {Promise<any>} - The list of available models.
      */
     public async listModels(): Promise<any> {
