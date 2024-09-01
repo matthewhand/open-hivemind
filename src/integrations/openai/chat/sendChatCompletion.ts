@@ -1,13 +1,13 @@
 import Debug from 'debug';
-import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import OpenAiService from '@src/integrations/openai/OpenAiService';
 import ConfigurationManager from '@config/ConfigurationManager';
 import LLMResponse from '@src/llm/interfaces/LLMResponse';
 import { completeSentence } from '@src/integrations/openai/operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { OpenAI } from 'openai';
 
 const debug = Debug('app:sendChatCompletion');
 const configManager = ConfigurationManager.getInstance();
+const llmConfig = configManager.getConfig('llm');
 
 /**
  * Handles the process of sending a chat completion request to the OpenAI API.
@@ -20,7 +20,7 @@ export async function sendChatCompletion(
   openAiService: OpenAiService,
   messages: IMessage[]
 ): Promise<LLMResponse> {
-  const parallelExecution = configManager.getConfig("llm").LLM_PARALLEL_EXECUTION;
+  const parallelExecution = llmConfig.getConfig('LLM_PARALLEL_EXECUTION');
 
   if (!parallelExecution && openAiService.isBusy()) {
     debug('Service is busy with another request.');
@@ -33,27 +33,24 @@ export async function sendChatCompletion(
 
   debug('Preparing messages for OpenAI API...');
 
-  debug('Sending request to OpenAI API...');
   try {
-    // Pass IMessage[] directly to createChatCompletion
-    const response: OpenAI.Chat.ChatCompletion = await openAiService.createChatCompletion(messages);
+    const response = await openAiService.createChatCompletion(messages);
     debug('API response received:', response);
 
-    // Process the response to extract content, token usage, and finish reason
     let content = response.choices[0]?.message?.content?.trim() || '';
     const tokensUsed = response.usage?.total_tokens || 0;
-    let finishReason: OpenAI.Chat.ChatCompletion['choices'][0]['finish_reason'] = response.choices[0]?.finish_reason || 'unknown';
+    let finishReason = response.choices[0]?.finish_reason || 'unknown';
 
     debug('Content:', content);
     debug('Tokens used:', tokensUsed);
     debug('Finish reason:', finishReason);
 
     if (finishReason === 'length') {
-      for (let attempt = 1; attempt <= configManager.getConfig("openai").OPENAI_MAX_RETRIES; attempt++) {
+      for (let attempt = 1; attempt <= configManager.getConfig('openai.OPENAI_MAX_RETRIES'); attempt++) {
         debug(`Retrying completion due to ${finishReason} (attempt ${attempt})`);
         const newContent = await completeSentence(openAiService, content);
-        content = newContent || content; // Update content if new content is returned
-        finishReason = 'stop'; // Set finish reason after successful retry
+        content = newContent || content;
+        finishReason = 'stop';
       }
     }
 

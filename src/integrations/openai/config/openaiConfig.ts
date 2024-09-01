@@ -84,6 +84,18 @@ const openaiConfig = convict({
         format: Number,
         default: 100,
         env: 'OPENAI_RESPONSE_MAX_TOKENS'
+    },
+    OPENAI_MAX_RETRIES: {
+        doc: 'Maximum number of retries for OpenAI requests',
+        format: 'nat',
+        default: 3,
+        env: 'OPENAI_MAX_RETRIES'
+    },
+    LLM_PARALLEL_EXECUTION: {
+        doc: 'Whether to allow parallel execution of OpenAI requests',
+        format: Boolean,
+        default: false,
+        env: 'LLM_PARALLEL_EXECUTION'
     }
 });
 

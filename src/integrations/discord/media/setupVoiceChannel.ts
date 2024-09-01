@@ -16,18 +16,25 @@ const configManager = ConfigurationManager.getInstance();
  * @returns The configured voice channel object.
  */
 export async function setupVoiceChannel(client: Client, channelId: string): Promise<VoiceChannel | null> {
-    try {
-        const channel = await client.channels.fetch(channelId) as VoiceChannel | null;
+  try {
+    const channel = await client.channels.fetch(channelId);
 
-        if (!channel || channel.type !== ChannelType.GuildVoice) {
-            debug('Channel not found or is not a voice channel');
-            return null;
-        }
-
-        debug('Voice channel setup complete.');
-        return channel;
-    } catch (error: any) {
-        debug('Error setting up voice channel: ' + error.message);
-        return null;
+    if (!channel || channel.type !== ChannelType.GuildVoice) {
+      debug('Channel not found or is not a voice channel');
+      return null;
     }
+
+    const voiceChannel = channel as VoiceChannel;
+
+    if (!voiceChannel.guild) {
+      debug('Voice channel does not belong to a guild');
+      return null;
+    }
+
+    debug('Voice channel setup complete.');
+    return voiceChannel;
+  } catch (error: any) {
+    debug('Error setting up voice channel: ' + error.message);
+    return null;
+  }
 }

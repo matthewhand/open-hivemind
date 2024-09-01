@@ -2,30 +2,14 @@ import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI } from 'openai';
 
 const configManager = ConfigurationManager.getInstance();
+const openaiConfig = configManager.get('openai');
 
-// Define explicit type for OpenAI Config
-interface OpenAiConfig {
-    OPENAI_API_KEY?: string;
-    OPENAI_BASE_URL?: string;
-    OPENAI_TIMEOUT?: number;
-    OPENAI_ORGANIZATION?: string;
-    OPENAI_MODEL?: string;
-    OPENAI_MAX_TOKENS?: number;
-    OPENAI_TEMPERATURE?: number;
-    OPENAI_FREQUENCY_PENALTY?: number;
-    OPENAI_PRESENCE_PENALTY?: number;
-    OPENAI_STOP?: string[];
-    OPENAI_TOP_P?: number;
-}
-
-const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
-
-if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
-    throw new Error('OpenAI configuration is missing or incomplete.');
+if (!openaiConfig.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key is missing from the configuration.');
 }
 
 const openai = new OpenAI({
-    apiKey: openaiConfig.OPENAI_API_KEY!,
+    apiKey: openaiConfig.OPENAI_API_KEY,
     baseURL: openaiConfig.OPENAI_BASE_URL || 'https://api.openai.com',
     organization: openaiConfig.OPENAI_ORGANIZATION,
     timeout: openaiConfig.OPENAI_TIMEOUT || 30000,
