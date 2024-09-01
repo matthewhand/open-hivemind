@@ -1,14 +1,12 @@
 import ConfigurationManager from '@src/config/ConfigurationManager';
 
-const configManager = ConfigurationManager.getInstance();
-
-export function setupVoiceChannel() {
-    const discordConfig = configManager.getConfig('discordConfig');
-    const openaiConfig = configManager.getConfig('openaiConfig');
+export function setupVoiceChannel(configManager: ConfigurationManager) {
+    const discordConfig = configManager.getConfig('discord');
+    const openaiConfig = configManager.getConfig('openai');
     
     const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE;
     const apiKey = openaiConfig.OPENAI_API_KEY;
-    const model = openaiConfig.OPENAI_MODEL; // Moved to openaiConfig
+    const model = openaiConfig.OPENAI_MODEL;
     
     // Logic to set up the voice channel using the configuration values
 }

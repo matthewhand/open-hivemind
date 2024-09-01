@@ -16,6 +16,9 @@ const debug = Debug('app:index');
 // Initialize configuration manager
 const configManager = ConfigurationManager.getInstance();
 
+// Load integration configurations
+configManager.loadConfig();
+
 // Debug environment variables
 debugEnvVars();
 
