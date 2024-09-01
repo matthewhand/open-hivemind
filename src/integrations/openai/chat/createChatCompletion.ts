@@ -13,10 +13,8 @@ export function createChatCompletion(
     historyMessages: IMessage[],
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
-): OpenAI.Chat.CreateChatCompletionRequestMessage {
-    // Removing @ts-expect-error to refactor the model property
+): OpenAI.Chat.CreateChatCompletionRequest {
     return {
-        // Updated type usage
         model: llmConfig?.get('LLM_MODEL') || 'gpt-4o-mini',
         messages: [
             { role: 'system', content: systemMessageContent },
