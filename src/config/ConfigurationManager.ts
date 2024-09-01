@@ -78,9 +78,6 @@ class ConfigurationManager {
         if (this.configs) {
             const loadedConfigs = Object.keys(this.configs);
             debug(`Loaded configurations: ${loadedConfigs.join(', ')}`);
-            loadedConfigs.forEach(configKey => {
-                debug(`Config [${configKey}] contains properties: ${Object.keys(this.configs![configKey].getProperties()).join(', ')}`);
-            });
         } else {
             debug('No configurations were loaded.');
         }

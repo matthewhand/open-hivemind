@@ -12,6 +12,12 @@ const replicateConfig = convict({
         format: String,
         default: '',
         env: 'REPLICATE_API_KEY'
+    },
+    REPLICATE_MODEL_VERSION: {
+        doc: 'Replicate Model Version',
+        format: String,
+        default: '',
+        env: 'REPLICATE_MODEL_VERSION'
     }
 });
 

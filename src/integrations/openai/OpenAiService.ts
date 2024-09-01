@@ -10,11 +10,11 @@ const configManager = ConfigurationManager.getInstance();
 
 /**
  * OpenAiService Class
- *
- * This service manages interactions with OpenAI's API, including creating chat completions
- * and listing available models. It is implemented as a singleton to ensure that only one
+ * 
+ * This service manages interactions with OpenAI's API, including creating chat completions 
+ * and listing available models. It is implemented as a singleton to ensure that only one 
  * instance of the service is used throughout the application.
- *
+ * 
  * Key Features:
  * - Singleton pattern for centralized management
  * - Handles API requests for chat completions
@@ -31,19 +31,32 @@ export class OpenAiService {
 
     // Private constructor to enforce singleton pattern
     private constructor() {
+        const openaiConfig = configManager.getConfig('openai');
+
+        if (!openaiConfig) {
+            throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
+        }
+
         const options: ClientOptions = {
-            apiKey: configManager.getConfig("openai").OPENAI_API_KEY,
-            organization: configManager.getConfig("openai").OPENAI_ORGANIZATION || undefined,
-            baseURL: configManager.getConfig("openai").OPENAI_BASE_URL,
-            timeout: configManager.getConfig("openai").OPENAI_TIMEOUT,
+            apiKey: openaiConfig.get('OPENAI_API_KEY'),
+            organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
+            baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
+            timeout: openaiConfig.get('OPENAI_TIMEOUT') || 30000,
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = configManager.getConfig("openai").LLM_PARALLEL_EXECUTION;
-        this.finishReasonRetry = configManager.getConfig("openai").OPENAI_FINISH_REASON_RETRY;
-        this.maxRetries = configManager.getConfig("openai").OPENAI_MAX_RETRIES;
+        this.parallelExecution = openaiConfig.get('LLM_PARALLEL_EXECUTION') || false;
+        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = openaiConfig.get('OPENAI_MAX_RETRIES') || 3;
+
+        debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
 
+    /**
+     * Retrieves the singleton instance of OpenAiService.
+     * 
+     * @returns {OpenAiService} The singleton instance of OpenAiService.
+     */
     public static getInstance(): OpenAiService {
         if (!OpenAiService.instance) {
             OpenAiService.instance = new OpenAiService();
@@ -51,10 +64,20 @@ export class OpenAiService {
         return OpenAiService.instance;
     }
 
+    /**
+     * Checks if the service is currently busy.
+     * 
+     * @returns {boolean} True if the service is busy, false otherwise.
+     */
     public isBusy(): boolean {
         return this.busy;
     }
 
+    /**
+     * Sets the busy status of the service.
+     * 
+     * @param {boolean} status - The busy status to set.
+     */
     public setBusy(status: boolean): void {
         this.busy = status;
     }
@@ -69,8 +92,8 @@ export class OpenAiService {
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = configManager.getConfig("openai").OPENAI_SYSTEM_PROMPT,
-        maxTokens: number = configManager.getConfig("openai").OPENAI_RESPONSE_MAX_TOKENS
+        systemMessageContent: string = configManager.getConfig("openai")?.get('OPENAI_SYSTEM_PROMPT') || '',
+        maxTokens: number = configManager.getConfig("openai")?.get('OPENAI_RESPONSE_MAX_TOKENS') || 150
     ): Promise<OpenAI.Chat.ChatCompletion> {
         try {
             // Create the request body using the helper function
