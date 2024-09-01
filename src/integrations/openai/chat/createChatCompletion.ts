@@ -14,8 +14,9 @@ export function createChatCompletion(
     systemMessageContent: string = llmConfig?.get('LLM_SYSTEM_PROMPT') || '',
     maxTokens: number = llmConfig?.get('LLM_RESPONSE_MAX_TOKENS') || 150
 ): OpenAI.Chat.CreateChatCompletionRequestMessage {
-    // @ts-expect-error: Type instantiation is excessively deep and possibly infinite
+    // Removing @ts-expect-error to refactor the model property
     return {
+        // Updated type usage
         model: llmConfig?.get('LLM_MODEL') || 'gpt-4o-mini',
         messages: [
             { role: 'system', content: systemMessageContent },
