@@ -111,7 +111,7 @@ function createRequestBody(messages: ChatCompletionMessage[], maxTokens: number)
     const requestBody: ChatCompletionCreateParams = {
         model: openaiConfig?.OPENAI_MODEL || 'text-davinci-003',
         messages,
-        max_tokens: maxTokens,
+        max_tokens: llmConfig?.LLM_MAX_TOKENS || maxTokens,
         temperature: openaiConfig?.OPENAI_TEMPERATURE || 0.7
     };
 
