@@ -1,9 +1,7 @@
-import { OpenAI } from 'openai';
+import { OpenAiService } from '../OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { createChatCompletion } from './createChatCompletion';
 import { completeSentence } from '../operations/completeSentence';
 import Debug from 'debug';
-import { OpenAiService } from '../OpenAiService';
 
 const debug = Debug('app:OpenAiService');
 
@@ -12,7 +10,7 @@ const debug = Debug('app:OpenAiService');
  * This method wraps the process of building a request body and sending it to the API,
  * ensuring that the service is not busy before making the request.
  *
- * @param openai - The OpenAiService instance.
+ * @param openaiService - The OpenAiService instance.
  * @param message - The message to send to OpenAI.
  * @param historyMessages - The chat history as an array of IMessage objects.
  * @param options - Additional options like parallel execution, max retries, and finish reason.
@@ -30,20 +28,18 @@ export async function generateChatResponse(
         setBusy: (status: boolean) => void;
     }
 ): Promise<string | null> {
-    const { openai } = openaiService;
-
-    if (!openai.apiKey) {
+    if (!openaiService.openai.apiKey) {
         debug('generateChatResponse: API key is missing');
         return null;
     }
 
     debug('generateChatResponse: Building request body');
     const requestBody = {
-        model: 'gpt-3.5-turbo',
-        messages: createChatCompletion([
+        model: openaiService.openai.model, // Correct the model handling
+        messages: [
             ...historyMessages,
             { role: 'user', content: message } as IMessage,
-        ]),
+        ],
         max_tokens: 150,
     };
 
@@ -58,7 +54,7 @@ export async function generateChatResponse(
         }
 
         debug('generateChatResponse: Sending request to OpenAI API');
-        const response = await openai.chat.completions.create(requestBody);
+        const response = await openaiService.openai.chat.completions.create(requestBody);
 
         let finishReason = response.choices[0].finish_reason;
         let content = response.choices[0].message.content;

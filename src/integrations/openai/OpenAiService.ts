@@ -36,7 +36,7 @@ if (typeof openaiConfig?.get !== 'function') {
  */
 export class OpenAiService {
     private static instance: OpenAiService; // Singleton instance
-    private readonly openai: OpenAI; // Instance of the OpenAI API client
+    public readonly openai: OpenAI; // Instance of the OpenAI API client, changed to public
     private busy: boolean = false;
     private readonly parallelExecution: boolean; // Configurable option for parallel execution
     private readonly finishReasonRetry: string; // Configurable finish reason for retry
@@ -52,7 +52,7 @@ export class OpenAiService {
             apiKey: openaiConfig?.get<string>('OPENAI_API_KEY')!,
             organization: openaiConfig?.get<string>('OPENAI_ORGANIZATION') || undefined,
             baseURL: openaiConfig?.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
-timeout: parseInt(openaiConfig?.get<string>("OPENAI_TIMEOUT") ?? "30000"),
+            timeout: parseInt(openaiConfig?.get<string>('OPENAI_TIMEOUT') ?? '30000'),
         };
 
         this.openai = new OpenAI(options);
@@ -60,7 +60,7 @@ timeout: parseInt(openaiConfig?.get<string>("OPENAI_TIMEOUT") ?? "30000"),
         this.parallelExecution = Boolean(llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION')) || false;
         // Ensuring finishReasonRetry is a string
         this.finishReasonRetry = openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
-this.maxRetries = parseInt(openaiConfig?.get<string>("OPENAI_MAX_RETRIES") ?? "3");
+        this.maxRetries = parseInt(openaiConfig?.get<string>('OPENAI_MAX_RETRIES') ?? '3');
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -128,7 +128,7 @@ this.maxRetries = parseInt(openaiConfig?.get<string>("OPENAI_MAX_RETRIES") ?? "3
      * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
      */
     public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
-        return generateChatResponse(this.openai, message, historyMessages, {
+        return generateChatResponse(this, message, historyMessages, {
             parallelExecution: this.parallelExecution,
             maxRetries: this.maxRetries,
             finishReasonRetry: this.finishReasonRetry,
