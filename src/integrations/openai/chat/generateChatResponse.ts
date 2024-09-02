@@ -1,6 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
+import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 
 const debug = Debug('app:OpenAiService');
 
@@ -53,22 +54,12 @@ export async function generateChatResponse(
             throw new Error('No history messages provided.');
         }
 
-        // Helper function to map IMessage to ChatCompletionMessageParam
-        function mapIMessageToChatParam(msg: IMessage): OpenAI.Chat.ChatCompletionMessageParam {
-            // @ts-ignore: Suppress type errors due to deep instantiation issues
-            return {
-                role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
-                content: msg.getText(),
-                name: msg.getAuthorName() || 'unknown',
-            };
-        }
-
-        // Map historyMessages to the expected OpenAI format
+        // Use the new conversion function
         const requestBody = {
             model: openAiService.openai.model,
             messages: [
                 { role: 'user', content: message },
-                ...historyMessages.map(mapIMessageToChatParam),
+                ...historyMessages.map(convertIMessageToChatParam),
             ],
             max_tokens: options.maxRetries, // Example usage of an option
             temperature: 0.7, // Default value or derived from configuration

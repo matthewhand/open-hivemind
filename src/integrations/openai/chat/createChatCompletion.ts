@@ -2,6 +2,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 import Debug from 'debug';
 import ConfigurationManager from '@config/ConfigurationManager';
+import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 
 const configManager = ConfigurationManager.getInstance();
 const llmConfig = configManager.getConfig('llm');
@@ -26,7 +27,6 @@ if (!llmConfig) {
  *     - `name?: string`
  * - **Validation and Guards**: Ensures that the input data is complete and correctly formatted.
  * - **Debugging**: Logs key values and the execution flow for easier debugging.
- * - **Handling Deep Type Instantiation**: Uses `@ts-ignore` where deep instantiation issues occur.
  *
  * @param openai - The OpenAI API client instance.
  * @param historyMessages - The chat history as an array of `IMessage` objects.
@@ -50,22 +50,12 @@ export async function createChatCompletion(
             throw new Error('No history messages provided.');
         }
 
-        // Helper function to map IMessage to ChatCompletionMessageParam
-        function mapIMessageToChatParam(msg: IMessage): OpenAI.Chat.ChatCompletionMessageParam {
-            // @ts-ignore: Suppress type errors due to deep instantiation issues
-            return {
-                role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
-                content: msg.getText(),
-                name: msg.getAuthorName() || 'unknown',
-            };
-        }
-
-        // Map historyMessages to the expected OpenAI format
+        // Use the new conversion function
         const requestBody = {
             model: openai.model,
             messages: [
                 { role: 'system', content: systemMessageContent },
-                ...historyMessages.map(mapIMessageToChatParam),
+                ...historyMessages.map(convertIMessageToChatParam),
             ],
             max_tokens: maxTokens,
             temperature: llmConfig?.get('LLM_TEMPERATURE') || 0.7,
