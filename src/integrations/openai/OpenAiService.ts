@@ -1,22 +1,24 @@
 import Debug from 'debug';
-import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAI, ClientOptions } from 'openai';
+import ConfigurationManager from '@config/ConfigurationManager';
 import { generateChatResponse } from './chat/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
-import { completeSentence } from './operations/completeSentence';
+import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
 const configManager = ConfigurationManager.getInstance();
 
-// Use openaiConfig directly from convict without casting to IConfig
+// Attempt to retrieve the OpenAI configuration
+debug('Attempting to retrieve OpenAI configuration...');
 const openaiConfig = configManager.getConfig('openai');
 const llmConfig = configManager.getConfig('llm');
 
-// Log the structure of openaiConfig for debugging purposes
-debug('openaiConfig structure:', openaiConfig);
+// Log the retrieved configuration objects
+debug('Retrieved openaiConfig:', openaiConfig);
+debug('Retrieved llmConfig:', llmConfig);
 
-if (typeof openaiConfig?.get !== 'function') {
+if (!openaiConfig || typeof openaiConfig.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
 }
 
@@ -28,20 +30,10 @@ if (typeof openaiConfig?.get !== 'function') {
  * instance of the service is used throughout the application.
  *
  * Key Features:
- * - **Integration with ConfigurationManager**: Relies on the ConfigurationManager class to retrieve 
- *   dynamic configurations such as API keys and timeouts, ensuring flexibility and adaptability to 
- *   different environments and integration requirements.
- *
- * - **Singleton Pattern**: Ensures that only one instance of the OpenAiService exists, managing 
- *   the state and interactions with OpenAI's API.
- *
- * - **Dynamic Configuration Usage**: Supports the flexible loading and management of configurations 
- *   at runtime, allowing the service to adapt to various environments without requiring code changes.
- *
- * Usage:
- * - Use `createChatCompletion` to send chat completion requests.
- * - Use `generateChatResponse` for generating responses with history management.
- * - Use `listModels` to retrieve available models from OpenAI.
+ * - Singleton pattern for centralized management
+ * - Handles API requests for chat completions
+ * - Manages service state, including busy status
+ * - Supports generating chat responses with history management
  */
 export class OpenAiService {
     private static instance: OpenAiService; // Singleton instance
@@ -58,18 +50,18 @@ export class OpenAiService {
         }
 
         const options: ClientOptions = {
-            apiKey: openaiConfig?.get<string>('OPENAI_API_KEY')!,
-            organization: openaiConfig?.get<string>('OPENAI_ORGANIZATION') || undefined,
-            baseURL: openaiConfig?.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: parseInt(openaiConfig?.get<string>('OPENAI_TIMEOUT') ?? '30000'),
+            apiKey: openaiConfig.get<string>('OPENAI_API_KEY')!,
+            organization: openaiConfig.get<string>('OPENAI_ORGANIZATION') || undefined,
+            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
+            timeout: parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') ?? '30000'),
         };
 
         this.openai = new OpenAI(options);
         // @ts-ignore: Suppressing deep type instantiation issues
         this.parallelExecution = Boolean(llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION')) || false;
         // Ensuring finishReasonRetry is a string
-        this.finishReasonRetry = openaiConfig?.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
-        this.maxRetries = parseInt(openaiConfig?.get<string>('OPENAI_MAX_RETRIES') ?? '3');
+        this.finishReasonRetry = openaiConfig.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = parseInt(openaiConfig.get<string>('OPENAI_MAX_RETRIES') ?? '3');
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -111,21 +103,12 @@ export class OpenAiService {
      *
      * @returns {Promise<OpenAI.Chat.ChatCompletion>} - The API response.
      */
-    // @ts-ignore
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
         maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
     ): Promise<OpenAI.Chat.ChatCompletion> {
-        try {
-            const requestBody = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
-            // @ts-ignore
-            const response = await this.openai.chat.completions.create(requestBody) as unknown as OpenAI.Chat.ChatCompletion;
-            return response;
-        } catch (error: any) {
-            debug('createChatCompletion: Error occurred:', error);
-            throw new Error(`Failed to create chat completion: ${error.message}`);
-        }
+        return createChatCompletion(historyMessages, systemMessageContent, maxTokens);
     }
 
     /**
@@ -152,14 +135,7 @@ export class OpenAiService {
      * @returns {Promise<any>} - The list of available models.
      */
     public async listModels(): Promise<any> {
-        try {
-            const response = await this.openai.models.list();
-            debug('Available models:', response.data);
-            return response.data;
-        } catch (error: any) {
-            debug('Error listing models:', error);
-            throw new Error(`Failed to list models: ${error.message}`);
-        }
+        return listModels(this.openai);
     }
 }
 
