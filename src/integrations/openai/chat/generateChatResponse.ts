@@ -5,6 +5,23 @@ import Debug from 'debug';
 
 const debug = Debug('app:OpenAiService');
 
+interface ChatCompletionMessageParam {
+    role: string;
+    content: string;
+    name?: string;
+}
+
+/**
+ * Maps an IMessage object to ChatCompletionMessageParam format.
+ */
+function mapMessageToChatCompletionParam(message: IMessage): ChatCompletionMessageParam {
+    return {
+        role: message.role,
+        content: message.getText(),
+        name: message.getAuthorName(), // Ensure name is included
+    };
+}
+
 /**
  * Generates a chat response using the OpenAI API.
  * This method wraps the process of building a request body and sending it to the API,
@@ -36,10 +53,7 @@ export async function generateChatResponse(
     debug('generateChatResponse: Building request body');
     const requestBody = {
         model: openaiService.openai.model, // Correct the model handling
-        messages: [
-            ...historyMessages,
-            { role: 'user', content: message } as IMessage,
-        ],
+        messages: historyMessages.map(mapMessageToChatCompletionParam), // Map messages correctly
         max_tokens: 150,
     };
 
