@@ -50,9 +50,16 @@ export async function createChatCompletion(
             throw new Error('No history messages provided.');
         }
 
+        // Retrieve the model ID
+        const model = await openai.models.list().then(models => models[0]?.id);
+
+        if (!model) {
+            throw new Error('No model available');
+        }
+
         // Constructing the request body
         const requestBody = {
-            model: openai.models.list(), // Fixed to correctly reference available models
+            model,
             messages: [
                 { role: 'system', content: systemMessageContent },
                 ...historyMessages.map(convertIMessageToChatParam),

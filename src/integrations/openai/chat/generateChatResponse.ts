@@ -54,9 +54,16 @@ export async function generateChatResponse(
             throw new Error('No history messages provided.');
         }
 
-        // Use the new conversion function
+        // Ensure model is correctly referenced
+        const model = await openAiService.openai.models.list().then(models => models[0]?.id);
+
+        if (!model) {
+            throw new Error('No model available');
+        }
+
+        // Use the conversion function
         const requestBody = {
-            model: openAiService.openai.models.list()[0].id, // Correctly referencing model ID
+            model,
             messages: [
                 { role: 'user', content: message },
                 ...historyMessages.map(convertIMessageToChatParam),

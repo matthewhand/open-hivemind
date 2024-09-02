@@ -17,8 +17,13 @@ import { OpenAI } from 'openai';
 export function convertIMessageToChatParam(
     msg: IMessage
 ): OpenAI.Chat.ChatCompletionMessageParam {
+    // Ensure the role is valid
+    if (!['system', 'user', 'assistant'].includes(msg.role)) {
+        throw new Error(`Invalid role: ${msg.role}`);
+    }
+
     return {
-        role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
+        role: msg.role as 'system' | 'user' | 'assistant',
         content: msg.getText(),
         name: msg.getAuthorName() || 'unknown',
     };
