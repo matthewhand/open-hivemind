@@ -56,7 +56,7 @@ export async function generateChatResponse(
 
         // Use the new conversion function
         const requestBody = {
-            model: openAiService.openai.model,
+            model: openAiService.openai.models.list()[0].id, // Correctly referencing model ID
             messages: [
                 { role: 'user', content: message },
                 ...historyMessages.map(convertIMessageToChatParam),

@@ -17,7 +17,6 @@ import { OpenAI } from 'openai';
 export function convertIMessageToChatParam(
     msg: IMessage
 ): OpenAI.Chat.ChatCompletionMessageParam {
-    // @ts-ignore: Suppress type errors due to deep instantiation issues
     return {
         role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
         content: msg.getText(),
