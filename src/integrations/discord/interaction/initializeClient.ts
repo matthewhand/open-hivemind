@@ -1,43 +1,20 @@
-import Debug from "debug";
-import { Client, GatewayIntentBits, Message } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
+import Debug from 'debug';
 
-const debug = Debug('app:initializeClient');
+const log = Debug('app:initializeClient');
 
 /**
- * Initializes and returns a new Discord client instance.
+ * Initializes the Discord client with the necessary intents.
  * 
- * This function sets up the Discord client with the necessary intents and event listeners.
- * It ensures the client is ready to interact with the Discord API, handle messages, and maintain voice state.
- * 
- * Key Features:
- * - Configures client intents to manage guilds, messages, and voice states.
- * - Logs client readiness and message events for monitoring and debugging.
- * 
- * @returns {Client} The initialized Discord client.
+ * @returns {Client} The initialized Discord client instance.
  */
-export function initializeClient(): Client {
-    debug('Initializing Discord client with required intents.');
-    const client = new Client({
+export const initializeClient = (): Client => {
+    log('Initializing Discord client with intents: Guilds, GuildMessages, GuildVoiceStates');
+    return new Client({
         intents: [
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.MessageContent,
-            GatewayIntentBits.GuildVoiceStates
+            GatewayIntentBits.GuildVoiceStates,
         ],
     });
-
-    client.once('ready', () => {
-        debug('Discord client is ready and connected to the gateway!');
-    });
-
-    client.on('messageCreate', (message: Message) => {
-        if (!message.guild) {
-            debug('Ignoring direct message from user:', message.author.tag);
-            return;  // Ignore direct messages
-        }
-        debug('Received a message in guild:', message.guild.name, 'with content:', message.content);
-        // Additional message handling logic here
-    });
-
-    return client;
-}
+};

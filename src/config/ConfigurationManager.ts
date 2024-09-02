@@ -2,7 +2,6 @@ import convict from 'convict';
 import Debug from 'debug';
 import { loadIntegrationConfigs } from './loadIntegrationConfigs';
 import messageConfig from '@src/message/config/messageConfig';
-import llmConfig from '@src/llm/config/llmConfig';
 
 const debug = Debug('app:ConfigurationManager');
 
@@ -85,11 +84,10 @@ export default class ConfigurationManager {
         }
 
         // Load configurations from integrations
-        this.configs = loadIntegrationConfigs();
+        this.configs = loadIntegrationConfigs('interfaces');
 
         // Add specific configurations
         this.configs['message'] = messageConfig;
-        this.configs['llm'] = llmConfig;
 
         // Debugging: List all loaded configuration keys
         if (this.configs) {

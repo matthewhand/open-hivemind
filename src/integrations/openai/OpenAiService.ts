@@ -11,8 +11,8 @@ const configManager = ConfigurationManager.getInstance();
 
 // Attempt to retrieve the OpenAI configuration
 debug('Attempting to retrieve OpenAI configuration...');
-const openaiConfig = configManager.getConfig('openai');
-const llmConfig = configManager.getConfig('llm');
+const openaiConfig = openaiConfig;
+const llmConfig = llmConfig;
 
 // Log the retrieved configuration objects
 debug('Retrieved openaiConfig:', openaiConfig);

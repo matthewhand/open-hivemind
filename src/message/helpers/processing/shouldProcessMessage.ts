@@ -2,7 +2,7 @@ import ConfigurationManager from '@config/ConfigurationManager';
 
 const configManager = ConfigurationManager.getInstance();
 const messageConfig = configManager.getConfig('message');
-const llmConfig = configManager.getConfig('llm');
+const llmConfig = llmConfig;
 
 export function shouldProcessMessage(lastMessageTime: number): boolean {
     if (!messageConfig || !llmConfig) {
