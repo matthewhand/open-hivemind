@@ -108,7 +108,7 @@ export class OpenAiService {
         systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
         maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
     ): Promise<OpenAI.Chat.ChatCompletion> {
-        return createChatCompletion(historyMessages, systemMessageContent, maxTokens);
+        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens);
     }
 
     /**

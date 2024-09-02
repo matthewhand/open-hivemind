@@ -51,7 +51,8 @@ export async function createChatCompletion(
         }
 
         // Retrieve the model ID
-        const model = await openai.models.list().then(models => models[0]?.id);
+        const models = await openai.models.list();
+        const model = models.data[0]?.id;
 
         if (!model) {
             throw new Error('No model available');

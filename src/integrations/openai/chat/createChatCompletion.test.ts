@@ -1,13 +1,26 @@
 import { createChatCompletion } from './createChatCompletion';
 import { MockMessage } from './MockMessage';
+import Debug from 'debug';
 
-// Test case: Create Chat Completion with mock messages
-const historyMessages = [new MockMessage('data'), new MockMessage('data')];
-const systemMessageContent = "System prompt for testing";
-const maxTokens = 100;
+const debug = Debug('test:createChatCompletion');
 
-// Simulate the chat completion creation process
-const completionParams = createChatCompletion(historyMessages, systemMessageContent, maxTokens);
+describe('createChatCompletion', () => {
+    it('should create a valid chat completion request', async () => {
+        // Prepare mock messages
+        const historyMessages: MockMessage[] = [
+            new MockMessage('user', 'What is the weather today?'),
+            new MockMessage('assistant', 'The weather today is sunny with a high of 75 degrees.'),
+        ];
 
-// Validate the output
-console.log('Completion Params:', completionParams);
+        // Execute the function
+        const result = await createChatCompletion(historyMessages);
+
+        // Log and validate the result
+        debug('createChatCompletion result:', result);
+        expect(result).toBeTruthy();
+        expect(result.model).toBeDefined();
+        expect(result.choices).toBeInstanceOf(Array);
+        expect(result.choices.length).toBeGreaterThan(0);
+        expect(result.choices[0].message.content).toContain('The weather today');
+    });
+});

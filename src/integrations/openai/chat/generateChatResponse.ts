@@ -55,7 +55,8 @@ export async function generateChatResponse(
         }
 
         // Ensure model is correctly referenced
-        const model = await openAiService.openai.models.list().then(models => models[0]?.id);
+        const models = await openAiService.openai.models.list();
+        const model = models.data[0]?.id;
 
         if (!model) {
             throw new Error('No model available');
