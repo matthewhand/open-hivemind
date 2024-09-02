@@ -5,14 +5,13 @@ import { generateChatResponse } from './chat/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
 import { completeSentence } from './operations/completeSentence';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { IConfig } from '@config/types/IConfig';
 
 const debug = Debug('app:OpenAiService');
 const configManager = ConfigurationManager.getInstance();
 
-// Cast openaiConfig to the IConfig interface for type safety
-const openaiConfig = configManager.getConfig('openai') as IConfig;
-const llmConfig = configManager.getConfig('llm') as IConfig;
+// Use openaiConfig directly from convict without casting to IConfig
+const openaiConfig = configManager.getConfig('openai');
+const llmConfig = configManager.getConfig('llm');
 
 // Log the structure of openaiConfig for debugging purposes
 debug('openaiConfig structure:', openaiConfig);
