@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:webhookHandler');
 

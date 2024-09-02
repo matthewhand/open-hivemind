@@ -1,4 +1,4 @@
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 import Debug from 'debug';
 import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import OpenAI from 'openai';

@@ -1,4 +1,4 @@
-import ConfigurationManager from '@src/config/ConfigurationManager';
+import ConfigurationManager from '@config/ConfigurationManager';
 
 const configManager = ConfigurationManager.getInstance();
 const messageConfig = configManager.getConfig("message");
