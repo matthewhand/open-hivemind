@@ -1,126 +1,98 @@
 import convict from 'convict';
 import Debug from 'debug';
-import { loadIntegrationConfigs } from './loadIntegrationConfigs';
-import messageConfig from '@src/message/config/messageConfig';
-import llmConfig from '@src/llm/config/llmConfig';
+import path from 'path';
+import fs from 'fs';
 
 const debug = Debug('app:ConfigurationManager');
 
-// Define the convict schema for base configurations
-const schema = convict({
-    NODE_ENV: {
-        doc: 'The application environment.',
-        format: ['production', 'development', 'test'],
-        default: 'development',
-        env: 'NODE_ENV',
-    },
-    // Additional global configurations can be defined here
-});
-
 /**
  * ConfigurationManager Class
- * 
- * This singleton class is responsible for managing the application's configurations.
- * 
+ *
+ * Manages the loading and retrieval of configurations using the convict library.
+ * This class follows the Singleton pattern to ensure only one instance exists.
+ * It supports dynamic loading of configurations for various integrations, allowing
+ * the application to be easily extended with new services.
+ *
  * Key Features:
- * - **Dynamic Configuration Loading**: Configurations are dynamically loaded from integration-specific modules, 
- *   allowing for the seamless addition of new integrations without modifying the core codebase. This makes the 
- *   system highly modular and scalable.
- * 
- * - **Centralized Management**: All configurations are managed in a central location, accessed through the 
- *   `getConfig` method. This ensures consistency across the application.
- * 
- * - **Error Handling**: The class includes mechanisms to validate and handle errors in configurations, providing 
- *   detailed logs when configurations fail to load or are missing.
- * 
- * - **Extensibility**: New integrations can be added by simply creating a new directory with the necessary 
- *   configuration files, making the system easy to extend.
- * 
+ * - **Singleton Pattern**: Ensures a single instance of ConfigurationManager is used throughout the application.
+ * - **Dynamic Configuration Loading**: Loads configurations from the `config/` directory dynamically.
+ * - **Configuration Retrieval**: Provides a method to retrieve configurations by name, with validation and logging.
+ *
  * Usage:
- * - Retrieve configurations by name using `getConfig(configName: string)`.
- * - Ensure configurations are loaded at the start using `loadConfig()` method.
+ * - Use `getConfig(configName: string)` to retrieve a specific configuration object.
+ * - Ensure configurations are loaded before accessing them.
  */
-export default class ConfigurationManager {
-    private static instance: ConfigurationManager; // Singleton instance
-    private configs: Record<string, convict.Config<any>> | null = null; // Stores integration configurations
+export class ConfigurationManager {
+    private static instance: ConfigurationManager;
+    private configs: Record<string, convict.Config<any>> | null = null;
 
-    /**
-     * Private constructor to enforce singleton pattern.
-     * Initializes the base configurations and logs the current environment.
-     */
-    private constructor() {
-        // Validate and load base configuration using convict schema
-        schema.validate({ allowed: 'strict' });
-
-        // Debug the current environment setting
-        const currentEnv = schema.get('NODE_ENV');
-        debug(`ConfigurationManager initialized in ${currentEnv} environment`);
-        this.loadConfig();
-    }
+    // Private constructor to enforce singleton pattern
+    private constructor() {}
 
     /**
      * Retrieves the singleton instance of ConfigurationManager.
-     * If the instance does not exist, it is created.
      *
-     * @returns The singleton instance of ConfigurationManager.
+     * @returns {ConfigurationManager} The singleton instance.
      */
     public static getInstance(): ConfigurationManager {
         if (!ConfigurationManager.instance) {
             ConfigurationManager.instance = new ConfigurationManager();
-            debug('ConfigurationManager instance created');
         }
         return ConfigurationManager.instance;
     }
 
     /**
-     * Loads the integration-specific configurations.
-     * This method should be called only once to initialize the configurations.
-     * 
-     * Guards against re-loading if configurations are already loaded.
+     * Loads configurations from the `config/` directory based on the provided integration names.
+     *
+     * @param {string[]} integrationNames - The names of the integrations to load configurations for.
      */
-    public loadConfig(): void {
-        if (this.configs) {
-            debug('Configurations already loaded, skipping reload.');
-            return;
-        }
+    public loadConfigurations(integrationNames: string[]): void {
+        this.configs = {};
 
-        // Load configurations from integrations
-        this.configs = loadIntegrationConfigs();
-
-        // Add specific configurations
-        this.configs['message'] = messageConfig;
-        this.configs['llm'] = llmConfig;
-
-        // Debugging: List all loaded configuration keys
-        if (this.configs) {
-            const loadedConfigs = Object.keys(this.configs);
-            debug(`Loaded configurations: ${loadedConfigs.join(', ')}`);
-        } else {
-            debug('No configurations were loaded.');
-        }
-
-        debug('Integration configurations loaded successfully');
+        integrationNames.forEach((integrationName) => {
+            const configFilePath = path.resolve(__dirname, `../integrations/${integrationName}/config/${integrationName}Config.json`);
+            if (fs.existsSync(configFilePath)) {
+                try {
+                    const config = convict(require(configFilePath));
+                    config.validate({ allowed: 'strict' });
+                    this.configs![integrationName] = config;
+                    debug(`Configuration '${integrationName}' loaded successfully.`);
+                } catch (error: any) {
+                    debug(`Error loading configuration '${integrationName}':`, error);
+                }
+            } else {
+                debug(`Configuration file for '${integrationName}' not found at '${configFilePath}'.`);
+            }
+        });
     }
 
     /**
-     * Retrieves a specific configuration by name.
+     * Retrieves a configuration by name.
      *
-     * @param configName - The name of the configuration to retrieve.
-     * @returns The requested configuration or null if not found.
+     * @param {string} configName - The name of the configuration to retrieve.
+     * @returns {convict.Config<any> | null} The configuration object, or null if not found.
      */
     public getConfig(configName: string): convict.Config<any> | null {
         if (!this.configs) {
-            debug(`Attempted to access config '${configName}' before configurations were loaded`);
+            debug('No configurations loaded. Ensure loadConfigurations is called before accessing configurations.');
             return null;
         }
 
         const config = this.configs[configName];
-        if (config) {
-            debug(`Configuration '${configName}' retrieved successfully`);
-        } else {
-            debug(`Configuration '${configName}' not found`);
+
+        if (!config) {
+            debug(`Configuration '${configName}' not found.`);
+            return null;
         }
-        
-        return config || null;
+
+        // Debug the structure of the configuration
+        debug(`Configuration '${configName}' structure:`, config);
+
+        if (typeof config.get !== 'function') {
+            debug(`Invalid configuration: '${configName}' does not have a 'get' method.`);
+            return null;
+        }
+
+        return config;
     }
 }
