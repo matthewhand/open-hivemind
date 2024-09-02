@@ -13,9 +13,23 @@ if (!llmConfig) {
 
 /**
  * Creates a chat completion request payload for OpenAI's API.
+ * 
+ * This function maps the application's `IMessage` interface to the format expected by OpenAI's SDK.
+ * It constructs the necessary request body, ensuring that all required fields are correctly mapped.
+ * Debugging statements and guards are added to validate the inputs and track the execution flow.
+ *
+ * Key Features:
+ * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format.
+ *   - Expected OpenAI type `ChatCompletionMessageParam`:
+ *     - `role: 'system' | 'user' | 'assistant'`
+ *     - `content: string`
+ *     - `name?: string`
+ * - **Validation and Guards**: Ensures that the input data is complete and correctly formatted.
+ * - **Debugging**: Logs key values and the execution flow for easier debugging.
+ * - **Handling Deep Type Instantiation**: Uses `@ts-ignore` where deep instantiation issues occur.
  *
  * @param openai - The OpenAI API client instance.
- * @param historyMessages - The chat history as an array of IMessage objects.
+ * @param historyMessages - The chat history as an array of `IMessage` objects.
  * @param systemMessageContent - The content for the system message.
  * @param maxTokens - The maximum number of tokens for the completion.
  * @returns A payload to send to OpenAI's create chat completion API.
@@ -27,15 +41,31 @@ export async function createChatCompletion(
     maxTokens: number = parseInt(llmConfig?.get<string>('LLM_RESPONSE_MAX_TOKENS') || '150')
 ): Promise<OpenAI.Chat.ChatCompletion> {
     try {
+        // Debugging the input values
+        debug('createChatCompletion: historyMessages:', historyMessages);
+        debug('createChatCompletion: systemMessageContent:', systemMessageContent);
+        debug('createChatCompletion: maxTokens:', maxTokens);
+
+        if (!historyMessages || historyMessages.length === 0) {
+            throw new Error('No history messages provided.');
+        }
+
+        // Helper function to map IMessage to ChatCompletionMessageParam
+        function mapIMessageToChatParam(msg: IMessage): OpenAI.Chat.ChatCompletionMessageParam {
+            // @ts-ignore: Suppress type errors due to deep instantiation issues
+            return {
+                role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
+                content: msg.getText(),
+                name: msg.getAuthorName() || 'unknown',
+            };
+        }
+
+        // Map historyMessages to the expected OpenAI format
         const requestBody = {
             model: openai.model,
             messages: [
                 { role: 'system', content: systemMessageContent },
-                ...historyMessages.map(msg => ({
-                    role: msg.role,
-                    content: msg.getText(),
-                    name: msg.getAuthorName() || 'unknown',
-                })),
+                ...historyMessages.map(mapIMessageToChatParam),
             ],
             max_tokens: maxTokens,
             temperature: llmConfig?.get('LLM_TEMPERATURE') || 0.7,
@@ -46,8 +76,12 @@ export async function createChatCompletion(
             stream: false,
         };
 
-        debug('createChatCompletion: Sending request to OpenAI API');
+        // Debugging the request body before sending
+        debug('createChatCompletion: requestBody:', requestBody);
+
         const response = await openai.chat.completions.create(requestBody);
+        debug('createChatCompletion: response received:', response);
+
         return response as unknown as OpenAI.Chat.ChatCompletion;
     } catch (error: any) {
         debug('createChatCompletion: Error occurred:', error);

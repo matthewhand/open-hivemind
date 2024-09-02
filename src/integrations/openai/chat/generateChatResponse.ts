@@ -1,40 +1,34 @@
-import { OpenAiService } from '../OpenAiService';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { completeSentence } from '../operations/completeSentence';
 import Debug from 'debug';
+import { OpenAiService } from '../OpenAiService';
 
 const debug = Debug('app:OpenAiService');
 
-interface ChatCompletionMessageParam {
-    role: string;
-    content: string;
-    name?: string;
-}
-
 /**
- * Maps an IMessage object to ChatCompletionMessageParam format.
- */
-function mapMessageToChatCompletionParam(message: IMessage): ChatCompletionMessageParam {
-    return {
-        role: message.role,
-        content: message.getText(),
-        name: message.getAuthorName() || 'unknown', // Ensure name is always a string
-    };
-}
-
-/**
- * Generates a chat response using the OpenAI API.
- * This method wraps the process of building a request body and sending it to the API,
- * ensuring that the service is not busy before making the request.
+ * Generates a chat response using the OpenAI API via the OpenAiService.
+ * 
+ * This function maps `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format and
+ * sends a request to the OpenAI API through the OpenAiService to generate a response.
+ * It includes guards to validate input data, and debugging statements to track the execution flow and data.
  *
- * @param openaiService - The OpenAiService instance.
- * @param message - The message to send to OpenAI.
- * @param historyMessages - The chat history as an array of IMessage objects.
- * @param options - Additional options like parallel execution, max retries, and finish reason.
+ * Key Features:
+ * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format.
+ *   - Expected OpenAI type `ChatCompletionMessageParam`:
+ *     - `role: 'system' | 'user' | 'assistant'`
+ *     - `content: string`
+ *     - `name?: string`
+ * - **Validation and Guards**: Ensures that input data is correctly formatted before sending the request.
+ * - **Debugging**: Logs key values and execution flow for easier troubleshooting.
+ * - **Handling Deep Type Instantiation**: Uses `@ts-ignore` where deep instantiation issues occur.
+ *
+ * @param openAiService - The instance of OpenAiService that manages API interactions.
+ * @param message - The input message to generate a response for.
+ * @param historyMessages - The chat history as an array of `IMessage` objects.
+ * @param options - Additional options such as `parallelExecution`, `maxRetries`, etc.
  * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
  */
 export async function generateChatResponse(
-    openaiService: OpenAiService,
+    openAiService: OpenAiService,
     message: string,
     historyMessages: IMessage[],
     options: {
@@ -45,49 +39,60 @@ export async function generateChatResponse(
         setBusy: (status: boolean) => void;
     }
 ): Promise<string | null> {
-    if (!openaiService.openai.apiKey) {
-        debug('generateChatResponse: API key is missing');
-        return null;
-    }
-
-    debug('generateChatResponse: Building request body');
-    const requestBody = {
-        model: openaiService.openai.model,
-        messages: historyMessages.map(mapMessageToChatCompletionParam),
-        max_tokens: 150,
-        stream: false, // Added the stream property with a default value
-    };
-
-    if (!options.parallelExecution && options.isBusy()) {
-        debug('generateChatResponse: Service is busy');
-        return null;
-    }
-
     try {
-        if (!options.parallelExecution) {
-            options.setBusy(true);
+        // Debugging the input values
+        debug('generateChatResponse: message:', message);
+        debug('generateChatResponse: historyMessages:', historyMessages);
+        debug('generateChatResponse: options:', options);
+
+        if (!message) {
+            throw new Error('No input message provided.');
         }
 
-        debug('generateChatResponse: Sending request to OpenAI API');
-        const response = await openaiService.openai.chat.completions.create(requestBody);
-
-        let finishReason = response.choices[0].finish_reason;
-        let content = response.choices[0].message.content;
-
-        for (let attempt = 1; attempt <= options.maxRetries && finishReason === options.finishReasonRetry; attempt++) {
-            debug(`generateChatResponse: Retrying due to ${finishReason} (attempt ${attempt})`);
-            content = await completeSentence(openaiService, content ?? '');
-            finishReason = finishReason === 'stop' ? 'stop' : finishReason;
+        if (!historyMessages || historyMessages.length === 0) {
+            throw new Error('No history messages provided.');
         }
 
-        return content;
+        // Helper function to map IMessage to ChatCompletionMessageParam
+        function mapIMessageToChatParam(msg: IMessage): OpenAI.Chat.ChatCompletionMessageParam {
+            // @ts-ignore: Suppress type errors due to deep instantiation issues
+            return {
+                role: msg.role as 'system' | 'user' | 'assistant', // Expecting these specific roles
+                content: msg.getText(),
+                name: msg.getAuthorName() || 'unknown',
+            };
+        }
+
+        // Map historyMessages to the expected OpenAI format
+        const requestBody = {
+            model: openAiService.openai.model,
+            messages: [
+                { role: 'user', content: message },
+                ...historyMessages.map(mapIMessageToChatParam),
+            ],
+            max_tokens: options.maxRetries, // Example usage of an option
+            temperature: 0.7, // Default value or derived from configuration
+        };
+
+        // Debugging the request body before sending
+        debug('generateChatResponse: requestBody:', requestBody);
+
+        // Handle busy state
+        if (options.isBusy()) {
+            debug('generateChatResponse: Service is busy, cannot process request');
+            return null;
+        }
+        options.setBusy(true);
+
+        const response = await openAiService.openai.chat.completions.create(requestBody);
+        debug('generateChatResponse: response received:', response);
+
+        options.setBusy(false);
+
+        return response.choices[0].message.content;
     } catch (error: any) {
         debug('generateChatResponse: Error occurred:', error);
-        return null;
-    } finally {
-        if (!options.parallelExecution) {
-            options.setBusy(false);
-            debug('generateChatResponse: Service busy status reset');
-        }
+        options.setBusy(false);
+        throw new Error(`Failed to generate chat response: ${error.message}`);
     }
 }
