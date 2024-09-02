@@ -50,9 +50,9 @@ export async function createChatCompletion(
             throw new Error('No history messages provided.');
         }
 
-        // Use the new conversion function
+        // Constructing the request body
         const requestBody = {
-            model: openai.model,
+            model: openai.models.list(), // Fixed to correctly reference available models
             messages: [
                 { role: 'system', content: systemMessageContent },
                 ...historyMessages.map(convertIMessageToChatParam),
