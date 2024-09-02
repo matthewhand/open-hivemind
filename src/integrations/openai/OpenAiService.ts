@@ -28,10 +28,20 @@ if (typeof openaiConfig?.get !== 'function') {
  * instance of the service is used throughout the application.
  *
  * Key Features:
- * - Singleton pattern for centralized management
- * - Handles API requests for chat completions
- * - Manages service state, including busy status
- * - Supports generating chat responses with history management
+ * - **Integration with ConfigurationManager**: Relies on the ConfigurationManager class to retrieve 
+ *   dynamic configurations such as API keys and timeouts, ensuring flexibility and adaptability to 
+ *   different environments and integration requirements.
+ *
+ * - **Singleton Pattern**: Ensures that only one instance of the OpenAiService exists, managing 
+ *   the state and interactions with OpenAI's API.
+ *
+ * - **Dynamic Configuration Usage**: Supports the flexible loading and management of configurations 
+ *   at runtime, allowing the service to adapt to various environments without requiring code changes.
+ *
+ * Usage:
+ * - Use `createChatCompletion` to send chat completion requests.
+ * - Use `generateChatResponse` for generating responses with history management.
+ * - Use `listModels` to retrieve available models from OpenAI.
  */
 export class OpenAiService {
     private static instance: OpenAiService; // Singleton instance

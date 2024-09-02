@@ -18,7 +18,7 @@ function mapMessageToChatCompletionParam(message: IMessage): ChatCompletionMessa
     return {
         role: message.role,
         content: message.getText(),
-        name: message.getAuthorName(), // Ensure name is included
+        name: message.getAuthorName() || 'unknown', // Ensure name is always a string
     };
 }
 
@@ -52,9 +52,10 @@ export async function generateChatResponse(
 
     debug('generateChatResponse: Building request body');
     const requestBody = {
-        model: openaiService.openai.model, // Correct the model handling
-        messages: historyMessages.map(mapMessageToChatCompletionParam), // Map messages correctly
+        model: openaiService.openai.model,
+        messages: historyMessages.map(mapMessageToChatCompletionParam),
         max_tokens: 150,
+        stream: false, // Added the stream property with a default value
     };
 
     if (!options.parallelExecution && options.isBusy()) {

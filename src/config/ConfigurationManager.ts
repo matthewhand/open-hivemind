@@ -21,8 +21,24 @@ const schema = convict({
  * ConfigurationManager Class
  * 
  * This singleton class is responsible for managing the application's configurations.
- * It loads configurations from integration-specific modules and validates them using convict.
- * The configurations are accessed through the getConfig method.
+ * 
+ * Key Features:
+ * - **Dynamic Configuration Loading**: Configurations are dynamically loaded from integration-specific modules, 
+ *   allowing for the seamless addition of new integrations without modifying the core codebase. This makes the 
+ *   system highly modular and scalable.
+ * 
+ * - **Centralized Management**: All configurations are managed in a central location, accessed through the 
+ *   `getConfig` method. This ensures consistency across the application.
+ * 
+ * - **Error Handling**: The class includes mechanisms to validate and handle errors in configurations, providing 
+ *   detailed logs when configurations fail to load or are missing.
+ * 
+ * - **Extensibility**: New integrations can be added by simply creating a new directory with the necessary 
+ *   configuration files, making the system easy to extend.
+ * 
+ * Usage:
+ * - Retrieve configurations by name using `getConfig(configName: string)`.
+ * - Ensure configurations are loaded at the start using `loadConfig()` method.
  */
 export default class ConfigurationManager {
     private static instance: ConfigurationManager; // Singleton instance
