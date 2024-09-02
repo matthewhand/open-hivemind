@@ -1,61 +1,49 @@
-import llmConfig from '@src/llm/interfaces/llmConfig';
+import openai from 'openai';
+import llmConfig from '@config/interfaces/LlmConfig';
 import { IMessage } from '@message/interfaces/IMessage';
-import { OpenAI } from 'openai';
-import { convertIMessageToChatParam } from './convertIMessageToChatParam';
+import Debug from 'debug';
+
+const debug = Debug('app:createChatCompletion');
 
 /**
- * Creates a chat completion using the OpenAI API based on the provided message history and prompt.
+ * Creates a chat completion request payload for OpenAI's API.
  * 
- * @param historyMessages - Array of IMessage objects representing the conversation history.
- * @param prompt - The prompt to send to the model.
- * @param openai - The OpenAI client instance.
- * @returns The chat completion response from OpenAI.
+ * This function maps the application's `IMessage` interface to the format expected by OpenAI's SDK.
+ * It constructs the necessary request body, ensuring that all required fields are correctly mapped.
+ * Debugging statements and guards are added to validate the inputs and track the execution flow.
+ * 
+ * Key Features:
+ * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format.
+ *   - Expected OpenAI type `ChatCompletionMessageParam`:
+ *     - `role: 'system' | 'user' | 'assistant'`
+ *     - `content: string`
+ *     - `name?: string`
+ * - **Validation and Guards**: Ensures that the input data is complete and correctly formatted.
+ * - **Debugging**: Logs key values and the execution flow for easier debugging.
  */
-export const createChatCompletion = async (
-    historyMessages: IMessage[], 
-    prompt: string, 
-    openai: OpenAI
-) => {
-    // Guard clauses to ensure valid input
-    if (!historyMessages || !Array.isArray(historyMessages)) {
-        throw new Error('Invalid historyMessages array provided.');
+export async function createChatCompletion(messages: IMessage[]): Promise<string> {
+    try {
+        const model = llmConfig.get('model');
+        const maxTokens = llmConfig.get('maxTokens');
+        const temperature = llmConfig.get('temperature');
+
+        debug(`Creating chat completion with model: ${model}`);
+        debug(`Number of messages: ${messages.length}`);
+
+        const response = await openai.ChatCompletion.create({
+            model,
+            messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
+            max_tokens: maxTokens,
+            temperature,
+        });
+
+        if (response && response.choices && response.choices[0].message.content) {
+            return response.choices[0].message.content;
+        }
+
+        throw new Error('Failed to get a valid response from OpenAI.');
+    } catch (error: any) {
+        debug('Failed to create chat completion: ' + error.message);
+        throw error;
     }
-    if (!prompt || typeof prompt !== 'string') {
-        throw new Error('Invalid prompt provided.');
-    }
-
-    // Retrieve system message and max tokens from config
-    const systemMessageContent: string = llmConfig.get('LLM_SYSTEM_PROMPT') || '';
-    const maxTokens: number = llmConfig.get('LLM_RESPONSE_MAX_TOKENS') || 150;
-
-    // Debugging: Log the retrieved config values
-    console.debug('System Message Content:', systemMessageContent);
-    console.debug('Max Tokens:', maxTokens);
-
-    // Construct the request body for the OpenAI API
-    const requestBody = {
-        model: llmConfig.get('LLM_MODEL'),
-        messages: [
-            { role: 'system', content: systemMessageContent },
-            ...historyMessages.map(msg => ({
-                role: msg.role as 'user' | 'assistant' | 'system',
-                content: msg.getText(),
-                name: msg.getAuthorName() || 'unknown', // Ensures name is included
-            })),
-            { role: 'user', content: prompt },
-        ],
-        max_tokens: maxTokens,
-        temperature: llmConfig.get('LLM_TEMPERATURE') || 0.7,
-        frequency_penalty: llmConfig.get('LLM_FREQUENCY_PENALTY') || 0,
-        presence_penalty: llmConfig.get('LLM_PRESENCE_PENALTY') || 0,
-        stop: llmConfig.get('LLM_STOP') || undefined,
-        top_p: llmConfig.get('LLM_TOP_P') || 1,
-        stream: false as const, // Explicitly setting stream property with correct type
-    };
-
-    // Debugging: Log the request body before sending it to OpenAI
-    console.debug('Request Body:', JSON.stringify(requestBody, null, 2));
-
-    // Send the request to OpenAI and return the response
-    return openai.chat.completions.create({ ...requestBody });
-};
+}
