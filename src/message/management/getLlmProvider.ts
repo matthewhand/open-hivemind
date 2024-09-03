@@ -16,7 +16,8 @@ const debug = Debug('app:getLlmProvider');
  */
 export function getLlmProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const llmConfig = configManager.getConfig("llm");
+  import llmConfig from "@llm/interfaces/llmConfig";
+const llmConfig = "llm");
 
   // Guard: Ensure llmConfig is loaded
   if (!llmConfig) {
