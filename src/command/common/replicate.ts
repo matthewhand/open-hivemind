@@ -1,39 +1,38 @@
-import Debug from 'debug';
 import axios from 'axios';
-import ConfigurationManager from '@config/ConfigurationManager';
+import replicateConfig from '@integrations/replicate/config/replicateConfig';
+import Debug from 'debug';
 
 const debug = Debug('app:replicate');
-const configManager = ConfigurationManager.getInstance();
 
-export async function replicateRequest(input: string): Promise<any> {
-    const replicateConfig = configManager.getConfig('replicateConfig');
-    if (!replicateConfig) {
-        throw new Error('Replicate configuration is not loaded.');
-    }
-
-    // Use simpler type assertions
-    const baseUrl = replicateConfig.get<string>('REPLICATE_BASE_URL') as string;
-    const apiToken = replicateConfig.get<string>('REPLICATE_API_TOKEN') as string;
-    const modelVersion = replicateConfig.get<string>('REPLICATE_MODEL_VERSION') as string;
-    const webhookUrl = configManager.getConfig("webhook")?.get<string>('WEBHOOK_URL') as string;
-
-    if (!baseUrl || !apiToken || !modelVersion) {
-        debug('Missing required configurations for Replicate API');
-        return null;
-    }
-
+/**
+ * Calls the Replicate API to run a model prediction.
+ *
+ * This function interacts with the Replicate API using the provided model version and input data.
+ * It handles the API request and processes the response or errors accordingly.
+ *
+ * Key Features:
+ * - **API Integration**: Interacts with the Replicate API to run model predictions.
+ * - **Error Handling**: Captures and logs errors during the API call.
+ * - **Configuration**: Uses `replicateConfig` for API URL, key, and model version.
+ */
+export async function replicate(inputData: any): Promise<any> {
     try {
-        const response = await axios.post(`${baseUrl}/predictions`, {
+        const apiUrl = replicateConfig.get('REPLICATE_API_URL');
+        const apiKey = replicateConfig.get('REPLICATE_API_KEY');
+        const modelVersion = replicateConfig.get('REPLICATE_MODEL_VERSION');
+
+        const response = await axios.post(`${apiUrl}/v1/predictions`, {
             version: modelVersion,
-            input: { prompt: input },
-            webhook: webhookUrl,
+            input: inputData
         }, {
-            headers: { Authorization: `Token ${apiToken}` }
+            headers: {
+                Authorization: `Token ${apiKey}`
+            }
         });
 
         return response.data;
     } catch (error: any) {
-        debug('Error in replicateRequest:', error);
-        return null;
+        debug(`Failed to call Replicate API: ${error.message}`);
+        throw error;
     }
 }
