@@ -24,7 +24,7 @@
     "@config": "dist/src/config",
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
-    "@integrations/discord": "dist/src/integrations/discord",
+    "@integrations": "dist/src/integrations",
     "@types": "dist/src/types"
   },
   "keywords": [],

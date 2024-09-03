@@ -1,6 +1,7 @@
 import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import Debug from 'debug';
+import llmConfig from "@llm/interfaces/llmConfig";
 
 const debug = Debug('app:getLlmProvider');
 
@@ -16,8 +17,6 @@ const debug = Debug('app:getLlmProvider');
  */
 export function getLlmProvider() {
   const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  import llmConfig from "@llm/interfaces/llmConfig";
-const llmConfig = "llm");
 
   // Guard: Ensure llmConfig is loaded
   if (!llmConfig) {

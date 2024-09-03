@@ -3,7 +3,6 @@ import ConfigurationManager from '@config/ConfigurationManager';
 const configManager = ConfigurationManager.getInstance();
 const messageConfig = configManager.getConfig("message");
 import llmConfig from "@llm/interfaces/llmConfig";
-const llmConfig = "llm");
 
 /**
  * Determines whether a message should be processed based on configuration settings.
