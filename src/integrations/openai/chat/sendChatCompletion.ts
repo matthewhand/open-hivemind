@@ -1,5 +1,5 @@
 import openai from 'openai';
-import llmConfig from '@config/interfaces/LlmConfig';
+import llmConfig from '@llm/interfaces/llmConfig';
 import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
 
