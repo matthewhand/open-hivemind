@@ -7,10 +7,10 @@ const debug = Debug('app:sendChatCompletion');
 
 /**
  * Sends a chat completion request to OpenAI's API.
- * 
+ *
  * This function handles the configuration, retry logic, and sending of a chat completion request. It uses the settings defined
  * in llmConfig, such as the model, retry count, and other parameters. It also manages the API response and any errors.
- * 
+ *
  * Key Features:
  * - **Configuration Handling**: Retrieves settings from llmConfig for controlling the chat completion.
  * - **Retry Logic**: Implements retry logic for incomplete responses or errors.
@@ -18,9 +18,9 @@ const debug = Debug('app:sendChatCompletion');
  */
 export async function sendChatCompletion(messages: IMessage[]): Promise<string> {
     try {
-        const model = llmConfig.get('model');
-        const maxRetries = llmConfig.get('maxRetries');
-        const retryDelay = llmConfig.get('retryDelay');
+        const model = llmConfig.get<string>('LLM_MODEL');
+        const maxRetries = llmConfig.get<number>('LLM_MAX_RETRIES');
+        const retryDelay = llmConfig.get<number>('LLM_RETRY_DELAY');
         
         debug(`Sending chat completion with model: ${model}`);
         debug(`Number of messages: ${messages.length}`);
@@ -32,7 +32,7 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
                     model,
                     messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
                 });
-                if (response && response.choices && response.choices[0].finish_reason !== 'length') {
+                if (response?.choices?.[0]?.finish_reason !== 'length') {
                     return response.choices[0].message.content;
                 }
                 debug(`Retrying due to finish reason: ${response.choices[0].finish_reason}`);
