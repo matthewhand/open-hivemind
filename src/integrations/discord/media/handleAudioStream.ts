@@ -15,6 +15,12 @@ const debug = Debug('app:message:handleAudioStream');
  * Handles the streaming of audio from a Discord voice connection.
  * Processes incoming audio streams, transcribes them, generates a response, and plays it back.
  *
+ * Key Features:
+ * - Streams audio from a Discord connection
+ * - Transcribes the streamed audio using OpenAI
+ * - Generates a response and plays it back in the same voice channel
+ * - Handles errors and logs detailed debug information
+ *
  * @param {Readable} stream - The audio stream to process.
  * @param {VoiceConnection} connection - The Discord voice connection to stream to.
  * @param {IMessage} message - The original message object associated with the stream.
@@ -24,7 +30,7 @@ const debug = Debug('app:message:handleAudioStream');
 export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage, aiService: OpenAiService): Promise<void> => {
     const audioChunks: Buffer[] = [];
     const userId = message.getAuthorId();
-    const audioFilePath = discordConfig.get('DISCORD_AUDIO_FILE_PATH') || 'audio.wav';
+    const audioFilePath = discordConfig.get<string>('DISCORD_AUDIO_FILE_PATH') || 'audio.wav';
 
     debug('handleAudioStream: Initialized for user', { userId });
 
