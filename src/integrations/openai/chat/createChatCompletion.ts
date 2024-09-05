@@ -21,7 +21,7 @@ export async function createChatCompletion(messages: IMessage[]): Promise<string
         debug(`Creating chat completion with model: ${model}`);
         debug(`Number of messages: ${messages.length}`);
 
-        const response = await openai.ChatCompletion.create({
+        const response = await new OpenAI().completions.create({
             model,
             messages: messages.map(convertIMessageToChatParam),
             max_tokens: maxTokens,
