@@ -3,18 +3,9 @@ import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnect
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import ConfigurationManager from '@config/ConfigurationManager';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 
 const debug = Debug('app:playAudioResponse');
-const configManager = ConfigurationManager.getInstance();
-
-// Define explicit type for openaiConfig
-interface OpenAiConfig {
-    OPENAI_BASE_URL?: string;
-    OPENAI_API_KEY?: string;
-}
-
-const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
 
 /**
  * Play Audio Response
@@ -32,7 +23,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         return;
     }
 
-    const narrationEndpointUrl = openaiConfig.OPENAI_BASE_URL;
+    const narrationEndpointUrl = openaiConfig.get('OPENAI_BASE_URL');
 
     if (!narrationEndpointUrl) {
         debug('OPENAI_BASE_URL is not set in the configuration.');
@@ -48,7 +39,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + openaiConfig.OPENAI_API_KEY,
+                'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY'),
             },
         });
 
