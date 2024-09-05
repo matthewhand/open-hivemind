@@ -1,20 +1,12 @@
 import Debug from 'debug';
 import { Client, TextChannel } from 'discord.js';
-import ConfigurationManager from '@config/ConfigurationManager';
+import discordConfig from '@config/interfaces/discordConfig';
 import { fetchChannel } from '@src/integrations/discord/fetchers/fetchChannel';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { fetchMessages } from '@src/integrations/discord/fetchers/fetchMessages';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:setMessageHandler');
-const configManager = ConfigurationManager.getInstance();
-
-// Define explicit type for discordConfig
-interface discordConfig {
-    DISCORD_CLIENT_ID?: string;
-}
-
-const discordConfig = configManager.getConfig('discordConfig') as discordConfig;
 
 /**
  * Set Message Handler
@@ -57,7 +49,7 @@ export function setMessageHandler(
       }
 
       // Guard: Ensure discordConfig is not null
-      if (discordConfig && discordMessage.author.id === discordConfig.DISCORD_CLIENT_ID) {
+      if (discordConfig && discordMessage.author.id === discordConfig.get('DISCORD_CLIENT_ID')) {
         debug('Skipping response to own Message ID: ' + discordMessage.id);
         return;
       }
