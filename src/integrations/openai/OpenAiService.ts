@@ -10,11 +10,12 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 const debug = Debug('app:OpenAiService');
 
 // Log the retrieved configuration objects
-debug('Retrieved openaiConfig:', openaiConfig.getProperties());
-debug('Retrieved llmConfig:', llmConfig.getProperties());
-
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
+}
+
+if (!llmConfig || typeof llmConfig.get !== 'function') {
+    throw new Error('Invalid LLM configuration: expected an object with a get method.');
 }
 
 /**
