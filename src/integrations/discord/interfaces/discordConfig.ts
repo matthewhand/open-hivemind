@@ -3,11 +3,6 @@
  * 
  * Configuration settings specific to the Discord integration.
  * This file uses the Convict library to define and validate configuration options.
- * 
- * Key Features:
- * - **Default Settings**: Provides default values for Discord-related configurations.
- * - **Validation**: Ensures the environment variables are correctly set.
- * - **Extensibility**: Can be extended to include more Discord-specific settings.
  */
 import convict from 'convict';
 
@@ -29,6 +24,12 @@ const discordConfig = convict({
         format: String,
         default: '',
         env: 'DISCORD_GUILD_ID',
+    },
+    DISCORD_AUDIO_FILE_PATH: {
+        doc: 'Path for storing audio files during voice interactions',
+        format: String,
+        default: 'audio.wav',
+        env: 'DISCORD_AUDIO_FILE_PATH',
     }
 });
 

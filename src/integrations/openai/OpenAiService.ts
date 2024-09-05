@@ -48,9 +48,9 @@ export class OpenAiService {
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = llmConfig.get('LLM_PARALLEL_EXECUTION') || false;
-        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
-        this.maxRetries = parseInt(openaiConfig.get('OPENAI_MAX_RETRIES') || '3');
+        this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
+        this.finishReasonRetry = String(openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop');
+        this.maxRetries = parseInt(String(openaiConfig.get('OPENAI_MAX_RETRIES') || '3'));
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -88,14 +88,14 @@ export class OpenAiService {
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
      *
-     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT')!, maxTokens: number = parseInt(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150')
+     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT')!, maxTokens: number = parseInt(String(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150'))
      *
      * @returns {Promise<any>} - The API response.
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT')!,
-        maxTokens: number = parseInt(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150')
+        maxTokens: number = parseInt(String(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150'))
     ): Promise<any> {
         return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens);
     }

@@ -7,6 +7,7 @@ import { transcribeAudio } from './transcribeAudio';
 import { playAudioResponse } from './playAudioResponse';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
 const debug = Debug('app:message:handleAudioStream');
 
@@ -23,6 +24,7 @@ const debug = Debug('app:message:handleAudioStream');
 export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage, aiService: OpenAiService): Promise<void> => {
     const audioChunks: Buffer[] = [];
     const userId = message.getAuthorId();
+    const audioFilePath = discordConfig.get('DISCORD_AUDIO_FILE_PATH') || 'audio.wav';
 
     debug('handleAudioStream: Initialized for user', { userId });
 
@@ -44,7 +46,6 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             }
 
             const wavBuffer = await convertOpusToWav(audioBuffer);
-            const audioFilePath = 'audio.wav';
             fs.writeFileSync(audioFilePath, wavBuffer);
 
             const stats = fs.statSync(audioFilePath);
