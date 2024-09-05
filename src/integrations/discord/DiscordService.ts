@@ -3,7 +3,7 @@ import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-import discordConfig from '@config/interfaces/discordConfig';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
 const log = Debug('app:discord-service');
 
@@ -60,6 +60,7 @@ export class DiscordService {
    */
   public async initialize(token?: string): Promise<void> {
     try {
+      // Retrieve the token from the configuration if not provided
       token = token || discordConfig.get<string>('DISCORD_TOKEN') as string;
 
       if (!token) {
