@@ -61,10 +61,10 @@ export class DiscordService {
   public async initialize(token?: string): Promise<void> {
     try {
       // Retrieve the token from the configuration if not provided
-      token = token || discordConfig.get<string>('DISCORD_TOKEN') as string;
+      token = token || discordConfig.get<string>('DISCORD_BOT_TOKEN');
 
       if (!token) {
-        throw new Error('DISCORD_TOKEN is not set');
+        throw new Error('DISCORD_BOT_TOKEN is not set');
       }
 
       await this.client.login(token);
