@@ -3,7 +3,7 @@ import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-import ConfigurationManager from '@config/ConfigurationManager';
+import discordConfig from '@config/interfaces/discordConfig';
 
 const log = Debug('app:discord-service');
 
@@ -23,13 +23,11 @@ export class DiscordService {
   private client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage) => void) | null = null;
-  private configManager: ConfigurationManager;
 
   // Private constructor to enforce singleton pattern
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
     this.client = initializeClient();
-    this.configManager = ConfigurationManager.getInstance();
     log('Client initialized successfully');
   }
 
@@ -62,12 +60,6 @@ export class DiscordService {
    */
   public async initialize(token?: string): Promise<void> {
     try {
-      const discordConfig = this.configManager.getConfig("discord");
-
-      if (!discordConfig) {
-        throw new Error('Discord configuration is not loaded.');
-      }
-
       token = token || discordConfig.get<string>('DISCORD_TOKEN') as string;
 
       if (!token) {

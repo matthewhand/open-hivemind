@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { OpenAI, ClientOptions, ChatCompletion } from 'openai';
+import { OpenAI, ClientOptions } from 'openai';
 import openaiConfig from '@integrations/openai/config/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { generateChatResponse } from './chat/generateChatResponse';
@@ -90,13 +90,13 @@ export class OpenAiService {
      *
      * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT'), maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')
      *
-     * @returns {Promise<ChatCompletion>} - The API response.
+     * @returns {Promise<any>} - The API response.
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT'),
         maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')
-    ): Promise<ChatCompletion> {
+    ): Promise<any> {
         return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens);
     }
 
