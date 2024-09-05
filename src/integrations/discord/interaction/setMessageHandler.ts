@@ -10,11 +10,11 @@ const debug = Debug('app:setMessageHandler');
 const configManager = ConfigurationManager.getInstance();
 
 // Define explicit type for discordConfig
-interface DiscordConfig {
+interface discordConfig {
     DISCORD_CLIENT_ID?: string;
 }
 
-const discordConfig = configManager.getConfig('discordConfig') as DiscordConfig;
+const discordConfig = configManager.getConfig('discordConfig') as discordConfig;
 
 /**
  * Set Message Handler

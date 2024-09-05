@@ -1,6 +1,6 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import { Client, GuildMember, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import DiscordConfig from '@config/interfaces/DiscordConfig';
+import discordConfig from '@config/interfaces/discordConfig';
 import path from 'path';
 import Debug from 'debug';
 
@@ -10,7 +10,7 @@ const debug = Debug('app:playAudioResponse');
  * Plays an audio response in a Discord voice channel.
  * 
  * This function handles the connection to a Discord voice channel and plays the specified audio file. It uses settings
- * from DiscordConfig to locate the audio files and manage the playback. Detailed debugging and error handling are included
+ * from discordConfig to locate the audio files and manage the playback. Detailed debugging and error handling are included
  * to ensure reliable playback and to handle any issues that arise.
  * 
  * Key Features:
@@ -25,7 +25,7 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
             throw new Error('User is not in a voice channel.');
         }
 
-        const audioFilePath = path.join(DiscordConfig.get('AUDIO_DIRECTORY'), fileName);
+        const audioFilePath = path.join(discordConfig.get('AUDIO_DIRECTORY'), fileName);
         debug(`Playing audio file: ${audioFilePath}`);
 
         const connection = joinVoiceChannel({

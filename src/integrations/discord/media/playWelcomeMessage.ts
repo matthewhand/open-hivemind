@@ -13,7 +13,7 @@ const defaultDir = './data/';
 const defaultFileName = 'welcome.mp3';
 
 // Define explicit types for discordConfig and openaiConfig
-interface DiscordConfig {
+interface discordConfig {
     WELCOME_AUDIO_DIR?: string;
     WELCOME_AUDIO_FILENAME?: string;
     DISCORD_WELCOME_MESSAGE?: string;
@@ -25,7 +25,7 @@ interface OpenAiConfig {
     OPENAI_VOICE?: string;
 }
 
-const discordConfig = configManager.getConfig('discordConfig') as DiscordConfig;
+const discordConfig = configManager.getConfig('discordConfig') as discordConfig;
 const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
 
 const audioDir = discordConfig.WELCOME_AUDIO_DIR || defaultDir;
