@@ -51,7 +51,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
                 return;
             }
 
-            const wavBuffer = await convertOpusToWav(audioBuffer);
+            const wavBuffer = await convertOpusToWav(audioBuffer, 'pcm'); // Fix: Passing correct format argument
             fs.writeFileSync(audioFilePath, wavBuffer);
 
             const stats = fs.statSync(audioFilePath);
