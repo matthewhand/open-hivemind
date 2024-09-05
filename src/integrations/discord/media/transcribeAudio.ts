@@ -24,7 +24,7 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
         debug('Sending audio for transcription...');
 
         // Mock of the actual transcription process
-        const response = await someTranscriptionService({
+        const response = await convertOpusToWav({
             model,
             apiKey,
             audioBuffer
