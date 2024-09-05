@@ -58,8 +58,13 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
 
         player.on('error', (error) => {
             debug('Error playing audio response: ' + error.message);
+            debug(error.stack); // Improvement: Added stack trace logging for better debugging
         });
     } catch (error: any) {
+        if (error.response?.status === 408) {
+            debug('Request timed out. Retrying...'); // Improvement: Added timeout handling
+            return playAudioResponse(connection, text);
+        }
         debug('Error generating or playing audio response: ' + (error instanceof Error ? error.message : String(error)));
     }
 }

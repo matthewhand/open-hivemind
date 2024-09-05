@@ -48,6 +48,10 @@ export async function sendCompletions(prompt: string): Promise<any> {
             await new Promise(res => setTimeout(res, 5000)); // Improvement: rate-limiting retry
             return sendCompletions(prompt);
         }
+        if (error.response?.status === 408) {
+            debug('Request timed out. Retrying...'); // Improvement: handle timeouts
+            return sendCompletions(prompt);
+        }
         throw new Error(`Failed to send completion request: ${error.message}`);
     }
 }

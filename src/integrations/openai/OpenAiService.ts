@@ -32,6 +32,7 @@ export class OpenAiService {
     private readonly parallelExecution: boolean; // Configurable option for parallel execution
     private readonly finishReasonRetry: string; // Configurable finish reason for retry
     private readonly maxRetries: number; // Configurable maximum retries
+    private readonly requestTimeout: number = parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') || '30000'); // Improvement: Timeout configuration
 
     // Private constructor to enforce singleton pattern
     private constructor() {
@@ -39,7 +40,7 @@ export class OpenAiService {
             apiKey: openaiConfig.get('OPENAI_API_KEY')!,
             organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
             baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') || '30000'),
+            timeout: this.requestTimeout, // Fix: Unified timeout handling
         };
 
         this.openai = new OpenAI(options);
