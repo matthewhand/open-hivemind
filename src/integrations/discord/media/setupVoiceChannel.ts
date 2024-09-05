@@ -1,9 +1,8 @@
 import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
 import Debug from 'debug';
-import ConfigurationManager from '@config/ConfigurationManager';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
 const debug = Debug('app:setupVoiceChannel');
-const configManager = ConfigurationManager.getInstance();
 
 /**
  * Setup Voice Channel
