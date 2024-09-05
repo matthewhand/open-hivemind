@@ -52,6 +52,7 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
     const model = openaiConfig.get<string>('OPENAI_MODEL') || 'text-davinci-003';
     let voice: AllowedVoice = 'fable';
 
+    // Use OPENAI_VOICE if it exists and is valid
     if (openaiConfig.get<string>('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get<string>('OPENAI_VOICE'))) {
         voice = openaiConfig.get<string>('OPENAI_VOICE');
     }
