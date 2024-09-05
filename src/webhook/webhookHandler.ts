@@ -31,6 +31,11 @@ client.login(DISCORD_TOKEN).catch(error => {
  * 
  * This server listens for webhook events and processes them accordingly.
  * It integrates with Discord channels to send notifications based on webhook data.
+ * 
+ * Key Features:
+ * - Listens for webhook events
+ * - Sends notifications to Discord channels
+ * - Includes error handling and logging
  *
  * @param port - The port on which the server will listen.
  */

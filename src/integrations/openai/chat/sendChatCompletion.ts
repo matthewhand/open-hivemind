@@ -28,7 +28,7 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
         let response;
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                response = await openai.ChatCompletion.create({
+                response = await openai.Completion.create({
                     model,
                     messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
                 });
@@ -39,6 +39,7 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
             } catch (error: any) {
                 debug(`Attempt ${attempt} failed with error: ${error.message}`);
                 if (attempt === maxRetries) throw new Error('Max retries reached, unable to complete request.');
+                debug(`Retrying in ${retryDelay} ms...`);
                 await new Promise(res => setTimeout(res, retryDelay));
             }
         }

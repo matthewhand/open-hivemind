@@ -2,6 +2,7 @@ import openai from 'openai';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
+import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 
 const debug = Debug('app:createChatCompletion');
 
@@ -9,15 +10,11 @@ const debug = Debug('app:createChatCompletion');
  * Creates a chat completion request payload for OpenAI's API.
  * 
  * This function maps the application's `IMessage` interface to the format expected by OpenAI's SDK.
- * It constructs the necessary request body, ensuring that all required fields are correctly mapped.
+ * It constructs the necessary request body using `convertIMessageToChatParam`.
  * Debugging statements and guards are added to validate the inputs and track the execution flow.
  * 
  * Key Features:
- * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format.
- *   - Expected OpenAI type `ChatCompletionMessageParam`:
- *     - `role: 'system' | 'user' | 'assistant'`
- *     - `content: string`
- *     - `name?: string`
+ * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` using a separate utility.
  * - **Validation and Guards**: Ensures that the input data is complete and correctly formatted.
  * - **Debugging**: Logs key values and the execution flow for easier debugging.
  */
@@ -32,7 +29,7 @@ export async function createChatCompletion(messages: IMessage[]): Promise<string
 
         const response = await openai.ChatCompletion.create({
             model,
-            messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
+            messages: messages.map(convertIMessageToChatParam),
             max_tokens: maxTokens,
             temperature,
         });
