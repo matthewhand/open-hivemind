@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import axios from 'axios';
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:OpenAiService');
 
@@ -33,6 +33,7 @@ export async function generateCompletion(prompt: string): Promise<string> {
         return response.data.choices[0].text.trim();
     } catch (error: any) {
         debug('Error generating completion:', error);
+        debug(error.stack); // Improvement: log stack trace for debugging
         throw new Error(`Failed to generate completion: ${error.message}`);
     }
 }
