@@ -25,7 +25,8 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
             throw new Error('User is not in a voice channel.');
         }
 
-        const audioFilePath = path.join(discordConfig.get('AUDIO_DIRECTORY'), fileName);
+        const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
+        const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
         debug(`Playing audio file: ${audioFilePath}`);
 
         const connection = joinVoiceChannel({

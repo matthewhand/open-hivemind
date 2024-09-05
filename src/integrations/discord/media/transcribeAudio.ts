@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import axios from 'axios';
+import fs from 'fs'; // Fix: Import fs module
 
 const debug = Debug('app:transcribeAudio');
 
@@ -19,12 +20,12 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
         const apiKey = openaiConfig.get('OPENAI_API_KEY');
 
         if (!apiKey) {
-            throw new Error('API key for OpenAI is missing.');
+            throw new Error('API key for OpenAI is missing.'); // Improvement: Add guard for API key
         }
 
         debug('Sending audio for transcription...', { model, audioFilePath }); // Improvement: Log model and file path
 
-        const audioBuffer = fs.readFileSync(audioFilePath); // Improvement: Reading file as buffer
+        const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Reading file as buffer
         const response = await axios.post(
             openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
             {
