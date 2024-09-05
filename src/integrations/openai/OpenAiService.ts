@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { OpenAI, ClientOptions } from 'openai';
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { generateChatResponse } from './chat/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
@@ -24,12 +24,6 @@ if (!llmConfig || typeof llmConfig.get !== 'function') {
  * This service manages interactions with OpenAI's API, including creating chat completions
  * and listing available models. It is implemented as a singleton to ensure that only one
  * instance of the service is used throughout the application.
- *
- * Key Features:
- * - Singleton pattern for centralized management
- * - Handles API requests for chat completions
- * - Manages service state, including busy status
- * - Supports generating chat responses with history management
  */
 export class OpenAiService {
     private static instance: OpenAiService; // Singleton instance
