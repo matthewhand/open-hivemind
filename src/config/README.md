@@ -7,7 +7,7 @@ The `ConfigurationManager` class serves as a centralized manager for environment
 - **ReplicateConfig**: Manages Replicate API settings.
 - **perplexityConfig**: Manages Perplexity AI settings.
 - **N8NConfig**: Manages N8N API settings.
-- **FlowiseConfig**: Manages Flowise API settings.
+- **flowiseConfig**: Manages Flowise API settings.
 - **discordConfig**: Handles Discord-related settings.
 
 ## Dynamic Loading
