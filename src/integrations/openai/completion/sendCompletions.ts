@@ -1,16 +1,11 @@
-import ConfigurationManager from '@config/ConfigurationManager';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 import { OpenAI } from 'openai';
-
-const configManager = ConfigurationManager.getInstance();
-const openaiConfig = configManager.getConfig('openai');
 
 if (!openaiConfig) {
     throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
 }
 
 const openai = new OpenAI({
-    // @ts-ignore: Suppressing deep type instantiation issues
-
     apiKey: openaiConfig.get('OPENAI_API_KEY'),
     baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
     organization: openaiConfig.get('OPENAI_ORGANIZATION'),
@@ -29,7 +24,6 @@ export async function sendCompletions(prompt: string): Promise<any> {
     }
 
     try {
-        // @ts-ignore: Suppressing deep instantiation issue
         const response = await openai.completions.create({
             model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
             prompt,
