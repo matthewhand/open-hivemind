@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -49,6 +49,7 @@ export async function sendFollowUpRequest(message: string): Promise<any> {
         return response;
     } catch (error: any) {
         console.error('Error sending follow-up request:', error);
+        debug(error.stack);  // Improvement: log stack trace for better debugging
         return null;
     }
 }
