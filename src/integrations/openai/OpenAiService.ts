@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { OpenAI, ClientOptions } from 'openai';
+import { OpenAI, ClientOptions, ChatCompletion } from 'openai';
 import openaiConfig from '@integrations/openai/config/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { generateChatResponse } from './chat/generateChatResponse';
@@ -10,8 +10,8 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 const debug = Debug('app:OpenAiService');
 
 // Log the retrieved configuration objects
-debug('Retrieved openaiConfig:', openaiConfig);
-debug('Retrieved llmConfig:', llmConfig);
+debug('Retrieved openaiConfig:', openaiConfig.getProperties());
+debug('Retrieved llmConfig:', llmConfig.getProperties());
 
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
@@ -40,23 +40,17 @@ export class OpenAiService {
 
     // Private constructor to enforce singleton pattern
     private constructor() {
-        if (!openaiConfig) {
-            throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
-        }
-
         const options: ClientOptions = {
-            apiKey: openaiConfig.get<string>('OPENAI_API_KEY')!,
-            organization: openaiConfig.get<string>('OPENAI_ORGANIZATION') || undefined,
-            baseURL: openaiConfig.get<string>('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') ?? '30000'),
+            apiKey: openaiConfig.get('OPENAI_API_KEY'),
+            organization: openaiConfig.get('OPENAI_ORGANIZATION'),
+            baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
+            timeout: openaiConfig.get('OPENAI_TIMEOUT'),
         };
 
         this.openai = new OpenAI(options);
-        // @ts-ignore: Suppressing deep type instantiation issues
-        this.parallelExecution = Boolean(llmConfig?.get<boolean>('LLM_PARALLEL_EXECUTION')) || false;
-        // Ensuring finishReasonRetry is a string
-        this.finishReasonRetry = openaiConfig.get<string>('OPENAI_FINISH_REASON_RETRY') || 'stop';
-        this.maxRetries = parseInt(openaiConfig.get<string>('OPENAI_MAX_RETRIES') ?? '3');
+        this.parallelExecution = llmConfig.get('LLM_PARALLEL_EXECUTION');
+        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = openaiConfig.get('OPENAI_MAX_RETRIES');
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -94,15 +88,15 @@ export class OpenAiService {
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
      *
-     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '', maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
+     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT'), maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')
      *
-     * @returns {Promise<OpenAI.Chat.ChatCompletion>} - The API response.
+     * @returns {Promise<ChatCompletion>} - The API response.
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = openaiConfig?.get<string>('OPENAI_SYSTEM_PROMPT') || '',
-        maxTokens: number = parseInt(openaiConfig?.get<string>('OPENAI_RESPONSE_MAX_TOKENS') || '150')
-    ): Promise<OpenAI.Chat.ChatCompletion> {
+        systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT'),
+        maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')
+    ): Promise<ChatCompletion> {
         return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens);
     }
 
