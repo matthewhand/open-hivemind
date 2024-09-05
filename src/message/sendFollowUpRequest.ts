@@ -1,15 +1,14 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
-import ConfigurationManager from '@config/ConfigurationManager';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
-const configManager = ConfigurationManager.getInstance();
 
 /**
  * Sends a follow-up request to the OpenAI service using the official client.
  * 
  * This function sends a request to the OpenAI API, passing the provided message as input.
- * It uses the configured API key, model, and other settings from the ConfigurationManager.
+ * It uses the configured API key, model, and other settings from convict config.
  * 
  * Guards are implemented to handle cases where critical configuration values are missing.
  * Debugging logs are included for better traceability of the request process.
@@ -18,8 +17,6 @@ const configManager = ConfigurationManager.getInstance();
  * @returns {Promise<any>} - The response data from the OpenAI API, or null if an error occurred.
  */
 export async function sendFollowUpRequest(message: string): Promise<any> {
-    const openaiConfig = configManager.getConfig("openai");
-
     // Guard: Ensure openaiConfig is loaded
     if (!openaiConfig) {
         console.error('OpenAI configuration is not loaded.');
@@ -27,8 +24,8 @@ export async function sendFollowUpRequest(message: string): Promise<any> {
     }
 
     // Simplified type assertions
-    const API_KEY: string = openaiConfig.get<string>('OPENAI_API_KEY');
-    const OPENAI_MODEL: string = openaiConfig.get<string>('OPENAI_MODEL');
+    const API_KEY: string = openaiConfig.get('OPENAI_API_KEY');
+    const OPENAI_MODEL: string = openaiConfig.get('OPENAI_MODEL');
 
     debug('Sending follow-up request with the following configuration:');
     debug('OPENAI_MODEL:', OPENAI_MODEL);
