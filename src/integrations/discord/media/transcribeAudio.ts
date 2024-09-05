@@ -8,11 +8,16 @@ const debug = Debug('app:transcribeAudio');
 /**
  * Transcribe Audio
  *
- * This function handles the transcription of audio files using the OpenAI API. It reads the audio file, sends it to the API,
- * and returns the transcribed text. The function also handles errors and logs detailed information for troubleshooting.
+ * This function transcribes audio files using OpenAI's API. It sends the audio file for processing and retrieves
+ * the transcription. The function logs all steps and handles any errors, including missing or incomplete configurations.
+ *
+ * Key Features:
+ * - Sends audio files to OpenAI for transcription
+ * - Handles errors and logs debug information
+ * - Uses configurable API key and model
  *
  * @param {string} audioFilePath - The path to the audio file to be transcribed.
- * @returns {Promise<string>} The transcribed text.
+ * @returns {Promise<string>} - The transcribed text from OpenAI.
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
