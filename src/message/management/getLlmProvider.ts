@@ -1,7 +1,6 @@
-import ConfigurationManager from '@config/ConfigurationManager';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
 import Debug from 'debug';
-import llmConfig from "@llm/interfaces/llmConfig";
+import llmConfig from '@llm/interfaces/llmConfig';
 
 const debug = Debug('app:getLlmProvider');
 
@@ -9,15 +8,13 @@ const debug = Debug('app:getLlmProvider');
  * Get LLM Provider
  *
  * Determines and returns the appropriate LLM provider singleton based on the
- * configuration specified in the ConfigurationManager. Supports multiple LLM
+ * configuration specified in the convict-based llmConfig. Supports multiple LLM
  * providers, such as OpenAI.
  *
  * @returns The singleton instance of the configured LLM provider.
  * @throws An error if the configured LLM provider is unsupported.
  */
 export function getLlmProvider() {
-  const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-
   // Guard: Ensure llmConfig is loaded
   if (!llmConfig) {
     throw new Error('LLM configuration is not loaded.');
