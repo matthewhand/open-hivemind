@@ -1,9 +1,8 @@
 import Debug from 'debug';
-import ConfigurationManager from '@config/ConfigurationManager';
 import axios from 'axios';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 
 const debug = Debug('app:OpenAiService');
-const configManager = ConfigurationManager.getInstance();
 
 /**
  * Generates a completion using the OpenAI API.
@@ -14,21 +13,19 @@ const configManager = ConfigurationManager.getInstance();
  * @returns {Promise<string>} - The generated completion from the API.
  */
 export async function generateCompletion(prompt: string): Promise<string> {
-    const openaiConfig = configManager.getConfig('openaiConfig') as unknown as { OPENAI_API_KEY: string; OPENAI_MODEL: string; OPENAI_MAX_TOKENS: number; };
-
-    if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
+    if (!openaiConfig || !openaiConfig.get('OPENAI_API_KEY')) {
         throw new Error('OpenAI configuration is missing or incomplete.');
     }
 
     try {
         const response = await axios.post('https://api.openai.com/v1/completions', {
-            model: openaiConfig.OPENAI_MODEL || 'gpt-4o-mini',
+            model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
             prompt,
-            max_tokens: openaiConfig.OPENAI_MAX_TOKENS || 100,
+            max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 100,
             temperature: 0.7,
         }, {
             headers: {
-                'Authorization': `Bearer ${openaiConfig.OPENAI_API_KEY}`,
+                'Authorization': `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
             },
         });
 
