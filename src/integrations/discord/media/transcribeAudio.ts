@@ -1,10 +1,9 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
 import fs from 'fs';
-import ConfigurationManager from '@config/ConfigurationManager';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 
 const debug = Debug('app:transcribeAudio');
-const configManager = ConfigurationManager.getInstance();
 
 /**
  * Transcribe Audio
@@ -17,20 +16,20 @@ const configManager = ConfigurationManager.getInstance();
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
-        const openaiConfig = configManager.getConfig('openaiConfig') as unknown as { OPENAI_API_KEY: string; OPENAI_MODEL?: string; OPENAI_VOICE?: string; OPENAI_TEMPERATURE?: number; };
+        const apiKey = openaiConfig.get<string>('OPENAI_API_KEY');
+        const model = openaiConfig.get<string>('OPENAI_MODEL') || 'whisper-1';
 
-        if (!openaiConfig || !openaiConfig.OPENAI_API_KEY) {
-            throw new Error('OpenAI configuration is missing or incomplete.');
+        if (!apiKey) {
+            throw new Error('OpenAI API key is missing or incomplete.');
         }
 
-        const openai = new OpenAI({
-            apiKey: openaiConfig.OPENAI_API_KEY
-        });
+        const openai = new OpenAI({ apiKey });
         const response = await openai.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),
-            model: openaiConfig.OPENAI_MODEL || 'whisper-1',
+            model,
             response_format: 'text'
         });
+
         debug('transcribeAudio: Full response: ' + JSON.stringify(response));
         return response.text;
     } catch (error: any) {
