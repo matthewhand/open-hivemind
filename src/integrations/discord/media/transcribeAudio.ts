@@ -16,7 +16,7 @@ const debug = Debug('app:transcribeAudio');
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
-        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1'); // Fix: Type constraint
+        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL') || 'whisper-1'; // Fix: Corrected access to model
         const apiKey = openaiConfig.get('OPENAI_API_KEY');
 
         if (!apiKey) {
@@ -25,18 +25,18 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
 
         debug('Sending audio for transcription...', { model, audioFilePath }); // Improvement: Log model and file path
 
-        const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Reading file as buffer
+        const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Correct number of arguments
         const response = await axios.post(
             openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
             {
                 model,
-                audioBuffer
+                file: audioBuffer, // Fix: Correct key for buffer
             },
             {
                 headers: {
                     'Authorization': 'Bearer ' + apiKey,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                },
             }
         );
 
