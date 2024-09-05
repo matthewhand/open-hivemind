@@ -3,26 +3,15 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
-import ConfigurationManager from '@config/ConfigurationManager';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
 const debug = Debug('app:webhookHandler');
 
 // Initialize Discord client with necessary intents
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-// Create an instance of ConfigurationManager
-const configManager = ConfigurationManager.getInstance();
-const discordConfig = configManager.getConfig('discord');
-
-// Guard: Ensure discordConfig is loaded
-if (!discordConfig) {
-  throw new Error('Discord configuration is not loaded.');
-}
-
-// Retrieve required configurations from ConfigurationManager
-// @ts-ignore: Type instantiation is excessively deep and possibly infinite
+// Fetch Discord configuration using convict
 const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_TOKEN');
-// @ts-ignore: Type instantiation is excessively deep and possibly infinite
 const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
 // Guard: Ensure necessary configurations are present
