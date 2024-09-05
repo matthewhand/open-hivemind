@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { OpenAI, ClientOptions } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
-import { generateChatResponse } from './chat/generateChatResponse';
+import { generateChatResponse } from './operations/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
