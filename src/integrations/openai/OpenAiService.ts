@@ -1,18 +1,13 @@
 import Debug from 'debug';
 import { OpenAI, ClientOptions } from 'openai';
-import ConfigurationManager from '@config/ConfigurationManager';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
+import llmConfig from '@llm/interfaces/llmConfig';
 import { generateChatResponse } from './chat/generateChatResponse';
 import { createChatCompletion } from './chat/createChatCompletion';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
-const configManager = ConfigurationManager.getInstance();
-
-// Attempt to retrieve the OpenAI configuration
-debug('Attempting to retrieve OpenAI configuration...');
-const openaiConfig = openaiConfig;
-const llmConfig = llmConfig;
 
 // Log the retrieved configuration objects
 debug('Retrieved openaiConfig:', openaiConfig);
