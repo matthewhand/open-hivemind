@@ -1,6 +1,6 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
 import { Client, GuildMember, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import discordConfig from '@config/interfaces/discordConfig';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import path from 'path';
 import Debug from 'debug';
 
@@ -55,11 +55,13 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
 
         player.on('error', (error) => {
             debug(`Error during audio playback: ${error.message}`);
+            debug(error.stack); // Improvement: log stack trace for better debugging
             connection.destroy();
             throw error;
         });
     } catch (error: any) {
         debug('Failed to play audio response: ' + error.message);
+        debug(error.stack); // Improvement: log stack trace for better debugging
         throw error;
     }
 }
