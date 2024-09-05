@@ -84,7 +84,7 @@ export default class ConfigurationManager {
         }
 
         // Load configurations from integrations
-        this.configs = loadIntegrationConfigs('interfaces');
+        this.configs = loadIntegrationConfigs();
 
         // Add specific configurations
         this.configs['message'] = messageConfig;

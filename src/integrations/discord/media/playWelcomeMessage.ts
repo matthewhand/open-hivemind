@@ -12,7 +12,7 @@ const debug = Debug('app:playWelcomeMessage');
 const defaultDir = './data/';
 const defaultFileName = 'welcome.mp3';
 
-const audioDir = discordConfig.get<string>('DISCORD_AUDIO_FILE_PATH') || defaultDir;
+const audioDir = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string || defaultDir;
 const outputPath = path.join(audioDir, defaultFileName);
 
 if (!fs.existsSync(audioDir)) {
@@ -48,19 +48,19 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         return;
     }
 
-    const welcomeMessage = discordConfig.get<string>('DISCORD_WELCOME_MESSAGE') || 'Welcome to the server!';
-    const model = openaiConfig.get<string>('OPENAI_MODEL') || 'text-davinci-003';
+    const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') as string || 'Welcome to the server!';
+    const model = openaiConfig.get('OPENAI_MODEL') as string || 'text-davinci-003';
     let voice: AllowedVoice = 'fable';
 
     // Use OPENAI_VOICE if it exists and is valid
-    if (openaiConfig.get<string>('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get<string>('OPENAI_VOICE'))) {
-        voice = openaiConfig.get<string>('OPENAI_VOICE');
+    if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE') as string)) {
+        voice = openaiConfig.get('OPENAI_VOICE') as AllowedVoice;
     }
 
     debug('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
-        apiKey: openaiConfig.get<string>('OPENAI_API_KEY') || ''
+        apiKey: openaiConfig.get('OPENAI_API_KEY') as string || ''
     });
 
     if (fs.existsSync(outputPath)) {

@@ -81,10 +81,12 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             }
         } catch (error: any) {
             debug('handleAudioStream: Error processing audio stream', { userId, error: error.message, stack: error.stack });
+            fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.message}\n${error.stack}\n`); // Improvement: Log errors to a file
         }
     });
 
     stream.on('error', (error: Error) => {
         debug('handleAudioStream: Error in audio stream', { userId, error: error.message, stack: error.stack });
+        fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.message}\n${error.stack}\n`); // Improvement: Log stream errors to a file
     });
 };

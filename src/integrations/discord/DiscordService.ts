@@ -87,6 +87,7 @@ export class DiscordService {
       }
     } catch (error: any) {
       log('Failed to start DiscordService: ' + error.message);
+      log(error.stack); // Improvement: Added stack trace logging for better error tracking
       process.exit(1);
     }
   }
@@ -117,6 +118,7 @@ export class DiscordService {
       log(`Message sent to channel ${channelId} successfully`);
     } catch (error: any) {
       log(`Failed to send message to channel ${channelId}: ` + error.message);
+      log(error.stack); // Improvement: Added stack trace logging for better error debugging
       throw error;
     }
   }
