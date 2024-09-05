@@ -81,7 +81,7 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
                 debug('Response status: ' + error.response.status);
                 debug('Response data: ' + JSON.stringify(error.response.data));
             }
-            debug(error.stack); // Improvement: log stack trace for debugging
+            debug(error.stack);
             return;
         }
     }
@@ -96,10 +96,10 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         });
         player.on('error', (error) => {
             debug('Error playing welcome message: ' + error.message);
-            debug(error.stack); // Improvement: log stack trace for debugging
+            debug(error.stack);
         });
     } catch (error: any) {
         debug('Error playing audio file: ' + error.message);
-        debug(error.stack); // Improvement: log stack trace for debugging
+        debug(error.stack);
     }
 }
