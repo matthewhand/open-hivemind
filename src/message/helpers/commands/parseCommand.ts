@@ -9,7 +9,7 @@ interface LlmConfig {
     LLM_PROVIDER?: string;
 }
 
-const llmConfig = llmConfig as LlmConfig;  // Properly initializing llmConfig
+const llmConfig: LlmConfig = configManager.get('LLM_PROVIDER') || {};  // Properly initializing llmConfig
 
 interface ParsedCommand {
     commandName: string;

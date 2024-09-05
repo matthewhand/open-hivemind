@@ -2,30 +2,31 @@ import ConfigurationManager from '@config/ConfigurationManager';
 
 const configManager = ConfigurationManager.getInstance();
 const messageConfig = configManager.getConfig('message');
-const llmConfig = llmConfig;
 
+// Ensure llmConfig is properly initialized
+const llmConfig = configManager.get('LLM_PROVIDER') || {};
+
+/**
+ * Determines whether the message should be processed based on the last message time
+ * and rate-limiting settings.
+ *
+ * @param {number} lastMessageTime - Timestamp of the last processed message.
+ * @returns {boolean} - True if the message can be processed, false otherwise.
+ */
 export function shouldProcessMessage(lastMessageTime: number): boolean {
-    if (!messageConfig || !llmConfig) {
-        throw new Error('Message or LLM configuration is not loaded.');
-    }
+  if (!messageConfig || !llmConfig) {
+    throw new Error('Message or LLM configuration is missing.');
+  }
 
-    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
-    const minIntervalMs = messageConfig.get<number>('MESSAGE_MIN_INTERVAL_MS');
-    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
-    const followUpEnabled = messageConfig.get<boolean>('MESSAGE_FOLLOW_UP_ENABLED');
-    // @ts-ignore: Type instantiation is excessively deep and possibly infinite
-    const limitPerHour = llmConfig.get<number>('LLM_MESSAGE_LIMIT_PER_HOUR');
+  const minIntervalMs = messageConfig.get<number>('MESSAGE_MIN_INTERVAL_MS');
+  const limitPerHour = llmConfig.get<number>('LLM_MESSAGE_LIMIT_PER_HOUR', 100);  // Default to 100
+  const now = Date.now();
+  const timeSinceLastMessage = now - lastMessageTime;
 
-    const now = Date.now();
-    const timeSinceLastMessage = now - lastMessageTime;
+  if (timeSinceLastMessage < minIntervalMs) {
+    return false;
+  }
 
-    if (timeSinceLastMessage < minIntervalMs) {
-        return false;
-    }
-
-    if (followUpEnabled) {
-        // Additional logic for follow-up enabled scenario
-    }
-
-    return true;
+  // Additional checks for message limits
+  return timeSinceLastMessage >= (60 * 60 * 1000) / limitPerHour;
 }
