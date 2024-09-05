@@ -30,7 +30,7 @@ const debug = Debug('app:message:handleAudioStream');
 export const handleAudioStream = async (stream: Readable, connection: VoiceConnection, message: IMessage, aiService: OpenAiService): Promise<void> => {
     const audioChunks: Buffer[] = [];
     const userId = message.getAuthorId();
-    const audioFilePath = discordConfig.get<string>('DISCORD_AUDIO_FILE_PATH') || 'audio.wav';
+    const audioFilePath = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string || 'audio.wav';
 
     debug('handleAudioStream: Initialized for user', { userId });
 
