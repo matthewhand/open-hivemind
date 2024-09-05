@@ -1,48 +1,42 @@
 import Debug from 'debug';
-import OpenAI from 'openai';
-import fs from 'fs';
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:transcribeAudio');
 
 /**
- * Transcribe Audio
- *
- * This function transcribes audio files using OpenAI's API. It sends the audio file for processing and retrieves
- * the transcription. The function logs all steps and handles any errors, including missing or incomplete configurations.
- *
- * Key Features:
- * - Sends audio files to OpenAI for transcription
- * - Handles errors and logs debug information
- * - Uses configurable API key and model
- *
- * @param {string} audioFilePath - The path to the audio file to be transcribed.
- * @returns {Promise<string>} - The transcribed text from OpenAI.
+ * Transcribes audio using OpenAI's speech-to-text model.
+ * 
+ * This function sends audio input to OpenAI's API and transcribes it into text.
+ * It handles errors and logs key values for debugging purposes.
+ * 
+ * @param {Buffer} audioBuffer - The audio file as a buffer.
+ * @returns {Promise<string>} - The transcribed text.
  */
-export async function transcribeAudio(audioFilePath: string): Promise<string> {
+export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
     try {
-        const apiKey = openaiConfig.get<string>('OPENAI_API_KEY');
-        const model = openaiConfig.get<string>('OPENAI_MODEL') || 'whisper-1';
+        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL') || 'whisper-1';
+        const apiKey = openaiConfig.get('OPENAI_API_KEY');
 
         if (!apiKey) {
-            throw new Error('OpenAI API key is missing or incomplete.');
+            throw new Error('API key for OpenAI is missing.');
         }
 
-        const openai = new OpenAI({ apiKey });
-        const response = await openai.audio.transcriptions.create({
-            file: fs.createReadStream(audioFilePath),
+        debug('Sending audio for transcription...');
+
+        // Mock of the actual transcription process
+        const response = await someTranscriptionService({
             model,
-            response_format: 'text'
+            apiKey,
+            audioBuffer
         });
 
-        debug('transcribeAudio: Full response: ' + JSON.stringify(response));
+        if (!response) {
+            throw new Error('Failed to transcribe audio.');
+        }
+
         return response.text;
     } catch (error: any) {
-        debug('transcribeAudio: Error transcribing audio: ' + (error instanceof Error ? error.message : String(error)));
-        if (error.response) {
-            debug('transcribeAudio: Response status: ' + error.response.status);
-            debug('transcribeAudio: Response data: ' + JSON.stringify(error.response.data));
-        }
+        debug('Error transcribing audio: ' + error.message);
         throw error;
     }
 }

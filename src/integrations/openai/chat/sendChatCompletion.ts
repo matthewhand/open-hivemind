@@ -1,4 +1,4 @@
-import openai from 'openai';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
@@ -7,18 +7,13 @@ const debug = Debug('app:sendChatCompletion');
 
 /**
  * Sends a chat completion request to OpenAI's API.
- *
- * This function handles the configuration, retry logic, and sending of a chat completion request. It uses the settings defined
- * in llmConfig, such as the model, retry count, and other parameters. It also manages the API response and any errors.
- *
- * Key Features:
- * - **Configuration Handling**: Retrieves settings from llmConfig for controlling the chat completion.
- * - **Retry Logic**: Implements retry logic for incomplete responses or errors.
- * - **Debugging and Error Handling**: Includes detailed logging for debugging purposes and handles errors gracefully.
+ * 
+ * This function uses llmConfig for general LLM settings and openaiConfig for provider-specific ones.
+ * It manages the retry logic, API response, and handles errors.
  */
 export async function sendChatCompletion(messages: IMessage[]): Promise<string> {
     try {
-        const model = llmConfig.get<string>('LLM_MODEL');
+        const model = openaiConfig.get<string>('OPENAI_MODEL');
         const maxRetries = llmConfig.get<number>('LLM_MAX_RETRIES');
         const retryDelay = llmConfig.get<number>('LLM_RETRY_DELAY');
         
@@ -28,7 +23,7 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
         let response;
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                response = await openai.Completion.create({
+                response = await openai.ChatCompletion.create({
                     model,
                     messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
                 });

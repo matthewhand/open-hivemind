@@ -1,5 +1,5 @@
-import openai from 'openai';
-import llmConfig from '@llm/interfaces/llmConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import llmConfig from '@llm/interfaces/llmConfig'; 
 import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
@@ -9,20 +9,14 @@ const debug = Debug('app:createChatCompletion');
 /**
  * Creates a chat completion request payload for OpenAI's API.
  * 
- * This function maps the application's `IMessage` interface to the format expected by OpenAI's SDK.
+ * This function uses both llmConfig and openaiConfig to handle settings.
  * It constructs the necessary request body using `convertIMessageToChatParam`.
- * Debugging statements and guards are added to validate the inputs and track the execution flow.
- * 
- * Key Features:
- * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` using a separate utility.
- * - **Validation and Guards**: Ensures that the input data is complete and correctly formatted.
- * - **Debugging**: Logs key values and the execution flow for easier debugging.
  */
 export async function createChatCompletion(messages: IMessage[]): Promise<string> {
     try {
-        const model = llmConfig.get('model');
-        const maxTokens = llmConfig.get('maxTokens');
-        const temperature = llmConfig.get('temperature');
+        const model = openaiConfig.get('OPENAI_MODEL');
+        const maxTokens = llmConfig.get('LLM_RESPONSE_MAX_TOKENS');
+        const temperature = llmConfig.get('LLM_TEMPERATURE');
 
         debug(`Creating chat completion with model: ${model}`);
         debug(`Number of messages: ${messages.length}`);
