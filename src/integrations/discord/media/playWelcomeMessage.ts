@@ -5,7 +5,7 @@ import fs from 'fs';
 import util from 'util';
 import path from 'path';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:playWelcomeMessage');
 
@@ -81,6 +81,7 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
                 debug('Response status: ' + error.response.status);
                 debug('Response data: ' + JSON.stringify(error.response.data));
             }
+            debug(error.stack); // Improvement: log stack trace for debugging
             return;
         }
     }
@@ -95,8 +96,10 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         });
         player.on('error', (error) => {
             debug('Error playing welcome message: ' + error.message);
+            debug(error.stack); // Improvement: log stack trace for debugging
         });
     } catch (error: any) {
         debug('Error playing audio file: ' + error.message);
+        debug(error.stack); // Improvement: log stack trace for debugging
     }
 }
