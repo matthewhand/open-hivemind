@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import { Readable } from 'stream';
 import { VoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
@@ -7,10 +7,8 @@ import { transcribeAudio } from './transcribeAudio';
 import { playAudioResponse } from './playAudioResponse';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import ConfigurationManager from '@config/ConfigurationManager';
 
 const debug = Debug('app:message:handleAudioStream');
-const configManager = ConfigurationManager.getInstance();  // Ensure configManager is instantiated
 
 /**
  * Handles the streaming of audio from a Discord voice connection.
@@ -62,7 +60,6 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
             if (transcript) {
                 debug('Transcription successful', { transcript });
 
-                // TODO: Track and pass transcribed history in future.
                 const response = await aiService.generateChatResponse(transcript, []);
 
                 if (response) {
