@@ -1,5 +1,8 @@
-import openaiConfig from '@integrations/openai/config/openaiConfig';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import { OpenAI } from 'openai';
+import Debug from 'debug';
+
+const debug = Debug('app:sendCompletions');
 
 if (!openaiConfig) {
     throw new Error('OpenAI configuration not found. Please ensure the OpenAI config is loaded.');
@@ -40,6 +43,11 @@ export async function sendCompletions(prompt: string): Promise<any> {
         }
         return response.choices;
     } catch (error: any) {
+        if (error.response?.status === 429) {
+            debug('Rate-limited by OpenAI API. Retrying after a delay...');
+            await new Promise(res => setTimeout(res, 5000)); // Improvement: rate-limiting retry
+            return sendCompletions(prompt);
+        }
         throw new Error(`Failed to send completion request: ${error.message}`);
     }
 }
