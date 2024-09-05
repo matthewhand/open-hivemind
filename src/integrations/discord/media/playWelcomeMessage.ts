@@ -1,35 +1,19 @@
-import ConfigurationManager from '@config/ConfigurationManager';
 import Debug from 'debug';
 import { VoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
 import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
 import path from 'path';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import openaiConfig from '@integrations/openai/config/openaiConfig';
 
 const debug = Debug('app:playWelcomeMessage');
-const configManager = ConfigurationManager.getInstance();
 
 const defaultDir = './data/';
 const defaultFileName = 'welcome.mp3';
 
-// Define explicit types for discordConfig and openaiConfig
-interface discordConfig {
-    WELCOME_AUDIO_DIR?: string;
-    WELCOME_AUDIO_FILENAME?: string;
-    DISCORD_WELCOME_MESSAGE?: string;
-}
-
-interface OpenAiConfig {
-    OPENAI_API_KEY?: string;
-    OPENAI_MODEL?: string;
-    OPENAI_VOICE?: string;
-}
-
-const discordConfig = configManager.getConfig('discordConfig') as discordConfig;
-const openaiConfig = configManager.getConfig('openaiConfig') as OpenAiConfig;
-
-const audioDir = discordConfig.WELCOME_AUDIO_DIR || defaultDir;
-const audioFileName = discordConfig.WELCOME_AUDIO_FILENAME || defaultFileName;
+const audioDir = discordConfig.get('WELCOME_AUDIO_DIR') || defaultDir;
+const audioFileName = discordConfig.get('WELCOME_AUDIO_FILENAME') || defaultFileName;
 const outputPath = path.join(audioDir, audioFileName);
 
 if (!fs.existsSync(audioDir)) {
@@ -49,18 +33,18 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
         return;
     }
 
-    const welcomeMessage = discordConfig.DISCORD_WELCOME_MESSAGE || 'Welcome to the server!';
-    const model = openaiConfig.OPENAI_MODEL || 'text-davinci-003';
-    let voice: AllowedVoice = 'fable'; // Updated default voice
+    const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') || 'Welcome to the server!';
+    const model = openaiConfig.get('OPENAI_MODEL') || 'text-davinci-003';
+    let voice: AllowedVoice = 'fable';
 
-    if (openaiConfig.OPENAI_VOICE && isAllowedVoice(openaiConfig.OPENAI_VOICE)) {
-        voice = openaiConfig.OPENAI_VOICE;
+    if (openaiConfig.get('OPENAI_VOICE') && isAllowedVoice(openaiConfig.get('OPENAI_VOICE'))) {
+        voice = openaiConfig.get('OPENAI_VOICE');
     }
 
     debug('Playing welcome message: ' + welcomeMessage);
 
     const openai = new OpenAI({
-        apiKey: openaiConfig.OPENAI_API_KEY || ''
+        apiKey: openaiConfig.get('OPENAI_API_KEY') || ''
     });
 
     if (fs.existsSync(outputPath)) {
