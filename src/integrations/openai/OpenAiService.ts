@@ -41,16 +41,16 @@ export class OpenAiService {
     // Private constructor to enforce singleton pattern
     private constructor() {
         const options: ClientOptions = {
-            apiKey: openaiConfig.get('OPENAI_API_KEY') as string,
-            organization: openaiConfig.get('OPENAI_ORGANIZATION') as string,
+            apiKey: openaiConfig.get('OPENAI_API_KEY')!,
+            organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
             baseURL: openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com',
-            timeout: openaiConfig.get('OPENAI_TIMEOUT') as number,
+            timeout: parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') || '30000'),
         };
 
         this.openai = new OpenAI(options);
-        this.parallelExecution = llmConfig.get('LLM_PARALLEL_EXECUTION') as boolean;
-        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') as string || 'stop';
-        this.maxRetries = openaiConfig.get('OPENAI_MAX_RETRIES') as number;
+        this.parallelExecution = llmConfig.get('LLM_PARALLEL_EXECUTION') || false;
+        this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.maxRetries = parseInt(openaiConfig.get('OPENAI_MAX_RETRIES') || '3');
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
     }
@@ -88,14 +88,14 @@ export class OpenAiService {
     /**
      * Sends the chat completion request to OpenAI API and returns the response.
      *
-     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT') as string, maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') as number
+     * @param historyMessages: IMessage[], systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT')!, maxTokens: number = parseInt(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150')
      *
      * @returns {Promise<any>} - The API response.
      */
     public async createChatCompletion(
         historyMessages: IMessage[],
-        systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT') as string,
-        maxTokens: number = openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') as number
+        systemMessageContent: string = openaiConfig.get('OPENAI_SYSTEM_PROMPT')!,
+        maxTokens: number = parseInt(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150')
     ): Promise<any> {
         return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens);
     }
