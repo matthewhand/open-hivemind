@@ -23,7 +23,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
         return;
     }
 
-    const narrationEndpointUrl = openaiConfig.get('OPENAI_BASE_URL');
+    const narrationEndpointUrl = openaiConfig.get('OPENAI_BASE_URL') as string;
 
     if (!narrationEndpointUrl) {
         debug('OPENAI_BASE_URL is not set in the configuration.');
@@ -39,7 +39,7 @@ export async function playAudioResponse(connection: VoiceConnection, text: strin
             audioConfig: { audioEncoding: 'MP3' }
         }, {
             headers: {
-                'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY'),
+                'Authorization': 'Bearer ' + openaiConfig.get('OPENAI_API_KEY') as string,
             },
         });
 

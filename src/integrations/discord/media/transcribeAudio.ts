@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import axios from 'axios';
 
 const debug = Debug('app:transcribeAudio');
 
@@ -23,18 +24,25 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
 
         debug('Sending audio for transcription...');
 
-        // Mock of the actual transcription process
-        const response = await convertOpusToWav({
-            model,
-            apiKey,
-            audioBuffer
-        });
+        const response = await axios.post(
+            openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
+            {
+                model,
+                audioBuffer
+            },
+            {
+                headers: {
+                    'Authorization': 'Bearer ' + apiKey,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
 
-        if (!response) {
+        if (!response || !response.data || !response.data.text) {
             throw new Error('Failed to transcribe audio.');
         }
 
-        return response.text;
+        return response.data.text;
     } catch (error: any) {
         debug('Error transcribing audio: ' + error.message);
         throw error;
