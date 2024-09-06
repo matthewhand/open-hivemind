@@ -3,17 +3,14 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 
 // Mock data
 const mockMessages: IMessage[] = [
-    { role: 'user', content: 'Hello' },
-    { role: 'assistant', content: 'Hi there!' }
+  { role: 'user', content: 'Hello', client: {}, channelId: '', data: {}, getMessageId: () => '' },
+  { role: 'assistant', content: 'Hi there!', client: {}, channelId: '', data: {}, getMessageId: () => '' }
 ];
 
 const mockSystemMessage = 'This is a test system message';
 
-// Initialize OpenAI service
-const openAiService = OpenAiService.getInstance();
-
 // Test createChatCompletion
-test('createChatCompletion should generate a valid completion', async () => {
-    const response = await openAiService.createChatCompletion(mockMessages, mockSystemMessage);
-    expect(response).toBeTruthy();
+ test('createChatCompletion should generate a valid completion', async () => {
+   const response = await OpenAiService.getInstance().createChatCompletion(mockMessages, mockSystemMessage);
+   expect(response).toBeTruthy();
 });

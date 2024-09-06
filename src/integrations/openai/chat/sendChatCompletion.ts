@@ -1,34 +1,38 @@
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import Debug from 'debug';
 import { OpenAI } from 'openai';
+import Debug from 'debug';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:sendChatCompletion');
 
 /**
- * Sends a chat completion request to OpenAI's API.
- * @param {Array<{ role: string, content: string }>} messages - The history of conversation messages.
- * @param {string} model - The model to use for the completion.
- * @param {number} maxTokens - The maximum number of tokens.
- * @returns {Promise<string>} - The generated completion text.
+ * Sends a chat completion request using OpenAI API.
+ * @param {IMessage[]} messages - Array of messages for the chat completion.
+ * @returns {Promise<string>} - The generated chat response.
  */
-export async function sendChatCompletion(
-    messages: { role: string; content: string }[],
-    model: string = openaiConfig.get('OPENAI_MODEL', 'gpt-3.5-turbo'),
-    maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS', 100)
-): Promise<string> {
-    const openai = new OpenAI({ apiKey: openaiConfig.get('OPENAI_API_KEY') });
-    debug(`Sending chat completion with model: ${model}`);
+export async function sendChatCompletion(messages: IMessage[]): Promise<string> {
+  const openai = new OpenAI({ apiKey: openaiConfig.get<string>('OPENAI_API_KEY')! });
 
+  // Format messages as a single prompt
+  const prompt = messages.map(msg => msg.content).join(' ');
+  debug(`Generated prompt: ${prompt}`);
+
+  try {
     const response = await openai.completions.create({
-        model,
-        messages,
-        max_tokens: maxTokens,
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE', 0.7)
+      model: openaiConfig.get<string>('OPENAI_MODEL')!,
+      prompt,
+      max_tokens: openaiConfig.get<number>('OPENAI_MAX_TOKENS')!,
     });
 
-    if (!response.choices || response.choices.length === 0) {
-        throw new Error('No completion choices returned from OpenAI API.');
+    if (!response.choices || !response.choices.length) {
+      throw new Error('No response from OpenAI');
     }
 
-    return response.choices[0].message?.content?.trim() || '';
+    const result = response.choices[0].text.trim();
+    debug('Generated chat completion:', result);
+    return result;
+  } catch (error: any) {
+    debug('Error generating chat completion:', error.message);
+    throw new Error(`Failed to generate chat completion: ${error.message}`);
+  }
 }

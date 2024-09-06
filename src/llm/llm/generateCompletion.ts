@@ -13,13 +13,13 @@ export async function sendCompletions(messages: IMessage[]): Promise<string> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   // Fix: Ensure messages follow the correct format
-  const formattedMessages = messages.map(msg => ({ role: msg.role, content: msg.content }));
-  debug(`Number of messages: ${formattedMessages.length}`);
+  const prompt = messages.map(msg => msg.content).join(' ');
+  debug(`Generated prompt: ${prompt}`);
 
   try {
     const response = await openai.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: formattedMessages,
+      prompt,
       max_tokens: 150,
     });
 
@@ -27,7 +27,7 @@ export async function sendCompletions(messages: IMessage[]): Promise<string> {
       throw new Error('No response from OpenAI');
     }
 
-    const result = response.choices[0].message.content.trim();
+    const result = response.choices[0].text.trim();
     debug('Generated completion:', result);
     return result;
   } catch (error: any) {
