@@ -18,6 +18,9 @@ const mockMessages: IMessage[] = [
     getChannelUsers: () => [],
     isReplyToBot: () => false,
     mentionsUsers: () => false,
+    isFromBot: () => false,
+    reply: () => null,
+    getAuthorName: () => '',
   },
   {
     role: 'assistant',
@@ -34,6 +37,9 @@ const mockMessages: IMessage[] = [
     getChannelUsers: () => [],
     isReplyToBot: () => false,
     mentionsUsers: () => false,
+    isFromBot: () => false,
+    reply: () => null,
+    getAuthorName: () => '',
   }
 ];
 
