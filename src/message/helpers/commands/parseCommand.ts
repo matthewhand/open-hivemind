@@ -1,16 +1,7 @@
 import Debug from 'debug';
-import ConfigurationManager from '@config/ConfigurationManager';
+import llmConfig from '@llm/interfaces/llmConfig';
 
 const debug = Debug('app:parseCommand');
-const configManager = ConfigurationManager.getInstance();
-
-// Define explicit type for llmConfig
-interface LlmConfig {
-    LLM_PROVIDER?: string;
-}
-
-// Fix: Correctly initialize llmConfig without calling non-existent get method
-const llmConfig: LlmConfig = configManager?.LLM_PROVIDER ? { LLM_PROVIDER: configManager.LLM_PROVIDER } : {};
 
 interface ParsedCommand {
     commandName: string;
@@ -43,15 +34,9 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
         debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args);
         return { commandName: commandName.toLowerCase(), action, args };
     } else {
-        // Improvement: More verbose debug logging for fallback mechanism
-        debug('LLM configuration unavailable or command did not match regex pattern.');
-        if (!llmConfig || !llmConfig.LLM_PROVIDER) {
-            debug('LLM configuration is not loaded.');
-            return null;
-        }
-
-        const defaultCommand = llmConfig.LLM_PROVIDER as string;
-        const argsWithoutMention = commandContent.replace(/<@!?\d+>\s*/, '').trim();
+        // Improvement: Use convict configuration directly
+        const defaultCommand = llmConfig.get('LLM_PROVIDER');
+        const argsWithoutMention = commandContent.replace(/<@!?\\d+>\\s*/, '').trim();
         if (defaultCommand && argsWithoutMention) {
             debug('Fallback to default command: ' + defaultCommand + ' with args: ' + argsWithoutMention);
             return { commandName: defaultCommand, action: '', args: argsWithoutMention };
