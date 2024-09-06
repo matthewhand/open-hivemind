@@ -1,10 +1,5 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-
-const configManager = ConfigurationManager.getInstance();
-const messageConfig = configManager?.message || {}; // Fix: Access message config safely
-
-// Ensure llmConfig is properly initialized
-const llmConfig = configManager?.LLM_PROVIDER ? { LLM_PROVIDER: configManager.LLM_PROVIDER } : {};
+import llmConfig from '@llm/interfaces/llmConfig';
+import messageConfig from '@config/messageConfig'; // Assuming messageConfig exists similarly
 
 /**
  * Determines whether the message should be processed based on the last message time
@@ -14,17 +9,18 @@ const llmConfig = configManager?.LLM_PROVIDER ? { LLM_PROVIDER: configManager.LL
  * @returns {boolean} - True if the message can be processed, false otherwise.
  */
 export function shouldProcessMessage(lastMessageTime: number): boolean {
+  // Guard: Ensure messageConfig and llmConfig are loaded properly
   if (!messageConfig || !llmConfig) {
     throw new Error('Message or LLM configuration is missing.');
   }
 
   // Improvement: Add default value and guard for message interval
-  const minIntervalMs = messageConfig['MESSAGE_MIN_INTERVAL_MS'] || 1000; // Default to 1000ms
-  const limitPerHour = llmConfig.LLM_PROVIDER ? 100 : 50;  // Default to 100 or fallback to 50
+  const minIntervalMs = messageConfig.get('MESSAGE_MIN_INTERVAL_MS') || 1000; // Default to 1000ms
+  const limitPerHour = llmConfig.get('LLM_MESSAGE_LIMIT_PER_HOUR', 100);  // Default to 100
   const now = Date.now();
   const timeSinceLastMessage = now - lastMessageTime;
 
-  // Improvement: Add debug logging for decision-making process
+  // Improvement: Add detailed logging for decision-making process
   console.debug(`Time since last message: ${timeSinceLastMessage}ms, Min interval: ${minIntervalMs}ms, Limit per hour: ${limitPerHour}`);
 
   if (timeSinceLastMessage < minIntervalMs) {
