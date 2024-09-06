@@ -20,9 +20,14 @@ export function getLlmProvider(): string {
  * @returns {Promise<string>} - The generated completion.
  */
 export async function generateLlmCompletion(prompt: string): Promise<string> {
-    const model = llmConfig.get('LLM_SYSTEM_PROMPT'); // Fix: Correct prompt access
+    const model = llmConfig.get('LLM_SYSTEM_PROMPT');
     const maxTokens = llmConfig.get('LLM_RESPONSE_MAX_TOKENS');
     const stopSequences = llmConfig.get('LLM_STOP');
+
+    // Improvement: Add debug logging for key variables
+    debug('Generating completion with model:', model);
+    debug('Max tokens:', maxTokens);
+    debug('Stop sequences:', stopSequences);
 
     if (!model || !maxTokens) {
         throw new Error('LLM configuration is incomplete. Ensure model and tokens are set.');
@@ -40,9 +45,13 @@ export async function generateLlmCompletion(prompt: string): Promise<string> {
             stop: stopSequences,
         });
 
-        if (!response || !response.data || !response.data.choices) {
+        // Fix: Ensure response and data properties exist
+        if (!response || !response.data || !Array.isArray(response.data.choices)) {
             throw new Error('Invalid response from OpenAI');
         }
+
+        // Improvement: Debug log for response content
+        debug('LLM response:', response);
 
         return response.data.choices[0].text.trim();
     } catch (error: any) {
