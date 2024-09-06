@@ -15,14 +15,10 @@ const debug = Debug('app:getLlmProvider');
  * @throws An error if the configured LLM provider is unsupported.
  */
 export function getLlmProvider() {
-  // Guard: Ensure llmConfig is loaded and contains LLM_PROVIDER
-  if (!llmConfig || !llmConfig.LLM_PROVIDER) {
-    throw new Error('LLM configuration or LLM_PROVIDER is not loaded.');
-  }
+  // Fix: Ensure llmConfig uses Convict's get() method
+  const llmProvider = llmConfig.get('LLM_PROVIDER');
 
-  const llmProvider = llmConfig.LLM_PROVIDER;
-
-  // Improvement: Debug log to track the selected provider
+  // Improvement: Log the selected provider for better traceability
   debug('Configured LLM provider:', llmProvider);
 
   // Guard: Ensure the LLM provider is specified
