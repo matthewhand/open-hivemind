@@ -8,7 +8,11 @@ import { IMessage } from '@src/message/interfaces/IMessage';
  * @returns {Array<{ role: string; content: string; name?: string }>} - Converted messages for OpenAI.
  */
 function convertIMessageToChatParam(historyMessages: IMessage[]): { role: string; content: string; name?: string }[] {
-    return historyMessages.map((msg) => ({ role: msg.role, content: msg.content, name: msg.role === 'system' ? 'system_name' : undefined }));
+    return historyMessages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        name: msg.getAuthorId() || undefined, // Ensure name is either a string or omitted
+    }));
 }
 
 /**
