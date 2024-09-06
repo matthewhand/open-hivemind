@@ -11,8 +11,8 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Fetch Discord configuration using convict
-const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_TOKEN');
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
+const DISCORD_TOKEN: string = discordConfig.get<string>('DISCORD_TOKEN');
+const DISCORD_CHAT_CHANNEL_ID: string = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
 // Guard: Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
@@ -28,10 +28,10 @@ client.login(DISCORD_TOKEN).catch(error => {
 
 /**
  * Starts the webhook server and defines its routes and handlers.
- * 
+ *
  * This server listens for webhook events and processes them accordingly.
  * It integrates with Discord channels to send notifications based on webhook data.
- * 
+ *
  * Key Features:
  * - Listens for webhook events
  * - Sends notifications to Discord channels
