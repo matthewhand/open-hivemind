@@ -5,13 +5,13 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 /**
  * Converts IMessage to ChatCompletionMessageParam format, ensuring necessary properties.
  * @param {IMessage[]} historyMessages - The messages in conversation history.
- * @returns {Array<{ role: string; content: string; name?: string }>} - Converted messages for OpenAI.
+ * @returns {Array<{ role: string; content: string; name: string }>} - Converted messages for OpenAI.
  */
-function convertIMessageToChatParam(historyMessages: IMessage[]): { role: string; content: string; name?: string }[] {
+function convertIMessageToChatParam(historyMessages: IMessage[]): { role: string; content: string; name: string }[] {
     return historyMessages.map((msg) => ({
         role: msg.role,
         content: msg.content,
-        name: msg.getAuthorId() || undefined, // Ensure name is either a string or omitted
+        name: msg.getAuthorId() || 'unknown', // Ensure name is always a string, default to 'unknown'
     }));
 }
 
@@ -29,7 +29,7 @@ export async function createChatCompletion(
     maxTokens: number
 ): Promise<string> {
     const messages = convertIMessageToChatParam(historyMessages);
-    messages.unshift({ role: 'system', content: systemMessageContent });
+    messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
 
     // Log the request being sent to the OpenAI API
     console.debug('[DEBUG] Sending chat completion request with messages:', messages);

@@ -14,7 +14,10 @@ const mockMessages: IMessage[] = [
     getChannelId: () => '',
     getAuthorId: () => '',
     getChannelTopic: () => '',
-    getTimestamp: () => new Date(),
+    getUserMentions: () => [],
+    getChannelUsers: () => [],
+    isReplyToBot: () => false,
+    mentionsUsers: () => false,
   },
   {
     role: 'assistant',
@@ -27,7 +30,10 @@ const mockMessages: IMessage[] = [
     getChannelId: () => '',
     getAuthorId: () => '',
     getChannelTopic: () => '',
-    getTimestamp: () => new Date(),
+    getUserMentions: () => [],
+    getChannelUsers: () => [],
+    isReplyToBot: () => false,
+    mentionsUsers: () => false,
   }
 ];
 

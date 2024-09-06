@@ -11,8 +11,8 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Fetch Discord configuration
-const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN');
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
+const DISCORD_TOKEN = discordConfig.get<'DISCORD_BOT_TOKEN'>('DISCORD_BOT_TOKEN');
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<'DISCORD_CHAT_CHANNEL_ID'>('DISCORD_CHAT_CHANNEL_ID');
 
 // Guard: Ensure necessary configurations are present and valid
 if (!DISCORD_TOKEN) {
