@@ -1,46 +1,34 @@
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import llmConfig from '@llm/interfaces/llmConfig';
-import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
+import { OpenAI } from 'openai';
 
 const debug = Debug('app:sendChatCompletion');
 
 /**
  * Sends a chat completion request to OpenAI's API.
- * 
- * This function uses llmConfig for general LLM settings and openaiConfig for provider-specific ones.
- * It manages the retry logic, API response, and handles errors.
+ * @param {Array<{ role: string, content: string }>} messages - The history of conversation messages.
+ * @param {string} model - The model to use for the completion.
+ * @param {number} maxTokens - The maximum number of tokens.
+ * @returns {Promise<string>} - The generated completion text.
  */
-export async function sendChatCompletion(messages: IMessage[]): Promise<string> {
-    try {
-        const model = openaiConfig.get<string>('OPENAI_MODEL');
-        const maxRetries = llmConfig.get<number>('LLM_MAX_RETRIES');
-        const retryDelay = llmConfig.get<number>('LLM_RETRY_DELAY');
-        
-        debug(`Sending chat completion with model: ${model}`);
-        debug(`Number of messages: ${messages.length}`);
+export async function sendChatCompletion(
+    messages: { role: string; content: string }[],
+    model: string = openaiConfig.get('OPENAI_MODEL', 'gpt-3.5-turbo'),
+    maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS', 100)
+): Promise<string> {
+    const openai = new OpenAI({ apiKey: openaiConfig.get('OPENAI_API_KEY') });
+    debug(`Sending chat completion with model: ${model}`);
 
-        let response;
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                response = await openai.ChatCompletion.create({
-                    model,
-                    messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
-                });
-                if (response?.choices?.[0]?.finish_reason !== 'length') {
-                    return response.choices[0].message.content;
-                }
-                debug(`Retrying due to finish reason: ${response.choices[0].finish_reason}`);
-            } catch (error: any) {
-                debug(`Attempt ${attempt} failed with error: ${error.message}`);
-                if (attempt === maxRetries) throw new Error('Max retries reached, unable to complete request.');
-                debug(`Retrying in ${retryDelay} ms...`);
-                await new Promise(res => setTimeout(res, retryDelay));
-            }
-        }
-        throw new Error('Failed to get a complete response from OpenAI.');
-    } catch (error: any) {
-        debug('Failed to send chat completion: ' + error.message);
-        throw error;
+    const response = await openai.completions.create({
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE', 0.7)
+    });
+
+    if (!response.choices || response.choices.length === 0) {
+        throw new Error('No completion choices returned from OpenAI API.');
     }
+
+    return response.choices[0].message?.content?.trim() || '';
 }
