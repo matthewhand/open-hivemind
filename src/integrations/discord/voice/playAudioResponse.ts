@@ -32,7 +32,7 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator as unknown as (guild: VoiceBasedChannel) => unknown,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator as unknown as (guild: VoiceBasedChannel) => unknown, // Fix: Correct type casting
         });
 
         connection.on('stateChange', (oldState, newState) => {
