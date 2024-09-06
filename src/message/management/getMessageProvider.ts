@@ -1,6 +1,6 @@
-import ConfigurationManager from '@config/ConfigurationManager';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import Debug from 'debug';
+import messageConfig from '@config/messageConfig'; // Assuming messageConfig uses Convict
 
 const debug = Debug('app:getMessageProvider');
 
@@ -8,22 +8,15 @@ const debug = Debug('app:getMessageProvider');
  * Get Message Provider
  *
  * Determines and returns the appropriate message provider singleton based on the
- * configuration specified in the ConfigurationManager. Supports multiple message
+ * configuration specified in the convict-based messageConfig. Supports multiple message
  * providers, such as Discord.
  *
  * @returns The singleton instance of the configured message provider.
  * @throws An error if the configured message provider is unsupported.
  */
 export function getMessageProvider() {
-  const configManager = ConfigurationManager.getInstance(); // Instantiate ConfigurationManager
-  const messageConfig = configManager.getConfig('message');
-
-  // Guard: Ensure messageConfig is loaded
-  if (!messageConfig) {
-    throw new Error('Message configuration is not loaded.');
-  }
-
-  const messageProvider = messageConfig.get<string>('MESSAGE_PROVIDER') as string;
+  // Ensure messageConfig is loaded
+  const messageProvider = messageConfig.get('MESSAGE_PROVIDER');
 
   debug('Configured message provider:', messageProvider);
 
