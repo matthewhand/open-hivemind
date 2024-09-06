@@ -40,7 +40,7 @@ function prepareRequestBody(
             const authorId = msg.getAuthorId();
             return {
                 ...convertIMessageToChatParam(msg),
-                name: authorId ? authorId : undefined,
+                name: authorId ? authorId : '', // Ensure name is always a string, even if empty
             };
         }),
     ];
