@@ -2,6 +2,7 @@ import Debug from 'debug';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import axios from 'axios';
 import fs from 'fs';
+import FormData from 'form-data'; // Added for form submission
 
 const debug = Debug('app:transcribeAudio');
 
@@ -18,22 +19,25 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
 
         // Guard: Check if the model and API key are valid
         if (!model) {
-            throw new Error('Invalid model provided for transcription.'); // Improvement: Guard for invalid model
+            throw new Error('Invalid model provided for transcription.');
         }
         if (!apiKey) {
-            throw new Error('API key for OpenAI is missing.'); // Guard for API key
+            throw new Error('API key for OpenAI is missing.');
         }
 
-        debug('Sending audio for transcription...', { model, audioFilePath }); // Logging model and path
+        debug('Sending audio for transcription...', { model, audioFilePath });
 
-        const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Correct file reading
+        const formData = new FormData();
+        formData.append('file', fs.createReadStream(audioFilePath)); // Correct form data submission
+        formData.append('model', model);
+
         const response = await axios.post(
             openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
-            { model }, // Ensure correct argument is passed
+            formData,
             {
                 headers: {
-                    'Authorization': 'Bearer ' + apiKey,
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'multipart/form-data',
                 },
             }
         );
@@ -42,7 +46,7 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
             throw new Error('Failed to transcribe audio.');
         }
 
-        debug('Transcription successful', { transcript: response.data.text }); // Improvement: Log transcription response
+        debug('Transcription successful', { transcript: response.data.text });
 
         return response.data.text;
     } catch (error: any) {

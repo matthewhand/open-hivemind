@@ -1,5 +1,6 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
-import { Client, GuildMember, VoiceBasedChannel, VoiceChannel } from 'discord.js';
+import { Client, GuildMember, VoiceBasedChannel, VoiceChannel, GatewayIntentBits } from 'discord.js';
+import { DiscordGatewayAdapterCreator } from '@discordjs/voice';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import path from 'path';
 import Debug from 'debug';
@@ -25,14 +26,19 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
             throw new Error('User is not in a voice channel.');
         }
 
-        const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string; // Fix: Correct type and key
-        const audioFilePath = path.join(audioDirectory, fileName); // Fix: Ensure path uses proper directory
+        const audioDirectory = discordConfig.get('DISCORD_AUDIO_FILE_PATH') as string;
+        const audioFilePath = path.join(audioDirectory, fileName);
+
+        // Improvement: Additional guard clause to check if the file path exists
+        if (!audioFilePath || !fs.existsSync(audioFilePath)) {
+            throw new Error('Audio file not found: ' + audioFilePath);
+        }
         debug(`Playing audio file: ${audioFilePath}`);
 
         const connection = joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator, // Fix: Correct type casting
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
         });
 
         connection.on('stateChange', (oldState, newState) => {
@@ -56,13 +62,13 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
 
         player.on('error', (error) => {
             debug(`Error during audio playback: ${error.message}`);
-            debug(error.stack); // Improvement: log stack trace for better debugging
+            debug(error.stack);
             connection.destroy();
             throw error;
         });
     } catch (error: any) {
         debug('Failed to play audio response: ' + error.message);
-        debug(error.stack); // Improvement: log stack trace for better debugging
+        debug(error.stack);
         throw error;
     }
 }
