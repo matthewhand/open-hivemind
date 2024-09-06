@@ -1,10 +1,12 @@
-import Debug from 'debug';
+import { OpenAI } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import axios from 'axios';
 import fs from 'fs';
-import FormData from 'form-data'; // Added for form submission
+import Debug from 'debug';
 
 const debug = Debug('app:transcribeAudio');
+const openai = new OpenAI({
+  apiKey: openaiConfig.get('OPENAI_API_KEY'),
+});
 
 /**
  * Transcribes audio using OpenAI's speech-to-text model.
@@ -13,44 +15,23 @@ const debug = Debug('app:transcribeAudio');
  * @returns {Promise<string>} - The transcribed text.
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
-    try {
-        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1');
-        const apiKey = openaiConfig.get('OPENAI_API_KEY');
+  try {
+    const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1');
+    const fileStream = fs.createReadStream(audioFilePath);
 
-        // Guard: Check if the model and API key are valid
-        if (!model) {
-            throw new Error('Invalid model provided for transcription.');
-        }
-        if (!apiKey) {
-            throw new Error('API key for OpenAI is missing.');
-        }
+    const response = await openai.audio.transcriptions.create({
+      model,
+      file: fileStream,
+    });
 
-        debug('Sending audio for transcription...', { model, audioFilePath });
-
-        const formData = new FormData();
-        formData.append('file', fs.createReadStream(audioFilePath)); // Correct form data submission
-        formData.append('model', model);
-
-        const response = await axios.post(
-            openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
-            formData,
-            {
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
-        );
-
-        if (!response || !response.data || !response.data.text) {
-            throw new Error('Failed to transcribe audio.');
-        }
-
-        debug('Transcription successful', { transcript: response.data.text });
-
-        return response.data.text;
-    } catch (error: any) {
-        debug('Error transcribing audio:', error.message);
-        throw error;
+    if (!response.text) {
+      throw new Error('Transcription failed.');
     }
+
+    debug('Transcription completed:', response.text);
+    return response.text;
+  } catch (error) {
+    debug('Error in transcription:', error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
 }

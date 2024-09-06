@@ -1,26 +1,29 @@
-import axios from 'axios';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
+import axios from 'axios';
 
 /**
- * Initializes the Flowise API client.
- * Ensures configuration values like FLOWISE_BASE_URL and FLOWISE_API_KEY are present.
- * @throws {Error} If required configuration is missing.
+ * Fetches data from Flowise API using the configured base URL and API key.
+ * 
+ * @returns {Promise<any>} The API response data.
  */
-if (!flowiseConfig.get('FLOWISE_BASE_URL')) {
-    throw new Error('FLOWISE_BASE_URL is missing.'); // Improvement: Guard and log missing config
+export async function getFlowiseData(): Promise<any> {
+  const baseURL = flowiseConfig.get('FLOWISE_API_URL') as string;
+  const apiKey = flowiseConfig.get('FLOWISE_API_KEY') as string;
+
+  if (!baseURL || !apiKey) {
+    throw new Error('Flowise base URL or API key is missing.');
+  }
+
+  try {
+    const response = await axios.get(baseURL, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data from Flowise API:', error);
+    throw error;
+  }
 }
-
-if (!flowiseConfig.get('FLOWISE_API_KEY')) {
-    throw new Error('FLOWISE_API_KEY is missing.');
-}
-
-const apiClient = axios.create({
-    baseURL: flowiseConfig.get('FLOWISE_BASE_URL') as string, // Fix: Ensure proper type
-    headers: {
-        'Authorization': `Bearer ${flowiseConfig.get('FLOWISE_API_KEY')}`,
-    },
-});
-
-console.log('Flowise client initialized with base URL:', flowiseConfig.get('FLOWISE_BASE_URL')); // Improvement: Log configuration
-
-export default apiClient;
