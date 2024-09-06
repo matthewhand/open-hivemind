@@ -13,7 +13,7 @@ const debug = Debug('app:transcribeAudio');
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
-        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1'); // Fix: Ensure type and path for model
+        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL') || 'whisper-1'; // Fix: Correct model access
         const apiKey = openaiConfig.get('OPENAI_API_KEY');
 
         if (!apiKey) {
