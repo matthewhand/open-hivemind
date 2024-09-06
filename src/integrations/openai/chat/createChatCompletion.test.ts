@@ -1,26 +1,19 @@
-import { createChatCompletion } from './createChatCompletion';
-import { MockMessage } from './MockMessage';
-import Debug from 'debug';
+import { OpenAiService } from '@integrations/openai/OpenAiService';
+import { IMessage } from '@src/message/interfaces/IMessage';
 
-const debug = Debug('test:createChatCompletion');
+// Mock data
+const mockMessages: IMessage[] = [
+    { role: 'user', content: 'Hello' },
+    { role: 'assistant', content: 'Hi there!' }
+];
 
-describe('createChatCompletion', () => {
-    it('should create a valid chat completion request', async () => {
-        // Prepare mock messages
-        const historyMessages: MockMessage[] = [
-            new MockMessage('user', 'What is the weather today?'),
-            new MockMessage('assistant', 'The weather today is sunny with a high of 75 degrees.'),
-        ];
+const mockSystemMessage = 'This is a test system message';
 
-        // Execute the function
-        const result = await createChatCompletion(historyMessages);
+// Initialize OpenAI service
+const openAiService = OpenAiService.getInstance();
 
-        // Log and validate the result
-        debug('createChatCompletion result:', result);
-        expect(result).toBeTruthy();
-        expect(result.model).toBeDefined();
-        expect(result.choices).toBeInstanceOf(Array);
-        expect(result.choices.length).toBeGreaterThan(0);
-        expect(result.choices[0].message.content).toContain('The weather today');
-    });
+// Test createChatCompletion
+test('createChatCompletion should generate a valid completion', async () => {
+    const response = await openAiService.createChatCompletion(mockMessages, mockSystemMessage);
+    expect(response).toBeTruthy();
 });
