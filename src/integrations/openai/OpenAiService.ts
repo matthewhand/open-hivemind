@@ -30,7 +30,7 @@ export class OpenAiService {
 
     private constructor() {
         // Ensure values are either valid or defaulted properly
-        const timeoutValue = String(openaiConfig.get<'OPENAI_TIMEOUT'>('OPENAI_TIMEOUT') || '30000');
+        const timeoutValue = String(openaiConfig.get('OPENAI_TIMEOUT') || '30000');
         this.requestTimeout = isNaN(Number(timeoutValue)) ? 30000 : Number(timeoutValue);
 
         const options: ClientOptions = {
@@ -42,7 +42,7 @@ export class OpenAiService {
 
         this.openai = new OpenAI(options);
         this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
-        this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY' | 'stop'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
+        this.finishReasonRetry = String(openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop');
         this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey, 'Timeout:', this.requestTimeout);
