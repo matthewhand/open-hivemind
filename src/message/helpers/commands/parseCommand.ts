@@ -9,7 +9,8 @@ interface LlmConfig {
     LLM_PROVIDER?: string;
 }
 
-const llmConfig: LlmConfig = configManager.get('LLM_PROVIDER') || {};  // Properly initializing llmConfig
+// Fix: Correctly initialize llmConfig without calling non-existent get method
+const llmConfig: LlmConfig = configManager?.LLM_PROVIDER ? { LLM_PROVIDER: configManager.LLM_PROVIDER } : {};
 
 interface ParsedCommand {
     commandName: string;
@@ -42,7 +43,9 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
         debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args);
         return { commandName: commandName.toLowerCase(), action, args };
     } else {
-        if (!llmConfig) {
+        // Improvement: More verbose debug logging for fallback mechanism
+        debug('LLM configuration unavailable or command did not match regex pattern.');
+        if (!llmConfig || !llmConfig.LLM_PROVIDER) {
             debug('LLM configuration is not loaded.');
             return null;
         }
