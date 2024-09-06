@@ -11,8 +11,8 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Fetch Discord configuration
-const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN');
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
+const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN')!;
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID')!;
 
 // Guard: Ensure necessary configurations are present
 if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
@@ -50,7 +50,6 @@ export const startWebhookServer = (port: number): void => {
     }
     debug('Image URL:', imageUrl);
     const channel = client.channels.cache.get(DISCORD_CHAT_CHANNEL_ID) as TextChannel;
-
     if (channel) {
       let resultMessage: string;
       if (predictionStatus === 'succeeded') {
