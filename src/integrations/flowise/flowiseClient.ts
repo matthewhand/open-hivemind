@@ -6,8 +6,12 @@ import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
  * Ensures configuration values like FLOWISE_BASE_URL and FLOWISE_API_KEY are present.
  * @throws {Error} If required configuration is missing.
  */
-if (!flowiseConfig.get('FLOWISE_BASE_URL') || !flowiseConfig.get('FLOWISE_API_KEY')) { // Fix: Correct config access
-    throw new Error('Flowise configuration is missing or incomplete.');
+if (!flowiseConfig.get('FLOWISE_BASE_URL')) {
+    throw new Error('FLOWISE_BASE_URL is missing.'); // Improvement: Guard and log missing config
+}
+
+if (!flowiseConfig.get('FLOWISE_API_KEY')) {
+    throw new Error('FLOWISE_API_KEY is missing.');
 }
 
 const apiClient = axios.create({
@@ -16,5 +20,7 @@ const apiClient = axios.create({
         'Authorization': `Bearer ${flowiseConfig.get('FLOWISE_API_KEY')}`,
     },
 });
+
+console.log('Flowise client initialized with base URL:', flowiseConfig.get('FLOWISE_BASE_URL')); // Improvement: Log configuration
 
 export default apiClient;
