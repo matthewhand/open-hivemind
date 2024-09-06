@@ -1,27 +1,37 @@
 import { OpenAI } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { IMessage } from '@src/message/interfaces/IMessage';
+
+/**
+ * Converts IMessage to ChatCompletionMessageParam format.
+ * @param {IMessage[]} historyMessages - The messages in conversation history.
+ * @returns {Array<{ role: string; content: string }>} - Converted messages for OpenAI.
+ */
+function convertIMessageToChatParam(historyMessages: IMessage[]): { role: string; content: string }[] {
+    return historyMessages.map((msg) => ({ role: msg.role, content: msg.content }));
+}
 
 /**
  * Creates a chat completion using OpenAI's API.
- * @param {Array<{ role: string, content: string }>} historyMessages - Conversation history.
- * @param {string} systemMessageContent - System message content for context.
- * @param {number} maxTokens - Maximum number of tokens for the completion.
- * @returns {Promise<string>} - The generated text from OpenAI.
+ * @param {IMessage[]} historyMessages - The conversation history in IMessage format.
+ * @param {string} systemMessageContent - The system message content for context.
+ * @param {number} maxTokens - The maximum number of tokens allowed for the completion.
+ * @returns {Promise<string>} - The generated response from OpenAI.
  */
 export async function createChatCompletion(
     openai: OpenAI,
-    historyMessages: { role: string; content: string }[],
+    historyMessages: IMessage[],
     systemMessageContent: string,
     maxTokens: number
 ): Promise<string> {
-    const messages = historyMessages.map((msg) => ({ role: msg.role, content: msg.content }));
+    const messages = convertIMessageToChatParam(historyMessages);
     messages.unshift({ role: 'system', content: systemMessageContent });
 
-    const response = await openai.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL', 'gpt-3.5-turbo'),
+    const response = await openai.chat.completions.create({
+        model: openaiConfig.get('OPENAI_MODEL'),
         messages,
         max_tokens: maxTokens,
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE', 0.7)
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE')
     });
 
     if (!response.choices || response.choices.length === 0) {
