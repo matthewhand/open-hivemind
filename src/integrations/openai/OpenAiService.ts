@@ -9,10 +9,12 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
 
+// Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
 }
 
+// Guard: Validate llmConfig object
 if (!llmConfig || typeof llmConfig.get !== 'function') {
     throw new Error('Invalid LLM configuration: expected an object with a get method.');
 }
@@ -24,9 +26,17 @@ export class OpenAiService {
     private readonly parallelExecution: boolean;
     private readonly finishReasonRetry: string;
     private readonly maxRetries: number;
-    private readonly requestTimeout: number = parseInt(openaiConfig.get<string>('OPENAI_TIMEOUT') || '30000');
+    private readonly requestTimeout: number;
 
     private constructor() {
+        const timeoutValue = openaiConfig.get<'OPENAI_TIMEOUT' | null>('OPENAI_TIMEOUT');
+        // Guard: Ensure timeout is valid and number
+        if (!timeoutValue || isNaN(parseInt(timeoutValue))) {
+            debug('Invalid or missing OPENAI_TIMEOUT, defaulting to 30000');
+            this.requestTimeout = 30000;
+        } else {
+            this.requestTimeout = parseInt(timeoutValue);
+        }
         const options: ClientOptions = {
             apiKey: openaiConfig.get('OPENAI_API_KEY')!,
             organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
@@ -37,7 +47,7 @@ export class OpenAiService {
         this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
         this.finishReasonRetry = String(openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop');
         this.maxRetries = parseInt(String(openaiConfig.get('OPENAI_MAX_RETRIES') || '3'));
-        debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey);
+        debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey, 'Timeout:', this.requestTimeout);
     }
 
     public static getInstance(): OpenAiService {
