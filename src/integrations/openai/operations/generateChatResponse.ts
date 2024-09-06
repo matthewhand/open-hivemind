@@ -7,21 +7,67 @@ import { ChatCompletionMessageParam } from 'openai';
 const debug = Debug('app:OpenAiService');
 
 /**
+ * Attempts to fetch the first available OpenAI model.
+ * @param openAiService - The OpenAiService instance to use for the request.
+ * @returns {Promise<string>} - The first model's ID.
+ */
+async function getFirstAvailableModel(openAiService: OpenAiService): Promise<string> {
+    const models = await openAiService.openai.models.list();
+    const model = models.data[0]?.id;
+
+    if (!model) {
+        throw new Error('No OpenAI model available');
+    }
+    return model;
+}
+
+/**
+ * Prepares the request body for the OpenAI API.
+ * @param message - The user message.
+ * @param historyMessages - History of the chat.
+ * @param model - The model to use for the request.
+ * @param options - Additional options such as max tokens.
+ * @returns {ChatCompletionMessageParam[]} - The request body for OpenAI.
+ */
+function prepareRequestBody(
+    message: string,
+    historyMessages: IMessage[],
+    model: string,
+    options: { maxTokens: number }
+): ChatCompletionMessageParam[] {
+    return [
+        { role: 'user', content: message },
+        ...historyMessages.map(convertIMessageToChatParam),
+    ];
+}
+
+/**
+ * Handles retries for the chat completion.
+ * @param func - The function to retry.
+ * @param retries - Number of retry attempts.
+ * @returns {Promise<any>} - The result of the function.
+ */
+async function retry(func: () => Promise<any>, retries: number): Promise<any> {
+    let attempts = 0;
+    while (attempts < retries) {
+        try {
+            return await func();
+        } catch (error) {
+            attempts++;
+            if (attempts >= retries) {
+                throw error;
+            }
+            debug(`Retry attempt ${attempts} failed, retrying...`);
+        }
+    }
+}
+
+/**
  * Generates a chat response using the OpenAI API via the OpenAiService.
  *
  * This function maps `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format and
  * sends a request to the OpenAI API through the OpenAiService to generate a response.
  * It includes guards to validate input data, and debugging statements to track the execution flow and data.
- *
- * Key Features:
- * - **Type Mapping**: Converts `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format.
- *   - Expected OpenAI type `ChatCompletionMessageParam`:
- *     - `role: 'system' | 'user' | 'assistant'`
- *     - `content: string`
- *     - `name?: string`
- * - **Validation and Guards**: Ensures that input data is correctly formatted before sending the request.
- * - **Debugging**: Logs key values and execution flow for easier troubleshooting.
- * - **Handling Deep Type Instantiation**: Uses `@ts-ignore` where deep instantiation issues occur.
  *
  * @param openAiService - The instance of OpenAiService that manages API interactions.
  * @param message - The input message to generate a response for.
@@ -42,7 +88,6 @@ export async function generateChatResponse(
     }
 ): Promise<string | null> {
     try {
-        // Debugging the input values
         debug('generateChatResponse: message:', message);
         debug('generateChatResponse: historyMessages:', historyMessages);
         debug('generateChatResponse: options:', options);
@@ -50,48 +95,34 @@ export async function generateChatResponse(
         if (!message) {
             throw new Error('No input message provided.');
         }
-
         if (!historyMessages || historyMessages.length === 0) {
             throw new Error('No history messages provided.');
         }
 
-        // Ensure model is correctly referenced
-        const models = await openAiService.openai.models.list();
-        const model = models.data[0]?.id;
+        const model = await getFirstAvailableModel(openAiService);
 
-        if (!model) {
-            throw new Error('No model available');
-        }
+        const requestBody = prepareRequestBody(message, historyMessages, model, { maxTokens: options.maxRetries });
+        debug('Request Body:', requestBody);
 
-        // Use the conversion function
-        const requestBody = {
-            model,
-            messages: [
-                { role: 'user', content: message },
-                ...historyMessages.map(convertIMessageToChatParam),
-            ] as ChatCompletionMessageParam[],
-            max_tokens: options.maxRetries, // Example usage of an option
-            temperature: 0.7, // Default value or derived from configuration
-        };
-
-        // Debugging the request body before sending
-        debug('generateChatResponse: requestBody:', requestBody);
-
-        // Handle busy state
         if (options.isBusy()) {
-            debug('generateChatResponse: Service is busy, cannot process request');
+            debug('Service is busy, cannot process request.');
             return null;
         }
         options.setBusy(true);
 
-        const response = await openAiService.openai.chat.completions.create(requestBody);
-        debug('generateChatResponse: response received:', response);
+        const response = await retry(() => openAiService.openai.chat.completions.create({
+            model,
+            messages: requestBody,
+            max_tokens: options.maxRetries,
+            temperature: 0.7,
+        }), options.maxRetries);
 
         options.setBusy(false);
+        debug('Response:', response);
 
-        return response.choices[0].message.content;
+        return response.choices[0].message.content || '';
     } catch (error: any) {
-        debug('generateChatResponse: Error occurred:', error);
+        debug('Error generating chat response:', error.message);
         options.setBusy(false);
         throw new Error(`Failed to generate chat response: ${error.message}`);
     }
