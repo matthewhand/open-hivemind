@@ -5,14 +5,14 @@ import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 const debug = Debug('app:sendCompletions');
 
 export async function sendCompletion(): Promise<void> {
-    const openai = new OpenAI({ apiKey: openaiConfig.get<string>('OPENAI_API_KEY')! });
+    const openai = new OpenAI({ apiKey: openaiConfig.get('OPENAI_API_KEY')! });
 
     try {
         const response = await openai.completions.create({
-            model: openaiConfig.get<string>('OPENAI_MODEL')!,
+            model: openaiConfig.get('OPENAI_MODEL')!,
             prompt: 'Your prompt here',
-            max_tokens: openaiConfig.get<number>('OPENAI_MAX_TOKENS')!,
-            temperature: openaiConfig.get<number>('OPENAI_TEMPERATURE')!
+            max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS')!,
+            temperature: openaiConfig.get('OPENAI_TEMPERATURE')!
         });
 
         if (!response.choices || !response.choices.length) {
