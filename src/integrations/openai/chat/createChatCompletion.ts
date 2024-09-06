@@ -1,40 +1,37 @@
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import llmConfig from '@llm/interfaces/llmConfig'; 
-import { IMessage } from '@message/interfaces/IMessage';
 import Debug from 'debug';
-import { convertIMessageToChatParam } from './convertIMessageToChatParam';
+import { OpenAI } from 'openai';
+import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:createChatCompletion');
 
 /**
- * Creates a chat completion request payload for OpenAI's API.
- * 
- * This function uses both llmConfig and openaiConfig to handle settings.
- * It constructs the necessary request body using `convertIMessageToChatParam`.
+ * Creates a chat completion using the OpenAI API.
+ * @param {IMessage[]} messages - Array of messages for the chat completion.
+ * @returns {Promise<string>} - The generated chat response.
  */
 export async function createChatCompletion(messages: IMessage[]): Promise<string> {
-    try {
-        const model = openaiConfig.get('OPENAI_MODEL');
-        const maxTokens = llmConfig.get('LLM_RESPONSE_MAX_TOKENS');
-        const temperature = llmConfig.get('LLM_TEMPERATURE');
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-        debug(`Creating chat completion with model: ${model}`);
-        debug(`Number of messages: ${messages.length}`);
+  // Fix: Ensure messages follow the correct format
+  const formattedMessages = messages.map(msg => ({ role: msg.role, content: msg.content }));
+  debug(`Number of messages: ${formattedMessages.length}`);
 
-        const response = await new OpenAI().completions.create({
-            model,
-            messages: messages.map(convertIMessageToChatParam),
-            max_tokens: maxTokens,
-            temperature,
-        });
+  try {
+    const response = await openai.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      messages: formattedMessages,
+      max_tokens: 150,
+    });
 
-        if (response && response.choices && response.choices[0].message.content) {
-            return response.choices[0].message.content;
-        }
-
-        throw new Error('Failed to get a valid response from OpenAI.');
-    } catch (error: any) {
-        debug('Failed to create chat completion: ' + error.message);
-        throw error;
+    if (!response.choices || !response.choices.length) {
+      throw new Error('No response from OpenAI');
     }
+
+    const result = response.choices[0].message.content.trim();
+    debug('Generated completion:', result);
+    return result;
+  } catch (error: any) {
+    debug('Error generating chat completion:', error.message);
+    throw new Error(`Failed to generate completion: ${error.message}`);
+  }
 }

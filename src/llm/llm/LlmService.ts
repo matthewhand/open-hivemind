@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
 import llmConfig from '@llm/interfaces/llmConfig';
+import { ChatCompletionMessageParam } from 'openai';
 
 const debug = Debug('app:LlmService');
 
@@ -9,7 +10,7 @@ const debug = Debug('app:LlmService');
  * @returns {string} The LLM provider name.
  */
 export function getLlmProvider(): string {
-    const provider = llmConfig.get('LLM_PROVIDER'); // Fix: Correct provider access
+    const provider = llmConfig.get('LLM_PROVIDER');
     if (!provider) throw new Error('LLM_PROVIDER is not configured');
     return provider;
 }
@@ -24,7 +25,9 @@ export async function generateLlmCompletion(prompt: string): Promise<string> {
     const maxTokens = llmConfig.get('LLM_RESPONSE_MAX_TOKENS');
     const stopSequences = llmConfig.get('LLM_STOP');
 
-    // Improvement: Add debug logging for key variables
+    // Fix: Correctly type messages as ChatCompletionMessageParam[]
+    const messages: ChatCompletionMessageParam[] = [{ role: 'user', content: prompt }];
+
     debug('Generating completion with model:', model);
     debug('Max tokens:', maxTokens);
     debug('Stop sequences:', stopSequences);
@@ -40,17 +43,16 @@ export async function generateLlmCompletion(prompt: string): Promise<string> {
     try {
         const response = await openai.completions.create({
             model,
-            prompt,
+            messages,
             max_tokens: maxTokens,
             stop: stopSequences,
+            stream: false,
         });
 
-        // Fix: Check for 'choices' array and access first result safely
         if (!response || !response.choices || !Array.isArray(response.choices)) {
             throw new Error('Invalid response from OpenAI');
         }
 
-        // Log and return the first completion result
         const resultText = response.choices[0]?.text?.trim() ?? '';
         debug('Generated completion:', resultText);
         return resultText;
