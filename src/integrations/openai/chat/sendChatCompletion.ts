@@ -11,7 +11,7 @@ const debug = Debug('app:sendChatCompletion');
  * @returns {Promise<string>} - The generated chat response.
  */
 export async function sendChatCompletion(messages: IMessage[]): Promise<string> {
-  const openai = new OpenAI({ apiKey: openaiConfig.get<string>('OPENAI_API_KEY')! });
+  const openai = new OpenAI({ apiKey: openaiConfig.get<'OPENAI_API_KEY'>('OPENAI_API_KEY')! });
 
   // Format messages as a single prompt
   const prompt = messages.map(msg => msg.content).join(' ');
@@ -19,9 +19,9 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
 
   try {
     const response = await openai.completions.create({
-      model: openaiConfig.get<string>('OPENAI_MODEL')!,
+      model: openaiConfig.get<'OPENAI_MODEL'>('OPENAI_MODEL')!,
       prompt,
-      max_tokens: openaiConfig.get<number>('OPENAI_MAX_TOKENS')!,
+      max_tokens: openaiConfig.get<'OPENAI_MAX_TOKENS'>('OPENAI_MAX_TOKENS')!,
     });
 
     if (!response.choices || !response.choices.length) {
