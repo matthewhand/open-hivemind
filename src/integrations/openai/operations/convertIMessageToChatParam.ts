@@ -1,16 +1,14 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { ChatCompletionMessageParam } from 'openai';
 
 /**
- * Converts an IMessage object into OpenAI's ChatCompletionMessageParam format.
+ * Converts IMessage to OpenAI API format.
  * @param message - The IMessage object to convert.
- * @returns {ChatCompletionMessageParam} - The formatted message for OpenAI API.
+ * @returns An object compatible with OpenAI chat API.
  */
-export function convertIMessageToChatParam(message: IMessage): ChatCompletionMessageParam {
+export function convertIMessageToChatParam(message: IMessage): { role: string; content: string; name?: string } {
     return {
         role: message.role,
         content: message.content,
-        // Optional: Include name if applicable (for system messages)
-        name: message.role === 'system' ? 'system_name' : undefined,
+        name: message.getAuthorId() || 'unknown', // Ensure name is always a string
     };
 }
