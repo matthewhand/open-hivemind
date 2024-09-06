@@ -1,23 +1,22 @@
 import { OpenAI } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import { ChatCompletionCreateParams } from 'openai';
-import { IMessage } from '@src/message/interfaces/IMessage';
 
 /**
  * Creates a chat completion using OpenAI's API.
  * 
- * @param {IMessage[]} historyMessages - The history of messages in the conversation.
+ * @param {ChatCompletionCreateParams['messages']} historyMessages - The history of messages in the conversation.
  * @param {string} systemMessageContent - The system message content for context.
  * @param {number} maxTokens - Maximum number of tokens for the completion.
  * @returns {Promise<string>} - The generated completion text.
  */
 export async function createChatCompletion(
     openai: OpenAI,
-    historyMessages: IMessage[],
+    historyMessages: ChatCompletionCreateParams['messages'],
     systemMessageContent: string,
     maxTokens: number
 ): Promise<string> {
-    const messages: ChatCompletionCreateParams['messages'] = historyMessages.map((msg) => ({
+    const messages = historyMessages.map((msg) => ({
         role: msg.role,
         content: msg.content,
     }));

@@ -3,14 +3,14 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
-import discordConfig from '@src/message/config/messageConfig'; // Fix reference to correct config
+import discordConfig from '@src/message/config/messageConfig';
 
 const debug = Debug('app:webhookHandler');
 
-// Initialize Discord client with necessary intents
+// Initialize Discord client
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-// Fetch Discord configuration using convict
+// Fetch Discord configuration
 const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN');
 const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
