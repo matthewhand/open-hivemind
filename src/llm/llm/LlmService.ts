@@ -1,7 +1,6 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
 import llmConfig from '@llm/interfaces/llmConfig';
-import { ChatCompletionMessageParam } from 'openai';
 
 const debug = Debug('app:LlmService');
 
@@ -13,11 +12,11 @@ const debug = Debug('app:LlmService');
 export async function generateCompletion(prompt: string): Promise<string> {
     const openai = new OpenAI({ apiKey: llmConfig.get<string>('LLM_API_KEY')! });
 
-    const messages: ChatCompletionMessageParam[] = [{ role: 'user', content: prompt }];
+    const messages = [{ role: 'user', content: prompt }];
 
     const response = await openai.chat.completions.create({
         model: llmConfig.get<string>('LLM_MODEL')!,
-        messages,
+        prompt,  // Corrected prompt usage
         max_tokens: llmConfig.get<number>('LLM_MAX_TOKENS')!,
         temperature: llmConfig.get<number>('LLM_TEMPERATURE')!,
         stream: false
