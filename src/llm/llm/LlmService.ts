@@ -10,15 +10,15 @@ const debug = Debug('app:LlmService');
  * @returns {Promise<string>} - The generated completion.
  */
 export async function generateCompletion(prompt: string): Promise<string> {
-    const openai = new OpenAI({ apiKey: llmConfig.get('LLM_API_KEY') });
+    const openai = new OpenAI({ apiKey: llmConfig.get<string>('LLM_API_KEY')! });
 
     const messages = [{ role: 'user', content: prompt }];
 
     const response = await openai.chat.completions.create({
-        model: llmConfig.get('LLM_MODEL')!,
+        model: llmConfig.get<string>('LLM_MODEL')!,
         messages,
-        max_tokens: parseInt(llmConfig.get('LLM_MAX_TOKENS') || '100'),
-        temperature: parseFloat(llmConfig.get('LLM_TEMPERATURE') || '0.7')
+        max_tokens: llmConfig.get<number>('LLM_MAX_TOKENS')!,
+        temperature: llmConfig.get<number>('LLM_TEMPERATURE')!
     });
 
     if (!response.choices || response.choices.length === 0) {
