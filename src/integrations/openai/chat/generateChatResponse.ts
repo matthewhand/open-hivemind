@@ -27,11 +27,18 @@ export async function generateChatResponse(prompt: string): Promise<string> {
             messages: [{ role: 'user', content: prompt }],
         });
 
+        // Ensure response is valid and return trimmed content, fallback to empty string if null
         if (!response || !response.choices || !response.choices[0]) {
-            throw new Error('Failed to generate chat response.');
+            throw new Error('Failed to generate chat response. No choices returned.');
         }
 
-        return response.choices[0].message.content;
+        const content = response.choices[0].message?.content?.trim() || '';
+
+        if (!content) {
+            debug('Generated response was empty.');
+        }
+
+        return content;
     } catch (error: any) {
         debug('Error generating chat response: ' + error.message);
         throw error;
