@@ -24,6 +24,15 @@ export class FlowiseCommand {
         }
         debug('Flowise API base URL: ' + apiUrl);
 
+        // Guard: Ensure API key is provided
+        const apiKey = process.env.FLOWISE_API_KEY;
+        if (!apiKey) {
+            const errorMessage = 'Flowise API key is missing.';
+            debug(errorMessage);
+            return { success: false, message: errorMessage };
+        }
+        debug('Flowise API Key: ' + apiKey);
+
         // Guard: Ensure endpointId is provided
         if (!endpointId) {
             const errorMessage = 'Endpoint ID is required but was not provided.';
@@ -37,8 +46,12 @@ export class FlowiseCommand {
         debug('Constructed Flowise API URL: ' + url);
 
         try {
+            // Log the request headers for better debugging
+            const headers = { 'Authorization': 'Bearer ' + apiKey };
+            debug('Request Headers:', headers);
+
             // Make a GET request to the Flowise API
-            const response = await axios.get(url);
+            const response = await axios.get(url, { headers });
             debug('Flowise API response status: ' + response.status);
 
             // Return success response with data
