@@ -11,12 +11,16 @@ const debug = Debug('app:webhookHandler');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 // Fetch Discord configuration
-const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN')!;
-const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID')!;
+const DISCORD_TOKEN = discordConfig.get<string>('DISCORD_BOT_TOKEN');
+const DISCORD_CHAT_CHANNEL_ID = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
-// Guard: Ensure necessary configurations are present
-if (!DISCORD_TOKEN || !DISCORD_CHAT_CHANNEL_ID) {
-  debug('Missing required configurations: DISCORD_BOT_TOKEN and/or DISCORD_CHAT_CHANNEL_ID', { DISCORD_TOKEN, DISCORD_CHAT_CHANNEL_ID });
+// Guard: Ensure necessary configurations are present and valid
+if (!DISCORD_TOKEN) {
+  debug('Error: DISCORD_BOT_TOKEN is missing or invalid.');
+  process.exit(1);
+}
+if (!DISCORD_CHAT_CHANNEL_ID) {
+  debug('Error: DISCORD_CHAT_CHANNEL_ID is missing or invalid.');
   process.exit(1);
 }
 
