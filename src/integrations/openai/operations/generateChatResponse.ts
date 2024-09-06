@@ -2,7 +2,6 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
-import { ChatCompletionMessageParam } from 'openai';
 
 const debug = Debug('app:OpenAiService');
 
@@ -27,17 +26,23 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param historyMessages - History of the chat.
  * @param model - The model to use for the request.
  * @param options - Additional options such as max tokens.
- * @returns {ChatCompletionMessageParam[]} - The request body for OpenAI.
+ * @returns {Array<{ role: string, content: string, name?: string }>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
     model: string,
     options: { maxTokens: number }
-): ChatCompletionMessageParam[] {
+): Array<{ role: string; content: string; name?: string }> {
     return [
         { role: 'user', content: message },
-        ...historyMessages.map(convertIMessageToChatParam),
+        ...historyMessages.map((msg) => {
+            const authorId = msg.getAuthorId();
+            return {
+                ...convertIMessageToChatParam(msg),
+                name: authorId ? authorId : undefined,
+            };
+        }),
     ];
 }
 
@@ -65,7 +70,7 @@ async function retry(func: () => Promise<any>, retries: number): Promise<any> {
 /**
  * Generates a chat response using the OpenAI API via the OpenAiService.
  *
- * This function maps `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format and
+ * This function maps `IMessage` objects to OpenAI's message format and
  * sends a request to the OpenAI API through the OpenAiService to generate a response.
  * It includes guards to validate input data, and debugging statements to track the execution flow and data.
  *
