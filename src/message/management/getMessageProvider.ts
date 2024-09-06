@@ -1,6 +1,6 @@
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig'; // Assuming messageConfig uses Convict
+import messageConfig from '@src/message/config/messageConfig'; // Correct reference to messageConfig
 
 const debug = Debug('app:getMessageProvider');
 

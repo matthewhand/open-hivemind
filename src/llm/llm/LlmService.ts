@@ -45,15 +45,15 @@ export async function generateLlmCompletion(prompt: string): Promise<string> {
             stop: stopSequences,
         });
 
-        // Fix: Ensure response and data properties exist
-        if (!response || !response.data || !Array.isArray(response.data.choices)) {
+        // Fix: Check for 'choices' array and access first result safely
+        if (!response || !response.choices || !Array.isArray(response.choices)) {
             throw new Error('Invalid response from OpenAI');
         }
 
-        // Improvement: Debug log for response content
-        debug('LLM response:', response);
-
-        return response.data.choices[0].text.trim();
+        // Log and return the first completion result
+        const resultText = response.choices[0]?.text?.trim() ?? '';
+        debug('Generated completion:', resultText);
+        return resultText;
     } catch (error: any) {
         debug('Error generating LLM completion:', error);
         throw new Error(`Failed to generate completion: ${error.message}`);

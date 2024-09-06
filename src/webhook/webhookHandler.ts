@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import discordConfig from '@src/message/config/messageConfig'; // Fix reference to correct config
 
 const debug = Debug('app:webhookHandler');
 
@@ -31,6 +31,11 @@ client.login(DISCORD_TOKEN).catch(error => {
  *
  * This server listens for webhook events and processes them accordingly.
  * It integrates with Discord channels to send notifications based on webhook data.
+ *
+ * Key Features:
+ * - Listens for webhook events
+ * - Sends notifications to Discord channels
+ * - Includes error handling and logging
  *
  * @param port - The port on which the server will listen.
  */
