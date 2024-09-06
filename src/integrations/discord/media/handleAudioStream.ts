@@ -64,20 +64,21 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             const transcript = await transcribeAudio(audioFilePath);
 
-            if (transcript) {
-                debug('Transcription successful', { transcript });
+            if (!transcript || transcript.trim() === '') { // Improvement: Guard against empty transcription
+                debug('handleAudioStream: Transcription is empty or invalid', { transcript });
+                return;
+            }
 
-                const response = await aiService.generateChatResponse(transcript, []);
+            debug('Transcription successful', { transcript });
 
-                if (response) {
-                    debug('Generated response', { response });
-                    await playAudioResponse(connection, response);
-                    debug('Played audio response');
-                } else {
-                    debug('handleAudioStream: Response generation returned null or undefined');
-                }
+            const response = await aiService.generateChatResponse(transcript, []);
+
+            if (response) {
+                debug('Generated response', { response });
+                await playAudioResponse(connection, response);
+                debug('Played audio response');
             } else {
-                debug('handleAudioStream: Transcription returned null or undefined');
+                debug('handleAudioStream: Response generation returned null or undefined');
             }
         } catch (error: any) {
             debug('handleAudioStream: Error processing audio stream', { userId, error: error.message, stack: error.stack });
