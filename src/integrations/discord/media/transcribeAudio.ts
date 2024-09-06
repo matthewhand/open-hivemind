@@ -25,7 +25,7 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
         const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Correct file reading
         const response = await axios.post(
             openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
-            { model, file: audioBuffer },
+            { model }, // Fix: Pass correct argument
             {
                 headers: {
                     'Authorization': 'Bearer ' + apiKey,
@@ -37,6 +37,8 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
         if (!response || !response.data || !response.data.text) {
             throw new Error('Failed to transcribe audio.');
         }
+
+        debug('Transcription successful', { transcript: response.data.text }); // Improvement: Log transcription response
 
         return response.data.text;
     } catch (error: any) {
