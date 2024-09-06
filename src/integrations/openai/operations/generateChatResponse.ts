@@ -2,12 +2,13 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
+import { ChatCompletionMessageParam } from 'openai';
 
 const debug = Debug('app:OpenAiService');
 
 /**
  * Generates a chat response using the OpenAI API via the OpenAiService.
- * 
+ *
  * This function maps `IMessage` objects to OpenAI's `ChatCompletionMessageParam` format and
  * sends a request to the OpenAI API through the OpenAiService to generate a response.
  * It includes guards to validate input data, and debugging statements to track the execution flow and data.
@@ -68,7 +69,7 @@ export async function generateChatResponse(
             messages: [
                 { role: 'user', content: message },
                 ...historyMessages.map(convertIMessageToChatParam),
-            ],
+            ] as ChatCompletionMessageParam[],
             max_tokens: options.maxRetries, // Example usage of an option
             temperature: 0.7, // Default value or derived from configuration
         };

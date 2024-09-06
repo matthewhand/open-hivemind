@@ -28,8 +28,10 @@ client.login(DISCORD_TOKEN).catch(error => {
 
 /**
  * Starts the webhook server and defines its routes and handlers.
+ *
  * This server listens for webhook events and processes them accordingly.
  * It integrates with Discord channels to send notifications based on webhook data.
+ *
  * @param port - The port on which the server will listen.
  */
 export const startWebhookServer = (port: number): void => {
@@ -48,8 +50,10 @@ export const startWebhookServer = (port: number): void => {
       debug('Missing predictionId or predictionStatus:', { predictionId, predictionStatus });
       return res.status(400).send({ error: 'Missing predictionId or predictionStatus' });
     }
+
     debug('Image URL:', imageUrl);
     const channel = client.channels.cache.get(DISCORD_CHAT_CHANNEL_ID) as TextChannel;
+
     if (channel) {
       let resultMessage: string;
       if (predictionStatus === 'succeeded') {
@@ -60,7 +64,8 @@ Image URL: ${imageUrl}`;
         debug('Processing:', predictionId);
         return res.sendStatus(200);
       } else {
-        resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
+        resultMessage = `Prediction ID: ${predictionId}
+Status: ${predictionStatus}`;
       }
       await channel.send(resultMessage).catch(error => {
         debug('Failed to send message to channel:', error.message);
@@ -69,31 +74,37 @@ Image URL: ${imageUrl}`;
     } else {
       debug('Channel not found for ID:', DISCORD_CHAT_CHANNEL_ID);
     }
+
     res.setHeader('Content-Type', 'application/json');
     res.sendStatus(200);
   });
 
+  // Health check route
   app.get('/health', (req: Request, res: Response) => {
     debug('Health check received');
     res.sendStatus(200);
   });
 
+  // Uptime check route
   app.get('/uptime', (req: Request, res: Response) => {
     const uptimeSeconds = process.uptime();
-    const uptime = new Date(uptimeSeconds * 1000).toISOString().substr(11, 8);
+    const uptime = new Date(uptimeSeconds * 1000).toISOString().substr(11, 8); // Convert seconds to HH:MM:SS format
     debug('Uptime check received:', uptime);
     res.status(200).send({ uptime });
   });
 
+  // Error handling middleware to catch unhandled errors
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     debug('Unhandled Error:', err.message);
     res.status(500).send({ error: 'Server Error' });
   });
 
+  // Start the server and listen on the specified port
   app.listen(port, () => {
     debug('HTTP server listening at http://localhost:' + port);
   });
 
+  // POST route to send messages to Discord channels
   app.post('/post', async (req: Request, res: Response) => {
     const message = req.body.message;
     if (!message) {
