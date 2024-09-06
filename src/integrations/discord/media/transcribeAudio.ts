@@ -13,9 +13,13 @@ const debug = Debug('app:transcribeAudio');
  */
 export async function transcribeAudio(audioFilePath: string): Promise<string> {
     try {
-        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1'); // Fix: Ensure correct model access
+        const model = openaiConfig.get('OPENAI_TRANSCRIBE_MODEL', 'whisper-1');
         const apiKey = openaiConfig.get('OPENAI_API_KEY');
 
+        // Guard: Check if the model and API key are valid
+        if (!model) {
+            throw new Error('Invalid model provided for transcription.'); // Improvement: Guard for invalid model
+        }
         if (!apiKey) {
             throw new Error('API key for OpenAI is missing.'); // Guard for API key
         }
@@ -25,7 +29,7 @@ export async function transcribeAudio(audioFilePath: string): Promise<string> {
         const audioBuffer = fs.readFileSync(audioFilePath); // Fix: Correct file reading
         const response = await axios.post(
             openaiConfig.get('OPENAI_BASE_URL') + '/v1/audio/transcriptions',
-            { model }, // Fix: Pass correct argument
+            { model }, // Ensure correct argument is passed
             {
                 headers: {
                     'Authorization': 'Bearer ' + apiKey,
