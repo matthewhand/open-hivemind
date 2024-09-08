@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import { createChatCompletion } from './createChatCompletion';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
-// Mock IMessage with required fields and additional properties
-const mockMessage: IMessage = {
+// Mock IMessage without direct access to protected 'data' property
+const mockMessage: Partial<IMessage> = {
   role: 'user',
   content: 'Hello',
   getAuthorId: () => 'user123',
@@ -20,8 +20,7 @@ const mockMessage: IMessage = {
   getChannelUsers: () => ['user1', 'user2'],
   isReplyToBot: () => false,
   mentionsUsers: () => false,
-  isFromBot: () => false,
-  data: {} // Adding the missing data property
+  isFromBot: () => false
 };
 
 // Mock dependencies
@@ -37,7 +36,7 @@ describe('createChatCompletion', () => {
   it('should return a valid completion response', async () => {
     const response = await createChatCompletion(
       mockOpenAI as any,
-      [mockMessage],
+      [mockMessage as IMessage],
       'system message',
       100
     );
@@ -54,7 +53,7 @@ describe('createChatCompletion', () => {
     };
     const response = await createChatCompletion(
       mockEmptyOpenAI as any,
-      [mockMessage],
+      [mockMessage as IMessage],
       'system message',
       100
     );
