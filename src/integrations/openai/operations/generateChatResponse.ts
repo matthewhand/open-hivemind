@@ -2,6 +2,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { ChatCompletionMessageParam } from 'openai'; // Ensure correct import
 
 const debug = Debug('app:OpenAiService');
 
@@ -24,19 +25,18 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param message - User message.
  * @param historyMessages - History of the chat.
  * @param model - Model to use.
- * @returns {Array<{ role: string, content: string; name: string }>}
+ * @returns {Array<ChatCompletionMessageParam>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
     model: string
-): Array<{ role: string; content: string; name: string }> {
+): Array<ChatCompletionMessageParam> {
     return [
-        { role: 'user', content: message, name: 'user' },
+        { role: 'user', content: message },
         ...historyMessages.map((msg) => ({
-            role: msg.role,
+            role: msg.role === 'function' ? 'function' : msg.role,
             content: msg.content,
-            name: msg.role === 'function' ? 'FunctionName' : msg.role,
         })),
     ];
 }
@@ -105,9 +105,9 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        // Fix: Use simpler openaiConfig.get() with correct types
-        const maxTokens = openaiConfig.get('OPENAI_MAX_TOKENS') ?? 150;
-        const temperature = openaiConfig.get('OPENAI_TEMPERATURE') ?? 0.7;
+        // Fix: Correctly assign types to messages
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS') ?? 150;
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') ?? 0.7;
 
         // Improvement: Add guards to validate config values
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
