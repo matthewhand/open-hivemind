@@ -15,8 +15,17 @@ const mockMessage: IMessage = {
   getText: () => 'Hello',
   getChannelId: () => '1234',
   getChannelTopic: () => 'General',
-  getUserMentions: () => []
+  getUserMentions: () => [],
+  getChannelUsers: () => ['user1', 'user2'],
+  isReplyToBot: () => false,
+  mentionsUsers: () => false,
+  isFromBot: () => false
 };
+
+// Guard to validate IMessage interface properties
+if (!mockMessage.getChannelUsers || !mockMessage.isReplyToBot) {
+  throw new Error('mockMessage does not conform to IMessage interface');
+}
 
 // Mock dependencies
 const mockOpenAI = {
@@ -27,6 +36,9 @@ const mockOpenAI = {
   },
 };
 
+// Debug logging
+console.debug('Calling createChatCompletion with:', mockMessage);
+
 describe('createChatCompletion', () => {
   it('should return a valid completion response', async () => {
     const response = await createChatCompletion(
@@ -35,6 +47,7 @@ describe('createChatCompletion', () => {
       'system message',
       100
     );
+    console.debug('Received response:', response);
     expect(response).to.equal('mock response');
   });
 
@@ -52,6 +65,7 @@ describe('createChatCompletion', () => {
       'system message',
       100
     );
+    console.debug('Received empty response:', response);
     expect(response).to.equal('');
   });
 });
