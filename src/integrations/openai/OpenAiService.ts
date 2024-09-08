@@ -1,4 +1,5 @@
 import Debug from 'debug';
+const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 import { OpenAI, ClientOptions } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
@@ -34,7 +35,7 @@ export class OpenAiService {
         this.requestTimeout = isNaN(Number(timeoutValue)) ? 30000 : Number(timeoutValue);
 
         const options: ClientOptions = {
-            apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
+            apiKey: String(redactSensitiveInfo('OPENAI_API_KEY', openaiConfig.get('OPENAI_API_KEY')) || ''),
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
             timeout: this.requestTimeout,

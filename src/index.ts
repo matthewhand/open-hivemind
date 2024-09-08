@@ -11,7 +11,7 @@ const { messageHandler } = require('@src/message/handlers/messageHandler');
 const debug = Debug('app:index');
 
 // Debug: Print all environment variables for verification
-console.log('[DEBUG] All environment variables:', process.env);
+console.log('[DEBUG] All environment variables:', redactSensitiveInfo('process.env', process.env));
 
 // Initialize configuration manager
 const configManager = ConfigurationManager.getInstance();
