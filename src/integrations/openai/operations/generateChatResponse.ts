@@ -106,7 +106,7 @@ export async function generateChatResponse(
 
         const model = await getFirstAvailableModel(openAiService);
 
-        const requestBody = prepareRequestBody(message, historyMessages, model, { maxTokens: options.maxRetries });
+        const requestBody = prepareRequestBody(message, historyMessages, model, { maxTokens: 150 });
         debug('Request Body:', requestBody);
 
         if (options.isBusy()) {
@@ -118,7 +118,7 @@ export async function generateChatResponse(
         const response = await retry(() => openAiService.openai.chat.completions.create({
             model,
             messages: requestBody,
-            max_tokens: options.maxRetries,
+            max_tokens: 150,
             temperature: 0.7,
         }), options.maxRetries);
 
