@@ -45,8 +45,8 @@ export async function createChatCompletion(
     }
 
     // Guard: Validate configuration values
-    const model = openaiConfig.get<string>('OPENAI_MODEL')!;
-    const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE')!;
+    const model = openaiConfig.get<string>('OPENAI_MODEL') as string;
+    const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') as number;
     if (!model || !temperature) {
         throw new Error('Missing OpenAI configuration values.');
     }

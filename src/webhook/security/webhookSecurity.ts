@@ -5,11 +5,11 @@ import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken = req.headers['x-webhook-token'];
-    const expectedToken: string = webhookConfig.get<string>('WEBHOOK_SECRET_TOKEN');
+    const expectedToken: string = webhookConfig.get<string>('WEBHOOK_SECRET_TOKEN')!;
 
-    // Redact sensitive token information in logs
-    console.debug('Provided Token:', redactSensitiveInfo(providedToken));
-    console.debug('Expected Token:', redactSensitiveInfo(expectedToken));
+    // Redact sensitive token information in logs based on key
+    console.debug('Provided Token:', redactSensitiveInfo('x-webhook-token', providedToken));
+    console.debug('Expected Token:', redactSensitiveInfo('WEBHOOK_SECRET_TOKEN', expectedToken));
 
     if (!expectedToken) {
         throw new Error('WEBHOOK_SECRET_TOKEN is not defined in config');
@@ -25,7 +25,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
 
 // Middleware for IP whitelisting (default to localhost)
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-    const whitelistedIps: string[] = webhookConfig.get<string[]>('WEBHOOK_WHITELISTED_IPS') || ['127.0.0.1'];
+    const whitelistedIps: string[] = webhookConfig.get<string[]>('WEBHOOK_WHITELISTED_IPS')! || ['127.0.0.1'];
     const requestIp = req.ip;
 
     console.debug('Request IP:', requestIp);

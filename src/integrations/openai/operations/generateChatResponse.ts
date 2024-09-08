@@ -25,18 +25,19 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param message - User message.
  * @param historyMessages - History of the chat.
  * @param model - Model to use.
- * @returns {Array<{ role: string, content: string }>}
+ * @returns {Array<{ role: string, content: string; name: string }>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
     model: string
-): Array<{ role: string; content: string }> {
+): Array<{ role: string; content: string; name: string }> {
     return [
-        { role: 'user', content: message },
+        { role: 'user', content: message, name: 'user' },
         ...historyMessages.map((msg) => ({
             role: msg.role,
             content: msg.content,
+            name: msg.role === 'function' ? 'FunctionName' : msg.role,
         })),
     ];
 }
@@ -105,8 +106,8 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
-        const temperature: number = openaiConfig.get<number>('OPENAI_TEMPERATURE');
+        const maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS') as number;
+        const temperature: number = openaiConfig.get<number>('OPENAI_TEMPERATURE') as number;
 
         // Validate that the values are within the acceptable range
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
