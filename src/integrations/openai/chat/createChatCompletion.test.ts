@@ -8,11 +8,10 @@ const mockMessage: IMessage = {
   role: 'user',
   content: 'Hello',
   getAuthorId: () => 'user123',
-  getAuthorName: () => 'User One', // Added missing property
+  getAuthorName: () => 'User One',
   reply: async () => Promise.resolve(),
   client: {},
   channelId: '1234',
-  // Removed protected 'data' property
   getMessageId: () => '5678',
   getText: () => 'Hello',
   getChannelId: () => '1234',
@@ -21,13 +20,9 @@ const mockMessage: IMessage = {
   getChannelUsers: () => ['user1', 'user2'],
   isReplyToBot: () => false,
   mentionsUsers: () => false,
-  isFromBot: () => false
+  isFromBot: () => false,
+  data: {} // Adding the missing data property
 };
-
-// Guard to validate IMessage interface properties
-if (!mockMessage.getChannelUsers || !mockMessage.isReplyToBot || !mockMessage.reply || !mockMessage.getAuthorName) {
-  throw new Error('mockMessage does not conform to IMessage interface');
-}
 
 // Mock dependencies
 const mockOpenAI = {
@@ -38,9 +33,6 @@ const mockOpenAI = {
   },
 };
 
-// Debug logging
-console.debug('Calling createChatCompletion with message ID:', mockMessage.getMessageId(), 'and content:', mockMessage.getText());
-
 describe('createChatCompletion', () => {
   it('should return a valid completion response', async () => {
     const response = await createChatCompletion(
@@ -49,7 +41,6 @@ describe('createChatCompletion', () => {
       'system message',
       100
     );
-    console.debug('Received response with message ID:', mockMessage.getMessageId(), 'Response:', response);
     expect(response).to.equal('mock response');
   });
 
@@ -67,7 +58,6 @@ describe('createChatCompletion', () => {
       'system message',
       100
     );
-    console.debug('Received empty response with message ID:', mockMessage.getMessageId(), 'Response:', response);
     expect(response).to.equal('');
   });
 });
