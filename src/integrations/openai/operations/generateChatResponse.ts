@@ -105,8 +105,8 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS') as number;
-        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') as number;
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS')!;
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE')!;
 
         const response = await retry(() => openAiService.openai.chat.completions.create({
             model,

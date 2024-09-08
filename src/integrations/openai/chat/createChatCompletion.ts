@@ -19,12 +19,12 @@ export async function createChatCompletion(
     const messages = convertIMessageToChatParam(historyMessages);
     messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
 
-    // Adjust overload parameters for non-streaming calls
+    // Adjust OpenAI API call to match overloads
     const response = await openai.chat.completions.create({
-        model: openaiConfig.get<string>('OPENAI_MODEL'),
+        model: openaiConfig.get<string>('OPENAI_MODEL')!,
         messages,
         max_tokens: maxTokens,
-        temperature: openaiConfig.get<number>('OPENAI_TEMPERATURE')
+        temperature: openaiConfig.get<number>('OPENAI_TEMPERATURE')!
     });
 
     if (!response || !response.choices || response.choices.length === 0) {
