@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import webhookConfig from '../interfaces/webhookConfig';
+import webhookConfig from '@integrations/discord/interfaces/webhookConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken = req.headers['x-webhook-token'] as string | undefined;
-    const expectedToken = webhookConfig.get<string>('WEBHOOK_SECRET_TOKEN');
+    const expectedToken = webhookConfig.get('WEBHOOK_SECRET_TOKEN');
 
     console.debug('Provided Token:', redactSensitiveInfo('x-webhook-token', providedToken));
     console.debug('Expected Token:', redactSensitiveInfo('WEBHOOK_SECRET_TOKEN', expectedToken));
