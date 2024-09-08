@@ -23,7 +23,8 @@ configManager.loadConfig();
 debugEnvVars();
 
 // Debug: Check if discord configuration is loaded
-const discordConfig = configManager.getConfig('discord');
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
+console.log('[DEBUG] discordConfig:', discordConfig);
 if (!discordConfig) {
     console.error('[DEBUG] Discord configuration not found');
 } else {
