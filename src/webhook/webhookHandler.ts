@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import discordConfig from './interfaces/discordConfig'; // Using correct discordConfig
+import discordConfig from '@integrations/discord/interfaces/discordConfig'; // Correct discordConfig path
 import { configureWebhookRoutes } from './routes/webhookRoutes';
 import express from 'express';
 import { Client } from 'discord.js';
