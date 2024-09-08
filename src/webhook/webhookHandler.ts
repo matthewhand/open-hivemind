@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import config from '@src/config';
+import config from '../../config'; // Updated to relative path
 import { configureWebhookRoutes } from './routes/webhookRoutes';
 import express from 'express';
 import { Client } from 'discord.js';
