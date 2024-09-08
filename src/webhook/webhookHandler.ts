@@ -62,14 +62,12 @@ export const startWebhookServer = (port: number): void => {
       let resultMessage: string;
       if (predictionStatus === 'succeeded') {
         const resultText = resultArray.join(' ');
-        resultMessage = `${resultText}
-Image URL: ${imageUrl}`;
+        resultMessage = `${resultText}\nImage URL: ${imageUrl}`;
       } else if (predictionStatus === 'processing') {
         debug('Processing:', predictionId);
         return res.sendStatus(200);
       } else {
-        resultMessage = `Prediction ID: ${predictionId}
-Status: ${predictionStatus}`;
+        resultMessage = `Prediction ID: ${predictionId}\nStatus: ${predictionStatus}`;
       }
       await channel.send(resultMessage).catch(error => {
         debug('Failed to send message to channel:', error.message);
