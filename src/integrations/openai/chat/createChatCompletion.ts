@@ -5,14 +5,14 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 interface ChatCompletionMessageParam {
   role: 'system' | 'user' | 'assistant' | 'function';
   content: string;
-  name?: string;
+  name: string; // Name is now always required
 }
 
 function convertIMessageToChatParam(historyMessages: IMessage[]): ChatCompletionMessageParam[] {
     return historyMessages.map((msg) => ({
         role: msg.role as 'user' | 'assistant' | 'function',
         content: msg.content,
-        name: msg.role === 'function' ? 'FunctionName' : '' // Ensure name is always a string
+        name: msg.role === 'function' ? 'FunctionName' : '' // Name is always required
     }));
 }
 
