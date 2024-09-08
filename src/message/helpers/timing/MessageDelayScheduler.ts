@@ -1,9 +1,9 @@
 import Debug from "debug";
 
-const debug = Debug("app:ResponseTimingManager");
+const debug = Debug("app:MessageDelayScheduler");
 
 /**
- * ResponseTimingManager Class
+ * MessageDelayScheduler Class
  *
  * Manages the timing of responses in a chat, introducing delays to simulate natural conversation flow.
  * The delay is calculated based on the time since the last message was sent, with a decay factor applied to avoid rapid responses.
@@ -14,8 +14,8 @@ const debug = Debug("app:ResponseTimingManager");
  * - Calculates delays with a decay factor based on message activity.
  * - Logs timing information for debugging and monitoring.
  */
-class ResponseTimingManager {
-    private static instance: ResponseTimingManager;
+class MessageDelayScheduler {
+    private static instance: MessageDelayScheduler;
     private maxDelay: number;
     private minDelay: number;
     private decayRate: number;
@@ -34,15 +34,15 @@ class ResponseTimingManager {
     }
 
     /**
-     * Retrieves the singleton instance of ResponseTimingManager, creating it if necessary.
+     * Retrieves the singleton instance of MessageDelayScheduler, creating it if necessary.
      *
-     * @returns The singleton instance of ResponseTimingManager.
+     * @returns The singleton instance of MessageDelayScheduler.
      */
-    public static getInstance(): ResponseTimingManager {
-        if (!ResponseTimingManager.instance) {
-            ResponseTimingManager.instance = new ResponseTimingManager({});
+    public static getInstance(): MessageDelayScheduler {
+        if (!MessageDelayScheduler.instance) {
+            MessageDelayScheduler.instance = new MessageDelayScheduler({});
         }
-        return ResponseTimingManager.instance;
+        return MessageDelayScheduler.instance;
     }
 
     /**
@@ -110,4 +110,4 @@ class ResponseTimingManager {
     }
 }
 
-export default ResponseTimingManager;
+export default MessageDelayScheduler;
