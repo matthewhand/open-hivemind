@@ -10,6 +10,9 @@ const { messageHandler } = require('@src/message/handlers/messageHandler');
 
 const debug = Debug('app:index');
 
+// Debug: Print all environment variables for verification
+console.log('[DEBUG] All environment variables:', process.env);
+
 // Initialize configuration manager
 const configManager = ConfigurationManager.getInstance();
 
@@ -38,12 +41,12 @@ async function main() {
         debug('[DEBUG] Message handler set up successfully.');
 
         // Retrieve the bot token directly using convict
-        const botToken = discordConfig?.get('DISCORD_TOKEN') || '';  // Convict-based access
+        const botToken = discordConfig?.get('DISCORD_BOT_TOKEN') || '';  // Convict-based access
 
-        debug('[DEBUG] Bot Token retrieved:', redactSensitiveInfo('DISCORD_TOKEN', botToken));
+        debug('[DEBUG] Bot Token retrieved:', redactSensitiveInfo('DISCORD_BOT_TOKEN', botToken));
 
         // Guard clause: Ensure bot token is properly configured
-        if (!botToken || botToken === 'UNCONFIGURED_DISCORD_TOKEN') {
+        if (!botToken || botToken === 'UNCONFIGURED_DISCORD_BOT_TOKEN') {
             console.error('[DEBUG] Bot Token is not configured correctly.');
             debug('[DEBUG] Full discordConfig:', discordConfig.getProperties()); // Dump full config for debugging
             process.exit(1);

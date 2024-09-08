@@ -35,7 +35,7 @@
     },
     "message": {
         "discord": {
-            "token": "YOUR_DISCORD_TOKEN",
+            "token": "YOUR_DISCORD_BOT_TOKEN",
             "clientId": "YOUR_CLIENT_ID",
             "channelId": "YOUR_CHANNEL_ID",
             "botUserId": "YOUR_BOT_USER_ID",

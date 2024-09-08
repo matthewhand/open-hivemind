@@ -11,7 +11,7 @@ const configManager = ConfigurationManager.getInstance();
 // Allowed users and roles from environment variables
 const allowedUsers = process.env.BOT_ALLOWED_USERS ? process.env.BOT_ALLOWED_USERS.split(',') : [];
 const allowedRoles = process.env.BOT_ALLOWED_ROLES ? process.env.BOT_ALLOWED_ROLES.split(',') : [];
-const nonOverridableEnvVars = new Set(['CLIENT_ID', 'DISCORD_TOKEN', 'DISCORD_GUILD_ID']);
+const nonOverridableEnvVars = new Set(['CLIENT_ID', 'DISCORD_BOT_TOKEN', 'DISCORD_GUILD_ID']);
 
 export const configCommand = {
     data: new SlashCommandBuilder()

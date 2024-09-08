@@ -10,7 +10,7 @@ export function debugEnvVars(): void {
     const requiredEnvVars: string[] = [];
 
     if (messageProvider === 'discord') {
-        requiredEnvVars.push('DISCORD_TOKEN', 'DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID');
+        requiredEnvVars.push('DISCORD_BOT_TOKEN', 'DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID');
     }
 
     if (llmProvider === 'openai') {

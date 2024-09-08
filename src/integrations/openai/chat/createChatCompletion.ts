@@ -40,15 +40,25 @@ export async function createChatCompletion(
     const messages = convertIMessageToChatParam(historyMessages);
     messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
 
+    // Fix: Provide defaults for model and temperature
+    const model = openaiConfig.get('OPENAI_MODEL') || 'gpt-3.5-turbo';
+    const temperature = openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
+
+    // Improvement: Add validation and debug logging
     if (!messages.length || !messages[0].role || !messages[0].content) {
         throw new Error('Invalid message format');
     }
 
-    // Guard: Validate configuration values
-    const model = openaiConfig.get('OPENAI_MODEL');
-    const temperature = openaiConfig.get('OPENAI_TEMPERATURE');
     if (!model || !temperature) {
         throw new Error('Missing OpenAI configuration values.');
+    }
+
+    if (typeof maxTokens !== 'number' || maxTokens <= 0) {
+        throw new Error('Invalid maxTokens value.');
+    }
+
+    if (!systemMessageContent) {
+        throw new Error('System message content is required.');
     }
 
     // Debug: Log configuration and message structure before making API call

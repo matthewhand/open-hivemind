@@ -15,7 +15,7 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
     debug('Attempting to log in to Discord.');
     // Guard clause: Ensure the token is provided.
     if (!token) {
-        const errorMessage = 'DISCORD_TOKEN is not defined.';
+        const errorMessage = 'DISCORD_BOT_TOKEN is not defined.';
         debug(errorMessage);
         throw new Error(errorMessage);
     }
