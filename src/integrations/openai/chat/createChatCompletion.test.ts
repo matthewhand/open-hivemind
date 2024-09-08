@@ -1,59 +1,43 @@
-import { OpenAiService } from '@integrations/openai/OpenAiService';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { describe, it } from 'mocha';
+import { expect } from 'chai';
+import { createChatCompletion } from './createChatCompletion';
 
-// Mock data with all required properties for IMessage
-const mockMessages: IMessage[] = [
-  {
-    role: 'user',
-    content: 'Hello',
-    client: {},
-    channelId: '',
-    data: {},
-    getMessageId: () => '',
-    getText: () => 'Hello',
-    getChannelId: () => '',
-    getAuthorId: () => '',
-    getChannelTopic: () => '',
-    getUserMentions: () => [],
-    getChannelUsers: () => [],
-    isReplyToBot: () => false,
-    mentionsUsers: () => false,
-    isFromBot: () => false,
-    reply: () => null,
-    getAuthorName: () => '',
+// Mock dependencies
+const mockOpenAI = {
+  chat: {
+    completions: {
+      create: async () => ({ choices: [{ message: { content: 'mock response' } }] }),
+    },
   },
-  {
-    role: 'assistant',
-    content: 'Hi there!',
-    client: {},
-    channelId: '',
-    data: {},
-    getMessageId: () => '',
-    getText: () => 'Hi there!',
-    getChannelId: () => '',
-    getAuthorId: () => '',
-    getChannelTopic: () => '',
-    getUserMentions: () => [],
-    getChannelUsers: () => [],
-    isReplyToBot: () => false,
-    mentionsUsers: () => false,
-    isFromBot: () => false,
-    reply: () => null,
-    getAuthorName: () => '',
-  }
-];
+};
 
-const mockSystemMessage = 'This is a test system message';
+// Test suite for createChatCompletion
+describe('createChatCompletion', () => {
+  it('should return a valid completion response', async () => {
+    const response = await createChatCompletion(
+      mockOpenAI as any,
+      [{ role: 'user', content: 'Hello', getAuthorId: () => 'user123' }],
+      'system message',
+      100
+    );
+    expect(response).to.equal('mock response');
+  });
 
-// Test for createChatCompletion
-// Fix: Ensure Promise resolves correctly
-// Improvement: Added more detailed assertions, comments, and debug logging
- test('createChatCompletion should generate a valid completion', async () => {
-   console.debug('[DEBUG] Starting test for createChatCompletion');
-   const response = await OpenAiService.getInstance().createChatCompletion(mockMessages, mockSystemMessage);
-   expect(response).toBeTruthy();
-   expect(typeof response).toBe('string'); // Ensuring the response is a string
-   expect(response.length).toBeGreaterThan(0); // Response should not be empty
-   console.debug('[DEBUG] Test completed successfully with response:', response);
-   return Promise.resolve(); // Ensure Promise resolves correctly
+  // Fix: Handle null case appropriately
+  it('should handle an empty completion response', async () => {
+    const mockEmptyOpenAI = {
+      chat: {
+        completions: {
+          create: async () => ({ choices: [] }),
+        },
+      },
+    };
+    const response = await createChatCompletion(
+      mockEmptyOpenAI as any,
+      [{ role: 'user', content: 'Hello', getAuthorId: () => 'user123' }],
+      'system message',
+      100
+    );
+    expect(response).to.equal('');
+  });
 });

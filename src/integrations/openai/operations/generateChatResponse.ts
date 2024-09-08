@@ -2,6 +2,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
+import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:OpenAiService');
 
@@ -24,14 +25,12 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param message - User message.
  * @param historyMessages - History of the chat.
  * @param model - Model to use.
- * @param options - Max tokens.
  * @returns {Array<{ role: string, content: string, name?: string }>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
-    model: string,
-    options: { maxTokens: number }
+    model: string
 ): Array<{ role: string; content: string; name?: string }> {
     return [
         { role: 'user', content: message },
@@ -97,7 +96,7 @@ export async function generateChatResponse(
 
         const model = await getFirstAvailableModel(openAiService);
 
-        const requestBody = prepareRequestBody(message, historyMessages, model, { maxTokens: 150 });
+        const requestBody = prepareRequestBody(message, historyMessages, model);
         debug('Request Body:', requestBody);
 
         if (options.isBusy()) {
@@ -106,11 +105,15 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
+        // Retrieve tokens and temperature from config dynamically
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE');
+
         const response = await retry(() => openAiService.openai.chat.completions.create({
             model,
             messages: requestBody,
-            max_tokens: 150,
-            temperature: 0.7,
+            max_tokens: maxTokens,
+            temperature: temperature,
         }), options.maxRetries);
 
         options.setBusy(false);
