@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import discordConfig from '@src/message/config/messageConfig';
+import discordConfig from '@src/message/interfaces/messageConfig';
 import { configureWebhookRoutes } from './routes/webhookRoutes';
 import express from 'express';
 import { Client } from 'discord.js';

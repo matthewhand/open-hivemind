@@ -1,5 +1,5 @@
 import llmConfig from '@llm/interfaces/llmConfig';
-import messageConfig from '@src/message/config/messageConfig';
+import messageConfig from '@src/message/interfaces/messageConfig';
 
 /**
  * Determines whether the message should be processed based on the last message time

@@ -1,7 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
 import { loadIntegrationConfigs } from './loadIntegrationConfigs';
-import messageConfig from '@src/message/config/messageConfig';
+import messageConfig from '@src/message/interfaces/messageConfig';
 
 const debug = Debug('app:ConfigurationManager');
 

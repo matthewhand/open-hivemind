@@ -1,6 +1,6 @@
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import Debug from 'debug';
-import messageConfig from '@src/message/config/messageConfig'; // Correct reference to messageConfig
+import messageConfig from '@src/message/interfaces/messageConfig'; // Correct reference to messageConfig
 
 const debug = Debug('app:getMessageProvider');
 
