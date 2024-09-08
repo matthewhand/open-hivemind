@@ -1,7 +1,6 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
-import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 
 const debug = Debug('app:OpenAiService');
@@ -106,10 +105,9 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
-        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE');
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS') ?? 150;
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') ?? 0.7;
 
-        // Validate that the values are within the acceptable range
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
             throw new Error('Invalid maxTokens value. Must be between 1 and 4096.');
         }
@@ -121,7 +119,7 @@ export async function generateChatResponse(
             model,
             messages: requestBody,
             max_tokens: maxTokens,
-            temperature,
+            temperature: temperature,
         }), options.maxRetries);
 
         options.setBusy(false);
