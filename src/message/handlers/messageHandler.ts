@@ -22,6 +22,7 @@ interface MessageConfig {
 }
 
 const messageConfig = configManager.getConfig('message') as MessageConfig;  // Properly initializing messageConfig
+if (!messageConfig?.MESSAGE_LLM_CHAT) { messageConfig.MESSAGE_LLM_CHAT = true; }
 
 /**
  * Message Handler
