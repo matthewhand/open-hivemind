@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import config from '../../config'; // Corrected config import path
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo'; // Import redaction utility
+import webhookConfig from '../interfaces/webhookConfig';
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken = req.headers['x-webhook-token'];
-    const expectedToken = config.get<string>('WEBHOOK_SECRET_TOKEN');
+    const expectedToken = webhookConfig.get<string>('WEBHOOK_SECRET_TOKEN');
 
     // Redact sensitive token information in logs
     console.debug('Provided Token:', redactSensitiveInfo(providedToken));
@@ -25,7 +25,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
 
 // Middleware for IP whitelisting (default to localhost)
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-    const whitelistedIps = config.get<string[]>('WEBHOOK_WHITELISTED_IPS') || ['127.0.0.1'];
+    const whitelistedIps = webhookConfig.get<string[]>('WEBHOOK_WHITELISTED_IPS') || ['127.0.0.1'];
     const requestIp = req.ip;
 
     console.debug('Request IP:', requestIp);
