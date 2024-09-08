@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import config from '@src/config';
+import config from '@config';
 
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
@@ -7,7 +7,8 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     const expectedToken = config.get<string>('WEBHOOK_SECRET_TOKEN');
 
     if (!providedToken || providedToken !== expectedToken) {
-        return res.status(403).send('Forbidden: Invalid token');
+        res.status(403).send('Forbidden: Invalid token');
+        return;
     }
 
     next();
@@ -19,7 +20,8 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
     const requestIp = req.ip;
 
     if (!whitelistedIps.includes(requestIp)) {
-        return res.status(403).send('Forbidden: Unauthorized IP address');
+        res.status(403).send('Forbidden: Unauthorized IP address');
+        return;
     }
 
     next();

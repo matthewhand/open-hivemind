@@ -19,7 +19,7 @@ export async function createChatCompletion(
     const messages = convertIMessageToChatParam(historyMessages);
     messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
 
-    // Fixed overload type for OpenAI API call
+    // Adjust overload parameters for non-streaming calls
     const response = await openai.chat.completions.create({
         model: openaiConfig.get<string>('OPENAI_MODEL'),
         messages,

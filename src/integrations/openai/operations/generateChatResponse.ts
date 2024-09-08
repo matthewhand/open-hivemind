@@ -7,9 +7,9 @@ import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 const debug = Debug('app:OpenAiService');
 
 /**
- * Fetches the first available OpenAI model.
- * @param openAiService - OpenAI service instance.
- * @returns {Promise<string>} - The model's ID.
+ * Fetch the first available OpenAI model.
+ * @param openAiService - Instance for the request.
+ * @returns {Promise<string>} - Model's ID.
  */
 async function getFirstAvailableModel(openAiService: OpenAiService): Promise<string> {
     const models = await openAiService.openai.models.list();
@@ -21,11 +21,11 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
 }
 
 /**
- * Prepares the request body for the OpenAI API.
- * @param message - The user message.
- * @param historyMessages - Conversation history.
- * @param model - OpenAI model to use.
- * @returns {Array<{ role: string; content: string; name?: string }>} - Request payload.
+ * Prepare the request body for the OpenAI API.
+ * @param message - User message.
+ * @param historyMessages - History of the chat.
+ * @param model - Model to use.
+ * @returns {Array<{ role: string, content: string, name?: string }>}
  */
 function prepareRequestBody(
     message: string,
@@ -42,9 +42,9 @@ function prepareRequestBody(
 }
 
 /**
- * Handles retries for the OpenAI API call.
+ * Handle retries for the chat completion.
  * @param func - Function to retry.
- * @param retries - Maximum retry attempts.
+ * @param retries - Max retry attempts.
  * @returns {Promise<any>} - Function result.
  */
 async function retry(func: () => Promise<any>, retries: number): Promise<any> {
@@ -63,11 +63,11 @@ async function retry(func: () => Promise<any>, retries: number): Promise<any> {
 }
 
 /**
- * Generates a chat response using OpenAI.
+ * Generate a chat response using OpenAI.
  * @param openAiService - OpenAiService instance.
- * @param message - The user message.
+ * @param message - User message.
  * @param historyMessages - Chat history.
- * @param options - Options for retries and parallel execution.
+ * @param options - Additional options.
  * @returns {Promise<string | null>} - Chat response or null.
  */
 export async function generateChatResponse(
@@ -105,7 +105,6 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        // Correct type constraints for max_tokens and temperature
         const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS') as number;
         const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') as number;
 
