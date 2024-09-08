@@ -15,4 +15,6 @@ const webhookConfig = convict({
     }
 });
 
+webhookConfig.validate({ allowed: 'strict' });
+
 export default webhookConfig;
