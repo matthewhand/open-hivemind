@@ -106,8 +106,8 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS') as number;
-        const temperature: number = openaiConfig.get<number>('OPENAI_TEMPERATURE') as number;
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE');
 
         // Validate that the values are within the acceptable range
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
@@ -121,7 +121,7 @@ export async function generateChatResponse(
             model,
             messages: requestBody,
             max_tokens: maxTokens,
-            temperature: temperature,
+            temperature,
         }), options.maxRetries);
 
         options.setBusy(false);
