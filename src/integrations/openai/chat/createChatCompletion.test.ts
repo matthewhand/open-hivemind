@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { createChatCompletion } from './createChatCompletion';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
-// Mock IMessage with required fields
+// Mock IMessage with required fields and additional properties
 const mockMessage: IMessage = {
   role: 'user',
   content: 'Hello',
@@ -12,6 +12,10 @@ const mockMessage: IMessage = {
   channelId: '1234',
   data: {},
   getMessageId: () => '5678',
+  getText: () => 'Hello',
+  getChannelId: () => '1234',
+  getChannelTopic: () => 'General',
+  getUserMentions: () => []
 };
 
 // Mock dependencies
