@@ -2,7 +2,6 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import { ChatCompletionMessageParam } from 'openai'; // Ensure correct import
 
 const debug = Debug('app:OpenAiService');
 
@@ -25,13 +24,13 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param message - User message.
  * @param historyMessages - History of the chat.
  * @param model - Model to use.
- * @returns {Array<ChatCompletionMessageParam>}
+ * @returns {Array<{ role: string; content: string }>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
     model: string
-): Array<ChatCompletionMessageParam> {
+): Array<{ role: string; content: string }> {
     return [
         { role: 'user', content: message },
         ...historyMessages.map((msg) => ({
