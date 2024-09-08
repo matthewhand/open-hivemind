@@ -31,22 +31,24 @@ export async function createChatCompletion(
     const messages = convertIMessageToChatParam(historyMessages);
     messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
 
-    // Log the request being sent to the OpenAI API
+    // Debugging: Log the request being sent to the OpenAI API
     console.debug('[DEBUG] Sending chat completion request with messages:', messages);
 
+    // Fix: Ensure correct request parameters for non-streaming
     const response = await openai.chat.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL'),
+        model: openaiConfig.get<'OPENAI_MODEL'>('OPENAI_MODEL')!,
         messages,
         max_tokens: maxTokens,
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE')
+        temperature: openaiConfig.get<'OPENAI_TEMPERATURE'>('OPENAI_TEMPERATURE')!
     });
 
-    // Log the response from the OpenAI API
-    console.debug('[DEBUG] Received response from OpenAI API:', response);
-
-    if (!response.choices || response.choices.length === 0) {
+    // Improvement: Add guard for response validation
+    if (!response || !response.choices || response.choices.length === 0) {
         throw new Error('No completion choices returned from OpenAI API.');
     }
+
+    // Debugging: Log the response from the OpenAI API
+    console.debug('[DEBUG] Received response from OpenAI API:', response);
 
     return response.choices[0].message?.content?.trim() || '';
 }
