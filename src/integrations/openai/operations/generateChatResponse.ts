@@ -3,7 +3,6 @@ import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import { Paths } from 'ts-essentials';
 
 const debug = Debug('app:OpenAiService');
 
@@ -106,8 +105,8 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
-        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE');
+        const maxTokens: number = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
+        const temperature: number = openaiConfig.get<number>('OPENAI_TEMPERATURE');
 
         // Validate that the values are within the acceptable range
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
