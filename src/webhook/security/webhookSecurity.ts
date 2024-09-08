@@ -5,7 +5,7 @@ import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken = req.headers['x-webhook-token'];
-    const expectedToken: string | undefined = webhookConfig.get<string>('WEBHOOK_SECRET_TOKEN');
+    const expectedToken = webhookConfig.get('WEBHOOK_SECRET_TOKEN');
 
     console.debug('Provided Token:', redactSensitiveInfo('x-webhook-token', providedToken));
     console.debug('Expected Token:', redactSensitiveInfo('WEBHOOK_SECRET_TOKEN', expectedToken));
@@ -24,7 +24,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
 
 // Middleware for IP whitelisting
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-    const whitelistedIps: string[] | undefined = webhookConfig.get<string[]>('WEBHOOK_WHITELISTED_IPS');
+    const whitelistedIps = webhookConfig.get('WEBHOOK_WHITELISTED_IPS');
     const requestIp = req.ip;
 
     console.debug('Request IP:', requestIp);
