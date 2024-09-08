@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import webhookConfig from '@integrations/webhook/interfaces/webhookConfig';
+import webhookConfig from '@webhook/interfaces/webhookConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 
 // Middleware for token-based authentication
