@@ -6,14 +6,13 @@ import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 const debug = Debug('app:OpenAiService');
 
 /**
- * Attempts to fetch the first available OpenAI model.
- * @param openAiService - The OpenAiService instance to use for the request.
- * @returns {Promise<string>} - The first model's ID.
+ * Fetch the first available OpenAI model.
+ * @param openAiService - Instance for the request.
+ * @returns {Promise<string>} - Model's ID.
  */
 async function getFirstAvailableModel(openAiService: OpenAiService): Promise<string> {
     const models = await openAiService.openai.models.list();
     const model = models.data[0]?.id;
-
     if (!model) {
         throw new Error('No OpenAI model available');
     }
@@ -21,11 +20,11 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
 }
 
 /**
- * Prepares the request body for the OpenAI API.
- * @param message - The user message.
+ * Prepare the request body for the OpenAI API.
+ * @param message - User message.
  * @param historyMessages - History of the chat.
- * @param model - The model to use for the request.
- * @param options - Additional options such as max tokens.
+ * @param model - Model to use.
+ * @param options - Max tokens.
  * @returns {Array<{ role: string, content: string, name?: string }>}
  */
 function prepareRequestBody(
@@ -36,21 +35,18 @@ function prepareRequestBody(
 ): Array<{ role: string; content: string; name?: string }> {
     return [
         { role: 'user', content: message },
-        ...historyMessages.map((msg) => {
-            const authorId = msg.getAuthorId();
-            return {
-                ...convertIMessageToChatParam(msg),
-                name: authorId ? authorId : '', // Ensure name is always a string, even if empty
-            };
-        }),
+        ...historyMessages.map((msg) => ({
+            ...convertIMessageToChatParam(msg),
+            name: msg.getAuthorId() || '',
+        })),
     ];
 }
 
 /**
- * Handles retries for the chat completion.
- * @param func - The function to retry.
- * @param retries - Number of retry attempts.
- * @returns {Promise<any>} - The result of the function.
+ * Handle retries for the chat completion.
+ * @param func - Function to retry.
+ * @param retries - Max retry attempts.
+ * @returns {Promise<any>} - Function result.
  */
 async function retry(func: () => Promise<any>, retries: number): Promise<any> {
     let attempts = 0;
@@ -68,17 +64,12 @@ async function retry(func: () => Promise<any>, retries: number): Promise<any> {
 }
 
 /**
- * Generates a chat response using the OpenAI API via the OpenAiService.
- *
- * This function maps `IMessage` objects to OpenAI's message format and
- * sends a request to the OpenAI API through the OpenAiService to generate a response.
- * It includes guards to validate input data, and debugging statements to track the execution flow and data.
- *
- * @param openAiService - The instance of OpenAiService that manages API interactions.
- * @param message - The input message to generate a response for.
- * @param historyMessages - The chat history as an array of `IMessage` objects.
- * @param options - Additional options such as `parallelExecution`, `maxRetries`, etc.
- * @returns {Promise<string | null>} - The OpenAI API's response, or null if an error occurs.
+ * Generate a chat response using OpenAI.
+ * @param openAiService - OpenAiService instance.
+ * @param message - User message.
+ * @param historyMessages - Chat history.
+ * @param options - Additional options.
+ * @returns {Promise<string | null>} - Chat response or null.
  */
 export async function generateChatResponse(
     openAiService: OpenAiService,
@@ -93,9 +84,9 @@ export async function generateChatResponse(
     }
 ): Promise<string | null> {
     try {
-        debug('generateChatResponse: message:', message);
-        debug('generateChatResponse: historyMessages:', historyMessages);
-        debug('generateChatResponse: options:', options);
+        debug('message:', message);
+        debug('historyMessages:', historyMessages);
+        debug('options:', options);
 
         if (!message) {
             throw new Error('No input message provided.');
@@ -110,7 +101,7 @@ export async function generateChatResponse(
         debug('Request Body:', requestBody);
 
         if (options.isBusy()) {
-            debug('Service is busy, cannot process request.');
+            debug('Service is busy.');
             return null;
         }
         options.setBusy(true);
@@ -125,10 +116,14 @@ export async function generateChatResponse(
         options.setBusy(false);
         debug('Response:', response);
 
-        return response.choices[0].message.content || '';
+        if (!response || !response.choices || response.choices.length === 0) {
+            throw new Error('No completion choices returned.');
+        }
+
+        return response.choices[0].message?.content || '';
     } catch (error: any) {
-        debug('Error generating chat response:', error.message);
+        debug('Error:', error.message);
         options.setBusy(false);
-        throw new Error(`Failed to generate chat response: ${error.message}`);
+        throw new Error(`Failed: ${error.message}`);
     }
 }
