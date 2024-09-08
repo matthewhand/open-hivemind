@@ -42,7 +42,8 @@ export class OpenAiService {
 
         this.openai = new OpenAI(options);
         this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
-        this.finishReasonRetry = String(openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop');
+        // Adjust Path<> type constraint for finishReasonRetry
+        this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
         this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
 
         debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey, 'Timeout:', this.requestTimeout);
