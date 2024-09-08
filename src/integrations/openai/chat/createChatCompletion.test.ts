@@ -12,7 +12,6 @@ const mockMessage: IMessage = {
   channelId: '1234',
   data: {},
   getMessageId: () => '5678',
-  getTimestamp: () => new Date(),
 };
 
 // Mock dependencies

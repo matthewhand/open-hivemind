@@ -25,18 +25,18 @@ async function getFirstAvailableModel(openAiService: OpenAiService): Promise<str
  * @param message - User message.
  * @param historyMessages - History of the chat.
  * @param model - Model to use.
- * @returns {Array<{ role: string, content: string, name?: string }>}
+ * @returns {Array<{ role: string, content: string }>}
  */
 function prepareRequestBody(
     message: string,
     historyMessages: IMessage[],
     model: string
-): Array<{ role: string; content: string; name?: string }> {
+): Array<{ role: string; content: string }> {
     return [
         { role: 'user', content: message },
         ...historyMessages.map((msg) => ({
-            ...convertIMessageToChatParam(msg),
-            name: msg.getAuthorId() || '',
+            role: msg.role,
+            content: msg.content,
         })),
     ];
 }
