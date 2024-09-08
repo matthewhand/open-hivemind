@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { Paths } from 'ts-essentials';
 
 const debug = Debug('app:OpenAiService');
 

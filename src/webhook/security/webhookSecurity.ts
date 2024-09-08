@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import config from '../../config';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo'; // Importing redaction utility
+import config from '../../config'; // Corrected config import path
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo'; // Import redaction utility
 
 // Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {

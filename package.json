@@ -63,6 +63,7 @@
     "pino": "^9.3.2",
     "pino-pretty": "^11.2.2",
     "rimraf": "^4.4.1",
+    "ts-essentials": "^10.0.2",
     "typeforce": "^1.18.0",
     "uuid": "^9.0.1",
     "uuidv4": "^6.2.13",
