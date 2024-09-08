@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import webhookConfig from '@webhook/interfaces/webhookConfig';
+import webhookConfig from '@src/webhook/interfaces/webhookConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 
-// Middleware for token-based authentication
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken = req.headers['x-webhook-token'] as string | undefined;
     const expectedToken = webhookConfig.get('WEBHOOK_SECRET_TOKEN');
@@ -22,7 +21,6 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     next();
 };
 
-// Middleware for IP whitelisting
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
     const whitelistedIps = webhookConfig.get<string[]>('WEBHOOK_WHITELISTED_IPS');
     const requestIp = req.ip;

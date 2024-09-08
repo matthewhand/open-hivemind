@@ -36,7 +36,7 @@ function prepareRequestBody(
         ...historyMessages.map((msg) => ({
             role: msg.role === 'function' ? 'function' : msg.role,
             content: msg.content,
-        })),
+        }))
     ];
 }
 
