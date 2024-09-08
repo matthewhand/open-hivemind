@@ -12,7 +12,7 @@ const mockMessage: IMessage = {
   reply: async () => Promise.resolve(),
   client: {},
   channelId: '1234',
-  data: {}, // Added missing 'data' property
+  // Removed protected 'data' property
   getMessageId: () => '5678',
   getText: () => 'Hello',
   getChannelId: () => '1234',
@@ -25,7 +25,7 @@ const mockMessage: IMessage = {
 };
 
 // Guard to validate IMessage interface properties
-if (!mockMessage.getChannelUsers || !mockMessage.isReplyToBot || !mockMessage.reply || !mockMessage.getAuthorName || !mockMessage.data) {
+if (!mockMessage.getChannelUsers || !mockMessage.isReplyToBot || !mockMessage.reply || !mockMessage.getAuthorName) {
   throw new Error('mockMessage does not conform to IMessage interface');
 }
 
