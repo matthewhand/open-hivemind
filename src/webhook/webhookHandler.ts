@@ -10,8 +10,8 @@ const client = new Client({ intents: [] });
 
 // Handle webhook requests
 export const handleWebhook = (req: Request, res: Response): void => {
-    const botToken = webhookConfig.get<string>('DISCORD_BOT_TOKEN');
-    const chatChannelId = webhookConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
+    const botToken = webhookConfig.get('DISCORD_BOT_TOKEN');
+    const chatChannelId = webhookConfig.get('DISCORD_CHAT_CHANNEL_ID');
 
     if (!botToken || !chatChannelId) {
         res.status(400).send('Invalid configuration');
