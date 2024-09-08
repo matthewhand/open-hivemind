@@ -10,8 +10,8 @@ const client = new Client({ intents: [] });
 
 // Handle webhook requests
 export const handleWebhook = (req: Request, res: Response): void => {
-    const botToken = discordConfig.get<string>('DISCORD_BOT_TOKEN');
-    const chatChannelId = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
+    const botToken = discordConfig.get('DISCORD_BOT_TOKEN');
+    const chatChannelId = discordConfig.get('DISCORD_CHAT_CHANNEL_ID');
 
     if (!botToken || !chatChannelId) {
         res.status(400).send('Invalid configuration');
