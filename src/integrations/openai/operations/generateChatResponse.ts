@@ -105,13 +105,17 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS') ?? 150;
-        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE') ?? 0.7;
+        // Fix: Use simpler openaiConfig.get() with correct types
+        const maxTokens = openaiConfig.get('OPENAI_MAX_TOKENS') ?? 150;
+        const temperature = openaiConfig.get('OPENAI_TEMPERATURE') ?? 0.7;
 
+        // Improvement: Add guards to validate config values
         if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
+            debug('Invalid maxTokens value:', maxTokens);
             throw new Error('Invalid maxTokens value. Must be between 1 and 4096.');
         }
         if (typeof temperature !== 'number' || temperature < 0 || temperature > 1) {
+            debug('Invalid temperature value:', temperature);
             throw new Error('Invalid temperature value. Must be between 0 and 1.');
         }
 
