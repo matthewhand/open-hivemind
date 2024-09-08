@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import webhookConfig from './interfaces/webhookConfig'; // Using new webhookConfig
+import discordConfig from './interfaces/discordConfig'; // Using correct discordConfig
 import { configureWebhookRoutes } from './routes/webhookRoutes';
 import express from 'express';
 import { Client } from 'discord.js';
@@ -10,8 +10,8 @@ const client = new Client({ intents: [] });
 
 // Handle webhook requests
 export const handleWebhook = (req: Request, res: Response): void => {
-    const botToken = webhookConfig.get('DISCORD_BOT_TOKEN');
-    const chatChannelId = webhookConfig.get('DISCORD_CHAT_CHANNEL_ID');
+    const botToken = discordConfig.get<string>('DISCORD_BOT_TOKEN');
+    const chatChannelId = discordConfig.get<string>('DISCORD_CHAT_CHANNEL_ID');
 
     if (!botToken || !chatChannelId) {
         res.status(400).send('Invalid configuration');
