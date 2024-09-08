@@ -105,8 +105,16 @@ export async function generateChatResponse(
         }
         options.setBusy(true);
 
-        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS')!;
-        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE')!;
+        const maxTokens = openaiConfig.get<number>('OPENAI_MAX_TOKENS');
+        const temperature = openaiConfig.get<number>('OPENAI_TEMPERATURE');
+
+        // Validate that the values are within the acceptable range
+        if (typeof maxTokens !== 'number' || maxTokens <= 0 || maxTokens > 4096) {
+            throw new Error('Invalid maxTokens value. Must be between 1 and 4096.');
+        }
+        if (typeof temperature !== 'number' || temperature < 0 || temperature > 1) {
+            throw new Error('Invalid temperature value. Must be between 0 and 1.');
+        }
 
         const response = await retry(() => openAiService.openai.chat.completions.create({
             model,
