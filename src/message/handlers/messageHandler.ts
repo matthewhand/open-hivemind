@@ -14,27 +14,22 @@ config();
 
 const debug = Debug('app:messageHandler');
 
-// Correct path and type usage for MESSAGE_IGNORE_BOTS
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
-const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;  // Ensure correct bot ID usage
+const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
-// Define explicit type for messageConfig
 interface MessageConfig {
   MESSAGE_LLM_CHAT?: boolean;
   MESSAGE_LLM_FOLLOW_UP?: boolean;
   MESSAGE_COMMAND_INLINE?: boolean;
   MESSAGE_COMMAND_SLASH?: boolean;
   MESSAGE_COMMAND_AUTHORISED_USERS?: string;
-  MESSAGE_IGNORE_BOTS?: boolean;  // Ensure MESSAGE_IGNORE_BOTS is correctly typed
+  MESSAGE_IGNORE_BOTS?: boolean;
 }
 
 /**
  * Message Handler
  *
- * Handles incoming messages by validating them, processing any commands they contain, and managing 
- * AI responses using the appropriate message provider. This function ensures that each message is 
- * processed accurately based on its content and context, while also considering response timing and 
- * follow-up logic.
+ * Handles incoming messages by validating them, processing commands, and managing AI responses.
  *
  * @param msg - The original message object implementing the IMessage interface.
  * @param historyMessages - The history of previous messages for context, defaults to an empty array.
@@ -44,7 +39,6 @@ export async function messageHandler(
   msg: IMessage,
   historyMessages: IMessage[] = []
 ): Promise<void> {
-  // Guard: Ensure a valid message object is provided
   if (!msg) {
     debug('No message provided.');
     return;
@@ -53,53 +47,39 @@ export async function messageHandler(
   const startTime = Date.now();
   debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
 
-  // Early guard to prevent bot from responding to itself or other bots
   if (msg.isFromBot()) {
-    // If the bot should ignore other bots or if it's the bot itself, skip processing
     if (ignoreBots || msg.getAuthorId() === botClientId) {
       debug(`[messageHandler] Ignoring message from bot or self: ${msg.getAuthorId()}`);
       return;
     }
   }
 
-  // Type Guard: Ensure msg implements IMessage and has necessary methods
   if (!(msg && 'getMessageId' in msg && typeof msg.getMessageId === 'function')) {
     debug('msg is not a valid IMessage instance.');
     return;
   }
 
-  debug('msg is a valid instance of IMessage.');
-
-  // Guard: Check that getText method exists and is valid
   if (typeof msg.getText !== 'function') {
     debug('msg does not have a valid getText method.');
     return;
   }
 
-  debug('msg has a valid getText method.');
-
-  // Guard: Ensure the message is not empty
   if (!msg.getText().trim()) {
     debug('Received an empty message.');
     return;
   }
 
-  // Validate the message
   if (!validateMessage(msg)) {
     debug('Message validation failed.');
     return;
   }
 
-  debug('Message validated successfully.');
-
   const messageProvider = getMessageProvider();
   const channelId = msg.getChannelId();
-  
-  // Process the command within the message
+
   let commandProcessed = false;
   await processCommand(msg, async (result: string) => {
     try {
-      // Check if command is allowed and if MESSAGE_COMMAND_AUTHORISED_USERS is configured
       if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
         const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
         if (!allowedUsers.includes(msg.getAuthorId())) {
@@ -107,7 +87,6 @@ export async function messageHandler(
           return;
         }
       }
-
       await messageProvider.sendMessageToChannel(channelId, result);
       commandProcessed = true;
       debug('Command reply sent successfully.');
@@ -121,12 +100,16 @@ export async function messageHandler(
     return;
   }
 
-  // Process LLM chat response if enabled
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
-    const llmProvider = getLlmProvider();
-    const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
+    const llmProvider = getLlmProvider(channelId);
+    let llmResponse;
+    if (llmProvider === getOpenAiProvider) {
+      llmResponse = await llmProvider(msg.getText(), historyMessages);
+    } else {
+      llmResponse = await llmProvider(msg.getText(), channelId);
+    }
+
     if (llmResponse) {
-      // Schedule the message with MessageDelayScheduler
       const timingManager = MessageDelayScheduler.getInstance();
       timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content: string) => {
         try {
@@ -139,16 +122,13 @@ export async function messageHandler(
     }
   }
 
-  // Implement follow-up logic if both LLM_CHAT and FOLLOW_UP are enabled
   if (messageConfig.get('MESSAGE_LLM_CHAT') && messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-    // Guard: Ensure command processing is enabled
     if (!messageConfig.get('MESSAGE_COMMAND_INLINE') && !messageConfig.get('MESSAGE_COMMAND_SLASH')) {
       debug('Follow-up logic is skipped because command processing is not enabled.');
       return;
     }
-    
+
     debug('Follow-up logic is enabled.');
-    // Using helper function to handle follow-up
     await sendFollowUpRequest(msg, channelId, 'AI response follow-up');
     debug('Follow-up request handled.');
   }

@@ -1,37 +1,20 @@
-import { OpenAiService } from '@src/integrations/openai/OpenAiService';
-import Debug from 'debug';
-import llmConfig from '@llm/interfaces/llmConfig';
-
-const debug = Debug('app:getLlmProvider');
+import { ConfigurationManager } from '@config/ConfigurationManager';
+import { getOpenAiProvider } from '@integrations/openai/openAiProvider';
+import { getFlowiseProvider } from '@integrations/flowise/flowiseProvider';
 
 /**
- * Get LLM Provider
+ * Determines which LLM provider to use based on the configuration.
+ * Returns either OpenAI or Flowise depending on the integration set for the channel.
  *
- * Determines and returns the appropriate LLM provider singleton based on the
- * configuration specified in the convict-based llmConfig. Supports multiple LLM
- * providers, such as OpenAI.
- *
- * @returns The singleton instance of the configured LLM provider.
- * @throws An error if the configured LLM provider is unsupported.
+ * @param {string} channelId - The ID of the channel where the request is being made.
+ * @returns {Function} The LLM provider function (OpenAI or Flowise).
  */
-export function getLlmProvider() {
-  // Fix: Ensure llmConfig uses Convict's get() method
-  const llmProvider = llmConfig.get('LLM_PROVIDER');
+export function getLlmProvider(channelId: string): Function {
+  const configManager = ConfigurationManager.getInstance();
+  const integration = configManager.getSession('llmIntegration', channelId) || 'openai'; // Default to OpenAI
 
-  // Improvement: Log the selected provider for better traceability
-  debug('Configured LLM provider:', llmProvider);
-
-  // Guard: Ensure the LLM provider is specified
-  if (!llmProvider) {
-    throw new Error('LLM_PROVIDER is not configured.');
+  if (integration === 'flowise') {
+    return getFlowiseProvider;
   }
-
-  // Return the appropriate LLM provider based on configuration
-  switch (llmProvider.toLowerCase()) {
-    case 'openai':
-      return OpenAiService.getInstance(); // Assuming OpenAiService is a singleton
-    // Add additional cases for other providers here
-    default:
-      throw new Error(`Unsupported LLM provider: ${llmProvider}`);
-  }
+  return getOpenAiProvider;
 }
