@@ -26,15 +26,6 @@ interface MessageConfig {
   MESSAGE_IGNORE_BOTS?: boolean;
 }
 
-/**
- * Message Handler
- *
- * Handles incoming messages by validating them, processing commands, and managing AI responses.
- *
- * @param msg - The original message object implementing the IMessage interface.
- * @param historyMessages - The history of previous messages for context, defaults to an empty array.
- * @returns {Promise<void>}
- */
 export async function messageHandler(
   msg: IMessage,
   historyMessages: IMessage[] = []
@@ -59,10 +50,14 @@ export async function messageHandler(
     return;
   }
 
+  debug('msg is a valid instance of IMessage.');
+
   if (typeof msg.getText !== 'function') {
     debug('msg does not have a valid getText method.');
     return;
   }
+
+  debug('msg has a valid getText method.');
 
   if (!msg.getText().trim()) {
     debug('Received an empty message.');
@@ -74,9 +69,10 @@ export async function messageHandler(
     return;
   }
 
+  debug('Message validated successfully.');
+
   const messageProvider = getMessageProvider();
   const channelId = msg.getChannelId();
-
   let commandProcessed = false;
   await processCommand(msg, async (result: string) => {
     try {
@@ -87,6 +83,7 @@ export async function messageHandler(
           return;
         }
       }
+
       await messageProvider.sendMessageToChannel(channelId, result);
       commandProcessed = true;
       debug('Command reply sent successfully.');
@@ -101,12 +98,8 @@ export async function messageHandler(
   }
 
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
-    const llmProvider = getLlmProvider(channelId);
-    let llmResponse;
-      llmResponse = await llmProvider(msg.getText(), historyMessages);
-    } else {
-      llmResponse = await llmProvider(msg.getText(), channelId);
-    }
+    const llmProvider = getLlmProvider();
+    const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
@@ -133,3 +126,4 @@ export async function messageHandler(
   }
 
   debug('Message handling completed.');
+}
