@@ -57,7 +57,7 @@ export async function messageHandler(
   debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
 
   // Early guard to prevent bot responding to itself or other bots
-  if (msg.author if (msg.author.botif (msg.author.bot msg.author.bot) {
+  if (msg.author if (msg.isFromBot()if (msg.isFromBot() msg.isFromBot()) {
     if (ignoreBots || msg.author.id === botClientId) {
       debug(`[messageHandler] Ignoring message from bot: ${msg.author.id}`);
       return;
