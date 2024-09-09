@@ -27,7 +27,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 
   const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
-  const chatflowId = flowiseConfig.get('FLOWISE_CHATFLOW_ID');
+  const chatflowId = flowiseConfig.get('FLOWISE_DEFAULT_CHATFLOW_ID');
 
   if (!baseURL || !apiKey || !chatflowId) {
     debug('Missing Flowise configuration values.', { baseURL, apiKey, chatflowId });
