@@ -1,51 +1,64 @@
-import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
 import axios from 'axios';
+import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
+import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 
+const debug = Debug('app:flowiseClient');
+
 /**
- * Sends a request to Flowise API and manages session ID per channel.
+ * Fetches chat completions from the Flowise API.
+ * This function respects session management, sending the current chatId for the chat.
  *
- * @param {string} channelId - The Discord channel or DM ID.
- * @param {string} question - The user's question.
- * @returns {Promise<string>} The LLM response from Flowise.
+ * @param {string} channelId - The channel or conversation ID.
+ * @param {string} question - The question/message from the user.
+ * @returns {Promise<string>} The Flowise response text.
  */
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {
-  const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT') as string;
-  const apiKey = flowiseConfig.get('FLOWISE_API_KEY') as string;
-  const chatflowId = flowiseConfig.get('FLOWISE_CHATFLOW_ID') as string;
-
-  if (!baseURL || !apiKey || !chatflowId) {
-    throw new Error('Flowise configuration is incomplete.');
+  // Guard: Ensure the question is non-empty
+  if (!question.trim()) {
+    debug('Empty question provided. Aborting request.');
+    throw new Error('Cannot send an empty question to Flowise.');
   }
 
-  // Retrieve session ID from ConfigurationManager
   const configManager = ConfigurationManager.getInstance();
-  let sessionId = configManager.getSession('flowise', channelId);
+  let chatId = configManager.getSession('flowise', channelId)?.chatId;
 
-  // Prepare the payload with the session ID
-  const payload: Record<string, any> = { question };
-  if (sessionId) {
-    payload.sessionId = sessionId;
+  // Logging chatId details
+  debug(`Using chatId: ${chatId} for channelId: ${channelId}`);
+
+  const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+  const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
+  const chatflowId = flowiseConfig.get('FLOWISE_CHATFLOW_ID');
+
+  // Guard: Ensure API key, endpoint, and chatflow ID are valid
+  if (!baseURL || !apiKey || !chatflowId) {
+    debug('Missing Flowise configuration values.', { baseURL, apiKey, chatflowId });
+    throw new Error('Flowise configuration incomplete. Ensure API key, endpoint, and chatflow ID are set.');
   }
+
+  const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+  const payload: Record<string, any> = { question, chatId };
+
+  // Include chatId if it exists
+  if (chatId) payload.chatId = chatId;
 
   try {
-    const response = await axios.post(`${baseURL}/prediction/${chatflowId}`, payload, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
+    const response = await axios.post(`${baseURL}/prediction/${chatflowId}`, payload, { headers });
+    const { text, chatId: newChatId } = response.data;
 
-    const { text, sessionId: newSessionId } = response.data;
+    // Log response details
+    debug('Received response from Flowise:', { text, newChatId });
 
-    // If a new session ID is generated, store it in ConfigurationManager
-    if (newSessionId && newSessionId !== sessionId) {
-      configManager.setSession('flowise', channelId, newSessionId);
+    // Update chatId if a new one is provided
+    if (newChatId && newChatId !== chatId) {
+      configManager.setSession('flowise', channelId, { chatId: newChatId });
+      debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
     }
 
     return text;
   } catch (error) {
-    console.error('Error fetching data from Flowise API:', error);
-    throw error;
+    debug('Error communicating with Flowise API:', error);
+    throw new Error('Failed to fetch response from Flowise.');
   }
 }
