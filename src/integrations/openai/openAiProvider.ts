@@ -1,4 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
+import axios from 'axios';
+import Debug from 'debug';
+const debug = Debug('app:openAiProvider');
 
 /**
  * OpenAI provider to generate responses based on full message history.
@@ -8,16 +11,31 @@ import { IMessage } from '@src/message/interfaces/IMessage';
  * @returns {Promise<string>} The generated response from OpenAI.
  */
 export async function getOpenAiProvider(userMessage: string, historyMessages: IMessage[]): Promise<string> {
-  // Logic to send userMessage + historyMessages to OpenAI and return the response
   const messages = historyMessages.map(msg => ({ role: msg.isFromBot() ? 'assistant' : 'user', content: msg.getText() }));
   messages.push({ role: 'user', content: userMessage });
 
-  // Example OpenAI API call placeholder (adjust with actual API call)
-  const response = await fakeOpenAiApi(messages); // Replace with actual OpenAI request
-  return response.data.choices[0].text;
-}
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OpenAI API key is missing.');
+  }
 
-// Placeholder for OpenAI API logic
-async function fakeOpenAiApi(messages: any[]): Promise<any> {
-  return Promise.resolve({ data: { choices: [{ text: 'OpenAI response based on full history' }] } });
+  const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+  const url = model.startsWith('gpt-') ? 'https://api.openai.com/v1/chat/completions' : 'https://api.openai.com/v1/completions';
+
+  try {
+    const response = await axios.post(
+      url,
+      {
+        model,
+        messages: model.startsWith('gpt-') ? messages : undefined,
+        prompt: !model.startsWith('gpt-') ? messages.map(msg => msg.content).join('\n') : undefined,
+      },
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
+
+    return model.startsWith('gpt-') ? response.data.choices[0].message.content : response.data.choices[0].text;
+  } catch (error) {
+    debug('Error generating response from OpenAI:', error.message);
+    throw error;
+  }
 }
