@@ -11,7 +11,7 @@ export const sendStylizedAnnouncement = async (interaction: CommandInteraction, 
     .setTitle('ChatFlow Updated!')
     .setDescription(`**The chat flow has been successfully set to:** \n\n> *${chatFlow}*`)
     .addFields({ name: 'What’s Next?', value: 'You can now use the new chat flow to interact with Flowise.' })
-    .setFooter({ text: 'Flowise Integration', iconURL: 'https://example.com/logo.png' }); // Add an optional footer/logo
+    .setFooter({ text: 'Flowise Integration', iconURL: 'https://matthewhand.github.io/discord-llm-bot/logo.png' });
 
   // Send the styled embed message
   await interaction.reply({ embeds: [embed] });
