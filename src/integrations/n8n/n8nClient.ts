@@ -1,5 +1,5 @@
 import axios from 'axios';
-import ConfigurationManager from '@config/ConfigurationManager';
+import { ConfigurationManager } from '@config/ConfigurationManager';
 
 const configManager = ConfigurationManager.getInstance();
 
