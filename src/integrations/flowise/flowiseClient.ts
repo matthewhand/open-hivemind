@@ -47,7 +47,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
     debug('Received response from Flowise:', { text, newChatId });
 
     if (newChatId && newChatId !== chatId) {
-      configManager.setSession('flowise', channelId, { chatId: newChatId });
+      configManager.setSession('flowise', channelId, newChatId);
       debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
     }
 
