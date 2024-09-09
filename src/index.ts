@@ -3,7 +3,7 @@ require('module-alias/register'); // Enables tsconfig @alias paths at runtime
 
 const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 const { DiscordService } = require('@src/integrations/discord/DiscordService');
-const ConfigurationManager = require('@config/ConfigurationManager').default;
+import { ConfigurationManager } from '@config/ConfigurationManager'; // Corrected import
 const { debugEnvVars } = require('@config/debugEnvVars');
 const Debug = require('debug');
 const { messageHandler } = require('@src/message/handlers/messageHandler');
