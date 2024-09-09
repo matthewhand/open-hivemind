@@ -22,6 +22,30 @@ const flowiseConfig = convict({
         format: String,
         default: '',
         env: 'FLOWISE_CHATFLOW_ID'
+    },
+    FLOWISE_FOLLOWUP_CHATFLOW_ID: {
+        doc: 'Flowise follow-up chatflow ID',
+        format: String,
+        default: '',
+        env: 'FLOWISE_FOLLOWUP_CHATFLOW_ID'
+    },
+    FLOWISE_IDLE_CHATFLOW_ID: {
+        doc: 'Flowise idle chatflow ID',
+        format: String,
+        default: '',
+        env: 'FLOWISE_IDLE_CHATFLOW_ID'
+    },
+    FLOWISE_SCHEDULED_CHATFLOW_ID: {
+        doc: 'Flowise scheduled chatflow ID',
+        format: String,
+        default: '',
+        env: 'FLOWISE_SCHEDULED_CHATFLOW_ID'
+    },
+    FLOWISE_GENERAL_CHATFLOW_ID: {
+        doc: 'Flowise general chatflow ID',
+        format: String,
+        default: '',
+        env: 'FLOWISE_GENERAL_CHATFLOW_ID'
     }
 });
 

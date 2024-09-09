@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendCompletions } from '@src/llm/llm/generateCompletion';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig'; // Correct path for config import
+import { ConfigurationManager } from '@config/ConfigurationManager'; // Import ConfigurationManager
 
 const debug = Debug('app:sendFollowUpRequest');
 
