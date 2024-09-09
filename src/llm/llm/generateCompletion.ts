@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { OpenAI } from 'openai';
 import axios from 'axios';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import flowiseConfig from '@config/flowiseConfig'; // Assuming Flowise config
+import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig'; // Assuming Flowise config
 
 const debug = Debug('app:sendCompletions');
 
