@@ -21,7 +21,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 
   const configManager = ConfigurationManager.getInstance();
   let session = configManager.getSession('flowise', channelId);
-  let chatId: string | undefined = session?.chatId;
+  let chatId: string | undefined = session ? session.chatId : undefined;
 
   debug(`Using chatId: ${chatId || 'none'} for channelId: ${channelId}`);
 
@@ -35,7 +35,9 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   }
 
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-  const payload: Record<string, any> = { question, chatId };
+  const payload: Record<string, any> = { question };
+
+  if (chatId) payload.chatId = chatId;
 
   try {
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });

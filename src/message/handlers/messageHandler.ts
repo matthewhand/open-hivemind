@@ -4,6 +4,7 @@ import { validateMessage } from '@src/message/helpers/processing/validateMessage
 import { processCommand } from '@src/message/helpers/processing/processCommand';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
+import { getOpenAiProvider } from '@src/message/management/getOpenAiProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
