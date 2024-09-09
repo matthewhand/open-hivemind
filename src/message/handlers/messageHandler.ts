@@ -99,6 +99,9 @@ export async function messageHandler(
 
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider(channelId);
+    const providerName = llmProvider instanceof FlowiseProvider ? 'Flowise' : 'OpenAI';
+    debug(`Selected LLM provider: ${providerName} for channel ${channelId}`);
+
     const llmResponse = await llmProvider(msg.getText(), historyMessages);
 
     if (llmResponse) {
