@@ -24,13 +24,13 @@ export async function sendFollowUpRequest(
   const provider = llmProvider instanceof Function ? 'openai' : 'flowise'; // Default to OpenAI if no provider is set
   const historyMessages = [msg];
 
-  let selectedChatflowId;
+  let selectedChatflowId: string | undefined;
 
   if (provider === 'flowise') {
     // Retrieve the chatflow for the channel, fallback to defaults based on contextType
     const configManager = ConfigurationManager.getInstance();
     const sessionData = configManager.getSession('flowise', channelId);
-    selectedChatflowId = sessionData && typeof sessionData === 'object' ? sessionData.chatFlow : undefined;
+    selectedChatflowId = sessionData && typeof sessionData === 'object' ? sessionData.chatFlow as string | undefined : undefined;
 
     if (typeof selectedChatflowId !== 'string') {
       // Use the default chatflow based on the context
