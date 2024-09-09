@@ -6,17 +6,16 @@ import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
-import ConfigurationManager from '@config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';  // Using convict config
 import { config } from 'dotenv';
 config();
 
 const debug = Debug('app:messageHandler');
-const configManager = ConfigurationManager.getInstance();
-const botClientId = 'YOUR_BOT_CLIENT_ID'; // Replace with actual bot client ID retrieval.
 
 // Load from config or default to ignoring bots
-const ignoreBots = process.env.MESSAGE_IGNORE_BOTS === 'true';
+const ignoreBots = discordConfig.get('MESSAGE_IGNORE_BOTS') === 'true';  // Using convict config for bots
+const botClientId = discordConfig.get('BOT_CLIENT_ID') as string;  // Get dynamic bot ID
 
 // Define explicit type for messageConfig
 interface MessageConfig {
@@ -27,9 +26,9 @@ interface MessageConfig {
   MESSAGE_COMMAND_AUTHORISED_USERS?: string;
 }
 
-const messageConfig = configManager.getConfig('message') as MessageConfig;  // Properly initializing messageConfig
-if (!messageConfig?.MESSAGE_IGNORE_BOTS) { messageConfig.MESSAGE_IGNORE_BOTS = true; }
-if (!messageConfig?.MESSAGE_LLM_CHAT) { messageConfig.MESSAGE_LLM_CHAT = true; }
+const messageConfig = discordConfig.get('message') as MessageConfig;  // Properly initializing messageConfig
+if (!messageConfig.MESSAGE_IGNORE_BOTS) { messageConfig.MESSAGE_IGNORE_BOTS = true; }
+if (!messageConfig.MESSAGE_LLM_CHAT) { messageConfig.MESSAGE_LLM_CHAT = true; }
 
 /**
  * Message Handler
@@ -56,10 +55,11 @@ export async function messageHandler(
   const startTime = Date.now();
   debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
 
-  // Early guard to prevent bot responding to itself or other bots
-  if (msg.author if (msg.isFromBot()if (msg.isFromBot() msg.isFromBot()) {
-    if (ignoreBots || msg.author.id === botClientId) {
-      debug(`[messageHandler] Ignoring message from bot: ${msg.author.id}`);
+  // Early guard to prevent bot from responding to itself or other bots
+  if (msg.isFromBot()) {
+    // If the bot should ignore other bots or if it's the bot itself, skip processing
+    if (ignoreBots || msg.getAuthorId() === botClientId) {
+      debug(`[messageHandler] Ignoring message from bot or self: ${msg.getAuthorId()}`);
       return;
     }
   }
