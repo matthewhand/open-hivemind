@@ -54,7 +54,7 @@ async function main() {
         }
 
         // Start the Discord service with the bot token
-        await discordService.start(botToken);
+        await discordService.initialize(botToken);
         debug('[DEBUG] Discord service started successfully with Bot Token.');
 
     } catch (error) {
