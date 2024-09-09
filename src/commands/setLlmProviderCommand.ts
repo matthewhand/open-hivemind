@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed } from 'discord.js';
+import { CommandInteraction, EmbedBuilder } from 'discord.js';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import { SlashCommandBuilder } from '@discordjs/builders';
 
@@ -13,7 +13,7 @@ export const setLlmProviderCommand = new SlashCommandBuilder()
   );
 
 export async function handleSetLlmProvider(interaction: CommandInteraction) {
-  const provider = interaction.options.getString('provider');
+  const provider = interaction.options.get('provider')?.value as string;
   const channelId = interaction.channelId;
   const configManager = ConfigurationManager.getInstance();
 
@@ -22,14 +22,17 @@ export async function handleSetLlmProvider(interaction: CommandInteraction) {
     return;
   }
 
-  configManager.setSession('llm', channelId, { provider });
+  configManager.setSession('llm', channelId, provider);
 
   // Create a flashy Discord-style embed
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(provider === 'openai' ? '#5865F2' : '#F47B67') // OpenAI color or Flowise color
     .setTitle('🔮 The Prophecy Has Shifted!')
     .setDescription(`Behold! The LLM provider has now been set to **${provider.toUpperCase()}**! Brace yourself for a new age of AI-powered responses...`)
-    .addField('🌀 Power Level Increased', `Your channel will now benefit from the immense wisdom of **${provider === 'openai' ? 'OpenAI\'s vast knowledge' : 'Flowise\'s arcane chatflow mastery'}**.`)
+    .addFields({
+      name: '🌀 Power Level Increased',
+      value: `Your channel will now benefit from the immense wisdom of **${provider === 'openai' ? 'OpenAI\'s vast knowledge' : 'Flowise\'s arcane chatflow mastery'}**.`
+    })
     .setFooter({ text: 'Remember, with great power comes great responses!' });
 
   // Adding absurd reactions for fun
