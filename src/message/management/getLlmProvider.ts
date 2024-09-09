@@ -1,3 +1,4 @@
+import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import { openAiProvider } from '@integrations/openai/openAiProvider';
 import { flowiseProvider } from '@integrations/flowise/flowiseProvider';
