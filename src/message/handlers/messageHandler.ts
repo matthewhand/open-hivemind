@@ -17,14 +17,6 @@ const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
-interface MessageConfig {
-  MESSAGE_LLM_CHAT?: boolean;
-  MESSAGE_LLM_FOLLOW_UP?: boolean;
-  MESSAGE_COMMAND_INLINE?: boolean;
-  MESSAGE_COMMAND_SLASH?: boolean;
-  MESSAGE_COMMAND_AUTHORISED_USERS?: string;
-  MESSAGE_IGNORE_BOTS?: boolean;
-}
 
 export async function messageHandler(
   msg: IMessage,
