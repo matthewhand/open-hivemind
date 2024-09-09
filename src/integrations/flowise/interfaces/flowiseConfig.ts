@@ -25,4 +25,7 @@ const flowiseConfig = convict({
     }
 });
 
+// Enforce strict validation
+flowiseConfig.validate({ allowed: 'strict' });
+
 export default flowiseConfig;
