@@ -7,15 +7,16 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';  // Using convict config
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import messageConfig from '@src/message/interfaces/messageConfig';
 import { config } from 'dotenv';
 config();
 
 const debug = Debug('app:messageHandler');
 
-// Load from config or default to ignoring bots
-const ignoreBots = discordConfig.get('MESSAGE_IGNORE_BOTS') === 'true';  // Using convict config for bots
-const botClientId = discordConfig.get('BOT_CLIENT_ID') as string;  // Get dynamic bot ID
+// Correct path and type usage for MESSAGE_IGNORE_BOTS
+const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
+const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;  // Ensure correct bot ID usage
 
 // Define explicit type for messageConfig
 interface MessageConfig {
@@ -24,11 +25,12 @@ interface MessageConfig {
   MESSAGE_COMMAND_INLINE?: boolean;
   MESSAGE_COMMAND_SLASH?: boolean;
   MESSAGE_COMMAND_AUTHORISED_USERS?: string;
+  MESSAGE_IGNORE_BOTS?: boolean;  // Ensure MESSAGE_IGNORE_BOTS is correctly typed
 }
 
-const messageConfig = discordConfig.get('message') as MessageConfig;  // Properly initializing messageConfig
-if (!messageConfig.MESSAGE_IGNORE_BOTS) { messageConfig.MESSAGE_IGNORE_BOTS = true; }
-if (!messageConfig.MESSAGE_LLM_CHAT) { messageConfig.MESSAGE_LLM_CHAT = true; }
+const messageConfigInstance = messageConfig.get('message') as MessageConfig;  // Properly initialize messageConfig
+if (!messageConfigInstance.MESSAGE_IGNORE_BOTS) { messageConfigInstance.MESSAGE_IGNORE_BOTS = true; }
+if (!messageConfigInstance.MESSAGE_LLM_CHAT) { messageConfigInstance.MESSAGE_LLM_CHAT = true; }
 
 /**
  * Message Handler
@@ -102,8 +104,8 @@ export async function messageHandler(
   await processCommand(msg, async (result: string) => {
     try {
       // Check if command is allowed and if MESSAGE_COMMAND_AUTHORISED_USERS is configured
-      if (messageConfig?.MESSAGE_COMMAND_AUTHORISED_USERS) {
-        const allowedUsers = messageConfig.MESSAGE_COMMAND_AUTHORISED_USERS.split(',');
+      if (messageConfigInstance?.MESSAGE_COMMAND_AUTHORISED_USERS) {
+        const allowedUsers = messageConfigInstance.MESSAGE_COMMAND_AUTHORISED_USERS.split(',');
         if (!allowedUsers.includes(msg.getAuthorId())) {
           debug('Command not authorized for user:', msg.getAuthorId());
           return;
@@ -124,7 +126,7 @@ export async function messageHandler(
   }
 
   // Process LLM chat response if enabled
-  if (messageConfig?.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
+  if (messageConfigInstance?.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
     if (llmResponse) {
@@ -142,9 +144,9 @@ export async function messageHandler(
   }
 
   // Implement follow-up logic if both LLM_CHAT and FOLLOW_UP are enabled
-  if (messageConfig?.MESSAGE_LLM_CHAT && messageConfig?.MESSAGE_LLM_FOLLOW_UP) {
+  if (messageConfigInstance?.MESSAGE_LLM_CHAT && messageConfigInstance?.MESSAGE_LLM_FOLLOW_UP) {
     // Guard: Ensure command processing is enabled
-    if (!messageConfig.MESSAGE_COMMAND_INLINE && !messageConfig.MESSAGE_COMMAND_SLASH) {
+    if (!messageConfigInstance.MESSAGE_COMMAND_INLINE && !messageConfigInstance.MESSAGE_COMMAND_SLASH) {
       debug('Follow-up logic is skipped because command processing is not enabled.');
       return;
     }

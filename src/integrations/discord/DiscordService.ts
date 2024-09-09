@@ -4,7 +4,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';  // Reusing utility
-import debugPermissions from '@src/integrations/discord/guild/debugPermissions';  // Reusing utility
+import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';  // Use correct named import
 import discordConfig from '@integrations/discord/interfaces/discordConfig';  // Using convict for config
 
 const log = Debug('app:discord-service');
