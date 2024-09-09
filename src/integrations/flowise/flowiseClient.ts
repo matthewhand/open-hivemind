@@ -20,8 +20,8 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   }
 
   const configManager = ConfigurationManager.getInstance();
-  let session = configManager.getSession('flowise', channelId);
-  let chatId: string | undefined = session && typeof session === 'object' ? session.chatId : undefined;
+  const session = configManager.getSession('flowise', channelId) as { chatId?: string } | undefined;
+  const chatId: string | undefined = session?.chatId;
 
   debug(`Using chatId: ${chatId || 'none'} for channelId: ${channelId}`);
 
