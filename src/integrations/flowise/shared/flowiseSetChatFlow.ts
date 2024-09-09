@@ -8,6 +8,6 @@ import { ConfigurationManager } from '@config/ConfigurationManager';
  */
 export const flowiseSetChatFlow = async (channelId: string, chatFlow: string): Promise<string> => {
   const configManager = ConfigurationManager.getInstance();
-  configManager.setSession('flowise', channelId, { chatFlow });
+  configManager.setSession('flowise', channelId, chatFlow);
   return `Chat flow set to ${chatFlow} for this channel.`;
 };

@@ -14,7 +14,6 @@ const debug = Debug('app:flowiseClient');
  * @returns {Promise<string>} The Flowise response text.
  */
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {
-  // Guard: Ensure the question is non-empty
   if (!question.trim()) {
     debug('Empty question provided. Aborting request.');
     throw new Error('Cannot send an empty question to Flowise.');
@@ -22,16 +21,14 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 
   const configManager = ConfigurationManager.getInstance();
   let session = configManager.getSession('flowise', channelId);
-  let chatId = session?.chatId;
+  let chatId: string | undefined = session?.chatId;
 
-  // Logging chatId details
-  debug(`Using chatId: ${chatId} for channelId: ${channelId}`);
+  debug(`Using chatId: ${chatId || 'none'} for channelId: ${channelId}`);
 
   const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
   const chatflowId = flowiseConfig.get('FLOWISE_CHATFLOW_ID');
 
-  // Guard: Ensure API key, endpoint, and chatflow ID are valid
   if (!baseURL || !apiKey || !chatflowId) {
     debug('Missing Flowise configuration values.', { baseURL, apiKey, chatflowId });
     throw new Error('Flowise configuration incomplete. Ensure API key, endpoint, and chatflow ID are set.');
@@ -40,18 +37,13 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
   const payload: Record<string, any> = { question, chatId };
 
-  // Include chatId if it exists
-  if (chatId) payload.chatId = chatId;
-
   try {
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
     const response = await axios.post(`${baseURL}/prediction/${chatflowId}`, payload, { headers });
     const { text, chatId: newChatId } = response.data;
 
-    // Log response details
     debug('Received response from Flowise:', { text, newChatId });
 
-    // Update chatId if a new one is provided
     if (newChatId && newChatId !== chatId) {
       configManager.setSession('flowise', channelId, { chatId: newChatId });
       debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
