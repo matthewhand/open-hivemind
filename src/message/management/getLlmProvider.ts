@@ -9,7 +9,7 @@ import { flowiseProvider } from '@integrations/flowise/flowiseProvider';
  * @param {string} channelId - The ID of the channel where the request is being made.
  * @returns {Function} The LLM provider function (OpenAI or Flowise).
  */
-export function getLlmProvider(channelId: string): Function {
+export function getLlmProvider(channelId: string): ILlmProvider {
   const configManager = ConfigurationManager.getInstance();
   const integration = configManager.getSession('llmIntegration', channelId) || 'openai'; // Default to OpenAI
 

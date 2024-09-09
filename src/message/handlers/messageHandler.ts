@@ -103,7 +103,7 @@ export async function messageHandler(
     debug('Preparing to send LLM response for message:', msg.getText());
 
     // Guard: Ensure LLM provider is correctly configured
-    const llmProvider = getLlmProvider(channelId) as { generateResponse: (historyMessages: IMessage[], text: string) => Promise<string> };
+    const llmProvider = getLlmProvider(channelId) as unknown as { generateResponse: (historyMessages: IMessage[], text: string) => Promise<string> };
     const llmResponse = await llmProvider.generateResponse(historyMessages, msg.getText());
     debug('LLM response generated:', llmResponse);
 
