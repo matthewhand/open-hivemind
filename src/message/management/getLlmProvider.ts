@@ -1,6 +1,6 @@
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import { getOpenAiProvider } from '@integrations/openai/openAiProvider';
-import { getFlowiseProvider } from '@integrations/flowise/flowiseProvider';
+import { openAiProvider } from '@integrations/openai/openAiProvider';
+import { flowiseProvider } from '@integrations/flowise/flowiseProvider';
 
 /**
  * Determines which LLM provider to use based on the configuration.
@@ -14,7 +14,7 @@ export function getLlmProvider(channelId: string): Function {
   const integration = configManager.getSession('llmIntegration', channelId) || 'openai'; // Default to OpenAI
 
   if (integration === 'flowise') {
-    return getFlowiseProvider;
+    return flowiseProvider;
   }
-  return getOpenAiProvider;
+  return openAiProvider;
 }
