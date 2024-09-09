@@ -21,7 +21,8 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   }
 
   const configManager = ConfigurationManager.getInstance();
-  let chatId = configManager.getSession('flowise', channelId)?.chatId;
+  let session = configManager.getSession('flowise', channelId);
+  let chatId = session?.chatId;
 
   // Logging chatId details
   debug(`Using chatId: ${chatId} for channelId: ${channelId}`);
