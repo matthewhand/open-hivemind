@@ -17,11 +17,11 @@ const flowiseConfig = convict({
         default: 'http://localhost:3002/api/v1',
         env: 'FLOWISE_API_ENDPOINT'
     },
-    FLOWISE_CHATFLOW_ID: {
+    FLOWISE_DEFAULT_CHATFLOW_ID: {
         doc: 'Flowise chatflow ID',
         format: String,
         default: '',
-        env: 'FLOWISE_CHATFLOW_ID'
+        env: 'FLOWISE_DEFAULT_CHATFLOW_ID'
     },
     FLOWISE_FOLLOWUP_CHATFLOW_ID: {
         doc: 'Flowise follow-up chatflow ID',
