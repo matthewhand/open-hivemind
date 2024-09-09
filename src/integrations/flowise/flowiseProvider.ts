@@ -1,5 +1,3 @@
-// src/integrations/flowise/flowiseProvider.ts
-
 /**
  * Flowise provider implements the ILlmProvider interface.
  * Flowise only supports chat-based completions.
@@ -9,17 +7,12 @@
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
-  supportsChatCompletion: () => true,
-  supportsCompletion: () => false,
 import Debug from 'debug';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
 import path from 'path';
 import fs from 'fs';
 
 const debug = Debug('app:flowiseProvider');
-  generateCompletion: async (prompt: string): Promise<string> => {
-    throw new Error("Completion (non-chat) not implemented.");
-  },
 
 /**
  * Reads Flowise API key from ~/.flowise/api.json and returns it.
@@ -59,17 +52,19 @@ async function getFlowiseApiKey(): Promise<string | null> {
  */
 export const flowiseProvider: ILlmProvider = {
   /**
+   * Indicates that Flowise supports chat completions.
+   * @returns {boolean} True since Flowise only supports chat completions.
+   */
+  supportsChatCompletion: () => true,
+
+  /**
    * Indicates that Flowise does not support non-chat completions.
    * @returns {boolean} False since Flowise only supports chat completions.
    */
-  supportsCompletion: () => {
-    debug('Flowise supports non-chat completions: false');
-    return false;
-  },
+  supportsCompletion: () => false,
 
   /**
-   * Generates a response using the Flowise API.
-   * This is a chat-based completion model, so it uses the message history.
+   * Generates a chat-based completion using the Flowise API.
    * @param {IMessage[]} historyMessages - The message history to send to Flowise.
    * @returns {Promise<string>} The generated response from Flowise.
    */
@@ -110,5 +105,14 @@ export const flowiseProvider: ILlmProvider = {
       }
       throw error;
     }
+  },
+
+  /**
+   * Generates a non-chat completion.
+   * @param {string} prompt - The prompt to send to Flowise.
+   * @returns {Promise<string>} The generated response from Flowise.
+   */
+  generateCompletion: async (prompt: string): Promise<string> => {
+    throw new Error("Completion (non-chat) not implemented.");
   }
 };
