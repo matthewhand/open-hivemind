@@ -98,8 +98,8 @@ export async function messageHandler(
   }
 
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
-    const llmProvider = getLlmProvider();
-    const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);
+    const llmProvider = getLlmProvider(channelId);
+    const llmResponse = await llmProvider(msg.getText(), historyMessages);
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
