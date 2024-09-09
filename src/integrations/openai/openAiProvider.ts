@@ -17,6 +17,9 @@ const debug = Debug('app:openAiProvider');
  * Supports both chat and non-chat completions.
  */
 export const openAiProvider: ILlmProvider = {
+  generateCompletion: async (prompt: string): Promise<string> => {
+    throw new Error("Completion (non-chat) not implemented.");
+  },
   /**
    * Indicates that OpenAI supports non-chat completions.
    * @returns {boolean} True since OpenAI supports both chat and non-chat completions.
@@ -33,7 +36,7 @@ export const openAiProvider: ILlmProvider = {
    * @param {string} userMessage - The latest user message.
    * @returns {Promise<string>} The generated response from OpenAI.
    */
-  generateResponse: async (historyMessages: IMessage[], userMessage: string): Promise<string> => {
+  generateChatCompletion: async (historyMessages: IMessage[], userMessage: string): Promise<string> => {
     debug('Generating response from OpenAI with userMessage:', userMessage);
     
     // Map the message history to OpenAI format

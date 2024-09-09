@@ -17,6 +17,9 @@ import path from 'path';
 import fs from 'fs';
 
 const debug = Debug('app:flowiseProvider');
+  generateCompletion: async (prompt: string): Promise<string> => {
+    throw new Error("Completion (non-chat) not implemented.");
+  },
 
 /**
  * Reads Flowise API key from ~/.flowise/api.json and returns it.
@@ -70,7 +73,7 @@ export const flowiseProvider: ILlmProvider = {
    * @param {IMessage[]} historyMessages - The message history to send to Flowise.
    * @returns {Promise<string>} The generated response from Flowise.
    */
-  generateResponse: async (historyMessages: IMessage[]): Promise<string> => {
+  generateChatCompletion: async (historyMessages: IMessage[]): Promise<string> => {
     debug('Generating response from Flowise with message history size:', historyMessages.length);
 
     // Get the Flowise API key

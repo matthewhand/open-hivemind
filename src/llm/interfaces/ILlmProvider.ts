@@ -1,6 +1,6 @@
 /**
  * ILlmProvider interface defines the structure for any LLM provider implementation.
- * Providers should specify whether they support chat completions and/or non-chat completions.
+ * Providers must implement methods for chat and non-chat completions.
  */
 export interface ILlmProvider {
   /**
@@ -16,10 +16,17 @@ export interface ILlmProvider {
   supportsCompletion: () => boolean;
 
   /**
-   * Generates a response based on the message history and the user message.
+   * Generates a chat-based completion.
    * @param {IMessage[]} historyMessages - The message history to send to the LLM.
    * @param {string} userMessage - The latest user message.
    * @returns {Promise<string>} The generated response from the LLM.
    */
-  generateResponse: (historyMessages: IMessage[], userMessage: string) => Promise<string>;
+  generateChatCompletion: (historyMessages: IMessage[], userMessage: string) => Promise<string>;
+
+  /**
+   * Generates a non-chat completion.
+   * @param {string} prompt - The prompt to send to the LLM.
+   * @returns {Promise<string>} The generated response from the LLM.
+   */
+  generateCompletion: (prompt: string) => Promise<string>;
 }
