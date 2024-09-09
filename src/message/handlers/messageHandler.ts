@@ -5,7 +5,7 @@ import { processCommand } from '@src/message/helpers/processing/processCommand';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
-import MessageDelayScheduler from '@src/message/helpers/timing/MessageDelayScheduler';
+import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import ConfigurationManager from '@config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 
@@ -115,7 +115,7 @@ export async function messageHandler(
     if (llmResponse) {
       // Schedule the message with MessageDelayScheduler
       const timingManager = MessageDelayScheduler.getInstance();
-      timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content) => {
+      timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content: string) => {
         try {
           await messageProvider.sendMessageToChannel(channelId, content);
           debug('LLM response sent successfully.');
