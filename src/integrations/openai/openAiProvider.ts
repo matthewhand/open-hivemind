@@ -5,6 +5,7 @@
  */
 
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
+  supportsChatCompletion: () => true,
 import { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
 import Debug from 'debug';
@@ -20,7 +21,7 @@ export const openAiProvider: ILlmProvider = {
    * Indicates that OpenAI supports non-chat completions.
    * @returns {boolean} True since OpenAI supports both chat and non-chat completions.
    */
-  supportsNonChat: () => {
+  supportsCompletion: () => {
     debug('OpenAI supports non-chat completions: true');
     return true;
   },

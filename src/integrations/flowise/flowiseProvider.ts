@@ -9,6 +9,8 @@
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
+  supportsChatCompletion: () => true,
+  supportsCompletion: () => false,
 import Debug from 'debug';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
 import path from 'path';
@@ -57,7 +59,7 @@ export const flowiseProvider: ILlmProvider = {
    * Indicates that Flowise does not support non-chat completions.
    * @returns {boolean} False since Flowise only supports chat completions.
    */
-  supportsNonChat: () => {
+  supportsCompletion: () => {
     debug('Flowise supports non-chat completions: false');
     return false;
   },
