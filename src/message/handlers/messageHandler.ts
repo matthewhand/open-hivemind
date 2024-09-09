@@ -8,9 +8,15 @@ import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldRepl
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import ConfigurationManager from '@config/ConfigurationManager';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
+import { config } from 'dotenv';
+config();
 
 const debug = Debug('app:messageHandler');
 const configManager = ConfigurationManager.getInstance();
+const botClientId = 'YOUR_BOT_CLIENT_ID'; // Replace with actual bot client ID retrieval.
+
+// Load from config or default to ignoring bots
+const ignoreBots = process.env.MESSAGE_IGNORE_BOTS === 'true';
 
 // Define explicit type for messageConfig
 interface MessageConfig {
@@ -22,6 +28,7 @@ interface MessageConfig {
 }
 
 const messageConfig = configManager.getConfig('message') as MessageConfig;  // Properly initializing messageConfig
+if (!messageConfig?.MESSAGE_IGNORE_BOTS) { messageConfig.MESSAGE_IGNORE_BOTS = true; }
 if (!messageConfig?.MESSAGE_LLM_CHAT) { messageConfig.MESSAGE_LLM_CHAT = true; }
 
 /**
@@ -48,6 +55,14 @@ export async function messageHandler(
 
   const startTime = Date.now();
   debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
+
+  // Early guard to prevent bot responding to itself or other bots
+  if (msg.author.bot) {
+    if (ignoreBots || msg.author.id === botClientId) {
+      debug(`[messageHandler] Ignoring message from bot: ${msg.author.id}`);
+      return;
+    }
+  }
 
   // Type Guard: Ensure msg implements IMessage and has necessary methods
   if (!(msg && 'getMessageId' in msg && typeof msg.getMessageId === 'function')) {
