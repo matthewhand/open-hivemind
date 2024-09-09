@@ -133,4 +133,3 @@ export async function messageHandler(
   }
 
   debug('Message handling completed.');
-}
