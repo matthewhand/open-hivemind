@@ -18,7 +18,7 @@ export const setChatFlowCommand = new SlashCommandBuilder()
  * Execute the slash command to set chat flow.
  */
 export const handleSetChatFlow = async (interaction: CommandInteraction) => {
-  const chatFlow = interaction.options.getString('chatflow');
+  const chatFlow = interaction.options.get('chatflow')?.value as string;  // Fixing typing issue here
   const channelId = interaction.channelId;
 
   const response = await flowiseSetChatFlow(channelId, chatFlow);
