@@ -2,8 +2,7 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendCompletions } from '@src/llm/llm/generateCompletion';
-import { ConfigurationManager } from '@config/ConfigurationManager'; // Assuming this is where session/config is handled
-import flowiseConfig from '@config/flowiseConfig';
+import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig'; // Correct path for config import
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -31,7 +30,7 @@ export async function sendFollowUpRequest(
     const configManager = ConfigurationManager.getInstance();
     selectedChatflowId = configManager.getSession('flowise', channelId)?.chatFlow;
 
-    if (!selectedChatflowId) {
+    if (typeof selectedChatflowId !== 'string') {
       // Use the default chatflow based on the context
       switch (contextType) {
         case 'followup':

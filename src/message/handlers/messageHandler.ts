@@ -17,7 +17,6 @@ const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
-
 export async function messageHandler(
   msg: IMessage,
   historyMessages: IMessage[] = []
@@ -91,8 +90,8 @@ export async function messageHandler(
 
   // Generic handling for LLM providers
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
-    const llmProvider = getLlmProvider(channelId);  // Abstracted LLM provider selection
-    const llmResponse = await llmProvider.chatCompletion(msg.getText(), historyMessages);
+    const llmProvider = getLlmProvider(channelId);
+    const llmResponse = await llmProvider(msg.getText(), historyMessages);  // Fixing chatCompletion error
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
