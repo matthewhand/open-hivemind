@@ -19,6 +19,12 @@ const messageConfig = convict({
         default: false,
         env: 'MESSAGE_FOLLOW_UP_ENABLED'
     },
+    MESSAGE_IGNORE_BOTS: {
+        doc: 'Enable ignore bots',
+        format: Boolean,
+        default: true,
+        env: 'MESSAGE_IGNORE_BOTS'
+    },
     MESSAGE_LLM_CHAT: {
         doc: 'Enable LLM chat',
         format: Boolean,

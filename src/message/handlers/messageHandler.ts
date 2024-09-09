@@ -28,10 +28,6 @@ interface MessageConfig {
   MESSAGE_IGNORE_BOTS?: boolean;  // Ensure MESSAGE_IGNORE_BOTS is correctly typed
 }
 
-const messageConfigInstance = messageConfig.get('message') as MessageConfig;  // Properly initialize messageConfig
-if (!messageConfigInstance.MESSAGE_IGNORE_BOTS) { messageConfigInstance.MESSAGE_IGNORE_BOTS = true; }
-if (!messageConfigInstance.MESSAGE_LLM_CHAT) { messageConfigInstance.MESSAGE_LLM_CHAT = true; }
-
 /**
  * Message Handler
  *
@@ -104,8 +100,8 @@ export async function messageHandler(
   await processCommand(msg, async (result: string) => {
     try {
       // Check if command is allowed and if MESSAGE_COMMAND_AUTHORISED_USERS is configured
-      if (messageConfigInstance?.MESSAGE_COMMAND_AUTHORISED_USERS) {
-        const allowedUsers = messageConfigInstance.MESSAGE_COMMAND_AUTHORISED_USERS.split(',');
+      if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
+        const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
         if (!allowedUsers.includes(msg.getAuthorId())) {
           debug('Command not authorized for user:', msg.getAuthorId());
           return;
@@ -126,7 +122,7 @@ export async function messageHandler(
   }
 
   // Process LLM chat response if enabled
-  if (messageConfigInstance?.MESSAGE_LLM_CHAT && shouldReplyToMessage(msg)) {
+  if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatResponse(msg.getText(), historyMessages);  // Convert to string if needed
     if (llmResponse) {
@@ -144,9 +140,9 @@ export async function messageHandler(
   }
 
   // Implement follow-up logic if both LLM_CHAT and FOLLOW_UP are enabled
-  if (messageConfigInstance?.MESSAGE_LLM_CHAT && messageConfigInstance?.MESSAGE_LLM_FOLLOW_UP) {
+  if (messageConfig.get('MESSAGE_LLM_CHAT') && messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     // Guard: Ensure command processing is enabled
-    if (!messageConfigInstance.MESSAGE_COMMAND_INLINE && !messageConfigInstance.MESSAGE_COMMAND_SLASH) {
+    if (!messageConfig.get('MESSAGE_COMMAND_INLINE') && !messageConfig.get('MESSAGE_COMMAND_SLASH')) {
       debug('Follow-up logic is skipped because command processing is not enabled.');
       return;
     }

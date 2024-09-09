@@ -1,28 +1,27 @@
-/**
- * flowiseConfig
- * 
- * Configuration settings specific to the Flowise integration.
- * This file uses the Convict library to define and validate configuration options.
- * 
- * Key Features:
- * - **Default Settings**: Defines default configuration values for Flowise.
- * - **Validation**: Ensures that the environment variables are correctly formatted.
- * - **Extensibility**: Easily extendable to include more Flowise-specific settings.
- */
 import convict from 'convict';
 
+/**
+ * Flowise-specific configuration using convict.
+ * This handles the API keys, endpoint URLs, and chatflow IDs specific to Flowise integration.
+ */
 const flowiseConfig = convict({
     FLOWISE_API_KEY: {
-        doc: 'API key for Flowise integration',
+        doc: 'API Key for Flowise integration',
         format: String,
         default: '',
-        env: 'FLOWISE_API_KEY',
+        env: 'FLOWISE_API_KEY'
     },
-    FLOWISE_API_URL: {
-        doc: 'API URL for Flowise integration',
-        format: 'url',
-        default: 'https://api.flowise.com',
-        env: 'FLOWISE_API_URL',
+    FLOWISE_API_ENDPOINT: {
+        doc: 'Flowise API base URL',
+        format: String,
+        default: 'http://localhost:3002/api/v1',
+        env: 'FLOWISE_API_ENDPOINT'
+    },
+    FLOWISE_CHATFLOW_ID: {
+        doc: 'Flowise chatflow ID',
+        format: String,
+        default: '',
+        env: 'FLOWISE_CHATFLOW_ID'
     }
 });
 
