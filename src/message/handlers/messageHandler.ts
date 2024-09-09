@@ -91,7 +91,7 @@ export async function messageHandler(
   // Generic handling for LLM providers
   if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
     const llmProvider = getLlmProvider(channelId);
-    const llmResponse = await llmProvider(msg.getText(), historyMessages);  // Fixing chatCompletion error
+    const llmResponse = await llmProvider.generateResponse(historyMessages, msg.getText());  // Fix: Correct method usage
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
