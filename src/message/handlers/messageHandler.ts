@@ -19,6 +19,7 @@ import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpR
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import messageConfig from '@src/message/interfaces/messageConfig';
 import { config } from 'dotenv';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 config();
 
 const debug = Debug('app:messageHandler');
@@ -103,8 +104,9 @@ export async function messageHandler(
     debug('Preparing to send LLM response for message:', msg.getText());
 
     // Guard: Ensure LLM provider is correctly configured
-    const llmProvider = getLlmProvider(channelId) as unknown as { generateResponse: (historyMessages: IMessage[], text: string) => Promise<string> };
-    const llmResponse = await llmProvider.generateResponse(historyMessages, msg.getText());
+    const llmProvider = getLlmProvider(channelId) as ILlmProvider;
+    // const llmResponse = await llmProvider.generateResponse(historyMessages, msg.getText());
+    const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
     debug('LLM response generated:', llmResponse);
 
     if (llmResponse) {

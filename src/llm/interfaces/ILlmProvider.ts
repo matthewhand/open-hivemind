@@ -1,3 +1,5 @@
+import { IMessage } from '@src/message/interfaces/IMessage';
+
 /**
  * ILlmProvider interface defines the structure for any LLM provider implementation.
  * Providers must implement methods for chat and non-chat completions.
