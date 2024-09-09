@@ -29,7 +29,8 @@ export async function sendFollowUpRequest(
   if (provider === 'flowise') {
     // Retrieve the chatflow for the channel, fallback to defaults based on contextType
     const configManager = ConfigurationManager.getInstance();
-    selectedChatflowId = configManager.getSession('flowise', channelId)?.chatFlow;
+    const sessionData = configManager.getSession('flowise', channelId);
+    selectedChatflowId = sessionData && typeof sessionData === 'object' ? sessionData.chatFlow : undefined;
 
     if (typeof selectedChatflowId !== 'string') {
       // Use the default chatflow based on the context
