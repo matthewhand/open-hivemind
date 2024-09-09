@@ -73,19 +73,33 @@ export async function messageHandler(
 
   const messageProvider = getMessageProvider();
   const channelId = msg.getChannelId();
+  let commandProcessed = false;
+  await processCommand(msg, async (result: string) => {
+    try {
+      if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
+        const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
+        if (!allowedUsers.includes(msg.getAuthorId())) {
+          debug('Command not authorized for user:', msg.getAuthorId());
+          return;
+        }
+      }
 
-  // Process command and get whether a command was processed
-  const commandProcessed = await processCommand(msg, async (result: string) => {
-    await messageProvider.sendMessageToChannel(channelId, result);
-    debug('Command reply sent successfully.');
+      await messageProvider.sendMessageToChannel(channelId, result);
+      commandProcessed = true;
+      debug('Command reply sent successfully.');
+    } catch (replyError) {
+      debug('Failed to send command reply:', replyError);
+    }
   });
 
-  // If no command was processed, handle LLM response generation if enabled
-  if (!commandProcessed && messageConfig.get('MESSAGE_LLM_CHAT')) {
-    const llmProvider = getLlmProvider(channelId);
-    const providerName = llmProvider instanceof FlowiseProvider ? 'Flowise' : 'OpenAI';
-    debug(`Selected LLM provider: ${providerName} for channel ${channelId}`);
+  if (commandProcessed) {
+    debug('Command processed, skipping LLM response.');
+    return;
+  }
 
+  // Generic handling for LLM providers
+  if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
+    const llmProvider = getLlmProvider(channelId);  // Abstracted LLM provider selection
     const llmResponse = await llmProvider.chatCompletion(msg.getText(), historyMessages);
 
     if (llmResponse) {
