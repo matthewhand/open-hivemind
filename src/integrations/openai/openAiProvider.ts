@@ -5,7 +5,6 @@
  */
 
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
-  supportsChatCompletion: () => true,
 import { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
 import Debug from 'debug';
@@ -17,9 +16,12 @@ const debug = Debug('app:openAiProvider');
  * Supports both chat and non-chat completions.
  */
 export const openAiProvider: ILlmProvider = {
-  generateCompletion: async (prompt: string): Promise<string> => {
-    throw new Error("Completion (non-chat) not implemented.");
-  },
+  /**
+   * Indicates that OpenAI supports chat completions.
+   * @returns {boolean} True since OpenAI supports both chat and non-chat completions.
+   */
+  supportsChatCompletion: () => true,
+
   /**
    * Indicates that OpenAI supports non-chat completions.
    * @returns {boolean} True since OpenAI supports both chat and non-chat completions.
@@ -30,8 +32,7 @@ export const openAiProvider: ILlmProvider = {
   },
 
   /**
-   * Generates a response using the OpenAI API.
-   * Dynamically selects the API endpoint based on the message format.
+   * Generates a chat-based completion using the OpenAI API.
    * @param {IMessage[]} historyMessages - The message history to send to OpenAI.
    * @param {string} userMessage - The latest user message.
    * @returns {Promise<string>} The generated response from OpenAI.
@@ -83,5 +84,14 @@ export const openAiProvider: ILlmProvider = {
       debug(`Error generating response from OpenAI: ${(error as Error).message}`);
       throw new Error(`Error generating response from OpenAI: ${(error as Error).message}`);
     }
-  }
+  },
+
+  /**
+   * Generates a non-chat completion.
+   * @param {string} prompt - The prompt to send to OpenAI.
+   * @returns {Promise<string>} The generated response from OpenAI.
+   */
+  generateCompletion: async (prompt: string): Promise<string> => {
+    throw new Error("Completion (non-chat) not implemented.");
+  },
 };
