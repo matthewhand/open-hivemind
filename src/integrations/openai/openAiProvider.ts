@@ -1,7 +1,7 @@
 /**
  * OpenAI provider implements the ILlmProvider interface.
- * It determines if the model should use chat or non-chat completions, based on environment configuration.
- * It generates a response based on the message history and the latest user input.
+ * It determines the API endpoint based on the message history and user input.
+ * Generates a response based on the message history and the latest user input.
  */
 
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
@@ -10,17 +10,6 @@ import axios from 'axios';
 import Debug from 'debug';
 
 const debug = Debug('app:openAiProvider');
-
-/**
- * Determines if the OpenAI model is a chat model.
- * This is read from the environment variable `OPENAI_IS_CHAT_MODEL`.
- * @returns {boolean} True if the model is a chat model, false otherwise.
- */
-function isChatModel(): boolean {
-  const isChat = process.env.OPENAI_IS_CHAT_MODEL === 'true';
-  debug(`isChatModel: ${isChat}`);
-  return isChat;
-}
 
 /**
  * OpenAI provider implementation.
@@ -38,7 +27,7 @@ export const openAiProvider: ILlmProvider = {
 
   /**
    * Generates a response using the OpenAI API.
-   * The API endpoint is chosen based on whether the model is chat-based or not.
+   * Dynamically selects the API endpoint based on the message format.
    * @param {IMessage[]} historyMessages - The message history to send to OpenAI.
    * @param {string} userMessage - The latest user message.
    * @returns {Promise<string>} The generated response from OpenAI.
@@ -59,9 +48,9 @@ export const openAiProvider: ILlmProvider = {
       throw new Error('OpenAI API key is missing.');
     }
 
-    // Determine the model and API endpoint
+    // Select API endpoint based on the format of the message history
     const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
-    const url = isChatModel() 
+    const url = messages.length > 1 
       ? 'https://api.openai.com/v1/chat/completions'
       : 'https://api.openai.com/v1/completions';
 
@@ -69,18 +58,18 @@ export const openAiProvider: ILlmProvider = {
     debug(`OpenAI API endpoint: ${url}`);
 
     try {
-      // Call OpenAI API based on whether it’s a chat or completion model
+      // Call OpenAI API based on the selected endpoint
       const response = await axios.post(
         url,
         {
           model,
-          messages: isChatModel() ? messages : undefined,
-          prompt: !isChatModel() ? messages.map(msg => msg.content).join('\n') : undefined,
+          messages: url.includes('chat') ? messages : undefined,
+          prompt: !url.includes('chat') ? messages.map(msg => msg.content).join('\n') : undefined,
         },
         { headers: { Authorization: `Bearer ${apiKey}` } }
       );
 
-      const generatedText = isChatModel()
+      const generatedText = url.includes('chat')
         ? response.data.choices[0].message.content
         : response.data.choices[0].text;
 
