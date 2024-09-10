@@ -20,7 +20,7 @@ const log = Debug('app:discord-service');
 export class DiscordService {
   private client: Client;
   private static instance: DiscordService;
-  private messageHandler: ((message: IMessage) => void) | null = null;
+  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
 
   // Private constructor to enforce singleton pattern
   private constructor() {
@@ -29,10 +29,7 @@ export class DiscordService {
     log('Client initialized successfully');
   }
 
-  /**
-   * Retrieves the singleton instance of DiscordService.
-   * Ensures that only one instance of this service is created and used across the application.
-   */
+  /** Retrieves the singleton instance of DiscordService. */
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
       log('Creating a new instance of DiscordService');
@@ -41,30 +38,20 @@ export class DiscordService {
     return DiscordService.instance;
   }
 
-  /**
-   * Sets a custom message handler for processing incoming Discord messages.
-   * 
-   * @param handler - A function that processes IMessage objects.
-   */
-  public setMessageHandler(handler: (message: IMessage) => void): void {
+  /** Sets a custom message handler for processing incoming Discord messages. */
+  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void {
     this.messageHandler = handler;
   }
 
-  /**
-   * Initializes the Discord client and logs in using the provided or configured token.
-   * Once logged in, the client will listen for messages and trigger the custom message handler if set.
-   * 
-   * @param token - Optional bot token to override the config value.
-   */
+  /** Initializes the Discord client and logs in using the provided or configured token. */
   public async initialize(token?: string): Promise<void> {
     try {
-      // Retrieve the token from the configuration file using discordConfig (Convict)
       token = token || discordConfig.get('DISCORD_BOT_TOKEN') as string;
 
       if (!token) {
         throw new Error('DISCORD_BOT_TOKEN is not set');
       }
-      log(`Initializing bot with token: ${token ? 'token set' : 'no token found'}`);  // Improvement: Log token status
+      log(`Initializing bot with token: ${token ? 'token set' : 'no token found'}`);
 
       await this.client.login(token);
       this.client.once('ready', async () => {
@@ -78,10 +65,18 @@ export class DiscordService {
 
       if (this.messageHandler) {
         log('Setting up custom message handler');
-        this.client.on('messageCreate', (message: Message) => {
+        this.client.on('messageCreate', async (message: Message) => {
           log(`Received a message with ID: ${message.id}`);
+
+          // Fetch message history (last 10 messages)
+          const channelId = message.channelId;
+          const historyMessages = await this.getMessagesFromChannel(channelId, 10);
+
           const iMessage: IMessage = new DiscordMessage(message);
-          this.messageHandler!(iMessage);  // Invoke the custom message handler
+          log('Passing message history to handler:', historyMessages);
+
+          // Call the handler with history messages
+          this.messageHandler!(iMessage, historyMessages);
         });
       } else {
         log('No custom message handler set');
