@@ -8,11 +8,6 @@ const debug = Debug('app:DiscordMessage');
  * Represents a Discord message, implementing the IMessage interface.
  */
 export default class DiscordMessage extends IMessage {
-    public getAuthorName(): string {
-        // Ensure this.message.author exists, then return the username; otherwise, return 'Unknown Author'.
-        return this.message?.author?.username || 'Unknown Author';
-    }
-
     public content: string;
     public client: Message['client'];
     public channelId: string;
@@ -34,7 +29,7 @@ export default class DiscordMessage extends IMessage {
         this.client = message.client;
         this.channelId = message.channelId;
         this.data = message.content;
-        this.role = '';  // Set this to the appropriate value based on your application's needs
+        this.role = '';  // Improvement: Set this to the appropriate value based on your application's needs
         debug('[DiscordMessage] Initializing with message ID: ' + message.id);
     }
 
@@ -43,7 +38,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The message ID.
      */
     getMessageId(): string {
-        debug('Getting message ID: ' + this.message.id);  // Improvement: Add logging
+        debug('Getting message ID: ' + this.message.id);
         return this.message.id;
     }
 
@@ -52,7 +47,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The message content.
      */
     getText(): string {
-        debug('Getting message text: ' + this.message.content);  // Improvement: Add logging
+        debug('Getting message text: ' + this.message.content);
         return this.message.content;
     }
 
@@ -61,6 +56,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The channel ID.
      */
     getChannelId(): string {
+        debug('Getting channel ID: ' + this.message.channelId);
         return this.message.channelId;
     }
 
@@ -69,6 +65,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The channel topic.
      */
     getChannelTopic(): string {
+        debug('Getting channel topic for channel: ' + this.message.channelId);
         if (this.message.channel instanceof TextChannel) {
             return this.message.channel.topic || '';
         }
@@ -80,6 +77,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The author's ID.
      */
     getAuthorId(): string {
+        debug('Getting author ID: ' + this.message.author.id);
         return this.message.author.id;
     }
 
@@ -88,7 +86,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string[]} An array of user IDs mentioned in the message.
      */
     getUserMentions(): string[] {
-        debug('Getting user mentions from message: ' + this.message.id);  // Improvement: Add logging
+        debug('Getting user mentions from message: ' + this.message.id);
         return this.message.mentions.users.map(user => user.id);
     }
 
@@ -97,9 +95,10 @@ export default class DiscordMessage extends IMessage {
      * @returns {string[]} An array of user IDs in the channel.
      */
     getChannelUsers(): string[] {
+        debug('Fetching users from channel: ' + this.message.channelId);
         if (this.message.channel instanceof TextChannel) {
             const members = this.message.channel.members;
-            if (!members) {  // Improvement: Guard clause
+            if (!members) {
                 debug('No members found in channel: ' + this.message.channelId);
                 return [];
             }
@@ -109,10 +108,26 @@ export default class DiscordMessage extends IMessage {
     }
 
     /**
+     * Gets the name of the author of the message.
+     * If the author or username is not present, it defaults to 'Unknown Author'.
+     * @returns {string} - The author's name.
+     */
+    public getAuthorName(): string {
+        const author = this.message.author;
+        if (author && author.username) {
+            debug('Author name found: ' + author.username);
+            return author.username;
+        }
+        debug('Author not found for message: ' + this.message.id);
+        return 'Unknown Author';
+    }
+
+    /**
      * Checks if the message is from a bot.
      * @returns {boolean} True if the message is from a bot, false otherwise.
      */
     isFromBot(): boolean {
+        debug('Checking if message is from a bot');
         return this.message.author.bot;
     }
 
@@ -121,6 +136,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {boolean} - True if the message is a reply to the bot.
      */
     isReplyToBot(): boolean {
+        debug('Checking if message is a reply to the bot');
         return !!this.repliedMessage && this.repliedMessage.author.bot;
     }
 
@@ -130,6 +146,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {boolean} True if the user is mentioned, false otherwise.
      */
     mentionsUsers(userId: string): boolean {
+        debug('Checking if message mentions user: ' + userId);
         return this.message.mentions.users.has(userId);
     }
 
