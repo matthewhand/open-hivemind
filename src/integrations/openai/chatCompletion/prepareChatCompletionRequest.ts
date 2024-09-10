@@ -17,7 +17,7 @@ export function prepareChatCompletionRequest(
   historyMessages: IMessage[],
   systemMessageContent: string
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
-  const systemMessage = { role: 'system', content: systemMessageContent, name: 'system' };
+  const systemMessage: OpenAI.Chat.ChatCompletionMessageParam = { role: 'system', content: systemMessageContent, name: 'system' };
 
   return [
     systemMessage,
