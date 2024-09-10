@@ -35,7 +35,7 @@ export class OpenAiService {
         this.requestTimeout = isNaN(Number(timeoutValue)) ? 30000 : Number(timeoutValue);
 
         const options: ClientOptions = {
-            apiKey: String(redactSensitiveInfo('OPENAI_API_KEY', openaiConfig.get('OPENAI_API_KEY')) || ''),
+            apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),  // Removed redaction here
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
             timeout: this.requestTimeout,
@@ -47,7 +47,7 @@ export class OpenAiService {
         this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
         this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
 
-        debug('[DEBUG] OpenAiService initialized with API Key:', options.apiKey, 'Timeout:', this.requestTimeout);
+        debug('[DEBUG] OpenAiService initialized with API Key:', this.redactApiKeyForLogging(options.apiKey), 'Timeout:', this.requestTimeout);
     }
 
     public static getInstance(): OpenAiService {
@@ -85,6 +85,18 @@ export class OpenAiService {
 
     public async listModels(): Promise<any> {
         return listModels(this.openai);
+    }
+
+    /**
+     * Logs sensitive information, but redacts API keys when debug logs are enabled.
+     * @param key - The API key to redact.
+     * @returns {string} - The redacted key if debugging, else the original.
+     */
+    private redactApiKeyForLogging(key: string): string {
+        if (debug.enabled) {
+            return redactSensitiveInfo('OPENAI_API_KEY', key);
+        }
+        return key;
     }
 }
 
