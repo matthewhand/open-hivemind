@@ -26,10 +26,12 @@ export const flowiseProvider: ILlmProvider = {
     const apiKey = await getApiKey();
     const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
 
+    // Reverse the order of history messages so the latest comes last
+    const reversedHistory = historyMessages.reverse();
     let userMessage = '';
-    if (historyMessages.length > 0) {
-      userMessage = historyMessages[historyMessages.length - 1].getText();
-      debug('Using message from history:', userMessage);
+    if (reversedHistory.length > 0) {
+      userMessage = reversedHistory[reversedHistory.length - 1].getText();
+      debug('Using message from reversed history:', userMessage);
     } else {
       debug('No message history provided, using fallback message.');
       userMessage = 'User input missing.';
