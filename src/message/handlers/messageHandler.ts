@@ -105,7 +105,6 @@ export async function messageHandler(
 
     // Guard: Ensure LLM provider is correctly configured
     const llmProvider = getLlmProvider(channelId) as ILlmProvider;
-    // const llmResponse = await llmProvider.generateResponse(historyMessages, msg.getText());
     const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
     debug('LLM response generated:', llmResponse);
 
