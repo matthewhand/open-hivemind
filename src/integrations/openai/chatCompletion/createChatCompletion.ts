@@ -20,8 +20,8 @@ export async function createChatCompletion(
   systemMessageContent: string,
   maxTokens: number
 ): Promise<string> {
-  const messages = convertIMessageToChatParam(historyMessages);
-[].concat(messages.unshift({ role: "system", content: systemMessageContent, name: "system" });
+  let messages = convertIMessageToChatParam(historyMessages);
+  messages = [{ role: 'system', content: systemMessageContent, name: 'system' }].concat(messages);
 
   const { model, temperature } = getOpenAIConfig();
 
