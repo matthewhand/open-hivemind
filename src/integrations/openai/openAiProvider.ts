@@ -36,7 +36,10 @@ export const openAiProvider: ILlmProvider = {
       setBusy: (status: boolean) => debug('Service busy state:', status),
     };
 
+    // Fix: Passing all four required arguments to generateChatResponse
     const result = await generateChatResponse(openAiService, userMessage, historyMessages, options);
+
+    // Fix: Ensure result is either a valid string or a fallback value
     return result ?? 'No response generated.';
   },
 

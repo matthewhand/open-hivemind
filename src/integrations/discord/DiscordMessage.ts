@@ -27,7 +27,7 @@ export default class DiscordMessage extends IMessage {
      * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
      */
     constructor(message: Message, repliedMessage: Message | null = null) {
-        super();  // Fix: Ensure correct parameters are passed based on IMessage implementation
+        super(message, '');  // Fix: Ensure the required 'message' and 'role' are passed to IMessage constructor
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.content = message.content;
