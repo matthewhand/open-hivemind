@@ -10,7 +10,7 @@ const flowise = new FlowiseClient({ baseUrl: flowiseConfig.get('FLOWISE_API_ENDP
 
 /**
  * Flowise provider implementation.
- * This provider supports both chat completions and single-turn completions.
+ * Supports both chat completions (with context) and single-turn completions.
  */
 export const flowiseProvider: ILlmProvider = {
   supportsChatCompletion: () => true,
@@ -18,22 +18,26 @@ export const flowiseProvider: ILlmProvider = {
 
   /**
    * Generates a chat-based completion using the Flowise SDK.
-   * Optionally falls back to HTTP if enabled via the environment.
+   * If the SDK fails and fallback is enabled, attempts an HTTP-based fallback.
    * @param {IMessage[]} historyMessages - The message history to send to Flowise.
    * @returns {Promise<string>} The generated response from Flowise.
    */
   generateChatCompletion: async (historyMessages: IMessage[]): Promise<string> => {
-    const userMessage = historyMessages.length > 0 ? historyMessages[historyMessages.length - 1].getText() : 'No message content';
-    const channelId = historyMessages.length > 0 ? historyMessages[0].getChannelId() : 'default-channel';
+    // Guard: Ensure historyMessages is non-empty and includes valid text
+    if (!historyMessages || historyMessages.length === 0 || !historyMessages[historyMessages.length - 1].getText().trim()) {
+      debug('No valid message content found in historyMessages. Exiting.');
+      return 'No message content available.';
+    }
+
+    const userMessage = historyMessages[historyMessages.length - 1].getText();
+    const channelId = historyMessages[0].getChannelId() || 'default-channel';
 
     try {
       // Primary Strategy: Use Flowise SDK
-      debug('Using Flowise SDK for chat completion');
+      debug('Using Flowise SDK for chat completion. chatflowId:', flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID'), 'userMessage:', userMessage);
       const completion = await flowise.createPrediction({ chatflowId: flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID'), question: userMessage });
-      let responseText = '';
-      completion.on('data', (chunk: { text: string }) => {
-        responseText += chunk.text;
-      });
+      const responseText = completion?.text || 'No response received.';
+      debug('Generated response from Flowise SDK:', responseText);
       return responseText;
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
@@ -52,21 +56,25 @@ export const flowiseProvider: ILlmProvider = {
   },
 
   /**
-   * Generates a non-chat (single-turn) completion using the Flowise SDK.
-   * Falls back to HTTP if enabled.
-   * @param {string} prompt - The prompt to send to Flowise.
+   * Generates a single-turn completion (no context) using the Flowise SDK.
+   * Falls back to HTTP if the SDK fails and fallback is enabled.
+   * @param {string} prompt - The user prompt to send to Flowise.
    * @returns {Promise<string>} The generated response from Flowise.
    */
   generateCompletion: async (prompt: string): Promise<string> => {
-    debug('Generating single-turn completion from Flowise with prompt:', prompt);
+    // Guard: Ensure prompt is non-empty
+    if (!prompt.trim()) {
+      debug('No valid prompt provided. Exiting.');
+      return 'Prompt is empty.';
+    }
+
+    debug('Generating single-turn completion from Flowise. chatflowId:', flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID'), 'prompt:', prompt);
 
     try {
       // Primary Strategy: Use Flowise SDK
       const completion = await flowise.createPrediction({ chatflowId: flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID'), question: prompt });
-      let responseText = '';
-      completion.on('data', (chunk: { text: string }) => {
-        responseText += chunk.text;
-      });
+      const responseText = completion?.text || 'No response received.';
+      debug('Generated response from Flowise SDK for single-turn:', responseText);
       return responseText;
     } catch (sdkError) {
       debug('Flowise SDK failed for single-turn completion:', sdkError);
