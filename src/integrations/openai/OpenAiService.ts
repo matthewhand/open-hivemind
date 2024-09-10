@@ -30,15 +30,14 @@ export class OpenAiService {
     private readonly requestTimeout: number;
 
     private constructor() {
-        // Fix: Corrected number-to-string conversion
-        const timeoutValue = openaiConfig.get('OPENAI_TIMEOUT') || '30000';
-        this.requestTimeout = Number(timeoutValue);
+        const timeoutValue = Number(openaiConfig.get('OPENAI_TIMEOUT') || 30000);
+        this.requestTimeout = timeoutValue;
 
         const options: ClientOptions = {
             apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
-            timeout: this.requestTimeout.toString(),
+            timeout: timeoutValue.toString(),
         };
 
         this.openai = new OpenAI(options);
@@ -67,10 +66,10 @@ export class OpenAiService {
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
-        maxTokens: string = String(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150'),
+        maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
         temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
     ): Promise<any> {
-        return createChatCompletion(this.openai, historyMessages, systemMessageContent, Number(maxTokens), temperature);
+        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens, temperature);
     }
 
     public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {

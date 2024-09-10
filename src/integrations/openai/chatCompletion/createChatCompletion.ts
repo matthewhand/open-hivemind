@@ -42,17 +42,12 @@ export async function createChatCompletion(
     throw new Error('System message content is required.');
   }
 
-  // Fix: Ensure correct typing for the system message
+  // Ensure correct typing for the system message
   messages[0] = {
-    role: 'system' as const, // Ensure 'role' is explicitly typed as 'system'
+    role: 'system', // Explicitly typed as 'system'
     content: String(systemMessageContent),
-    name: 'system'
+    name: 'system',
   };
-
-  // Handle more complex content types if necessary
-  if (Array.isArray(messages[0].content)) {
-    messages[0].content = messages[0].content.join(' '); // Convert array content to string
-  }
 
   // Debug logging before API call
   console.debug('OpenAI Model:', model);
