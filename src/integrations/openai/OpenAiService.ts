@@ -11,6 +11,7 @@ import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
+import { getEmoji } from '@common/getEmoji';
 
 const debug = Debug('app:OpenAiService');
 
@@ -112,7 +113,7 @@ export class OpenAiService {
             { role: 'user', content: message },
             ...historyMessages.map((msg) => ({
                 role: (msg.isFromBot() ? 'assistant' : 'user') as 'user' | 'assistant',
-                content: msg.getText() || 'No content'  // Fallback if getText() returns null
+                content: msg.getText() || getEmoji()  // Use random emoji as fallback
             }))
         ];
 
