@@ -41,7 +41,7 @@ export async function sendCompletions(messages: IMessage[], provider: string): P
   } else if (provider === 'flowise') {
     // Flowise logic
     const flowiseEndpoint = flowiseConfig.get('FLOWISE_API_ENDPOINT');
-    const chatflowId = flowiseConfig.get('FLOWISE_DEFAULT_CHATFLOW_ID');
+    const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
     const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
 
     try {

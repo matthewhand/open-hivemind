@@ -51,6 +51,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "ffmpeg-static": "^5.2.0",
+    "flowise-sdk": "^1.0.8",
     "form-data": "^4.0.0",
     "gauge": "^4.0.4",
     "glob": "^9.3.5",

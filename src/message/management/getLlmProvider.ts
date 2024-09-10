@@ -1,21 +1,25 @@
-import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
-import { ConfigurationManager } from '@config/ConfigurationManager';
 import { openAiProvider } from '@integrations/openai/openAiProvider';
-import { flowiseProvider } from '@integrations/flowise/flowiseProvider';
+import { flowiseProvider } from '@integrations/flowise/flowiseProvider'; // Assuming Flowise provider exists
+import llmConfig from '@llm/interfaces/llmConfig';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import Debug from 'debug';
+
+const debug = Debug('app:getLlmProvider');
 
 /**
- * Determines which LLM provider to use based on the configuration.
- * Returns either OpenAI or Flowise depending on the integration set for the channel.
- *
- * @param {string} channelId - The ID of the channel where the request is being made.
- * @returns {Function} The LLM provider function (OpenAI or Flowise).
+ * Returns the appropriate LLM provider based on configuration.
+ * @returns {ILlmProvider} Selected LLM provider.
  */
 export function getLlmProvider(channelId: string): ILlmProvider {
-  const configManager = ConfigurationManager.getInstance();
-  const integration = configManager.getSession('llmIntegration', channelId) || 'openai'; // Default to OpenAI
+  const provider = llmConfig.get('LLM_PROVIDER') || 'openai';  // Defaults to OpenAI if not set
+  debug('LLM Provider selected:', provider);
 
-  if (integration === 'flowise') {
-    return flowiseProvider;
+  switch (provider.toLowerCase()) {
+    case 'openai':
+      return openAiProvider;
+    case 'flowise':
+      return flowiseProvider;  // Use Flowise when configured
+    default:
+      throw new Error(`Unknown LLM provider: ${provider}`);
   }
-  return openAiProvider;
 }
