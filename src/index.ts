@@ -71,3 +71,8 @@ main().catch((error) => {
     console.error('[DEBUG] Unexpected error in main execution:', error);
     process.exit(1);
 });
+import llmConfig from '@llm/interfaces/llmConfig';
+import messageConfig from '@message/interfaces/messageConfig';
+
+console.log('LLM Provider in use:', llmConfig.get('LLM_PROVIDER') || 'Default OpenAI');
+console.log('Message Provider in use:', messageConfig.get('MESSAGE_PROVIDER') || 'Default Message Service');

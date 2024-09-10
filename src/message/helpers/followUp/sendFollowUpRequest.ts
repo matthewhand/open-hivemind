@@ -5,7 +5,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 const debug = Debug('app:sendFollowUpRequest');
 
 /**
- * Sends an AI-generated follow-up message based on the conversation context.
+ * Sends an AI-generated follow-up message using completions (not chat completions).
  * @param {IMessage} msg - The message to follow up on.
  * @param {string} channelId - The channel where the follow-up should be sent.
  * @param {string} followUpText - The follow-up text to send.
@@ -17,9 +17,9 @@ export async function sendFollowUpRequest(
 ): Promise<void> {
   const llmProvider = getLlmProvider(channelId);
 
-  // Guard: Ensure the provider supports chat completions
-  if (!llmProvider.supportsChatCompletion()) {
-    debug(`[sendFollowUpRequest] LLM provider does not support chat completions for channel: ${channelId}.`);
+  // Guard: Ensure the provider supports completions (not chat completions)
+  if (!llmProvider.supportsCompletion()) {
+    debug(`[sendFollowUpRequest] LLM provider does not support completions for channel: ${channelId}.`);
     return;
   }
 
@@ -27,7 +27,7 @@ export async function sendFollowUpRequest(
   debug(`[sendFollowUpRequest] Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider.generateChatCompletion(historyMessages, followUpText);
+    const response = await llmProvider.generateCompletion(followUpText);
     debug('[sendFollowUpRequest] Follow-up response generated:', response);
 
     // Send the follow-up response to the same channel
