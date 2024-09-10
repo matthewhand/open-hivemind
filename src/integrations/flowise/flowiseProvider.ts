@@ -40,15 +40,21 @@ export const flowiseProvider: ILlmProvider = {
     debug('Using Flowise SDK for chat completion with message:', userMessage);
 
     try {
-      const completion = await flowise.createPrediction({
+      const payload = {
         chatflowId,
         question: userMessage,
         apiKey,
         streaming: false,
-      });
+      };
+
+      debug('Sending payload to Flowise:', payload);
+
+      const completion = await flowise.createPrediction(payload);
+      debug('Flowise SDK raw response:', completion);
 
       const response = completion?.text || 'No response generated';
-      debug('Flowise SDK response:', response);
+      debug('Flowise SDK processed response:', response);
+
       return response;
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
