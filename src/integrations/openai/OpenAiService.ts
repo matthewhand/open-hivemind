@@ -30,6 +30,7 @@ export class OpenAiService {
     private readonly requestTimeout: number;
 
     private constructor() {
+        // Fix: Ensure timeoutValue is passed correctly as a string
         const timeoutValue = openaiConfig.get('OPENAI_TIMEOUT') || '30000';
         this.requestTimeout = Number(timeoutValue);
 
