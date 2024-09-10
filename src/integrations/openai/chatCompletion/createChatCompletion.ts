@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { prepareChatCompletionRequest, getOpenAIConfig } from './prepareChatCompletionRequest';
-import { convertIMessageToChatParam } from './convertIMessageToChatParam'; // Reuse conversion logic
+import { convertIMessageToChatParam } from './convertIMessageToChatParam';
 
 /**
  * Creates a chat completion using OpenAI's API.
@@ -20,13 +20,13 @@ export async function createChatCompletion(
   systemMessageContent: string,
   maxTokens: number
 ): Promise<string> {
-  const messages = convertIMessageToChatParam(historyMessages); // Use centralized conversion logic
-  messages.unshift({ role: 'system', content: systemMessageContent, name: 'system' });
+  const messages = convertIMessageToChatParam(historyMessages);
+[].concat(messages.unshift({ role: "system", content: systemMessageContent, name: "system" });
 
   const { model, temperature } = getOpenAIConfig();
 
-  // Improvement: Add validation and debug logging
-  if (!messages.length || !messages[0].role || !messages[0].content) {
+  // Validate input
+  if (messages.length === 0) {
     throw new Error('Invalid message format');
   }
 
@@ -42,7 +42,7 @@ export async function createChatCompletion(
     throw new Error('System message content is required.');
   }
 
-  // Debug: Log configuration and message structure before making API call
+  // Debug logging before API call
   console.debug('OpenAI Model:', model);
   console.debug('Temperature Setting:', temperature);
   console.debug('Messages for OpenAI Completion:', JSON.stringify(messages, null, 2));
@@ -59,7 +59,7 @@ export async function createChatCompletion(
     return '';
   }
 
-  // Debug: Log API response
+  // Debug API response
   console.debug('OpenAI API Response:', JSON.stringify(response, null, 2));
 
   return response.choices[0].message?.content?.trim() || '';

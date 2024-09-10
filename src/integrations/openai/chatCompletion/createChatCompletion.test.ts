@@ -34,7 +34,7 @@ const mockOpenAI = {
 
 describe('createChatCompletion', () => {
   it('should return a valid completion response', async () => {
-    const response = await createChatCompletion(
+    const response = await createChatCompletion(openai, historyMessages, systemMessageContent, maxTokens, temperature)
       mockOpenAI as any,
       [mockMessage as IMessage],
       'system message',
@@ -51,7 +51,7 @@ describe('createChatCompletion', () => {
         },
       },
     };
-    const response = await createChatCompletion(
+    const response = await createChatCompletion(openai, historyMessages, systemMessageContent, maxTokens, temperature)
       mockEmptyOpenAI as any,
       [mockMessage as IMessage],
       'system message',
