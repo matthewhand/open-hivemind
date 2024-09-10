@@ -17,8 +17,8 @@ export async function completeSentence(
     content: string
 ): Promise<string> {
     try {
-        // Using generateChatResponse to get the completion
-        const response = await client.generateChatResponse(content, []);
+        // Using generateChatCompletion to get the completion
+        const response = await client.generateChatCompletion(content, []);
 
         // Ensure response is valid and trim any extra whitespace
         const trimmedResponse = response?.trim();

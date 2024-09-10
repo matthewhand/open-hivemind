@@ -71,7 +71,7 @@ export const handleAudioStream = async (stream: Readable, connection: VoiceConne
 
             debug('Transcription successful', { transcript });
 
-            const response = await aiService.generateChatResponse(transcript, []);
+            const response = await aiService.generateChatCompletion(transcript, []);
 
             if (response) {
                 debug('Generated response', { response });

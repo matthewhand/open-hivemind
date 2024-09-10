@@ -1,3 +1,9 @@
+/**
+ * OpenAiService provides a singleton interface for interacting with the OpenAI API.
+ * It includes functionality for generating chat completions, checking service status,
+ * and listing available models. Configuration details are retrieved from external
+ * configuration sources like 'openaiConfig' and 'llmConfig'.
+ */
 import Debug from 'debug';
 const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 import { OpenAI, ClientOptions } from 'openai';
@@ -27,6 +33,10 @@ export class OpenAiService {
     private readonly maxRetries: number;
     private readonly requestTimeout: number;
 
+    /**
+     * Private constructor to initialize the OpenAI client and configuration.
+     * Retrieves API key, timeout, and other settings from openaiConfig.
+     */
     private constructor() {
         const timeoutValue = Number(openaiConfig.get('OPENAI_TIMEOUT') || 30000);
         this.requestTimeout = timeoutValue;
@@ -38,6 +48,7 @@ export class OpenAiService {
             timeout: timeoutValue,
         };
 
+        // Initialize OpenAI client
         this.openai = new OpenAI(options);
         this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
         this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
@@ -46,6 +57,10 @@ export class OpenAiService {
         debug('[DEBUG] OpenAiService initialized with API Key:', this.redactApiKeyForLogging(String(options.apiKey || '')), 'Timeout:', this.requestTimeout);
     }
 
+    /**
+     * Singleton pattern to get the instance of OpenAiService.
+     * Ensures only one instance is active at a time.
+     */
     public static getInstance(): OpenAiService {
         if (!OpenAiService.instance) {
             OpenAiService.instance = new OpenAiService();
@@ -53,14 +68,32 @@ export class OpenAiService {
         return OpenAiService.instance;
     }
 
+    /**
+     * Checks whether the service is currently busy processing requests.
+     * @returns {boolean} True if busy, false otherwise.
+     */
     public isBusy(): boolean {
         return this.busy;
     }
 
+    /**
+     * Sets the busy status of the service.
+     * @param status - True to set the service as busy, false to set it as idle.
+     */
     public setBusy(status: boolean): void {
         this.busy = status;
     }
 
+    /**
+     * Generates a chat completion from OpenAI based on the user's message and history.
+     * Handles system messages, user input, and message history.
+     * @param message - The user's input message.
+     * @param historyMessages - Previous chat messages.
+     * @param systemMessageContent - A system-level message to initialize the chat context.
+     * @param maxTokens - Maximum number of tokens for the response (default: 150).
+     * @param temperature - Controls randomness in the response (default: 0.7).
+     * @returns {Promise<any>} The generated chat completion response or error.
+     */
     public async generateChatCompletion(
         message: string,
         historyMessages: IMessage[],
@@ -84,15 +117,44 @@ export class OpenAiService {
 
             return response.choices[0]?.message.content || null;
         } catch (error: any) {
-            debug('Error:', error.message);
+            debug('Error generating chat completion:', { message, historyMessages, error: error.message });
             throw new Error(`Failed to generate chat completion: ${error.message}`);
         }
     }
 
+    /**
+     * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
+     * @param message - The user's input message.
+     * @param historyMessages - Previous chat messages.
+     * @param systemMessageContent - A system-level message to initialize the chat context.
+     * @param maxTokens - Maximum number of tokens for the response (default: 150).
+     * @param temperature - Controls randomness in the response (default: 0.7).
+     * @returns {Promise<any>} The generated chat response or error.
+     */
+    public async generateChatResponse(
+        message: string,
+        historyMessages: IMessage[],
+        systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
+        maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
+        temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
+    ): Promise<any> {
+        // Passthrough to generateChatCompletion
+        return this.generateChatCompletion(message, historyMessages, systemMessageContent, maxTokens, temperature);
+    }
+
+    /**
+     * Lists available OpenAI models by invoking the OpenAI API.
+     * @returns {Promise<any>} A list of models or error if retrieval fails.
+     */
     public async listModels(): Promise<any> {
         return listModels(this.openai);
     }
 
+    /**
+     * Redacts the OpenAI API key for logging purposes, ensuring it is not exposed in logs.
+     * @param key - The API key to be redacted.
+     * @returns {string} The redacted API key or the original key if debugging is disabled.
+     */
     private redactApiKeyForLogging(key: string): string {
         if (debug.enabled) {
             return redactSensitiveInfo('OPENAI_API_KEY', key);

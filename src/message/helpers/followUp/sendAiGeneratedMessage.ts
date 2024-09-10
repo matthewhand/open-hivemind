@@ -23,7 +23,7 @@ export async function sendAiGeneratedMessage(
 ): Promise<void> {
   try {
     // TODO: Track and pass transcribed history in future.
-    const response = await aiManager.generateChatResponse(prompt, []);
+    const response = await aiManager.generateChatCompletion(prompt, []);
 
     // Validate the AI response before proceeding
     if (!response || typeof response !== 'string' || response.trim() === '') {
