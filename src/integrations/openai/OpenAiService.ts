@@ -69,7 +69,7 @@ export class OpenAiService {
         maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
         temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
     ): Promise<any> {
-        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens, temperature);
+        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens.toString(), temperature);
     }
 
     public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
