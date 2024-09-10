@@ -30,7 +30,7 @@ export class OpenAiService {
     private readonly requestTimeout: number;
 
     private constructor() {
-        // Fix: Ensure timeoutValue is passed correctly as a string
+        // Fix: Corrected number-to-string conversion
         const timeoutValue = openaiConfig.get('OPENAI_TIMEOUT') || '30000';
         this.requestTimeout = Number(timeoutValue);
 
@@ -38,7 +38,7 @@ export class OpenAiService {
             apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
-            timeout: this.requestTimeout,
+            timeout: this.requestTimeout.toString(),
         };
 
         this.openai = new OpenAI(options);

@@ -22,7 +22,8 @@ export function convertIMessageToChatParam(
         throw new Error(`Invalid role: ${msg.role}`);
     }
 
-    const content = msg.role === 'function' ? msg.getFunctionCall() : msg.getText();
+    // Placeholder for handling 'function' role content
+    const content = msg.role === 'function' ? '[Function Call Content Placeholder]' : msg.getText();
 
     return {
         role: msg.role as 'system' | 'user' | 'assistant' | 'function',
