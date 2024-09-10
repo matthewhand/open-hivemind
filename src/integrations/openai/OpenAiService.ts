@@ -30,9 +30,12 @@ export class OpenAiService {
     private readonly requestTimeout: number;
 
     private constructor() {
-        // Ensure values are either valid or defaulted properly
-        const timeoutValue = String(openaiConfig.get('OPENAI_TIMEOUT') || '30000');
-        this.requestTimeout = isNaN(Number(timeoutValue)) ? 30000 : Number(timeoutValue);
+        // Guard: Validate timeout value and ensure it is a string before parsing
+        const timeoutValue = openaiConfig.get('OPENAI_TIMEOUT') || '30000';
+        if (isNaN(Number(timeoutValue))) {
+            throw new Error('Invalid timeout value. Expected a number convertible to string.');
+        }
+        this.requestTimeout = Number(timeoutValue);
 
         const options: ClientOptions = {
             apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),  // Removed redaction here
