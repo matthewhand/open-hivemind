@@ -2,6 +2,8 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { OpenAiService } from '../OpenAiService';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { createChatCompletion } from '@integrations/openai/chatCompletion/createChatCompletion';
+import { retryRequest } from '@integrations/openai/chatCompletion/retryRequest';
 
 const debug = Debug('app:OpenAiService');
 
@@ -11,55 +13,12 @@ const debug = Debug('app:OpenAiService');
  * @returns {Promise<string>} - Model's ID.
  */
 async function getFirstAvailableModel(openAiService: OpenAiService): Promise<string> {
-    const models = await openAiService.openai.models.list();
-    const model = models.data[0]?.id;
-    if (!model) {
-        throw new Error('No OpenAI model available');
-    }
-    return model;
-}
-
-/**
- * Prepare the request body for the OpenAI API.
- * @param message - User message.
- * @param historyMessages - History of the chat.
- * @param model - Model to use.
- * @returns {Array<{ role: 'user' | 'system' | 'assistant'; content: string; name: string }>}
- */
-function prepareRequestBody(
-    message: string,
-    historyMessages: IMessage[],
-    model: string
-): Array<{ role: 'user' | 'system' | 'assistant'; content: string; name: string }> {
-    return [
-        { role: 'user', content: message, name: 'default_name' },
-        ...historyMessages.map((msg) => ({
-            role: msg.role as 'user' | 'system' | 'assistant',
-            content: msg.content,
-            name: 'default_name' // Correct name field
-        }))
-    ];
-}
-
-/**
- * Handle retries for the chat completion.
- * @param func - Function to retry.
- * @param retries - Max retry attempts.
- * @returns {Promise<any>} - Function result.
- */
-async function retry(func: () => Promise<any>, retries: number): Promise<any> {
-    let attempts = 0;
-    while (attempts < retries) {
-        try {
-            return await func();
-        } catch (error) {
-            attempts++;
-            if (attempts >= retries) {
-                throw error;
-            }
-            debug(`Retry attempt ${attempts} failed, retrying...`);
-        }
-    }
+  const models = await openAiService.openai.models.list();
+  const model = models.data[0]?.id;
+  if (!model) {
+    throw new Error('No OpenAI model available');
+  }
+  return model;
 }
 
 /**
@@ -71,61 +30,51 @@ async function retry(func: () => Promise<any>, retries: number): Promise<any> {
  * @returns {Promise<string | null>} - Chat response or null.
  */
 export async function generateChatResponse(
-    openAiService: OpenAiService,
-    message: string,
-    historyMessages: IMessage[],
-    options: {
-        parallelExecution: boolean;
-        maxRetries: number;
-        finishReasonRetry: string;
-        isBusy: () => boolean;
-        setBusy: (status: boolean) => void;
-    }
+  openAiService: OpenAiService,
+  message: string,
+  historyMessages: IMessage[],
+  options: {
+    parallelExecution: boolean;
+    maxRetries: number;
+    finishReasonRetry: string;
+    isBusy: () => boolean;
+    setBusy: (status: boolean) => void;
+  }
 ): Promise<string | null> {
-    try {
-        debug('message:', message);
-        debug('historyMessages:', historyMessages);
-        debug('options:', options);
+  try {
+    debug('message:', message);
+    debug('historyMessages:', historyMessages);
+    debug('options:', options);
 
-        if (!message) {
-            throw new Error('No input message provided.');
-        }
-        if (!historyMessages || historyMessages.length === 0) {
-            throw new Error('No history messages provided.');
-        }
-
-        const model = await getFirstAvailableModel(openAiService);
-
-        const requestBody = prepareRequestBody(message, historyMessages, model);
-        debug('Request Body:', requestBody);
-
-        if (options.isBusy()) {
-            debug('Service is busy.');
-            return null;
-        }
-        options.setBusy(true);
-
-        const maxTokens = openaiConfig.get('OPENAI_MAX_TOKENS') ?? 150;
-        const temperature = openaiConfig.get('OPENAI_TEMPERATURE') ?? 0.7;
-
-        const response = await retry(() => openAiService.openai.chat.completions.create({
-            model,
-            messages: requestBody,
-            max_tokens: maxTokens,
-            temperature: temperature,
-        }), options.maxRetries);
-
-        options.setBusy(false);
-        debug('Response:', response);
-
-        if (!response || !response.choices || response.choices.length === 0) {
-            throw new Error('No completion choices returned.');
-        }
-
-        return response.choices[0].message?.content || '';
-    } catch (error: any) {
-        debug('Error:', error.message);
-        options.setBusy(false);
-        throw new Error(`Failed: ${error.message}`);
+    if (!message) {
+      throw new Error('No input message provided.');
     }
+    if (!historyMessages || historyMessages.length === 0) {
+      throw new Error('No history messages provided.');
+    }
+
+    const model = await getFirstAvailableModel(openAiService);
+
+    const systemMessageContent = 'Initializing system context...';
+
+    if (options.isBusy()) {
+      debug('Service is busy.');
+      return null;
+    }
+    options.setBusy(true);
+
+    // Use retry logic and chat completion functions
+    const result = await retryRequest(() =>
+      createChatCompletion(openAiService.openai, historyMessages, message, systemMessageContent, openaiConfig.get('OPENAI_MAX_TOKENS') ?? 150),
+      options.maxRetries
+    );
+
+    options.setBusy(false);
+
+    return result;
+  } catch (error: any) {
+    debug('Error:', error.message);
+    options.setBusy(false);
+    throw new Error(`Failed: ${error.message}`);
+  }
 }
