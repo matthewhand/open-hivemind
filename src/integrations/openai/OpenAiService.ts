@@ -110,7 +110,10 @@ export class OpenAiService {
         const chatParams: ChatCompletionMessage[] = [
             { role: 'system', content: systemMessageContent },
             { role: 'user', content: message },
-            ...historyMessages.map((msg) => ({ role: msg.isFromBot() ? "assistant" : "user" as "system" | "user" | "assistant", content: msg.content }))
+            ...historyMessages.map((msg) => ({
+                role: (msg.isFromBot() ? 'assistant' : 'user') as 'user' | 'assistant',
+                content: msg.getText() || 'No content'  // Fallback if getText() returns null
+            }))
         ];
 
         try {
