@@ -22,14 +22,20 @@ export const flowiseProvider: ILlmProvider = {
   supportsChatCompletion: () => true,
   supportsCompletion: () => true,
 
-  generateChatCompletion: async (historyMessages: IMessage[]): Promise<string> => {
+  generateChatCompletion: async (historyMessages: IMessage[] = []): Promise<string> => {
     const apiKey = await getApiKey();
     const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
 
-    if (!historyMessages.length) throw new Error('No message history provided.');
+    let userMessage = '';
+    if (historyMessages.length > 0) {
+      userMessage = historyMessages[historyMessages.length - 1].getText();
+      debug('Using message from history:', userMessage);
+    } else {
+      debug('No message history provided, using fallback message.');
+      userMessage = 'User input missing.';
+    }
 
-    const userMessage = historyMessages[historyMessages.length - 1].getText();
-    debug('Using Flowise SDK for chat completion');
+    debug('Using Flowise SDK for chat completion with message:', userMessage);
 
     try {
       const completion = await flowise.createPrediction({
