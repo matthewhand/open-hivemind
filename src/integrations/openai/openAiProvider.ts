@@ -3,11 +3,11 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import { generateChatResponse } from './operations/generateChatResponse';
 import { generateCompletion } from './completion/generateCompletion';
-import OpenAiService from './OpenAiService';
+import { OpenAiService } from './OpenAiService';
 
 const debug = Debug('app:openAiProvider');
 
-const openAiService = OpenAiService.getInstance(); // Use singleton
+const openAiService = OpenAiService.getInstance();
 
 export const openAiProvider: ILlmProvider = {
   supportsChatCompletion: (): boolean => true,
