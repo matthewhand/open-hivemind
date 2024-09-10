@@ -3,8 +3,6 @@ const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
 import { OpenAI, ClientOptions } from 'openai';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
 import llmConfig from '@llm/interfaces/llmConfig';
-import { generateChatResponse } from './operations/generateChatResponse';
-import { createChatCompletion } from './chatCompletion/createChatCompletion';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
@@ -63,23 +61,32 @@ export class OpenAiService {
         this.busy = status;
     }
 
-    public async createChatCompletion(
+    public async generateChatCompletion(
+        message: string,
         historyMessages: IMessage[],
         systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
         maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
         temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
     ): Promise<any> {
-        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens.toString(), temperature);
-    }
+        const chatParams = [
+            { role: 'system', content: systemMessageContent },
+            { role: 'user', content: message },
+            ...historyMessages.map((msg) => ({ role: msg.role, content: msg.content, name: msg.getAuthorId() || 'unknown' }))
+        ];
 
-    public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
-        return generateChatResponse(this, message, historyMessages, {
-            parallelExecution: this.parallelExecution,
-            maxRetries: this.maxRetries,
-            finishReasonRetry: this.finishReasonRetry,
-            isBusy: this.isBusy.bind(this),
-            setBusy: this.setBusy.bind(this),
-        });
+        try {
+            const response = await this.openai.chat.completions.create({
+                model: openaiConfig.get('OPENAI_MODEL') || 'gpt-3.5-turbo',
+                messages: chatParams,
+                max_tokens: maxTokens,
+                temperature,
+            });
+
+            return response.choices[0]?.message.content || null;
+        } catch (error: any) {
+            debug('Error:', error.message);
+            throw new Error(`Failed to generate chat completion: ${error.message}`);
+        }
     }
 
     public async listModels(): Promise<any> {

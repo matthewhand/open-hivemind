@@ -1,7 +1,7 @@
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
-import { generateChatResponse } from './operations/generateChatResponse';
+import { generateChatCompletion } from './operations/generateChatCompletion';
 import { generateCompletion } from './completion/generateCompletion';
 import { OpenAiService } from './OpenAiService';
 
@@ -18,7 +18,7 @@ export const openAiProvider: ILlmProvider = {
   },
 
   generateChatCompletion: async (historyMessages: IMessage[], userMessage: string): Promise<string> => {
-    debug('Delegating chat completion to generateChatResponse...');
+    debug('Delegating chat completion to generateChatCompletion...');
 
     // Fallback: If no historyMessages, create history from userMessage
     if (!historyMessages.length) {
@@ -36,8 +36,8 @@ export const openAiProvider: ILlmProvider = {
       setBusy: (status: boolean) => debug('Service busy state:', status),
     };
 
-    // Fix: Passing all four required arguments to generateChatResponse
-    const result = await generateChatResponse(openAiService, userMessage, historyMessages, options);
+    // Fix: Passing all four required arguments to generateChatCompletion
+    const result = await generateChatCompletion((openAiService, userMessage, historyMessages, options), options.maxRetries);
 
     // Fix: Ensure result is either a valid string or a fallback value
     return result ?? 'No response generated.';

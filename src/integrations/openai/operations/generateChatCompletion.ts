@@ -2,8 +2,6 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import axios from 'axios';
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
-import { retryRequest } from '@integrations/openai/chatCompletion/retryRequest';
-import { prepareChatCompletionRequest } from './convertIMessageToChatParam';
 
 const debug = Debug('app:OpenAiService');
 
@@ -55,34 +53,31 @@ export async function generateChatCompletion(
     options.setBusy(true);
 
     // Prepare the message payload with system, user, and history messages
-    const chatParams = prepareChatCompletionRequest(
-      message,
-      historyMessages,
-      systemMessageContent
-    );
+    const chatParams = [
+      { role: 'system', content: systemMessageContent },
+      { role: 'user', content: message },
+      ...historyMessages.map((msg) => ({ role: msg.role, content: msg.content, name: msg.getAuthorId() || 'unknown' }))
+    ];
 
     // API request details
-    const response = await retryRequest(async () => {
-      const result = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model,
-          messages: chatParams,
-          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
-          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model,
+        messages: chatParams,
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            Authorization: `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      return result.data.choices[0]?.message.content || null;
-    }, options.maxRetries);
-
+      }
+    );
     options.setBusy(false);
-    return response;
+
+    return response.data.choices[0]?.message.content || null;
   } catch (error: any) {
     debug('Error:', error.message);
     options.setBusy(false);
