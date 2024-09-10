@@ -30,15 +30,11 @@ export class OpenAiService {
     private readonly requestTimeout: number;
 
     private constructor() {
-        // Guard: Validate timeout value and ensure it is a string before parsing
         const timeoutValue = openaiConfig.get('OPENAI_TIMEOUT') || '30000';
-        if (isNaN(Number(timeoutValue))) {
-            throw new Error('Invalid timeout value. Expected a number convertible to string.');
-        }
         this.requestTimeout = Number(timeoutValue);
 
         const options: ClientOptions = {
-            apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),  // Removed redaction here
+            apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
             timeout: this.requestTimeout,
@@ -46,7 +42,6 @@ export class OpenAiService {
 
         this.openai = new OpenAI(options);
         this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
-        // Adjust Path<> type constraint for finishReasonRetry
         this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
         this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
 
@@ -71,10 +66,10 @@ export class OpenAiService {
     public async createChatCompletion(
         historyMessages: IMessage[],
         systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
-        maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-        temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7) // Added fifth argument
+        maxTokens: string = String(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || '150'),
+        temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
     ): Promise<any> {
-        return createChatCompletion(this.openai, historyMessages, systemMessageContent, maxTokens, temperature);
+        return createChatCompletion(this.openai, historyMessages, systemMessageContent, Number(maxTokens), temperature);
     }
 
     public async generateChatResponse(message: string, historyMessages: IMessage[]): Promise<string | null> {
@@ -91,11 +86,6 @@ export class OpenAiService {
         return listModels(this.openai);
     }
 
-    /**
-     * Logs sensitive information, but redacts API keys when debug logs are enabled.
-     * @param key - The API key to redact.
-     * @returns {string} - The redacted key if debugging, else the original.
-     */
     private redactApiKeyForLogging(key: string): string {
         if (debug.enabled) {
             return redactSensitiveInfo('OPENAI_API_KEY', key);
