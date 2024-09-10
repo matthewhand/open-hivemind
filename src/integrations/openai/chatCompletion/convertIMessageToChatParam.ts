@@ -7,8 +7,8 @@ import { OpenAI } from 'openai';
  * Key Features:
  * - **Type Mapping**: Converts `IMessage` to `ChatCompletionMessageParam`.
  *   - Expected OpenAI type `ChatCompletionMessageParam`:
- *     - `role: 'system' | 'user' | 'assistant'`
- *     - `content: string`
+ *     - `role: 'system' | 'user' | 'assistant' | 'function'`
+ *     - `content: string | ChatCompletionContentPart[]`
  *     - `name?: string`
  * 
  * @param msg - The `IMessage` object to be converted.
@@ -18,13 +18,15 @@ export function convertIMessageToChatParam(
     msg: IMessage
 ): OpenAI.Chat.ChatCompletionMessageParam {
     // Ensure the role is valid
-    if (!['system', 'user', 'assistant'].includes(msg.role)) {
+    if (!['system', 'user', 'assistant', 'function'].includes(msg.role)) {
         throw new Error(`Invalid role: ${msg.role}`);
     }
 
+    const content = msg.role === 'function' ? msg.getFunctionCall() : msg.getText();
+
     return {
-        role: msg.role as 'system' | 'user' | 'assistant',
-        content: msg.getText(),
+        role: msg.role as 'system' | 'user' | 'assistant' | 'function',
+        content,
         name: msg.getAuthorName() || 'unknown',
     };
 }
