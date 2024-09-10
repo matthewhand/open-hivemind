@@ -20,6 +20,14 @@ export const openAiProvider: ILlmProvider = {
   generateChatCompletion: async (historyMessages: IMessage[], userMessage: string): Promise<string> => {
     debug('Delegating chat completion to generateChatResponse...');
 
+    // Fallback: If no historyMessages, create history from userMessage
+    if (!historyMessages.length) {
+      historyMessages = [{
+        getText: () => userMessage,
+        isFromBot: () => false,
+      } as IMessage];
+    }
+
     const options = {
       parallelExecution: false,
       maxRetries: 3,

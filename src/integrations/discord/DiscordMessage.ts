@@ -27,7 +27,7 @@ export default class DiscordMessage extends IMessage {
      * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
      */
     constructor(message: Message, repliedMessage: Message | null = null) {
-        super(message, '');
+        super();  // Fix: Ensure correct parameters are passed based on IMessage implementation
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.content = message.content;
@@ -43,6 +43,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The message ID.
      */
     getMessageId(): string {
+        debug('Getting message ID: ' + this.message.id);  // Improvement: Add logging
         return this.message.id;
     }
 
@@ -51,6 +52,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string} - The message content.
      */
     getText(): string {
+        debug('Getting message text: ' + this.message.content);  // Improvement: Add logging
         return this.message.content;
     }
 
@@ -86,6 +88,7 @@ export default class DiscordMessage extends IMessage {
      * @returns {string[]} An array of user IDs mentioned in the message.
      */
     getUserMentions(): string[] {
+        debug('Getting user mentions from message: ' + this.message.id);  // Improvement: Add logging
         return this.message.mentions.users.map(user => user.id);
     }
 
@@ -96,6 +99,10 @@ export default class DiscordMessage extends IMessage {
     getChannelUsers(): string[] {
         if (this.message.channel instanceof TextChannel) {
             const members = this.message.channel.members;
+            if (!members) {  // Improvement: Guard clause
+                debug('No members found in channel: ' + this.message.channelId);
+                return [];
+            }
             return Array.from(members.values()).map(member => member.user.id);
         }
         return [];
