@@ -47,7 +47,7 @@ export class OpenAiService {
         this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
         this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
 
-        debug('[DEBUG] OpenAiService initialized with API Key:', this.redactApiKeyForLogging(options.apiKey), 'Timeout:', this.requestTimeout);
+        debug('[DEBUG] OpenAiService initialized with API Key:', this.redactApiKeyForLogging(String(options.apiKey || '')), 'Timeout:', this.requestTimeout);
     }
 
     public static getInstance(): OpenAiService {
