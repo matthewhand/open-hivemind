@@ -14,6 +14,12 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:OpenAiService');
 
+// Manually define ChatCompletionMessage structure
+interface ChatCompletionMessage {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+}
+
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
     throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
@@ -101,10 +107,10 @@ export class OpenAiService {
         maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
         temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
     ): Promise<any> {
-        const chatParams = [
+        const chatParams: ChatCompletionMessage[] = [
             { role: 'system', content: systemMessageContent },
             { role: 'user', content: message },
-            ...historyMessages.map((msg) => ({ role: msg.role, content: msg.content, name: msg.getAuthorId() || 'unknown' }))
+            ...historyMessages.map((msg) => ({ role: msg.isFromBot() ? "assistant" : "user" as "system" | "user" | "assistant", content: msg.content }))
         ];
 
         try {
