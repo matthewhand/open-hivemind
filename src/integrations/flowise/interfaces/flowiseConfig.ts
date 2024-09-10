@@ -1,62 +1,36 @@
-import convict from "convict";
+import convict from 'convict';
 
-/**
- * Flowise-specific configuration using convict.
- * This handles the API keys, endpoint URLs, and chatflow IDs specific to Flowise integration.
- */
 const flowiseConfig = convict({
-    FLOWISE_API_KEY: {
-        doc: "API Key for Flowise integration",
-        format: String,
-        default: "",
-        env: "FLOWISE_API_KEY"
-    },
-    FLOWISE_API_ENDPOINT: {
-        doc: "Flowise API base URL",
-        format: String,
-        default: "http://localhost:3002/api/v1",
-        env: "FLOWISE_API_ENDPOINT"
-    },
-    FLOWISE_CONVERSATION_CHATFLOW_ID: {
-        doc: "Flowise chatflow ID for multi-turn conversations",
-        format: String,
-        default: "",
-        env: "FLOWISE_CONVERSATION_CHATFLOW_ID"
-    },
-    FLOWISE_COMPLETION_CHATFLOW_ID: {
-        doc: "Flowise chatflow ID for single-turn completions",
-        format: String,
-        default: "",
-        env: "FLOWISE_COMPLETION_CHATFLOW_ID"
-    },
-    FLOWISE_FOLLOWUP_CHATFLOW_ID: {
-        doc: "Flowise follow-up chatflow ID",
-        format: String,
-        default: "",
-        env: "FLOWISE_FOLLOWUP_CHATFLOW_ID"
-    },
-    FLOWISE_IDLE_CHATFLOW_ID: {
-        doc: "Flowise idle chatflow ID",
-        format: String,
-        default: "",
-        env: "FLOWISE_IDLE_CHATFLOW_ID"
-    },
-    FLOWISE_SCHEDULED_CHATFLOW_ID: {
-        doc: "Flowise scheduled chatflow ID",
-        format: String,
-        default: "",
-        env: "FLOWISE_SCHEDULED_CHATFLOW_ID"
-    },
-    FLOWISE_GENERAL_CHATFLOW_ID: {
-        doc: "Flowise general chatflow ID",
-        format: String,
-        default: "",
-        env: "FLOWISE_GENERAL_CHATFLOW_ID"
-    }
+  FLOWISE_API_ENDPOINT: {
+    doc: 'The base URL of the Flowise API',
+    format: String,
+    default: 'http://localhost:3002/api/v1',
+    env: 'FLOWISE_API_ENDPOINT',
+  },
+  FLOWISE_API_KEY: {
+    doc: 'The API key for authenticating with Flowise',
+    format: String,
+    default: '',
+    env: 'FLOWISE_API_KEY',
+  },
+  FLOWISE_CONVERSATION_CHATFLOW_ID: {
+    doc: 'The chatflow ID for conversation-based completions',
+    format: String,
+    default: '',
+    env: 'FLOWISE_CONVERSATION_CHATFLOW_ID',
+  },
+  FLOWISE_COMPLETION_CHATFLOW_ID: {
+    doc: 'The chatflow ID for completion-based completions',
+    format: String,
+    default: '',
+    env: 'FLOWISE_COMPLETION_CHATFLOW_ID',
+  },
+  FLOWISE_ENABLE_FALLBACK: {
+    doc: 'Enable fallback to the manual HTTP Flowise API integration',
+    format: Boolean,
+    default: false,
+    env: 'FLOWISE_ENABLE_FALLBACK',
+  },
 });
 
-// Enforce strict validation
-flowiseConfig.validate({ allowed: "strict" });
-
 export default flowiseConfig;
-
