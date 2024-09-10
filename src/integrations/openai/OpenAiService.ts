@@ -37,7 +37,7 @@ export class OpenAiService {
             apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
             organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
             baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
-            timeout: timeoutValue.toString(),
+            timeout: timeoutValue,
         };
 
         this.openai = new OpenAI(options);

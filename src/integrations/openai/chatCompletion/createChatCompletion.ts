@@ -49,6 +49,11 @@ export async function createChatCompletion(
     name: 'system',
   };
 
+  // Handle more complex content types if necessary
+  if (Array.isArray(messages[0].content)) {
+    messages[0].content = messages[0].content.map(part => part.text).join(' '); // Convert array content to string
+  }
+
   // Debug logging before API call
   console.debug('OpenAI Model:', model);
   console.debug('Temperature Setting:', temperature);
