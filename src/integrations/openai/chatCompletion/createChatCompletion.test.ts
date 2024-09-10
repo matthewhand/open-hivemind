@@ -34,16 +34,20 @@ const mockOpenAI = {
 
 describe('createChatCompletion', () => {
   it('should return a valid completion response', async () => {
+    console.debug('Test case: valid completion response');
     const response = await createChatCompletion(
       mockOpenAI as any,
       [mockMessage as IMessage],
-      'system message',
+      'User message',
+      'System message',
       100
     );
+    console.debug('Response:', response);
     expect(response).to.equal('mock response');
   });
 
   it('should handle an empty completion response', async () => {
+    console.debug('Test case: empty completion response');
     const mockEmptyOpenAI = {
       chat: {
         completions: {
@@ -54,9 +58,11 @@ describe('createChatCompletion', () => {
     const response = await createChatCompletion(
       mockEmptyOpenAI as any,
       [mockMessage as IMessage],
-      'system message',
+      'User message',
+      'System message',
       100
     );
+    console.debug('Response:', response);
     expect(response).to.equal('');
   });
 });

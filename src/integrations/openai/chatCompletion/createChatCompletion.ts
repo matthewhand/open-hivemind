@@ -42,6 +42,13 @@ export async function createChatCompletion(
     throw new Error('System message content is required.');
   }
 
+  // Fix: Ensure correct typing for the system message
+  messages[0] = {
+    role: 'system', // Ensure 'role' matches OpenAI expected types
+    content: String(systemMessageContent),
+    name: 'system'
+  };
+
   // Debug logging before API call
   console.debug('OpenAI Model:', model);
   console.debug('Temperature Setting:', temperature);
