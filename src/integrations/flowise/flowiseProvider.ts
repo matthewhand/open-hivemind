@@ -1,3 +1,9 @@
+/**
+ * FlowiseProvider is an integration that provides connection to Flowise, an LLM orchestration service.
+ * It supports chat completion and completion tasks using Flowise SDK.
+ * This class handles authentication, fallback mechanisms, and supports both SDK and HTTP API communication.
+ */
+
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
@@ -14,8 +20,13 @@ class FlowiseProvider implements ILlmProvider {
     this.initializeClient();
   }
 
+  /**
+   * Initializes the Flowise client with dynamic API endpoint from the configuration.
+   */
   async initializeClient() {
-    this.client = new FlowiseClient({});
+    const flowiseUrl = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+    this.client = new FlowiseClient({ baseUrl: flowiseUrl });
+    debug('Initialized FlowiseClient with endpoint:', flowiseUrl);
   }
 
   supportsChatCompletion() {
@@ -46,7 +57,6 @@ class FlowiseProvider implements ILlmProvider {
       const payload = {
         chatflowId,
         question: userMessage,
-        apiKey: await getApiKey(),
         streaming: false,
       };
 
@@ -68,7 +78,7 @@ class FlowiseProvider implements ILlmProvider {
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
       if (flowiseConfig.get('FLOWISE_ENABLE_FALLBACK')) {
-        return await fallbackToHttpApi(userMessage, chatflowId, await getApiKey());
+        return await fallbackToHttpApi(userMessage, chatflowId);
       }
       throw sdkError;
     }
@@ -82,7 +92,6 @@ class FlowiseProvider implements ILlmProvider {
       const payload = {
         chatflowId,
         question: prompt,
-        apiKey: await getApiKey(),
         streaming: false,
       };
 
@@ -102,13 +111,16 @@ class FlowiseProvider implements ILlmProvider {
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
       if (flowiseConfig.get('FLOWISE_ENABLE_FALLBACK')) {
-        return await fallbackToHttpApi(prompt, chatflowId, await getApiKey());
+        return await fallbackToHttpApi(prompt, chatflowId);
       }
       throw sdkError;
     }
   }
 }
 
+/**
+ * Authenticate and retrieve API key if username/password is provided or fallback to default API key.
+ */
 async function getApiKey() {
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
   const username = process.env.FLOWISE_USERNAME;
@@ -133,7 +145,10 @@ async function getApiKey() {
   }
 }
 
-async function fallbackToHttpApi(question: string, chatflowId: string, apiKey: string) {
+/**
+ * Fallback to HTTP API if Flowise SDK fails.
+ */
+async function fallbackToHttpApi(question: string, chatflowId: string) {
   const apiUrl = `${flowiseConfig.get('FLOWISE_API_ENDPOINT')}/chatflows/${chatflowId}`;
   debug(`Falling back to HTTP API at ${apiUrl}`);
 
@@ -141,7 +156,7 @@ async function fallbackToHttpApi(question: string, chatflowId: string, apiKey: s
     const response = await axios.post(
       apiUrl,
       { question },
-      { headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' } }
+      { headers: { Authorization: `Bearer ${await getApiKey()}`, 'Content-Type': 'application/json' } }
     );
 
     if (response.data?.text) {
