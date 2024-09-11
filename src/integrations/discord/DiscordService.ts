@@ -69,16 +69,28 @@ export class DiscordService {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
           log(`Received a message with ID: ${message.id}`);
-          fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message, (key, value) => typeof value === "bigint" ? value.toString() : value, 2)}\n`);
+          try {
+            fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2)}\n`);
+          } catch (error: any) {
+            log(`Failed to log message details to ${discordLogFile}:`, error.message);
+          }
 
           // Fetch message history (last 10 messages)
           const channelId = message.channelId;
           const historyMessages = await this.getMessagesFromChannel(channelId, 10);
 
-          fs.appendFileSync(discordLogFile, `Fetched message history: ${JSON.stringify(historyMessages, null, 2)}\n`);
+          try {
+            fs.appendFileSync(discordLogFile, `Fetched message history: ${JSON.stringify(historyMessages, null, 2)}\n`);
+          } catch (error: any) {
+            log(`Failed to log message history to ${discordLogFile}:`, error.message);
+          }
 
           const iMessage: IMessage = new DiscordMessage(message);
-          fs.appendFileSync(discordLogFile, `Converted to IMessage: ${JSON.stringify(iMessage, null, 2)}\n`);
+          try {
+            fs.appendFileSync(discordLogFile, `Converted to IMessage: ${JSON.stringify(iMessage, null, 2)}\n`);
+          } catch (error: any) {
+            log(`Failed to log IMessage to ${discordLogFile}:`, error.message);
+          }
 
           // Call the handler with history messages
           this.messageHandler!(iMessage, historyMessages);
