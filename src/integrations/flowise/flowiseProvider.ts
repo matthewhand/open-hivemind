@@ -65,13 +65,20 @@ export const flowiseProvider: ILlmProvider = {
 
       debug('Sending payload to Flowise:', payload);
 
-      const completion = await flowise.createPrediction(payload);
-      debug('Flowise SDK raw response:', completion);
-
-      const response = completion?.text || 'No response generated';
-      debug('Flowise SDK processed response:', response);
-
-      return response;
+      if (this?.client) {
+        const completion = await this.client?.createPrediction?.(payload);
+        if (completion) {
+          debug('Flowise SDK raw response:', completion);
+          const response = completion?.text || 'No response generated';
+          debug('Flowise SDK processed response:', response);
+          return response;
+        } else {
+          throw new Error('Completion response was undefined.');
+        }
+      } else {
+        debug('Flowise client is not initialized.');
+        throw new Error('Flowise client is not initialized.');
+      }
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
       if (flowiseConfig.get('FLOWISE_ENABLE_FALLBACK')) {
@@ -88,16 +95,27 @@ export const flowiseProvider: ILlmProvider = {
     debug('Using Flowise SDK for completion');
 
     try {
-      const completion = await flowise.createPrediction({
+      const payload = {
         chatflowId,
         question: prompt,
         apiKey,
         streaming: false,
-      });
+      };
 
-      const response = completion?.text || 'No response generated';
-      debug('Flowise SDK response:', response);
-      return response;
+      if (this?.client) {
+        const completion = await this.client?.createPrediction?.(payload);
+        if (completion) {
+          debug('Flowise SDK raw response:', completion);
+          const response = completion?.text || 'No response generated';
+          debug('Flowise SDK processed response:', response);
+          return response;
+        } else {
+          throw new Error('Completion response was undefined.');
+        }
+      } else {
+        debug('Flowise client is not initialized.');
+        throw new Error('Flowise client is not initialized.');
+      }
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
       if (flowiseConfig.get('FLOWISE_ENABLE_FALLBACK')) {
