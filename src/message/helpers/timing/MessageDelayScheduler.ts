@@ -135,6 +135,7 @@ export class MessageDelayScheduler {
     if (this.typingInterval) {
       clearInterval(this.typingInterval);
     }
+console.debug('MessageDelayScheduler is starting typing indicator for channel: ' + channel.id);
     this.typingInterval = startTypingIndicator(channel, stopCondition);
     debug('MessageDelayScheduler started with typing indicator');
   }
