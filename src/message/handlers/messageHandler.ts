@@ -1,13 +1,19 @@
 import { startTypingIndicator } from '@integrations/discord/startTypingIndicator';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 /**
- * Handles incoming messages in Discord and processes commands or replies using LLMs (Large Language Models).
+ * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
  * 
- * @param msg - The message object containing details of the incoming message.
- * @param historyMessages - Optional array of historical messages for context (default is an empty array).
+ * The handler validates the message, checks if it's from a bot or an authorized user, processes commands if found, 
+ * or generates and sends a reply using an LLM. It also manages follow-up responses and controls typing indicators 
+ * to improve user experience during message processing.
  * 
- * This function validates incoming messages, checks if the message should be processed (based on bot rules),
- * and either processes commands or sends a response from an LLM provider. Additionally, it manages follow-up requests.
+ * @param msg - The message object containing details of the incoming message, including content and metadata.
+ * @param historyMessages - Optional array of historical messages for context in LLM responses (default is an empty array).
+ * 
+ * Key steps:
+ * 1. Validates the message content and checks for bot rules.
+ * 2. Handles commands or generates an LLM response.
+ * 3. Manages follow-up requests and typing indicators.
  */
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
