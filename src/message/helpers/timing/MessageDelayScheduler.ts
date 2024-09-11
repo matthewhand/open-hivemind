@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { startTypingIndicator } from '../../integrations/discord/startTypingIndicator';
+import { startTypingIndicator } from '@integrations/discord/startTypingIndicator';
 import { ChatHistory } from '../../common/chatHistory';
 
 const debug = Debug('app:MessageDelayScheduler');
@@ -18,7 +18,7 @@ export class MessageDelayScheduler {
   private minDelay: number;
   private decayRate: number;
   private typingInterval: NodeJS.Timeout | null = null;
-  private delayTime: number;
+  private delayTime: number = 0;
 
   /**
    * Singleton pattern: Ensures only one instance of MessageDelayScheduler is used.
