@@ -45,8 +45,8 @@ export async function messageHandler(
   debug('messageHandler called with msg:', msg, 'historyMessages:', historyMessages);
 
   // Guard: Check if message object is valid
-  if (!msg) {
-    debug('No message provided. Exiting handler.');
+  if (!msg || typeof msg.getMessageId !== 'function') {
+    debug('Invalid or no message provided. Exiting handler.');
     return;
   }
 
@@ -136,7 +136,7 @@ export async function messageHandler(
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
-      await timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content: string) => {
+      await timingManager.scheduleMessage(client, channelId, llmResponse, Date.now() - startTime, async (content: string) => {
         try {
           debug('Sending LLM response to channel:', channelId, 'response:', content);
           await messageProvider.sendMessageToChannel(channelId, content);
