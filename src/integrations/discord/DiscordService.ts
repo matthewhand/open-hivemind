@@ -3,11 +3,13 @@ import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';  // Reusing utility
-import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';  // Use correct named import
-import discordConfig from '@integrations/discord/interfaces/discordConfig';  // Using convict for config
+import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
+import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import fs from 'fs';  // For writing logs to a file
 
 const log = Debug('app:discord-service');
+const discordLogFile = './discord_message.log';
 
 /**
  * DiscordService Class
@@ -67,13 +69,16 @@ export class DiscordService {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
           log(`Received a message with ID: ${message.id}`);
+          fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message, null, 2)}\n`);
 
           // Fetch message history (last 10 messages)
           const channelId = message.channelId;
           const historyMessages = await this.getMessagesFromChannel(channelId, 10);
 
+          fs.appendFileSync(discordLogFile, `Fetched message history: ${JSON.stringify(historyMessages, null, 2)}\n`);
+
           const iMessage: IMessage = new DiscordMessage(message);
-          log('Passing message history to handler:', historyMessages);
+          fs.appendFileSync(discordLogFile, `Converted to IMessage: ${JSON.stringify(iMessage, null, 2)}\n`);
 
           // Call the handler with history messages
           this.messageHandler!(iMessage, historyMessages);
