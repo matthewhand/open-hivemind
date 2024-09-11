@@ -69,7 +69,7 @@ export class DiscordService {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
           log(`Received a message with ID: ${message.id}`);
-          fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message, null, 2)}\n`);
+          fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message, (key, value) => typeof value === "bigint" ? value.toString() : value, 2)}\n`);
 
           // Fetch message history (last 10 messages)
           const channelId = message.channelId;
