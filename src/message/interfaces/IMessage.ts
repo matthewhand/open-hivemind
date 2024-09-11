@@ -18,7 +18,8 @@ export abstract class IMessage {
         }
         this.data = data;
         this.role = role;
-        debug('IMessage initialized with data: ' + JSON.stringify(data));
+        // debug('IMessage initialized with data: ' + JSON.stringify(data));
+        debug('IMessage initialized');
     }
     /**
      * Retrieves the message ID.
@@ -73,15 +74,15 @@ export abstract class IMessage {
      * @returns {boolean} True if the message is from a bot, false otherwise.
      */
     abstract isFromBot(): boolean;
-    /**
-     * Sends a reply to the message.
-     * @param {string} content - The content of the reply.
-     * @returns {Promise<void>} A promise that resolves when the reply is sent.
-     */
-    async reply(content: string): Promise<void> {
-        debug('Replying with content: ' + content);
-        // Implementation logic for replying to a message
-    }
+    // /**
+    //  * Sends a reply to the message.
+    //  * @param {string} content - The content of the reply.
+    //  * @returns {Promise<void>} A promise that resolves when the reply is sent.
+    //  */
+    // async reply(content: string): Promise<void> {
+    //     debug('Replying with content: ' + content);
+    //     // Implementation logic for replying to a message
+    // }
     /**
      * Retrieves the author's name.
      * @returns {string} The author's name.
