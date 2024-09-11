@@ -67,7 +67,7 @@ export async function messageHandler(
   debug('msg has a valid getText method and contains text:', msg.getText());
 
   // Start typing indicator when processing starts
-console.debug('Invoking startTypingIndicator with channel ID: ' + msg.getChannelId());
+  console.debug('Invoking startTypingIndicator with channel ID: ' + msg.getChannelId());
   startTypingIndicator(msg.getChannelId(), () => false);
 
   // Guard: Validate message format and content
