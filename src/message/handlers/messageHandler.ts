@@ -1,4 +1,4 @@
-import { startTypingIndicator } from '@integrations/discord/startTypingIndicator';
+import { sendTyping } from '@integrations/discord/sendTyping';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 /**
  * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
@@ -73,8 +73,8 @@ export async function messageHandler(
   debug('msg has a valid getText method and contains text:', msg.getText());
 
   // Start typing indicator when processing starts
-  console.debug('Invoking startTypingIndicator with channel ID: ' + msg.getChannelId());
-  startTypingIndicator(msg.getChannelId(), () => false);
+  console.debug('Invoking sendTyping with channel ID: ' + msg.getChannelId());
+  sendTyping(msg.getChannelId(), () => false);
 
   // Guard: Validate message format and content
   const isValidMessage = await validateMessage(msg);

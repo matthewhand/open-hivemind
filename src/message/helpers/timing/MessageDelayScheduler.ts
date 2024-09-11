@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { startTypingIndicator } from '@integrations/discord/startTypingIndicator';
+import { sendTyping } from '@integrations/discord/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
 
 const debug = Debug('app:MessageDelayScheduler');
@@ -136,7 +136,7 @@ export class MessageDelayScheduler {
       clearInterval(this.typingInterval);
     }
 console.debug('MessageDelayScheduler is starting typing indicator for channel: ' + channel.id);
-    this.typingInterval = startTypingIndicator(channel, stopCondition);
+    this.typingInterval = sendTyping(channel, stopCondition);
     debug('MessageDelayScheduler started with typing indicator');
   }
 

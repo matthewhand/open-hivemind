@@ -1,5 +1,5 @@
 /**
- * startTypingIndicator - Starts and maintains typing indicators in a Discord channel at regular intervals.
+ * sendTyping - Starts and maintains typing indicators in a Discord channel at regular intervals.
  *
  * The typing indicator is sent every 15 seconds to simulate activity while the bot processes commands.
  * Debugging is included to track the channel details, typing loop initiation, and termination.
@@ -10,7 +10,7 @@
  */
 import Debug from 'debug';
 
-const debug = Debug('app:startTypingIndicator');
+const debug = Debug('app:sendTyping');
 
 /**
  * Utility to Start a Typing Indicator in a Discord Channel
@@ -28,7 +28,7 @@ const debug = Debug('app:startTypingIndicator');
  * @param stopCondition - A function that stops the typing indicator when returning true.
  * @returns A NodeJS.Timeout object that can be used to clear the interval, or null if the channel is invalid.
  */
-export function startTypingIndicator(channel: any, stopCondition: () => boolean): NodeJS.Timeout {
+export function sendTyping(channel: any, stopCondition: () => boolean): NodeJS.Timeout {
     if (!channel || typeof channel.sendTyping !== 'function') {
         debug('Invalid channel object provided.');
         return null as any;
@@ -47,6 +47,6 @@ console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' 
 
 console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
     channel.sendTyping();
-    debug('startTypingIndicator: Interval started');
+    debug('sendTyping: Interval started');
     return typingInterval;
 }
