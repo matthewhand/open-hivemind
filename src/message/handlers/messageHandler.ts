@@ -64,9 +64,14 @@ export async function messageHandler(
   }
   debug('msg has a valid getText method and contains text:', msg.getText());
 
+  // Start typing indicator when processing starts
+  startTypingIndicator(msg.getChannelId());
+
   // Guard: Validate message format and content
-  if (!validateMessage(msg)) {
+  const isValidMessage = await validateMessage(msg);
+  if (!isValidMessage) {
     debug('Message validation failed. Exiting handler.');
+    stopTypingIndicator(msg.getChannelId());
     return;
   }
   debug('Message validated successfully.');
@@ -96,21 +101,30 @@ export async function messageHandler(
 
   if (commandProcessed) {
     debug('Command processed, skipping LLM response.');
+    stopTypingIndicator(msg.getChannelId());
+    return;
+  }
+
+  // Guard: Should bot reply to this message?
+  const shouldReply = await shouldReplyToMessage(msg);
+  if (!shouldReply) {
+    debug('Message is not eligible for reply:', msg);
+    stopTypingIndicator(msg.getChannelId());
     return;
   }
 
   // Handle LLM response
-  if (messageConfig.get('MESSAGE_LLM_CHAT') && shouldReplyToMessage(msg)) {
+  if (messageConfig.get('MESSAGE_LLM_CHAT')) {
     debug('Preparing to send LLM response for message:', msg.getText());
 
     // Guard: Ensure LLM provider is correctly configured
-    const llmProvider = getLlmProvider(channelId) as ILlmProvider;
+    const llmProvider = await getLlmProvider(channelId) as ILlmProvider;
     const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
     debug('LLM response generated:', llmResponse);
 
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
-      timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content: string) => {
+      await timingManager.scheduleMessage(channelId, llmResponse, Date.now() - startTime, async (content: string) => {
         try {
           debug('Sending LLM response to channel:', channelId, 'response:', content);
           await messageProvider.sendMessageToChannel(channelId, content);
@@ -123,16 +137,15 @@ export async function messageHandler(
   }
 
   // Follow-up request handling
-  if (messageConfig.get('MESSAGE_LLM_CHAT') && messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-    if (!messageConfig.get('MESSAGE_COMMAND_INLINE') && !messageConfig.get('MESSAGE_COMMAND_SLASH')) {
-      debug('Follow-up logic is skipped because command processing is not enabled.');
-      return;
-    }
-
+  if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     debug('Follow-up logic is enabled. Sending follow-up request.');
     await sendFollowUpRequest(msg, channelId, 'AI response follow-up');
     debug('Follow-up request handled successfully.');
   }
 
-  debug('Message handling completed.');
+  stopTypingIndicator(msg.getChannelId());
+
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+  debug(`Message processed in ${duration} ms.`);
 }

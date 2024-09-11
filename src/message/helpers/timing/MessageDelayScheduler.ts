@@ -1,5 +1,6 @@
-import { ChatHistory } from '../../common/chatHistory';
 import Debug from 'debug';
+import { startTypingIndicator } from '../../integrations/discord/startTypingIndicator';
+import { ChatHistory } from '../../common/chatHistory';
 
 const debug = Debug('app:MessageDelayScheduler');
 
@@ -16,6 +17,8 @@ export class MessageDelayScheduler {
   private maxDelay: number;
   private minDelay: number;
   private decayRate: number;
+  private typingInterval: NodeJS.Timeout | null = null;
+  private delayTime: number;
 
   /**
    * Singleton pattern: Ensures only one instance of MessageDelayScheduler is used.
@@ -122,5 +125,27 @@ export class MessageDelayScheduler {
     // Clear typing interval after delay
     setTimeout(() => clearInterval(interval), delay);
   }
-}
 
+  /**
+   * Starts the typing indicator with a stop condition.
+   * @param channel - The Discord channel.
+   * @param stopCondition - Function to determine when to stop typing.
+   */
+  public start(channel: any, stopCondition: () => boolean) {
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+    }
+    this.typingInterval = startTypingIndicator(channel, stopCondition);
+    debug('MessageDelayScheduler started with typing indicator');
+  }
+
+  /**
+   * Stops the typing indicator.
+   */
+  public stop(): void {
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+      debug('MessageDelayScheduler: Typing indicator stopped');
+    }
+  }
+}

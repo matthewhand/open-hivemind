@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 
 const debug = Debug('app:startTypingIndicator');
 
@@ -15,15 +15,25 @@ const debug = Debug('app:startTypingIndicator');
  * - Logs important steps and potential issues for debugging purposes.
  *
  * @param channel - The Discord channel where the typing indicator will be shown.
+ * @param stopCondition - A function that stops the typing indicator when returning true.
  * @returns A NodeJS.Timeout object that can be used to clear the interval, or null if the channel is invalid.
  */
-export function startTypingIndicator(channel: any): NodeJS.Timeout {
+export function startTypingIndicator(channel: any, stopCondition: () => boolean): NodeJS.Timeout {
     if (!channel || typeof channel.sendTyping !== 'function') {
         debug('Invalid channel object provided.');
         return null as any;
     }
+    const typingInterval = setInterval(() => {
+        if (stopCondition()) {
+            clearInterval(typingInterval);
+            debug('Typing indicator stopped.');
+            return;
+        }
+        channel.sendTyping();
+        debug('Typing indicator sent.');
+    }, 15000);
+
     channel.sendTyping();
-    const typingInterval = setInterval(() => channel.sendTyping(), 15000);
     debug('startTypingIndicator: Interval started');
     return typingInterval;
 }
