@@ -1,4 +1,4 @@
-import { sendTyping } from '../../integrations/discord/sendTyping';
+import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 
 export function stopTypingIndicator(channel: any): void {
     if (!channel) return;

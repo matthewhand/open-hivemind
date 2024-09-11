@@ -1,5 +1,7 @@
-import { sendTyping } from '@integrations/discord/sendTyping';
+import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
+import { Client } from 'discord.js';
+
 /**
  * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
  * 
@@ -36,6 +38,7 @@ const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
 export async function messageHandler(
+  client: Client,
   msg: IMessage,
   historyMessages: IMessage[] = []
 ): Promise<void> {
@@ -74,7 +77,7 @@ export async function messageHandler(
 
   // Start typing indicator when processing starts
   console.debug('Invoking sendTyping with channel ID: ' + msg.getChannelId());
-  sendTyping(msg.getChannelId(), () => false);
+  sendTyping(client, msg.getChannelId());
 
   // Guard: Validate message format and content
   const isValidMessage = await validateMessage(msg);

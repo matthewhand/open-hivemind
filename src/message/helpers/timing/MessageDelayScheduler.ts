@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { sendTyping } from '@integrations/discord/sendTyping';
+import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
 
 const debug = Debug('app:MessageDelayScheduler');
@@ -129,14 +129,13 @@ export class MessageDelayScheduler {
   /**
    * Starts the typing indicator with a stop condition.
    * @param channel - The Discord channel.
-   * @param stopCondition - Function to determine when to stop typing.
    */
-  public start(channel: any, stopCondition: () => boolean) {
+  public start(channel: any) {
     if (this.typingInterval) {
       clearInterval(this.typingInterval);
     }
-console.debug('MessageDelayScheduler is starting typing indicator for channel: ' + channel.id);
-    this.typingInterval = sendTyping(channel, stopCondition);
+    console.debug('MessageDelayScheduler is starting typing indicator for channel: ' + channel.id);
+    this.typingInterval = setInterval(() => sendTyping(channel), 3000);
     debug('MessageDelayScheduler started with typing indicator');
   }
 
