@@ -51,15 +51,18 @@ export async function getFlowiseResponse(channelId: string, question: string): P
       debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
     }
 
-    // Ensure valid text is returned
     if (!text || typeof text !== 'string' || !text.trim()) {
       debug('Flowise returned an invalid or empty text response.');
       throw new Error('Flowise response is empty or invalid.');
     }
 
     return text;
-  } catch (error) {
-    debug('Error communicating with Flowise API:', error);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      debug('Flowise API error with status:', error.response?.status, 'response data:', error.response?.data);
+    } else {
+      debug('Error communicating with Flowise API:', error);
+    }
     throw new Error('Failed to fetch response from Flowise.');
   }
 }
