@@ -45,13 +45,19 @@ export async function messageHandler(
   debug('messageHandler called with msg:', msg, 'historyMessages:', historyMessages);
 
   // Guard: Check if message object is valid
-  if (!msg || typeof msg.getMessageId !== 'function') {
-    debug('Invalid or no message provided. Exiting handler.');
+  if (!msg) {
+    debug('No message object provided. Exiting handler.');
     return;
   }
 
+  // Log the value if getMessageId is missing
+  if (typeof msg.getMessageId !== 'function') {
+    debug('msg.getMessageId is missing. msg:', msg);
+  }
+
   const startTime = Date.now();
-  debug('Received message with ID:', msg.getMessageId(), 'at', new Date(startTime).toISOString());
+  const messageId = msg.getMessageId ? msg.getMessageId() : 'unknown';
+  debug('Received message with ID:', messageId, 'at', new Date(startTime).toISOString());
 
   // Guard: Ensure message is not from bot or self if bots should be ignored
   if (msg.isFromBot()) {
@@ -61,19 +67,12 @@ export async function messageHandler(
     }
   }
 
-  // Guard: Ensure message object has necessary methods
-  if (!(msg && 'getMessageId' in msg && typeof msg.getMessageId === 'function')) {
-    debug('msg is not a valid IMessage instance. Exiting handler.');
-    return;
+  // Log the value if getText is missing
+  if (typeof msg.getText !== 'function') {
+    debug('msg.getText is missing. msg:', msg);
+  } else if (!msg.getText().trim()) {
+    debug('msg has no valid text content. msg:', msg);
   }
-  debug('msg is a valid instance of IMessage.');
-
-  // Guard: Ensure message has text content
-  if (typeof msg.getText !== 'function' || !msg.getText().trim()) {
-    debug('msg has no valid getText method or message is empty. Exiting handler.');
-    return;
-  }
-  debug('msg has a valid getText method and contains text:', msg.getText());
 
   // Start typing indicator when processing starts
   console.debug('Invoking sendTyping with channel ID: ' + msg.getChannelId());
