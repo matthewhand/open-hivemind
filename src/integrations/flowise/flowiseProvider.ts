@@ -7,12 +7,28 @@ import axios from 'axios';
 
 const debug = Debug('app:flowiseProvider');
 
-const flowise = new FlowiseClient({ baseUrl: flowiseConfig.get('FLOWISE_API_ENDPOINT') });
-
 async function getApiKey() {
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
-  if (!apiKey) throw new Error('Flowise API key is missing.');
-  return apiKey;
+  const username = process.env.FLOWISE_USERNAME;
+  const password = process.env.FLOWISE_PASSWORD;
+
+  if (apiKey) return apiKey;
+  if (!username || !password) throw new Error('Flowise credentials are missing.');
+
+  try {
+    debug('Authenticating via username/password...');
+    const authResponse = await axios.post(
+      `${flowiseConfig.get('FLOWISE_API_ENDPOINT')}/auth/login`,
+      { username, password }
+    );
+
+    const token = authResponse.data?.token;
+    if (!token) throw new Error('Failed to retrieve API token from username/password.');
+    return token;
+  } catch (authError) {
+    debug('Authentication failed:', authError);
+    throw new Error('Unable to authenticate using username and password.');
+  }
 }
 
 /**
