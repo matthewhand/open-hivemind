@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { Client } from 'discord.js';
 import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
 
@@ -87,12 +88,14 @@ export class MessageDelayScheduler {
   /**
    * Schedules a message to be sent after the calculated delay.
    * Sends typing indicators during the delay period.
+   * @param client - The Discord client instance.
    * @param channelId - The ID of the channel to which the message will be sent.
    * @param messageContent - The content of the message to send.
    * @param processingTime - The time taken by the processing step.
    * @param sendFunction - The function to call for sending the message.
    */
   public scheduleMessage(
+    client: Client,
     channelId: string,
     messageContent: string,
     processingTime: number,
@@ -102,41 +105,12 @@ export class MessageDelayScheduler {
     debug(`scheduleMessage: Scheduling message in channel ${channelId} with delay of ${delay}ms.`);
 
     // Send typing indicators during the delay
-    this.sendTypingIndicator(channelId, delay);
+    sendTyping(client, channelId);
 
     setTimeout(() => {
       sendFunction(messageContent);
       this.logIncomingMessage(channelId); // Log time after sending message
     }, delay);
-  }
-
-  /**
-   * Sends typing indicators to simulate natural typing behavior during a delay.
-   * @param channelId - The ID of the channel where the typing indicator will be sent.
-   * @param delay - The delay duration during which typing indicators should be sent.
-   */
-  private sendTypingIndicator(channelId: string, delay: number): void {
-    const typingInterval = 3000; // Send typing indicator every 3 seconds
-    const interval = setInterval(() => {
-      console.debug(`[MessageDelayScheduler] Sending typing indicator for channel: ${channelId}`);
-      // Simulate sending typing indicator here (via Discord API)
-    }, typingInterval);
-
-    // Clear typing interval after delay
-    setTimeout(() => clearInterval(interval), delay);
-  }
-
-  /**
-   * Starts the typing indicator with a stop condition.
-   * @param channel - The Discord channel.
-   */
-  public start(channel: any) {
-    if (this.typingInterval) {
-      clearInterval(this.typingInterval);
-    }
-    console.debug('MessageDelayScheduler is starting typing indicator for channel: ' + channel.id);
-    this.typingInterval = setInterval(() => sendTyping(channel), 3000);
-    debug('MessageDelayScheduler started with typing indicator');
   }
 
   /**

@@ -1,6 +1,7 @@
 import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 import { Client } from 'discord.js';
+import messageConfig from '@src/message/interfaces/messageConfig';
 
 /**
  * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
@@ -27,7 +28,6 @@ import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldRepl
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
-import messageConfig from '@src/message/interfaces/messageConfig';
 import { config } from 'dotenv';
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 config();
