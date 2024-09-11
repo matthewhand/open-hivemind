@@ -52,8 +52,8 @@ RUN npm ci
 RUN mkdir src
 
 # Combine debug steps into a single step
-COPY src/dependencyReport.js src/test-libs.js src/
-RUN npm run dep-report && npm run test-libs
+#COPY src/dependencyReport.js src/test-libs.js src/
+#RUN npm run dep-report && npm run test-libs
 
 RUN ls -latr node_modules
 RUN ls -latr src/
