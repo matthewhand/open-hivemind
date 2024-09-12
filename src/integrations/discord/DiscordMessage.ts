@@ -7,7 +7,7 @@ const debug = Debug('app:DiscordMessage');
 /**
  * Represents a Discord message, implementing the IMessage interface.
  */
-export default class DiscordMessage extends IMessage {
+export default class DiscordMessage implements IMessage {
     public content: string;
     public channelId: string;
     public data: string;
@@ -21,13 +21,12 @@ export default class DiscordMessage extends IMessage {
      * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
      */
     constructor(message: Message, repliedMessage: Message | null = null) {
-        super(message, '');  // Fix: Ensure the required 'message' and 'role' are passed to IMessage constructor
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.content = message.content;
         this.channelId = message.channelId;
         this.data = message.content;
-        this.role = '';  // Improvement: Set this to the appropriate value based on your application's needs
+        this.role = '';  // Set to appropriate value based on your application's needs
         debug('[DiscordMessage] Initializing with message ID: ' + message.id);
     }
 
