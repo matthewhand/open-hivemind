@@ -62,7 +62,7 @@ class FlowiseProvider implements ILlmProvider {
       };
 
       debug('Sending payload to Flowise:', payload);
-      const completion = await this.client.getChatCompletion(payload);
+      const completion = await this.client.getChat(payload);
       if (completion) {
         debug('Flowise SDK raw response:', completion);
         const response = completion?.text || 'No response generated';

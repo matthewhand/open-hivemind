@@ -2,7 +2,7 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
-import { Client } from '@src/message/interfaces/Client';
+import { Client } from 'discord.js';
 
 const debug = Debug('app:sendFollowUpRequest');
 

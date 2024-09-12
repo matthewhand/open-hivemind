@@ -1,5 +1,6 @@
 import { Client, Message, EmbedBuilder } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
+import DiscordMessage from "@src/integrations/discord/DiscordMessage";
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
