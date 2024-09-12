@@ -16,7 +16,7 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
 
   try {
     debug('Sending request to Flowise SDK with prompt:', prompt);
-    const response = await client.getChat({ chatflowId, question: prompt, streaming: false });
+    const response = await client.getCompletion({ chatflowId, question: prompt }); // Updated method
     debug('Received response from Flowise SDK:', response);
 
     if (response?.text) {
