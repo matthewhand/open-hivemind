@@ -42,7 +42,15 @@ const discordConfig = convict({
         format: 'int',
         default: 10,
         env: 'DISCORD_MESSAGE_HISTORY_LIMIT',
+    },
+    DISCORD_CHAT_CHANNEL_ID: {
+        doc: 'Discord chat channel ID',
+        format: String,
+        default: '',
+        env: 'DISCORD_CHAT_CHANNEL_ID',
     }
 });
+
+discordConfig.validate({ allowed: 'strict' });
 
 export default discordConfig;

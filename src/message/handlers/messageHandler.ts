@@ -1,24 +1,3 @@
-import { sendTyping } from '@integrations/discord/interaction/sendTyping';
-import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
-import { Client } from 'discord.js';
-import messageConfig from '@src/message/interfaces/messageConfig';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-
-/**
- * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
- *
- * The handler validates the message, checks if it's from a bot or an authorized user, processes commands if found,
- * or generates and sends a reply using an LLM. It also manages follow-up responses and controls typing indicators
- * to improve user experience during message processing.
- *
- * @param msg - The message object containing details of the incoming message, including content and metadata.
- * @param historyMessages - Optional array of historical messages for context in LLM responses (default is an empty array).
- *
- * Key steps:
- * 1. Validates the message content and checks for bot rules.
- * 2. Handles commands or generates an LLM response.
- * 3. Manages follow-up requests and typing indicators.
- */
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/processing/validateMessage';
@@ -28,31 +7,39 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
+import { sendTyping } from '@integrations/discord/interaction/sendTyping';
+import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import { config } from 'dotenv';
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
+import { Client } from 'discord.js';
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+
 config();
-
 const debug = Debug('app:messageHandler');
-
-const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
+const ignoreBots = true;
 const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
 export async function messageHandler(
   client: Client,
-  msg: IMessage,
-  historyMessages: IMessage[] = []
+  messages: IMessage[]
 ): Promise<void> {
-  debug('messageHandler called with msg:', msg, 'historyMessages:', historyMessages);
+  debug('messageHandler called with messages:', messages);
 
-  // Check if msg is an instance of IMessage
+  if (!messages || messages.length === 0) {
+    debug('No messages to process');
+    return;
+  }
+
+  const historyMessages = messages.slice(1); // Use the rest as history
+  let msg = messages[0]; // First message for processing
+
   if (!(msg instanceof DiscordMessage)) {
     debug('msg is not an instance of IMessage, wrapping it in DiscordMessage');
     msg = new DiscordMessage(msg as any); // Wrap it in DiscordMessage
   }
 
-  // Ensure all historyMessages are IMessage instances
-  historyMessages = historyMessages.map(message => {
+  historyMessages.map((message) => {
     if (!(message instanceof DiscordMessage)) {
       debug('Wrapping history message in DiscordMessage');
       return new DiscordMessage(message as any);
@@ -60,13 +47,11 @@ export async function messageHandler(
     return message;
   });
 
-  // Proceed with processing the message...
   try {
     const startTime = Date.now();
     const messageId = msg.getMessageId ? msg.getMessageId() : 'unknown';
     debug('Received message with ID:', messageId, 'at', new Date(startTime).toISOString());
 
-    // Improvement: Adding guard to check if msg has required methods before proceeding
     if (!msg.getAuthorId || !msg.getChannelId) {
       debug('Invalid message object. Missing necessary methods.');
       return;
@@ -79,7 +64,6 @@ export async function messageHandler(
       }
     }
 
-    // Start typing indicator when processing starts
     sendTyping(client, msg.getChannelId());
 
     const isValidMessage = await validateMessage(msg);
@@ -94,10 +78,9 @@ export async function messageHandler(
     const channelId = msg.getChannelId();
     let commandProcessed = false;
 
-    // Process command, if applicable
     await processCommand(msg, async (result: string) => {
-      if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
-        const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
+      if (discordConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
+        const allowedUsers = discordConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
         if (!allowedUsers.includes(msg.getAuthorId())) {
           debug('Command not authorized for user:', msg.getAuthorId());
           return;
@@ -121,18 +104,24 @@ export async function messageHandler(
       return;
     }
 
-    if (messageConfig.get('MESSAGE_LLM_CHAT')) {
+    if (discordConfig.get('MESSAGE_LLM_CHAT')) {
       const llmProvider = await getLlmProvider(channelId) as ILlmProvider;
       const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
       if (llmResponse) {
         const timingManager = MessageDelayScheduler.getInstance();
-        await timingManager.scheduleMessage(client, channelId, llmResponse, Date.now() - startTime, async (content: string) => {
-          await messageProvider.sendMessageToChannel(channelId, content);
-        });
+        await timingManager.scheduleMessage(
+          client,
+          channelId,
+          llmResponse,
+          Date.now() - startTime,
+          async (content: string) => {
+            await messageProvider.sendMessageToChannel(channelId, content);
+          }
+        );
       }
     }
 
-    if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
+    if (discordConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
       await sendFollowUpRequest(client, msg, channelId, 'AI response follow-up');
     }
 
