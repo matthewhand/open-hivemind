@@ -24,9 +24,8 @@ export async function handleSetLlmProvider(interaction: CommandInteraction) {
 
   configManager.setSession('llm', channelId, provider);
 
-  // Create a flashy Discord-style embed
   const embed = new EmbedBuilder()
-    .setColor(provider === 'openai' ? '#5865F2' : '#F47B67') // OpenAI color or Flowise color
+    .setColor(provider === 'openai' ? '#5865F2' : '#F47B67')
     .setTitle('🔮 The Prophecy Has Shifted!')
     .setDescription(`Behold! The LLM provider has now been set to **${provider.toUpperCase()}**! Brace yourself for a new age of AI-powered responses...`)
     .addFields({
@@ -35,10 +34,9 @@ export async function handleSetLlmProvider(interaction: CommandInteraction) {
     })
     .setFooter({ text: 'Remember, with great power comes great responses!' });
 
-  // Adding absurd reactions for fun
   const message = await interaction.reply({ embeds: [embed], fetchReply: true });
   if (message) {
-    await message.react('⚡'); // Lightning bolt for power
-    await message.react('🎉'); // Party popper for celebration
+    await message.react('⚡');
+    await message.react('🎉');
   }
 }

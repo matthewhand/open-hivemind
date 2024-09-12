@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { banUser } from '@command/common/ban';
+import { banCommand } from '@command/common/ban';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { CommandInteraction } from 'discord.js';
 
@@ -10,7 +10,7 @@ const debug = Debug('app:inlineBanCommand');
  *
  * Provides an inline command to ban a user in a Discord guild.
  *
- * This command extends the functionality provided by the `banUser` function
+ * This command extends the functionality provided by the `banCommand` function
  * and integrates it into the inline command structure, allowing for easier
  * access and execution within Discord.
  */
@@ -25,7 +25,7 @@ export class InlineBanCommand {
                 return { success: false, message: 'User not found.', error: 'User not found' };
             }
 
-            await banUser(message as unknown as CommandInteraction, target);
+            await banCommand(message as unknown as CommandInteraction, target);
             return { success: true, message: `User ${target.user.tag} has been banned.` };
         } catch (error: any) {
             debug('Error executing InlineBanCommand: ' + error.message);

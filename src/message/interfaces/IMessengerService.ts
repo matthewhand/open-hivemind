@@ -1,26 +1,35 @@
-import Debug from "debug";
-import { Message } from 'discord.js';
+import { IMessage } from './IMessage';
 
 /**
- * Interface representing a messenger service for handling Discord interactions.
+ * IMessengerService provides a platform-agnostic interface for messaging services,
+ * allowing interactions such as sending messages, fetching message history, and
+ * registering custom message handlers.
  */
 export interface IMessengerService {
-    /**
-     * Initializes the service by logging in and setting up event handlers.
-     * Exits the process if initialization fails.
-     */
-    initialize(): Promise<void>;
+  /**
+   * Sends a message to a specified channel.
+   * @param channelId - The ID of the channel to send the message to.
+   * @param message - The content of the message to send.
+   */
+  sendMessageToChannel(channelId: string, message: string): Promise<void>;
 
-    /**
-     * Starts the messenger service.
-     * @param clientId - The client ID to log in with.
-     */
-    start(clientId: string): Promise<void>;
+  /**
+   * Fetches messages from a specified channel.
+   * @param channelId - The ID of the channel to fetch messages from.
+   * @param limit - Optional number of messages to fetch (default: 10).
+   */
+  getMessagesFromChannel(channelId: string, limit?: number): Promise<IMessage[]>;
 
-    /**
-     * Handles an incoming message, determining if an AI response is needed,
-     * preparing the request, and sending the response.
-     * @param message - The incoming message object.
-     */
-    handleMessage(message: Message<boolean>): Promise<void>;
+  /**
+   * Sets a custom message handler for processing incoming messages.
+   * @param handler - The function that handles incoming messages.
+   */
+  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void;
+
+  /**
+   * Sends a public service announcement to the channel. The platform may format the announcement differently.
+   * @param channelId - The channel to send the announcement to.
+   * @param announcement - The announcement content (can be rich embeds or simple text based on the platform).
+   */
+  sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
 }

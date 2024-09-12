@@ -1,11 +1,11 @@
-import { Client, Message } from 'discord.js';
+import { Client, Message, EmbedBuilder } from 'discord.js';
 import { initializeClient } from './interaction/initializeClient';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
 import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import { IMessengerService } from '@src/message/interfaces/IMessengerService';
 import fs from 'fs';  // For writing logs to a file
 
 const log = Debug('app:discord-service');
@@ -15,11 +15,9 @@ const discordLogFile = './discord_message.log';
  * DiscordService Class
  * 
  * This service handles interactions with the Discord API, managing message handling,
- * user authentication, and other Discord-related operations. It ensures communication
- * with Discord servers via the Discord.js library and provides methods for sending messages,
- * fetching message history, and setting up custom message handlers.
+ * user authentication, and other Discord-related operations. It implements IMessengerService.
  */
-export class DiscordService {
+export class DiscordService implements IMessengerService {
   private client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
@@ -153,6 +151,37 @@ export class DiscordService {
       return fetchedMessages.map((msg) => new DiscordMessage(msg));  // Convert messages to IMessage format
     } catch (error: any) {
       log(`Failed to fetch messages from channel ${channelId}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Sends a public service announcement to a channel using an embed.
+   * 
+   * @param channelId - The ID of the Discord channel.
+   * @param announcement - The announcement content, which will be styled using an embed.
+   */
+  public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
+    if (!this.client) {
+      throw new Error('Discord client is not initialized');
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle(announcement.title || '📢 Public Announcement')
+      .setDescription(announcement.description || 'No description provided')
+      .setColor(announcement.color || '#0099ff')
+      .setTimestamp();
+
+    try {
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel?.isTextBased()) {
+        throw new Error('Channel is not text-based or does not exist');
+      }
+
+      await channel.send({ embeds: [embed] });
+      log(`Public announcement sent to channel ${channelId}`);
+    } catch (error: any) {
+      log(`Failed to send public announcement: ${error.message}`);
       throw error;
     }
   }

@@ -21,12 +21,9 @@ class FlowiseProvider implements ILlmProvider {
   }
 
   /**
-   * Initializes the Flowise client with dynamic API endpoint from the configuration.
    */
   async initializeClient() {
     const flowiseUrl = flowiseConfig.get('FLOWISE_API_ENDPOINT');
-    this.client = new FlowiseClient({ baseUrl: flowiseUrl });
-    debug('Initialized FlowiseClient with endpoint:', flowiseUrl);
   }
 
   supportsChatCompletion() {
@@ -53,6 +50,10 @@ class FlowiseProvider implements ILlmProvider {
 
     debug('Using Flowise SDK for chat completion with message:', userMessage);
 
+    if (!this.client) {
+      throw new Error('Flowise client is not initialized.');
+    }
+
     try {
       const payload = {
         chatflowId,
@@ -61,19 +62,14 @@ class FlowiseProvider implements ILlmProvider {
       };
 
       debug('Sending payload to Flowise:', payload);
-
-      if (this.client) {
-        const completion = await this.client.createPrediction(payload);
-        if (completion) {
-          debug('Flowise SDK raw response:', completion);
-          const response = completion?.text || 'No response generated';
-          debug('Flowise SDK processed response:', response);
-          return response;
-        } else {
-          throw new Error('Completion response was undefined.');
-        }
+      const completion = await this.client.getChatCompletion(payload);
+      if (completion) {
+        debug('Flowise SDK raw response:', completion);
+        const response = completion?.text || 'No response generated';
+        debug('Flowise SDK processed response:', response);
+        return response;
       } else {
-        throw new Error('Flowise client is not initialized.');
+        throw new Error('Completion response was undefined.');
       }
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
@@ -88,6 +84,10 @@ class FlowiseProvider implements ILlmProvider {
     const chatflowId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
     debug('Using Flowise SDK for completion');
 
+    if (!this.client) {
+      throw new Error('Flowise client is not initialized.');
+    }
+
     try {
       const payload = {
         chatflowId,
@@ -95,18 +95,15 @@ class FlowiseProvider implements ILlmProvider {
         streaming: false,
       };
 
-      if (this.client) {
-        const completion = await this.client.createPrediction(payload);
-        if (completion) {
-          debug('Flowise SDK raw response:', completion);
-          const response = completion?.text || 'No response generated';
-          debug('Flowise SDK processed response:', response);
-          return response;
-        } else {
-          throw new Error('Completion response was undefined.');
-        }
+      debug('Sending payload to Flowise:', payload);
+      const completion = await this.client.getCompletion(payload);
+      if (completion) {
+        debug('Flowise SDK raw response:', completion);
+        const response = completion?.text || 'No response generated';
+        debug('Flowise SDK processed response:', response);
+        return response;
       } else {
-        throw new Error('Flowise client is not initialized.');
+        throw new Error('Completion response was undefined.');
       }
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);

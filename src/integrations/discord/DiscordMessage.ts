@@ -9,7 +9,6 @@ const debug = Debug('app:DiscordMessage');
  */
 export default class DiscordMessage extends IMessage {
     public content: string;
-    public client: Message['client'];
     public channelId: string;
     public data: string;
     public role: string;
@@ -26,7 +25,6 @@ export default class DiscordMessage extends IMessage {
         this.message = message;
         this.repliedMessage = repliedMessage;
         this.content = message.content;
-        this.client = message.client;
         this.channelId = message.channelId;
         this.data = message.content;
         this.role = '';  // Improvement: Set this to the appropriate value based on your application's needs

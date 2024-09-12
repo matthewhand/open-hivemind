@@ -8,7 +8,6 @@ const debug = Debug('app:IMessage');
  */
 export abstract class IMessage {
     public content: string = "";  // Added content property
-    public client: any;      // Added client property
     public channelId: string = "";  // Added channelId property
     protected data: any;
     public role: string;  // Added role property
