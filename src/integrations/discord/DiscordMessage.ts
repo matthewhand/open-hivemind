@@ -27,16 +27,17 @@ export default class DiscordMessage implements IMessage {
     this.channelId = message.channelId;
     this.data = message.content;
     this.role = '';  // Set to appropriate value based on your application's needs
-    debug('[DiscordMessage] Initializing with message ID: ' + message.id);
+    debug('[DiscordMessage] Initializing with message ID: ' + (message.id || 'undefined'));
   }
 
   /**
    * Gets the ID of the message.
-   * @returns {string} - The message ID.
+   * @returns {string} - The message ID, or a fallback value if undefined.
    */
   getMessageId(): string {
-    debug('Getting message ID: ' + this.message.id);
-    return this.message.id;
+    const messageId = this.message.id || 'unknown';
+    debug('Getting message ID: ' + messageId);
+    return messageId;
   }
 
   /**
@@ -125,7 +126,7 @@ export default class DiscordMessage implements IMessage {
    */
   isFromBot(): boolean {
     debug('Checking if message is from a bot');
-    return this.message.author.bot;
+    return this.message.author?.bot || false;
   }
 
   /**
@@ -134,7 +135,7 @@ export default class DiscordMessage implements IMessage {
    */
   isReplyToBot(): boolean {
     debug('Checking if message is a reply to the bot');
-    return !!this.repliedMessage && this.repliedMessage.author.bot;
+    return !!this.repliedMessage && this.repliedMessage.author?.bot;
   }
 
   /**
