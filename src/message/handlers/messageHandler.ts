@@ -66,6 +66,12 @@ export async function messageHandler(
     const messageId = msg.getMessageId ? msg.getMessageId() : 'unknown';
     debug('Received message with ID:', messageId, 'at', new Date(startTime).toISOString());
 
+    // Improvement: Adding guard to check if msg has required methods before proceeding
+    if (!msg.getAuthorId || !msg.getChannelId) {
+      debug('Invalid message object. Missing necessary methods.');
+      return;
+    }
+
     if (msg.isFromBot()) {
       if (ignoreBots || msg.getAuthorId() === botClientId) {
         debug(`[messageHandler] Ignoring message from bot or self: ${msg.getAuthorId()}`);
