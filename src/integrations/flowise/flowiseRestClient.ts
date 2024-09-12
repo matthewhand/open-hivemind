@@ -7,10 +7,10 @@ const debug = Debug('app:flowiseClient');
 
 /**
  * Fetches chat completions from the Flowise API.
- * This function respects session management, sending the current chatId for the chat.
+ * Sends only the latest message (question) and does not include history.
  *
  * @param {string} channelId - The channel or conversation ID.
- * @param {string} question - The question/message from the user.
+ * @param {string} question - The latest question/message from the user.
  * @returns {Promise<string>} The Flowise response text.
  */
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {
@@ -35,7 +35,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   }
 
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-  const payload: Record<string, any> = { question };
+  const payload: Record<string, any> = { question }; // Send only the latest question
 
   if (chatId) payload.chatId = chatId;
 
@@ -68,8 +68,8 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 }
 
 /**
- * Fetches chat completions from the Flowise API via HTTP fallback.
- * This method handles sessions and sends the chatId for the chat.
+ * Fallback to fetch chat completions from the Flowise API.
+ * This method sends only the latest question/message to the API.
  *
  * @param {string} channelId - The channel or conversation ID.
  * @param {string} question - The question/message from the user.
