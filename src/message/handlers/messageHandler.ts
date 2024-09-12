@@ -10,6 +10,7 @@ import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpR
 import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import messageConfig from '@src/message/interfaces/messageConfig';
 import { config } from 'dotenv';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import { Client } from 'discord.js';
@@ -17,7 +18,7 @@ import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 config();
 const debug = Debug('app:messageHandler');
-const ignoreBots = true;
+const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 const botClientId = discordConfig.get('DISCORD_CLIENT_ID') as string;
 
 export async function messageHandler(
@@ -79,12 +80,11 @@ export async function messageHandler(
     let commandProcessed = false;
 
     await processCommand(msg, async (result: string) => {
-      if (discordConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
-        const allowedUsers = discordConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
-        if (!allowedUsers.includes(msg.getAuthorId())) {
-          debug('Command not authorized for user:', msg.getAuthorId());
-          return;
-        }
+      const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') as string;
+      const allowedUsers = authorisedUsers ? authorisedUsers.split(',') : [];
+      if (!allowedUsers.includes(msg.getAuthorId())) {
+        debug('Command not authorized for user:', msg.getAuthorId());
+        return;
       }
       debug('Sending command result to channel:', channelId, 'result:', result);
       await messageProvider.sendMessageToChannel(channelId, result);
@@ -104,7 +104,7 @@ export async function messageHandler(
       return;
     }
 
-    if (discordConfig.get('MESSAGE_LLM_CHAT')) {
+    if (messageConfig.get('MESSAGE_LLM_CHAT')) {
       const llmProvider = await getLlmProvider(channelId) as ILlmProvider;
       const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
       if (llmResponse) {
@@ -121,7 +121,7 @@ export async function messageHandler(
       }
     }
 
-    if (discordConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
+    if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
       await sendFollowUpRequest(client, msg, channelId, 'AI response follow-up');
     }
 
