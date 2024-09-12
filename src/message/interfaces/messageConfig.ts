@@ -26,7 +26,7 @@ const messageConfig = convict({
         env: 'MESSAGE_IGNORE_BOTS'
     },
     MESSAGE_LLM_CHAT: {
-        doc: 'Enable LLM chat',
+        doc: 'Enable chat completion using LLM',
         format: Boolean,
         default: true,
         env: 'MESSAGE_LLM_CHAT'
@@ -38,9 +38,9 @@ const messageConfig = convict({
         env: 'MESSAGE_LLM_COMPLETE_SENTENCE'
     },
     MESSAGE_LLM_FOLLOW_UP: {
-        doc: 'Enable LLM follow-up',
+        doc: 'Enable follow-up requests for LLM responses',
         format: Boolean,
-        default: true,
+        default: false,
         env: 'MESSAGE_LLM_FOLLOW_UP'
     },
     MESSAGE_LLM_SUMMARISE: {
