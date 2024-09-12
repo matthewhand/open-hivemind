@@ -9,7 +9,7 @@ const debug = Debug('app:IMessage');
 export abstract class IMessage {
     public content: string = "";  // Added content property
     public channelId: string = "";  // Added channelId property
-    protected data: any;
+    public data: any;
     public role: string;  // Added role property
     constructor(data: any, role: string) {
         if (new.target === IMessage) {

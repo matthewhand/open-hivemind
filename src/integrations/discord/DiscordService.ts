@@ -52,6 +52,7 @@ export class DiscordService implements IMessengerService {
           log(`Received a message with ID: ${message.id}`);
           try { fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message)}\n`); } catch (error: any) { log(`Failed to log message details:`, error.message); }
           const channelId = message.channelId;
+log(`Extracted channelId: ${channelId}`);
           const historyMessages = await this.getMessagesFromChannel(channelId, 10);
           try { fs.appendFileSync(discordLogFile, `Fetched message history: ${JSON.stringify(historyMessages)}\n`); } catch (error: any) { log(`Failed to log history:`, error.message); }
           const iMessage: IMessage = new DiscordMessage(message);
