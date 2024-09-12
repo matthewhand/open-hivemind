@@ -4,8 +4,8 @@
  * This class handles authentication, fallback mechanisms, and supports both SDK and HTTP API communication.
  */
 
-import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
 import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
 import { FlowiseClient } from 'flowise-sdk';
 import Debug from 'debug';
@@ -21,9 +21,21 @@ class FlowiseProvider implements ILlmProvider {
   }
 
   /**
+   * Initializes the Flowise client using the API endpoint.
+   * Throws an error if initialization fails.
    */
   async initializeClient() {
-    const flowiseUrl = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+    try {
+      const flowiseUrl = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+      if (!flowiseUrl) {
+        throw new Error('Flowise API endpoint is not configured.');
+      }
+      this.client = new FlowiseClient({ baseUrl: flowiseUrl });
+      debug('Flowise client initialized with endpoint:', flowiseUrl);
+    } catch (error) {
+      debug('Failed to initialize Flowise client:', error);
+      throw new Error('Failed to initialize Flowise client.');
+    }
   }
 
   supportsChatCompletion() {
@@ -34,6 +46,10 @@ class FlowiseProvider implements ILlmProvider {
     return true;
   }
 
+  /**
+   * Generates a chat completion using Flowise SDK.
+   * Fallbacks to HTTP API if SDK fails.
+   */
   async generateChatCompletion(historyMessages: IMessage[] = []): Promise<string> {
     const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
 
@@ -48,10 +64,9 @@ class FlowiseProvider implements ILlmProvider {
       userMessage = 'User input missing.';
     }
 
-    debug('Using Flowise SDK for chat completion with message:', userMessage);
-
     if (!this.client) {
-      throw new Error('Flowise client is not initialized.');
+      debug('Flowise client not initialized, falling back to HTTP API.');
+      return await fallbackToHttpApi(userMessage, chatflowId);
     }
 
     try {
@@ -61,15 +76,14 @@ class FlowiseProvider implements ILlmProvider {
         streaming: false,
       };
 
-      debug('Sending payload to Flowise:', payload);
+      debug('Sending payload to Flowise SDK:', payload);
       const completion = await this.client.getChat(payload);
       if (completion) {
-        debug('Flowise SDK raw response:', completion);
         const response = completion?.text || 'No response generated';
         debug('Flowise SDK processed response:', response);
         return response;
       } else {
-        throw new Error('Completion response was undefined.');
+        throw new Error('No completion response received from Flowise SDK.');
       }
     } catch (sdkError) {
       debug('Flowise SDK failed:', sdkError);
@@ -80,12 +94,16 @@ class FlowiseProvider implements ILlmProvider {
     }
   }
 
+  /**
+   * Generates a non-chat completion using Flowise SDK.
+   * Fallbacks to HTTP API if SDK fails.
+   */
   async generateCompletion(prompt: string): Promise<string> {
     const chatflowId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
-    debug('Using Flowise SDK for completion');
 
     if (!this.client) {
-      throw new Error('Flowise client is not initialized.');
+      debug('Flowise client not initialized, falling back to HTTP API.');
+      return await fallbackToHttpApi(prompt, chatflowId);
     }
 
     try {
@@ -95,18 +113,17 @@ class FlowiseProvider implements ILlmProvider {
         streaming: false,
       };
 
-      debug('Sending payload to Flowise:', payload);
+      debug('Sending completion payload to Flowise SDK:', payload);
       const completion = await this.client.getCompletion(payload);
       if (completion) {
-        debug('Flowise SDK raw response:', completion);
         const response = completion?.text || 'No response generated';
-        debug('Flowise SDK processed response:', response);
+        debug('Flowise SDK processed completion response:', response);
         return response;
       } else {
-        throw new Error('Completion response was undefined.');
+        throw new Error('No completion response received from Flowise SDK.');
       }
     } catch (sdkError) {
-      debug('Flowise SDK failed:', sdkError);
+      debug('Flowise SDK completion failed:', sdkError);
       if (flowiseConfig.get('FLOWISE_ENABLE_FALLBACK')) {
         return await fallbackToHttpApi(prompt, chatflowId);
       }

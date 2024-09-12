@@ -25,8 +25,9 @@ export class InlineBanCommand {
                 return { success: false, message: 'User not found.', error: 'User not found' };
             }
 
-            await banCommand(message as unknown as CommandInteraction, target);
-            return { success: true, message: `User ${target.user.tag} has been banned.` };
+            // Execute ban command, now only passing the message as expected.
+            await banCommand(message);
+            return { success: true, message: `User ${target.user.tag} has been banned for: ${reason}.` };
         } catch (error: any) {
             debug('Error executing InlineBanCommand: ' + error.message);
             return { success: false, message: 'Failed to ban the user.', error: error.message };

@@ -150,7 +150,7 @@ export async function messageHandler(
   // Follow-up request handling
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     debug('Follow-up logic is enabled. Sending follow-up request.');
-    await sendFollowUpRequest(msg, channelId, 'AI response follow-up');
+    await sendFollowUpRequest(client, msg, channelId, 'AI response follow-up');
     debug('Follow-up request handled successfully.');
   }
 
