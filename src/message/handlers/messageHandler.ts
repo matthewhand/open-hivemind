@@ -2,6 +2,7 @@ import { sendTyping } from '@integrations/discord/interaction/sendTyping';
 import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
 import { Client } from 'discord.js';
 import messageConfig from '@src/message/interfaces/messageConfig';
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 
 /**
  * Handles and processes incoming messages in a Discord server, leveraging Large Language Models (LLMs) for automated responses or command execution.
@@ -44,23 +45,27 @@ export async function messageHandler(
 ): Promise<void> {
   debug('messageHandler called with msg:', msg, 'historyMessages:', historyMessages);
 
-  // Guard: Check if message object is valid
-  if (!msg) {
-    debug('No message object provided. Exiting handler.');
-    return;
+  // Check if msg is an instance of IMessage
+  if (!(msg instanceof DiscordMessage)) {
+    debug('msg is not an instance of IMessage, wrapping it in DiscordMessage');
+    msg = new DiscordMessage(msg as any); // Wrap it in DiscordMessage
   }
 
-  try {
-    // Log the value if getMessageId is missing
-    if (typeof msg.getMessageId !== 'function') {
-      debug('msg.getMessageId is missing. msg:', msg);
+  // Ensure all historyMessages are IMessage instances
+  historyMessages = historyMessages.map(message => {
+    if (!(message instanceof DiscordMessage)) {
+      debug('Wrapping history message in DiscordMessage');
+      return new DiscordMessage(message as any);
     }
+    return message;
+  });
 
+  // Proceed with processing the message...
+  try {
     const startTime = Date.now();
     const messageId = msg.getMessageId ? msg.getMessageId() : 'unknown';
     debug('Received message with ID:', messageId, 'at', new Date(startTime).toISOString());
 
-    // Guard: Ensure message is not from bot or self if bots should be ignored
     if (msg.isFromBot()) {
       if (ignoreBots || msg.getAuthorId() === botClientId) {
         debug(`[messageHandler] Ignoring message from bot or self: ${msg.getAuthorId()}`);
@@ -68,18 +73,9 @@ export async function messageHandler(
       }
     }
 
-    // Log the value if getText is missing
-    if (typeof msg.getText !== 'function') {
-      debug('msg.getText is missing. msg:', msg);
-    } else if (!msg.getText().trim()) {
-      debug('msg has no valid text content. msg:', msg);
-    }
-
     // Start typing indicator when processing starts
-    console.debug('Invoking sendTyping with channel ID: ' + msg.getChannelId());
     sendTyping(client, msg.getChannelId());
 
-    // Guard: Validate message format and content
     const isValidMessage = await validateMessage(msg);
     if (!isValidMessage) {
       debug('Message validation failed. Exiting handler.');
@@ -94,30 +90,24 @@ export async function messageHandler(
 
     // Process command, if applicable
     await processCommand(msg, async (result: string) => {
-      try {
-        if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
-          const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
-          if (!allowedUsers.includes(msg.getAuthorId())) {
-            debug('Command not authorized for user:', msg.getAuthorId());
-            return;
-          }
+      if (messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS')) {
+        const allowedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS').split(',');
+        if (!allowedUsers.includes(msg.getAuthorId())) {
+          debug('Command not authorized for user:', msg.getAuthorId());
+          return;
         }
-        debug('Sending command result to channel:', channelId, 'result:', result);
-        await messageProvider.sendMessageToChannel(channelId, result);
-        commandProcessed = true;
-        debug('Command reply sent successfully.');
-      } catch (replyError) {
-        debug('Failed to send command reply:', replyError);
       }
+      debug('Sending command result to channel:', channelId, 'result:', result);
+      await messageProvider.sendMessageToChannel(channelId, result);
+      commandProcessed = true;
+      debug('Command reply sent successfully.');
     });
 
     if (commandProcessed) {
-      debug('Command processed, skipping LLM response.');
       stopTypingIndicator(msg.getChannelId());
       return;
     }
 
-    // Guard: Should bot reply to this message?
     const shouldReply = await shouldReplyToMessage(msg);
     if (!shouldReply) {
       debug('Message is not eligible for reply:', msg);
@@ -125,41 +115,23 @@ export async function messageHandler(
       return;
     }
 
-    // Handle LLM response
     if (messageConfig.get('MESSAGE_LLM_CHAT')) {
-      debug('Preparing to send LLM response for message:', msg.getText());
-
-      // Guard: Ensure LLM provider is correctly configured
       const llmProvider = await getLlmProvider(channelId) as ILlmProvider;
       const llmResponse = await llmProvider.generateChatCompletion(historyMessages, msg.getText());
-      debug('LLM response generated:', llmResponse);
-
       if (llmResponse) {
         const timingManager = MessageDelayScheduler.getInstance();
         await timingManager.scheduleMessage(client, channelId, llmResponse, Date.now() - startTime, async (content: string) => {
-          try {
-            debug('Sending LLM response to channel:', channelId, 'response:', content);
-            await messageProvider.sendMessageToChannel(channelId, content);
-            debug('LLM response sent successfully.');
-          } catch (replyError) {
-            debug('Failed to send LLM response:', replyError);
-          }
+          await messageProvider.sendMessageToChannel(channelId, content);
         });
       }
     }
 
-    // Follow-up request handling
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-      debug('Follow-up logic is enabled. Sending follow-up request.');
       await sendFollowUpRequest(client, msg, channelId, 'AI response follow-up');
-      debug('Follow-up request handled successfully.');
     }
 
     stopTypingIndicator(msg.getChannelId());
 
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-    debug(`Message processed in ${duration} ms.`);
   } catch (error) {
     debug('Error in messageHandler:', error);
     stopTypingIndicator(msg.getChannelId());
