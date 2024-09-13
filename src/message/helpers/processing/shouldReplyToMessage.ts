@@ -1,5 +1,5 @@
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import constants from '@config/constants';
+// import constants from '@config/constants';
 import Debug from 'debug';
 
 const debug = Debug('app:shouldReplyToMessage');
@@ -31,7 +31,7 @@ export function shouldReplyToMessage(message: any, botId: string, integration: s
     }
 
     // Restore chance-based logic from older version
-    let chance = calculateBaseChance(message, timeSinceLastActivity);
+    let chance = calculateBaseChance(messengerService.getClientId(), message, timeSinceLastActivity);
     const decision = Math.random() < chance;
     debug(`Should send response (random < chance): ${decision} (${Math.random()} < ${chance})`);
     
@@ -48,8 +48,8 @@ export function shouldReplyToMessage(message: any, botId: string, integration: s
  * @param {number} timeSinceLastActivity - Time in milliseconds since the last activity, used to calculate decay.
  * @returns {number} - The calculated chance of responding (between 0 and 1).
  */
-function calculateBaseChance(message: any, timeSinceLastActivity: number): number {
-    if (message.getAuthorId() === constants.CLIENT_ID) {
+function calculateBaseChance(clientId: string, message: any, timeSinceLastActivity: number): number {
+    if (message.getAuthorId() === messengerService.getClientId()) {
         debug("Not responding to self-generated messages.");
         return 0;
     }
@@ -68,7 +68,7 @@ function calculateBaseChance(message: any, timeSinceLastActivity: number): numbe
     if (/[!?]/.test(text.slice(1))) {
         chance += parseFloat(process.env.MESSAGE_INTERROBANG_BONUS || '0.1');
     }
-    if (text.includes(constants.CLIENT_ID)) {
+    if (text.includes(messengerService.getClientId())) {
         chance += parseFloat(process.env.MESSAGE_MENTION_BONUS || '0.5');
     }
 

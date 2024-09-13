@@ -32,4 +32,10 @@ export interface IMessengerService {
    * @param announcement - The announcement content (can be rich embeds or simple text based on the platform).
    */
   sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
+
+  /**
+   * Retrieves the client ID for the bot on the respective platform.
+   * @returns {string} The client ID of the bot.
+   */
+  getClientId(): string;
 }
