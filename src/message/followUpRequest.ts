@@ -1,6 +1,6 @@
 import Debug from "debug";
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
+import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
 import { Client } from 'discord.js';
 
 /**

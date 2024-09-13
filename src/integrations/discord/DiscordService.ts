@@ -19,6 +19,7 @@ const discordLogFile = './discord_message.log';
  * user authentication, and other Discord-related operations. It implements IMessengerService.
  */
 export class DiscordService implements IMessengerService {
+getClientId(): string { return "client-id"; };
   private client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
@@ -197,3 +198,4 @@ export class DiscordService implements IMessengerService {
     }
   }
 }
+

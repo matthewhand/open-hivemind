@@ -1,15 +1,12 @@
 import Debug from 'debug';
 import { Client } from 'discord.js';
-import { sendTyping } from '@integrations/discord/interaction/sendTyping';
+import { sendTyping } from '@src/message/helpers/handler/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
 
 const debug = Debug('app:MessageDelayScheduler');
 
 /**
- * MessageDelayScheduler - Manages delayed message sending to simulate natural typing and manage bot activity.
- * 
- * This class schedules messages by introducing a delay influenced by recent bot activity, message size, and time since last response.
- * Additionally, it sends typing indicators during the delay period.
+ * Manages delayed message sending to simulate natural typing and manage bot activity.
  */
 export class MessageDelayScheduler {
   private static instance: MessageDelayScheduler;
@@ -22,8 +19,8 @@ export class MessageDelayScheduler {
   private delayTime: number = 0;
 
   /**
-   * Singleton pattern: Ensures only one instance of MessageDelayScheduler is used.
-   * @returns {MessageDelayScheduler} The single instance of MessageDelayScheduler.
+   * Singleton pattern to ensure only one instance of MessageDelayScheduler.
+   * @returns {MessageDelayScheduler} The single instance.
    */
   public static getInstance(): MessageDelayScheduler {
     if (!MessageDelayScheduler.instance) {
@@ -33,9 +30,7 @@ export class MessageDelayScheduler {
   }
 
   /**
-   * Private constructor to enforce singleton pattern.
-   * Initializes the timing parameters including max delay, min delay, and decay rate.
-   * @param config - Configuration object containing maxDelay, minDelay, and decayRate.
+   * Constructor with delay and decay settings.
    */
   private constructor({ maxDelay = 10000, minDelay = 1000, decayRate = -0.5 } = {}) {
     this.maxDelay = maxDelay;
@@ -44,9 +39,8 @@ export class MessageDelayScheduler {
   }
 
   /**
-   * Logs the arrival of an incoming message for a specific channel.
-   * This method updates the lastIncomingMessageTime for the channel to the current time.
-   * @param channelId - The ID of the channel where the message was received.
+   * Logs the arrival of an incoming message.
+   * @param channelId - The ID of the channel.
    */
   public logIncomingMessage(channelId: string): void {
     const currentTime = Date.now();
@@ -54,45 +48,43 @@ export class MessageDelayScheduler {
       this.channelsTimingInfo[channelId] = {};
     }
     this.channelsTimingInfo[channelId].lastIncomingMessageTime = currentTime;
-    debug(`logIncomingMessage: Channel ${channelId} logged incoming message at ${currentTime}.`);
+    debug(`Channel ${channelId} logged incoming message at ${currentTime}.`);
   }
 
   /**
-   * Calculates the delay before sending a message, considering the time since the last message and message size.
-   * @param channelId - The ID of the channel for which to calculate the delay.
-   * @param messageContent - The content of the message to be sent.
-   * @param processingTime - The time taken by the processing step.
-   * @returns The calculated delay (in milliseconds) before sending the message.
+   * Calculates the delay before sending a message.
+   * @param channelId - The ID of the channel.
+   * @param messageContent - The message content.
+   * @param processingTime - Time spent processing.
+   * @returns {number} The delay in milliseconds.
    */
   public calculateDelay(channelId: string, messageContent: string, processingTime: number): number {
     const currentTime = Date.now();
     const channelInfo = this.channelsTimingInfo[channelId];
 
     if (!channelInfo || !channelInfo.lastIncomingMessageTime) {
-      // No prior incoming message, apply minimum delay minus processing time
       return Math.max(this.minDelay - processingTime, 0);
     }
 
     const timeSinceLastIncomingMessage = currentTime - channelInfo.lastIncomingMessageTime;
-    const recentMessages = this.chatHistory.getRecentMessages(60000); // Last 60 seconds
-    const activityMultiplier = Math.pow(1.2, recentMessages.length); // Exponential increase based on activity
-    const sizeMultiplier = Math.max(1, messageContent.length / 50); // Longer messages take longer to 'type'
+    const recentMessages = this.chatHistory.getRecentMessages(60000);
+    const activityMultiplier = Math.pow(1.2, recentMessages.length);
+    const sizeMultiplier = Math.max(1, messageContent.length / 50);
 
     let delay = Math.exp(this.decayRate * timeSinceLastIncomingMessage / 1000) * this.maxDelay;
     delay = Math.min(Math.max(delay, this.minDelay), this.maxDelay) * activityMultiplier * sizeMultiplier;
 
-    debug(`calculateDelay: Channel ${channelId} calculated delay: ${delay}ms (Processing Time: ${processingTime}ms).`);
+    debug(`Channel ${channelId} calculated delay: ${delay}ms.`);
     return delay;
   }
 
   /**
-   * Schedules a message to be sent after the calculated delay.
-   * Sends typing indicators during the delay period.
+   * Schedules a message to be sent after the delay.
    * @param client - The Discord client instance.
-   * @param channelId - The ID of the channel to which the message will be sent.
-   * @param messageContent - The content of the message to send.
-   * @param processingTime - The time taken by the processing step.
-   * @param sendFunction - The function to call for sending the message.
+   * @param channelId - The channel ID.
+   * @param messageContent - The content of the message.
+   * @param processingTime - The time taken for processing.
+   * @param sendFunction - The function to send the message.
    */
   public scheduleMessage(
     client: Client,
@@ -102,14 +94,13 @@ export class MessageDelayScheduler {
     sendFunction: (message: string) => void
   ): void {
     const delay = this.calculateDelay(channelId, messageContent, processingTime);
-    debug(`scheduleMessage: Scheduling message in channel ${channelId} with delay of ${delay}ms.`);
+    debug(`Scheduling message in channel ${channelId} with delay of ${delay}ms.`);
 
-    // Send typing indicators during the delay
     sendTyping(client, channelId);
 
     setTimeout(() => {
       sendFunction(messageContent);
-      this.logIncomingMessage(channelId); // Log time after sending message
+      this.logIncomingMessage(channelId);
     }, delay);
   }
 
@@ -119,7 +110,7 @@ export class MessageDelayScheduler {
   public stop(): void {
     if (this.typingInterval) {
       clearInterval(this.typingInterval);
-      debug('MessageDelayScheduler: Typing indicator stopped');
+      debug('Typing indicator stopped');
     }
   }
 }

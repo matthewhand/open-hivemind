@@ -1,38 +1,47 @@
+// Message Handler
+// Handles incoming messages and determines if the bot should reply.
+// Includes validation, command processing, and decision-making logic.
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { validateMessage } from '@src/message/helpers/processing/validateMessage';
-import { processCommand } from '@src/message/helpers/processing/processCommand';
+import { validateMessage } from '@src/message/helpers/handler/validateMessage';
+import { processCommand } from '@src/message/helpers/handler/processCommand';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
-import { MessageDelayScheduler } from '@src/message/helpers/timing/MessageDelayScheduler';
-import { sendFollowUpRequest } from '@src/message/helpers/followUp/sendFollowUpRequest';
-import { sendTyping } from '@integrations/discord/interaction/sendTyping';
-import { stopTypingIndicator } from '@integrations/discord/stopTypingIndicator';
+import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
+import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
+import { sendTyping } from '@src/message/helpers/handler/sendTyping';
+import { stopTypingIndicator } from '@src/message/helpers/handler/stopTypingIndicator';
 import messageConfig from '@src/message/interfaces/messageConfig';
-import { IMessengerService } from '@src/message/interfaces/IMessengerService';
+import { Client } from 'discord.js';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 
+/**
+ * Handles an incoming message and determines the appropriate bot response.
+ * @param client - The service handling the messaging platform (Discord, etc.)
+ * @param msg - The message object received.
+ * @param startTime - The timestamp when the message was received.
+ */
 export async function handleMessage(
-  messengerService: IMessengerService,
-  msg: IMessage,
-  startTime: number
+client: Client,
+msg: IMessage,
+startTime: number
 ): Promise<void> {
-  debug('Handling message with ID: ' + msg.getMessageId());
-
+const botClientId = process.env.DISCORD_CLIENT_ID || "botId_placeholder";
   if (!msg.getAuthorId || !msg.getChannelId) {
-    debug('Invalid message object. Missing necessary methods.');
+    debug('Invalid message object. Missing necessary methods: ' + JSON.stringify(msg));
     return;
   }
 
+  // Guard: Ignore bot messages if configured
   if (msg.isFromBot() && ignoreBots) {
     debug(`[handleMessage] Ignoring message from bot: ${msg.getAuthorId()}`);
     return;
   }
 
-  sendTyping(messengerService, msg.getChannelId());
+  sendTyping(client, msg.getChannelId());
 
   const isValidMessage = await validateMessage(msg);
   if (!isValidMessage) {
@@ -46,6 +55,7 @@ export async function handleMessage(
   const channelId = msg.getChannelId();
   let commandProcessed = false;
 
+  // Process commands, if any
   await processCommand(msg, async (result: string) => {
     const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') as string;
     const allowedUsers = authorisedUsers ? authorisedUsers.split(',') : [];
@@ -64,20 +74,22 @@ export async function handleMessage(
     return;
   }
 
-  const shouldReply = await shouldReplyToMessage(msg, messengerService.getClientId(), messageProvider, Date.now() - startTime);
+  // Determine if bot should reply
+  const shouldReply = await shouldReplyToMessage(msg, botClientId, "discord", Date.now() - startTime);
   if (!shouldReply) {
     debug('Message is not eligible for reply:', msg);
     stopTypingIndicator(msg.getChannelId());
     return;
   }
 
+  // Generate response using LLM if enabled
   if (messageConfig.get('MESSAGE_LLM_CHAT')) {
     const llmProvider = await getLlmProvider(channelId);
     const llmResponse = await llmProvider.generateChatCompletion([], msg.getText());
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
       await timingManager.scheduleMessage(
-        messengerService,
+        client,
         channelId,
         llmResponse,
         Date.now() - startTime,
@@ -88,8 +100,9 @@ export async function handleMessage(
     }
   }
 
+  // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-    await sendFollowUpRequest(messengerService, msg, channelId, 'AI response follow-up');
+    await sendFollowUpRequest(client, msg, channelId, 'AI response follow-up');
   }
 
   stopTypingIndicator(msg.getChannelId());
