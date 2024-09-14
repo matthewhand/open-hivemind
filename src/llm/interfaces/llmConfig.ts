@@ -78,3 +78,4 @@ const llmConfig = convict({
 llmConfig.validate({ allowed: 'strict' });
 
 export default llmConfig;
+llmConfig.validate({ allowed: "strict" });

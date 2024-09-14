@@ -2,7 +2,7 @@ import debug from 'debug';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 import { handleMessage } from '@src/message/handlers/messageHandler';
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
-import webhookService from '@src/webhook/webhookService';
+import { webhookService } from '@src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
 import messageConfig from '@message/interfaces/messageConfig';
@@ -46,7 +46,7 @@ async function main() {
   await startBot(messengerService);
 
   // Check if the webhook service is enabled
-  const isWebhookEnabled = messageConfig.get('WEBHOOK_ENABLED') || false;
+  const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, starting...');
     await webhookService.start();  // Start the webhook service if configured
