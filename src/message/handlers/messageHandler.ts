@@ -83,7 +83,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     const llmResponse = await llmProvider.generateChatCompletion([], message.getText());
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
-      await timingManager.scheduleMessage(sendTypingFunction,sendTypingFunction,sendTypingFunction,sendTypingFunction,
+      await timingManager.scheduleMessage(
         message.getChannelId(),
         llmResponse,
         Date.now(),
