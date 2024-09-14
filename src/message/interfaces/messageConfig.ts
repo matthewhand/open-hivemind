@@ -78,6 +78,12 @@ const messageConfig = convict({
         format: String,
         default: '',
         env: 'DISCORD_CHAT_CHANNEL_ID'
+    },
+    MESSAGE_WEBHOOK_ENABLED: {
+        doc: 'Enable webhook functionality',
+        format: Boolean,
+        default: false,
+        env: 'MESSAGE_WEBHOOK_ENABLED'
     }
 });
 
