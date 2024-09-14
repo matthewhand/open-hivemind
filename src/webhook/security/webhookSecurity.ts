@@ -3,10 +3,10 @@ import webhookConfig from '@src/webhook/interfaces/webhookConfig';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken: string = req.headers['x-webhook-token'] ? String(req.headers['x-webhook-token']) : '';
-    const expectedToken: string = webhookConfig.get('WEBHOOK_SECRET_TOKEN') ?? '';
+    const expectedToken: string = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
     if (!expectedToken) {
-        throw new Error('WEBHOOK_SECRET_TOKEN is not defined in config');
+        throw new Error('WEBHOOK_TOKEN is not defined in config');
     }
 
     if (!providedToken || providedToken !== expectedToken) {
@@ -18,11 +18,11 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
 };
 
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-    const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_WHITELISTED_IPS') ?? [];
+    const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST') ? webhookConfig.get('WEBHOOK_IP_WHITELIST').split(',') : [];
     const requestIp: string = req.ip ?? '';
 
     if (whitelistedIps.length === 0) {
-        throw new Error('WEBHOOK_WHITELISTED_IPS is not defined or empty in config');
+        throw new Error('WEBHOOK_IP_WHITELIST is not defined or empty in config');
     }
 
     if (!whitelistedIps.includes(requestIp)) {
