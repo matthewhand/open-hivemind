@@ -15,11 +15,16 @@ const discordLogFile = './discord_message.log';
 /**
  * DiscordService Class
  *
- * This service handles interactions with the Discord API, managing message handling,
- * user authentication, and other Discord-related operations. It implements IMessengerService.
+ * This service manages the interaction with the Discord API, including message handling,
+ * user authentication, and other Discord-related operations. Implements the IMessengerService interface.
+ * Key Features:
+ *  - Singleton Pattern: Ensures a single instance of the service.
+ *  - Custom Message Handling: Allows external handlers for processing Discord messages.
+ *  - Robust Error Handling: Implements guard clauses and debug logging for reliability.
+ *  - Message Logging: Logs all incoming messages and their history to a file for auditing.
  */
 export class DiscordService implements IMessengerService {
-getClientId(): string { return "client-id"; };
+  getClientId(): string { return discordConfig.get('DISCORD_CLIENT_ID'); };
   private client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
@@ -40,12 +45,18 @@ getClientId(): string { return "client-id"; };
     return DiscordService.instance;
   }
 
-  /** Sets a custom message handler for processing incoming Discord messages. */
+  /**
+   * Sets a custom message handler for processing incoming Discord messages.
+   * @param handler Function to process messages.
+   */
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void {
     this.messageHandler = handler;
   }
 
-  /** Initializes the Discord client and logs in using the provided or configured token. */
+  /**
+   * Initializes the Discord client and logs in using the configured token.
+   * @param token Optional bot token, otherwise loads from config.
+   */
   public async initialize(token?: string): Promise<void> {
     try {
       token = token || discordConfig.get('DISCORD_BOT_TOKEN') as string;
@@ -57,7 +68,6 @@ getClientId(): string { return "client-id"; };
 
       await this.client.login(token);
       this.client.once('ready', async () => {
-log("Discord message event handler invoked");
         const botClientId = this.client.user?.id;
         if (botClientId) {
           log(`Logged in as ${this.client.user?.tag}! Client ID: ${botClientId}`);
@@ -69,7 +79,6 @@ log("Discord message event handler invoked");
       if (this.messageHandler) {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
-log("Discord message event handler invoked");
           if (message.partial) {
             try {
               message = await message.fetch();
@@ -119,12 +128,11 @@ log("Discord message event handler invoked");
 
   /**
    * Sends a message to a specified Discord channel.
-   *
-   * @param channelId - The ID of the Discord channel.
-   * @param message - The message content to send to the channel.
+   * @param channelId The ID of the channel.
+   * @param message The message to send.
    */
   public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
-    if (!this.client) {  // Improvement: Guard clause
+    if (!this.client) {  // Guard clause
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
@@ -141,14 +149,12 @@ log("Discord message event handler invoked");
   }
 
   /**
-   * Fetches a number of messages from a specified Discord channel.
-   *
-   * @param channelId - The ID of the Discord channel to fetch messages from.
-   * @param limit - The number of messages to fetch (defaults to 10).
-   * @returns {Promise<IMessage[]>} - Returns a Promise that resolves to an array of IMessage objects.
+   * Fetches messages from a specified Discord channel.
+   * @param channelId The ID of the channel.
+   * @param limit Maximum number of messages to retrieve.
    */
   public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
-    if (!this.client) {  // Improvement: Guard clause
+    if (!this.client) {  // Guard clause
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
@@ -157,7 +163,7 @@ log("Discord message event handler invoked");
       log(`Fetching up to ${limit} messages from channel ${channelId}`);
       const channel = await this.client.channels.fetch(channelId);
 
-      if (!channel || !channel.isTextBased()) {  // Fix: Replacing deprecated method isText()
+      if (!channel || !channel.isTextBased()) {  // Replace deprecated isText()
         throw new Error(`Channel ${channelId} not found or is not a text-based channel.`);
       }
 
@@ -170,10 +176,9 @@ log("Discord message event handler invoked");
   }
 
   /**
-   * Sends a public service announcement to a channel using an embed.
-   *
-   * @param channelId - The ID of the Discord channel.
-   * @param announcement - The announcement content, which will be styled using an embed.
+   * Sends a public service announcement (PSA) using an embedded message.
+   * @param channelId The ID of the channel.
+   * @param announcement The PSA details.
    */
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     if (!this.client) {
@@ -200,4 +205,3 @@ log("Discord message event handler invoked");
     }
   }
 }
-
