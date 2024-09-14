@@ -24,11 +24,7 @@ const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
  * @param msg - The message object received.
  * @param startTime - The timestamp when the message was received.
  */
-export async function handleMessage(
-client: Client,
-msg: IMessage,
-startTime: number
-): Promise<void> {
+export async function handleMessage(client: Client, msg: IMessage, startTime: number): Promise<void> {
 const botClientId = process.env.DISCORD_CLIENT_ID || "botId_placeholder";
   if (!msg.getAuthorId || !msg.getChannelId) {
     debug('Invalid message object. Missing necessary methods: ' + JSON.stringify(msg));

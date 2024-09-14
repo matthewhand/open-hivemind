@@ -57,6 +57,7 @@ getClientId(): string { return "client-id"; };
 
       await this.client.login(token);
       this.client.once('ready', async () => {
+log("Discord message event handler invoked");
         const botClientId = this.client.user?.id;
         if (botClientId) {
           log(`Logged in as ${this.client.user?.tag}! Client ID: ${botClientId}`);
@@ -68,6 +69,7 @@ getClientId(): string { return "client-id"; };
       if (this.messageHandler) {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
+log("Discord message event handler invoked");
           if (message.partial) {
             try {
               message = await message.fetch();
