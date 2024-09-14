@@ -17,7 +17,6 @@ console.log('[DEBUG] All environment variables:', redactSensitiveInfo('process.e
 const configManager = ConfigurationManager.getInstance();
 
 // Load integration configurations
-configManager.loadConfig();
 
 // Debug environment variables
 debugEnvVars();
