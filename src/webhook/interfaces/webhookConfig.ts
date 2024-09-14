@@ -1,17 +1,23 @@
 import convict from 'convict';
 
 const webhookConfig = convict({
-    WEBHOOK_SECRET_TOKEN: {
-        doc: 'Secret token for webhook authentication',
-        format: String,
-        default: 'your_secret_token',
-        env: 'WEBHOOK_SECRET_TOKEN'
+    WEBHOOK_ENABLED: {
+        doc: 'Whether to enable the webhook service',
+        format: Boolean,
+        default: false,
+        env: 'WEBHOOK_ENABLED',
     },
-    WEBHOOK_WHITELISTED_IPS: {
-        doc: 'List of IPs allowed to send requests',
-        format: Array,
-        default: ['127.0.0.1'],
-        env: 'WEBHOOK_WHITELISTED_IPS'
+    WEBHOOK_TOKEN: {
+        doc: 'Token used to verify incoming webhook requests',
+        format: String,
+        default: '',
+        env: 'WEBHOOK_TOKEN',
+    },
+    WEBHOOK_IP_WHITELIST: {
+        doc: 'Comma-separated list of IPs allowed to send webhook requests',
+        format: String,
+        default: '',
+        env: 'WEBHOOK_IP_WHITELIST',
     }
 });
 
