@@ -2,6 +2,7 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
+import { Client } from 'discord.js';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -13,7 +14,7 @@ const debug = Debug('app:sendFollowUpRequest');
  * @param followUpText - The follow-up text to send.
  */
 export async function sendFollowUpRequest(
-  client: any,
+  client: Client,
   msg: IMessage,
   channelId: string,
   followUpText: string

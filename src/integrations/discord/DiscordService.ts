@@ -25,7 +25,7 @@ const discordLogFile = './discord_message.log';
  */
 export class DiscordService implements IMessengerService {
   getClientId(): string { return discordConfig.get('DISCORD_CLIENT_ID'); };
-  private client: Client;
+  public client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
 

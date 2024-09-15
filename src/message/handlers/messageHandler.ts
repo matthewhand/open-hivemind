@@ -9,6 +9,7 @@ import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelay
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
 import { stopTypingIndicator } from '@src/message/helpers/handler/stopTypingIndicator';
 import messageConfig from '@src/message/interfaces/messageConfig';
+import { DiscordService } from '@src/integrations/discord/DiscordService';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
@@ -90,7 +91,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     const followUpText = 'Follow-up text';  // Replace with actual text
-    await sendFollowUpRequest(message, message.getChannelId(), followUpText);
+    const client = DiscordService.getInstance().client;
+    await sendFollowUpRequest(client, message, message.getChannelId(), followUpText);
   }
 
   stopTypingIndicator(message.getChannelId());

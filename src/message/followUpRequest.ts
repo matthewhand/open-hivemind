@@ -1,11 +1,43 @@
-// Correcting argument mismatch and aligning follow-up request logic.
+import { getLlmProvider } from '@src/message/management/getLlmProvider';
+import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
+import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
+import { Client } from 'discord.js';
 
-export async function followUpRequest(message: IMessage, channelId: string, followUpText: string): Promise<void> {
+const debug = Debug('app:sendFollowUpRequest');
+
+/**
+ * Sends an AI-generated follow-up message using completions (not chat completions).
+ * @param client - The Discord client.
+ * @param msg - The message to follow up on.
+ * @param channelId - The channel where the follow-up should be sent.
+ * @param followUpText - The follow-up text to send.
+ * @param historyMessages - The previous messages in the channel.
+ */
+export async function sendFollowUpRequest(
+  client: Client,
+  msg: IMessage,
+  channelId: string,
+  followUpText: string,
+  historyMessages: IMessage[] // Adding missing argument
+): Promise<void> {
+  const llmProvider = getLlmProvider(channelId);
+
+  // Guard: Ensure the provider supports completions (not chat completions)
+  if (!llmProvider.supportsCompletion()) {
+    debug(`[sendFollowUpRequest] LLM provider does not support completions for channel: ${channelId}.`);
+    return;
+  }
+
+  debug(`[sendFollowUpRequest] Using LLM provider for follow-up in channel: ${channelId}`);
+
   try {
-    await sendFollowUpRequest(message, channelId, followUpText);
+    const response = await llmProvider.generateCompletion(followUpText);
+    const followUpMessage = followUpText + ' ' + response;
+    debug('[sendFollowUpRequest] Sending follow-up message:', followUpMessage);
+
+    await sendMessageToChannel(channelId, followUpMessage);
   } catch (error) {
-    console.error('Error in follow-up request:', error);
+    debug('[sendFollowUpRequest] Error generating follow-up:', error);
   }
 }
