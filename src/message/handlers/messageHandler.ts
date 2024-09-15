@@ -1,12 +1,21 @@
+// Message Handler
+// This function processes incoming messages on a Discord channel and determines the bot's appropriate response. It handles message validation, command execution, reply decision-making, and generating responses using a language model (LLM). If configured, it also sends follow-up messages.
+// Key steps include:
+// - Ignoring bot messages (if enabled).
+// - Validating messages and processing commands for authorized users.
+// - Deciding whether the bot should reply based on message content.
+// - Generating replies via LLM if chat functionality is enabled.
+// - Optionally sending follow-up messages.
+
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/handler/validateMessage';
 import { processCommand } from '@src/message/helpers/handler/processCommand';
-import { getMessageProvider } from '@src/message/management/getMessageProvider';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
+import { sendTyping } from '@src/message/helpers/handler/sendTyping';
 import { stopTypingIndicator } from '@src/message/helpers/handler/stopTypingIndicator';
 import messageConfig from '@src/message/interfaces/messageConfig';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
@@ -14,11 +23,6 @@ import { DiscordService } from '@src/integrations/discord/DiscordService';
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 
-/**
- * Processes an incoming message and determines the appropriate bot response, considering the message history.
- * @param message - The incoming message.
- * @param historyMessages - The previous messages in the channel.
- */
 export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<void> {
   const botClientId = process.env.DISCORD_CLIENT_ID || "botId_placeholder";
   if (!message.getAuthorId || !message.getChannelId) {
@@ -31,6 +35,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     debug(`[handleMessage] Ignoring message from bot: ${message.getAuthorId()}`);
     return;
   }
+
+  sendTyping(DiscordService.getInstance().client, message.getChannelId());
 
   const isValidMessage = await validateMessage(message);
   if (!isValidMessage) {
@@ -69,7 +75,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   }
 
   // Generate response using LLM if enabled
-  if (messageConfig.get('MESSAGE_LLM_CHAT')) {
     const llmProvider = getLlmProvider();
     if (!llmProvider) {
       debug('No LLM provider available.');
@@ -78,22 +83,24 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     const llmResponse = await llmProvider.generateChatCompletion([], message.getText());
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
+      const client = DiscordService.getInstance().client;
       await timingManager.scheduleMessage(
+        client,
+        message.getChannelId(),
         llmResponse,
         Date.now(),
-        async (content: string) => {
+message.getChannelId(), llmResponse, Date.now());
           debug('Sending LLM-generated content:', content);
         }
-      );
     }
   }
 
   // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-    const followUpText = 'Follow-up text';  // Replace with actual text
-    const client = DiscordService.getInstance().client;
-    await sendFollowUpRequest(client, message, message.getChannelId(), followUpText);
+    const followUpText = 'Follow-up text';
+    await sendFollowUpRequest(message.getChannelId(), message, message);
   }
 
   stopTypingIndicator(message.getChannelId());
+}
 }
