@@ -12,7 +12,7 @@ const log = Debug('app:sendMessageToChannel');
  */
 export async function sendMessageToChannel(channelId: string, message: string): Promise<void> {
     try {
-        const client = DiscordService.getInstance().getClientId();
+        const client = DiscordService.getInstance().getClient();
         const channel = client.channels.cache.get(channelId) as TextChannel;
         if (!channel) {
             throw new Error('Channel not found');
