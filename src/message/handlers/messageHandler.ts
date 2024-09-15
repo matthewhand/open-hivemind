@@ -1,6 +1,3 @@
-// Message Handler
-// Processes incoming messages and the message history.
-// Adjusted to fit the (message, historyMessages) signature expected by DiscordService.
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/handler/validateMessage';
@@ -10,7 +7,6 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
-import { sendTyping } from '@src/message/helpers/handler/sendTyping';
 import { stopTypingIndicator } from '@src/message/helpers/handler/stopTypingIndicator';
 import messageConfig from '@src/message/interfaces/messageConfig';
 
@@ -34,8 +30,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     debug(`[handleMessage] Ignoring message from bot: ${message.getAuthorId()}`);
     return;
   }
-
-  sendTyping(message.getChannelId());
 
   const isValidMessage = await validateMessage(message);
   if (!isValidMessage) {
@@ -84,7 +78,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     if (llmResponse) {
       const timingManager = MessageDelayScheduler.getInstance();
       await timingManager.scheduleMessage(
-        message.getChannelId(),
         llmResponse,
         Date.now(),
         async (content: string) => {
@@ -96,7 +89,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
   // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-    await sendFollowUpRequest(message, historyMessages);
+    const followUpText = 'Follow-up text';  // Replace with actual text
+    await sendFollowUpRequest(message, message.getChannelId(), followUpText);
   }
 
   stopTypingIndicator(message.getChannelId());

@@ -139,7 +139,7 @@ export class DiscordService implements IMessengerService {
 
     try {
       log(`Sending message to channel ${channelId}: ${message}`);
-      await sendMessageToChannel(this.client, channelId, message);  // Use sendMessageToChannel utility
+      await sendMessageToChannel(channelId, message);  // Adjusted to pass correct arguments
       log(`Message sent to channel ${channelId} successfully`);
     } catch (error: any) {
       log(`Failed to send message to channel ${channelId}: ` + error.message);

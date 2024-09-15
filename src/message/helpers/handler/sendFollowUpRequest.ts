@@ -2,19 +2,16 @@ import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
-import { Client } from 'discord.js';
 
 const debug = Debug('app:sendFollowUpRequest');
 
 /**
  * Sends an AI-generated follow-up message using completions (not chat completions).
- * @param {Client} client - The messaging service interface.
- * @param {IMessage} msg - The message to follow up on.
- * @param {string} channelId - The channel where the follow-up should be sent.
- * @param {string} followUpText - The follow-up text to send.
+ * @param msg - The message to follow up on.
+ * @param channelId - The channel where the follow-up should be sent.
+ * @param followUpText - The follow-up text to send.
  */
 export async function sendFollowUpRequest(
-  client: Client,
   msg: IMessage,
   channelId: string,
   followUpText: string
@@ -33,10 +30,9 @@ export async function sendFollowUpRequest(
   try {
     const response = await llmProvider.generateCompletion(followUpText);
     const followUpMessage = followUpText + ' ' + response;
-    debug('[sendFollowUpRequest] Sending follow-up message:', followUpMessage);  // Improvement: Debug log
+    debug('[sendFollowUpRequest] Sending follow-up message:', followUpMessage);
 
-    // Fix: Use Client to send the message
-    await sendMessageToChannel(client, channelId, followUpMessage);
+    await sendMessageToChannel(channelId, followUpMessage);
   } catch (error) {
     debug('[sendFollowUpRequest] Error generating follow-up:', error);
   }

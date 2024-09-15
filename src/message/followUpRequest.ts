@@ -1,22 +1,11 @@
-import Debug from "debug";
+// Correcting argument mismatch and aligning follow-up request logic.
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
-import { Client } from 'discord.js';
 
-/**
- * Handles the follow-up request by sending a follow-up message.
- *
- * @param message - The original message.
- * @param client - The Discord client to send the message.
- */
-export async function followUpRequest(message: IMessage, client: Client): Promise<void> {
-    const channelId = message.getChannelId();
-    const topic = message.getChannelTopic() || 'General Discussion';
-
-    try {
-        // Fix: Add client argument to match sendFollowUpRequest signature.
-        await sendFollowUpRequest(client, message, channelId, topic);
-    } catch (error: any) {
-        console.error('[followUpRequest] Error sending follow-up request:', error);
-    }
+export async function followUpRequest(message: IMessage, channelId: string, followUpText: string): Promise<void> {
+  try {
+    await sendFollowUpRequest(message, channelId, followUpText);
+  } catch (error) {
+    console.error('Error in follow-up request:', error);
+  }
 }
