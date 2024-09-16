@@ -9,7 +9,7 @@ import llmConfig from "@llm/interfaces/llmConfig";
  * @param messageLength - The length of the message to process.
  * @returns Whether the message should be processed or not.
  */
-export function shouldProcessMessage(messageLength: number): boolean {
+export function shouldProcessMessageByLength(messageLength: number): boolean {
     if (!messageConfig || !llmConfig) {
         throw new Error('Message or LLM configuration is not loaded.');
     }

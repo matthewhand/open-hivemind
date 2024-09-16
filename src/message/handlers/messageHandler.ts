@@ -1,5 +1,7 @@
 // Message Handler
-// This function processes incoming messages on a Discord channel and determines the bot's appropriate response. It handles message validation, command execution, reply decision-making, and generating responses using a language model (LLM). If configured, it also sends follow-up messages.
+// This function processes incoming messages on a Discord channel and determines the bot's appropriate response. 
+// It handles message validation, command execution, reply decision-making, and generating responses using a language model (LLM). 
+// If configured, it also sends follow-up messages.
 // Key steps include:
 // - Ignoring bot messages (if enabled).
 // - Validating messages and processing commands for authorized users.
@@ -15,8 +17,6 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
-import { sendTyping } from '@src/message/helpers/handler/sendTyping';
-import { stopTypingIndicator } from '@src/message/helpers/handler/stopTypingIndicator';
 import messageConfig from '@src/message/interfaces/messageConfig';
 import { DiscordService } from '@src/integrations/discord/DiscordService';
 
@@ -36,12 +36,10 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     return;
   }
 
-  sendTyping(DiscordService.getInstance().client, message.getChannelId());
 
   const isValidMessage = await validateMessage(message);
   if (!isValidMessage) {
     debug('Message validation failed. Exiting handler.');
-    stopTypingIndicator(message.getChannelId());
     return;
   }
   debug('Message validated successfully.');
@@ -62,7 +60,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   });
 
   if (commandProcessed) {
-    stopTypingIndicator(message.getChannelId());
     return;
   }
 
@@ -70,11 +67,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   const shouldReply = await shouldReplyToMessage(message, botClientId, "discord", Date.now());
   if (!shouldReply) {
     debug('Message is not eligible for reply:', message);
-    stopTypingIndicator(message.getChannelId());
     return;
   }
 
   // Generate response using LLM if enabled
+  if (messageConfig.get('MESSAGE_LLM_CHAT')) {
     const llmProvider = getLlmProvider();
     if (!llmProvider) {
       debug('No LLM provider available.');
@@ -85,22 +82,19 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const timingManager = MessageDelayScheduler.getInstance();
       const client = DiscordService.getInstance().client;
       await timingManager.scheduleMessage(
-        client,
         message.getChannelId(),
-        llmResponse,
+        message.getChannelId(),
         Date.now(),
-message.getChannelId(), llmResponse, Date.now());
-          debug('Sending LLM-generated content:', content);
-        }
+        handleGeneratedMessage
+      );
+      debug('Sending LLM-generated content:', llmResponse);
     }
   }
 
   // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     const followUpText = 'Follow-up text';
-    await sendFollowUpRequest(message.getChannelId(), message, message);
+    await sendFollowUpRequest(message, message, message);
   }
 
-  stopTypingIndicator(message.getChannelId());
-}
 }
