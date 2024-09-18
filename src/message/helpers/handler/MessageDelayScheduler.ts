@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import { Client } from 'discord.js';
 import { sendTyping } from '@src/message/helpers/handler/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
 
@@ -80,14 +79,12 @@ export class MessageDelayScheduler {
 
   /**
    * Schedules a message to be sent after the delay.
-   * @param client - The Discord client instance.
    * @param channelId - The channel ID.
    * @param messageContent - The content of the message.
    * @param processingTime - The time taken for processing.
    * @param sendFunction - The function to send the message.
    */
   public scheduleMessage(
-    client: Client,
     channelId: string,
     messageContent: string,
     processingTime: number,
@@ -96,7 +93,6 @@ export class MessageDelayScheduler {
     const delay = this.calculateDelay(channelId, messageContent, processingTime);
     debug(`Scheduling message in channel ${channelId} with delay of ${delay}ms.`);
 
-    sendTyping(client, channelId);
 
     setTimeout(() => {
       sendFunction(messageContent);

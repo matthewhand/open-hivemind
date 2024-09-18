@@ -1,16 +1,28 @@
-import { Client, Message, EmbedBuilder } from 'discord.js';
-import { initializeClient } from './interaction/initializeClient';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage';
-import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
 import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
+import { shouldProcessMessage } from '@src/message/helpers/processing/shouldProcessMessage';
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
+import { Client, EmbedBuilder, GatewayIntentBits } from 'discord.js';
 import fs from 'fs';
+import debug from 'debug';
 
-const log = Debug('app:discord-service');
+const log = debug('app:discord-service');
 const discordLogFile = './discord_message.log';
+
+/**
+ * Initializes the Discord client with necessary intents.
+ */
+export function initializeClient(): Client {
+    return new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildVoiceStates,
+        ],
+    });
+}
 
 /**
  * DiscordService Class
@@ -27,7 +39,7 @@ export class DiscordService implements IMessengerService {
   getClientId(): string { return discordConfig.get('DISCORD_CLIENT_ID'); };
   public client: Client;
   private static instance: DiscordService;
-  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
+  private messageHandler: ((message: DiscordMessage, historyMessages: DiscordMessage[]) => void) | null = null;
 
   // Private constructor to enforce singleton pattern
   private constructor() {
@@ -49,7 +61,7 @@ export class DiscordService implements IMessengerService {
    * Sets a custom message handler for processing incoming Discord messages.
    * @param handler Function to process messages.
    */
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void {
+  public setMessageHandler(handler: (message: DiscordMessage, historyMessages: DiscordMessage[]) => void): void {
     this.messageHandler = handler;
   }
 
@@ -60,69 +72,50 @@ export class DiscordService implements IMessengerService {
   public async initialize(token?: string): Promise<void> {
     try {
       token = token || discordConfig.get('DISCORD_BOT_TOKEN') as string;
-
-      if (!token) {
-        throw new Error('DISCORD_BOT_TOKEN is not set');
-      }
-      log(`Initializing bot with token: ${token ? 'token set' : 'no token found'}`);
-
       await this.client.login(token);
-      this.client.once('ready', async () => {
-        const botClientId = this.client.user?.id;
-        if (botClientId) {
-          log(`Logged in as ${this.client.user?.tag}! Client ID: ${botClientId}`);
+      log('Discord client logged in successfully');
+    } catch (error: any) {
+      log(`Failed to initialize Discord client: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handles incoming Discord messages and logs them for auditing.
+   * @param iMessage The incoming message object.
+   * @param historyMessages An array of previous messages for context.
+   */
+  private async handleMessage(iMessage: DiscordMessage, historyMessages: DiscordMessage[]): Promise<void> {
+    try {
+      const messageContent = `${iMessage.getAuthorName()}: ${iMessage.getText()}`;
+      log(`Handling message from ${iMessage.getAuthorName()}: ${iMessage.getText()}`);
+
+      fs.appendFile(discordLogFile, messageContent + '\n', (error) => {
+        if (error) {
+          log(`Failed to log IMessage to ${discordLogFile}:`, error.message);
         }
 
-        await debugPermissions(this.client);  // Debug the bot's permissions in the guild
+        // Check if message should be processed
+        const lastMessageTime = Date.now() - 10000;  // Placeholder for actual message time tracking
+        const shouldProcess = shouldProcessMessage(lastMessageTime);
+
+        if (!shouldProcess) {
+          log('Message processing skipped due to rate limits or interval settings.');
+          return;  // Cancel typing if not processed
+        }
+
+        // Add typing indicator with delay
+        const channel = this.client.channels.cache.get(iMessage.getChannelId());
+        if (channel && channel.isTextBased()) {
+          setTimeout(() => {
+            channel.sendTyping();
+          }, Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000);  // Random delay between 5-10 seconds
+        }
+
+        // Call the handler with history messages
+        this.messageHandler!(iMessage, historyMessages);
       });
-
-      if (this.messageHandler) {
-        log('Setting up custom message handler');
-        this.client.on('messageCreate', async (message: Message) => {
-          if (message.partial) {
-            try {
-              message = await message.fetch();
-              log('Fetched full message:', message);
-            } catch (error) {
-              log('Error fetching full message:', error);
-              return;
-            }
-          }
-
-          log(`Received a message with ID: ${message.id}`);
-          try {
-            fs.appendFileSync(discordLogFile, `Full message object: ${JSON.stringify(message)}\n`);
-          } catch (error: any) {
-            log(`Failed to log message details to ${discordLogFile}:`, error.message);
-          }
-
-          const channelId = message.channelId;
-          log(`Extracted channelId: ${channelId}`);
-
-          const historyMessages = await this.getMessagesFromChannel(channelId, 10);
-          try {
-            fs.appendFileSync(discordLogFile, `Fetched message history: ${JSON.stringify(historyMessages)}\n`);
-          } catch (error: any) {
-            log(`Failed to log message history to ${discordLogFile}:`, error.message);
-          }
-
-          const iMessage: IMessage = new DiscordMessage(message);
-          try {
-            fs.appendFileSync(discordLogFile, `Converted to IMessage: ${JSON.stringify(iMessage)}\n`);
-          } catch (error: any) {
-            log(`Failed to log IMessage to ${discordLogFile}:`, error.message);
-          }
-
-          // Call the handler with history messages
-          this.messageHandler!(iMessage, historyMessages);
-        });
-      } else {
-        log('No custom message handler set');
-      }
     } catch (error: any) {
-      log('Failed to start DiscordService: ' + error.message);
-      log(error.stack);
-      process.exit(1);  // Exit the process on failure
+      log(`Error in handleMessage: ${error.message}`);
     }
   }
 
@@ -132,18 +125,17 @@ export class DiscordService implements IMessengerService {
    * @param message The message to send.
    */
   public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
-    if (!this.client) {  // Guard clause
+    if (!this.client) {
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
 
     try {
       log(`Sending message to channel ${channelId}: ${message}`);
-      await sendMessageToChannel(channelId, message);  // Adjusted to pass correct arguments
+      await sendMessageToChannel(channelId, message);
       log(`Message sent to channel ${channelId} successfully`);
     } catch (error: any) {
       log(`Failed to send message to channel ${channelId}: ` + error.message);
-      log(error.stack);
       throw error;
     }
   }
@@ -153,8 +145,8 @@ export class DiscordService implements IMessengerService {
    * @param channelId The ID of the channel.
    * @param limit Maximum number of messages to retrieve.
    */
-  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
-    if (!this.client) {  // Guard clause
+  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<DiscordMessage[]> {
+    if (!this.client) {
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
@@ -163,12 +155,12 @@ export class DiscordService implements IMessengerService {
       log(`Fetching up to ${limit} messages from channel ${channelId}`);
       const channel = await this.client.channels.fetch(channelId);
 
-      if (!channel || !channel.isTextBased()) {  // Replace deprecated isText()
+      if (!channel || !channel.isTextBased()) {
         throw new Error(`Channel ${channelId} not found or is not a text-based channel.`);
       }
 
       const fetchedMessages = await channel.messages.fetch({ limit });
-      return fetchedMessages.map((msg) => new DiscordMessage(msg));  // Convert messages to IMessage format
+      return fetchedMessages.map((msg) => new DiscordMessage(msg));
     } catch (error: any) {
       log(`Failed to fetch messages from channel ${channelId}: ${error.message}`);
       throw error;
@@ -181,26 +173,18 @@ export class DiscordService implements IMessengerService {
    * @param announcement The PSA details.
    */
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
-    if (!this.client) {
-      throw new Error('Discord client is not initialized');
+    const channel = this.client.channels.cache.get(channelId);
+    if (!channel || !channel.isTextBased()) {
+      throw new Error('Discord client is not initialized or the channel is not text-based');
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle(announcement.title || '📢 Public Announcement')
-      .setDescription(announcement.description || 'No description provided')
-      .setColor(announcement.color || '#0099ff')
-      .setTimestamp();
-
     try {
-      const channel = await this.client.channels.fetch(channelId);
-      if (!channel?.isTextBased()) {
-        throw new Error('Channel is not text-based or does not exist');
-      }
-
-      await channel.send({ embeds: [embed] });
+      log(`Sending public announcement to channel ${channelId}`);
+      const embedMessage = new EmbedBuilder().setDescription(announcement.description);
+      await channel.send({ embeds: [embedMessage] });
       log(`Public announcement sent to channel ${channelId}`);
     } catch (error: any) {
-      log(`Failed to send public announcement: ${error.message}`);
+      log(`Failed to send public announcement to channel ${channelId}: ${error.message}`);
       throw error;
     }
   }

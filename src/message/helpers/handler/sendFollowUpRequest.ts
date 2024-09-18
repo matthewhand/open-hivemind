@@ -8,13 +8,11 @@ const debug = Debug('app:sendFollowUpRequest');
 
 /**
  * Sends an AI-generated follow-up message using completions (not chat completions).
- * @param client - The Discord client.
  * @param msg - The message to follow up on.
  * @param channelId - The channel where the follow-up should be sent.
  * @param followUpText - The follow-up text to send.
  */
 export async function sendFollowUpRequest(
-  client: Client,
   msg: IMessage,
   channelId: string,
   followUpText: string

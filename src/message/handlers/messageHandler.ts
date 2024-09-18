@@ -36,7 +36,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     return;
   }
 
-
   const isValidMessage = await validateMessage(message);
   if (!isValidMessage) {
     debug('Message validation failed. Exiting handler.');
@@ -46,7 +45,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
   let commandProcessed = false;
 
-  // Process commands, if any
+  // Process inline commands, if any
   await processCommand(message, async (result: string) => {
     const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') as string;
     const allowedUsers = authorisedUsers ? authorisedUsers.split(',') : [];
@@ -85,7 +84,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         message.getChannelId(),
         message.getChannelId(),
         Date.now(),
-        handleGeneratedMessage
+        (message: string) => { debug(`Generated message: ${message}`); }
       );
       debug('Sending LLM-generated content:', llmResponse);
     }
@@ -94,7 +93,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   // Follow-up logic, if enabled
   if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
     const followUpText = 'Follow-up text';
-    await sendFollowUpRequest(message, message, message);
+    await sendFollowUpRequest(message, message.getChannelId(), followUpText);
   }
-
 }
