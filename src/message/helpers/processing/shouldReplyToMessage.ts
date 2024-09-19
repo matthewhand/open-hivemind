@@ -16,7 +16,7 @@ export function shouldReplyToMessage(message: any, botId: string, integration: s
 
     // Check if the bot has spoken before in the channel
     const botSpokenBefore = process.env[`SESSION_${integration.toUpperCase()}_${channelId}`];
-    const isDirectQuery = message.mentionsUsers(botId) || message.isReply();
+    const isDirectQuery = message.mentionsUsers(botId) || message.isReplyToBot();
 
     if (!botSpokenBefore && !isDirectQuery) {
         debug('Bot has not spoken before and the message is not a direct query.');
