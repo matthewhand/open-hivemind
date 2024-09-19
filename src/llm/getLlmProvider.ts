@@ -15,7 +15,7 @@ export function getLlmProvider() {
     case 'openai':
       return openAiProvider;
     case 'flowise':
-      // Add flowise provider when needed
+      return flowiseProvider;
       break;
     default:
       throw new Error(`Unknown LLM provider: ${provider}`);
