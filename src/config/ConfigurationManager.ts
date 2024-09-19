@@ -60,7 +60,7 @@ export class ConfigurationManager {
     }
 
     /**
-     * Stores a session ID for a specific integration and channel.
+     * Stores a unique session ID for a specific integration and channel.
      * @param integration The name of the integration (e.g., 'flowise').
      * @param channelId The ID of the channel or conversation.
      * @param sessionId The session ID to store.
@@ -69,8 +69,9 @@ export class ConfigurationManager {
         if (!this.sessionStore[integration]) {
             this.sessionStore[integration] = {};
         }
-        this.sessionStore[integration][channelId] = sessionId;
-        debug(`Session set for integration ${integration}, channel ${channelId}`);
+        const uniqueSessionId = `${integration}-${channelId}-${sessionId}`;
+        this.sessionStore[integration][channelId] = uniqueSessionId;
+        debug(`Session set for integration ${integration}, channel ${channelId}, session ${uniqueSessionId}`);
     }
 
     /**

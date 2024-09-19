@@ -1,8 +1,9 @@
+require("dotenv/config");
 import debug from 'debug';
-import { DiscordService } from '@src/integrations/discord/DiscordService';
-import { handleMessage } from '@src/message/handlers/messageHandler';
-import { IMessengerService } from '@src/message/interfaces/IMessengerService';
-import { webhookService } from '@src/webhook/webhookService';
+import { DiscordService } from '../src/integrations/discord/DiscordService';
+import { handleMessage } from '../src/message/handlers/messageHandler';
+import { IMessengerService } from '../src/message/interfaces/IMessengerService';
+import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
 import messageConfig from '@message/interfaces/messageConfig';
