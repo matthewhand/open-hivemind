@@ -1,4 +1,5 @@
 require("dotenv/config");
+require("module-alias/register");
 import debug from 'debug';
 import { DiscordService } from '../src/integrations/discord/DiscordService';
 import { handleMessage } from '../src/message/handlers/messageHandler';
