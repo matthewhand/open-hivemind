@@ -1,4 +1,5 @@
 import { openAiProvider } from '@src/integrations/openai/openAiProvider';
+import { flowiseProvider } from '@src/integrations/flowise/flowiseProvider';
 import llmConfig from '@llm/interfaces/llmConfig';
 import Debug from 'debug';
 
