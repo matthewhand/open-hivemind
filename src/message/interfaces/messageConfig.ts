@@ -10,7 +10,7 @@ const messageConfig = convict({
     MESSAGE_MIN_INTERVAL_MS: {
         doc: 'Minimum interval between messages (ms)',
         format: 'int',
-        default: 1000,
+        default: 3000,
         env: 'MESSAGE_MIN_INTERVAL_MS'
     },
     MESSAGE_FOLLOW_UP_ENABLED: {
