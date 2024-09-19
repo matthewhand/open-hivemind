@@ -3,22 +3,23 @@
  * 
  * This module determines whether the bot should reply to an incoming message based on various factors such as
  * message content, mentions, channel activity, and configured probabilities.
+ * It ensures that the bot responds appropriately without overwhelming channels or interacting unnecessarily.
  */
 
 import Debug from 'debug';
 
 const debug = Debug('app:shouldReplyToMessage');
 
-// In-memory store for tracking channels where the bot has spoken
-const channelsWithBotInteraction = new Set<string>();
+// In-memory store for tracking channels where the bot has spoken with timestamps
+const channelsWithBotInteraction = new Map<string, number>();
 
 /**
- * Marks a channel as having had bot interaction.
+ * Marks a channel as having had bot interaction by storing the current timestamp.
  * @param channelId - The ID of the channel to mark.
  */
 export function markChannelAsInteracted(channelId: string): void {
-    channelsWithBotInteraction.add(channelId);
-    debug(`Channel ${channelId} marked as interacted.`);
+    channelsWithBotInteraction.set(channelId, Date.now());
+    debug(`Channel ${channelId} marked as interacted at ${Date.now()}.`);
 }
 
 /**
@@ -26,21 +27,23 @@ export function markChannelAsInteracted(channelId: string): void {
  * @param message - The incoming message object.
  * @param botId - The bot's user ID.
  * @param integration - The name of the integration (e.g., 'discord').
- * @param timeSinceLastActivity - Time since the last activity in milliseconds.
+ * @param activityTimeWindow - The time window for activity decay in milliseconds.
  * @returns Whether the bot should reply to the message.
  */
 export function shouldReplyToMessage(
     message: any,
     botId: string,
     integration: string,
-    timeSinceLastActivity: number = 10000
+    activityTimeWindow: number = 300000 // 5 minutes in milliseconds
 ): boolean {
     const channelId = message.getChannelId();
     debug(`Evaluating message in channel: ${channelId}`);
 
     // Check if the bot has spoken before in the channel
-    const botSpokenBefore = channelsWithBotInteraction.has(channelId);
-    debug(`Bot spoken before in channel ${channelId}: ${botSpokenBefore}`);
+    const lastInteractionTime = channelsWithBotInteraction.get(channelId) || 0;
+    const currentTime = Date.now();
+    const timeSinceLastActivity = currentTime - lastInteractionTime;
+    debug(`Time since last activity in channel ${channelId}: ${timeSinceLastActivity}ms`);
 
     // Check if the message is a direct query (mentions or replies to the bot)
     let isDirectQuery = false;
@@ -51,13 +54,12 @@ export function shouldReplyToMessage(
         debug('Message mentionsUsers method is undefined.');
     }
 
-    if (!botSpokenBefore && !isDirectQuery) {
-        debug('Bot has not spoken before and the message is not a direct query.');
+    if (!lastInteractionTime && !isDirectQuery) {
+        debug('Bot has not interacted before and the message is not a direct query.');
         // Optionally, allow unsolicited responses by not returning here
-        // return false;
     }
 
-    const chance = calculateBaseChance(message, timeSinceLastActivity);
+    const chance = calculateBaseChance(message, timeSinceLastActivity, activityTimeWindow);
     debug(`Calculated chance to respond: ${chance}`);
 
     const randomValue = Math.random();
@@ -71,16 +73,17 @@ export function shouldReplyToMessage(
  * Calculates the base chance of responding to a message.
  * @param message - The incoming message object.
  * @param timeSinceLastActivity - Time since the last activity in milliseconds.
+ * @param activityTimeWindow - The time window for activity decay.
  * @returns The calculated chance (0 to 1).
  */
-function calculateBaseChance(message: any, timeSinceLastActivity: number): number {
+function calculateBaseChance(message: any, timeSinceLastActivity: number, activityTimeWindow: number): number {
     // Prevent the bot from responding to its own messages
     if (message.getAuthorId() === process.env.DISCORD_CLIENT_ID) {
         debug('Not responding to self-generated messages.');
         return 0;
     }
 
-    let chance = 0;
+    let chance = 0.2;
     const text = message.getText().toLowerCase();
     debug(`Message text: "${text}"`);
 
@@ -97,14 +100,14 @@ function calculateBaseChance(message: any, timeSinceLastActivity: number): numbe
 
     // Bonus for interrobang punctuation
     if (/[!?]/.test(text.slice(1))) {
-        const interrobangBonus = parseFloat(process.env.MESSAGE_INTERROBANG_BONUS || '0.1');
+        const interrobangBonus = parseFloat(process.env.MESSAGE_INTERROBANG_BONUS || '0.2');
         chance += interrobangBonus;
         debug(`Interrobang detected. Added bonus: ${interrobangBonus}. Current chance: ${chance}`);
     }
 
     // Bonus for bot mention
     if (typeof message.mentionsUsers === 'function' && message.mentionsUsers(process.env.DISCORD_CLIENT_ID || '')) {
-        const mentionBonus = parseFloat(process.env.MESSAGE_MENTION_BONUS || '0.5');
+        const mentionBonus = parseFloat(process.env.MESSAGE_MENTION_BONUS || '0.8');
         chance += mentionBonus;
         debug(`Bot mentioned. Added bonus: ${mentionBonus}. Current chance: ${chance}`);
     }
@@ -119,25 +122,21 @@ function calculateBaseChance(message: any, timeSinceLastActivity: number): numbe
     // Bonus for priority channels
     const priorityChannel = process.env.MESSAGE_PRIORITY_CHANNEL;
     if (priorityChannel && message.getChannelId() === priorityChannel) {
-        const priorityBonus = parseFloat(process.env.MESSAGE_PRIORITY_CHANNEL_BONUS || '0.8');
+        const priorityBonus = parseFloat(process.env.MESSAGE_PRIORITY_CHANNEL_BONUS || '1.1');
         chance += priorityBonus;
         debug(`Priority channel detected. Added bonus: ${priorityBonus}. Current chance: ${chance}`);
     }
 
-    // Apply decay based on recent activity
-    const recentActivityDecayRate = parseFloat(
-        process.env.MESSAGE_RECENT_ACTIVITY_DECAY_RATE || '0.5'
-    );
-    const activityTimeWindow = parseInt(
-        process.env.MESSAGE_ACTIVITY_TIME_WINDOW || '300000',
-        10
-    );
-    const decayFactor = Math.exp(
-        -recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow)
-    );
-    debug(`Decay factor based on recent activity: ${decayFactor}`);
-    chance *= decayFactor;
-    debug(`Chance after applying decay: ${chance}`);
+    // // Apply decay based on recent activity
+    // const recentActivityDecayRate = parseFloat(
+    //     process.env.MESSAGE_RECENT_ACTIVITY_DECAY_RATE || '0.5'
+    // );
+    // const decayFactor = Math.exp(
+    //     -recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow)
+    // );
+    // debug(`Decay factor based on recent activity: ${decayFactor}`);
+    // chance *= decayFactor;
+    // debug(`Chance after applying decay: ${chance}`);
 
     // Cap the chance at 1
     const finalChance = Math.min(chance, 1);

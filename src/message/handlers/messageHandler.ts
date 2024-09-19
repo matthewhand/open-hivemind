@@ -3,6 +3,7 @@
  * 
  * This module handles incoming messages, validates them, processes commands, and determines
  * whether the bot should respond unsolicitedly based on configured probabilities and message content.
+ * It ensures efficient message processing with appropriate debugging and error handling.
  */
 
 import Debug from 'debug';
@@ -78,8 +79,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     // Determine if bot should reply
-    const timeSinceLastActivity = Date.now(); // Adjust as needed
-    const shouldReply = shouldReplyToMessage(message, botClientId, "discord", timeSinceLastActivity);
+    const shouldReply = shouldReplyToMessage(message, botClientId, "discord", 300000); // 5 minutes activity window
     if (!shouldReply) {
         debug('Message is not eligible for reply:', message);
         return;
