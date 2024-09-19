@@ -39,6 +39,7 @@ export class DiscordService implements IMessengerService {
         GatewayIntentBits.GuildVoiceStates,
       ],
     });
+    this.initialize();
     log('Client initialized successfully');
   }
 
