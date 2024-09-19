@@ -9,7 +9,31 @@ import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 const debug = Debug('app:flowiseProvider');
 
 class FlowiseProvider implements ILlmProvider {
-  constructor() {}
+  constructor() {
+    debug('Initializing FlowiseProvider...');
+    
+    // Debug all Flowise configuration and environment variables
+    const chatflowConversationId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+    const chatflowCompletionId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
+    const useRest = flowiseConfig.get('FLOWISE_USE_REST');
+    const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
+    const apiEndpoint = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+
+    debug(`Flowise Configuration:
+      FLOWISE_CONVERSATION_CHATFLOW_ID: ${chatflowConversationId || 'NOT SET'},
+      FLOWISE_COMPLETION_CHATFLOW_ID: ${chatflowCompletionId || 'NOT SET'},
+      FLOWISE_USE_REST: ${useRest},
+      FLOWISE_API_KEY: ${redactSensitiveInfo('apiKey', apiKey)},
+      FLOWISE_API_ENDPOINT: ${apiEndpoint || 'NOT SET'}
+    `);
+
+    if (!chatflowConversationId || !chatflowCompletionId || !apiKey || !apiEndpoint) {
+      debug('Missing critical Flowise configuration items.');
+      throw new Error('Flowise configuration is incomplete.');
+    } else {
+      debug('FlowiseProvider initialized successfully with all required configuration.');
+    }
+  }
 
   supportsChatCompletion() {
     return true;
@@ -23,23 +47,9 @@ class FlowiseProvider implements ILlmProvider {
    * Chooses between REST and SDK client based on config and generates a chat completion.
    */
   async generateChatCompletion(historyMessages: IMessage[] = [], systemPrompt: string = ''): Promise<string> {
+    debug('Starting chat completion with Flowise...');
     const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
     const useRest = flowiseConfig.get('FLOWISE_USE_REST');
-    const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
-    const baseUrl = flowiseConfig.get('FLOWISE_BASE_URL');
-
-    debug(`Flowise Configuration Loaded:
-      Chatflow ID: ${chatflowId || 'MISSING'},
-      Use REST: ${useRest},
-      API Key: ${redactSensitiveInfo('apiKey', apiKey)},
-      Base URL: ${baseUrl || 'MISSING'}
-    `);
-    debug(`History Messages: ${historyMessages.map(m => m.getText()).join(' ')}`);
-
-    if (!chatflowId) {
-      debug('FLOWISE_CONVERSATION_CHATFLOW_ID is missing.');
-      throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not defined.');
-    }
 
     const prompt = `${systemPrompt}\n${historyMessages.map(m => m.getText()).join(' ')}`;
     debug(`Generated Prompt: ${prompt}`);
@@ -57,23 +67,9 @@ class FlowiseProvider implements ILlmProvider {
    * Chooses between REST and SDK client based on config and generates a completion.
    */
   async generateCompletion(prompt: string, systemPrompt: string = ''): Promise<string> {
+    debug('Starting completion generation with Flowise...');
     const chatflowId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
     const useRest = flowiseConfig.get('FLOWISE_USE_REST');
-    const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
-    const baseUrl = flowiseConfig.get('FLOWISE_BASE_URL');
-
-    debug(`Flowise Configuration Loaded:
-      Chatflow ID: ${chatflowId || 'MISSING'},
-      Use REST: ${useRest},
-      API Key: ${redactSensitiveInfo('apiKey', apiKey)},
-      Base URL: ${baseUrl || 'MISSING'}
-    `);
-    debug(`System Prompt: ${systemPrompt}, Prompt: ${prompt}`);
-
-    if (!chatflowId) {
-      debug('FLOWISE_COMPLETION_CHATFLOW_ID is missing.');
-      throw new Error('FLOWISE_COMPLETION_CHATFLOW_ID is not defined.');
-    }
 
     const combinedPrompt = `${systemPrompt}\n${prompt}`;
     debug(`Generated Combined Prompt: ${combinedPrompt}`);
