@@ -1,14 +1,14 @@
 import convict from 'convict';
 
 const flowiseConfig = convict({
-    FLOWISE_BASE_URL: {
-        doc: 'Base URL for Flowise API',
-        format: String,
+    FLOWISE_API_ENDPOINT: {
+        doc: 'API endpoint for Flowise',
+        format: 'String',
         default: '',
-        env: 'FLOWISE_BASE_URL'
+        env: 'FLOWISE_API_ENDPOINT'
     },
     FLOWISE_API_KEY: {
-        doc: 'API Key for Flowise API',
+        doc: 'API key for Flowise',
         format: String,
         default: '',
         env: 'FLOWISE_API_KEY'

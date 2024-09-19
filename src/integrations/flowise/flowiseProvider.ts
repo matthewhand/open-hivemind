@@ -17,17 +17,24 @@ class FlowiseProvider implements ILlmProvider {
     return true;
   }
 
-  /**
+  /** 
    * Chooses between REST and SDK client based on config and generates a chat completion.
    */
   async generateChatCompletion(historyMessages: IMessage[] = [], systemPrompt: string = ''): Promise<string> {
     const chatflowId = process.env.FLOWISE_CONVERSATION_CHATFLOW_ID;
+    const useRest = process.env.FLOWISE_USE_REST === 'true';
+    debug(`Chatflow ID: ${chatflowId}, Use REST: ${useRest}, System Prompt: ${systemPrompt}`);
+    debug(`History Messages: ${historyMessages.map(m => m.getText()).join(' ')}`);
+
     if (!chatflowId) {
+      debug('FLOWISE_CONVERSATION_CHATFLOW_ID is missing.');
       throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not defined.');
     }
-    const prompt = `${systemPrompt}\n${historyMessages.map(m => m.getText()).join(' ')}`;
 
-    if (process.env.FLOWISE_USE_REST === 'true') {
+    const prompt = `${systemPrompt}\n${historyMessages.map(m => m.getText()).join(' ')}`;
+    debug(`Generated Prompt: ${prompt}`);
+
+    if (useRest) {
       debug('Using REST client for chat completion');
       return await getFlowiseResponse('channelId', prompt);
     } else {
@@ -36,17 +43,23 @@ class FlowiseProvider implements ILlmProvider {
     }
   }
 
-  /**
+  /** 
    * Chooses between REST and SDK client based on config and generates a completion.
    */
   async generateCompletion(prompt: string, systemPrompt: string = ''): Promise<string> {
     const chatflowId = process.env.FLOWISE_COMPLETION_CHATFLOW_ID;
+    const useRest = process.env.FLOWISE_USE_REST === 'true';
+    debug(`Chatflow ID: ${chatflowId}, Use REST: ${useRest}, System Prompt: ${systemPrompt}, Prompt: ${prompt}`);
+
     if (!chatflowId) {
+      debug('FLOWISE_COMPLETION_CHATFLOW_ID is missing.');
       throw new Error('FLOWISE_COMPLETION_CHATFLOW_ID is not defined.');
     }
-    const combinedPrompt = `${systemPrompt}\n${prompt}`;
 
-    if (process.env.FLOWISE_USE_REST === 'true') {
+    const combinedPrompt = `${systemPrompt}\n${prompt}`;
+    debug(`Generated Combined Prompt: ${combinedPrompt}`);
+
+    if (useRest) {
       debug('Using REST client for completion');
       return await getFlowiseResponse('channelId', combinedPrompt);
     } else {
