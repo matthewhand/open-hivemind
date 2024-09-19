@@ -1,5 +1,5 @@
 import axios from 'axios';
-import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 

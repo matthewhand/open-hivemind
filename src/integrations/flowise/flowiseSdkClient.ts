@@ -1,5 +1,5 @@
 import { FlowiseClient } from 'flowise-sdk';
-import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:flowiseSdkClient');

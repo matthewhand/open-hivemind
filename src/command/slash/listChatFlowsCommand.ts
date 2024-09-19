@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { CommandInteraction } from 'discord.js';
 import axios from 'axios';
-import flowiseConfig from '@integrations/flowise/interfaces/flowiseConfig';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
 // Define the command to list chat flows
 export const listChatFlowsCommand = new SlashCommandBuilder()
