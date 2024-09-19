@@ -1,5 +1,5 @@
 import { Client, Message, EmbedBuilder } from 'discord.js';
-import { initializeClient } from './interaction/initializeClient';
+import { GatewayIntentBits } from 'discord.js';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
@@ -32,7 +32,13 @@ export class DiscordService implements IMessengerService {
   // Private constructor to enforce singleton pattern
   private constructor() {
     log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
-    this.client = initializeClient();
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+      ],
+    });
     log('Client initialized successfully');
   }
 
