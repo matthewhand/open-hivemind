@@ -10,8 +10,9 @@
 #RUN pip install ollama
 
 # ---- Build Node Environment ----
-FROM node:20-buster
-WORKDIR /usr/src/app
+FROM node:20 AS build
+
+WORKDIR /app
 
 # Install Node dependencies first for caching
 COPY package*.json ./
@@ -32,13 +33,6 @@ RUN apt-get update && apt-get install -y \
 # Update Python to a version compatible with node-gyp
 RUN apt-get install -y python3 python3-dev
 
-# Install encryption packages and opus separately
-#RUN npm install sodium
-#RUN npm install sodium-native
-#RUN npm install libsodium-wrappers
-#RUN npm install tweetnacl
-#RUN npm install @discordjs/voice
-#RUN npm install opusscript
 
 # Copy app source from src to root in the container
 COPY src/ .
@@ -46,25 +40,33 @@ COPY src/ .
 
 RUN ls -latr 
 
+
 # Install Node dependencies
 RUN npm install -g npm@latest
-#RUN npm install
 RUN npm ci
 
-# workaround
-RUN mkdir src
+# Compile TypeScript to JavaScript
+RUN which tsc
+RUN npm run build
 
-# Combine debug steps into a single step
-#COPY src/dependencyReport.js src/test-libs.js src/
-#RUN npm run dep-report && npm run test-libs
+# Stage 2: Production
+FROM build AS production
 
-RUN ls -latr node_modules
-RUN ls -latr src/
+WORKDIR /app
 
-# Make the entrypoint script executable
-#RUN chmod +x ./entrypoint.sh
+# Include Python because it is as popular as TypeScript
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    python3 \
+    python3-pip \
+    jq 
+    # ... and jq is just useful
 
-# Copy Python environment
-#COPY --from=python-env /usr/local /usr/local
+# Copy compiled files and package.json/package-lock.json from build stage
+COPY --from=build /app/dist /app/dist
+COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/package-lock.json /app/package-lock.json
 
-CMD [ "node", "index.js" ]
+# Install production dependencies
+RUN npm ci --production
+
+CMD [ "node", "dist/src/index.js" ]
