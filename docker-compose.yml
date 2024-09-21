@@ -1,17 +1,16 @@
+
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  open-hivemind-agent:
+    image: mhand79/open-hivemind:latest
+    restart: unless-stopped
     ports:
-      - "3011:3001"  # Adjust the port mapping as per your application's requirement
+      - "3001:3001"  # Adjust the port mapping as per your application's requirement
+    environment:
+      - NODE_ENV=development # Needed for multi-stage ie installs compiler `tsc`
     env_file:
       - .env
     volumes:
-      - ./src:/usr/src/app
-      - /usr/src/app/node_modules  # Persist node_modules volume
-      - ./src/config/config.json:/config.json  # Map config.json to /config.json in the container
-    restart: unless-stopped
+      - ./config:/config
     logging:
       driver: json-file
       options:
