@@ -17,8 +17,14 @@ WORKDIR /app
 # Install Node dependencies first for caching
 COPY package*.json ./
 
+# Update and build essentials
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    build-essential \
+    jq 
+    # ... and jq is just useful
+
 # Install FFmpeg, libsodium and other dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     ffmpeg \
     gcc \
     g++ \
@@ -30,16 +36,13 @@ RUN apt-get update && apt-get install -y \
     libsodium23 \
     libopus-dev
 
-# Update Python to a version compatible with node-gyp
-RUN apt-get install -y python3 python3-dev
+## Update Python to a version compatible with node-gyp
+#RUN apt-get install -y python3 python3-dev
 
-
-# Copy app source from src to root in the container
-COPY src/ .
-#COPY entrypoint.sh ./
-
+COPY . .
 RUN ls -latr 
-
+RUN npm install
+RUN npm install -g typescript
 
 # Install Node dependencies
 RUN npm install -g npm@latest
@@ -54,12 +57,12 @@ FROM build AS production
 
 WORKDIR /app
 
-# Include Python because it is as popular as TypeScript
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    python3 \
-    python3-pip \
-    jq 
-    # ... and jq is just useful
+## Include Python because it is as popular as TypeScript
+#RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+#    python3 \
+#    python3-pip \
+#    jq 
+#    # ... and jq is just useful
 
 # Copy compiled files and package.json/package-lock.json from build stage
 COPY --from=build /app/dist /app/dist
