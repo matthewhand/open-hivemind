@@ -29,6 +29,9 @@ RUN apt-get update && apt-get install -y \
     libsodium23 \
     libopus-dev
 
+# Update Python to a version compatible with node-gyp
+RUN apt-get install -y python3 python3-dev
+
 # Install encryption packages and opus separately
 #RUN npm install sodium
 #RUN npm install sodium-native
