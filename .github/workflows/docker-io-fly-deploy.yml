@@ -35,7 +35,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: .
-        file: docker/Dockerfile.base
+        file: Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:latest
         platforms: linux/amd64,linux/arm64
