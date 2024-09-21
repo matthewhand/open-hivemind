@@ -23,26 +23,26 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     jq 
     # ... and jq is just useful
 
-# Install FFmpeg, libsodium and other dependencies
-RUN apt-get install -y \
-    ffmpeg \
-    gcc \
-    g++ \
-    make \
-    libtool \
-    autoconf \
-    automake \
-    libsodium-dev \
-    libsodium23 \
-    libopus-dev
+## Install FFmpeg, libsodium and other dependencies
+#RUN apt-get install -y \
+#    ffmpeg \
+#    gcc \
+#    g++ \
+#    make \
+#    libtool \
+#    autoconf \
+#    automake \
+#    libsodium-dev \
+#    libsodium23 \
+#    libopus-dev
 
 ## Update Python to a version compatible with node-gyp
 #RUN apt-get install -y python3 python3-dev
 
 COPY . .
 RUN ls -latr 
-RUN npm install
-RUN npm install -g typescript
+#RUN npm install
+#RUN npm install -g typescript
 
 # Install Node dependencies
 RUN npm install -g npm@latest
