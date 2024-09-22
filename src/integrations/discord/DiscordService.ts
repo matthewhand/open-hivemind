@@ -1,4 +1,4 @@
-import { Client, Message, EmbedBuilder } from 'discord.js';
+import { Client, Message, EmbedBuilder } from "discord.js";
 import { GatewayIntentBits } from 'discord.js';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import Debug from 'debug';
@@ -14,9 +14,8 @@ const discordLogFile = './discord_message.log';
 
 /**
  * DiscordService Class
- *
  * This service manages the interaction with the Discord API, including message handling,
- * user authentication, and other Discord-related operations. Implements the IMessengerService interface.
+ * user authentication, and other Discord operations. It implements the IMessengerService interface.
  * Key Features:
  *  - Singleton Pattern: Ensures a single instance of the service.
  *  - Custom Message Handling: Allows external handlers for processing Discord messages.
@@ -24,7 +23,9 @@ const discordLogFile = './discord_message.log';
  *  - Message Logging: Logs all incoming messages and their history to a file for auditing.
  */
 export class DiscordService implements IMessengerService {
-  getClientId(): string { return discordConfig.get('DISCORD_CLIENT_ID'); };
+  getClientId(): string {
+    return discordConfig.get('DISCORD_CLIENT_ID');
+  }
   public client: Client;
   private static instance: DiscordService;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
@@ -43,7 +44,9 @@ export class DiscordService implements IMessengerService {
     log('Client initialized successfully');
   }
 
-  /** Retrieves the singleton instance of DiscordService. */
+  /**
+   * Retrieves the singleton instance of DiscordService.
+   */
   public static getInstance(): DiscordService {
     if (!DiscordService.instance) {
       log('Creating a new instance of DiscordService');
@@ -51,7 +54,6 @@ export class DiscordService implements IMessengerService {
     }
     return DiscordService.instance;
   }
-
   /**
    * Sets a custom message handler for processing incoming Discord messages.
    * @param handler Function to process messages.
@@ -66,7 +68,7 @@ export class DiscordService implements IMessengerService {
    */
   public async initialize(token?: string): Promise<void> {
     try {
-      token = token || discordConfig.get('DISCORD_BOT_TOKEN') as string;
+      token = token || (discordConfig.get('DISCORD_BOT_TOKEN') as string);
 
       if (!token) {
         throw new Error('DISCORD_BOT_TOKEN is not set');
@@ -80,7 +82,7 @@ export class DiscordService implements IMessengerService {
           log(`Logged in as ${this.client.user?.tag}! Client ID: ${botClientId}`);
         }
 
-        await debugPermissions(this.client);  // Debug the bot's permissions in the guild
+        await debugPermissions(this.client); // Debug the bot's permissions in the guild
       });
 
       if (this.messageHandler) {
@@ -120,7 +122,6 @@ export class DiscordService implements IMessengerService {
             log(`Failed to log IMessage to ${discordLogFile}:`, error.message);
           }
 
-          // Call the handler with history messages
           this.messageHandler!(iMessage, historyMessages);
         });
       } else {
@@ -129,7 +130,7 @@ export class DiscordService implements IMessengerService {
     } catch (error: any) {
       log('Failed to start DiscordService: ' + error.message);
       log(error.stack);
-      process.exit(1);  // Exit the process on failure
+      process.exit(1); // Exit the process on failure
     }
   }
 
@@ -139,18 +140,22 @@ export class DiscordService implements IMessengerService {
    * @param message The message to send.
    */
   public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
-    if (!this.client) {  // Guard clause
+    if (!this.client) {
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
 
     try {
       log(`Sending message to channel ${channelId}: ${message}`);
-      await sendMessageToChannel(channelId, message);  // Adjusted to pass correct arguments
+      const channel = await this.client.channels.fetch(channelId);
+      if (channel.isTextBased()) {
+        await channel.send(message);
+      } else {
+        throw new Error('Channel is not text-based or does not support sending messages');
+      }
       log(`Message sent to channel ${channelId} successfully`);
     } catch (error: any) {
       log(`Failed to send message to channel ${channelId}: ` + error.message);
-      log(error.stack);
       throw error;
     }
   }
@@ -161,7 +166,7 @@ export class DiscordService implements IMessengerService {
    * @param limit Maximum number of messages to retrieve.
    */
   public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
-    if (!this.client) {  // Guard clause
+    if (!this.client) {
       log('Client not initialized');
       throw new Error('Discord client is not initialized');
     }
@@ -170,12 +175,12 @@ export class DiscordService implements IMessengerService {
       log(`Fetching up to ${limit} messages from channel ${channelId}`);
       const channel = await this.client.channels.fetch(channelId);
 
-      if (!channel || !channel.isTextBased()) {  // Replace deprecated isText()
+      if (!channel || !channel.isTextBased()) {
         throw new Error(`Channel ${channelId} not found or is not a text-based channel.`);
       }
 
       const fetchedMessages = await channel.messages.fetch({ limit });
-      return fetchedMessages.map((msg) => new DiscordMessage(msg));  // Convert messages to IMessage format
+      return fetchedMessages.map((msg) => new DiscordMessage(msg));
     } catch (error: any) {
       log(`Failed to fetch messages from channel ${channelId}: ${error.message}`);
       throw error;
