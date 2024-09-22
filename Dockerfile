@@ -18,8 +18,7 @@ COPY tsconfig.json .
 COPY tsconfig.paths.json .
 
 # Install Node.js dependencies
-RUN npm ci
-
+RUN npm install
 # Compile TypeScript into JavaScript (output goes to `dist/` directory)
 RUN npm run build
 
@@ -38,6 +37,9 @@ COPY --from=build /app/src/scripts /scripts
 
 # Install only production dependencies
 RUN npm ci --production
+
+# Confirm module register installation
+RUN find . | grep -i register.js
 
 # Clean up unnecessary files
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
