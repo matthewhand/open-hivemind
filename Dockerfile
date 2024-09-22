@@ -29,7 +29,7 @@ WORKDIR /app
 
 # Copy the compiled files and configuration from the build stage
 COPY --from=build /app/dist /app/dist
-COPY --from=build /app/config /app/config
+#COPY --from=build /app/config /app/config # TODO add to docker-compose.yaml
 COPY --from=build /app/package.json /app/package-lock.json ./
 
 # Copy the src/scripts folder to /scripts in the container
