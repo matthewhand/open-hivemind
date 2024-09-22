@@ -8,14 +8,10 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./",
-    "baseUrl": ".",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
     "downlevelIteration": true
-  },
-  "paths": {
-    "@src/*": ["src/*"]
   },
   "include": [
     "src/**/*",
