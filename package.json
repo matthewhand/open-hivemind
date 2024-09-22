@@ -43,7 +43,7 @@
     "axios": "^1.6.5",
     "config": "^3.3.12",
     "convict": "^6.2.4",
-    "debug": "^4.3.6",
+    "debug": "^4.3.7",
     "discord-api-types": "^0.37.67",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
