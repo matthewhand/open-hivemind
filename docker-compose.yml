@@ -1,12 +1,11 @@
-
 services:
   open-hivemind-agent:
     image: mhand79/open-hivemind:latest
     restart: unless-stopped
     ports:
-      - "3001:3001"  # Adjust the port mapping as per your application's requirement
+      - "3001:3001"
     environment:
-      - NODE_ENV=development # Needed for multi-stage ie installs compiler `tsc`
+      - NODE_ENV=development
     env_file:
       - .env
     volumes:
@@ -17,3 +16,26 @@ services:
         max-size: "100k"
         max-file: "3"
         mode: non-blocking
+
+  open-hivemind-agent-local:
+    # Profile for building with the local Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    volumes:
+      - ./config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "100k"
+        max-file: "3"
+        mode: non-blocking
+    profiles:
+      - local
