@@ -3,21 +3,22 @@ FROM node:20 AS build
 
 WORKDIR /app
 
-# Copy only package files to install dependencies (for better caching)
-COPY package*.json ./
-
 # Install necessary build tools and system dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y ffmpeg libsodium-dev libopus-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Node.js dependencies
-RUN npm ci
+# Copy only package files to install dependencies (for better caching)
+COPY package*.json ./
 
 # Copy only the necessary files for the build
 COPY src/ ./src
 COPY config/ ./config
 COPY tsconfig.json .
+COPY tsconfig.paths.json .
+
+# Install Node.js dependencies
+RUN npm ci
 
 # Compile TypeScript into JavaScript (output goes to `dist/` directory)
 RUN npm run build
