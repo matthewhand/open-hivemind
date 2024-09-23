@@ -5,13 +5,13 @@ import { getMessageProvider } from './message/management/getMessageProvider';
 
 // Main function to initialize the webhook service
 async function startWebhookService() {
-  const isWebhookEnabled = messageConfig.get<boolean>('MESSAGE_WEBHOOK_ENABLED') || false;
+  const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED');
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, starting...');
 
     const messageService = getMessageProvider();
-    const channelId: string = messageConfig.get<string>('MESSAGE_DEFAULT_CHANNEL_ID');
-    const webhookPort: number = webhookConfig.get<number>('WEBHOOK_PORT');
+    const channelId = messageConfig.get('MESSAGE_DEFAULT_CHANNEL_ID');
+    const webhookPort = webhookConfig.get('WEBHOOK_PORT');
 
     await webhookService.start(messageService, channelId, webhookPort);
   } else {
