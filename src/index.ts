@@ -41,7 +41,8 @@ async function startBot(messengerService: IMessengerService) {
     messengerService.setMessageHandler(handleMessage);
     log(`[DEBUG] Message handler set up successfully for ${messengerService.constructor.name}.`);
   } catch (error) {
-    log(`[ERROR] Failed to start the bot service: ${error.message}`);
+    const err = error as Error;
+    log(`[ERROR] Failed to start the bot service: ${err.message}`);
   }
 }
 
@@ -67,6 +68,7 @@ async function main() {
 
 // Start the application with error handling
 main().catch((error) => {
-  log(`[ERROR] Unexpected error in main execution: ${error.message}`);
+  const err = error as Error;
+  log(`[ERROR] Unexpected error in main execution: ${err.message}`);
   process.exit(1);
 });
