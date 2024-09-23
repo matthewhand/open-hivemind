@@ -10,7 +10,7 @@ import { webhookService } from '../src/webhook/webhookService';
 const app = express();
 const log = debug('app:index');
 const defaultChannelId = 'default-channel';
-const defaultPort = process.env.PORT || 8080;
+const defaultPort = Number(process.env.PORT) || 8080;
 
 // Health check route
 app.get('/health', (req, res) => {
