@@ -16,7 +16,7 @@ import { webhookService } from '../src/webhook/webhookService';
 
 const log = debug('app:index');
 const defaultChannelId = 'default-channel';
-const defaultPort = Number(process.env.WEBHOOK_PORT) || 3000;
+const defaultPort = Number(process.env.PORT) || 10000;
 const messageProvider = process.env.MESSAGE_PROVIDER || 'Default Message Service';
 const llmProvider = process.env.LLM_PROVIDER || 'Default LLM Service';
 const isWebhookEnabled = process.env.MESSAGE_WEBHOOK_ENABLED === 'true';
