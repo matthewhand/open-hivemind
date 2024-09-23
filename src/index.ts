@@ -1,3 +1,4 @@
+import express from 'express';
 require('dotenv/config');
 require('module-alias/register');
 import debug from 'debug';
@@ -6,10 +7,15 @@ import { handleMessage } from '../src/message/handlers/messageHandler';
 import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 
-// Hardcoded configuration
+const app = express();
 const log = debug('app:index');
 const defaultChannelId = 'default-channel';
-const defaultPort = 8080;
+const defaultPort = process.env.PORT || 8080;
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // Function to start the bot
 async function startBot(messengerService: IMessengerService) {
@@ -34,6 +40,11 @@ async function main() {
   // Start the webhook service
   console.log('Starting webhook service with hardcoded values...');
   await webhookService.start(messengerService, defaultChannelId, defaultPort);
+
+  // Start the Express server
+  app.listen(defaultPort, () => {
+    console.log(`Server is running on port ${defaultPort}`);
+  });
 }
 
 // Start the application
