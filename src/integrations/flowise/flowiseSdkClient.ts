@@ -33,9 +33,11 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
       return completion.text;
     }
 
-    throw new Error('No valid response from Flowise SDK.');
+    debug("Flowise SDK unavailable, returning empty string");
+    return "";
   } catch (error: any) {
     debug('Error using Flowise SDK:', error);
-    throw new Error('Failed to fetch response from Flowise SDK.');
+    debug("Flowise SDK unavailable, returning empty string");
+    return "";
   }
 }
