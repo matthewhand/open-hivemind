@@ -1,27 +1,15 @@
 import { webhookService } from './webhook/webhookService';
-import messageConfig from './message/interfaces/messageConfig';
-import webhookConfig from './webhook/interfaces/webhookConfig';
 import { getMessageProvider } from './message/management/getMessageProvider';
 
-// Define the correct paths for convict
-const MESSAGE_DEFAULT_CHANNEL_ID_PATH = 'MESSAGE_DEFAULT_CHANNEL_ID';
-const MESSAGE_WEBHOOK_ENABLED_PATH = 'MESSAGE_WEBHOOK_ENABLED';
-const WEBHOOK_PORT_PATH = 'WEBHOOK_PORT';
-
-// Main function to initialize the webhook service
+// Main function to initialize the webhook service with hardcoded values
 async function startWebhookService() {
-  const isWebhookEnabled = messageConfig.get<boolean>(MESSAGE_WEBHOOK_ENABLED_PATH) || false;
-  if (isWebhookEnabled) {
-    console.log('Webhook service is enabled, starting...');
+  console.log('Starting webhook service with hardcoded values...');
 
-    const messageService = getMessageProvider();
-    const channelId = messageConfig.get<string>(MESSAGE_DEFAULT_CHANNEL_ID_PATH);
-    const webhookPort = webhookConfig.get<number>(WEBHOOK_PORT_PATH);
+  const defaultChannelId = 'default-channel';
+  const defaultPort = 8080;
+  const messageService = getMessageProvider(); // Getting a valid message service
 
-    await webhookService.start(messageService, channelId, webhookPort);
-  } else {
-    console.log('Webhook service is disabled.');
-  }
+  await webhookService.start(messageService, defaultChannelId, defaultPort);
 }
 
 // Execute the main function
