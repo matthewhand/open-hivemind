@@ -29,7 +29,7 @@ export function configureWebhookRoutes(app: express.Application, messageService:
 
     try {
       await messageService.sendPublicAnnouncement('', resultMessage);  // Use empty channel for now
-    } catch (error) {
+    } catch (error: any) {
       debug('Failed to send message:', error.message);
     }
 

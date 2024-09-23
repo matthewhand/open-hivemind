@@ -1,5 +1,5 @@
-require("dotenv/config");
-require("module-alias/register");
+require('dotenv/config');
+require('module-alias/register');
 import debug from 'debug';
 import { DiscordService } from '../src/integrations/discord/DiscordService';
 import { handleMessage } from '../src/message/handlers/messageHandler';
@@ -7,7 +7,7 @@ import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
-import webhookConfig from "@webhook/interfaces/webhookConfig";
+import webhookConfig from '@webhook/interfaces/webhookConfig';
 import messageConfig from '@message/interfaces/messageConfig';
 
 /**
@@ -20,7 +20,7 @@ const log = debug('app:index');
 /**
  * Starts the bot by initializing the messaging and LLM services and setting the message handler.
  * Handles error scenarios to ensure robust startup.
- * 
+ *
  * @param messengerService - The messaging service implementing IMessengerService.
  */
 async function startBot(messengerService: IMessengerService) {
@@ -52,8 +52,14 @@ async function main() {
   const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, starting...');
-    await webhookService.start();  // Start the webhook service if configured
-    const webhookPort = webhookConfig.get("WEBHOOK_PORT") || 80;
+
+    // Retrieve necessary configurations
+    const messageService = getMessageProvider();
+    const channelId = messageConfig.get('MESSAGE_DEFAULT_CHANNEL_ID') || '';
+    const webhookPort = webhookConfig.get('WEBHOOK_PORT') || 80;
+
+    // Start the webhook service
+    await webhookService.start(messageService, channelId, webhookPort);
   } else {
     console.log('Webhook service is disabled.');
   }
