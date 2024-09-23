@@ -1,3 +1,10 @@
+/**
+ * Main Application Entry Point
+ * 
+ * This module starts the bot service and optionally the webhook service based on configuration.
+ * It integrates Discord, messaging, and webhook services under a unified Express application.
+ */
+
 import express from 'express';
 require('dotenv/config');
 require('module-alias/register');
@@ -7,48 +14,59 @@ import { handleMessage } from '../src/message/handlers/messageHandler';
 import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 
-const app = express();
 const log = debug('app:index');
 const defaultChannelId = 'default-channel';
 const defaultPort = Number(process.env.WEBHOOK_PORT) || 80;
+const messageProvider = process.env.MESSAGE_PROVIDER || 'Default Message Service';
+const llmProvider = process.env.LLM_PROVIDER || 'Default LLM Service';
+const isWebhookEnabled = process.env.MESSAGE_WEBHOOK_ENABLED === 'true';
 
-// Health check route
+// Health check route for monitoring the bot and server health
+const app = express();
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Function to start the bot
+/**
+ * Starts the bot service with the given messaging service.
+ * @param messengerService The platform-agnostic messenger service (e.g., Discord)
+ */
 async function startBot(messengerService: IMessengerService) {
+  if (!messengerService) {
+    log('[ERROR] Messenger service is not available. Cannot start the bot.');
+    return;
+  }
   try {
     // Set the message handler for incoming messages
     messengerService.setMessageHandler(handleMessage);
-    log('[DEBUG] Message handler set up successfully.');
+    log(`[DEBUG] Message handler set up successfully for ${messengerService.constructor.name}.`);
   } catch (error) {
-    log('Error starting bot service:', error);
+    log(`[ERROR] Failed to start the bot service: ${error.message}`);
   }
 }
 
-// Main function to initiate the bot service and webhook service
+/**
+ * Main function to initialize the bot service and optionally the webhook service.
+ */
 async function main() {
-  console.log('Message Provider in use: Default Message Service');
-  console.log('LLM Provider in use: Default LLM Service');
+  log(`[INFO] Initializing bot with message provider: ${messageProvider}`);
+  log(`[INFO] Initializing LLM provider: ${llmProvider}`);
 
   // Start the bot service with Discord
   const messengerService = DiscordService.getInstance();
   await startBot(messengerService);
 
-  // Start the webhook service
-  console.log('Starting webhook service with hardcoded values...');
-  await webhookService.start(messengerService, defaultChannelId, defaultPort);
-
-  // Start the Express server
-  app.listen(defaultPort, () => {
-    console.log(`Server is running on port ${defaultPort}`);
-  });
+  // Conditionally start the webhook service if enabled
+  if (isWebhookEnabled) {
+    log('[INFO] Webhook service is enabled, starting...');
+    await webhookService.start(app, messengerService, defaultChannelId, defaultPort);
+  } else {
+    log('[INFO] Webhook service is disabled. No server will be started.');
+  }
 }
 
-// Start the application
+// Start the application with error handling
 main().catch((error) => {
-  console.error('[DEBUG] Unexpected error in main execution:', error);
+  log(`[ERROR] Unexpected error in main execution: ${error.message}`);
   process.exit(1);
 });
