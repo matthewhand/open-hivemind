@@ -10,10 +10,10 @@ async function startWebhookService() {
     console.log('Webhook service is enabled, starting...');
 
     const messageService = getMessageProvider();
-    const channelId = messageConfig.get<string>('MESSAGE_DEFAULT_CHANNEL_ID');
-    const webhookPort = webhookConfig.get<string>('WEBHOOK_PORT');
+    const channelId = messageConfig.get('MESSAGE_DEFAULT_CHANNEL_ID');
+    const webhookPort = webhookConfig.get('WEBHOOK_PORT');
 
-    await webhookService.start(messageService, channelId, webhookPort);
+    await webhookService.start(messageService, channelId.toString(), webhookPort.toString());
   } else {
     console.log('Webhook service is disabled.');
   }
