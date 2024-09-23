@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Message } from 'discord.js';
+import { TextChannel, DMChannel } from "discord.js";
 
 const debug = Debug('app:sendFollowUp');
 
@@ -30,6 +31,7 @@ export const sendFollowUp = async (
       throw new Error('Invalid message or follow-up text provided');
     }
     debug('Sending follow-up message to channel: ' + message.channel.id);
+if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
     await message.channel.send(followUpText);
     debug('Follow-up message sent successfully');
   } catch (error: any) {

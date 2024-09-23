@@ -1,5 +1,6 @@
 import Debug from "debug";
 import { Message } from 'discord.js';
+import { TextChannel, DMChannel } from "discord.js";
 import { splitMessage } from '@src/message/helpers/processing/splitMessage';
 
 const debug = Debug('app:sendResponse');
@@ -33,6 +34,7 @@ export const sendResponse = async (
 
     const responseParts = splitMessage(responseText);
     for (const part of responseParts) {
+if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
       await message.channel.send(part);
     }
     debug('Response message sent successfully: ' + responseText);

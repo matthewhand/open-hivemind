@@ -1,4 +1,6 @@
 import { Client, Message, EmbedBuilder } from "discord.js";
+import { PartialGroupDMChannel } from "discord.js";
+import { TextChannel, DMChannel } from "discord.js";
 import { GatewayIntentBits } from 'discord.js';
 import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import Debug from 'debug';
@@ -148,7 +150,11 @@ export class DiscordService implements IMessengerService {
     try {
       log(`Sending message to channel ${channelId}: ${message}`);
       const channel = await this.client.channels.fetch(channelId);
-      if (channel.isTextBased()) {
+if (!(channel instanceof TextChannel || channel instanceof DMChannel)) { throw new Error(`Unsupported channel type for send method.`); }
+if (!channel) { throw new Error(`Channel ${channelId} not found`); }
+if (channel instanceof PartialGroupDMChannel) { throw new Error("Cannot send messages to PartialGroupDMChannel"); }
+if (channel instanceof TextChannel || channel instanceof DMChannel) {
+if (channel instanceof PartialGroupDMChannel) { throw new Error("Cannot send messages to PartialGroupDMChannel"); }
         await channel.send(message);
       } else {
         throw new Error('Channel is not text-based or does not support sending messages');
@@ -174,6 +180,8 @@ export class DiscordService implements IMessengerService {
     try {
       log(`Fetching up to ${limit} messages from channel ${channelId}`);
       const channel = await this.client.channels.fetch(channelId);
+if (!(channel instanceof TextChannel || channel instanceof DMChannel)) { throw new Error(`Unsupported channel type for send method.`); }
+if (!channel) { throw new Error(`Channel ${channelId} not found`); }
 
       if (!channel || !channel.isTextBased()) {
         throw new Error(`Channel ${channelId} not found or is not a text-based channel.`);
@@ -205,6 +213,8 @@ export class DiscordService implements IMessengerService {
 
     try {
       const channel = await this.client.channels.fetch(channelId);
+if (!(channel instanceof TextChannel || channel instanceof DMChannel)) { throw new Error(`Unsupported channel type for send method.`); }
+if (!channel) { throw new Error(`Channel ${channelId} not found`); }
       if (!channel?.isTextBased()) {
         throw new Error('Channel is not text-based or does not exist');
       }

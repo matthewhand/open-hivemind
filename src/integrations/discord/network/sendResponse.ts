@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Message } from 'discord.js';
+import { TextChannel, DMChannel } from "discord.js";
 
 const debug = Debug('app:sendResponse');
 
@@ -30,6 +31,7 @@ export const sendResponse = async (
       throw new Error('Invalid message or response text provided');
     }
     debug('Sending response message to channel: ' + message.channel.id);
+if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
     await message.channel.send(responseText);
     debug('Response message sent successfully');
   } catch (error: any) {
