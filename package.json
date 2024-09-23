@@ -24,6 +24,7 @@
     "@config": "dist/src/config",
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
+    "@webhook": "dist/src/webhook",
     "@integrations": "dist/src/integrations",
     "@types": "dist/src/types"
   },

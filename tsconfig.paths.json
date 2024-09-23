@@ -7,6 +7,7 @@
       "@config/*": ["src/config/*"],
       "@llm/*": ["src/llm/*"],
       "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
       "@src/*": ["src/*"]

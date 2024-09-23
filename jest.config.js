@@ -16,6 +16,7 @@ module.exports = {
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@llm/(.*)$': '<rootDir>/src/llm/$1',
     '^@message/(.*)$': '<rootDir>/src/message/$1',
+    '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
