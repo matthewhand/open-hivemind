@@ -22,7 +22,9 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
     const requestIp: string = req.ip ?? '';
 
     if (whitelistedIps.length === 0) {
-        throw new Error('WEBHOOK_IP_WHITELIST is not defined or empty in config');
+        console.log("No WEBHOOK_IP_WHITELIST set, allowing all IPs");
+        next();
+        return;
     }
 
     if (!whitelistedIps.includes(requestIp)) {

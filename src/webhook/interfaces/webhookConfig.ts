@@ -18,6 +18,12 @@ const webhookConfig = convict({
         format: String,
         default: '',
         env: 'WEBHOOK_IP_WHITELIST',
+    },
+    WEBHOOK_PORT: {
+        doc: "The port to run the webhook on.",
+        format: "port",
+        default: 80,
+        env: "WEBHOOK_PORT",
     }
 });
 

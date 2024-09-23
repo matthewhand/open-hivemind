@@ -7,6 +7,7 @@ import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
+import webhookConfig from "@webhook/interfaces/webhookConfig";
 import messageConfig from '@message/interfaces/messageConfig';
 
 /**
@@ -52,7 +53,7 @@ async function main() {
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, starting...');
     await webhookService.start();  // Start the webhook service if configured
-const webhookPort = webhookConfig.get("WEBHOOK_PORT") || 80;
+    const webhookPort = webhookConfig.get("WEBHOOK_PORT") || 80;
   } else {
     console.log('Webhook service is disabled.');
   }

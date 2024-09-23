@@ -2,11 +2,12 @@ import Debug from 'debug';
 import express, { Request, Response } from 'express';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import { Client, TextChannel } from 'discord.js';
+import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
 
 const debug = Debug('app:webhookRoutes');
 
 export function configureWebhookRoutes(app: express.Application, client: Client, DISCORD_CHAT_CHANNEL_ID: string): void {
-  app.post('/webhook', async (req: Request, res: Response) => {
+  app.post('/webhook', verifyWebhookToken, verifyIpWhitelist, async (req: Request, res: Response) => {
     debug('Received webhook:', JSON.stringify(req.body));
 
     const predictionId = req.body.id;
