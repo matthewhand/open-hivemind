@@ -52,6 +52,7 @@ async function main() {
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, starting...');
     await webhookService.start();  // Start the webhook service if configured
+const webhookPort = messageConfig.get("WEBHOOK_PORT") || 80;
   } else {
     console.log('Webhook service is disabled.');
   }
