@@ -52,6 +52,7 @@ async function startBot(messengerService: IMessengerService) {
 async function main() {
   log(`[INFO] Initializing bot with message provider: ${messageProvider}`);
   log(`[INFO] Initializing LLM provider: ${llmProvider}`);
+  log(`[INFO] Webhook enabled: ${isWebhookEnabled}, port: ${defaultPort}`);
 
   // Start the bot service with Discord
   const messengerService = DiscordService.getInstance();
@@ -59,7 +60,7 @@ async function main() {
 
   // Conditionally start the webhook service if enabled
   if (isWebhookEnabled) {
-    log('[INFO] Webhook service is enabled, starting...');
+    log(`[INFO] Starting webhook service on port ${defaultPort}...`);
     await webhookService.start(app, messengerService, defaultChannelId, defaultPort);
   } else {
     log('[INFO] Webhook service is disabled. No server will be started.');
