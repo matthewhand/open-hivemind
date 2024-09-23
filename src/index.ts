@@ -11,7 +11,7 @@ async function startWebhookService() {
 
     const messageService = getMessageProvider();
     const channelId = messageConfig.get<string>('MESSAGE_DEFAULT_CHANNEL_ID') || '';
-    const webhookPort = webhookConfig.get('WEBHOOK_PORT').toString();
+    const webhookPort = webhookConfig.get<number>('WEBHOOK_PORT');
 
     await webhookService.start(messageService, channelId, webhookPort);
   } else {
