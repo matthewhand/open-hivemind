@@ -16,21 +16,23 @@ import express from 'express';
 import webhookConfig from '@webhook/interfaces/webhookConfig';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import Debug from 'debug';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
 
 const log = Debug('app:webhookService');
 
 export const webhookService = {
   /**
    * Starts the webhook service.
+   * @param {IMessengerService} messageService - The platform-agnostic message service
    * @param {number} port - The port to run the webhook server on (defaults to 80)
    */
-  start: (port: number = webhookConfig.get('WEBHOOK_PORT') as number) => {
+  start: (messageService: IMessengerService, port: number = webhookConfig.get('WEBHOOK_PORT') as number) => {
     const app = express();
     app.use(express.json()); // Middleware to parse JSON request bodies
 
-    // Register the webhook routes (no platform-specific parameters)
+    // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
-    configureWebhookRoutes(app); // No need to pass any client or platform details here
+    configureWebhookRoutes(app, messageService);
 
     // Start the Express server and listen on the specified port
     app.listen(port, () => {
