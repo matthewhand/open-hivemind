@@ -63,8 +63,13 @@ async function main() {
     log(`[INFO] Starting webhook service on port ${defaultPort}...`);
     await webhookService.start(app, messengerService, defaultChannelId, defaultPort);
   } else {
-    log('[INFO] Webhook service is disabled. No server will be started.');
+    log('[INFO] Webhook service is disabled. Listening for other routes.');
   }
+
+  // Start the Express server
+  app.listen(defaultPort, () => {
+    log(`[INFO] Server is listening on port ${defaultPort}`);
+  });
 }
 
 // Start the application with error handling
