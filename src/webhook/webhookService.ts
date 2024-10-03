@@ -40,10 +40,10 @@ export const webhookService = {
 
     // Only listen on the port if we created a new app (no external app was passed)
     // if (!app.listen) {
-      app.listen(port, () => {
-        log(`Webhook service started successfully on port ${port}`);
-        console.log(`Webhook service is running on port ${port}`);
-      });
+      // app.listen(port, () => {
+        // log(`Webhook service started successfully on port ${port}`);
+        // console.log(`Webhook service is running on port ${port}`);
+      // });
     // }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
