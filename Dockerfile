@@ -1,48 +1,49 @@
 # ---- Stage 1: Build Environment ----
-FROM node:20 AS build
+FROM node:20-slim AS build
+
+# Define an environment variable to detect low memory environments
+ARG LOW_MEMORY=false
 
 WORKDIR /app
 
-# Install necessary build tools and system dependencies
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y ffmpeg libsodium-dev libopus-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Install system dependencies by default unless LOW_MEMORY is set to "true"
+RUN if [ "$LOW_MEMORY" = "true" ]; then \
+        echo "Skipping apt-get dependencies due to low-memory environment."; \
+    else \
+        apt-get update && apt-get upgrade -y && \
+        apt-get install -y ffmpeg libsodium-dev libopus-dev && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
-# Copy only package files to install dependencies (for better caching)
+# Copy package files and install dependencies for building
 COPY package*.json ./
 
-# Copy only the necessary files for the build
+RUN npm install
+
+# Copy the source files for building
 COPY src/ ./src
 COPY config/ ./config
 COPY tsconfig.json .
 COPY tsconfig.paths.json .
 
-# Install Node.js dependencies
-RUN npm install
-# Compile TypeScript into JavaScript (output goes to `dist/` directory)
+# Compile TypeScript into JavaScript
 RUN npm run build
 
 # ---- Stage 2: Production Environment ----
-FROM node:20-slim AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy the compiled files and configuration from the build stage
+# Copy the compiled files and production package files
 COPY --from=build /app/dist /app/dist
-#COPY --from=build /app/config /app/config # TODO add to docker-compose.yaml
 COPY --from=build /app/package.json /app/package-lock.json ./
-
-# Copy the src/scripts folder to /scripts in the container
-COPY --from=build /app/src/scripts /scripts
 
 # Install only production dependencies
 RUN npm ci --production
 
-# Confirm module register installation
-RUN find . | grep -i register.js
-
-# Clean up unnecessary files
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Copy any necessary scripts
+COPY --from=build /app/src/scripts /scripts
 
 # Set the default command to start the application
 CMD ["node", "dist/src/index.js"]
+    
