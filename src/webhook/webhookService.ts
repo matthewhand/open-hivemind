@@ -6,7 +6,6 @@
  * related to Discord or any other provider.
  * 
  * Features:
- * - Starts an Express server on a configurable port (default: 80)
  * - Registers secure webhook routes
  * - Integrates IP whitelisting and token verification
  * - Debug logging for tracing execution and identifying issues
@@ -26,9 +25,8 @@ export const webhookService = {
    * @param {Express.Application} [app] - Optional existing Express app instance
    * @param {IMessengerService} messageService - The platform-agnostic message service
    * @param {string} channelId - The ID of the channel to send messages
-   * @param {number} port - The port to run the webhook server on (defaults to 80)
    */
-  start: (app: express.Application | null, messageService: IMessengerService, channelId: string, port: number = webhookConfig.get('WEBHOOK_PORT') as number) => {
+  start: (app: express.Application | null, messageService: IMessengerService, channelId: string) => {
     if (!app) {
       app = express(); // Create a new app if none is passed
       app.use(express.json()); // Middleware to parse JSON request bodies
@@ -37,14 +35,6 @@ export const webhookService = {
     // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
     configureWebhookRoutes(app, messageService);
-
-    // Only listen on the port if we created a new app (no external app was passed)
-    // if (!app.listen) {
-      // app.listen(port, () => {
-        // log(`Webhook service started successfully on port ${port}`);
-        // console.log(`Webhook service is running on port ${port}`);
-      // });
-    // }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
   }

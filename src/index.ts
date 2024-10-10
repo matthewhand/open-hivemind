@@ -7,7 +7,6 @@ import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
-import webhookConfig from '@webhook/interfaces/webhookConfig';
 import messageConfig from '@message/interfaces/messageConfig'; 
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import express from 'express'; // Add Express app
@@ -47,17 +46,24 @@ async function main() {
   const messengerService = DiscordService.getInstance();
   await startBot(messengerService);
 
+  // Use PORT from environment variables or fallback to 5005
+  const port = process.env.PORT || 5005;
+
+  // Always listen on PORT
+  app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+
   // Check if the webhook service is enabled via configuration
   const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
-    console.log('Webhook service is enabled, starting...');
+    console.log('Webhook service is enabled, registering routes...');
 
-    // Get necessary configurations for the webhook service from discordConfig and webhookConfig
+    // Get necessary configurations for the webhook service from discordConfig
     const channelId = discordConfig.get('DISCORD_CHAT_CHANNEL_ID') || '';  // Fetch channel ID from discordConfig
-    const webhookPort = webhookConfig.get('WEBHOOK_PORT') || 80;
 
-    // Start the webhook service with Express `app` and convert `webhookPort` to string
-    await webhookService.start(app, messengerService, channelId, Number(webhookPort));  
+    // Register webhook routes on the existing Express app (no need to pass the port)
+    await webhookService.start(app, messengerService, channelId);  
   } else {
     console.log('Webhook service is disabled.');
   }
