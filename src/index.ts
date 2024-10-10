@@ -10,12 +10,16 @@ import llmConfig from '@llm/interfaces/llmConfig';
 import messageConfig from '@message/interfaces/messageConfig'; 
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import express from 'express'; // Add Express app
+import healthRoute from './routes/health'; // Import the health route
 
 // Logging setup
 const log = debug('app:index');
 
 // Define Express app for webhook service
 const app = express();
+
+// Register the health route
+app.use(healthRoute);
 
 /**
  * Starts the bot service by initializing the messaging and LLM services.
