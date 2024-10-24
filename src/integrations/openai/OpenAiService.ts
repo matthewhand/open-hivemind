@@ -123,6 +123,7 @@ export class OpenAiService {
                 messages: chatParams,
                 max_tokens: maxTokens,
                 temperature,
+                stream: false
             });
 
             return response.choices[0]?.message.content || null;
