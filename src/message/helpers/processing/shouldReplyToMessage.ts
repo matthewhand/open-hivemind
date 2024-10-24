@@ -1,146 +1,117 @@
-/**
- * shouldReplyToMessage.ts
- * 
- * This module determines whether the bot should reply to an incoming message based on various factors such as
- * message content, mentions, channel activity, and configured probabilities.
- * It ensures that the bot responds appropriately without overwhelming channels or interacting unnecessarily.
- */
-
+import messageConfig from '@message/interfaces/messageConfig';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:shouldReplyToMessage');
 
-// In-memory store for tracking channels where the bot has spoken with timestamps
+// Store for tracking interactions in channels
 const channelsWithBotInteraction = new Map<string, number>();
 
-/**
- * Marks a channel as having had bot interaction by storing the current timestamp.
- * @param channelId - The ID of the channel to mark.
- */
+let recentActivityDecayRate = messageConfig.get('MESSAGE_RECENT_ACTIVITY_DECAY_RATE');
+let activityTimeWindow = messageConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW');
+
+export function setDecayConfig(newDecayRate: number, newTimeWindow: number): void {
+  recentActivityDecayRate = newDecayRate;
+  activityTimeWindow = newTimeWindow;
+  debug(`Updated decay config: rate = ${recentActivityDecayRate}, window = ${activityTimeWindow}ms`);
+}
+
 export function markChannelAsInteracted(channelId: string): void {
-    channelsWithBotInteraction.set(channelId, Date.now());
-    debug(`Channel ${channelId} marked as interacted at ${Date.now()}.`);
+  channelsWithBotInteraction.set(channelId, Date.now());
+  debug(`Channel ${channelId} marked as interacted at ${Date.now()}.`);
 }
 
-/**
- * Determines whether the bot should reply to a message based on various factors.
- * @param message - The incoming message object.
- * @param botId - The bot's user ID.
- * @param integration - The name of the integration (e.g., 'discord').
- * @param activityTimeWindow - The time window for activity decay in milliseconds.
- * @returns Whether the bot should reply to the message.
- */
 export function shouldReplyToMessage(
-    message: any,
-    botId: string,
-    integration: string,
-    activityTimeWindow: number = 300000 // 5 minutes in milliseconds
+  message: any,
+  botId: string,
+  platform: 'discord' | 'generic'
 ): boolean {
-    const channelId = message.getChannelId();
-    debug(`Evaluating message in channel: ${channelId}`);
+  const channelId = message.getChannelId();
+  debug(`Evaluating message in channel: ${channelId}`);
 
-    // Check if the bot has spoken before in the channel
-    const lastInteractionTime = channelsWithBotInteraction.get(channelId) || 0;
-    const currentTime = Date.now();
-    const timeSinceLastActivity = currentTime - lastInteractionTime;
-    debug(`Time since last activity in channel ${channelId}: ${timeSinceLastActivity}ms`);
+  const lastInteractionTime = channelsWithBotInteraction.get(channelId) || 0;
+  const timeSinceLastActivity = Date.now() - lastInteractionTime;
+  debug(`Time since last activity: ${timeSinceLastActivity}ms`);
 
-    // Check if the message is a direct query (mentions or replies to the bot)
-    let isDirectQuery = false;
-    if (typeof message.mentionsUsers === 'function') {
-        isDirectQuery = message.mentionsUsers(botId) || message.isReplyToBot();
-        debug(`Is direct query: ${isDirectQuery}`);
-    } else {
-        debug('Message mentionsUsers method is undefined.');
-    }
+  let chance = 0.2; // Base chance before decay
+  debug(`Initial base chance: ${chance}`);
 
-    if (!lastInteractionTime && !isDirectQuery) {
-        debug('Bot has not interacted before and the message is not a direct query.');
-        // Optionally, allow unsolicited responses by not returning here
-    }
+  // Apply decay to the initial base chance
+  const decayFactor = Math.max(
+    0.5, // Minimum 50% chance retention
+    Math.exp(-recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow))
+  );
+  chance *= decayFactor;
+  debug(`Chance after decay: ${chance} (decay factor: ${decayFactor})`);
 
-    const chance = calculateBaseChance(message, timeSinceLastActivity, activityTimeWindow);
-    debug(`Calculated chance to respond: ${chance}`);
+  // Apply key modifiers after decay
+  chance = applyModifiers(message, botId, platform, chance);
+  debug(`Final chance after applying all modifiers: ${chance}`);
 
-    const randomValue = Math.random();
-    const decision = randomValue < chance;
-    debug(`Random value: ${randomValue} < Chance: ${chance} => Should respond: ${decision}`);
+  const decision = Math.random() < chance;
+  debug(`Decision: ${decision} (chance = ${chance})`);
 
-    return decision;
+  return decision;
 }
 
-/**
- * Calculates the base chance of responding to a message.
- * @param message - The incoming message object.
- * @param timeSinceLastActivity - Time since the last activity in milliseconds.
- * @param activityTimeWindow - The time window for activity decay.
- * @returns The calculated chance (0 to 1).
- */
-function calculateBaseChance(message: any, timeSinceLastActivity: number, activityTimeWindow: number): number {
-    // Prevent the bot from responding to its own messages
-    if (message.getAuthorId() === process.env.DISCORD_CLIENT_ID) {
-        debug('Not responding to self-generated messages.');
-        return 0;
-    }
+function applyModifiers(
+  message: any,
+  botId: string,
+  platform: 'discord' | 'generic',
+  chance: number
+): number {
+  const text = message.getText().toLowerCase();
 
-    let chance = 0.2;
-    const text = message.getText().toLowerCase();
-    debug(`Message text: "${text}"`);
+  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
+    debug(`Message from bot itself. Chance set to 0.`);
+    return 0;
+  }
 
-    // Handle wakewords
-    const wakewords = process.env.MESSAGE_WAKEWORDS
-        ? process.env.MESSAGE_WAKEWORDS.split(',').map(w => w.trim())
-        : ['!help', '!ping'];
-    debug(`Configured wakewords: ${wakewords.join(', ')}`);
+  const wakewords = messageConfig.get('MESSAGE_WAKEWORDS');
+  if (wakewords.some((word: string) => text.startsWith(word))) {
+    debug(`Wakeword detected. Chance set to 1.`);
+    return 1;
+  }
 
-    if (wakewords.some((wakeword) => text.startsWith(wakeword))) {
-        debug('Wakeword detected. Setting chance to 1.');
-        return 1;
-    }
+  if (/[!?]/.test(text.slice(-1))) {
+    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS') || 0.2;
+    chance += interrobangBonus;
+    debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
+  }
 
-    // Bonus for interrobang punctuation
-    if (/[!?]/.test(text.slice(1))) {
-        const interrobangBonus = parseFloat(process.env.MESSAGE_INTERROBANG_BONUS || '0.2');
-        chance += interrobangBonus;
-        debug(`Interrobang detected. Added bonus: ${interrobangBonus}. Current chance: ${chance}`);
-    }
+  if (message.mentionsUsers(botId)) {
+    const mentionBonus = messageConfig.get('MESSAGE_MENTION_BONUS') || 0.8;
+    chance += mentionBonus;
+    debug(`Bot mentioned. Applied bonus: ${mentionBonus}. New chance: ${chance}`);
+  }
 
-    // Bonus for bot mention
-    if (typeof message.mentionsUsers === 'function' && message.mentionsUsers(process.env.DISCORD_CLIENT_ID || '')) {
-        const mentionBonus = parseFloat(process.env.MESSAGE_MENTION_BONUS || '0.8');
-        chance += mentionBonus;
-        debug(`Bot mentioned. Added bonus: ${mentionBonus}. Current chance: ${chance}`);
-    }
+  if (message.isFromBot()) {
+    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || -1.0;
+    chance += botModifier;
+    debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
+  }
 
-    // Modifier for messages from other bots
-    if (message.isFromBot()) {
-        const botModifier = parseFloat(process.env.MESSAGE_BOT_RESPONSE_MODIFIER || '-1.0');
-        chance += botModifier;
-        debug(`Message from another bot. Applied modifier: ${botModifier}. Current chance: ${chance}`);
-    }
+  if (platform === 'discord') {
+    chance = applyDiscordBonuses(message, chance);
+    debug(`After applying Discord-specific bonuses, chance: ${chance}`);
+  }
 
-    // Bonus for priority channels
-    const priorityChannel = process.env.MESSAGE_PRIORITY_CHANNEL;
-    if (priorityChannel && message.getChannelId() === priorityChannel) {
-        const priorityBonus = parseFloat(process.env.MESSAGE_PRIORITY_CHANNEL_BONUS || '1.1');
-        chance += priorityBonus;
-        debug(`Priority channel detected. Added bonus: ${priorityBonus}. Current chance: ${chance}`);
-    }
+  return chance;
+}
 
-    // // Apply decay based on recent activity
-    // const recentActivityDecayRate = parseFloat(
-    //     process.env.MESSAGE_RECENT_ACTIVITY_DECAY_RATE || '0.5'
-    // );
-    // const decayFactor = Math.exp(
-    //     -recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow)
-    // );
-    // debug(`Decay factor based on recent activity: ${decayFactor}`);
-    // chance *= decayFactor;
-    // debug(`Chance after applying decay: ${chance}`);
+function applyDiscordBonuses(message: any, chance: number): number {
+  const priorityChannel = discordConfig.get('DISCORD_PRIORITY_CHANNEL');
+  if (priorityChannel && message.getChannelId() === priorityChannel) {
+    const bonus = discordConfig.get('DISCORD_PRIORITY_CHANNEL_BONUS') || 1.1;
+    chance += bonus;
+    debug(`Priority channel detected. Applied bonus: ${bonus}. New chance: ${chance}`);
+  }
 
-    // Cap the chance at 1
-    const finalChance = Math.min(chance, 1);
-    debug(`Final capped chance: ${finalChance}`);
+  const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
+  const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
 
-    return finalChance;
+  const channelBonus = channelBonuses[message.getChannelId()] ?? globalModifier;
+  debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
+
+  return chance * channelBonus;
 }

@@ -79,7 +79,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     // Determine if bot should reply
-    const shouldReply = shouldReplyToMessage(message, botClientId, "discord", 300000); // 5 minutes activity window
+    const shouldReply = shouldReplyToMessage(message, botClientId, "discord");  // Removed 4th argument
     if (!shouldReply) {
         debug('Message is not eligible for reply:', message);
         return;

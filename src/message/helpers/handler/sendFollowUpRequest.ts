@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
 import { Client } from 'discord.js';
+import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -25,7 +26,18 @@ export async function sendFollowUpRequest(
     return;
   }
 
-  const historyMessages = [msg];
+  const bonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
+  const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
+  const bonus = bonuses[channelId] ?? globalModifier;
+  const baseChance = 0.1; // Default chance
+  const finalChance = baseChance * bonus;
+
+  if (Math.random() >= finalChance) {
+    debug(`[sendFollowUpRequest] Skipped follow-up due to chance limit (finalChance: ${finalChance}).`);
+    return;
+  }
+
+  const historyMessages = [msg]; // Track message history if needed
   debug(`[sendFollowUpRequest] Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
