@@ -7,7 +7,7 @@ import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
-import messageConfig from '@message/interfaces/messageConfig'; 
+import messageConfig from '@message/interfaces/messageConfig';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import express from 'express'; // Add Express app
 import healthRoute from './routes/health'; // Import the health route
@@ -42,7 +42,6 @@ async function startBot(messengerService: IMessengerService) {
  * Main function to initialize both the bot service and webhook service (if enabled).
  */
 async function main() {
-  // Log the LLM and message providers in use
   console.log('LLM Provider in use:', llmConfig.get('LLM_PROVIDER') || 'Default OpenAI');
   console.log('Message Provider in use:', messageConfig.get('MESSAGE_PROVIDER') || 'Default Message Service');
 
@@ -63,11 +62,16 @@ async function main() {
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, registering routes...');
 
-    // Get necessary configurations for the webhook service from discordConfig
-    const channelId = discordConfig.get('DISCORD_CHAT_CHANNEL_ID') || '';  // Fetch channel ID from discordConfig
+    // Get channel configuration and bonuses
+    const channelId = discordConfig.get('DISCORD_CHANNEL_ID') || '';
+    const bonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
+    const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
+    const bonus = bonuses[channelId] ?? globalModifier;
 
-    // Register webhook routes on the existing Express app (no need to pass the port)
-    await webhookService.start(app, messengerService, channelId);  
+    console.log(`Using bonus: ${bonus} for channel: ${channelId}`);
+
+    // Start webhook service on the existing Express app
+    await webhookService.start(app, messengerService, channelId);
   } else {
     console.log('Webhook service is disabled.');
   }
