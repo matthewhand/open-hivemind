@@ -49,7 +49,10 @@
             "unsolicitedResponseHandler": {
                 "enabled": true,
                 "responseTriggerWords": ["help", "support"],
-                "responseRateLimitMs": 60000
+                "responseRateLimitMs": 60000,
+                "channelSpecificBonuses": {
+                    "1112523756720627712": 1.5
+                }
             },
             "responseTimingManager": {
                 "initialDelayMs": 500,
