@@ -20,7 +20,8 @@ module.exports = {
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
-  setupFiles: ['module-alias/register'],
+  setupFiles: ['node_modules/module-alias/register'],
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
+  setupFiles: ['<rootDir>/jest-setup.js'],
   verbose: true,
 };

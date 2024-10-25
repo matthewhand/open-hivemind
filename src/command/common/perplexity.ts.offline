@@ -1,7 +1,0 @@
-import ConfigurationManager from '@config/ConfigurationManager';
-
-const configManager = ConfigurationManager.getInstance();
-const perplexityConfig = configManager.getConfig('perplexityConfig');
-const perplexityApiUrl = perplexityConfig.PERPLEXITY_BASE_URL;
-
-// Additional logic and functionality
