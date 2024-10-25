@@ -110,7 +110,7 @@ function applyDiscordBonuses(message: any, chance: number): number {
   const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
   const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
 
-  const channelBonus = channelBonuses[message.getChannelId()] ?? globalModifier;
+  const channelBonus = channelBonuses[message.getChannelId()] ?? 0.0;
   debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
 
   return chance * channelBonus;
