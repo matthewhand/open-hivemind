@@ -45,7 +45,7 @@ export class OpenAiService {
      * Retrieves API key, timeout, and other settings from openaiConfig.
      */
     private constructor() {
-        const timeoutValue = Number(openaiConfig.get('OPENAI_TIMEOUT') || 30000);
+        const timeoutValue = Number(openaiConfig.get('OPENAI_TIMEOUT') || 300000);
         this.requestTimeout = timeoutValue;
 
         const options: ClientOptions = {
