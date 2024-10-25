@@ -1,4 +1,4 @@
-import Debug from "debug";
+import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:validateMessage');
@@ -14,8 +14,17 @@ const debug = Debug('app:validateMessage');
  */
 export function validateMessage(message: IMessage): boolean {
     try {
-        const isValid = message.getText().length > 0 && message.getAuthorId() !== '';
-        debug('Message validation ' + (isValid ? 'passed' : 'failed'));
+        const text = message.getText();
+        const textLength = text.length;
+        const authorId = message.getAuthorId();
+
+        debug(`Validating message ID: ${message.getMessageId()}`);
+        debug(`Message text length: ${textLength}, Text: "${text}"`);
+        debug(`Message author ID: ${authorId}`);
+
+        const isValid = textLength > 0 && authorId !== '';
+        debug(`Message validation ${isValid ? 'passed' : 'failed'}`);
+        
         return isValid;
     } catch (error: any) {
         debug('Failed to validate message: ' + error.message);
