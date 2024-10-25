@@ -1,7 +1,7 @@
 import { getLlmProvider } from '@src/message/management/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
+// import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
 import { Client } from 'discord.js';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 
@@ -43,9 +43,9 @@ export async function sendFollowUpRequest(
   try {
     const response = await llmProvider.generateCompletion(followUpText);
     const followUpMessage = followUpText + ' ' + response;
-    debug('[sendFollowUpRequest] Sending follow-up message:', followUpMessage);
+    debug('TODO [sendFollowUpRequest] Sending follow-up message:', followUpMessage);
 
-    await sendMessageToChannel(channelId, followUpMessage);
+    // await sendMessageToChannel(channelId, followUpMessage);
   } catch (error) {
     debug('[sendFollowUpRequest] Error generating follow-up:', error);
   }
