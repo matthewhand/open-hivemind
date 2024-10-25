@@ -67,6 +67,11 @@ function applyModifiers(
     return 0;
   }
 
+  if (message.mentionsUsers(botId)) {
+    debug(`Bot ID ${botId} mentioned. Responding`)
+    return 1;
+  }
+
   const wakewords = messageConfig.get('MESSAGE_WAKEWORDS');
   if (wakewords.some((word: string) => text.startsWith(word))) {
     debug(`Wakeword detected. Chance set to 1.`);
@@ -74,15 +79,9 @@ function applyModifiers(
   }
 
   if (/[!?]/.test(text.slice(-1))) {
-    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS') || 0.2;
+    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS') || 0.3;
     chance += interrobangBonus;
     debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
-  }
-
-  if (message.mentionsUsers(botId)) {
-    const mentionBonus = messageConfig.get('MESSAGE_MENTION_BONUS') || 0.8;
-    chance += mentionBonus;
-    debug(`Bot mentioned. Applied bonus: ${mentionBonus}. New chance: ${chance}`);
   }
 
   if (message.isFromBot()) {
@@ -108,7 +107,7 @@ function applyDiscordBonuses(message: any, chance: number): number {
   }
 
   const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
-  const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
+  // const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
 
   const channelBonus = channelBonuses[message.getChannelId()] ?? 0.0;
   debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
