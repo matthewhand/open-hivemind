@@ -112,6 +112,12 @@ const messageConfig = convict({
     format: Boolean,
     default: true,
     env: 'MESSAGE_FILTER_BY_USER'
+  },
+  MESSAGE_HISTORY_LIMIT: {  // New config entry
+    doc: 'Number of messages to fetch from the channel history.',
+    format: 'int',
+    default: 10,
+    env: 'MESSAGE_HISTORY_LIMIT'
   }
 });
 

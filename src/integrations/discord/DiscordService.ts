@@ -8,6 +8,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
 import { sendPublicAnnouncement } from '@src/integrations/discord/interaction/sendPublicAnnouncement';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import messageConfig from '@message/interfaces/messageConfig';
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
 import fs from 'fs';
 
@@ -21,7 +22,7 @@ log(`Logging Enabled: ${loggingEnabled}`);
 
 /**
  * DiscordService Class
- * Manages interaction with the Discord API, including message handling, 
+ * Manages interaction with the Discord API, including message handling,
  * authentication, and other operations. Implements the IMessengerService interface.
  */
 export class DiscordService implements IMessengerService {
@@ -100,7 +101,10 @@ export class DiscordService implements IMessengerService {
           const isMentioned = this.isBotMentioned(message);
           log(`Bot mentioned: ${isMentioned}`);
 
-          const historyMessages = await this.getMessagesFromChannel(message.channelId, 10);
+          const historyLimit = messageConfig.get('MESSAGE_HISTORY_LIMIT') || 10;
+          const historyMessages = await this.getMessagesFromChannel(message.channelId, historyLimit);
+          log(`Fetched ${historyMessages.length} messages from channel ${message.channelId}`);
+
           if (loggingEnabled) {
             fs.appendFileSync(discordLogFile, `History: ${JSON.stringify(historyMessages)}\n`);
           }

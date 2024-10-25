@@ -1,9 +1,20 @@
+/**
+ * DiscordMessage.ts
+ *
+ * This class encapsulates the Discord message object, providing utility methods to access message properties
+ * such as text, author ID, channel ID, and mentions. It ensures safe access to properties and includes
+ * comprehensive debug statements for better traceability.
+ */
+
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { Message, TextChannel } from 'discord.js';
 
 const debug = Debug('app:DiscordMessage');
 
+/**
+ * DiscordMessage class wraps the Discord.js Message object to provide additional utility methods.
+ */
 export default class DiscordMessage implements IMessage {
     public content: string;
     public channelId: string;
@@ -12,14 +23,21 @@ export default class DiscordMessage implements IMessage {
     private readonly message: Message;
     private readonly repliedMessage: Message | null;
 
+    /**
+     * Constructs an instance of DiscordMessage.
+     * @param {Message} message - The raw message object from Discord.
+     * @param {Message | null} [repliedMessage=null] - The message this message is replying to, if any.
+     */
     constructor(message: Message, repliedMessage: Message | null = null) {
         this.message = message;
         this.repliedMessage = repliedMessage;
-        this.content = message.content || '[No content]';  // Default if content is empty
+        this.content = message.content || '[No content]'; // Ensure fallback for empty content
         this.channelId = message.channelId;
         this.data = message.content;
-        this.role = '';  // Customize based on your needs
-        debug('[DiscordMessage] Initializing with message ID: ' + (message.id || 'undefined'));
+        this.role = ''; // Customize based on application needs
+
+        const author = `${message.author.username}#${message.author.discriminator} (${message.author.id})`;
+        debug(`DiscordMessage: [ID: ${message.id}] by ${author}`); // Shortened log with author info
     }
 
     getMessageId(): string {
@@ -29,9 +47,8 @@ export default class DiscordMessage implements IMessage {
     }
 
     getText(): string {
-        const text = this.content || '[No content]';  // Fallback to prevent undefined
-        debug('Getting message text: ' + text);
-        return text;
+        debug('Getting message text: ' + this.content);
+        return this.content;
     }
 
     public setText(text: string): void {
@@ -59,20 +76,20 @@ export default class DiscordMessage implements IMessage {
 
     getUserMentions(): string[] {
         debug('Getting user mentions from message: ' + this.message.id);
-        return this.message.mentions.users.map(user => user.id);
+        return this.message.mentions.users.map((user) => user.id);
     }
 
     getChannelUsers(): string[] {
         debug('Fetching users from channel: ' + this.channelId);
         if (this.message.channel instanceof TextChannel) {
             const members = this.message.channel.members;
-            return Array.from(members.values()).map(member => member.user.id);
+            return Array.from(members.values()).map((member) => member.user.id);
         }
         return [];
     }
 
     getAuthorName(): string {
-        const authorName = this.message.author?.username || 'Unknown Author';
+        const authorName = this.message.author.username || 'Unknown Author';
         debug('Author name: ' + authorName);
         return authorName;
     }
