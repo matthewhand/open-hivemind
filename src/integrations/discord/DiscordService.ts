@@ -13,6 +13,7 @@ import fs from 'fs';
 
 const log = Debug('app:discord-service');
 const discordLogFile = './discord_message.log';
+const channelId = discordConfig.get('DISCORD_CHANNEL_ID') || '';
 
 /**
  * DiscordService Class
@@ -90,6 +91,11 @@ export class DiscordService implements IMessengerService {
       if (this.messageHandler) {
         log('Setting up custom message handler');
         this.client.on('messageCreate', async (message: Message) => {
+          // Ensure the bot only responds to the configured channel, if set
+          if (channelId && message.channel.id !== channelId) {
+            return; // Ignore messages from other channels
+          }
+
           if (message.partial) {
             try {
               message = await message.fetch();
