@@ -1,5 +1,6 @@
 import { openAiProvider } from '@src/integrations/openai/openAiProvider';
 import { flowiseProvider } from '@src/integrations/flowise/flowiseProvider';
+import * as openWebUI from '@src/integrations/openwebui/runInference';
 import llmConfig from '@llm/interfaces/llmConfig';
 import Debug from 'debug';
 
@@ -17,8 +18,9 @@ export function getLlmProvider() {
       return openAiProvider;
     case 'flowise':
       return flowiseProvider;
-      break;
+    case 'openwebui':
+      return openWebUI;
     default:
-      throw new Error(`Unknown LLM provider: ${provider}`);
+      throw new Error('Unknown LLM provider: ' + provider);
   }
 }
