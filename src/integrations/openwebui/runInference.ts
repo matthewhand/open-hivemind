@@ -7,25 +7,25 @@ import Debug from 'debug';
 const debug = Debug('app:runInference');
 
 /**
- * Executes inference using Open WebUI with the provided prompt and cached knowledge file ID.
- * Throws an error if the request fails or required data is missing.
+ * Executes inference using Open WebUI with the provided prompt and optional chat history.
  * 
- * @param {string} prompt - The input prompt for the model.
- * @returns {Promise<any>} - The inference result from Open WebUI.
+ * @param prompt - The input prompt for the model.
+ * @param history - Optional chat history.
+ * @returns A promise resolving to the inference result.
  */
-export async function runInference(prompt: string): Promise<any> {
+export async function generateChatCompletion(prompt: string, history: string[] = []): Promise<any> {
   const { apiUrl } = openWebUIConfig.getProperties();
 
-  // Guard: Ensure a valid prompt is provided.
   if (!prompt || prompt.trim() === '') {
     debug('Invalid prompt:', prompt);
     throw new Error('Prompt cannot be empty.');
   }
 
-  const knowledgeFileId = getKnowledgeFileId(); // Retrieve the cached file ID.
+  const knowledgeFileId = getKnowledgeFileId();
 
   debug('Running inference with prompt:', prompt);
   debug('Using knowledge file ID:', knowledgeFileId);
+  debug('History:', history);
 
   try {
     const sessionKey = await getSessionKey();
@@ -35,11 +35,8 @@ export async function runInference(prompt: string): Promise<any> {
     };
 
     const url = apiUrl + '/chat/completions';
-    const response = await axios.post(
-      url,
-      { prompt, knowledgeFileId },
-      { headers }
-    );
+    const payload = { prompt, knowledgeFileId, history };
+    const response = await axios.post(url, payload, { headers });
 
     debug('Inference result:', response.data);
     return response.data;
