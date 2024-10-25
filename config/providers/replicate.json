@@ -1,5 +1,0 @@
-{
-  "REPLICATE_API_TOKEN": "default_replicate_api_token",
-  "REPLICATE_BASE_URL": "https://api.replicate.com/v1",
-  "REPLICATE_MODEL_VERSION": "default_version"
-}
