@@ -9,26 +9,26 @@ const debug = Debug('app:openWebUIConfig');
  */
 const openWebUIConfig = convict({
   apiUrl: {
-    doc: 'The API URL for the Open WebUI server.',
-    format: 'url',
+    doc: 'The API URL for the Open WebUI server',
+    format: String,  // Changed from url to String to prevent validation issues
     default: 'http://host.docker.internal:3000/api/',
     env: 'OPEN_WEBUI_API_URL',
   },
   username: {
-    doc: 'Username for authentication with Open WebUI.',
+    doc: 'Username for authentication with Open WebUI',
     format: String,
     default: '',
     env: 'OPEN_WEBUI_USERNAME',
   },
   password: {
-    doc: 'Password for authentication with Open WebUI.',
+    doc: 'Password for authentication with Open WebUI',
     format: String,
     default: '',
     env: 'OPEN_WEBUI_PASSWORD',
     sensitive: true,
   },
   knowledgeFile: {
-    doc: 'Path to the knowledge file to upload (optional).',
+    doc: 'Path to the knowledge file to upload (optional)',
     format: String,
     default: null,
     env: 'OPEN_WEBUI_KNOWLEDGE_FILE',
