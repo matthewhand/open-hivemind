@@ -113,6 +113,12 @@ const discordConfig = convict({
         format: Number,
         default: 1.1,
         env: 'DISCORD_PRIORITY_CHANNEL_BONUS',
+    }, 
+    DISCORD_LOGGING_ENABLED: {
+        doc: 'Controls whether logs are written to files',
+        format: Boolean,
+        default: false,
+        env: 'DISCORD_LOGGING_ENABLED'
     }
 });
 
