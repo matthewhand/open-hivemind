@@ -11,50 +11,64 @@ export abstract class IMessage {
     public channelId: string = "";  // Added channelId property
     public data: any;
     public role: string;  // Added role property
+
     constructor(data: any, role: string) {
         if (new.target === IMessage) {
             throw new TypeError('Cannot construct IMessage instances directly');
         }
         this.data = data;
         this.role = role;
-        // debug('IMessage initialized with data: ' + JSON.stringify(data));
         debug('IMessage initialized');
     }
+
     /**
      * Retrieves the message ID.
      * @returns {string} The message ID.
      */
     abstract getMessageId(): string;
+
     /**
      * Retrieves the text content of the message.
      * @returns {string} The text content.
      */
     abstract getText(): string;
+
+    /**
+     * Sets the text content of the message.
+     * @param {string} text - The new text content for the message.
+     */
+    public abstract setText(text: string): void;
+
     /**
      * Retrieves the channel ID where the message was sent.
      * @returns {string} The channel ID.
      */
     abstract getChannelId(): string;
+
     /**
      * Retrieves the author ID of the message.
      * @returns {string} The author ID.
      */
     abstract getAuthorId(): string;
+
     /**
      * Retrieves the topic of the channel.
      * @returns {string | null} The channel topic, or null if not available.
      */
     abstract getChannelTopic(): string | null;
+
     /**
      * Retrieves the users mentioned in the message.
      * @returns {string[]} Array of mentioned user IDs.
      */
     abstract getUserMentions(): string[];
+
     /**
      * Retrieves the users in the channel.
      * @returns {string[]} Array of user IDs in the channel.
      */
     abstract getChannelUsers(): string[];
+
     /**
      * Checks if the message is a reply to the bot.
      * @returns {boolean} True if the message is a reply to the bot, false otherwise.
@@ -62,26 +76,20 @@ export abstract class IMessage {
     isReplyToBot(): boolean {
         return false;
     }
+
     /**
      * Checks if the message mentions a specific user.
      * @param {string} userId - The ID of the user to check for mentions.
      * @returns {boolean} True if the user is mentioned, false otherwise.
      */
     abstract mentionsUsers(userId: string): boolean;
+
     /**
      * Checks if the message is from a bot.
      * @returns {boolean} True if the message is from a bot, false otherwise.
      */
     abstract isFromBot(): boolean;
-    // /**
-    //  * Sends a reply to the message.
-    //  * @param {string} content - The content of the reply.
-    //  * @returns {Promise<void>} A promise that resolves when the reply is sent.
-    //  */
-    // async reply(content: string): Promise<void> {
-    //     debug('Replying with content: ' + content);
-    //     // Implementation logic for replying to a message
-    // }
+
     /**
      * Retrieves the author's name.
      * @returns {string} The author's name.

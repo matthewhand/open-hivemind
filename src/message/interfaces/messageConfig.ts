@@ -110,7 +110,7 @@ const messageConfig = convict({
   MESSAGE_FILTER_BY_USER: {
     doc: 'If true, filter chat history to only include messages from the triggering user.',
     format: Boolean,
-    default: false,
+    default: true,
     env: 'MESSAGE_FILTER_BY_USER'
   }
 });

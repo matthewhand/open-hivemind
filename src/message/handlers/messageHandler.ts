@@ -1,7 +1,7 @@
 /**
  * messageHandler.ts
  *
- * Handles incoming messages, processes commands, and interacts with the LLM.
+ * This module handles incoming messages, processes commands, and interacts with the LLM.
  */
 
 import Debug from 'debug';
@@ -17,26 +17,6 @@ import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
-
-/**
- * Dynamically recreate the original IMessage implementation with aggregated text.
- * @param {IMessage} originalMessage - The original message object.
- * @param {string} aggregatedText - The aggregated content.
- * @returns {IMessage} A new instance of the same IMessage implementation.
- */
-function recreateMessageWithAggregatedText(
-    originalMessage: IMessage,
-    aggregatedText: string
-): IMessage {
-    const MessageConstructor = originalMessage.constructor as new (...args: any[]) => IMessage;
-
-    return new MessageConstructor(
-        aggregatedText,                    // Updated text content
-        originalMessage.getChannelId(),    // Original channel ID
-        originalMessage.getAuthorId(),     // Original author ID
-        originalMessage.data               // Original message data
-    );
-}
 
 /**
  * Handles incoming messages, processes commands, and interacts with the LLM.
@@ -79,16 +59,17 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
         debug(`Found ${userMessages.length} messages from user ${userId}.`);
 
-        if (userMessages.length === 0) {
-            debug('No messages found to aggregate. Skipping aggregation.');
-        } else {
+        if (userMessages.length > 0) {
             const aggregatedText = userMessages
-                .map((msg) => msg.getText().trim())
+                .map((msg) => msg.getText().trim() || '[No content]')
                 .join(' ');
 
             debug(`Aggregated text for user ${userId}: "${aggregatedText}"`);
 
-            message = recreateMessageWithAggregatedText(message, aggregatedText);
+            // Use setText() to update the message content
+            message.setText(aggregatedText);
+        } else {
+            debug('No messages found to aggregate. Skipping aggregation.');
         }
     } else {
         llmInputMessages = historyMessages;
