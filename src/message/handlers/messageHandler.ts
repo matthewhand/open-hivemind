@@ -33,7 +33,7 @@ function recreateMessageWithAggregatedText(
 ): IMessage {
     const MessageConstructor = originalMessage.constructor as new (...args: any[]) => IMessage;
 
-    // Create a new instance using the same constructor, with updated text and original metadata.
+    // Create a new instance using the same constructor with aggregated content and original metadata.
     return new MessageConstructor(
         aggregatedText,                    // Updated text content
         originalMessage.getChannelId(),    // Original channel ID
@@ -67,24 +67,29 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     const filterByUser = messageConfig.get('MESSAGE_FILTER_BY_USER');
+    debug(`MESSAGE_FILTER_BY_USER: ${filterByUser}`);  // Confirm the config value
+
     let llmInputMessages: IMessage[] = [];
 
     if (filterByUser) {
         // Aggregate the text from all messages by the same user.
         const userId = message.getAuthorId();
-        const aggregatedText = historyMessages
-            .filter(msg => msg.getAuthorId() === userId)
+        const userMessages = historyMessages.filter(msg => msg.getAuthorId() === userId);
+
+        debug(`Found ${userMessages.length} messages from user ${userId}.`);
+
+        const aggregatedText = userMessages
             .map(msg => msg.getText().trim())
             .join(' ');
 
-        debug(`Aggregated messages for user ${userId}: ${aggregatedText}`);
+        debug(`Aggregated text for user ${userId}: "${aggregatedText}"`);
 
         // Dynamically recreate the original message with aggregated text.
         message = recreateMessageWithAggregatedText(message, aggregatedText);
     } else {
         // Use the entire message history if filtering is disabled.
         llmInputMessages = historyMessages;
-        debug(`Passing full message history with ${llmInputMessages.length} messages.`);
+        debug(`Using full message history with ${llmInputMessages.length} messages.`);
     }
 
     let commandProcessed = false;
