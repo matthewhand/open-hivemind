@@ -1,9 +1,9 @@
 /**
  * messageHandler.ts
- * 
- * This module handles incoming messages, validates them, processes commands, 
- * and determines whether the bot should respond unsolicitedly based on configured 
- * probabilities and message content. It ensures efficient message processing with 
+ *
+ * This module handles incoming messages, validates them, processes commands,
+ * and determines whether the bot should respond based on message content
+ * and configured probabilities. It ensures efficient message processing with
  * appropriate debugging and error handling.
  */
 
@@ -45,11 +45,15 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         return;
     }
 
-    const refusalText = (messageConfig.get('MESSAGE_REFUSAL_TEXT') || 'Nupe').trim();
-    const refusalPrompt = (messageConfig.get('MESSAGE_REFUSAL_PROMPT') || 
-        'generate brief whimsical refusal for user').trim();
-    const defaultResponse = messageConfig.get('MESSAGE_REFUSAL_DEFAULT_RESPONSE') || 
-        'Oops, that’s tricky! Check docs for more insights.';
+    // Apply user-specific filtering if enabled
+    const filterByUser = messageConfig.get('MESSAGE_FILTER_BY_USER');
+    if (filterByUser) {
+        const userId = message.getAuthorId();
+        historyMessages = historyMessages.filter(msg => msg.getAuthorId() === userId);
+        debug(`Filtered history to only include messages from user ${userId}.`);
+    }
+
+    debug(`Filtered history length: ${historyMessages.length}`);
 
     let commandProcessed = false;
 
@@ -75,17 +79,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         });
 
         if (commandProcessed) return;
-    }
-
-    // Check if the message matches the refusal text
-    if (message.getText().trim().toLowerCase() === refusalText.toLowerCase()) {
-        debug('Refusal text detected. Invoking generateHelpfulMessage...');
-        const helpfulMessage = await generateHelpfulMessage(getLlmProvider(), refusalPrompt, refusalText);
-
-        const response = helpfulMessage || defaultResponse;
-        debug(`Sending response: ${response}`);
-        await provider.sendMessageToChannel(message.getChannelId(), response);
-        return;
     }
 
     const botClientId = provider.getClientId();
@@ -119,39 +112,5 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
         const followUpText = 'Follow-up text';
         await sendFollowUpRequest(message, message.getChannelId(), followUpText);
-    }
-}
-
-/**
- * Generates a helpful message using the LLM provider.
- * @param {any} llmProvider - The LLM provider instance.
- * @param {string} refusalPrompt - The prompt to generate a response.
- * @param {string} refusalText - The configured refusal text to avoid echoing.
- * @returns {Promise<string | null>} - The generated message or null if it matches the refusal text.
- */
-async function generateHelpfulMessage(
-    llmProvider: any, 
-    refusalPrompt: string, 
-    refusalText: string
-): Promise<string | null> {
-    try {
-        const completion = await llmProvider.generateCompletion(refusalPrompt);
-        debug('Generated helpful message:', completion);
-
-        const normalizedCompletion = completion?.trim().toLowerCase();
-        const normalizedRefusal = refusalText.trim().toLowerCase();
-
-        // Side-by-side comparison for better visibility
-        debug(`Comparing LLM response vs. refusal text:\n - LLM: "${normalizedCompletion}"\n - Refusal: "${normalizedRefusal}"`);
-
-        if (!normalizedCompletion || normalizedCompletion === normalizedRefusal) {
-            debug('LLM response matches refusal text. Returning null.');
-            return null;
-        }
-
-        return completion.trim();
-    } catch (error) {
-        debug('Error generating helpful message:', error);
-        return null;
     }
 }

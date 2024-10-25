@@ -84,7 +84,7 @@ const messageConfig = convict({
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window for recent activity (in milliseconds).',
     format: Number,
-    default: 300000,
+    default: 300000, // 5 minutes
     env: 'MESSAGE_ACTIVITY_WINDOW'
   },
   MESSAGE_WAKEWORDS: {
@@ -106,26 +106,13 @@ const messageConfig = convict({
     doc: 'Modifier to reduce chance for bot responses.',
     format: Number,
     default: -1.0
-  },  
-  MESSAGE_REFUSAL_TEXT: {
-    doc: 'Text response that triggers a helpful message generation.',
-    format: String,
-    default: 'Nupe',
-    env: 'MESSAGE_REFUSAL_TEXT'
   },
-  MESSAGE_REFUSAL_PROMPT: {
-    doc: 'Prompt to generate whimsical guidance when refusal text is detected.',
-    format: String,
-    default: 'generate brief whimsical guidance for user that refers them to https://docs.openwebui.com/',
-    env: 'MESSAGE_REFUSAL_PROMPT'
-  },
-  MESSAGE_REFUSAL_DEFAULT_RESPONSE: {
-    doc: 'Default response if LLM completion fails.',
-    format: String,
-    default: 'It seems tricky! Check https://docs.openwebui.com/ for more insights.',
-    env: 'MESSAGE_REFUSAL_DEFAULT_RESPONSE'
-}
-
+  MESSAGE_FILTER_BY_USER: {
+    doc: 'If true, filter chat history to only include messages from the triggering user.',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_FILTER_BY_USER'
+  }
 });
 
 // Load configuration from JSON file
