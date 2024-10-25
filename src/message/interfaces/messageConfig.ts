@@ -106,7 +106,26 @@ const messageConfig = convict({
     doc: 'Modifier to reduce chance for bot responses.',
     format: Number,
     default: -1.0
-  }
+  },  
+  MESSAGE_REFUSAL_TEXT: {
+    doc: 'Text response that triggers a helpful message generation.',
+    format: String,
+    default: 'Nupe',
+    env: 'MESSAGE_REFUSAL_TEXT'
+  },
+  MESSAGE_REFUSAL_PROMPT: {
+    doc: 'Prompt to generate whimsical guidance when refusal text is detected.',
+    format: String,
+    default: 'generate brief whimsical guidance for user that refers them to https://docs.openwebui.com/',
+    env: 'MESSAGE_REFUSAL_PROMPT'
+  },
+  MESSAGE_REFUSAL_DEFAULT_RESPONSE: {
+    doc: 'Default response if LLM completion fails.',
+    format: String,
+    default: 'It seems tricky! Check https://docs.openwebui.com/ for more insights.',
+    env: 'MESSAGE_REFUSAL_DEFAULT_RESPONSE'
+}
+
 });
 
 // Load configuration from JSON file
