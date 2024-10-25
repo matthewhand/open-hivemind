@@ -1,10 +1,7 @@
 /**
  * messageHandler.ts
  *
- * This module handles incoming messages, validates them, processes commands,
- * and determines whether the bot should respond based on message content
- * and configured probabilities. It ensures efficient message processing with
- * appropriate debugging and error handling.
+ * Handles incoming messages, processes commands, and interacts with the LLM.
  */
 
 import Debug from 'debug';
@@ -33,12 +30,11 @@ function recreateMessageWithAggregatedText(
 ): IMessage {
     const MessageConstructor = originalMessage.constructor as new (...args: any[]) => IMessage;
 
-    // Create a new instance using the same constructor with aggregated content and original metadata.
     return new MessageConstructor(
         aggregatedText,                    // Updated text content
         originalMessage.getChannelId(),    // Original channel ID
         originalMessage.getAuthorId(),     // Original author ID
-        originalMessage.data               // Original data
+        originalMessage.data               // Original message data
     );
 }
 
@@ -72,22 +68,29 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let llmInputMessages: IMessage[] = [];
 
     if (filterByUser) {
-        // Aggregate the text from all messages by the same user.
         const userId = message.getAuthorId();
-        const userMessages = historyMessages.filter(msg => msg.getAuthorId() === userId);
+        debug(`Filtering messages for user ID: ${userId}`);
+
+        const userMessages = historyMessages.filter((msg) => {
+            const isFromUser = msg.getAuthorId() === userId;
+            debug(`Checking message ID: ${msg.getMessageId()} - Is from user? ${isFromUser}`);
+            return isFromUser;
+        });
 
         debug(`Found ${userMessages.length} messages from user ${userId}.`);
 
-        const aggregatedText = userMessages
-            .map(msg => msg.getText().trim())
-            .join(' ');
+        if (userMessages.length === 0) {
+            debug('No messages found to aggregate. Skipping aggregation.');
+        } else {
+            const aggregatedText = userMessages
+                .map((msg) => msg.getText().trim())
+                .join(' ');
 
-        debug(`Aggregated text for user ${userId}: "${aggregatedText}"`);
+            debug(`Aggregated text for user ${userId}: "${aggregatedText}"`);
 
-        // Dynamically recreate the original message with aggregated text.
-        message = recreateMessageWithAggregatedText(message, aggregatedText);
+            message = recreateMessageWithAggregatedText(message, aggregatedText);
+        }
     } else {
-        // Use the entire message history if filtering is disabled.
         llmInputMessages = historyMessages;
         debug(`Using full message history with ${llmInputMessages.length} messages.`);
     }
@@ -126,7 +129,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatCompletion(
-        filterByUser ? [] : llmInputMessages, // Use history only if not filtering by user
+        filterByUser ? [] : llmInputMessages,  // Use history only if not filtering by user
         message.getText()
     );
 
