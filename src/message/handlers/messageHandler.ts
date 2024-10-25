@@ -1,9 +1,10 @@
 /**
  * messageHandler.ts
  * 
- * This module handles incoming messages, validates them, processes commands, and determines
- * whether the bot should respond unsolicitedly based on configured probabilities and message content.
- * It ensures efficient message processing with appropriate debugging and error handling.
+ * This module handles incoming messages, validates them, processes commands, 
+ * and determines whether the bot should respond unsolicitedly based on configured 
+ * probabilities and message content. It ensures efficient message processing with 
+ * appropriate debugging and error handling.
  */
 
 import Debug from 'debug';
@@ -15,119 +16,142 @@ import { shouldReplyToMessage, markChannelAsInteracted } from '@src/message/help
 import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '@src/message/helpers/handler/sendFollowUpRequest';
 import messageConfig from '@src/message/interfaces/messageConfig';
-import { DiscordService } from '@src/integrations/discord/DiscordService';
+import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 
 /**
- * Handles incoming Discord messages and processes them.
+ * Handles incoming messages, processes commands, and interacts with the LLM.
  * @param {IMessage} message - The incoming message object.
  * @param {IMessage[]} historyMessages - An array of recent message history.
  */
 export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<void> {
-    const botClientId = process.env.DISCORD_CLIENT_ID || "botId_placeholder";
+    const provider = getMessageProvider();
+    const startTime = Date.now(); // Track start time for processing
 
-    if (!message.getAuthorId || !message.getChannelId) {
-        debug('Invalid message object. Missing necessary methods: ' + JSON.stringify(message));
+    if (!message.getAuthorId() || !message.getChannelId()) {
+        debug('Invalid message object. Missing required methods:', JSON.stringify(message));
         return;
     }
 
-    const startTime = Date.now(); // Start time for processing
-
-    // Guard: Ignore bot messages if configured
     if (message.isFromBot() && ignoreBots) {
-        debug(`[handleMessage] Ignoring message from bot: ${message.getAuthorId()}`);
+        debug(`[handleMessage] Ignoring bot message from: ${message.getAuthorId()}`);
         return;
     }
 
-    const isValidMessage = await validateMessage(message);
-    if (!isValidMessage) {
-        debug('Message validation failed. Exiting handler.');
+    if (!(await validateMessage(message))) {
+        debug('Message validation failed.');
         return;
     }
-    debug('Message validated successfully.');
+
+    const refusalText = (messageConfig.get('MESSAGE_REFUSAL_TEXT') || 'Nupe').trim();
+    const refusalPrompt = (messageConfig.get('MESSAGE_REFUSAL_PROMPT') || 
+        'generate brief whimsical refusal for user').trim();
+    const defaultResponse = messageConfig.get('MESSAGE_REFUSAL_DEFAULT_RESPONSE') || 
+        'Oops, that’s tricky! Check docs for more insights.';
 
     let commandProcessed = false;
 
-    // Process inline commands, if any
-    await processCommand(message, async (result: string) => {
-        const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') as string;
-        const allowedUsers = authorisedUsers ? authorisedUsers.split(',') : [];
-        if (!allowedUsers.includes(message.getAuthorId())) {
-            debug('Command not authorized for user:', message.getAuthorId());
-            return;
-        }
-        debug('Sending command result:', result);
-        commandProcessed = true;
+    // Process inline commands if enabled
+    if (messageConfig.get('MESSAGE_COMMAND_INLINE')) {
+        await processCommand(message, async (result: string) => {
+            const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') || '';
+            const allowedUsers = authorisedUsers.split(',');
 
-        // Send the command result immediately without delay using DiscordService
-        try {
-            const discordService = DiscordService.getInstance();
-            await discordService.sendMessageToChannel(message.getChannelId(), result);
-            debug('Command reply sent successfully.');
+            if (!allowedUsers.includes(message.getAuthorId())) {
+                debug('User not authorized to run commands:', message.getAuthorId());
+                return;
+            }
 
-            // Mark channel as interacted
-            markChannelAsInteracted(message.getChannelId());
-        } catch (error) {
-            debug('Error sending command reply:', error);
-        }
-    });
+            try {
+                await provider.sendMessageToChannel(message.getChannelId(), result);
+                debug('Command response sent successfully.');
+                markChannelAsInteracted(message.getChannelId());
+                commandProcessed = true;
+            } catch (error) {
+                debug('Error sending command response:', error);
+            }
+        });
 
-    if (commandProcessed) {
+        if (commandProcessed) return;
+    }
+
+    // Check if the message matches the refusal text
+    if (message.getText().trim().toLowerCase() === refusalText.toLowerCase()) {
+        debug('Refusal text detected. Invoking generateHelpfulMessage...');
+        const helpfulMessage = await generateHelpfulMessage(getLlmProvider(), refusalPrompt, refusalText);
+
+        const response = helpfulMessage || defaultResponse;
+        debug(`Sending response: ${response}`);
+        await provider.sendMessageToChannel(message.getChannelId(), response);
         return;
     }
 
-    // Determine if bot should reply
-    const shouldReply = shouldReplyToMessage(message, botClientId, "discord");  // Removed 4th argument
+    const botClientId = provider.getClientId();
+    const shouldReply = shouldReplyToMessage(message, botClientId, 'discord');
     if (!shouldReply) {
         debug('Message is not eligible for reply:', message);
         return;
     }
 
-    // Generate response using LLM if enabled
-    if (messageConfig.get('MESSAGE_LLM_CHAT')) {
-        const llmProvider = getLlmProvider();
-        if (!llmProvider) {
-            debug('No LLM provider available.');
-            return;
-        }
-        const llmResponse = await llmProvider.generateChatCompletion([], message.getText());
-        if (llmResponse) {
-            const timingManager = MessageDelayScheduler.getInstance();
-            const discordService = DiscordService.getInstance();
+    const llmProvider = getLlmProvider();
+    const llmResponse = await llmProvider.generateChatCompletion([], message.getText());
 
-            // Calculate processing time
-            const processingTime = Date.now() - startTime;
+    if (llmResponse) {
+        const timingManager = MessageDelayScheduler.getInstance();
+        const processingTime = Date.now() - startTime;
 
-            // Define the send function to send the message via DiscordService
-            const sendFunction = async (response: string) => {
-                try {
-                    await discordService.sendMessageToChannel(message.getChannelId(), response);
-                    debug(`Sent LLM-generated message: ${response}`);
+        const sendFunction = async (response: string) => {
+            try {
+                await provider.sendMessageToChannel(message.getChannelId(), response);
+                debug(`Sent LLM-generated message: ${response}`);
+                markChannelAsInteracted(message.getChannelId());
+            } catch (error) {
+                debug('Error sending LLM-generated message:', error);
+            }
+        };
 
-                    // Mark channel as interacted
-                    markChannelAsInteracted(message.getChannelId());
-                } catch (error: any) {
-                    debug('Error sending LLM-generated message:', error);
-                }
-            };
-
-            // Schedule the message with correct parameters
-            timingManager.scheduleMessage(
-                message.getChannelId(),
-                llmResponse,
-                processingTime,
-                sendFunction
-            );
-
-            debug('Scheduled LLM-generated content:', llmResponse);
-        }
+        timingManager.scheduleMessage(message.getChannelId(), llmResponse, processingTime, sendFunction);
+        debug('Scheduled LLM response:', llmResponse);
     }
 
-    // Follow-up logic, if enabled
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
         const followUpText = 'Follow-up text';
         await sendFollowUpRequest(message, message.getChannelId(), followUpText);
+    }
+}
+
+/**
+ * Generates a helpful message using the LLM provider.
+ * @param {any} llmProvider - The LLM provider instance.
+ * @param {string} refusalPrompt - The prompt to generate a response.
+ * @param {string} refusalText - The configured refusal text to avoid echoing.
+ * @returns {Promise<string | null>} - The generated message or null if it matches the refusal text.
+ */
+async function generateHelpfulMessage(
+    llmProvider: any, 
+    refusalPrompt: string, 
+    refusalText: string
+): Promise<string | null> {
+    try {
+        const completion = await llmProvider.generateCompletion(refusalPrompt);
+        debug('Generated helpful message:', completion);
+
+        const normalizedCompletion = completion?.trim().toLowerCase();
+        const normalizedRefusal = refusalText.trim().toLowerCase();
+
+        // Side-by-side comparison for better visibility
+        debug(`Comparing LLM response vs. refusal text:\n - LLM: "${normalizedCompletion}"\n - Refusal: "${normalizedRefusal}"`);
+
+        if (!normalizedCompletion || normalizedCompletion === normalizedRefusal) {
+            debug('LLM response matches refusal text. Returning null.');
+            return null;
+        }
+
+        return completion.trim();
+    } catch (error) {
+        debug('Error generating helpful message:', error);
+        return null;
     }
 }
