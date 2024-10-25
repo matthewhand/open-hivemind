@@ -2,7 +2,7 @@ require('dotenv/config');
 require('module-alias/register');
 import debug from 'debug';
 import { DiscordService } from '../src/integrations/discord/DiscordService';
-import { handleMessage } from '../src/message/handlers/messageHandler';
+import { handleMessage } from './message/handlers/messageHandler';
 import { IMessengerService } from '../src/message/interfaces/IMessengerService';
 import { webhookService } from '../src/webhook/webhookService';
 const { debugEnvVars } = require('@config/debugEnvVars');
