@@ -22,6 +22,27 @@ const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 
 /**
+ * Dynamically recreate the original IMessage implementation with aggregated text.
+ * @param {IMessage} originalMessage - The original message object.
+ * @param {string} aggregatedText - The aggregated content.
+ * @returns {IMessage} A new instance of the same IMessage implementation.
+ */
+function recreateMessageWithAggregatedText(
+    originalMessage: IMessage,
+    aggregatedText: string
+): IMessage {
+    const MessageConstructor = originalMessage.constructor as new (...args: any[]) => IMessage;
+
+    // Create a new instance using the same constructor, with updated text and original metadata.
+    return new MessageConstructor(
+        aggregatedText,                    // Updated text content
+        originalMessage.getChannelId(),    // Original channel ID
+        originalMessage.getAuthorId(),     // Original author ID
+        originalMessage.data               // Original data
+    );
+}
+
+/**
  * Handles incoming messages, processes commands, and interacts with the LLM.
  * @param {IMessage} message - The incoming message object.
  * @param {IMessage[]} historyMessages - An array of recent message history.
@@ -45,19 +66,29 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         return;
     }
 
-    // Apply user-specific filtering if enabled
     const filterByUser = messageConfig.get('MESSAGE_FILTER_BY_USER');
-    if (filterByUser) {
-        const userId = message.getAuthorId();
-        historyMessages = historyMessages.filter(msg => msg.getAuthorId() === userId);
-        debug(`Filtered history to only include messages from user ${userId}.`);
-    }
+    let llmInputMessages: IMessage[] = [];
 
-    debug(`Filtered history length: ${historyMessages.length}`);
+    if (filterByUser) {
+        // Aggregate the text from all messages by the same user.
+        const userId = message.getAuthorId();
+        const aggregatedText = historyMessages
+            .filter(msg => msg.getAuthorId() === userId)
+            .map(msg => msg.getText().trim())
+            .join(' ');
+
+        debug(`Aggregated messages for user ${userId}: ${aggregatedText}`);
+
+        // Dynamically recreate the original message with aggregated text.
+        message = recreateMessageWithAggregatedText(message, aggregatedText);
+    } else {
+        // Use the entire message history if filtering is disabled.
+        llmInputMessages = historyMessages;
+        debug(`Passing full message history with ${llmInputMessages.length} messages.`);
+    }
 
     let commandProcessed = false;
 
-    // Process inline commands if enabled
     if (messageConfig.get('MESSAGE_COMMAND_INLINE')) {
         await processCommand(message, async (result: string) => {
             const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') || '';
@@ -89,7 +120,10 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     const llmProvider = getLlmProvider();
-    const llmResponse = await llmProvider.generateChatCompletion([], message.getText());
+    const llmResponse = await llmProvider.generateChatCompletion(
+        filterByUser ? [] : llmInputMessages, // Use history only if not filtering by user
+        message.getText()
+    );
 
     if (llmResponse) {
         const timingManager = MessageDelayScheduler.getInstance();
