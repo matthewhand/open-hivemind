@@ -30,7 +30,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./config:/config
+      - ./config:/app/config
     logging:
       driver: json-file
       options:

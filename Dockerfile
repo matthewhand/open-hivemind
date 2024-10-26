@@ -23,6 +23,7 @@ RUN npm install
 # Copy the source files for building
 COPY src/ ./src
 COPY config/ ./config
+COPY docs/ ./docs
 COPY tsconfig.json .
 COPY tsconfig.paths.json .
 

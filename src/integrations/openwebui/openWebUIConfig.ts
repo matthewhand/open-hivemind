@@ -30,13 +30,13 @@ const openWebUIConfig = convict({
   knowledgeFile: {
     doc: 'Path to the knowledge file to upload (optional)',
     format: String,
-    default: null,
+    default: '',  // Default to an empty string to indicate no file
     env: 'OPEN_WEBUI_KNOWLEDGE_FILE',
   },
   model: {
     doc: 'The default model to use for completions',
     format: String,
-    default: 'llama3.2',  // Placeholder model; can be changed via environment
+    default: 'llama3.2',
     env: 'OPEN_WEBUI_MODEL',
   },
 });
