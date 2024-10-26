@@ -110,7 +110,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatCompletion(
-        message.getText(), []
+        message.getText() || "",
+        llmInputMessages
     );
 
     if (llmResponse) {

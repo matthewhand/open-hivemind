@@ -8,7 +8,7 @@ import discordConfig from '@integrations/discord/interfaces/discordConfig';
 const debug = Debug('app:sendFollowUpRequest');
 
 /**
- * Sends an AI-generated follow-up message using completions (not chat completions).
+ * Sends an AI-generated follow-up message using chat completions.
  * @param msg - The message to follow up on.
  * @param channelId - The channel where the follow-up should be sent.
  * @param followUpText - The follow-up text to send.
@@ -18,11 +18,11 @@ export async function sendFollowUpRequest(
   channelId: string,
   followUpText: string
 ): Promise<void> {
-  const llmProvider = getLlmProvider(channelId);
+  const llmProvider = getLlmProvider();  // No argument needed
 
-  // Guard: Ensure the provider supports completions (not chat completions)
-  if (!llmProvider.supportsCompletion()) {
-    debug(`[sendFollowUpRequest] LLM provider does not support completions for channel: ${channelId}.`);
+  // Guard: Ensure the provider supports chat completions
+  if (!llmProvider.supportsChatCompletion()) {
+    debug(`[sendFollowUpRequest] LLM provider does not support chat completions for channel: ${channelId}.`);
     return;
   }
 
@@ -41,7 +41,7 @@ export async function sendFollowUpRequest(
   debug(`[sendFollowUpRequest] Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider.generateCompletion(followUpText);
+    const response = await llmProvider.generateChatCompletion(followUpText, historyMessages);
     const followUpMessage = followUpText + ' ' + response;
     debug('TODO [sendFollowUpRequest] Sending follow-up message:', followUpMessage);
 

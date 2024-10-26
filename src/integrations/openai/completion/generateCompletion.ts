@@ -1,39 +1,29 @@
 import Debug from 'debug';
-import axios from 'axios';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import { IMessage } from '@src/message/interfaces/IMessage';
+import { getLlmProvider } from '@src/message/management/getLlmProvider';
 
-const debug = Debug('app:OpenAiService');
+const debug = Debug('app:sendCompletions');
 
 /**
- * Generates a completion using the OpenAI API.
- *
- * This function sends a prompt to the OpenAI API and returns the generated completion.
- *
- * @param {string} prompt - The prompt to send to the OpenAI API.
- * @returns {Promise<string>} - The generated completion from the API.
+ * Sends a completion request using the configured LLM provider (e.g., OpenAI or Flowise).
+ * @param {IMessage[]} messages - Array of messages forming the input context.
+ * @returns {Promise<string>} - The generated response.
  */
-export async function generateCompletion(prompt: string): Promise<string> {
-    if (!openaiConfig || !openaiConfig.get('OPENAI_API_KEY')) {
-        throw new Error('OpenAI configuration is missing or incomplete.');
-    }
+export async function sendCompletions(messages: IMessage[]): Promise<string> {
+  // Construct a prompt by joining message texts
+  const prompt = messages.map(msg => msg.getText()).join(' ');
+  debug(`Generated prompt: ${prompt}`);
 
-    try {
-        const response = await axios.post('https://api.openai.com/v1/completions', {
-            model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o-mini',
-            prompt,
-            max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 100,
-            temperature: 0.7,
-        }, {
-            headers: {
-                'Authorization': `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
-            },
-        });
+  // Retrieve the LLM provider (no arguments needed)
+  const llmProvider = getLlmProvider();
 
-        debug('Generated completion:', response.data.choices[0].text.trim());
-        return response.data.choices[0].text.trim();
-    } catch (error: any) {
-        debug('Error generating completion:', error);
-        debug(error.stack); // Improvement: log stack trace for debugging
-        throw new Error(`Failed to generate completion: ${error.message}`);
-    }
+  try {
+    // Delegate the task to the provider's generateChatCompletion method
+    const result = await llmProvider.generateChatCompletion(prompt, messages);
+    debug('Generated completion from provider:', result);
+    return result;
+  } catch (error: any) {
+    debug('Error sending completion via provider:', error.message);
+    throw new Error(`Failed to send completion: ${error.message}`);
+  }
 }

@@ -23,7 +23,7 @@ export interface ILlmProvider {
    * @param {string} userMessage - The latest user message.
    * @returns {Promise<string>} The generated response from the LLM.
    */
-  generateChatCompletion: (historyMessages: IMessage[], userMessage: string) => Promise<string>;
+  generateChatCompletion: (userMessage: string, historyMessages: IMessage[] ) => Promise<string>;
 
   /**
    * Generates a non-chat completion.

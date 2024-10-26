@@ -14,7 +14,7 @@ export async function sendCompletions(messages: IMessage[]): Promise<string> {
   debug(`Generated prompt: ${prompt}`);
 
   // Retrieve the LLM provider dynamically
-  const llmProvider = getLlmProvider(messages[0].getChannelId());
+  const llmProvider = getLlmProvider();
 
   try {
     // Delegate the completion generation to the appropriate provider

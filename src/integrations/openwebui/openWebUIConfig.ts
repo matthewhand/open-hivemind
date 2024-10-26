@@ -10,7 +10,7 @@ const debug = Debug('app:openWebUIConfig');
 const openWebUIConfig = convict({
   apiUrl: {
     doc: 'The API URL for the Open WebUI server',
-    format: String,  // Changed from url to String to prevent validation issues
+    format: String,
     default: 'http://host.docker.internal:3000/api/',
     env: 'OPEN_WEBUI_API_URL',
   },
@@ -33,6 +33,12 @@ const openWebUIConfig = convict({
     default: null,
     env: 'OPEN_WEBUI_KNOWLEDGE_FILE',
   },
+  model: {
+    doc: 'The default model to use for completions',
+    format: String,
+    default: 'llama3.2',  // Placeholder model; can be changed via environment
+    env: 'OPEN_WEBUI_MODEL',
+  },
 });
 
 /**
@@ -43,6 +49,5 @@ debug('OpenWebUIConfig initialized with values:', openWebUIConfig.getProperties(
 
 /**
  * Exports the validated configuration instance.
- * This ensures consistent access to environment-specific settings across modules.
  */
 export default openWebUIConfig;

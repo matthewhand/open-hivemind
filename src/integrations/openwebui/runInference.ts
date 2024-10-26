@@ -3,29 +3,33 @@ import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
 import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
+import { IMessage } from '@src/message/interfaces/IMessage';  // Import IMessage
 
 const debug = Debug('app:runInference');
 
 /**
- * Executes inference using Open WebUI with the provided prompt and optional chat history.
+ * Executes inference using Open WebUI with the provided user message and optional chat history.
  * 
- * @param prompt - The input prompt for the model.
- * @param history - Optional chat history.
+ * @param userMessage - The input from the user.
+ * @param historyMessages - Optional message history.
  * @returns A promise resolving to the inference result.
  */
-export async function generateChatCompletion(prompt: string, history: string[] = []): Promise<any> {
+export async function generateChatCompletion(
+  userMessage: string,
+  historyMessages: IMessage[] = []
+): Promise<any> {
   const { apiUrl } = openWebUIConfig.getProperties();
 
-  if (!prompt || prompt.trim() === '') {
-    debug('Invalid prompt:', prompt);
-    throw new Error('Prompt cannot be empty.');
+  if (!userMessage || userMessage.trim() === '') {
+    debug('Invalid user message:', userMessage);
+    throw new Error('User message cannot be empty.');
   }
 
   const knowledgeFileId = getKnowledgeFileId();
 
-  debug('Running inference with prompt:', prompt);
+  debug('Running inference with user message:', userMessage);
   debug('Using knowledge file ID:', knowledgeFileId);
-  debug('History:', history);
+  debug('History Messages:', historyMessages);
 
   try {
     const sessionKey = await getSessionKey();
@@ -35,7 +39,11 @@ export async function generateChatCompletion(prompt: string, history: string[] =
     };
 
     const url = apiUrl + '/chat/completions';
-    const payload = { prompt, knowledgeFileId, history };
+    const payload = {
+      prompt: userMessage,
+      knowledgeFileId,
+      history: historyMessages.map(msg => msg.getText()), // Convert to plain text
+    };
     const response = await axios.post(url, payload, { headers });
 
     debug('Inference result:', response.data);

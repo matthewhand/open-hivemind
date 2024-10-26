@@ -41,15 +41,12 @@ class FlowiseProvider implements ILlmProvider {
 
   /**
    * Generates a chat completion using the Flowise SDK.
-   * @param historyMessages - Optional array of message history.
-   * @param systemPrompt - Optional system prompt to prepend.
-   * @returns The generated chat completion.
    */
-  async generateChatCompletion(historyMessages: IMessage[] = [], systemPrompt: string = ''): Promise<string> {
+  async generateChatCompletion(userMessage: string, historyMessages: IMessage[] = []): Promise<string> {
     debug('Starting chat completion with Flowise...');
     const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
 
-    const prompt = `${systemPrompt}\n${historyMessages.map(m => m.getText()).join(' ')}`;
+    const prompt = `${userMessage}\n${historyMessages.map(m => m.getText()).join(' ')}`;
     debug(`Generated Prompt: ${prompt}`);
 
     debug('Using SDK client for chat completion');
@@ -58,9 +55,6 @@ class FlowiseProvider implements ILlmProvider {
 
   /**
    * Generates a completion using the Flowise SDK.
-   * @param prompt - The input prompt.
-   * @param systemPrompt - Optional system prompt to prepend.
-   * @returns The generated completion.
    */
   async generateCompletion(prompt: string, systemPrompt: string = ''): Promise<string> {
     debug('Starting completion generation with Flowise...');

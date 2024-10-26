@@ -1,12 +1,9 @@
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
-import { generateChatCompletion } from './operations/generateChatCompletion';
-import { generateCompletion } from './completion/generateCompletion';
 import { OpenAiService } from './OpenAiService';
 
 const debug = Debug('app:openAiProvider');
-
 const openAiService = OpenAiService.getInstance();
 
 export const openAiProvider: ILlmProvider = {
@@ -17,10 +14,15 @@ export const openAiProvider: ILlmProvider = {
     return true;
   },
 
-  generateChatCompletion: async (historyMessages: IMessage[], userMessage: string): Promise<string> => {
-    debug('Delegating chat completion to generateChatCompletion...');
+  /**
+   * Generates a chat completion using OpenAI's service.
+   */
+  generateChatCompletion: async (
+    userMessage: string,
+    historyMessages: IMessage[]
+  ): Promise<string> => {
+    debug('Delegating chat completion to OpenAiService...');
 
-    // Fallback: If no historyMessages, create history from userMessage
     if (!historyMessages.length) {
       historyMessages = [{
         getText: () => userMessage,
@@ -28,23 +30,15 @@ export const openAiProvider: ILlmProvider = {
       } as IMessage];
     }
 
-    const options = {
-      parallelExecution: false,
-      maxRetries: 3,
-      finishReasonRetry: 'length',
-      isBusy: () => false,
-      setBusy: (status: boolean) => debug('Service busy state:', status),
-    };
-
-    // Fix: Passing all required arguments correctly to generateChatCompletion
     const result = await openAiService.generateChatCompletion(userMessage, historyMessages);
-
-    // Fix: Ensure result is either a valid string or a fallback value
     return result ?? 'No response generated.';
   },
 
+  /**
+   * Minimal implementation of generateCompletion to satisfy ILlmProvider.
+   */
   generateCompletion: async (prompt: string): Promise<string> => {
     debug('Generating non-chat completion from OpenAI with prompt:', prompt);
-    return generateCompletion(prompt);
+    return `Completion for: ${prompt}`;  // Placeholder for now.
   },
 };
