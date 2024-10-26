@@ -16,6 +16,8 @@ services:
         max-size: "100k"
         max-file: "3"
         mode: non-blocking
+    profiles:
+      - default        
 
   open-hivemind-agent-local:
     # Profile for building with the local Dockerfile
