@@ -1,8 +1,34 @@
-import convict from 'convict';
+import convict, { Config } from 'convict';
 import path from 'path';
 
-// Define the schema for message configuration
-const messageConfig = convict({
+// Define the schema interface
+interface MessageConfigSchema {
+  MESSAGE_PROVIDER: string;
+  MESSAGE_MIN_INTERVAL_MS: number;
+  MESSAGE_FOLLOW_UP_ENABLED: boolean;
+  MESSAGE_IGNORE_BOTS: boolean;
+  MESSAGE_LLM_CHAT: boolean;
+  MESSAGE_LLM_COMPLETE_SENTENCE: boolean;
+  MESSAGE_LLM_FOLLOW_UP: boolean;
+  MESSAGE_LLM_SUMMARISE: boolean;
+  MESSAGE_COMMAND_INLINE: boolean;
+  MESSAGE_COMMAND_SLASH: boolean;
+  MESSAGE_COMMAND_AUTHORISED_USERS: string;
+  MESSAGE_WEBHOOK_ENABLED: boolean;
+  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: number;
+  MESSAGE_ACTIVITY_TIME_WINDOW: number;
+  MESSAGE_WAKEWORDS: string[];
+  MESSAGE_INTERROBANG_BONUS: number;
+  MESSAGE_MENTION_BONUS: number;
+  MESSAGE_BOT_RESPONSE_MODIFIER: number;
+  MESSAGE_FILTER_BY_USER: boolean;
+  MESSAGE_HISTORY_LIMIT: number;
+  MESSAGE_STRIP_BOT_ID: boolean;
+  MESSAGE_ADD_USER_HINT: boolean;
+}
+
+// Create the convict schema
+const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>({
   MESSAGE_PROVIDER: {
     doc: 'Message provider (e.g., discord)',
     format: String,
@@ -84,7 +110,7 @@ const messageConfig = convict({
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window for recent activity (in milliseconds).',
     format: Number,
-    default: 300000, // 5 minutes
+    default: 300000,
     env: 'MESSAGE_ACTIVITY_WINDOW'
   },
   MESSAGE_WAKEWORDS: {
@@ -113,15 +139,27 @@ const messageConfig = convict({
     default: true,
     env: 'MESSAGE_FILTER_BY_USER'
   },
-  MESSAGE_HISTORY_LIMIT: {  // New config entry
+  MESSAGE_HISTORY_LIMIT: {
     doc: 'Number of messages to fetch from the channel history.',
     format: 'int',
     default: 10,
     env: 'MESSAGE_HISTORY_LIMIT'
+  },
+  MESSAGE_STRIP_BOT_ID: {
+    doc: 'Remove bot ID references from messages',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_STRIP_BOT_ID'
+  },
+  MESSAGE_ADD_USER_HINT: {
+    doc: 'Add a user hint (e.g., "from <user>") in messages',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_ADD_USER_HINT'
   }
 });
 
-// Load configuration from JSON file
+// Load the configuration from JSON file
 const configFilePath = path.join(__dirname, '../../../config/providers/message.json');
 messageConfig.loadFile(configFilePath);
 
