@@ -4,6 +4,8 @@
  * This module handles incoming messages, processes commands, and interacts with the LLM.
  */
 
+import { stripBotId } from '../helpers/processing/stripBotId';
+import { addUserHint } from '../helpers/processing/addUserHint';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { validateMessage } from '@src/message/helpers/handler/validateMessage';
@@ -25,6 +27,8 @@ const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
  */
 export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<void> {
     const provider = getMessageProvider();
+    const botId = provider.getClientId();  // Get the bot ID dynamically
+    const userId = message.getAuthorId();
     const startTime = Date.now(); // Track start time for processing
 
     if (!message.getAuthorId() || !message.getChannelId()) {
@@ -45,28 +49,30 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     const filterByUser = messageConfig.get('MESSAGE_FILTER_BY_USER');
     debug(`MESSAGE_FILTER_BY_USER: ${filterByUser}`);  // Confirm the config value
 
+    let processedMessage = message.getText();
+
+    // Apply bot ID stripping and user hinting
+    processedMessage = stripBotId(processedMessage, botId);
+    processedMessage = addUserHint(processedMessage, userId, botId);
+
+    debug(`Processed message: "${processedMessage}"`);
+    console.log(`Processed message: "${processedMessage}"`);
+
     let llmInputMessages: IMessage[] = [];
 
     if (filterByUser) {
-        const userId = message.getAuthorId();
-        debug(`Filtering messages for user ID: ${userId}`);
-
         const userMessages = historyMessages.filter((msg) => {
             const isFromUser = msg.getAuthorId() === userId;
             debug(`Checking message ID: ${msg.getMessageId()} - Is from user? ${isFromUser}`);
             return isFromUser;
         });
 
-        debug(`Found ${userMessages.length} messages from user ${userId}.`);
-
-        if (userMessages.length > 0) {
+        if (userMessages.length) {
             const aggregatedText = userMessages
                 .map((msg) => msg.getText().trim() || '[No content]')
                 .join(' ');
 
             debug(`Aggregated text for user ${userId}: "${aggregatedText}"`);
-
-            // Use setText() to update the message content
             message.setText(aggregatedText);
         } else {
             debug('No messages found to aggregate. Skipping aggregation.');
@@ -110,7 +116,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     const llmProvider = getLlmProvider();
     const llmResponse = await llmProvider.generateChatCompletion(
-        message.getText() || "",
+        message.getText() || '',
         llmInputMessages
     );
 
