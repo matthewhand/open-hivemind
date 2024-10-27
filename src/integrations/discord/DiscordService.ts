@@ -140,7 +140,7 @@ export class DiscordService implements IMessengerService {
   }
 
   public getClientId(): string {
-    return this.botUserId || 'unknown-client-id';
+    return this.botUserId || '';
   }
 
   public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
