@@ -1,3 +1,5 @@
+// src/integrations/discord/DiscordService.ts
+
 /**
  * DiscordService.ts
  *
@@ -7,14 +9,12 @@
 
 import { 
   Client, 
-  Message as DiscordMessage, 
-  EmbedBuilder, 
-  PartialGroupDMChannel, 
+  Message as DiscordMessageType, 
+  GatewayIntentBits, 
   TextChannel, 
-  DMChannel, 
-  GatewayIntentBits 
+  DMChannel 
 } from 'discord.js';
-import DiscordMessageWrapper from '@src/integrations/discord/DiscordMessage'; // Renamed to avoid conflict with DiscordMessage from discord.js
+import DiscordMessage from '@src/integrations/discord/DiscordMessage';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
@@ -23,7 +23,6 @@ import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import messageConfig from '@message/interfaces/messageConfig';
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
 import { ChatHistory } from '@src/message/common/chatHistory';
-import { MessageDelayScheduler } from '@src/message/helpers/handler/MessageDelayScheduler';
 import fs from 'fs';
 import path from 'path';
 
@@ -56,7 +55,7 @@ export class DiscordService implements IMessengerService {
   private messageTimestamps: Record<string, number[]> = {}; // For rate limiting
 
   private constructor() {
-    log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates');
+    log('Initializing Client with intents: Guilds, GuildMessages, GuildVoiceStates, MessageContent');
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -115,7 +114,7 @@ export class DiscordService implements IMessengerService {
 
       if (this.messageHandler) {
         log('Setting up custom message handler');
-        this.client.on('messageCreate', async (message: DiscordMessage) => {
+        this.client.on('messageCreate', async (message: DiscordMessageType) => {
           log(`Incoming Message Channel ID: ${message.channel.id}`);
 
           // Filter messages from specific channel if configured
@@ -145,8 +144,8 @@ export class DiscordService implements IMessengerService {
             fs.appendFileSync(discordLogFile, `Message: ${JSON.stringify(message)}\n`);
           }
 
-          // Convert DiscordMessage to IMessage
-          const iMessage: IMessage = new DiscordMessageWrapper(message);
+          // Convert DiscordMessageType to IMessage
+          const iMessage: IMessage = new DiscordMessage(message);
 
           // Add message to chat history
           this.chatHistory.addMessage(iMessage);
@@ -194,16 +193,6 @@ export class DiscordService implements IMessengerService {
       log(error.stack);
       process.exit(1); // Exit process if Discord client fails to start
     }
-  }
-
-  /**
-   * Checks if the bot is mentioned in the message.
-   * @param {DiscordMessage} message - The Discord message to check.
-   * @returns {boolean} True if the bot is mentioned, else false.
-   */
-  private isBotMentioned(message: DiscordMessage): boolean {
-    if (!this.botUserId) return false;
-    return message.mentions.has(this.botUserId);
   }
 
   /**
@@ -269,7 +258,7 @@ export class DiscordService implements IMessengerService {
         throw new Error('Unsupported channel type.');
       }
       const messages = await channel.messages.fetch({ limit });
-      return messages.map((msg) => new DiscordMessageWrapper(msg));
+      return messages.map((msg) => new DiscordMessage(msg));
     } catch (error: any) {
       log(`Failed to fetch messages from channel ${channelId}: ${error.message}`);
       throw error;
@@ -288,7 +277,7 @@ export class DiscordService implements IMessengerService {
     this.messageTimestamps[channelId].push(currentTime);
     // Remove timestamps older than 60 seconds
     this.messageTimestamps[channelId] = this.messageTimestamps[channelId].filter(
-      timestamp => currentTime - timestamp <= 60000
+      (timestamp) => currentTime - timestamp <= 60000
     );
     log(`Recorded message timestamp for channel ${channelId}. Total in last minute: ${this.messageTimestamps[channelId].length}`);
   }
@@ -307,7 +296,7 @@ export class DiscordService implements IMessengerService {
 
     // Remove timestamps older than 60 seconds
     this.messageTimestamps[channelId] = this.messageTimestamps[channelId].filter(
-      timestamp => currentTime - timestamp <= 60000
+      (timestamp) => currentTime - timestamp <= 60000
     );
 
     const isLimited = this.messageTimestamps[channelId].length >= this.rateLimitPerChannel;

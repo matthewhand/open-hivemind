@@ -182,7 +182,7 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
   },
   MESSAGE_DECAY_RATE: {
     doc: 'Decay rate for calculating message delays.',
-    format: 'number',
+    format: 'Number',
     default: -0.5,
     env: 'MESSAGE_DECAY_RATE'
   },

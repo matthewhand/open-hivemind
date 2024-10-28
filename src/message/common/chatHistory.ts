@@ -1,3 +1,7 @@
+// src/message/common/chatHistory.ts
+
+import { IMessage } from '@src/message/interfaces/IMessage';
+
 /**
  * ChatHistory - Tracks messages sent by the bot for timing and activity purposes.
  * 
@@ -6,16 +10,9 @@
  * - Querying messages within a specific timeframe.
  * - Clearing old messages to maintain memory efficiency.
  */
-
-interface ChatMessage {
-  content: string;
-  timestamp: number;
-  channelId: string;
-}
-
 export class ChatHistory {
   private static instance: ChatHistory;
-  private history: ChatMessage[] = [];
+  private history: IMessage[] = [];
 
   /**
    * Singleton pattern: Ensures only one instance of ChatHistory is used across the bot.
@@ -30,32 +27,28 @@ export class ChatHistory {
 
   /**
    * Adds a new message to the chat history.
-   * @param {string} content - The content of the message sent by the bot.
-   * @param {string} channelId - The ID of the channel where the message was sent.
+   * @param {IMessage} message - The IMessage instance to add.
    */
-  public addMessage(content: string, channelId: string): void {
-    if (!content || !channelId) {
-      console.error('[ChatHistory] Invalid message or channel ID provided.');
-      return;
-    }
-    const newMessage: ChatMessage = { content, timestamp: Date.now(), channelId };
-    this.history.push(newMessage);
-    console.debug('[ChatHistory] Message added:', newMessage);
+  public addMessage(message: IMessage): void {
+    this.history.push(message);
+    console.debug('[ChatHistory] Message added:', message.getMessageId());
   }
 
   /**
    * Retrieves all messages sent within the specified timeframe.
    * @param {number} timeframe - The time in milliseconds to look back (e.g., last 60000 ms).
-   * @returns {ChatMessage[]} An array of messages sent within the timeframe.
+   * @returns {IMessage[]} An array of messages sent within the timeframe.
    */
-  public getRecentMessages(timeframe: number): ChatMessage[] {
+  public getRecentMessages(timeframe: number): IMessage[] {
     if (timeframe <= 0) {
       console.error('[ChatHistory] Invalid timeframe provided:', timeframe);
       return [];
     }
     const currentTime = Date.now();
-    const recentMessages = this.history.filter(msg => currentTime - msg.timestamp <= timeframe);
-    console.debug('[ChatHistory] Recent messages retrieved:', recentMessages);
+    const recentMessages = this.history.filter(
+      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
+    );
+    console.debug('[ChatHistory] Recent messages retrieved:', recentMessages.map(m => m.getMessageId()));
     return recentMessages;
   }
 
@@ -64,7 +57,10 @@ export class ChatHistory {
    * @param {number} cutoffTime - The time in milliseconds (messages older than this will be removed).
    */
   public clearOldMessages(cutoffTime: number): void {
-    this.history = this.history.filter(msg => msg.timestamp > cutoffTime);
-    console.debug('[ChatHistory] Cleared old messages. Current history size:', this.history.length);
+    const cutoffDate = new Date(Date.now() - cutoffTime);
+    const initialLength = this.history.length;
+    this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
+    const clearedMessages = initialLength - this.history.length;
+    console.debug(`[ChatHistory] Cleared ${clearedMessages} old messages. Current history size: ${this.history.length}`);
   }
 }

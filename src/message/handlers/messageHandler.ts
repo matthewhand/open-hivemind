@@ -16,7 +16,7 @@ import { shouldReplyToMessage, markChannelAsInteracted } from '../helpers/proces
 import { MessageDelayScheduler } from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import messageConfig from '@src/message/interfaces/messageConfig';
-import { getMessageProvider as getProvider } from '@src/message/management/getMessageProvider';
+import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
@@ -163,22 +163,22 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 }
 
-/**
- * Retrieves the IMessageProvider instance based on configuration.
- * This function ensures that the message provider is initialized only once.
- * @returns {IMessageProvider} The message provider instance.
- */
-function getMessageProvider(): IMessageProvider {
-    const provider = messageConfig.get('MESSAGE_PROVIDER');
-    switch (provider) {
-        case 'discord':
-            const { DiscordMessageProvider } = require('../../integrations/discord/DiscordMessageProvider');
-            return new DiscordMessageProvider();
-        // Add cases for other providers as needed
-        default:
-            throw new Error(`Unsupported message provider: ${provider}`);
-    }
-}
+// /**
+//  * Retrieves the IMessageProvider instance based on configuration.
+//  * This function ensures that the message provider is initialized only once.
+//  * @returns {IMessageProvider} The message provider instance.
+//  */
+// function getMessageProvider(): IMessageProvider {
+//     const provider = messageConfig.get('MESSAGE_PROVIDER');
+//     switch (provider) {
+//         case 'discord':
+//             const { DiscordMessageProvider } = require('../../integrations/discord/DiscordMessageProvider');
+//             return new DiscordMessageProvider();
+//         // Add cases for other providers as needed
+//         default:
+//             throw new Error(`Unsupported message provider: ${provider}`);
+//     }
+// }
 
 /**
  * Generates a response based on the processed message.

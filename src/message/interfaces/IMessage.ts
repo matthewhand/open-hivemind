@@ -34,6 +34,12 @@ export abstract class IMessage {
     abstract getText(): string;
 
     /**
+     * Retrieves the timestamp of the message.
+     * @returns {Date} The message timestamp.
+     */
+    abstract getTimestamp(): Date;
+    
+    /**
      * Sets the text content of the message.
      * @param {string} text - The new text content for the message.
      */
