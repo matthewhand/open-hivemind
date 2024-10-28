@@ -25,6 +25,15 @@ interface MessageConfigSchema {
   MESSAGE_HISTORY_LIMIT: number;
   MESSAGE_STRIP_BOT_ID: boolean;
   MESSAGE_ADD_USER_HINT: boolean;
+
+  // **Newly Added Configurations**
+  MESSAGE_MAX_DELAY: number;
+  MESSAGE_MIN_DELAY: number;
+  MESSAGE_DECAY_RATE: number;
+  MESSAGE_RATE_LIMIT_PER_CHANNEL: number;
+  DISCORD_TOKEN: string;
+  PLATFORM: string;
+  BOT_ID: string;
 }
 
 // Create the convict schema
@@ -156,6 +165,50 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     format: Boolean,
     default: true,
     env: 'MESSAGE_ADD_USER_HINT'
+  },
+
+  // **Newly Added Configurations**
+  MESSAGE_MAX_DELAY: {
+    doc: 'Maximum delay before sending a message (ms)',
+    format: 'int',
+    default: 10000,
+    env: 'MESSAGE_MAX_DELAY'
+  },
+  MESSAGE_MIN_DELAY: {
+    doc: 'Minimum delay before sending a message (ms)',
+    format: 'int',
+    default: 1000,
+    env: 'MESSAGE_MIN_DELAY'
+  },
+  MESSAGE_DECAY_RATE: {
+    doc: 'Decay rate for calculating message delays.',
+    format: 'number',
+    default: -0.5,
+    env: 'MESSAGE_DECAY_RATE'
+  },
+  MESSAGE_RATE_LIMIT_PER_CHANNEL: {
+    doc: 'Maximum number of messages a channel can receive per minute.',
+    format: 'int',
+    default: 5,
+    env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL'
+  },
+  DISCORD_TOKEN: {
+    doc: 'Discord bot token for authentication.',
+    format: String,
+    default: '',
+    env: 'DISCORD_TOKEN'
+  },
+  PLATFORM: {
+    doc: 'The platform the bot is running on.',
+    format: ['discord', 'slack', 'generic'], // Adjust based on supported platforms
+    default: 'discord',
+    env: 'PLATFORM'
+  },
+  BOT_ID: {
+    doc: 'The unique identifier for the bot.',
+    format: String,
+    default: '',
+    env: 'BOT_ID'
   }
 });
 

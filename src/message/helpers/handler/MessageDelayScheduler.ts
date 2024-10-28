@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { sendTyping } from '@src/message/helpers/handler/sendTyping';
 import { ChatHistory } from '../../common/chatHistory';
+import messageConfig from '../../interfaces/messageConfig';
 
 const debug = Debug('app:MessageDelayScheduler');
 
@@ -16,6 +17,8 @@ export class MessageDelayScheduler {
   private decayRate: number;
   private typingInterval: NodeJS.Timeout | null = null;
   private delayTime: number = 0;
+  private rateLimitPerChannel: number;
+  private messageTimestamps: Record<string, number[]> = {};
 
   /**
    * Singleton pattern to ensure only one instance of MessageDelayScheduler.
@@ -23,18 +26,20 @@ export class MessageDelayScheduler {
    */
   public static getInstance(): MessageDelayScheduler {
     if (!MessageDelayScheduler.instance) {
-      MessageDelayScheduler.instance = new MessageDelayScheduler({});
+      debug('Creating a new instance of MessageDelayScheduler');
+      MessageDelayScheduler.instance = new MessageDelayScheduler();
     }
     return MessageDelayScheduler.instance;
   }
 
   /**
-   * Constructor with delay and decay settings.
+   * Constructor with delay and decay settings from configuration.
    */
-  private constructor({ maxDelay = 10000, minDelay = 1000, decayRate = -0.5 } = {}) {
-    this.maxDelay = maxDelay;
-    this.minDelay = minDelay;
-    this.decayRate = decayRate;
+  private constructor() {
+    this.maxDelay = messageConfig.get('MESSAGE_MAX_DELAY') || 10000;
+    this.minDelay = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
+    this.decayRate = messageConfig.get('MESSAGE_DECAY_RATE') || -0.5;
+    this.rateLimitPerChannel = messageConfig.get('MESSAGE_RATE_LIMIT_PER_CHANNEL') || 5;
   }
 
   /**
@@ -67,7 +72,7 @@ export class MessageDelayScheduler {
 
     const timeSinceLastIncomingMessage = currentTime - channelInfo.lastIncomingMessageTime;
     const recentMessages = this.chatHistory.getRecentMessages(60000);
-    const activityMultiplier = Math.pow(1.2, recentMessages.length);
+    const activityMultiplier = Math.min(Math.pow(1.2, recentMessages.length), 5); // Capped at 5x
     const sizeMultiplier = Math.max(1, messageContent.length / 50);
 
     let delay = Math.exp(this.decayRate * timeSinceLastIncomingMessage / 1000) * this.maxDelay;
@@ -90,14 +95,64 @@ export class MessageDelayScheduler {
     processingTime: number,
     sendFunction: (message: string) => void
   ): void {
+    if (this.isRateLimited(channelId)) {
+      debug(`Channel ${channelId} is rate-limited. Message not scheduled.`);
+      return;
+    }
+
     const delay = this.calculateDelay(channelId, messageContent, processingTime);
     debug(`Scheduling message in channel ${channelId} with delay of ${delay}ms.`);
 
-
     setTimeout(() => {
-      sendFunction(messageContent);
-      this.logIncomingMessage(channelId);
+      try {
+        sendFunction(messageContent);
+        this.logIncomingMessage(channelId);
+        this.recordMessageTimestamp(channelId);
+      } catch (error) {
+        debug(`Error sending message: ${(error as Error).message}`);
+      }
     }, delay);
+  }
+
+  /**
+   * Records the timestamp of a sent message for rate limiting.
+   * @param channelId - The channel ID.
+   */
+  private recordMessageTimestamp(channelId: string): void {
+    const currentTime = Date.now();
+    if (!this.messageTimestamps[channelId]) {
+      this.messageTimestamps[channelId] = [];
+    }
+    this.messageTimestamps[channelId].push(currentTime);
+    // Remove timestamps older than 60 seconds
+    this.messageTimestamps[channelId] = this.messageTimestamps[channelId].filter(
+      timestamp => currentTime - timestamp <= 60000
+    );
+  }
+
+  /**
+   * Checks if the channel is rate-limited.
+   * @param channelId - The channel ID.
+   * @returns {boolean} True if rate-limited, else false.
+   */
+  private isRateLimited(channelId: string): boolean {
+    const currentTime = Date.now();
+    if (!this.messageTimestamps[channelId]) {
+      this.messageTimestamps[channelId] = [];
+      return false;
+    }
+
+    // Remove timestamps older than 60 seconds
+    this.messageTimestamps[channelId] = this.messageTimestamps[channelId].filter(
+      timestamp => currentTime - timestamp <= 60000
+    );
+
+    const isLimited = this.messageTimestamps[channelId].length >= this.rateLimitPerChannel;
+    if (isLimited) {
+      debug(`Channel ${channelId} has reached the rate limit of ${this.rateLimitPerChannel} messages per minute.`);
+    }
+
+    return isLimited;
   }
 
   /**
