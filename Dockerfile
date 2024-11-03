@@ -49,6 +49,9 @@
     COPY entrypoint-restart.sh /app/entrypoint-restart.sh
     RUN chmod +x /app/entrypoint-restart.sh
     
+    # Copy the config directory for runtime
+    COPY --from=build /app/config /app/config
+    
     # Set the entrypoint script to handle process restarts
     ENTRYPOINT ["/app/entrypoint-restart.sh"]
     
