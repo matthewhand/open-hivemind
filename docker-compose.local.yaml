@@ -1,6 +1,8 @@
 services:
   open-hivemind-agent:
-    image: mhand79/open-hivemind:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "3020:3020"
