@@ -3,11 +3,13 @@ module.exports = {
   coverageDirectory: "coverage",
   coverageReporters: ["html", "text", "lcov"],
 
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/tests'],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.tsx?$': 'ts-jest'
   },
-  testRegex: '(/src/.*|(\\.|/)test)\\.tsx?$',
+  testRegex: '(\\.|/)test\\.tsx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/',
