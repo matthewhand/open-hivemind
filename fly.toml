@@ -1,0 +1,26 @@
+# fly.toml app configuration file generated for open-hivemind on 2025-01-17T22:46:58Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'open-hivemind'
+primary_region = 'syd'
+
+[build]
+  image = 'mhand79/open-hivemind'
+
+[env]
+  PORT = '5005'
+
+[http_service]
+  internal_port = 5005
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
