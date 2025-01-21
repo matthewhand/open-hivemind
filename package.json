@@ -18,15 +18,15 @@
     "ncu": "ncu"
   },
   "_moduleAliases": {
-    "@src": "dist/src",
-    "@command": "dist/src/command",
-    "@common": "dist/src/common",
-    "@config": "dist/src/config",
-    "@llm": "dist/src/llm",
-    "@message": "dist/src/message",
-    "@webhook": "dist/src/webhook",
-    "@integrations": "dist/src/integrations",
-    "@types": "dist/src/types"
+    "@src": "src",
+    "@command": "src/command",
+    "@common": "src/common",
+    "@config": "src/config",
+    "@llm": "src/llm",
+    "@message": "src/message",
+    "@webhook": "src/webhook",
+    "@integrations": "src/integrations",
+    "@types": "src/types"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
