@@ -1,20 +1,3 @@
-// Mock logger globally
-jest.mock('@src/utils/logger', () => ({
-  warn: jest.fn(),
-  info: jest.fn(),
-  error: jest.fn(),
-}));
-
-// Mock logger globally
-jest.mock('@src/utils/logger', () => ({
-  __esModule: true,
-  default: {
-    warn: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-  },
-}));
-
 // Mock messageConfig globally
 jest.mock('@src/message/interfaces/messageConfig', () => ({
   __esModule: true,

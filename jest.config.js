@@ -12,7 +12,8 @@ module.exports = {
   testRegex: '(\\.|/)test\\.tsx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    '^@src/(.*)$': '<rootDir>/src/',
+    '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts', // Added specific mapping for logger
+    '^@src/(.*)$': '<rootDir>/src/$1',
     '^@command/(.*)$': '<rootDir>/src/command/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
