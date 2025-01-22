@@ -19,7 +19,7 @@ import messageConfig from '@src/message/interfaces/messageConfig';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
-const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
+const ignoreBots = messageConfig?.get?.('MESSAGE_IGNORE_BOTS') === true || true;
 
 // Initialize a single instance of IMessageProvider to avoid repetitive calls
 const messageProvider: IMessageProvider = getMessageProvider();
