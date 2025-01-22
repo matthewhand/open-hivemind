@@ -14,12 +14,28 @@ jest.mock('@llm/interfaces/llmConfig', () => ({
 }));
 
 describe('getLlmProvider', () => {
+    it('should return the OpenAI provider when LLM_PROVIDER is openai', () => {
+        const provider = getLlmProvider();
+        expect(provider).toBe(openAiProvider);
+    });
+
+    it('should return the Flowise provider when LLM_PROVIDER is flowise', () => {
+        const llmConfig = require('@llm/interfaces/llmConfig');
+        llmConfig.get.mockReturnValue('flowise');
+        const provider = getLlmProvider();
+        expect(provider).toBe(flowiseProvider);
+    });
+
+    // it('should return the OpenWebUI provider when LLM_PROVIDER is openwebui', () => {
+    //     const llmConfig = require('@llm/interfaces/llmConfig');
+    //     llmConfig.get.mockReturnValue('openwebui');
+    //     const provider = getLlmProvider();
+    //     expect(provider).toBe(openWebUI);
+    // });
 
     it('should throw an error for unknown LLM_PROVIDER', () => {
-        // Update the mock to return an unknown provider
         const llmConfig = require('@llm/interfaces/llmConfig');
         llmConfig.get.mockReturnValue('unknown');
-
         expect(() => getLlmProvider()).toThrow('Unknown LLM provider: unknown');
     });
 });
