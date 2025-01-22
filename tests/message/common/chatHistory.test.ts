@@ -1,8 +1,8 @@
-import { getChatHistory } from '@message/common/chatHistory';
+import { ChatHistory } from '@message/common/chatHistory';
 
 describe('ChatHistory', () => {
   it('should retrieve chat history', () => {
-    const history = getChatHistory();
+    const history = ChatHistory.getInstance();
     expect(history).toBeDefined();
   });
 });
