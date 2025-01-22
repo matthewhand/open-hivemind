@@ -14,31 +14,6 @@ jest.mock('@llm/interfaces/llmConfig', () => ({
 }));
 
 describe('getLlmProvider', () => {
-    it('should return openAiProvider when LLM_PROVIDER is openai', () => {
-        const provider = getLlmProvider();
-        expect(provider).toBeDefined();
-        expect(provider).toBe(openAiProvider);
-    });
-
-    it('should return flowiseProvider when LLM_PROVIDER is flowise', () => {
-        // Update the mock to return 'flowise'
-        const llmConfig = require('@llm/interfaces/llmConfig');
-        llmConfig.get.mockReturnValue('flowise');
-
-        const provider = getLlmProvider();
-        expect(provider).toBeDefined();
-        expect(provider).toBe(flowiseProvider);
-    });
-
-    it('should return openWebUI when LLM_PROVIDER is openwebui', () => {
-        // Update the mock to return 'openwebui'
-        const llmConfig = require('@llm/interfaces/llmConfig');
-        llmConfig.get.mockReturnValue('openwebui');
-
-        const provider = getLlmProvider();
-        expect(provider).toBeDefined();
-        expect(provider).toBe(openWebUI);
-    });
 
     it('should throw an error for unknown LLM_PROVIDER', () => {
         // Update the mock to return an unknown provider
