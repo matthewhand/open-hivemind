@@ -2,14 +2,84 @@
  * Class representing an LLM (Large Language Model) response.
  */
 class LLMResponse {
+    private id: string;
+    private object: string;
+    private created: number;
+    private model: string;
+    private choices: { index: number, message: { role: string, content: string }, finish_reason: string }[];
+    private usage: { prompt_tokens: number, completion_tokens: number, total_tokens: number };
     private content: string;
     private finish_reason: string;
     private completion_tokens: number;
 
-    constructor(content: string, finish_reason: string = 'completed', completion_tokens: number = 0) {
+    constructor(
+        id: string,
+        object: string,
+        created: number,
+        model: string,
+        choices: { index: number, message: { role: string, content: string }, finish_reason: string }[],
+        usage: { prompt_tokens: number, completion_tokens: number, total_tokens: number },
+        content: string,
+        finish_reason: string = 'completed',
+        completion_tokens: number = 0
+    ) {
+        this.id = id;
+        this.object = object;
+        this.created = created;
+        this.model = model;
+        this.choices = choices;
+        this.usage = usage;
         this.content = content;
         this.finish_reason = finish_reason;
         this.completion_tokens = completion_tokens;
+    }
+
+    /**
+     * Retrieves the ID of the response.
+     * @returns {string} The response ID.
+     */
+    getId(): string {
+        return this.id;
+    }
+
+    /**
+     * Retrieves the object type of the response.
+     * @returns {string} The object type.
+     */
+    getObject(): string {
+        return this.object;
+    }
+
+    /**
+     * Retrieves the creation timestamp of the response.
+     * @returns {number} The creation timestamp.
+     */
+    getCreated(): number {
+        return this.created;
+    }
+
+    /**
+     * Retrieves the model used for the response.
+     * @returns {string} The model name.
+     */
+    getModel(): string {
+        return this.model;
+    }
+
+    /**
+     * Retrieves the choices in the response.
+     * @returns {Array} The choices array.
+     */
+    getChoices(): { index: number, message: { role: string, content: string }, finish_reason: string }[] {
+        return this.choices;
+    }
+
+    /**
+     * Retrieves the usage statistics of the response.
+     * @returns {Object} The usage statistics.
+     */
+    getUsage(): { prompt_tokens: number, completion_tokens: number, total_tokens: number } {
+        return this.usage;
     }
 
     /**
