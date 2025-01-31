@@ -2,7 +2,16 @@ import { IMessageProvider } from '../interfaces/IMessageProvider';
 import { SlackService } from '../../integrations/slack/SlackService';
 
 export class SlackMessageProvider implements IMessageProvider {
-  private slackService = new SlackService();
+  private _slackService?: SlackService;
+  private get slackService() {
+    if (process.env.NODE_ENV === 'test') {
+      return SlackService.getInstance();
+    }
+    if (!this._slackService) {
+      this._slackService = SlackService.getInstance();
+    }
+    return this._slackService;
+  }
 
   async sendMessage(channelId: string, message: string) {
     await this.slackService.sendMessage(channelId, message);

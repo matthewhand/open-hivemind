@@ -1,17 +1,22 @@
-import express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { SlackService } from './SlackService';
 
-const router = express.Router();
-export let slackService = new SlackService(); // Export it for mocking
+export class SlackEventListener {
+  private slackService: SlackService;
+  private req: Request;
+  private res: Response;
+  private next: NextFunction;
 
-router.post('/slack/events', async (req, res) => {
-  const { event } = req.body;
-
-  if (event && event.type === 'message' && !event.bot_id) {
-    await slackService.sendMessage(event.channel, `You said: ${event.text}`);
+  constructor(req: Request, res: Response, next: NextFunction) {
+    this.slackService = SlackService.getInstance();
+    this.req = req;
+    this.res = res;
+    this.next = next;
   }
 
-  res.sendStatus(200);
-});
-
-export default router;
+  public async handleEvent(event: any) {
+    if (event && event.type === 'message' && !event.bot_id) {
+      await this.slackService.sendMessage(event.channel, `You said: ${event.text}`);
+    }
+  }
+}

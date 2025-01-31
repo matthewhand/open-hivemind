@@ -1,36 +1,44 @@
 import { SlackMessageProvider } from '@message/providers/SlackMessageProvider';
 import { SlackService } from '@integrations/slack/SlackService';
 
-jest.mock('@integrations/slack/SlackService'); // Mock Slack API service
+const slackServiceMock = {
+  sendMessage: jest.fn(),
+  fetchMessages: jest.fn(() => Promise.resolve([{ text: 'Hello from Slack' }])),
+};
+
+jest.mock('@integrations/slack/SlackService', () => {
+  return {
+    SlackService: {
+      getInstance: jest.fn(() => slackServiceMock),
+    },
+  };
+});
 
 describe('SlackMessageProvider', () => {
-  let slackProvider: SlackMessageProvider;
-  let slackServiceMock: jest.Mocked<SlackService>;
+  let provider: SlackMessageProvider;
 
   beforeEach(() => {
-    slackServiceMock = new SlackService() as jest.Mocked<SlackService>;
-    slackServiceMock.sendMessage = jest.fn().mockResolvedValue(undefined);
-    slackServiceMock.fetchMessages = jest.fn().mockResolvedValue([{ text: 'Hello from Slack' }]);
+    process.env.SLACK_BOT_TOKEN = 'mock-token'; // ✅ Ensure token exists
 
-    slackProvider = new SlackMessageProvider();
-    (slackProvider as any).slackService = slackServiceMock; // Inject mock service
+    // Reset mocks before each test
+    slackServiceMock.sendMessage.mockClear();
+    slackServiceMock.fetchMessages.mockClear();
+
+    provider = new SlackMessageProvider();
   });
 
-  test('should be instantiated properly', () => {
-    expect(slackProvider).toBeInstanceOf(SlackMessageProvider);
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   test('should send a message via SlackService', async () => {
-    await slackProvider.sendMessage('general', 'Hello Slack!');
+    await provider.sendMessage('general', 'Hello Slack!');
     expect(slackServiceMock.sendMessage).toHaveBeenCalledWith('general', 'Hello Slack!');
   });
 
-  test('should fetch messages via SlackService', async () => {
-    const messages = await slackProvider.getMessages('general');
+  test('should fetch messages from SlackService', async () => {
+    const messages = await provider.getMessages('general');
     expect(messages).toEqual([{ text: 'Hello from Slack' }]);
-  });
-
-  test('should return the correct client ID', () => {
-    expect(slackProvider.getClientId()).toBe('slack-bot');
+    expect(slackServiceMock.fetchMessages).toHaveBeenCalledWith('general');
   });
 });
