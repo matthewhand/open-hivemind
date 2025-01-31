@@ -1,6 +1,7 @@
 import { DiscordService } from '@src/integrations/discord/DiscordService';
+import { SlackMessageProvider } from '@message/providers/SlackMessageProvider';
 import Debug from 'debug';
-import messageConfig from '@src/message/interfaces/messageConfig'; // Correct reference to messageConfig
+import messageConfig from '@src/message/interfaces/messageConfig';
 
 const debug = Debug('app:getMessageProvider');
 
@@ -28,8 +29,9 @@ export function getMessageProvider() {
   // Return the appropriate message provider based on configuration
   switch (messageProvider.toLowerCase()) {
     case 'discord':
-      return DiscordService.getInstance();
-    // Add additional cases for other providers here
+      return DiscordService.getInstance(); // ✅ Singleton pattern
+    case 'slack':
+      return new SlackMessageProvider(); // ✅ Direct instantiation
     default:
       throw new Error(`Unsupported message provider: ${messageProvider}`);
   }
