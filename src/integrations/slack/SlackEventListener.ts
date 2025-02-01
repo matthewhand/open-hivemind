@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { SlackService } from './SlackService';
-import Debug from 'debug';
-
-const debug = Debug('app:SlackEventListener');
+import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { extractSlackMetadata } from './slackMetadata';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 export class SlackEventListener {
   private slackService: SlackService;
@@ -18,11 +18,18 @@ export class SlackEventListener {
   }
 
   public async handleEvent(event: any) {
-    // For Slack, we currently echo the message.
-    // In the future, you might convert the Slack event to a common message model
-    // and pass it through the same handler as Discord messages.
     if (event && event.type === 'message' && !event.bot_id) {
-      await this.slackService.sendMessage(event.channel, `You said: ${event.text}`);
+      let metadata = {};
+      if (process.env.INCLUDE_SLACK_METADATA === 'true') {
+        metadata = extractSlackMetadata(event);
+      }
+      const llmProvider = getLlmProvider();
+        // For simplicity, pass an empty history array.
+        if (!('generateChatCompletion' in llmProvider)) {
+          throw new Error('llmProvider does not implement generateChatCompletion');
+        }
+        const response = await (llmProvider as ILlmProvider).generateChatCompletion(event.text, [], metadata);
+        await this.slackService.sendMessage(event.channel, response);
     }
   }
 }
