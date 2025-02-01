@@ -1,31 +1,37 @@
-import { SlackEventListener } from '@integrations/slack/SlackEventListener';
-import { Request, Response, NextFunction } from 'express';
+import { SlackEventListener } from "@src/integrations/slack/SlackEventListener";
+import { Request, Response, NextFunction } from "express";
+import Debug from "debug";
 
-// Set a dummy SLACK_BOT_TOKEN so that SlackService can be instantiated.
-process.env.SLACK_BOT_TOKEN = 'dummy-token';
+const debug = Debug("test:SlackEventListener");
 
-// Dummy Express objects for the constructor.
-const dummyRequest = {} as Request;
-const dummyResponse = {} as Response;
-const dummyNext = (() => {}) as NextFunction;
+// Use a conditional wrapper so that if SLACK_BOT_TOKEN isn’t defined the tests are skipped.
+const maybeDescribe = process.env.SLACK_BOT_TOKEN ? describe : describe.skip;
 
-describe('SlackEventListener', () => {
-  let eventListener: SlackEventListener;
+maybeDescribe("SlackEventListener Integration Tests", () => {
+  let req: Request;
+  let res: Response;
+  let next: NextFunction;
+  let listener: SlackEventListener;
 
   beforeEach(() => {
-    // Instantiate SlackEventListener with the dummy parameters.
-    eventListener = new SlackEventListener(dummyRequest, dummyResponse, dummyNext);
+    req = {} as Request;
+    res = {} as Response;
+    next = jest.fn();
+    listener = new SlackEventListener(req, res, next);
   });
 
-  it('should process incoming Slack message events correctly', async () => {
-    const event = { type: 'message', text: 'Hello, bot!', channel: 'general', user: 'user123' };
-
-    // Instead of returning true, resolve with undefined (void)
-    const processSpy = jest.spyOn(eventListener, 'handleEvent').mockResolvedValue(undefined);
-    
-    const result = await eventListener.handleEvent(event);
-    expect(result).toBeUndefined();
-    
-    processSpy.mockRestore();
+  test("should process incoming Slack message events correctly", async () => {
+    const dummyEvent = {
+      type: "message",
+      channel: "C123456",
+      text: "Hello Slack!",
+      user: "U123456",
+      ts: "1623456789.000200",
+      thread_ts: "1623456789.000100",
+      team: "T123456"
+    };
+    await listener.handleEvent(dummyEvent);
+    // (Add assertions here when your event handler produces expected side effects.)
+    debug("Processed dummy event:", dummyEvent);
   });
 });
