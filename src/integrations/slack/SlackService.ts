@@ -36,7 +36,7 @@ export class SlackService {
     try {
       await this.slackClient.chat.postMessage({ channel, text });
       debug(`[Slack] Message sent to #${channel}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`[Slack] Failed to send message to #${channel}:`, error);
       throw new Error(`[Slack] Failed to send message: ${error}`);
     }
@@ -52,6 +52,21 @@ export class SlackService {
     } catch (error) {
       console.error(`[Slack] Failed to fetch messages from #${channel}:`, error);
       throw new Error(`[Slack] Failed to fetch messages: ${error}`);
+    }
+  }
+
+  /**
+   * Joins a Slack channel.
+   * @param channel The name of the channel to join.
+   */
+  public async joinChannel(channel: string): Promise<void> {
+    try {
+      await this.slackClient.conversations.join({ channel });
+      debug(`[Slack] Joined channel: #${channel}`);
+      // Once joined, send the welcome message.
+      await this.sendWelcomeMessage(channel);
+    } catch (error) {
+      throw new Error(`[Slack] Failed to join channel: ${channel} - ${error}`);
     }
   }
 
@@ -78,15 +93,44 @@ export class SlackService {
   }
 
   /**
-   * Joins a Slack channel.
-   * @param channel The name of the channel to join.
+   * Sends a welcome message containing a "Getting Started" button to a Slack channel.
+   * This message uses Slack’s Block Kit to present a rich UI.
+   * @param channel The ID of the Slack channel.
    */
-  public async joinChannel(channel: string): Promise<void> {
+  public async sendWelcomeMessage(channel: string): Promise<void> {
     try {
-      await this.slackClient.conversations.join({ channel });
-      debug(`[Slack] Joined channel: #${channel}`);
-    } catch (error) {
-      throw new Error(`[Slack] Failed to join channel: ${channel} - ${error}`);
+      const blocks = [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Welcome to the channel! Click the button below for help getting started."
+          }
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "Getting Started"
+              },
+              "value": "getting_started",
+              "action_id": "getting_started"
+            }
+          ]
+        }
+      ];
+      
+      await this.slackClient.chat.postMessage({
+        channel,
+        text: "Welcome to the channel! Click the button below for help getting started.",
+        blocks
+      });
+      debug(`[Slack] Sent welcome message to channel ${channel}`);
+    } catch (error: any) {
+      console.error(`[Slack] Failed to send welcome message: ${error.message}`);
     }
   }
 }
