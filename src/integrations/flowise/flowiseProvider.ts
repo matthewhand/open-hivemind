@@ -8,22 +8,27 @@ import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 const debug = Debug('app:flowiseProvider');
 
 class FlowiseProvider implements ILlmProvider {
-  constructor() {
+  private chatflowConversationId: string;
+  private chatflowCompletionId: string;
+  private apiKey: string;
+  private apiEndpoint: string;
+
+  constructor(config?: { chatflowConversationId?: string; chatflowCompletionId?: string; apiKey?: string; apiEndpoint?: string }) {
     debug('Initializing FlowiseProvider...');
 
-    const chatflowConversationId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
-    const chatflowCompletionId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
-    const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
-    const apiEndpoint = flowiseConfig.get('FLOWISE_API_ENDPOINT');
+    this.chatflowConversationId = config?.chatflowConversationId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+    this.chatflowCompletionId = config?.chatflowCompletionId || flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
+    this.apiKey = config?.apiKey || flowiseConfig.get('FLOWISE_API_KEY');
+    this.apiEndpoint = config?.apiEndpoint || flowiseConfig.get('FLOWISE_API_ENDPOINT');
 
     debug(`Flowise Configuration:
-      FLOWISE_CONVERSATION_CHATFLOW_ID: ${chatflowConversationId || 'NOT SET'},
-      FLOWISE_COMPLETION_CHATFLOW_ID: ${chatflowCompletionId || 'NOT SET'},
-      API_KEY: ${redactSensitiveInfo('apiKey', apiKey)},
-      API_ENDPOINT: ${apiEndpoint || 'NOT SET'}
+      FLOWISE_CONVERSATION_CHATFLOW_ID: ${this.chatflowConversationId || 'NOT SET'},
+      FLOWISE_COMPLETION_CHATFLOW_ID: ${this.chatflowCompletionId || 'NOT SET'},
+      API_KEY: ${redactSensitiveInfo('apiKey', this.apiKey)},
+      API_ENDPOINT: ${this.apiEndpoint || 'NOT SET'}
     `);
 
-    if (!chatflowConversationId || !chatflowCompletionId || !apiKey || !apiEndpoint) {
+    if (!this.chatflowConversationId || !this.chatflowCompletionId || !this.apiKey || !this.apiEndpoint) {
       debug('Missing critical Flowise configuration items.');
       throw new Error('Flowise configuration is incomplete.');
     } else {
@@ -31,11 +36,11 @@ class FlowiseProvider implements ILlmProvider {
     }
   }
 
-  supportsChatCompletion() {
+  supportsChatCompletion(): boolean {
     return true;
   }
 
-  supportsCompletion() {
+  supportsCompletion(): boolean {
     return true;
   }
 
@@ -44,13 +49,16 @@ class FlowiseProvider implements ILlmProvider {
    */
   async generateChatCompletion(userMessage: string, historyMessages: IMessage[] = []): Promise<string> {
     debug('Starting chat completion with Flowise...');
-    const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+
+    if (!this.chatflowConversationId) {
+      throw new Error('Flowise chatflowConversationId is not set.');
+    }
 
     const prompt = `${userMessage}\n${historyMessages.map(m => m.getText()).join(' ')}`;
     debug(`Generated Prompt: ${prompt}`);
 
     debug('Using SDK client for chat completion');
-    return await getFlowiseSdkResponse(prompt, chatflowId);
+    return await getFlowiseSdkResponse(prompt, this.chatflowConversationId);
   }
 
   /**
@@ -58,14 +66,17 @@ class FlowiseProvider implements ILlmProvider {
    */
   async generateCompletion(prompt: string, systemPrompt: string = ''): Promise<string> {
     debug('Starting completion generation with Flowise...');
-    const chatflowId = flowiseConfig.get('FLOWISE_COMPLETION_CHATFLOW_ID');
+
+    if (!this.chatflowCompletionId) {
+      throw new Error('Flowise chatflowCompletionId is not set.');
+    }
 
     const combinedPrompt = `${systemPrompt}\n${prompt}`;
     debug(`Generated Combined Prompt: ${combinedPrompt}`);
 
     debug('Using SDK client for completion');
-    return await getFlowiseSdkResponse(combinedPrompt, chatflowId);
+    return await getFlowiseSdkResponse(combinedPrompt, this.chatflowCompletionId);
   }
 }
 
-export default new FlowiseProvider();
+export default FlowiseProvider;
