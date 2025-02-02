@@ -26,6 +26,13 @@ export function shouldReplyToMessage(
   botId: string,
   platform: 'discord' | 'generic'
 ): boolean {
+  // --- Force reply override ---
+  if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
+    debug('FORCE_REPLY env var enabled. Forcing reply.');
+    return true;
+  }
+  // --- End override ---
+
   const channelId = message.getChannelId();
   debug(`Evaluating message in channel: ${channelId}`);
 
@@ -68,7 +75,7 @@ function applyModifiers(
   }
 
   if (message.mentionsUsers(botId)) {
-    debug(`Bot ID ${botId} mentioned. Responding`)
+    debug(`Bot ID ${botId} mentioned. Responding.`);
     return 1;
   }
 
@@ -107,8 +114,6 @@ function applyDiscordBonuses(message: any, chance: number): number {
   }
 
   const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
-  // const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
-
   const channelBonus = channelBonuses[message.getChannelId()] ?? 0.0;
   debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
 
