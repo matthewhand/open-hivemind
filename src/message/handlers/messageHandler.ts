@@ -18,24 +18,24 @@ const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
 
 const messageProvider: IMessageProvider = getMessageProvider();
 
-export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<void> {
+export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<string> {
   try {
     debug(`Handling message from user ${message.getAuthorId()} in channel ${message.getChannelId()}.`);
     console.log(`Handling message from user ${message.getAuthorId()} in channel ${message.getChannelId()}.`);
 
     if (!message.getAuthorId() || !message.getChannelId()) {
       debug('Invalid message object. Missing required methods:', JSON.stringify(message));
-      return;
+      return ''; // Return an empty string
     }
 
     if (message.isFromBot() && ignoreBots) {
       debug(`[handleMessage] Ignoring bot message from: ${message.getAuthorId()}`);
-      return;
+      return ''; // Return an empty string for ignored bot messages
     }
 
     if (!(await validateMessage(message))) {
       debug('Message validation failed.');
-      return;
+      return ''; // Return an empty string if validation fails
     }
 
     const filterByUser = messageConfig.get('MESSAGE_FILTER_BY_USER');
@@ -69,20 +69,16 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           debug('Error sending command response:', (error as Error).message);
         }
       });
-      if (commandProcessed) return;
+      if (commandProcessed) return ''; // Return empty string if command was processed
     }
 
     const shouldReply = shouldReplyToMessage(message, botId, messageConfig.get('PLATFORM') as 'discord' | 'generic');
     if (!shouldReply) {
       debug('Message is not eligible for reply:', message);
-      return;
+      return ''; // Return empty string if not eligible for reply
     }
 
     const llmProvider = getLlmProvider();
-    
-    // if (!('generateChatCompletion' in llmProvider)) {
-    //   throw new Error('llmProvider does not implement generateChatCompletion');
-    // }
 
     const llmResponse = await (llmProvider as ILlmProvider).generateChatCompletion(
       message.getText() || '',
@@ -108,6 +104,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       timingManager.scheduleMessage(message.getChannelId(), llmResponse, actualProcessingTime, sendFunction);
       debug('Scheduled LLM response:', llmResponse);
+      return llmResponse; // Return the LLM response string (or you could return processedMessage or any confirmation)
     }
 
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
@@ -115,9 +112,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       await sendFollowUpRequest(message, message.getChannelId(), followUpText);
       debug('Sent follow-up request.');
     }
+
+    return ''; // Default return if no LLM response is generated.
   } catch (error) {
     debug(`Error handling message: ${(error as Error).message}`);
     console.error(`Error handling message: ${(error as Error).message}`);
+    return ''; // Return empty string on error.
   }
 }
 
