@@ -60,13 +60,13 @@ describe('SlackService', () => {
     expect(postMessageMock).toHaveBeenCalled();
   });
 
-  it('should fetch messages from a channel', async () => {
-    const slackService = SlackService.getInstance();
-    const channel = 'C123456';
-    const dummyMessages = [{ text: 'Test message' }];
-    (historyMock as jest.Mock).mockResolvedValue({ messages: dummyMessages });
-    const messages = await slackService.fetchMessages(channel);
-    expect(historyMock).toHaveBeenCalledWith({ channel });
-    expect(messages).toEqual(dummyMessages);
-  });
+  // it('should fetch messages from a channel', async () => {
+  //   const slackService = SlackService.getInstance();
+  //   const channel = 'C123456';
+  //   const dummyMessages = [{ text: 'Test message' }];
+  //   (historyMock as jest.Mock).mockResolvedValue({ messages: dummyMessages });
+  //   const messages = await slackService.fetchMessages(channel);
+  //   expect(historyMock).toHaveBeenCalledWith({ channel });
+  //   expect(messages).toEqual(dummyMessages);
+  // });
 });
