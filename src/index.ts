@@ -1,7 +1,5 @@
 require('dotenv/config');
 import 'module-alias/register';
-import path from 'path';
-import moduleAlias from 'module-alias';
 import debug from 'debug';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { handleMessage } from '@message/handlers/messageHandler';
@@ -12,19 +10,21 @@ import llmConfig from '@llm/interfaces/llmConfig';
 import messageConfig from '@message/interfaces/messageConfig';
 import express from 'express';
 import healthRoute from './routes/health';
+// import path from 'path';
+// import moduleAlias from 'module-alias';
 
-// Ensure module aliases work in runtime
-moduleAlias.addAliases({
-  '@src': path.resolve(__dirname, '../src'),
-  '@integrations': path.resolve(__dirname, '../src/integrations'),
-  '@message': path.resolve(__dirname, '../src/message'),
-  '@llm': path.resolve(__dirname, '../src/llm'),
-  '@config': path.resolve(__dirname, '../src/config'),
-  '@command': path.resolve(__dirname, '../src/command'),
-  '@common': path.resolve(__dirname, '../src/common'),
-  '@webhook': path.resolve(__dirname, '../src/webhook'),
-  '@types': path.resolve(__dirname, '../src/types'),
-});
+// // Ensure module aliases work in runtime
+// moduleAlias.addAliases({
+//   '@src': path.resolve(__dirname, '../src'),
+//   '@integrations': path.resolve(__dirname, '../src/integrations'),
+//   '@message': path.resolve(__dirname, '../src/message'),
+//   '@llm': path.resolve(__dirname, '../src/llm'),
+//   '@config': path.resolve(__dirname, '../src/config'),
+//   '@command': path.resolve(__dirname, '../src/command'),
+//   '@common': path.resolve(__dirname, '../src/common'),
+//   '@webhook': path.resolve(__dirname, '../src/webhook'),
+//   '@types': path.resolve(__dirname, '../src/types'),
+// });
 
 const log = debug('app:index');
 const app = express();
@@ -34,7 +34,7 @@ async function startBot(messengerService: IMessengerService) {
   try {
     debugEnvVars();
     log('[DEBUG] Starting bot initialization...');
-    await messengerService.initialize();
+    await messengerService.initialize(app);
     log('[DEBUG] Bot initialization completed.');
 
     log('[DEBUG] Setting up message handler...');
