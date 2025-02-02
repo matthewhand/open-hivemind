@@ -31,7 +31,7 @@ export interface IMessengerService {
    * Sets a custom message handler for processing incoming messages.
    * @param handler - The function that handles incoming messages.
    */
-  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void;
+  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void;
 
   /**
    * Sends a public service announcement to the channel. The platform may format the announcement differently.
