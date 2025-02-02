@@ -66,6 +66,12 @@ const discordConfig = convict({
         default: '',
         env: 'DISCORD_CHANNEL_ID',
     },
+    DISCORD_DEFAULT_CHANNEL_ID: {
+        doc: 'Default channel ID for outgoing messages.',
+        format: String,
+        default: '',
+        env: 'DISCORD_DEFAULT_CHANNEL_ID',
+    },
     DISCORD_CHANNEL_BONUSES: {
         doc: 'Optional channel-specific bonuses as a KVP list.',
         format: 'channel-bonuses',
