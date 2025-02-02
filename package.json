@@ -1,7 +1,7 @@
 {
-  "name": "discord-llm-bot",
+  "name": "open-hivemind",
   "version": "1.0.0",
-  "description": "A Discord bot to communicate with LLMs and execute Python code",
+  "description": "A messenger bot to communicate with LLMs",
   "type": "commonjs",
   "scripts": {
     "lint": "npx eslint src/",
@@ -18,15 +18,15 @@
     "ncu": "ncu"
   },
   "_moduleAliases": {
-    "@src": "src",
-    "@command": "src/command",
-    "@common": "src/common",
-    "@config": "src/config",
-    "@llm": "src/llm",
-    "@message": "src/message",
-    "@webhook": "src/webhook",
-    "@integrations": "src/integrations",
-    "@types": "src/types"
+    "@src": "dist/src",
+    "@command": "dist/src/command",
+    "@common": "dist/src/common",
+    "@config": "dist/src/config",
+    "@llm": "dist/src/llm",
+    "@message": "dist/src/message",
+    "@webhook": "dist/src/webhook",
+    "@integrations": "dist/src/integrations",
+    "@types": "dist/src/types"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
