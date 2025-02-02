@@ -14,13 +14,13 @@ import {
   TextChannel, 
   DMChannel 
 } from 'discord.js';
-import DiscordMessage from '@src/integrations/discord/DiscordMessage';
+import DiscordMessage from './DiscordMessage';
 import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
-import { debugPermissions } from '@src/integrations/discord/guild/debugPermissions';
-import { sendPublicAnnouncement } from '@src/integrations/discord/interaction/sendPublicAnnouncement';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
-import messageConfig from '@message/interfaces/messageConfig';
+import { debugPermissions } from './guild/debugPermissions';
+import { sendPublicAnnouncement } from './interaction/sendPublicAnnouncement';
+import discordConfig from './interfaces/discordConfig';
+import { IMessage } from '@message/interfaces/IMessage';
+import messageConfig from '@src/message/interfaces/messageConfig';
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
 import { ChatHistory } from '@src/message/common/chatHistory';
 import fs from 'fs';
