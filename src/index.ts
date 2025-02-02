@@ -9,25 +9,17 @@ const { debugEnvVars } = require('@config/debugEnvVars');
 import llmConfig from '@llm/interfaces/llmConfig';
 import messageConfig from '@message/interfaces/messageConfig';
 import express from 'express';
+import bodyParser from 'body-parser';
 import healthRoute from './routes/health';
-// import path from 'path';
-// import moduleAlias from 'module-alias';
-
-// // Ensure module aliases work in runtime
-// moduleAlias.addAliases({
-//   '@src': path.resolve(__dirname, '../src'),
-//   '@integrations': path.resolve(__dirname, '../src/integrations'),
-//   '@message': path.resolve(__dirname, '../src/message'),
-//   '@llm': path.resolve(__dirname, '../src/llm'),
-//   '@config': path.resolve(__dirname, '../src/config'),
-//   '@command': path.resolve(__dirname, '../src/command'),
-//   '@common': path.resolve(__dirname, '../src/common'),
-//   '@webhook': path.resolve(__dirname, '../src/webhook'),
-//   '@types': path.resolve(__dirname, '../src/types'),
-// });
 
 const log = debug('app:index');
 const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
+    next();
+});
 app.use(healthRoute);
 
 async function startBot(messengerService: IMessengerService) {
