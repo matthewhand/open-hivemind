@@ -7,6 +7,12 @@ import { IMessage } from './IMessage';
  */
 export interface IMessengerService {
   /**
+   * Initializes the messaging service (optional, defaults to doing nothing).
+   * Implementations can override this to perform setup tasks.
+   */
+  initialize(): Promise<void>;
+
+  /**
    * Sends a message to a specified channel.
    * @param channelId - The ID of the channel to send the message to.
    * @param message - The content of the message to send.
