@@ -1,11 +1,17 @@
 import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { IMessage } from '@message/interfaces/IMessage';
+import SlackMessage from './SlackMessage';
+import slackConfig from './interfaces/slackConfig';
 
 const debug = Debug('app:SlackService');
 
-export class SlackService {
+export class SlackService implements IMessengerService {
   private static instance: SlackService | undefined;
   private slackClient: WebClient;
+  private botUserId: string | null = null;
+  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
 
   private constructor() {
     if (!process.env.SLACK_BOT_TOKEN) {
@@ -24,55 +30,52 @@ export class SlackService {
     return SlackService.instance;
   }
 
-  // For testing purposes, allow resetting the instance.
   public static resetInstance(): void {
     SlackService.instance = undefined;
   }
 
-  /**
-   * Sends a message to a Slack channel.
-   */
+  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void {
+    this.messageHandler = handler;
+  }
+
   public async sendMessage(channel: string, text: string): Promise<void> {
+    await this.sendMessageToChannel(channel, text);
+  }
+
+  public async fetchMessages(channel: string): Promise<IMessage[]> {
+    return this.getMessagesFromChannel(channel);
+  }
+
+  public async sendMessageToChannel(channel: string, message: string): Promise<void> {
     try {
-      await this.slackClient.chat.postMessage({ channel, text });
-      debug(`[Slack] Message sent to #${channel}`);
+      await this.slackClient.chat.postMessage({ channel, text: message });
+      debug('[Slack] Message sent to #' + channel);
     } catch (error: any) {
-      console.error(`[Slack] Failed to send message to #${channel}:`, error);
-      throw new Error(`[Slack] Failed to send message: ${error}`);
+      console.error('[Slack] Failed to send message to #' + channel + ':', error);
+      throw new Error('[Slack] Failed to send message: ' + error.message);
     }
   }
 
-  /**
-   * Fetches messages from a Slack channel.
-   */
-  public async fetchMessages(channel: string): Promise<{ text?: string }[]> {
+  public async getMessagesFromChannel(channel: string, limit: number = 10): Promise<IMessage[]> {
     try {
-      const result = await this.slackClient.conversations.history({ channel });
-      return result.messages?.map((msg) => ({ text: msg.text })) || [];
-    } catch (error) {
-      console.error(`[Slack] Failed to fetch messages from #${channel}:`, error);
-      throw new Error(`[Slack] Failed to fetch messages: ${error}`);
+      const result = await this.slackClient.conversations.history({ channel, limit });
+      return result.messages?.map((msg) => new SlackMessage(msg.text || '', channel, msg)) || [];
+    } catch (error: any) {
+      console.error('[Slack] Failed to fetch messages from #' + channel + ': ' + error.message);
+      throw new Error('[Slack] Failed to fetch messages: ' + error.message);
     }
   }
 
-  /**
-   * Joins a Slack channel.
-   * @param channel The name of the channel to join.
-   */
   public async joinChannel(channel: string): Promise<void> {
     try {
       await this.slackClient.conversations.join({ channel });
-      debug(`[Slack] Joined channel: #${channel}`);
-      // Once joined, send the welcome message.
+      debug('[Slack] Joined channel: #' + channel);
       await this.sendWelcomeMessage(channel);
-    } catch (error) {
-      throw new Error(`[Slack] Failed to join channel: ${channel} - ${error}`);
+    } catch (error: any) {
+      console.error('[Slack] Failed to join channel: ' + channel + ' - ' + error.message);
     }
   }
 
-  /**
-   * Joins the configured Slack channels based on `SLACK_JOIN_CHANNELS`
-   */
   public async joinConfiguredChannels(): Promise<void> {
     const channels = process.env.SLACK_JOIN_CHANNELS;
     if (!channels) {
@@ -85,18 +88,30 @@ export class SlackService {
     for (const channel of channelList) {
       try {
         await this.joinChannel(channel);
-        debug(`[Slack] Successfully joined #${channel}`);
+        debug('[Slack] Successfully joined #' + channel);
       } catch (error) {
-        console.warn(`[Slack] Could not join #${channel}`);
+        console.warn('[Slack] Could not join #' + channel);
       }
     }
   }
 
-  /**
-   * Sends a welcome message containing a "Getting Started" button to a Slack channel.
-   * This message uses Slack’s Block Kit to present a rich UI.
-   * @param channel The ID of the Slack channel.
-   */
+  public async sendPublicAnnouncement(channel: string, announcement: any): Promise<void> {
+    try {
+      await this.slackClient.chat.postMessage({ channel, text: announcement });
+      debug('[Slack] Public announcement sent to #' + channel);
+    } catch (error: any) {
+      console.error('[Slack] Failed to send announcement: ' + error.message);
+    }
+  }
+
+  public getClientId(): string {
+    return this.botUserId || '';
+  }
+
+  public getDefaultChannel(): string {
+    return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
+  }
+
   public async sendWelcomeMessage(channel: string): Promise<void> {
     try {
       const blocks = [
@@ -128,9 +143,14 @@ export class SlackService {
         text: "Welcome to the channel! Click the button below for help getting started.",
         blocks
       });
-      debug(`[Slack] Sent welcome message to channel ${channel}`);
+      debug('[Slack] Sent welcome message to channel ' + channel);
     } catch (error: any) {
-      console.error(`[Slack] Failed to send welcome message: ${error.message}`);
+      console.error('[Slack] Failed to send welcome message: ' + error.message);
     }
+  }
+
+  public async shutdown(): Promise<void> {
+    debug('[Slack] Shutting down SlackService...');
+    SlackService.instance = undefined;
   }
 }
