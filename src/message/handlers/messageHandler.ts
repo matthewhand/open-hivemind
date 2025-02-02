@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { IMessageProvider } from '@src/message/interfaces/IMessageProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
+import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';  // ✅ Added missing import
 import { stripBotId } from '../helpers/processing/stripBotId';
 import { addUserHint } from '../helpers/processing/addUserHint';
 import { validateMessage } from '../helpers/handler/validateMessage';
@@ -11,8 +12,6 @@ import { MessageDelayScheduler } from '../helpers/handler/MessageDelayScheduler'
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import messageConfig from '@src/message/interfaces/messageConfig';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
-// If you have a common adapter already, import it here. For example:
-// import { toCommonMessage } from '../common/adapters';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
@@ -24,7 +23,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     debug(`Handling message from user ${message.getAuthorId()} in channel ${message.getChannelId()}.`);
     console.log(`Handling message from user ${message.getAuthorId()} in channel ${message.getChannelId()}.`);
 
-    // Validate the message
     if (!message.getAuthorId() || !message.getChannelId()) {
       debug('Invalid message object. Missing required methods:', JSON.stringify(message));
       return;
@@ -50,13 +48,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     processedMessage = stripBotId(processedMessage, botId);
     processedMessage = addUserHint(processedMessage, userId, botId);
 
-    debug(`Processed message: "${processedMessage}"`);
-    console.log(`Processed message: "${processedMessage}"`);
+    debug(`Processed message: \"${processedMessage}\"`);
+    console.log(`Processed message: \"${processedMessage}\"`);
 
-    // (Optional) Convert message to a common model if desired:
-    // const commonMessage = toCommonMessage(message);
-
-    // Handle inline commands
     let commandProcessed = false;
     if (messageConfig.get('MESSAGE_COMMAND_INLINE')) {
       await processCommand(message, async (result: string) => {
@@ -85,7 +79,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     const llmProvider = getLlmProvider();
-    const llmResponse = await llmProvider.generateChatCompletion(
+    
+    // if (!('generateChatCompletion' in llmProvider)) {
+    //   throw new Error('llmProvider does not implement generateChatCompletion');
+    // }
+
+    const llmResponse = await (llmProvider as ILlmProvider).generateChatCompletion(
       message.getText() || '',
       historyMessages
     );
@@ -112,7 +111,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
-      const followUpText = 'Follow-up text'; // This can be dynamic
+      const followUpText = 'Follow-up text'; 
       await sendFollowUpRequest(message, message.getChannelId(), followUpText);
       debug('Sent follow-up request.');
     }
@@ -123,5 +122,5 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 }
 
 async function generateResponse(message: string): Promise<string> {
-  return `You said: "${message}"`;
+  return `You said: \"${message}\"`;
 }
