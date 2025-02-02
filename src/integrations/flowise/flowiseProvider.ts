@@ -104,4 +104,4 @@ class FlowiseProvider implements ILlmProvider {
   }
 }
 
-export default new FlowiseProvider();
+export default FlowiseProvider;
