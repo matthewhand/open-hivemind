@@ -143,18 +143,25 @@ export class SlackService implements IMessengerService {
 
       // Extract input values from the modal
       const submittedValues = payload.view.state.values;
-      // Example: Assume we have an input field with "user_input"
-      const userResponse = submittedValues?.user_input_block?.user_input?.value || 'No response provided';
+      const userInput = submittedValues?.user_input_block?.user_input?.value || 'No response provided';
+      debug(`[Slack] User submitted: ${userInput}`);
 
-      debug(`[Slack] User submitted: ${userResponse}`);
+      // Use the message handler (e.g., your LLM inference) if it is set
+      if (this.messageHandler) {
+        // For modal submissions, we may not have channel context—so we pass an empty history array.
+        const historyMessages: IMessage[] = [];
+        // Create a SlackMessage representing the modal submission.
+        const messageObj = new SlackMessage(userInput, payload.user.id, payload);
+        await this.messageHandler(messageObj, historyMessages);
+      } else {
+        // Fallback if no message handler is configured.
+        await this.slackClient.chat.postMessage({
+          channel: payload.user.id,
+          text: "No message handler configured."
+        });
+      }
 
-      // Respond to the user (optional)
-      await this.slackClient.chat.postMessage({
-        channel: payload.user.id, // Send a DM to the user
-        text: `Thanks for your submission! You said: "${userResponse}"`
-      });
-
-      // Acknowledge the modal submission (required) so Slack closes the modal
+      // Acknowledge the modal submission so that Slack can close the modal.
       res.status(200).json({ response_action: 'clear' });
     } catch (error) {
       debug(`[Slack] Error handling view_submission: ${error}`);
