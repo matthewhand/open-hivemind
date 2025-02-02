@@ -1,6 +1,6 @@
 import { EmbedBuilder, TextChannel, DMChannel, PartialGroupDMChannel } from 'discord.js';
 import Debug from 'debug';
-import { DiscordService } from '@src/integrations/discord/DiscordService';
+import { DiscordService } from '../DiscordService';
 
 const log = Debug('app:sendPublicAnnouncement');
 
