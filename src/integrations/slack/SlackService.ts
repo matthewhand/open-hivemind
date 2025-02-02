@@ -19,7 +19,7 @@ export class SlackService implements IMessengerService {
   private rtmClient?: RTMClient;
   private mode: 'socket' | 'rtm';
   private botUserId: string | null = null;
-  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
+  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
 
   private constructor() {
     debug('[Slack] Initializing SlackService...');
@@ -136,26 +136,54 @@ export class SlackService implements IMessengerService {
   private async handleViewSubmission(payload: any, res: Response): Promise<void> {
     try {
       debug(`[Slack] Handling modal submission: ${JSON.stringify(payload.view.state.values)}`);
-      const submittedValues = payload.view.state.values;
-      const userInput = submittedValues?.user_input_block?.user_input?.value || ''; // No content generated
-      debug(`[Slack] User submitted: ${userInput}`);
-      if (this.messageHandler) {
-        const historyMessages: IMessage[] = [];
-        const messageObj = new SlackMessage(userInput, payload.user.id, payload);
-        await this.messageHandler(messageObj, historyMessages);
-      } else {
-        await this.slackClient.chat.postMessage({
-          channel: payload.user.id,
-          text: "No message handler configured."
-        });
-      }
+      
+      // Immediately acknowledge the submission so Slack closes the modal.
       res.status(200).json({ response_action: 'clear' });
+      
+      // Asynchronously process the LLM generation without blocking the response.
+      setImmediate(async () => {
+        try {
+          const submittedValues = payload.view.state.values;
+          const userInput = submittedValues?.user_input_block?.user_input?.value || '';
+          debug(`[Slack] (Async) User submitted: ${userInput}`);
+          
+          // Post a "typing" indicator immediately.
+          const typingResponse = await this.slackClient.chat.postMessage({
+            channel: payload.user.id,
+            text: '_Assistant is typing..._'
+          });
+          debug(`[Slack] (Async) Sent typing indicator, ts: ${typingResponse.ts}`);
+          
+          // Set a timeout to delete the typing indicator after 5 seconds.
+          setTimeout(async () => {
+            try {
+              await this.slackClient.chat.delete({
+                channel: payload.user.id,
+                ts: typingResponse.ts as string, // assert ts is a string
+              });
+              debug(`[Slack] (Async) Deleted typing indicator for user: ${payload.user.id}`);
+            } catch (deleteError) {
+              debug(`[Slack] (Async) Failed to delete typing indicator: ${deleteError}`);
+            }
+          }, 5000);
+          
+          // Start LLM generation via your message handler.
+          // We assume that the message handler itself will eventually post the final LLM reply.
+          if (this.messageHandler) {
+            await this.messageHandler(new SlackMessage(userInput, payload.user.id, payload), []);
+          } else {
+            debug(`[Slack] (Async) No message handler configured.`);
+          }
+        } catch (asyncError) {
+          debug(`[Slack] (Async) Error processing view_submission asynchronously: ${asyncError}`);
+        }
+      });
     } catch (error) {
       debug(`[Slack] Error handling view_submission: ${error}`);
       res.status(500).send('Internal Server Error');
     }
   }
-
+          
   private async handleBlockAction(payload: any, res: Response): Promise<void> {
     try {
       const actionId = payload.actions[0].action_id;
@@ -306,16 +334,32 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  public async sendMessageToChannel(channel: string, message: string): Promise<void> {
+  public async sendMessageToChannel(
+    channel: string,
+    message: string,
+    displayName: string = 'Assistant'
+  ): Promise<void> {
     try {
-      debug(`[Slack] Sending message to #${channel}: "${message}"`);
-      const response = await this.slackClient.chat.postMessage({ channel, text: message });
-      debug(`[Slack] Message sent: ${JSON.stringify(response)}`);
+      // Prepend displayName to the message
+      const formattedMessage = `*${displayName}*: ${message}`;
+  
+      debug(`[Slack] Sending message to #${channel} as "${displayName}": "${formattedMessage}"`);
+  
+      // Post the message to Slack
+      const response = await this.slackClient.chat.postMessage({
+        channel,
+        text: formattedMessage,
+        // Use optional emoji or other features if needed
+        icon_emoji: ':robot_face:'
+      });
+  
+      debug(`[Slack] Message sent successfully: ${JSON.stringify(response)}`);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[Slack] Failed to send message to #${channel}: ${errMsg}`);
     }
   }
+    
 
   public async joinConfiguredChannels(): Promise<void> {
     const channels = process.env.SLACK_JOIN_CHANNELS;
@@ -336,12 +380,31 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => void): void {
+  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void {
     this.messageHandler = handler;
   }
 
-  public async sendMessage(channel: string, text: string): Promise<void> {
-    await this.sendMessageToChannel(channel, text);
+  public async sendMessage(
+    channel: string,
+    text: string
+  ): Promise<void> {
+    try {
+      // Default display name
+      let displayName = 'Assistant';
+  
+      // Detect "Handoff to <x>" in the text
+      const handoffMatch = text.match(/\[Handoff to ([^\]]+)]/);
+      if (handoffMatch && handoffMatch[1]) {
+        displayName = handoffMatch[1].trim(); // Extract and trim the agent name
+        debug(`[Slack] Detected handoff to agent: ${displayName}`);
+      }
+  
+      // Call the sendMessageToChannel method with the extracted display name
+      await this.sendMessageToChannel(channel, text, displayName);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[Slack] Failed to send message: ${errMsg}`);
+    }
   }
 
   public async fetchMessages(channel: string): Promise<IMessage[]> {
