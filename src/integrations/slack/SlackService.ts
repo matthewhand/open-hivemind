@@ -6,6 +6,7 @@ import { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from './SlackMessage';
 import slackConfig from './interfaces/slackConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';  
+import express, { Application, Request, Response } from 'express';
 
 const debug = Debug('app:SlackService');
 
@@ -54,20 +55,63 @@ export class SlackService implements IMessengerService {
     SlackService.instance = undefined;
   }
 
-  public async initialize(): Promise<void> {
+  public async initialize(app: Application): Promise<void> {
     try {
       debug('[Slack] Fetching bot user identity...');
       const authTest = await this.slackClient.auth.test();
       this.botUserId = authTest.user_id || null;
       debug(`[Slack] Bot authenticated as: ${authTest.user} (ID: ${this.botUserId})`);
 
+      debug('[Slack] Initializing SlackService and registering routes...');
+      app.post('/slack/interactive-endpoint', this.handleInteractiveRequest.bind(this));
+
       debug('[Slack] Joining configured channels...');
       await this.joinConfiguredChannels();
+
       debug('[Slack] Initialization complete.');
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[Slack] Initialization error: ${errMsg}`);
     }
+  }
+
+   /**
+   * Handles incoming Slack interactive requests (buttons, modals, etc.).
+   */
+  private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
+    try {
+      const payload = JSON.parse(req.body.payload);
+      debug('Received interactive event:', payload);
+
+      if (payload.type === 'block_actions') {
+        await this.handleBlockAction(payload);
+      } else if (payload.type === 'view_submission') {
+        await this.handleViewSubmission(payload);
+      }
+
+      res.status(200).send(); // Acknowledge request
+    } catch (error) {
+      debug('Error handling Slack interactive request:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+
+  private async handleBlockAction(payload: any): Promise<void> {
+    debug(`Handling block action: ${payload.actions[0].action_id}`);
+
+    await this.slackClient.chat.postMessage({
+      channel: payload.user.id,
+      text: `You clicked a button: ${payload.actions[0].text.text}`,
+    });
+  }
+
+  private async handleViewSubmission(payload: any): Promise<void> {
+    debug('Handling modal submission:', payload.view.state.values);
+
+    await this.slackClient.chat.postMessage({
+      channel: payload.user.id,
+      text: 'Thank you for submitting the form!',
+    });
   }
 
   public async startListening(): Promise<void> {
