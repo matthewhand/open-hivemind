@@ -1,4 +1,5 @@
 import { SocketModeClient } from '@slack/socket-mode';
+import { RTMClient } from '@slack/rtm-api';
 import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
@@ -14,7 +15,9 @@ const debug = Debug('app:SlackService');
 export class SlackService implements IMessengerService {
   private static instance: SlackService | undefined;
   private slackClient: WebClient;
-  private socketClient: SocketModeClient;
+  private socketClient?: SocketModeClient;
+  private rtmClient?: RTMClient;
+  private mode: 'socket' | 'rtm';
   private botUserId: string | null = null;
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => void) | null = null;
 
@@ -30,10 +33,23 @@ export class SlackService implements IMessengerService {
       throw new Error('SLACK_BOT_TOKEN is not set.');
     }
 
+    // Determine mode; default to 'socket'
+    this.mode = process.env.SLACK_MODE ? process.env.SLACK_MODE.toLowerCase() as 'socket' | 'rtm' : 'socket';
     this.slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
-    this.socketClient = new SocketModeClient({
-      appToken: process.env.SLACK_APP_TOKEN || (() => { throw new Error("SLACK_APP_TOKEN is not set.") })()
-    });
+
+    if (this.mode === 'socket') {
+      if (!process.env.SLACK_APP_TOKEN) {
+        throw new Error('SLACK_APP_TOKEN is not set for socket mode.');
+      }
+      this.socketClient = new SocketModeClient({
+        appToken: process.env.SLACK_APP_TOKEN
+      });
+      debug('[Slack] Configured for Socket Mode.');
+    } else if (this.mode === 'rtm') {
+      // Instantiate RTM client from @slack/rtm-api
+      this.rtmClient = new RTMClient(process.env.SLACK_BOT_TOKEN);
+      debug('[Slack] Configured for RTM Mode.');
+    }
   }
 
   public static getInstance(): SlackService {
@@ -41,12 +57,10 @@ export class SlackService implements IMessengerService {
       debug('[Slack] Running in test mode, creating new instance.');
       return new SlackService();
     }
-
     if (!SlackService.instance) {
       debug('[Slack] Creating a new instance of SlackService.');
       SlackService.instance = new SlackService();
     }
-
     return SlackService.instance;
   }
 
@@ -63,7 +77,6 @@ export class SlackService implements IMessengerService {
       debug(`[Slack] Bot authenticated as: ${authTest.user} (ID: ${this.botUserId})`);
 
       debug('[Slack] Initializing SlackService and registering routes...');
-      // Register endpoint with signature verification middleware
       app.post(
         '/slack/interactive-endpoint',
         this.verifySlackSignature.bind(this),
@@ -83,9 +96,6 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Middleware: Verify Slack Request Signature
-   */
   private verifySlackSignature(req: Request, res: Response, next: NextFunction): void {
     const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
     if (!slackSigningSecret) {
@@ -93,40 +103,29 @@ export class SlackService implements IMessengerService {
       res.status(500).send('Server misconfiguration.');
       return;
     }
-
     const timestamp = req.headers['x-slack-request-timestamp'] as string;
     const slackSignature = req.headers['x-slack-signature'] as string;
-    
     if (!timestamp || !slackSignature) {
       res.status(400).send('Bad Request');
       return;
     }
-
     const requestBody = JSON.stringify(req.body);
     const baseString = `v0:${timestamp}:${requestBody}`;
     const mySignature = `v0=${crypto.createHmac('sha256', slackSigningSecret).update(baseString).digest('hex')}`;
-
-    // if (crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature))) {
-      next(); // Continue processing request
-    // } else {
-    //   res.status(400).send('Invalid signature.');
-    // }
+    // For production, compare signatures securely.
+    next();
   }
 
-  /**
-   * Handles incoming Slack interactive requests (buttons, modals, etc.).
-   */
   private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
     try {
       debug(`[Slack] Received interactive event: ${JSON.stringify(req.body.payload)}`);
       const payload = JSON.parse(req.body.payload);
-
       if (payload.type === 'block_actions') {
         await this.handleBlockAction(payload, res);
       } else if (payload.type === 'view_submission') {
         await this.handleViewSubmission(payload, res);
       } else {
-        res.status(200).send(); // Default response for unhandled actions
+        res.status(200).send();
       }
     } catch (error) {
       debug(`[Slack] Error handling interactive request: ${error}`);
@@ -134,34 +133,22 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Handles modal form submissions from Slack.
-   */
   private async handleViewSubmission(payload: any, res: Response): Promise<void> {
     try {
       debug(`[Slack] Handling modal submission: ${JSON.stringify(payload.view.state.values)}`);
-
-      // Extract input values from the modal
       const submittedValues = payload.view.state.values;
-      const userInput = submittedValues?.user_input_block?.user_input?.value || 'No response provided';
+      const userInput = submittedValues?.user_input_block?.user_input?.value || ''; // No content generated
       debug(`[Slack] User submitted: ${userInput}`);
-
-      // Use the message handler (e.g., your LLM inference) if it is set
       if (this.messageHandler) {
-        // For modal submissions, we may not have channel context—so we pass an empty history array.
         const historyMessages: IMessage[] = [];
-        // Create a SlackMessage representing the modal submission.
         const messageObj = new SlackMessage(userInput, payload.user.id, payload);
         await this.messageHandler(messageObj, historyMessages);
       } else {
-        // Fallback if no message handler is configured.
         await this.slackClient.chat.postMessage({
           channel: payload.user.id,
           text: "No message handler configured."
         });
       }
-
-      // Acknowledge the modal submission so that Slack can close the modal.
       res.status(200).json({ response_action: 'clear' });
     } catch (error) {
       debug(`[Slack] Error handling view_submission: ${error}`);
@@ -169,18 +156,11 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Handles block actions with an interactive help message including buttons.
-   */
   private async handleBlockAction(payload: any, res: Response): Promise<void> {
     try {
       const actionId = payload.actions[0].action_id;
       debug(`Handling block action: ${actionId}`);
-
-      // Acknowledge the request immediately to prevent Slack timeout errors
       res.status(200).send();
-
-      // Define interactive help message with buttons and usage instructions
       const blocks = [
         {
           type: "section",
@@ -194,19 +174,13 @@ export class SlackService implements IMessengerService {
           elements: [
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "📚 See Course Info"
-              },
+              text: { type: "plain_text", text: "📚 See Course Info" },
               action_id: "see_course_info",
               value: "course_info"
             },
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "📅 Book Office Hours"
-              },
+              text: { type: "plain_text", text: "📅 Book Office Hours" },
               action_id: "book_office_hours",
               value: "office_hours"
             }
@@ -217,27 +191,19 @@ export class SlackService implements IMessengerService {
           elements: [
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "📖 Get Study Resources"
-              },
+              text: { type: "plain_text", text: "📖 Get Study Resources" },
               action_id: "get_study_resources",
               value: "study_resources"
             },
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "❓ Ask a Question"
-              },
+              text: { type: "plain_text", text: "❓ Ask a Question" },
               action_id: "ask_question",
               value: "ask_question"
             }
           ]
         },
-        {
-          type: "divider"
-        },
+        { type: "divider" },
         {
           type: "section",
           text: {
@@ -246,17 +212,12 @@ export class SlackService implements IMessengerService {
           }
         }
       ];
-
-      // Send an interactive Block Kit message with instructions
       await this.slackClient.chat.postMessage({
         channel: payload.user.id,
         text: "Welcome! Here’s how you can interact with the University Bot.",
         blocks: blocks
       });
-
       debug(`[Slack] Sent interactive help message to user: ${payload.user.id}`);
-
-      // Process the button action based on the action_id
       switch (actionId) {
         case "see_course_info":
           await this.sendCourseInfo(payload.user.id);
@@ -278,9 +239,6 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Fetches Slack messages from a channel.
-   */
   public async getMessagesFromChannel(channel: string, limit: number = 10): Promise<IMessage[]> {
     try {
       debug(`[Slack] Fetching last ${limit} messages from channel: #${channel}`);
@@ -294,42 +252,60 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Starts listening to events via Socket Mode.
-   */
   public async startListening(): Promise<void> {
-    debug('[Slack] Subscribing to message events...');
-
-    this.socketClient.on('message', async ({ event }: { event: any }) => {
-      debug(`[Slack] Received message in #${event.channel}: ${event.text}`);
-
-      if (!event.text || event.subtype === 'bot_message') {
-        debug('[Slack] Ignoring bot message or empty text.');
-        return;
-      }
-
-      if (this.messageHandler) {
-        let historyMessages: IMessage[] = [];
-        try {
-          historyMessages = await this.getMessagesFromChannel(event.channel, 10);
-          debug(`[Slack] Retrieved ${historyMessages.length} past messages for context.`);
-        } catch (error: unknown) {
-          console.warn(`[Slack] Failed to fetch past messages: ${error}`);
+    debug('[Slack] Starting message listener...');
+    if (this.mode === 'socket' && this.socketClient) {
+      this.socketClient.on('message', async ({ event }: { event: any }) => {
+        debug(`[Slack] [Socket] Received message in #${event.channel}: ${event.text}`);
+        if (!event.text || event.subtype === 'bot_message') {
+          debug('[Slack] Ignoring bot message or empty text.');
+          return;
         }
-
-        debug(`[Slack] Processing new message: "${event.text}"`);
-        await this.messageHandler(new SlackMessage(event.text, event.channel, event), historyMessages);
-      } else {
-        debug('[Slack] No message handler set.');
-      }
-    });
-
-    await this.socketClient.start();
+        if (this.messageHandler) {
+          let historyMessages: IMessage[] = [];
+          try {
+            historyMessages = await this.getMessagesFromChannel(event.channel, 10);
+            debug(`[Slack] Retrieved ${historyMessages.length} past messages for context.`);
+          } catch (error: unknown) {
+            console.warn(`[Slack] Failed to fetch past messages: ${error}`);
+          }
+          await this.messageHandler(new SlackMessage(event.text, event.channel, event), historyMessages);
+        } else {
+          debug('[Slack] No message handler set.');
+        }
+      });
+      await this.socketClient.start();
+      debug('[Slack] Socket Mode client started.');
+    } else if (this.mode === 'rtm' && this.rtmClient) {
+      // RTM message event handling
+      this.rtmClient.on('message', async (message: any) => {
+        debug(`[Slack] [RTM] Received message: ${message.text}`);
+        // Adjust according to RTM message structure:
+        if (!message.text || message.subtype === 'bot_message') {
+          debug('[Slack] Ignoring bot message or empty text.');
+          return;
+        }
+        if (this.messageHandler) {
+          // For RTM, the channel is message.channel
+          let historyMessages: IMessage[] = [];
+          try {
+            historyMessages = await this.getMessagesFromChannel(message.channel, 10);
+            debug(`[Slack] Retrieved ${historyMessages.length} past messages for context.`);
+          } catch (error: unknown) {
+            console.warn(`[Slack] Failed to fetch past messages: ${error}`);
+          }
+          await this.messageHandler(new SlackMessage(message.text, message.channel, message), historyMessages);
+        } else {
+          debug('[Slack] No message handler set.');
+        }
+      });
+      await this.rtmClient.start();
+      debug('[Slack] RTM client started.');
+    } else {
+      debug('[Slack] No valid client configured for listening.');
+    }
   }
 
-  /**
-   * Sends a message to a Slack channel.
-   */
   public async sendMessageToChannel(channel: string, message: string): Promise<void> {
     try {
       debug(`[Slack] Sending message to #${channel}: "${message}"`);
@@ -341,19 +317,14 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Joins the channels configured in the environment.
-   */
   public async joinConfiguredChannels(): Promise<void> {
     const channels = process.env.SLACK_JOIN_CHANNELS;
     if (!channels) {
       debug('[Slack] No channels specified to join.');
       return;
     }
-
     const channelList = channels.split(',').map(channel => channel.trim());
     debug(`[Slack] Channels to join: ${channelList.join(', ')}`);
-
     for (const channel of channelList) {
       try {
         await this.joinChannel(channel);
@@ -377,9 +348,6 @@ export class SlackService implements IMessengerService {
     return this.getMessagesFromChannel(channel);
   }
 
-  /**
-   * Joins a single channel and sends a welcome message.
-   */
   public async joinChannel(channel: string): Promise<void> {
     try {
       debug(`[Slack] Attempting to join channel: #${channel}`);
@@ -392,9 +360,6 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  /**
-   * Sends a public announcement to a channel.
-   */
   public async sendPublicAnnouncement(channel: string, announcement: any): Promise<void> {
     try {
       debug(`[Slack] Sending public announcement to #${channel}`);
@@ -414,42 +379,31 @@ export class SlackService implements IMessengerService {
     return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
   }
 
-  /**
-   * Sends a welcome message with a "Getting Started" button.
-   */
   public async sendWelcomeMessage(channel: string): Promise<void> {
     try {
       debug(`[Slack] Sending welcome message to #${channel}`);
       const blocks = [
         {
           type: "section",
-          text: {
-            type: "mrkdwn",
-            text: "Welcome to the channel! Click the button below for help getting started."
-          }
+          text: { type: "mrkdwn", text: "Welcome to the channel! Click the button below for help getting started." }
         },
         {
           type: "actions",
           elements: [
             {
               type: "button",
-              text: {
-                type: "plain_text",
-                text: "Getting Started"
-              },
+              text: { type: "plain_text", text: "Getting Started" },
               value: "getting_started",
               action_id: "getting_started"
             }
           ]
         }
       ];
-
       await this.slackClient.chat.postMessage({
         channel,
         text: "Welcome to the channel! Click the button below for help getting started.",
         blocks
       });
-
       debug(`[Slack] Sent welcome message to #${channel}`);
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -462,7 +416,7 @@ export class SlackService implements IMessengerService {
     SlackService.instance = undefined;
   }
 
-  // Placeholder implementations for button actions – implement these as needed
+  // Placeholder button actions
 
   private async sendCourseInfo(userId: string): Promise<void> {
     await this.slackClient.chat.postMessage({
@@ -486,36 +440,20 @@ export class SlackService implements IMessengerService {
   }
 
   private async sendAskQuestionModal(triggerId: string): Promise<void> {
-    // Implement modal trigger logic here
     await this.slackClient.views.open({
       trigger_id: triggerId,
       view: {
         type: "modal",
         callback_id: "ask_question_modal",
-        title: {
-          type: "plain_text",
-          text: "Ask a Question"
-        },
-        submit: {
-          type: "plain_text",
-          text: "Submit"
-        },
-        close: {
-          type: "plain_text",
-          text: "Cancel"
-        },
+        title: { type: "plain_text", text: "Ask a Question" },
+        submit: { type: "plain_text", text: "Submit" },
+        close: { type: "plain_text", text: "Cancel" },
         blocks: [
           {
             type: "input",
             block_id: "user_input_block",
-            element: {
-              type: "plain_text_input",
-              action_id: "user_input"
-            },
-            label: {
-              type: "plain_text",
-              text: "Your Question"
-            }
+            element: { type: "plain_text_input", action_id: "user_input" },
+            label: { type: "plain_text", text: "Your Question" }
           }
         ]
       }
