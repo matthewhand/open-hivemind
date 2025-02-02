@@ -13,6 +13,9 @@
     "skipLibCheck": true,
     "downlevelIteration": true
   },
+  "paths": {
+    "@src/*": ["src/*"]
+  },
   "include": [
     "src/**/*",
     "tests/**/*"
