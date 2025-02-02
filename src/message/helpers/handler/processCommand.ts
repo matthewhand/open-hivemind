@@ -1,6 +1,8 @@
-import Debug from "debug";
+import Debug from 'debug';  // ✅ Added missing import
 import { handleStatusCommand } from '../commands/statusCommand';
 import { IMessage } from '@src/message/interfaces/IMessage';
+
+const debug = Debug('app:processCommand');  // ✅ Initialize Debug instance
 
 /**
  * Process Command
