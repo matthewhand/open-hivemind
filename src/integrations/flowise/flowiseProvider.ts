@@ -47,12 +47,14 @@ class FlowiseProvider implements ILlmProvider {
   /**
    * Generates a chat completion using the Flowise SDK.
    */
-  async generateChatCompletion(userMessage: string, historyMessages: IMessage[] = []): Promise<string> {
+  async generateChatCompletion(userMessage: string, historyMessages: IMessage[] = [], metadata?: Record<string, any>): Promise<string> {
     debug('Starting chat completion with Flowise...');
 
     if (!this.chatflowConversationId) {
       throw new Error('Flowise chatflowConversationId is not set.');
     }
+
+    // TODO handle metadata somehow
 
     const prompt = `${userMessage}\n${historyMessages.map(m => m.getText()).join(' ')}`;
     debug(`Generated Prompt: ${prompt}`);
@@ -79,4 +81,4 @@ class FlowiseProvider implements ILlmProvider {
   }
 }
 
-export default FlowiseProvider;
+export default new FlowiseProvider();
