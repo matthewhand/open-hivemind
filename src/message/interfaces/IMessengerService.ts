@@ -38,4 +38,16 @@ export interface IMessengerService {
    * @returns {string} The client ID of the bot.
    */
   getClientId(): string;
+
+  /**
+   * Retrieves the default channel ID where the bot should operate.
+   * This ensures that platform-specific logic remains inside each provider.
+   * @returns {string} The default channel ID.
+   */
+  getDefaultChannel(): string;
+
+  /**
+   * Gracefully shuts down the messaging service, ensuring all connections are properly closed.
+   */
+  shutdown(): Promise<void>;
 }
