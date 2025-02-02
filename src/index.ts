@@ -13,7 +13,7 @@ import messageConfig from '@message/interfaces/messageConfig';
 import express from 'express';
 import healthRoute from './routes/health';
 
-// ✅ Ensure module aliases work in runtime
+// Ensure module aliases work in runtime
 moduleAlias.addAliases({
   '@src': path.resolve(__dirname, '../src'),
   '@integrations': path.resolve(__dirname, '../src/integrations'),
@@ -33,10 +33,15 @@ app.use(healthRoute);
 async function startBot(messengerService: IMessengerService) {
   try {
     debugEnvVars();
+    log('[DEBUG] Starting bot initialization...');
+    await messengerService.initialize();
+    log('[DEBUG] Bot initialization completed.');
+
+    log('[DEBUG] Setting up message handler...');
     messengerService.setMessageHandler(handleMessage);
     log('[DEBUG] Message handler set up successfully.');
   } catch (error) {
-    log('Error starting bot service:', error);
+    log('[DEBUG] Error starting bot service:', error);
   }
 }
 
@@ -47,17 +52,23 @@ async function main() {
   const messengerService = getMessengerProvider();
   await startBot(messengerService);
 
-  const port = process.env.PORT || 5005;
-  app.listen(port, () => {
-    console.log('Server is listening on port ' + port);
-  });
+  // Only start the HTTP server if HTTP_ENABLED is not set to "false"
+  const httpEnabled = process.env.HTTP_ENABLED !== 'false';
+  if (httpEnabled) {
+    const port = process.env.PORT || 5005;
+    app.listen(port, () => {
+      console.log('Server is listening on port ' + port);
+    });
+  } else {
+    console.log('HTTP server is disabled (HTTP_ENABLED=false).');
+  }
 
   const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, registering routes...');
     const channelId = messengerService.getDefaultChannel();
     await webhookService.start(app, messengerService, channelId);
-      } else {
+  } else {
     console.log('Webhook service is disabled.');
   }
 }
