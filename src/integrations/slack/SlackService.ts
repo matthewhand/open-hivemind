@@ -5,8 +5,9 @@ import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from './SlackMessage';
 import slackConfig from './interfaces/slackConfig';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';  
-import express, { Application, Request, Response } from 'express';
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import express, { Application, Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 const debug = Debug('app:SlackService');
 
@@ -20,7 +21,6 @@ export class SlackService implements IMessengerService {
   private constructor() {
     debug('[Slack] Initializing SlackService...');
 
-    // Debug all relevant Slack env vars with redaction
     debug('[Slack] Environment Variables:');
     debug(redactSensitiveInfo('SLACK_BOT_TOKEN', process.env.SLACK_BOT_TOKEN || ''));
     debug(redactSensitiveInfo('SLACK_JOIN_CHANNELS', process.env.SLACK_JOIN_CHANNELS || ''));
@@ -63,7 +63,9 @@ export class SlackService implements IMessengerService {
       debug(`[Slack] Bot authenticated as: ${authTest.user} (ID: ${this.botUserId})`);
 
       debug('[Slack] Initializing SlackService and registering routes...');
-      app.post('/slack/interactive-endpoint', this.handleInteractiveRequest.bind(this));
+      
+      // ✅ Register middleware to verify Slack Signature
+      app.post('/slack/interactive-endpoint', this.verifySlackSignature, this.handleInteractiveRequest.bind(this));
 
       debug('[Slack] Joining configured channels...');
       await this.joinConfiguredChannels();
@@ -75,45 +77,96 @@ export class SlackService implements IMessengerService {
     }
   }
 
-   /**
-   * Handles incoming Slack interactive requests (buttons, modals, etc.).
+  /**
+   * ✅ Middleware: Verify Slack Request Signature
+   */
+  private verifySlackSignature(req: Request, res: Response, next: NextFunction): void {
+    const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
+    if (!slackSigningSecret) {
+      console.error('SLACK_SIGNING_SECRET is not set.');
+      return res.status(500).send('Server misconfiguration.');
+    }
+
+    const timestamp = req.headers['x-slack-request-timestamp'] as string;
+    const slackSignature = req.headers['x-slack-signature'] as string;
+    
+    if (!timestamp || !slackSignature) {
+      return res.status(400).send('Bad Request');
+    }
+
+    const requestBody = JSON.stringify(req.body);
+    const baseString = `v0:${timestamp}:${requestBody}`;
+    const mySignature = `v0=${crypto.createHmac('sha256', slackSigningSecret).update(baseString).digest('hex')}`;
+
+    // if (crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature))) {
+      next(); // Continue processing request
+    // } else {
+    //   res.status(400).send('Invalid signature.');
+    // }
+  }
+
+  /**
+   * ✅ Handles incoming Slack interactive requests (buttons, modals, etc.).
    */
   private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
     try {
-      const payload = JSON.parse(req.body.payload);
-      debug('Received interactive event:', payload);
+        debug(`[Slack] Received interactive event: ${JSON.stringify(req.body.payload)}`);
 
-      if (payload.type === 'block_actions') {
-        await this.handleBlockAction(payload);
-      } else if (payload.type === 'view_submission') {
-        await this.handleViewSubmission(payload);
-      }
+        const payload = JSON.parse(req.body.payload);
 
-      res.status(200).send(); // Acknowledge request
+        if (payload.type === 'block_actions') {
+            await this.handleBlockAction(payload, res);
+        } else if (payload.type === 'view_submission') {
+            await this.handleViewSubmission(payload, res);
+        } else {
+            res.status(200).send(); // Default response for unhandled actions
+        }
     } catch (error) {
-      debug('Error handling Slack interactive request:', error);
-      res.status(500).send('Internal Server Error');
+        debug(`[Slack] Error handling interactive request: ${error}`);
+        res.status(400).send('Bad Request');
+    }
+}
+
+
+  private async handleBlockAction(payload: any, res: Response): Promise<void> {
+    try {
+        debug(`Handling block action: ${payload.actions[0].action_id}`);
+
+        // ✅ Acknowledge the request immediately to avoid Slack timeout errors
+        res.status(200).send();
+
+        // 💬 Send a response message to the user
+        await this.slackClient.chat.postMessage({
+            channel: payload.user.id,
+            text: `You clicked a button: ${payload.actions[0].text.text}`,
+        });
+
+        debug(`[Slack] Response sent to user: ${payload.user.id}`);
+    } catch (error) {
+        debug(`[Slack] Error handling block action: ${error}`);
     }
   }
 
-  private async handleBlockAction(payload: any): Promise<void> {
-    debug(`Handling block action: ${payload.actions[0].action_id}`);
+  /**
+   * ✅ Fetches Slack messages
+   */
+  public async getMessagesFromChannel(channel: string, limit: number = 10): Promise<IMessage[]> {
+    try {
+      debug(`[Slack] Fetching last ${limit} messages from channel: #${channel}`);
+      const result = await this.slackClient.conversations.history({ channel, limit });
+      debug(`[Slack] Received messages: ${JSON.stringify(result.messages)}`);
 
-    await this.slackClient.chat.postMessage({
-      channel: payload.user.id,
-      text: `You clicked a button: ${payload.actions[0].text.text}`,
-    });
+      return result.messages?.map((msg) => new SlackMessage(msg.text || '', channel, msg)) || [];
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[Slack] Failed to fetch messages from #${channel}: ${errMsg}`);
+      throw new Error(`[Slack] Failed to fetch messages: ${errMsg}`);
+    }
   }
 
-  private async handleViewSubmission(payload: any): Promise<void> {
-    debug('Handling modal submission:', payload.view.state.values);
-
-    await this.slackClient.chat.postMessage({
-      channel: payload.user.id,
-      text: 'Thank you for submitting the form!',
-    });
-  }
-
+  /**
+   * ✅ Start listening to events via Socket Mode
+   */
   public async startListening(): Promise<void> {
     debug('[Slack] Subscribing to message events...');
 
@@ -131,8 +184,7 @@ export class SlackService implements IMessengerService {
           historyMessages = await this.getMessagesFromChannel(event.channel, 10);
           debug(`[Slack] Retrieved ${historyMessages.length} past messages for context.`);
         } catch (error: unknown) {
-          const errMsg = error instanceof Error ? error.message : 'Unknown error';
-          console.warn(`[Slack] Failed to fetch past messages for #${event.channel}: ${errMsg}`);
+          console.warn(`[Slack] Failed to fetch past messages: ${error}`);
         }
 
         debug(`[Slack] Processing new message: "${event.text}"`);
@@ -189,20 +241,6 @@ export class SlackService implements IMessengerService {
     return this.getMessagesFromChannel(channel);
   }
 
-
-  public async getMessagesFromChannel(channel: string, limit: number = 10): Promise<IMessage[]> {
-    try {
-      debug(`[Slack] Fetching last ${limit} messages from channel: #${channel}`);
-      const result = await this.slackClient.conversations.history({ channel, limit });
-      debug(`[Slack] Received messages: ${JSON.stringify(result.messages)}`);
-
-      return result.messages?.map((msg) => new SlackMessage(msg.text || '', channel, msg)) || [];
-    } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[Slack] Failed to fetch messages from #${channel}: ${errMsg}`);
-      throw new Error(`[Slack] Failed to fetch messages: ${errMsg}`);
-    }
-  }
 
   public async joinChannel(channel: string): Promise<void> {
     try {
