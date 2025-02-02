@@ -1,10 +1,34 @@
 import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
-import { OpenAiService } from '../integrations/openai/OpenAiService';  
+import { OpenAiService } from './OpenAiService';
 
 const debug = Debug('app:openAiProvider');
 const openAiService = OpenAiService.getInstance();
+
+// Helper to create a dummy IMessage when history is empty.
+function createDummyMessage(userMessage: string): IMessage {
+  return {
+    content: userMessage,
+    channelId: 'mock-channel',
+    data: {},
+    role: 'user',
+    getText: () => userMessage,
+    isFromBot: () => false,
+    getAuthorId: () => 'mock-user',
+    getChannelId: () => 'mock-channel',
+    getTimestamp: () => new Date(),
+    // Note: In this project, getUserMentions is expected to return string[]
+    getUserMentions: () => [],
+    // Similarly, mentionsUsers is expected to return a boolean now.
+    mentionsUsers: () => false,
+    getChannelUsers: () => [],
+    getAuthorName: () => 'Mock User',
+    isReplyToBot: () => false,
+    getMessageId: () => 'mock-id',
+    setText: function(text: string) { this.content = text; }
+  } as IMessage;
+}
 
 export const openAiProvider: ILlmProvider = {
   supportsChatCompletion: (): boolean => true,
@@ -14,51 +38,34 @@ export const openAiProvider: ILlmProvider = {
     return true;
   },
 
+  /**
+   * Generates a chat completion using OpenAI's service.
+   */
   generateChatCompletion: async (
     userMessage: string,
-    historyMessages: IMessage[] = []
+    historyMessages: IMessage[] = [],
+    metadata?: Record<string, any>
   ): Promise<string> => {
     debug('Delegating chat completion to OpenAiService...');
 
-    let metadata: Record<string, string> | undefined = undefined;
-    if (process.env.OPENAI_INCLUDE_METADATA === 'true' && historyMessages.length > 0) {
-      const lastMessage = historyMessages[historyMessages.length - 1];
-      metadata = {
-        user: lastMessage.getAuthorId(),
-        channel: lastMessage.getChannelId(),
-      };
-      debug('Including metadata in completion request:', metadata);
-    }
-
     if (!historyMessages.length) {
-      historyMessages = [{
-        content: userMessage,
-        channelId: 'unknown',
-        data: {},
-        role: 'user',
-        getText: () => userMessage,
-        isFromBot: () => false,
-        getAuthorId: () => 'unknown',
-        getChannelId: () => 'unknown',
-        getTimestamp: () => new Date(),
-        setText: function (text: string) { this.content = text; },
-        getChannelTopic: () => null,
-        getUserMentions: () => [],
-        getChannelUsers: () => [],
-        getAuthorName: () => 'unknown',
-        isReplyToBot: () => false,
-        getMessageId: () => 'mock-id',
-        mentionsUsers: () => false,  
-      }];
+      historyMessages = [createDummyMessage(userMessage)];
     }
 
-    const metadataStr = metadata ? JSON.stringify(metadata) : undefined;
-    const result = await openAiService.generateChatCompletion(userMessage, historyMessages, metadataStr);
+    debug('History Messages:', historyMessages);
+
+    // Here, ensure that metadata is a string if expected, or pass undefined.
+    const metadataParam = typeof metadata === 'string' ? metadata : undefined;
+
+    const result = await openAiService.generateChatCompletion(userMessage, historyMessages, metadataParam);
     return result ?? 'No response generated.';
   },
 
+  /**
+   * Minimal implementation of generateCompletion to satisfy ILlmProvider.
+   */
   generateCompletion: async (prompt: string): Promise<string> => {
     debug('Generating non-chat completion from OpenAI with prompt:', prompt);
-    return `Completion for: ${prompt}`;
+    return `Completion for: ${prompt}`;  // Placeholder for now.
   },
 };
