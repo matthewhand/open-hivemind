@@ -53,7 +53,7 @@ export const openAiProvider: ILlmProvider = {
     debug('History Messages:', historyMessages);
 
     const result = await openAiService.generateChatCompletion(userMessage, historyMessages);
-    return result ?? 'No response generated.';
+    return result ?? '';
   },
 
   /**
