@@ -1,6 +1,8 @@
 services:
-  open-hivemind-agent:
-    image: mhand79/open-hivemind:latest
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "3020:3020"
@@ -16,3 +18,4 @@ services:
         max-size: "100k"
         max-file: "3"
         mode: non-blocking
+
