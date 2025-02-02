@@ -1,35 +1,19 @@
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
+import { openAiProvider } from '@src/llm/openAiProvider';
 import FlowiseProvider from '@integrations/flowise/flowiseProvider';
-import { openWebUIProvider } from '@integrations/openwebui/openWebUIProvider';
-import { openAiProvider } from '@integrations/openai/openAiProvider';
-import llmConfig from '@llm/interfaces/llmConfig';
-import Debug from 'debug';
+// If you also support OpenWebUI, import it similarly
+// import OpenWebUIProvider from '@integrations/openwebui/runInference';
 
-const debug = Debug('app:getLlmProvider');
-
-/**
- * Returns the appropriate LLM provider based on configuration.
- * @returns {ILlmProvider} Selected LLM provider.
- */
 export function getLlmProvider(): ILlmProvider {
-  const provider = llmConfig.get('LLM_PROVIDER') || 'openai';
-  debug('LLM Provider selected:', provider);
-
-  let selectedProvider: ILlmProvider;
-
-  switch (provider.toLowerCase()) {
+  const providerEnv = process.env.LLM_PROVIDER || 'openai';
+  switch (providerEnv.toLowerCase()) {
     case 'flowise':
-      selectedProvider = FlowiseProvider;
-      break;
-    case 'openwebui':
-      selectedProvider = openWebUIProvider;
-      break;
+      // FlowiseProvider is exported as an instance
+      return FlowiseProvider;
+    // case 'openwebui':
+    //   return OpenWebUIProvider;
     case 'openai':
-      selectedProvider = openAiProvider;
-      break;
     default:
-      throw new Error(`Unknown LLM provider: ${provider}`);
+      return openAiProvider;
   }
-
-  return selectedProvider;
 }
