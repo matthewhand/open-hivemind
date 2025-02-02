@@ -3,7 +3,7 @@ import Debug from 'debug';
 const debug = Debug('app:utils:environmentUtils');
 
 export function debugEnvVars(): void {
-    const messageProvider = process.env.MESSAGE || 'discord';
+    const messageProvider = process.env.MESSAGE_PROVIDER || 'discord';
     const llmProvider = process.env.LLM_PROVIDER || 'openai';
 
     // Required environment variables based on MESSAGE and LLM values
