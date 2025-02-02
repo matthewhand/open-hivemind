@@ -1,4 +1,5 @@
 import { IMessage } from './IMessage';
+import { Application } from 'express';
 
 /**
  * IMessengerService provides a platform-agnostic interface for messaging services,
@@ -10,7 +11,7 @@ export interface IMessengerService {
    * Initializes the messaging service (optional, defaults to doing nothing).
    * Implementations can override this to perform setup tasks.
    */
-  initialize(): Promise<void>;
+  initialize(app: Application): Promise<void>;
 
   /**
    * Sends a message to a specified channel.
