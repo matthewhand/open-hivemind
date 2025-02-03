@@ -11,7 +11,7 @@ export interface IMessageProvider {
      * @param message - The content of the message to be sent.
      * @returns A Promise that resolves when the message is successfully sent.
      */
-    sendMessageToChannel(channelId: string, message: string): Promise<void>;
+    sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<void>;
 
     /**
      * Retrieves the bot's client ID.
