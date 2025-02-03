@@ -13,16 +13,16 @@ export class SlackMessageProvider implements IMessageProvider {
     return this._slackService;
   }
 
-  async sendMessage(channelId: string, message: string) {
-    await this.slackService.sendMessage(channelId, message);
+  async sendMessage(channelId: string, message: string, senderName?: string) {
+    await this.slackService.sendMessage(channelId, message, senderName);
   }
 
   async getMessages(channelId: string) {
     return await this.slackService.fetchMessages(channelId);
   }
 
-  async sendMessageToChannel(channelId: string, message: string) {
-    return this.sendMessage(channelId, message);
+  async sendMessageToChannel(channelId: string, message: string, senderName?: string) {
+    return this.sendMessage(channelId, message, senderName);
   }
 
   getClientId(): string {
