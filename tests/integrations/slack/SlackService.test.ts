@@ -25,13 +25,23 @@ jest.mock('@slack/web-api', () => {
 jest.mock('@slack/socket-mode', () => {
   return {
     SocketModeClient: jest.fn().mockImplementation(() => ({
-      on: jest.fn(),    // ✅ Ensure event handling is mocked
-      start: jest.fn(), // ✅ Ensure start() is mocked
+      on: jest.fn(),
+      start: jest.fn(),
     })),
   };
 });
 
-// ✅ Retrieve mocks for use in tests
+jest.mock('@slack/rtm-api', () => {
+  return {
+    RTMClient: jest.fn().mockImplementation(() => ({
+      on: jest.fn(),
+      start: jest.fn(),
+      addAppMetadata: jest.fn(),
+    })),
+  };
+});
+
+// Retrieve mocks for use in tests
 const { __mocks__ } = require('@slack/web-api');
 const postMessageMock = __mocks__.postMessageMock;
 const joinMock = __mocks__.joinMock;
@@ -39,51 +49,58 @@ const historyMock = __mocks__.historyMock;
 const authTestMock = __mocks__.authTestMock;
 
 const SocketModeClient = require('@slack/socket-mode').SocketModeClient;
+const RTMClient = require('@slack/rtm-api').RTMClient;
 const socketClientMock = new SocketModeClient();
-
 const socketOnMock = socketClientMock.on;
 const socketStartMock = socketClientMock.start;
-
-// Mock SocketModeClient to prevent API calls
-jest.mock('@slack/socket-mode', () => {
-  return {
-    SocketModeClient: jest.fn(() => ({
-      on: jest.fn(),
-      start: jest.fn().mockResolvedValue(undefined),
-    })),
-  };
-});
 
 describe('SlackService', () => {
   beforeEach(() => {
     SlackService.resetInstance();
-    process.env.SLACK_BOT_TOKEN = 'dummy-slack-token';
+    // Set comma-separated environment variables.
+    process.env.SLACK_BOT_TOKEN = 'dummy-slack-token'; // single token for testing (could be "token1,token2" if desired)
     process.env.SLACK_APP_TOKEN = 'dummy-app-token';
+    process.env.SLACK_SIGNING_SECRET = 'dummy-signing-secret';
     process.env.SLACK_JOIN_CHANNELS = 'DEADBEEFCAFE';
     process.env.SLACK_DEFAULT_CHANNEL_ID = 'DEADBEEFCAFE';
     postMessageMock.mockClear();
     joinMock.mockClear();
     historyMock.mockClear();
+    authTestMock.mockClear();
+    socketOnMock.mockClear();
+    socketStartMock.mockClear();
   });
 
   afterEach(() => {
     delete process.env.SLACK_BOT_TOKEN;
     delete process.env.SLACK_APP_TOKEN;
+    delete process.env.SLACK_SIGNING_SECRET;
+    delete process.env.SLACK_JOIN_CHANNELS;
+    delete process.env.SLACK_DEFAULT_CHANNEL_ID;
   });
 
   it('should send a plain message', async () => {
     const slackService = SlackService.getInstance();
+    // Simulate auth test result by manually setting botUserName on default bot.
+    slackService['slackBots'][0].botUserName = 'TestBot';
     const channel = 'C123456';
     const message = 'Test message';
 
     await slackService.sendMessage(channel, message);
-    expect(postMessageMock).toHaveBeenCalledWith({ channel, text: message });
+    // The new design formats the message as "*TestBot*: Test message" and adds an icon.
+    expect(postMessageMock).toHaveBeenCalledWith({
+      channel,
+      text: '*TestBot*: Test message',
+      icon_emoji: ':robot_face:',
+    });
   });
 
   it('should send a welcome message', async () => {
     const slackService = SlackService.getInstance();
+    slackService['slackBots'][0].botUserName = 'TestBot';
     const channel = 'C123456';
 
+    // Call the public wrapper that sends a welcome message using the default bot.
     await slackService.sendWelcomeMessage(channel);
     expect(postMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,22 +112,63 @@ describe('SlackService', () => {
 
   it('should join a channel and send a welcome message', async () => {
     const slackService = SlackService.getInstance();
+    slackService['slackBots'][0].botUserName = 'TestBot';
     const channel = 'C123456';
 
     await slackService.joinChannel(channel);
     expect(joinMock).toHaveBeenCalledWith({ channel });
-    expect(postMessageMock).toHaveBeenCalled(); // Welcome message check
+    // The welcome message should be sent after joining.
+    expect(postMessageMock).toHaveBeenCalled();
   });
 
-  // it('should fetch messages from a channel', async () => {
-  //   const slackService = SlackService.getInstance();
-  //   const channel = 'C123456';
-  //   const dummyMessages = [{ text: 'Test message' }];
+  it('should handle action endpoint with valid payload', async () => {
+    const slackService = SlackService.getInstance();
+    slackService['slackBots'][0].botUserName = 'TestBot';
+    // Set a dummy messageHandler that resolves.
+    slackService.setMessageHandler(async (message, history) => 'Handled');
+    const validPayload = {
+      type: 'block_actions',
+      user: { id: 'U123456' },
+      actions: [{ action_id: 'test_action_id', value: 'TestAction' }],
+      trigger_id: 'trigger123'
+    };
+    const mockRequest = {
+      body: {
+        payload: JSON.stringify(validPayload),
+      },
+      headers: {
+        'x-slack-signature': 'v0=valid_signature',
+        'x-slack-request-timestamp': '1234567890',
+      },
+    };
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
 
-  //   (historyMock as jest.Mock).mockResolvedValue({ messages: dummyMessages });
+    await slackService['handleActionRequest'](mockRequest as any, mockResponse as any);
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.send).toHaveBeenCalledWith('Interactive action handled successfully.');
+  });
 
-  //   const messages = await slackService.fetchMessages(channel);
-  //   expect(historyMock).toHaveBeenCalledWith({ channel, limit: 10 });
-  //   expect(messages).toEqual(dummyMessages);
-  // });
+  it('should handle action endpoint with invalid payload', async () => {
+    const slackService = SlackService.getInstance();
+    const mockRequest = {
+      body: {
+        payload: 'invalid_payload',
+      },
+      headers: {
+        'x-slack-signature': 'v0=invalid_signature',
+        'x-slack-request-timestamp': '1234567890',
+      },
+    };
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+
+    await slackService['handleActionRequest'](mockRequest as any, mockResponse as any);
+    expect(mockResponse.status).toHaveBeenCalledWith(400);
+    expect(mockResponse.send).toHaveBeenCalledWith('Bad Request');
+  });
 });
