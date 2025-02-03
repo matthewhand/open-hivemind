@@ -1,4 +1,4 @@
-/**
+/** 
  * OpenAiService provides a singleton interface for interacting with the OpenAI API.
  * It includes functionality for generating chat completions, checking service status,
  * and listing available models. Configuration details are retrieved from external
@@ -15,8 +15,6 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@common/getEmoji';
 
 const debug = Debug('app:OpenAiService');
-
-
 
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
@@ -39,7 +37,6 @@ export class OpenAiService {
 
   /**
    * Private constructor to initialize the OpenAI client and configuration.
-   * Retrieves API key, timeout, and other settings from openaiConfig.
    */
   private constructor() {
     debug('[DEBUG] Entering OpenAiService constructor');
@@ -49,7 +46,7 @@ export class OpenAiService {
     debug(`[DEBUG] Request timeout set to ${this.requestTimeout} ms`);
 
     const options: ClientOptions = {
-      apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),  // Ensure string is used
+      apiKey: String(openaiConfig.get('OPENAI_API_KEY') || ''),
       organization: String(openaiConfig.get('OPENAI_ORGANIZATION') || ''),
       baseURL: String(openaiConfig.get('OPENAI_BASE_URL') || 'https://api.openai.com'),
       timeout: timeoutValue,
@@ -80,7 +77,6 @@ export class OpenAiService {
 
   /**
    * Singleton pattern to get the instance of OpenAiService.
-   * Ensures only one instance is active at a time.
    */
   public static getInstance(): OpenAiService {
     debug('[DEBUG] getInstance called');
@@ -95,7 +91,6 @@ export class OpenAiService {
 
   /**
    * Checks whether the service is currently busy processing requests.
-   * @returns {boolean} True if busy, false otherwise.
    */
   public isBusy(): boolean {
     debug(`[DEBUG] isBusy called, returning: ${this.busy}`);
@@ -113,13 +108,16 @@ export class OpenAiService {
 
   /**
    * Generates a chat completion from OpenAI based on the user's message and history.
-   * Handles system messages, user input, and message history.
+   * Instead of returning just a string, this method returns an object with two properties:
+   *  - text: the generated response content.
+   *  - context_variables: an object that includes active_agent_name (if available).
+   *
    * @param message - The user's input message.
    * @param historyMessages - Previous chat messages.
    * @param systemMessageContent - A system-level message to initialize the chat context.
    * @param maxTokens - Maximum number of tokens for the response (default: 150).
    * @param temperature - Controls randomness in the response (default: 0.7).
-   * @returns {Promise<any>} The generated chat completion response or error.
+   * @returns {Promise<any>} The generated chat completion response object.
    */
   public async generateChatCompletion(
     message: string,
@@ -221,10 +219,10 @@ export class OpenAiService {
       { role: 'system', content: systemMessageContent },
       {
         role: 'assistant',
-        content: "", // ✅ Ensured string (no null values allowed)
+        content: "", // Empty string content
         tool_calls: [
           {
-            id: toolCallId, // ✅ Matches the tool response ID
+            id: toolCallId,
             type: "function",
             function: {
               name: "get_metadata",
@@ -235,13 +233,13 @@ export class OpenAiService {
       },
       {
         role: 'tool',
-        tool_call_id: toolCallId, // ✅ Ensures correct mapping
+        tool_call_id: toolCallId,
         content: JSON.stringify(fullMetadata)
       },
       { role: 'user', content: message },
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
-        content: msg.getText() || "" // ✅ Ensured content is always a string
+        content: msg.getText() || ""
       })),
     ];
   
@@ -283,7 +281,19 @@ export class OpenAiService {
       }
   
       debug('[DEBUG] Final extracted content:', content);
-      return content;
+  
+      // --- Attach agent metadata ---
+      let activeAgentName: string | undefined;
+      // Look for active agent name in full_response if available.
+      if ((response as any).full_response && (response as any).full_response.agent && (response as any).full_response.agent.name) {
+        activeAgentName = (response as any).full_response.agent.name;
+      }
+  
+      // Return an object that includes the text and context_variables.
+      return { 
+        text: content, 
+        context_variables: { active_agent_name: activeAgentName } 
+      };
     } catch (error: any) {
       debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: error.message });
       throw new Error(`Failed to generate chat completion: ${error.message}`);
@@ -292,12 +302,6 @@ export class OpenAiService {
           
   /**
    * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
-   * @param message - The user's input message.
-   * @param historyMessages - Previous chat messages.
-   * @param systemMessageContent - A system-level message to initialize the chat context.
-   * @param maxTokens - Maximum number of tokens for the response (default: 150).
-   * @param temperature - Controls randomness in the response (default: 0.7).
-   * @returns {Promise<any>} The generated chat response or error.
    */
   public async generateChatResponse(
     message: string,
@@ -312,7 +316,6 @@ export class OpenAiService {
 
   /**
    * Lists available OpenAI models by invoking the OpenAI API.
-   * @returns {Promise<any>} A list of models or error if retrieval fails.
    */
   public async listModels(): Promise<any> {
     debug('[DEBUG] listModels called');
@@ -327,9 +330,7 @@ export class OpenAiService {
   }
 
   /**
-   * Redacts the OpenAI API key for logging purposes, ensuring it is not exposed in logs.
-   * @param key - The API key to be redacted.
-   * @returns {string} The redacted API key or the original key if debugging is disabled.
+   * Redacts the OpenAI API key for logging purposes.
    */
   private redactApiKeyForLogging(key: string): string {
     debug('[DEBUG] redactApiKeyForLogging called');
