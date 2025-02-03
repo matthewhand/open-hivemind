@@ -16,20 +16,6 @@ import { getEmoji } from '@common/getEmoji';
 
 const debug = Debug('app:OpenAiService');
 
-type ChatRole = 'system' | 'user' | 'assistant' | 'function';
-
-interface BaseMessage {
-  role: ChatRole;
-  content: string;
-}
-
-interface FunctionMessage extends BaseMessage {
-  role: 'function';
-  name: string; // Required for function messages
-  content: string;
-}
-
-type ChatCompletionMessage = BaseMessage | FunctionMessage;
 
 
 // Guard: Validate openaiConfig object
@@ -145,8 +131,7 @@ export class OpenAiService {
     debug('[DEBUG] generateChatCompletion called');
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
     debug('[DEBUG] History messages count:', historyMessages.length);
-
-
+  
     const fullMetadata = {
       workspaceInfo: {
         workspaceId: "T123456",
@@ -229,59 +214,62 @@ export class OpenAiService {
         }
       ]
     };
-    
+  
+    const toolCallId = "tool_call_12345"; // Ensures matching ID
+  
     const chatParams: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemMessageContent },
       {
         role: 'assistant',
-        content: JSON.stringify({
-          function_call: {
-            name: "get_metadata",
-            arguments: JSON.stringify({ threadTs: "1234" }),
-          },
-        }),
+        content: "", // ✅ Ensured string (no null values allowed)
+        tool_calls: [
+          {
+            id: toolCallId, // ✅ Matches the tool response ID
+            type: "function",
+            function: {
+              name: "get_metadata",
+              arguments: JSON.stringify({ threadTs: "1234" })
+            }
+          }
+        ]
       },
       {
-        role: 'function',
-        name: "get_metadata", // Required for function messages
-        content: JSON.stringify(fullMetadata),
+        role: 'tool',
+        tool_call_id: toolCallId, // ✅ Ensures correct mapping
+        content: JSON.stringify(fullMetadata)
       },
       { role: 'user', content: message },
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
-        content: msg.getText() || getEmoji(),
+        content: msg.getText() || "" // ✅ Ensured content is always a string
       })),
     ];
-    
-    console.debug('[DEBUG] Chat parameters:', chatParams);
-    
-
+  
+    console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
+  
     try {
       const response = await this.openai.chat.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL') || 'gpt-3.5-turbo',
+        model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
         messages: chatParams,
         max_tokens: maxTokens,
         temperature,
         stream: false
       });
+  
       debug('[DEBUG] OpenAI API response received:', response);
-
-      // Log the raw first choice for clarity
+  
       const choice = response.choices && response.choices[0];
       debug('[DEBUG] Raw first choice:', JSON.stringify(choice));
-
-      // Primary extraction: attempt to extract content from the first choice.
-      let content = choice?.message?.content || null;
+  
+      let content = choice?.message?.content || "";
       debug('[DEBUG] Extracted content from choices:', content);
-
-      // Fallback: If no content found, iterate backwards through full_response.messages.
+  
       if (!content && (response as any).full_response && Array.isArray((response as any).full_response.messages)) {
         const messages = (response as any).full_response.messages;
         debug('[DEBUG] Iterating through full_response.messages for assistant content. Total messages:', messages.length);
         for (let i = messages.length - 1; i >= 0; i--) {
           const msg = messages[i];
           debug(`[DEBUG] Checking message at index ${i}: role=${msg.role}, content="${msg.content}"`);
-          // Stop iteration if a non-assistant message is encountered.
           if (msg.role !== 'assistant') {
             debug(`[DEBUG] Encountered non-assistant message at index ${i}; stopping iteration.`);
             break;
@@ -293,19 +281,7 @@ export class OpenAiService {
           }
         }
       }
-
-      // Check for context variables indicating a handoff to another agent.
-      if ((response as any).full_response && (response as any).full_response.context_variables && (response as any).full_response.context_variables.active_agent_name) {
-        const activeAgent = (response as any).full_response.context_variables.active_agent_name;
-        debug(`[DEBUG] Handoff detected to agent: ${activeAgent}`);
-        // Prefix the output with a handoff note.
-        if (content) {
-          content = `[Handoff to ${activeAgent}]\n` + content;
-        } else {
-          content = `[Handoff to ${activeAgent}]`;
-        }
-      }
-
+  
       debug('[DEBUG] Final extracted content:', content);
       return content;
     } catch (error: any) {
@@ -313,7 +289,7 @@ export class OpenAiService {
       throw new Error(`Failed to generate chat completion: ${error.message}`);
     }
   }
-
+          
   /**
    * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
    * @param message - The user's input message.
