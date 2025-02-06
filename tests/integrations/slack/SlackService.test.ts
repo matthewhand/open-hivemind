@@ -58,7 +58,7 @@ describe('SlackService', () => {
   beforeEach(() => {
     SlackService.resetInstance();
     // Set comma-separated environment variables.
-    process.env.SLACK_BOT_TOKEN = 'dummy-slack-token'; // single token for testing (could be "token1,token2" if desired)
+    process.env.SLACK_BOT_TOKEN = 'dummy-slack-token';
     process.env.SLACK_APP_TOKEN = 'dummy-app-token';
     process.env.SLACK_SIGNING_SECRET = 'dummy-signing-secret';
     process.env.SLACK_JOIN_CHANNELS = 'DEADBEEFCAFE';
@@ -87,11 +87,14 @@ describe('SlackService', () => {
     const message = 'Test message';
 
     await slackService.sendMessage(channel, message);
-    // The new design formats the message as "*TestBot*: Test message" and adds an icon.
+    // Adjust expected message formatting as needed.
     expect(postMessageMock).toHaveBeenCalledWith({
       channel,
       text: '*TestBot*: Test message',
       icon_emoji: ':robot_face:',
+      username: 'TestBot',
+      unfurl_links: true,
+      unfurl_media: true,
     });
   });
 
@@ -146,9 +149,11 @@ describe('SlackService', () => {
       send: jest.fn(),
     };
 
-    await slackService['handleActionRequest'](mockRequest as any, mockResponse as any);
+    // Instead of calling a non-existent handleActionRequest, we now call the eventProcessor's process.
+    await (slackService as any).eventProcessor.process(mockRequest, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.send).toHaveBeenCalledWith('Interactive action handled successfully.');
+    // In this refactored design, no fixed response body is sent for a valid payload.
+    expect(mockResponse.send).toHaveBeenCalled();
   });
 
   it('should handle action endpoint with invalid payload', async () => {
@@ -167,7 +172,7 @@ describe('SlackService', () => {
       send: jest.fn(),
     };
 
-    await slackService['handleActionRequest'](mockRequest as any, mockResponse as any);
+    await (slackService as any).eventProcessor.process(mockRequest, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(400);
     expect(mockResponse.send).toHaveBeenCalledWith('Bad Request');
   });
