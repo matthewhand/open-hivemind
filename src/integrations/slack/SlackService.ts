@@ -11,7 +11,6 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 
-// NEW imports
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { InteractiveActionHandlers } from './InteractiveActionHandlers';
 
@@ -35,7 +34,6 @@ export class SlackService implements IMessengerService {
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
 
   private signatureVerifier: SlackSignatureVerifier;
-  // NEW: An instance of SlackInteractiveHandler
   private interactiveHandler: SlackInteractiveHandler;
 
   private constructor() {
@@ -102,7 +100,7 @@ export class SlackService implements IMessengerService {
     }
     this.signatureVerifier = new SlackSignatureVerifier(mainSigningSecret);
 
-    // 1) Create the InteractiveActionHandlers object
+    // Create InteractiveActionHandlers that delegate back to SlackService methods
     const interactiveHandlers: InteractiveActionHandlers = {
       sendCourseInfo: async (channel: string) => {
         await this.sendCourseInfo(channel);
@@ -125,7 +123,7 @@ export class SlackService implements IMessengerService {
               text: `👋 *Hello <@${userId}>!* Welcome to the University Bot. How can I assist you?`
             }
           },
-          // Add more blocks if you wish
+          // Possibly more blocks
         ];
         const defaultBot = this.slackBots[0];
         await defaultBot.webClient.chat.postMessage({
@@ -136,7 +134,6 @@ export class SlackService implements IMessengerService {
       }
     };
 
-    // 2) Instantiate SlackInteractiveHandler, passing in our InteractiveActionHandlers
     this.interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
   }
 
@@ -167,8 +164,7 @@ export class SlackService implements IMessengerService {
         express.urlencoded({ extended: true }),
         (req: Request, res: Response, next: NextFunction) =>
           this.signatureVerifier.verify(req, res, next),
-        // Replaced the old this.handleInteractiveRequest with:
-        (req: Request, res: Response) => this.interactiveHandler.handleRequest(req, res)
+        this.handleInteractiveRequest.bind(this)
       );
 
       // Slack action endpoint
@@ -188,7 +184,7 @@ export class SlackService implements IMessengerService {
         this.handleActionRequest.bind(this)
       );
 
-      // For each Slack bot, auth.test(), join channels, start listening
+      // For each Slack bot
       for (const botInfo of this.slackBots) {
         try {
           const authTest = await botInfo.webClient.auth.test();
@@ -209,13 +205,16 @@ export class SlackService implements IMessengerService {
       console.error(`[Slack] Initialization error: ${errMsg}`);
     }
   }
+
+  // CHANGED handleInteractiveRequest: delegate block action to interactiveHandler
   private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
     try {
       debug(`[Slack] Received interactive request with body: ${JSON.stringify(req.body)}`);
       const payload = JSON.parse(req.body.payload);
       debug(`[Slack] Parsed interactive payload: ${JSON.stringify(payload)}`);
       if (payload.type === 'block_actions') {
-        await this.handleBlockAction(payload, res);
+        // Now call interactiveHandler
+        await this.interactiveHandler.handleBlockAction(payload, res);
       } else if (payload.type === 'view_submission') {
         await this.handleViewSubmission(payload, res);
       } else {
@@ -226,7 +225,6 @@ export class SlackService implements IMessengerService {
       res.status(400).send('Bad Request');
     }
   }
-
   private async handleViewSubmission(payload: any, res: Response): Promise<void> {
     try {
       debug(`[Slack] Handling modal submission: ${JSON.stringify(payload.view.state.values)}`);
@@ -275,103 +273,6 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  private async handleBlockAction(payload: any, res: Response): Promise<void> {
-    try {
-      const actionId = payload.actions[0].action_id;
-      debug(`[Slack] Handling block action: ${actionId}`);
-      res.status(200).send();
-
-      const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID;
-      if (!defaultChannel) {
-        debug('[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send block action response.');
-        return;
-      }
-
-      // Only send welcome message if "getting_started" was clicked
-      if (actionId === 'getting_started') {
-        const blocks = [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `👋 *Hello <@${payload.user.id}>!* Welcome to the University Bot. How can I assist you?`
-            }
-          },
-          {
-            type: 'actions',
-            elements: [
-              {
-                type: 'button',
-                text: { type: 'plain_text', text: '📚 See Course Info' },
-                action_id: 'see_course_info',
-                value: 'course_info'
-              },
-              {
-                type: 'button',
-                text: { type: 'plain_text', text: '📅 Book Office Hours' },
-                action_id: 'book_office_hours',
-                value: 'office_hours'
-              }
-            ]
-          },
-          {
-            type: 'actions',
-            elements: [
-              {
-                type: 'button',
-                text: { type: 'plain_text', text: '📖 Get Study Resources' },
-                action_id: 'get_study_resources',
-                value: 'study_resources'
-              },
-              {
-                type: 'button',
-                text: { type: 'plain_text', text: '❓ Ask a Question' },
-                action_id: 'ask_question',
-                value: 'ask_question'
-              }
-            ]
-          },
-          { type: 'divider' },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `💡 *Need more help?* Click a button above or type \`@university-bot help\` for a full list of commands.`
-            }
-          }
-        ];
-
-        const defaultBot = this.slackBots[0];
-        await defaultBot.webClient.chat.postMessage({
-          channel: defaultChannel,
-          text: 'Welcome! Here’s how you can interact with the University Bot.',
-          blocks: blocks
-        });
-
-        debug(`[Slack] Sent interactive help message to default channel: ${defaultChannel}`);
-      }
-
-      // Handle individual button clicks
-      switch (actionId) {
-        case 'see_course_info':
-          await this.sendCourseInfo(defaultChannel);
-          break;
-        case 'book_office_hours':
-          await this.sendBookingInstructions(defaultChannel);
-          break;
-        case 'get_study_resources':
-          await this.sendStudyResources(defaultChannel);
-          break;
-        case 'ask_question':
-          await this.sendAskQuestionModal(payload.trigger_id);
-          break;
-        default:
-          debug(`[Slack] Unhandled action: ${actionId}`);
-      }
-    } catch (error) {
-      debug(`[Slack] Error handling block action: ${error}`);
-    }
-  }
 
   private async handleActionRequest(req: Request, res: Response): Promise<void> {
     try {

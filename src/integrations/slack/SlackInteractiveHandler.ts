@@ -28,7 +28,7 @@ export class SlackInteractiveHandler {
     }
   }
 
-  private async handleBlockAction(payload: any, res: Response): Promise<void> {
+  async handleBlockAction(payload: any, res: Response): Promise<void> {
     try {
       const actionId = payload.actions[0].action_id;
       debug(`[Slack] Handling block action: ${actionId}`);
@@ -66,7 +66,7 @@ export class SlackInteractiveHandler {
     }
   }
 
-  private async handleViewSubmission(payload: any, res: Response): Promise<void> {
+  async handleViewSubmission(payload: any, res: Response): Promise<void> {
     try {
       debug(`[Slack] Handling modal submission: ${JSON.stringify(payload.view.state.values)}`);
       res.status(200).json({ response_action: 'clear' });
