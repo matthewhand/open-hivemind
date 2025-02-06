@@ -1,3 +1,4 @@
+import { Mutex } from 'async-mutex';
 import { SocketModeClient } from '@slack/socket-mode';
 import { RTMClient } from '@slack/rtm-api';
 import { WebClient } from '@slack/web-api';
@@ -8,7 +9,6 @@ import SlackMessage from './SlackMessage';
 import slackConfig from './interfaces/slackConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import express, { Application, Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 
 // Interactive handling
@@ -46,6 +46,8 @@ export class SlackService implements IMessengerService {
 
   // Read configuration option to include history (off by default)
   private includeHistory: boolean = (slackConfig.get('SLACK_INCLUDE_HISTORY') === true);
+
+  private queueMutex = new Mutex();
 
   private constructor() {
     debug('[Slack] Initializing SlackService...');
@@ -392,52 +394,66 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  private async processQueue(): Promise<void> {
-    if (this.isProcessingQueue) {
-      return;
-    }
-    this.isProcessingQueue = true;
-    while (this.eventQueue.length > 0) {
-      const { event, res } = this.eventQueue.shift()!;
-      res.status(200).send(); // Respond immediately to Slack
-      debug(`[Slack] Processing event: ${JSON.stringify(event)}`);
 
-      if (event.subtype === 'bot_message') {
-        debug('[Slack] Ignoring bot message.');
-        continue;
-      }
-      if (event.event_ts && this.lastEventTs === event.event_ts) {
-        debug(`[Slack] Duplicate event detected (event_ts: ${event.event_ts}). Ignoring.`);
-        continue;
-      }
-      if (!event.text) {
-        debug('[Slack] Ignoring message with empty text.');
-        continue;
-      }
-      if (this.messageHandler) {
-        const messageText = event.text || '';
-        debug(`[Slack] Responding to query: ${messageText}`);
-        const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || event.channel;
-        const slackMessage = new SlackMessage(messageText, defaultChannel, event);
-        let history: IMessage[] = [];
-        if (this.includeHistory) {
+  private async processQueue(): Promise<void> {
+    await this.queueMutex.runExclusive(async () => {
+      while (this.eventQueue.length > 0) {
+        const { event, res } = this.eventQueue.shift()!;
+        res.status(200).send(); // Respond immediately to Slack
+
+        debug(`[Slack] Processing event: ${JSON.stringify(event)}`);
+
+        const allBotUserIds = this.slackBots
+          .map((info) => info.botUserId)
+          .filter(Boolean) as string[];
+
+        if (event.subtype === 'bot_message' || event.bot_id) {
+          debug('[Slack] Ignoring bot message (event.subtype or event.bot_id set).');
+          continue;
+        }
+
+        if (event.user && allBotUserIds.includes(event.user)) {
+          debug(`[Slack] Ignoring message from our known bot user: ${event.user}`);
+          continue;
+        }
+
+        if (event.event_ts && this.lastEventTs === event.event_ts) {
+          debug(`[Slack] Duplicate event detected (event_ts: ${event.event_ts}). Ignoring.`);
+          continue;
+        }
+
+        if (!event.text) {
+          debug('[Slack] Ignoring message (lacks text).');
+          continue;
+        }
+
+        if (this.messageHandler) {
+          const messageText = event.text || '';
+          debug(`[Slack] Responding to query: ${messageText}`);
+          const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || event.channel;
+          const slackMessage = new SlackMessage(messageText, defaultChannel, event);
+
+          let history: IMessage[] = [];
+          if (this.includeHistory) {
+            try {
+              history = await this.fetchMessagesForBot(this.slackBots[0], defaultChannel, 10);
+            } catch (err) {
+              debug(`[Slack] Failed to fetch chat history: ${err}`);
+            }
+          }
+
           try {
-            history = await this.fetchMessagesForBot(this.slackBots[0], defaultChannel, 10);
-          } catch (err) {
-            debug(`[Slack] Failed to fetch chat history: ${err}`);
+            await this.messageHandler(slackMessage, history);
+          } catch (handlerError) {
+            debug(`[Slack] Error in message handler: ${handlerError}`);
           }
         }
-        try {
-          await this.messageHandler(slackMessage, history);
-        } catch (handlerError) {
-          debug(`[Slack] Error in message handler: ${handlerError}`);
+
+        if (event.event_ts) {
+          this.lastEventTs = event.event_ts;
         }
       }
-      if (event.event_ts) {
-        this.lastEventTs = event.event_ts;
-      }
-    }
-    this.isProcessingQueue = false;
+    });
   }
 
   public async getMessagesFromChannel(channelId: string, limit?: number): Promise<IMessage[]> {
@@ -526,6 +542,7 @@ export class SlackService implements IMessengerService {
       await botInfo.webClient.chat.postMessage({
         channel,
         text: message,
+        username: displayName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
