@@ -11,6 +11,10 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 
+// NEW imports
+import { SlackInteractiveHandler } from './SlackInteractiveHandler';
+import { InteractiveActionHandlers } from './InteractiveActionHandlers';
+
 const debug = Debug('app:SlackService');
 
 interface SlackBotInfo {
@@ -30,8 +34,9 @@ export class SlackService implements IMessengerService {
   private mode: 'socket' | 'rtm';
   private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
 
-  // NEW: SlackSignatureVerifier instance
   private signatureVerifier: SlackSignatureVerifier;
+  // NEW: An instance of SlackInteractiveHandler
+  private interactiveHandler: SlackInteractiveHandler;
 
   private constructor() {
     debug('[Slack] Initializing SlackService...');
@@ -91,12 +96,48 @@ export class SlackService implements IMessengerService {
     debug('=== END BOT INITIALIZATION DUMP ===');
 
     // Create a SlackSignatureVerifier using the first bot's signingSecret
-    // (or whichever you deem appropriate)
     const mainSigningSecret = this.slackBots[0]?.signingSecret;
     if (!mainSigningSecret) {
       throw new Error('No Slack signing secret found in SlackService constructor');
     }
     this.signatureVerifier = new SlackSignatureVerifier(mainSigningSecret);
+
+    // 1) Create the InteractiveActionHandlers object
+    const interactiveHandlers: InteractiveActionHandlers = {
+      sendCourseInfo: async (channel: string) => {
+        await this.sendCourseInfo(channel);
+      },
+      sendBookingInstructions: async (channel: string) => {
+        await this.sendBookingInstructions(channel);
+      },
+      sendStudyResources: async (channel: string) => {
+        await this.sendStudyResources(channel);
+      },
+      sendAskQuestionModal: async (triggerId: string) => {
+        await this.sendAskQuestionModal(triggerId);
+      },
+      sendInteractiveHelpMessage: async (defaultChannel: string, userId: string) => {
+        const blocks = [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `👋 *Hello <@${userId}>!* Welcome to the University Bot. How can I assist you?`
+            }
+          },
+          // Add more blocks if you wish
+        ];
+        const defaultBot = this.slackBots[0];
+        await defaultBot.webClient.chat.postMessage({
+          channel: defaultChannel,
+          text: 'Welcome! Here’s how you can interact with the University Bot.',
+          blocks
+        });
+      }
+    };
+
+    // 2) Instantiate SlackInteractiveHandler, passing in our InteractiveActionHandlers
+    this.interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
   }
 
   public static getInstance(): SlackService {
@@ -126,7 +167,8 @@ export class SlackService implements IMessengerService {
         express.urlencoded({ extended: true }),
         (req: Request, res: Response, next: NextFunction) =>
           this.signatureVerifier.verify(req, res, next),
-        this.handleInteractiveRequest.bind(this)
+        // Replaced the old this.handleInteractiveRequest with:
+        (req: Request, res: Response) => this.interactiveHandler.handleRequest(req, res)
       );
 
       // Slack action endpoint
@@ -146,7 +188,7 @@ export class SlackService implements IMessengerService {
         this.handleActionRequest.bind(this)
       );
 
-      // For each Slack bot, do auth.test, join channels, and start listening
+      // For each Slack bot, auth.test(), join channels, start listening
       for (const botInfo of this.slackBots) {
         try {
           const authTest = await botInfo.webClient.auth.test();
@@ -167,9 +209,6 @@ export class SlackService implements IMessengerService {
       console.error(`[Slack] Initialization error: ${errMsg}`);
     }
   }
-
-  // Everything below remains essentially the same, except we removed the old verifySlackSignature method
-
   private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
     try {
       debug(`[Slack] Received interactive request with body: ${JSON.stringify(req.body)}`);
