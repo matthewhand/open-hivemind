@@ -11,6 +11,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 
+// NEW imports for interactive handling
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { InteractiveActionHandlers } from './InteractiveActionHandlers';
 
@@ -35,6 +36,11 @@ export class SlackService implements IMessengerService {
 
   private signatureVerifier: SlackSignatureVerifier;
   private interactiveHandler: SlackInteractiveHandler;
+
+  // NEW properties for queue-based event processing:
+  private eventQueue: { event: any, res: Response }[] = [];
+  private isProcessingQueue: boolean = false;
+  private lastEventTs: string | null = null;
 
   private constructor() {
     debug('[Slack] Initializing SlackService...');
@@ -63,7 +69,7 @@ export class SlackService implements IMessengerService {
       ? (process.env.SLACK_MODE.toLowerCase() as 'socket' | 'rtm')
       : 'socket';
 
-    // Build an internal list of SlackBotInfo
+    // Build internal list of SlackBotInfo
     botTokens.forEach((botToken, index) => {
       const appToken = index < appTokens.length ? appTokens[index] : undefined;
       const signingSecret = index < signingSecrets.length ? signingSecrets[index] : signingSecrets[0];
@@ -86,7 +92,6 @@ export class SlackService implements IMessengerService {
       debug(`[Slack] Created SlackBotInfo #${index} with mode=${this.mode}. BOT token: ${redactSensitiveInfo('token', botToken)}`);
     });
 
-    // Dump the complete bots list for debugging
     debug('=== BOT INITIALIZATION DUMP ===');
     this.slackBots.forEach((bot, index) => {
       debug(`Bot[${index}]: botUserName=${bot.botUserName || 'Not set yet'}, botUserId=${bot.botUserId || 'Not set'}, mode=${this.mode}`);
@@ -100,7 +105,7 @@ export class SlackService implements IMessengerService {
     }
     this.signatureVerifier = new SlackSignatureVerifier(mainSigningSecret);
 
-    // Create InteractiveActionHandlers that delegate back to SlackService methods
+    // Create InteractiveActionHandlers that delegate back to SlackService's placeholder methods
     const interactiveHandlers: InteractiveActionHandlers = {
       sendCourseInfo: async (channel: string) => {
         await this.sendCourseInfo(channel);
@@ -123,7 +128,48 @@ export class SlackService implements IMessengerService {
               text: `👋 *Hello <@${userId}>!* Welcome to the University Bot. How can I assist you?`
             }
           },
-          // Possibly more blocks
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: '📚 See Course Info' },
+                action_id: 'see_course_info',
+                value: 'course_info'
+              },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: '📅 Book Office Hours' },
+                action_id: 'book_office_hours',
+                value: 'office_hours'
+              }
+            ]
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: '📖 Get Study Resources' },
+                action_id: 'get_study_resources',
+                value: 'study_resources'
+              },
+              {
+                type: 'button',
+                text: { type: 'plain_text', text: '❓ Ask a Question' },
+                action_id: 'ask_question',
+                value: 'ask_question'
+              }
+            ]
+          },
+          { type: 'divider' },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `💡 *Need more help?* Click a button above or type \`@university-bot help\` for a full list of commands.`
+            }
+          }
         ];
         const defaultBot = this.slackBots[0];
         await defaultBot.webClient.chat.postMessage({
@@ -134,6 +180,7 @@ export class SlackService implements IMessengerService {
       }
     };
 
+    // Instantiate SlackInteractiveHandler with these delegates
     this.interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
   }
 
@@ -164,7 +211,7 @@ export class SlackService implements IMessengerService {
         express.urlencoded({ extended: true }),
         (req: Request, res: Response, next: NextFunction) =>
           this.signatureVerifier.verify(req, res, next),
-        this.handleInteractiveRequest.bind(this)
+        (req: Request, res: Response) => this.handleInteractiveRequest(req, res)
       );
 
       // Slack action endpoint
@@ -184,7 +231,7 @@ export class SlackService implements IMessengerService {
         this.handleActionRequest.bind(this)
       );
 
-      // For each Slack bot
+      // For each Slack bot, run auth.test, join channels, and start listening.
       for (const botInfo of this.slackBots) {
         try {
           const authTest = await botInfo.webClient.auth.test();
@@ -206,14 +253,13 @@ export class SlackService implements IMessengerService {
     }
   }
 
-  // CHANGED handleInteractiveRequest: delegate block action to interactiveHandler
+  // Updated: Delegate interactive requests to SlackInteractiveHandler
   private async handleInteractiveRequest(req: Request, res: Response): Promise<void> {
     try {
       debug(`[Slack] Received interactive request with body: ${JSON.stringify(req.body)}`);
       const payload = JSON.parse(req.body.payload);
       debug(`[Slack] Parsed interactive payload: ${JSON.stringify(payload)}`);
       if (payload.type === 'block_actions') {
-        // Now call interactiveHandler
         await this.interactiveHandler.handleBlockAction(payload, res);
       } else if (payload.type === 'view_submission') {
         await this.handleViewSubmission(payload, res);
@@ -225,6 +271,8 @@ export class SlackService implements IMessengerService {
       res.status(400).send('Bad Request');
     }
   }
+
+  // handleViewSubmission remains unchanged
   private async handleViewSubmission(payload: any, res: Response): Promise<void> {
     try {
       debug(`[Slack] Handling modal submission: ${JSON.stringify(payload.view.state.values)}`);
@@ -258,7 +306,6 @@ export class SlackService implements IMessengerService {
           }, 5000);
 
           if (this.messageHandler) {
-            // Instead of using payload.user.id (DM), we use the default channel
             await this.messageHandler(new SlackMessage(userInput, defaultChannel, payload), []);
           } else {
             debug(`[Slack] (Async) No message handler configured.`);
@@ -273,7 +320,7 @@ export class SlackService implements IMessengerService {
     }
   }
 
-
+  // Updated: handleActionRequest now queues event_callback events to avoid race conditions.
   private async handleActionRequest(req: Request, res: Response): Promise<void> {
     try {
       let body = req.body;
@@ -300,7 +347,7 @@ export class SlackService implements IMessengerService {
           const messageText = action.value || '';
           const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || payload.channel.id;
           const slackMessage = new SlackMessage(messageText, defaultChannel, payload);
-          this.messageHandler(slackMessage, []);
+          await this.messageHandler(slackMessage, []);
         } else {
           debug('[Slack] No message handler configured.');
         }
@@ -308,30 +355,9 @@ export class SlackService implements IMessengerService {
         return;
       }
       if (body.type === 'event_callback') {
-        debug('[Slack] Received event callback.');
-        res.status(200).send();
-        const event = body.event;
-        debug(`[Slack] Event received: ${JSON.stringify(event)}`);
-
-        // BOT MESSAGE FILTERING:
-        if (event.bot_id || event.subtype === 'bot_message') {
-          debug('[Slack] Ignoring bot message.');
-          return;
-        }
-        if (!event.text) {
-          debug('[Slack] Ignoring message with empty text.');
-          return;
-        }
-
-        if (this.messageHandler) {
-          const messageText = event.text || '';
-          debug(`[Slack] Responding to query: ${messageText}`);
-          const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || event.channel;
-          const slackMessage = new SlackMessage(messageText, defaultChannel, event);
-          this.messageHandler(slackMessage, []);
-        } else {
-          debug('[Slack] No message handler configured.');
-        }
+        // Add event to the queue and process sequentially.
+        this.eventQueue.push({ event: body.event, res });
+        this.processQueue();
         return;
       }
       debug('[Slack] Received unknown payload structure.');
@@ -340,6 +366,50 @@ export class SlackService implements IMessengerService {
       debug(`[Slack] Error handling action request: ${error}`);
       res.status(400).send('Bad Request');
     }
+  }
+
+  // New: Process queued events sequentially to prevent duplicates
+  private async processQueue(): Promise<void> {
+    if (this.isProcessingQueue) {
+      return;
+    }
+    this.isProcessingQueue = true;
+    while (this.eventQueue.length > 0) {
+      const { event, res } = this.eventQueue.shift()!;
+      // Send 200 OK immediately to Slack to satisfy their timeout.
+      res.status(200).send();
+      debug(`[Slack] Processing event: ${JSON.stringify(event)}`);
+
+      // BOT MESSAGE FILTERING:
+      if (event.subtype === 'bot_message') {
+        debug('[Slack] Ignoring bot message.');
+        continue;
+      }
+      // DUPLICATE EVENT CHECK:
+      if (event.event_ts && this.lastEventTs === event.event_ts) {
+        debug(`[Slack] Duplicate event detected (event_ts: ${event.event_ts}). Ignoring.`);
+        continue;
+      }
+      if (!event.text) {
+        debug('[Slack] Ignoring message with empty text.');
+        continue;
+      }
+      if (this.messageHandler) {
+        const messageText = event.text || '';
+        debug(`[Slack] Responding to query: ${messageText}`);
+        const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || event.channel;
+        const slackMessage = new SlackMessage(messageText, defaultChannel, event);
+        try {
+          await this.messageHandler(slackMessage, []);
+        } catch (handlerError) {
+          debug(`[Slack] Error in message handler: ${handlerError}`);
+        }
+      }
+      if (event.event_ts) {
+        this.lastEventTs = event.event_ts;
+      }
+    }
+    this.isProcessingQueue = false;
   }
 
   private async fetchMessagesForBot(
@@ -470,7 +540,6 @@ export class SlackService implements IMessengerService {
         return this.slackBots[index];
       }
     }
-    // Fallback: match by the actual botUserName
     const matched = this.slackBots.find(bot => bot.botUserName?.toLowerCase() === agentName.toLowerCase());
     if (matched) {
       debug(`[Slack] Matched bot ${matched.botUserName} to agent ${agentName}`);
@@ -517,12 +586,10 @@ export class SlackService implements IMessengerService {
   private async sendWelcomeMessageForBot(botInfo: SlackBotInfo, channel: string): Promise<void> {
     try {
       debug(`[Slack] [${botInfo.botUserName}] Sending welcome message to #${channel}`);
-
       let text: string;
       let blocks: any[] | undefined = undefined;
 
       if (botInfo === this.slackBots[0]) {
-        // Default bot: Show "Getting Started" button
         text = 'Welcome to the channel! Click the button below for help getting started.';
         blocks = [
           {
@@ -542,7 +609,6 @@ export class SlackService implements IMessengerService {
           }
         ];
       } else {
-        // Additional bots: Just show a simple message
         text = `${botInfo.botUserName} reporting for duty.`;
       }
 
