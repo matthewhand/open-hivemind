@@ -13,6 +13,12 @@ const slackConfig = convict({
     default: '',
     env: 'SLACK_SIGNING_SECRET',
   },
+  SLACK_INCLUDE_HISTORY: {
+    doc: 'Whether to include the message history for LLM completion',
+    format: Boolean,
+    default: false,
+    env: 'SLACK_INCLUDE_HISTORY',
+  },
   SLACK_CHANNEL_ID: {
     doc: 'Default Slack channel ID for messages',
     format: String,
