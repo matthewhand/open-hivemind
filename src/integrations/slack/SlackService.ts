@@ -426,7 +426,8 @@ export class SlackService implements IMessengerService {
       }
 
       const displayName = botInfo.botUserName || senderName;
-      const formattedMessage = `*${displayName}*: ${message}`;
+      // const formattedMessage = `*${displayName}*: ${message}`;
+      const formattedMessage = `${message}`;
 
       debug(`=== MESSAGE HANDLER DEBUG ===`);
       debug(`Channel: ${channel}`);
@@ -671,8 +672,9 @@ export class SlackService implements IMessengerService {
         debug(`[Slack] Processing interactive action with ID: ${actionId}`);
         if (this.messageHandler) {
           const messageText = action.value || '';
-          const slackMessage = new SlackMessage(messageText, payload.user.id, payload);
-          await this.messageHandler(slackMessage, []);
+          const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || payload.channel.id;
+          const slackMessage = new SlackMessage(messageText, defaultChannel, payload);
+          this.messageHandler(slackMessage, []);
         } else {
           debug('[Slack] No message handler configured.');
         }
@@ -684,6 +686,26 @@ export class SlackService implements IMessengerService {
         res.status(200).send();
         const event = body.event;
         debug(`[Slack] Event received: ${JSON.stringify(event)}`);
+
+        // **BOT MESSAGE FILTERING:**
+        if (event.bot_id || event.subtype === 'bot_message') {
+          debug('[Slack] Ignoring bot message.');
+          return; 
+        }
+        if (!event.text) {
+           debug('[Slack] Ignoring message with empty text.');
+           return;
+        }
+
+        if (this.messageHandler) {
+          const messageText = event.text || '';
+          debug('[Slack] Responding to query: ${messageText}');
+          const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID || event.channel; // Use event.channel for channel ID
+          const slackMessage = new SlackMessage(messageText, defaultChannel, event); 
+          this.messageHandler(slackMessage, []); // Call it directly (async)
+        } else {
+          debug('[Slack] No message handler configured.');
+        }
         return;
       }
       debug('[Slack] Received unknown payload structure.');
