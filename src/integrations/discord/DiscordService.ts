@@ -220,24 +220,27 @@ export class DiscordService implements IMessengerService {
    * @param {string} message - The content of the message.
    * @returns {Promise<void>} Resolves when the message is sent.
    */
-  public async sendMessageToChannel(channelId: string, message: string): Promise<void> {
-    if (!this.client) {
-      log('Client not initialized');
-      throw new Error('Discord client is not initialized');
-    }
-
-    try {
-      log(`Sending message to channel ${channelId}: ${message}`);
-      const channel = await this.client.channels.fetch(channelId);
-      if (!(channel instanceof TextChannel || channel instanceof DMChannel)) {
-        throw new Error('Unsupported channel type.');
+  public async sendMessageToChannel(channelId: string, message: string, senderName?: string): Promise<void> {
+      if (!this.client) {
+          log('Client not initialized');
+          throw new Error('Discord client is not initialized');
       }
-      await channel.send(message);
-      log(`Message sent to channel ${channelId} successfully`);
-    } catch (error: any) {
-      log(`Failed to send message to channel ${channelId}: ${error.message}`);
-      throw error;
-    }
+      try {
+          log(`Sending message to channel ${channelId}: ${message}`);
+          const channel = await this.client.channels.fetch(channelId);
+          if (!(channel instanceof TextChannel || channel instanceof DMChannel)) {
+              throw new Error('Unsupported channel type.');
+          }
+          if (senderName === undefined) {
+              await channel.send(message);
+          } else {
+              await channel.send(`${senderName}: ${message}`);
+          }
+          log(`Message sent to channel ${channelId} successfully`);
+      } catch (error: any) {
+          log(`Failed to send message to channel ${channelId}: ${error.message}`);
+          throw error;
+      }
   }
 
   public getDefaultChannel(): string {
