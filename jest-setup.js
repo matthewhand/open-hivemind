@@ -11,3 +11,11 @@ moduleAlias.addAliases({
   '@webhook': path.resolve(__dirname, 'src/webhook'),
   '@integrations': path.resolve(__dirname, 'src/integrations'),
 });
+
+if (process.env.NODE_ENV === 'test') {
+  process.env.SLACK_BOT_TOKEN = 'dummy-bot-token';
+  process.env.SLACK_SIGNING_SECRET = 'dummy-signing-secret';
+  process.env.SLACK_JOIN_CHANNELS = 'dummy-channel';
+  process.env.SLACK_DEFAULT_CHANNEL_ID = 'dummy-default-channel';
+  process.env.SLACK_MODE = 'socket';
+}

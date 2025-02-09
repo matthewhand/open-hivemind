@@ -7,7 +7,7 @@
     "lint": "npx eslint src/",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
-    "build": "tsc && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/",
+    "build": "mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/ && tsc",
     "start": "node --max-old-space-size=256 dist/src/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",

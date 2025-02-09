@@ -12,7 +12,7 @@ module.exports = {
   testRegex: '(\\.|/)test\\.tsx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts', // Added specific mapping for logger
+    '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '^@src/(.*)$': '<rootDir>/src/$1',
     '^@command/(.*)$': '<rootDir>/src/command/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
@@ -22,6 +22,9 @@ module.exports = {
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
+    '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
+    '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
+    '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js'
   },
   setupFiles: [
     '<rootDir>/jest-setup.js'

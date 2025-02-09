@@ -1,10 +1,18 @@
 import { getMessageProvider } from '@message/management/getMessageProvider';
-import messageConfig from '@src/message/interfaces/messageConfig';
 
-describe('getMessageProvider Integration Test', () => {
+jest.mock('@src/message/interfaces/messageConfig', () => ({
+  get: (key: string) => {
+    const testConfig: Record<string, string> = {
+      MESSAGE_PROVIDER: process.env.MESSAGE_PROVIDER || 'discord',
+    };
+    return testConfig[key];
+  },
+}));
+
+describe('getMessageProvider Unit Test', () => {
   beforeEach(() => {
-    jest.resetModules(); // ✅ Ensure fresh module state
-    delete process.env.MESSAGE_PROVIDER; // ✅ Reset environment variable
+    jest.resetModules();
+    delete process.env.MESSAGE_PROVIDER;
   });
 
   test('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "discord"', () => {
@@ -24,18 +32,4 @@ describe('getMessageProvider Integration Test', () => {
 
     expect(provider).toHaveProperty('sendMessageToChannel');
   });
-
-//   test('should throw an error if MESSAGE_PROVIDER is invalid', () => {
-//     process.env.MESSAGE_PROVIDER = 'invalid-provider';
-
-//     // ✅ Instead of `jest.isolateModules`, call `getMessageProvider` directly
-//     expect(() => getMessageProvider()).toThrow('Unsupported message provider: invalid-provider');
-//   });
-
-//   test('should throw an error if MESSAGE_PROVIDER is missing', () => {
-//     delete process.env.MESSAGE_PROVIDER;
-
-//     // ✅ Instead of `jest.isolateModules`, call `getMessageProvider` directly
-//     expect(() => getMessageProvider()).toThrow('MESSAGE_PROVIDER is not configured.');
-//   });
 });

@@ -13,6 +13,7 @@ import llmConfig from '@llm/interfaces/llmConfig';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@common/getEmoji';
+import { NONAME } from 'dns';
 
 const debug = Debug('app:OpenAiService');
 
@@ -213,36 +214,41 @@ export class OpenAiService {
       ]
     };
   
-    const toolCallId = "tool_call_12345"; // Ensures matching ID
+    const conversationId = "conversation-id-string-less-than-40-char";
+    const toolCallId = "matches-tool_call_id-in-tool-message";
   
     const chatParams: ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemMessageContent },
-      {
-        role: 'assistant',
-        content: "", // Empty string content
+      { role: 'system', content: systemMessageContent }, // ✅ System message first
+    
+      { role: 'user', content: message }, // ✅ User message should always come first
+      
+      ...historyMessages.map((msg) => ({
+        role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
+        content: msg.getText() || ""
+      })), 
+    
+      { 
+        role: 'assistant', 
+        content: "", // Assistant makes a tool call
         tool_calls: [
           {
             id: toolCallId,
             type: "function",
-            function: {
-              name: "get_metadata",
-              arguments: JSON.stringify({ threadTs: "1234" })
+            function: { 
+              name: "metadata_for_conversation", 
+              arguments: conversationId 
             }
           }
         ]
       },
-      {
-        role: 'tool',
+    
+      { 
+        role: 'tool', 
         tool_call_id: toolCallId,
         content: JSON.stringify(fullMetadata)
-      },
-      { role: 'user', content: message },
-      ...historyMessages.map((msg) => ({
-        role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
-        content: msg.getText() || ""
-      })),
+      }
     ];
-  
+      
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
   
     try {
