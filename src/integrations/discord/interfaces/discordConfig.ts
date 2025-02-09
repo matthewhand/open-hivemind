@@ -21,19 +21,30 @@ convict.addFormat({
         }, {});
     },
 });
+convict.addFormat({
+    name: 'csv-array',
+    validate: function(val) {
+        if (typeof val !== 'string' && !Array.isArray(val)) {
+            throw new Error('Must be a comma separated string or an array');
+        }
+    },
+    coerce: function(val) {
+        return Array.isArray(val) ? val : val.split(',').map((s: string) => s.trim());
+    }
+});
 
 // Define the schema for Discord-specific configuration
 const discordConfig = convict({
     DISCORD_BOT_TOKEN: {
-        doc: 'The token for the Discord bot.',
-        format: String,
-        default: '',
+        doc: 'The token(s) for the Discord bot(s), as a comma-separated string or array.',
+        format: 'csv-array',
+        default: [],
         env: 'DISCORD_BOT_TOKEN',
     },
     DISCORD_CLIENT_ID: {
-        doc: 'The client ID of the Discord bot.',
-        format: String,
-        default: '',
+        doc: 'The client ID(s) of the Discord bot(s), as a comma-separated string or array.',
+        format: 'csv-array',
+        default: [],
         env: 'DISCORD_CLIENT_ID',
     },
     DISCORD_GUILD_ID: {
