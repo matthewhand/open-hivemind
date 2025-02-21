@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { SlackBotManager } from './SlackBotManager';
+import { SlackService } from './SlackService'; // Keep import for type safety
 
 const debug = Debug('app:SlackInteractiveActions');
 
@@ -10,19 +11,23 @@ export class SlackInteractiveActions {
     this.botManager = botManager;
   }
 
+  private getSlackService(): SlackService {
+    return SlackService.getInstance(); // Lazy instantiation
+  }
+
   public async sendCourseInfo(channel: string) {
     const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
-    await this.botManager.sendMessage(channel, 'Course Info: Here are the details...', botInfo.botUserName || 'Jeeves');
+    await this.getSlackService().sendMessage(channel, 'Course Info: Here are the details...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendBookingInstructions(channel: string) {
     const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
-    await this.botManager.sendMessage(channel, 'Office Hours Booking: To book...', botInfo.botUserName || 'Jeeves');
+    await this.getSlackService().sendMessage(channel, 'Office Hours Booking: To book...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendStudyResources(channel: string) {
     const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
-    await this.botManager.sendMessage(channel, 'Study Resources: Here are some...', botInfo.botUserName || 'Jeeves');
+    await this.getSlackService().sendMessage(channel, 'Study Resources: Here are some...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendAskQuestionModal(triggerId: string) {
@@ -56,6 +61,6 @@ export class SlackInteractiveActions {
       ] },
       { type: 'section', text: { type: 'mrkdwn', text: `💡 *Need more help?* Type \`@university-bot help\` for commands.` } }
     ];
-    await this.botManager.sendMessage(channel, 'Welcome! Here’s how to interact.', botInfo.botUserName || 'Jeeves'); // Blocks need integration—simplified
+    await this.getSlackService().sendMessage(channel, 'Welcome! Here’s how to interact.', botInfo.botUserName || 'Jeeves'); // Blocks need integration—simplified
   }
 }
