@@ -1,3 +1,4 @@
 {
-  "WEBHOOK_URL": "https://example.com/webhook"
+  "WEBHOOK_ENABLED": false,
+  "WEBHOOK_URL": ""
 }
