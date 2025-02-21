@@ -1,33 +1,24 @@
-import { DiscordService } from '@src/integrations/discord/DiscordService';
-import { SlackMessageProvider } from '@src/message/providers/SlackMessageProvider';
 import Debug from 'debug';
-import messageConfig from '@src/message/interfaces/messageConfig';
+import messageConfig from '@src/config/messageConfig';
+import { IMessageProvider } from '@message/interfaces/IMessageProvider';
+import { DiscordMessageProvider } from '@integrations/discord/providers/DiscordMessageProvider'; // Updated path
+import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider'; // Updated path
 
 const debug = Debug('app:getMessageProvider');
 
-/**
- * Get Message Provider
- *
- * Determines and returns the appropriate message provider based on the
- * configuration specified in the message configuration.
- *
- * @returns The instance of the configured message provider.
- * @throws An error if the provider is unsupported.
- */
-export function getMessageProvider() {
-  const provider = messageConfig.get('MESSAGE_PROVIDER');
-  debug('Configured message provider:', provider);
+export function getMessageProvider(): IMessageProvider {
+  const providerName = messageConfig.get('MESSAGE_PROVIDER') || 'discord'; // Default from config/default.json
+  debug(`Selecting message provider: ${providerName}`);
 
-  if (!provider) {
-    throw new Error('MESSAGE_PROVIDER is not configured.');
-  }
-
-  switch (provider.toLowerCase()) {
+  switch (providerName.toLowerCase()) {
     case 'discord':
-      return DiscordService.getInstance();  // Singleton for Discord
+      debug('Returning DiscordMessageProvider');
+      return new DiscordMessageProvider();
     case 'slack':
-      return new SlackMessageProvider();      // New instance for Slack
+      debug('Returning SlackMessageProvider');
+      return new SlackMessageProvider();
     default:
-      throw new Error(`Unsupported message provider: ${provider}`);
+      debug(`Unknown MESSAGE_PROVIDER '${providerName}', defaulting to DiscordMessageProvider`);
+      return new DiscordMessageProvider();
   }
 }
