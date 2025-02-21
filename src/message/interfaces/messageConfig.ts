@@ -1,47 +1,11 @@
-import convict, { Config } from 'convict';
+import convict from 'convict';
 import path from 'path';
 
-// Define the schema interface
-interface MessageConfigSchema {
-  MESSAGE_PROVIDER: string;
-  MESSAGE_MIN_INTERVAL_MS: number;
-  MESSAGE_FOLLOW_UP_ENABLED: boolean;
-  MESSAGE_IGNORE_BOTS: boolean;
-  MESSAGE_LLM_CHAT: boolean;
-  MESSAGE_LLM_COMPLETE_SENTENCE: boolean;
-  MESSAGE_LLM_FOLLOW_UP: boolean;
-  MESSAGE_LLM_SUMMARISE: boolean;
-  MESSAGE_COMMAND_INLINE: boolean;
-  MESSAGE_COMMAND_SLASH: boolean;
-  MESSAGE_COMMAND_AUTHORISED_USERS: string;
-  MESSAGE_WEBHOOK_ENABLED: boolean;
-  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: number;
-  MESSAGE_ACTIVITY_TIME_WINDOW: number;
-  MESSAGE_WAKEWORDS: string[];
-  MESSAGE_INTERROBANG_BONUS: number;
-  MESSAGE_MENTION_BONUS: number;
-  MESSAGE_BOT_RESPONSE_MODIFIER: number;
-  MESSAGE_FILTER_BY_USER: boolean;
-  MESSAGE_HISTORY_LIMIT: number;
-  MESSAGE_STRIP_BOT_ID: boolean;
-  MESSAGE_ADD_USER_HINT: boolean;
-
-  // **Newly Added Configurations**
-  MESSAGE_MAX_DELAY: number;
-  MESSAGE_MIN_DELAY: number;
-  MESSAGE_DECAY_RATE: number;
-  MESSAGE_RATE_LIMIT_PER_CHANNEL: number;
-  DISCORD_TOKEN: string;
-  PLATFORM: string;
-  BOT_ID: string;
-}
-
-// Create the convict schema
-const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>({
+const messageConfig = convict({
   MESSAGE_PROVIDER: {
-    doc: 'Message provider (e.g., discord)',
+    doc: 'Messaging platform provider (e.g., slack, discord)',
     format: String,
-    default: 'discord',
+    default: 'slack',
     env: 'MESSAGE_PROVIDER'
   },
   MESSAGE_MIN_INTERVAL_MS: {
@@ -57,13 +21,13 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     env: 'MESSAGE_FOLLOW_UP_ENABLED'
   },
   MESSAGE_IGNORE_BOTS: {
-    doc: 'Enable ignore bots',
+    doc: 'Ignore messages from bots',
     format: Boolean,
     default: true,
     env: 'MESSAGE_IGNORE_BOTS'
   },
   MESSAGE_LLM_CHAT: {
-    doc: 'Enable chat completion using LLM',
+    doc: 'Enable LLM chat completion',
     format: Boolean,
     default: true,
     env: 'MESSAGE_LLM_CHAT'
@@ -75,7 +39,7 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     env: 'MESSAGE_LLM_COMPLETE_SENTENCE'
   },
   MESSAGE_LLM_FOLLOW_UP: {
-    doc: 'Enable follow-up requests for LLM responses',
+    doc: 'Enable LLM follow-up requests',
     format: Boolean,
     default: false,
     env: 'MESSAGE_LLM_FOLLOW_UP'
@@ -99,7 +63,7 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     env: 'MESSAGE_COMMAND_SLASH'
   },
   MESSAGE_COMMAND_AUTHORISED_USERS: {
-    doc: 'Authorized users for commands',
+    doc: 'Comma-separated list of authorized user IDs for commands',
     format: String,
     default: '',
     env: 'MESSAGE_COMMAND_AUTHORISED_USERS'
@@ -111,63 +75,65 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     env: 'MESSAGE_WEBHOOK_ENABLED'
   },
   MESSAGE_RECENT_ACTIVITY_DECAY_RATE: {
-    doc: 'Decay rate for recent activity.',
+    doc: 'Decay rate for recent activity',
     format: Number,
     default: 0.5,
-    env: 'MESSAGE_DECAY_RATE'
+    env: 'MESSAGE_RECENT_ACTIVITY_DECAY_RATE'
   },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
-    doc: 'Time window for recent activity (in milliseconds).',
-    format: Number,
+    doc: 'Time window for recent activity (ms)',
+    format: 'int',
     default: 300000,
-    env: 'MESSAGE_ACTIVITY_WINDOW'
+    env: 'MESSAGE_ACTIVITY_TIME_WINDOW'
   },
   MESSAGE_WAKEWORDS: {
-    doc: 'List of wakewords to trigger responses.',
-    format: Array,
-    default: ['!help', '!ping']
+    doc: 'Comma-separated list of wakewords',
+    format: String,
+    default: '!help,!ping',
+    env: 'MESSAGE_WAKEWORDS'
   },
   MESSAGE_INTERROBANG_BONUS: {
-    doc: 'Bonus chance for interrobang messages.',
+    doc: 'Bonus chance for interrobang messages',
     format: Number,
-    default: 0.2
+    default: 0.4,
+    env: 'MESSAGE_INTERROBANG_BONUS'
   },
   MESSAGE_MENTION_BONUS: {
-    doc: 'Bonus chance for direct mentions.',
+    doc: 'Bonus chance for direct mentions',
     format: Number,
-    default: 0.8
+    default: 0.8,
+    env: 'MESSAGE_MENTION_BONUS'
   },
   MESSAGE_BOT_RESPONSE_MODIFIER: {
-    doc: 'Modifier to reduce chance for bot responses.',
+    doc: 'Modifier for bot response chance',
     format: Number,
-    default: -1.0
+    default: 0.1,
+    env: 'MESSAGE_BOT_RESPONSE_MODIFIER'
   },
   MESSAGE_FILTER_BY_USER: {
-    doc: 'If true, filter chat history to only include messages from the triggering user.',
+    doc: 'Filter chat history by triggering user',
     format: Boolean,
     default: true,
     env: 'MESSAGE_FILTER_BY_USER'
   },
   MESSAGE_HISTORY_LIMIT: {
-    doc: 'Number of messages to fetch from the channel history.',
+    doc: 'Number of messages to fetch from history',
     format: 'int',
-    default: 10,
+    default: 20,
     env: 'MESSAGE_HISTORY_LIMIT'
   },
   MESSAGE_STRIP_BOT_ID: {
-    doc: 'Remove bot ID references from messages',
+    doc: 'Remove bot ID from messages',
     format: Boolean,
     default: true,
     env: 'MESSAGE_STRIP_BOT_ID'
   },
   MESSAGE_ADD_USER_HINT: {
-    doc: 'Add a user hint (e.g., "from <user>") in messages',
+    doc: 'Add user hint to messages',
     format: Boolean,
     default: true,
     env: 'MESSAGE_ADD_USER_HINT'
   },
-
-  // **Newly Added Configurations**
   MESSAGE_MAX_DELAY: {
     doc: 'Maximum delay before sending a message (ms)',
     format: 'int',
@@ -181,42 +147,38 @@ const messageConfig: Config<MessageConfigSchema> = convict<MessageConfigSchema>(
     env: 'MESSAGE_MIN_DELAY'
   },
   MESSAGE_DECAY_RATE: {
-    doc: 'Decay rate for calculating message delays.',
-    format: 'Number',
+    doc: 'Decay rate for message delays',
+    format: Number,
     default: -0.5,
     env: 'MESSAGE_DECAY_RATE'
   },
   MESSAGE_RATE_LIMIT_PER_CHANNEL: {
-    doc: 'Maximum number of messages a channel can receive per minute.',
+    doc: 'Max messages per channel per minute',
     format: 'int',
     default: 5,
     env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL'
   },
-  DISCORD_TOKEN: {
-    doc: 'Discord bot token for authentication.',
-    format: String,
-    default: '',
-    env: 'DISCORD_TOKEN'
+  MESSAGE_CALM_WINDOW: {
+    doc: 'Time to wait for calm period before replying (ms)',
+    format: 'int',
+    default: 2000,
+    env: 'MESSAGE_CALM_WINDOW'
   },
   PLATFORM: {
-    doc: 'The platform the bot is running on.',
-    format: ['discord', 'slack', 'generic'], // Adjust based on supported platforms
-    default: 'discord',
+    doc: 'Platform the bot runs on',
+    format: String,
+    default: 'slack',
     env: 'PLATFORM'
   },
   BOT_ID: {
-    doc: 'The unique identifier for the bot.',
+    doc: 'Bot identifier',
     format: String,
-    default: '',
+    default: 'slack-bot',
     env: 'BOT_ID'
   }
 });
 
-// Load the configuration from JSON file
-const configFilePath = path.join(__dirname, '../../../config/providers/message.json');
-messageConfig.loadFile(configFilePath);
-
-// Validate the configuration to ensure it matches the schema
+messageConfig.loadFile(path.join(__dirname, '../../../config/providers/message.json'));
 messageConfig.validate({ allowed: 'strict' });
 
 export default messageConfig;
