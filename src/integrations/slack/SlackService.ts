@@ -1,4 +1,5 @@
 import { Application, Request, Response, NextFunction } from 'express';
+import * as express from 'express'; // Add express import
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
@@ -6,19 +7,20 @@ import { SlackBotManager } from './SlackBotManager';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { InteractiveActionHandlers } from './InteractiveActionHandlers';
-import slackConfig from './interfaces/slackConfig';
+import slackConfig from '@src/config/slackConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
+import SlackMessage from './SlackMessage'; // Fix: Use default import
 
 const debug = Debug('app:SlackService');
 
 export class SlackService implements IMessengerService {
-  private static instance: SlackService;
+  private static instance: SlackService | undefined;
   private botManager: SlackBotManager;
   private signatureVerifier: SlackSignatureVerifier;
   private interactiveHandler: SlackInteractiveHandler;
   private interactiveActions: SlackInteractiveActions;
   private lastEventTs: string | null = null;
-  private lastSentTs: string | null = null; // Resubmission check
+  private lastSentTs: string | null = null;
 
   private constructor() {
     const botTokens = process.env.SLACK_BOT_TOKEN?.split(',').map(s => s.trim()) || [];
@@ -27,7 +29,7 @@ export class SlackService implements IMessengerService {
     const mode = process.env.SLACK_MODE === 'rtm' ? 'rtm' : 'socket';
     this.botManager = new SlackBotManager(botTokens, appTokens, signingSecrets, mode);
     this.signatureVerifier = new SlackSignatureVerifier(signingSecrets[0]);
-    this.interactiveActions = new SlackInteractiveActions(this.botManager); // Pass botManager
+    this.interactiveActions = new SlackInteractiveActions(this.botManager);
     const interactiveHandlers: InteractiveActionHandlers = {
       sendCourseInfo: async (channel) => this.interactiveActions.sendCourseInfo(channel),
       sendBookingInstructions: async (channel) => this.interactiveActions.sendBookingInstructions(channel),
@@ -64,6 +66,10 @@ export class SlackService implements IMessengerService {
     this.botManager.setMessageHandler(handler);
   }
 
+  public async sendMessageToChannel(channel: string, text: string, senderName?: string) {
+    await this.sendMessage(channel, text, senderName);
+  }
+
   public async sendMessage(channel: string, text: string, senderName?: string, ts?: string) {
     const botInfo = this.botManager.getBotByName(senderName || 'Jeeves') || this.botManager.getAllBots()[0];
     if (ts && ts === this.lastSentTs) {
@@ -86,6 +92,10 @@ export class SlackService implements IMessengerService {
     }
   }
 
+  public async getMessagesFromChannel(channel: string): Promise<IMessage[]> {
+    return this.fetchMessages(channel);
+  }
+
   public async fetchMessages(channel: string): Promise<IMessage[]> {
     const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
     try {
@@ -95,6 +105,10 @@ export class SlackService implements IMessengerService {
       debug(`Failed to fetch messages: ${error}`);
       return [];
     }
+  }
+
+  public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
+    await this.sendMessage(channelId, announcement.message || announcement, 'Jeeves');
   }
 
   private async handleActionRequest(req: Request, res: Response) {
@@ -140,7 +154,7 @@ export class SlackService implements IMessengerService {
   }
 
   private async joinConfiguredChannelsForBot(botInfo: any) {
-    const channels = process.env.SLACK_JOIN_CHANNELS;
+    const channels = slackConfig.get('SLACK_JOIN_CHANNELS');
     if (!channels) return;
     const channelList = channels.split(',').map(ch => ch.trim());
     for (const channel of channelList) {
@@ -154,7 +168,19 @@ export class SlackService implements IMessengerService {
     }
   }
 
+  public async joinChannel(channel: string): Promise<void> {
+    const botInfo = this.botManager.getAllBots()[0];
+    await botInfo.webClient.conversations.join({ channel });
+    await this.sendMessage(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+  }
+
+  public async sendWelcomeMessage(channel: string): Promise<void> {
+    const botInfo = this.botManager.getAllBots()[0];
+    await this.sendMessage(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+  }
+
   public getClientId(): string { return this.botManager.getAllBots()[0]?.botUserId || ''; }
   public getDefaultChannel(): string { return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || ''; }
   public async shutdown(): Promise<void> { SlackService.instance = undefined; }
+  public getBotManager(): SlackBotManager { return this.botManager; } // For tests
 }
