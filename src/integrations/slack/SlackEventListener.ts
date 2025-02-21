@@ -3,6 +3,7 @@ import { SlackService } from './SlackService';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { extractSlackMetadata } from './slackMetadata';
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { SlackMessageHandler } from './SlackMessageHandler';
 
 export class SlackEventListener {
   private slackService: SlackService;
@@ -19,17 +20,13 @@ export class SlackEventListener {
 
   public async handleEvent(event: any) {
     if (event && event.type === 'message' && !event.bot_id) {
-      let metadata = {};
-      if (process.env.INCLUDE_SLACK_METADATA === 'true') {
-        metadata = extractSlackMetadata(event);
-      }
+      let metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
       const llmProvider = getLlmProvider();
-        // For simplicity, pass an empty history array.
-        if (!('generateChatCompletion' in llmProvider)) {
-          throw new Error('llmProvider does not implement generateChatCompletion');
-        }
-        const response = await (llmProvider as ILlmProvider).generateChatCompletion(event.text, [], metadata);
-        await this.slackService.sendMessage(event.channel, response);
+      if (!('generateChatCompletion' in llmProvider)) throw new Error('llmProvider lacks generateChatCompletion');
+      const response = await (llmProvider as ILlmProvider).generateChatCompletion(event.text, [], metadata);
+      const botInfo = this.slackService['botManager'].getBotByName('Jeeves') || this.slackService['botManager'].getAllBots()[0]; // Access private
+      const messageHandler = new SlackMessageHandler(botInfo.webClient);
+      await messageHandler.sendMessage(event.channel, response, botInfo.botUserName || 'Jeeves', event.event_ts);
     }
   }
 }
