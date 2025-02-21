@@ -1,8 +1,4 @@
 {
-  "service": {
-    "MESSAGE_LLM_CHAT": true,
-    "LLM_PROVIDER": "openai",
-    "MESSAGE_PROVIDER": "discord",
-    "COMMAND_PROVIDERS": "typescript,python,bash"
-  }
+  "LLM_PROVIDER": "openai",
+  "LLM_PARALLEL_EXECUTION": false
 }
