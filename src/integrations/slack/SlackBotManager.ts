@@ -2,7 +2,7 @@ import { SocketModeClient } from '@slack/socket-mode';
 import { RTMClient } from '@slack/rtm-api';
 import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
-import { SlackMessage } from './SlackMessage';
+import SlackMessage from './SlackMessage'; // Fix: Use default import
 import { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:SlackBotManager');
