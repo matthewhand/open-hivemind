@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { IMessageProvider } from '@src/message/interfaces/IMessageProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';  // ✅ Added missing import
+import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import { stripBotId } from '../helpers/processing/stripBotId';
 import { addUserHint } from '../helpers/processing/addUserHint';
 import { validateMessage } from '../helpers/handler/validateMessage';
@@ -15,7 +15,6 @@ import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
 const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS') === true;
-
 const messageProvider: IMessageProvider = getMessageProvider();
 
 export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<string> {
@@ -61,8 +60,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           return;
         }
         try {
-          // Use active agent override if available from message metadata; otherwise default to UniversityPoet.
-          const activeAgentName = (message.metadata && message.metadata.active_agent_name) || 'UniversityPoet';
+          const activeAgentName = message.metadata?.active_agent_name || 'UniversityPoet';
           await messageProvider.sendMessageToChannel(message.getChannelId(), result, activeAgentName);
           debug('Command response sent successfully.');
           markChannelAsInteracted(message.getChannelId());
@@ -74,48 +72,27 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       if (commandProcessed) return ''; // Return empty string if command was processed
     }
 
-    const shouldReply = shouldReplyToMessage(message, botId, messageConfig.get('PLATFORM') as 'discord' | 'generic');
-    if (!shouldReply) {
-      debug('Message is not eligible for reply:', message);
-      return ''; // Return empty string if not eligible for reply
-    }
+    if (!shouldReplyToMessage(message, botId, messageConfig.get('MESSAGE_PROVIDER'))) return '';
 
     const llmProvider = getLlmProvider();
-
     const llmResponse = await (llmProvider as ILlmProvider).generateChatCompletion(
       message.getText() || '',
       historyMessages
     );
 
     if (llmResponse) {
-      // --- Extract active agent name from either the IMessage metadata or the LLM response if available ---
-      let activeAgentName: string | undefined;
-      if (message && message.metadata && message.metadata.active_agent_name) {
-        activeAgentName = message.metadata.active_agent_name;
-      } else if (typeof llmResponse === 'object' && llmResponse !== null) {
-        const llmObj = llmResponse as any;
-        if (llmObj.context_variables && llmObj.context_variables.active_agent_name) {
-          activeAgentName = llmObj.context_variables.active_agent_name;
-        } else if (llmObj.agent && llmObj.agent.name) {
-          activeAgentName = llmObj.agent.name;
-        }
-      }
-      debug(`Active agent name: ${activeAgentName}`);
-
+      const activeAgentName = message.metadata?.active_agent_name || 'UniversityPoet';
       const timingManager = MessageDelayScheduler.getInstance();
       const startTime = Date.now();
-      // Optionally, generate a confirmation response.
       const response = await generateResponse(processedMessage);
       const endTime = Date.now();
       const actualProcessingTime = endTime - startTime;
 
       const sendFunction = async (responseContent: any) => {
         try {
-          // If responseContent is an object, extract its text property.
           const textContent = typeof responseContent === 'object' && responseContent !== null
             ? responseContent.text || ''
             : responseContent;
-          // Pass activeAgentName as the third parameter so SlackService chooses the right bot.
           await messageProvider.sendMessageToChannel(message.getChannelId(), textContent, activeAgentName);
           debug(`Sent LLM-generated message from agent "${activeAgentName}": ${textContent}`);
           markChannelAsInteracted(message.getChannelId());
@@ -126,7 +103,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       timingManager.scheduleMessage(message.getChannelId(), llmResponse, actualProcessingTime, sendFunction);
       debug('Scheduled LLM response:', llmResponse);
-      return llmResponse; // Return the LLM response object (which includes text and context_variables)
+      return llmResponse;
     }
 
     if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
