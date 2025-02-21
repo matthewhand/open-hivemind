@@ -1,37 +1,41 @@
-import { SlackEventListener } from '@integrations/slack/SlackEventListener';
-import { Request, Response, NextFunction } from 'express';
+import { SlackEventListener } from '../../../src/integrations/slack/SlackEventListener';
+import { SlackService } from '../../../src/integrations/slack/SlackService';
+import { getLlmProvider } from '../../../src/llm/getLlmProvider'; // Fixed import path
 
-const flowiseConfigured = !!(process.env.FLOWISE_API_KEY &&
-  process.env.FLOWISE_CONVERSATION_CHATFLOW_ID &&
-  process.env.FLOWISE_COMPLETION_CHATFLOW_ID &&
-  process.env.FLOWISE_API_ENDPOINT);
+jest.mock('@slack/web-api', () => ({
+  WebClient: jest.fn().mockImplementation(() => ({
+    chat: { postMessage: jest.fn().mockResolvedValue({}) },
+  })),
+}));
 
-const describeOrSkip = flowiseConfigured ? describe : describe.skip;
+jest.mock('../../../src/llm/getLlmProvider', () => ({
+  getLlmProvider: () => ({
+    generateChatCompletion: jest.fn().mockResolvedValue('Hello back!'), // Mock LLM response
+    supportsChatCompletion: () => true,
+    supportsCompletion: () => true,
+    generateCompletion: jest.fn().mockResolvedValue('Completed!'),
+  }),
+}));
 
-describeOrSkip('SlackEventListener', () => {
-  let req: Request;
-  let res: Response;
-  let next: NextFunction;
+describe('SlackEventListener', () => {
   let listener: SlackEventListener;
+  let slackService: SlackService;
 
   beforeEach(() => {
-    req = {} as Request;
-    res = {} as Response;
-    next = jest.fn();
-    listener = new SlackEventListener(req, res, next);
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
+    slackService = SlackService.getInstance();
+    listener = new SlackEventListener({} as any, {} as any, jest.fn());
+    jest.spyOn(slackService, 'sendMessage').mockResolvedValue(undefined);
   });
 
-  test('should process incoming Slack message events correctly', async () => {
-    const dummyEvent = {
-      type: 'message',
-      channel: 'C123456',
-      text: 'Hello Slack!',
-      user: 'U123456',
-      ts: '1623456789.000200',
-      thread_ts: '1623456789.000100',
-      team: 'T123456'
-    };
-    await listener.handleEvent(dummyEvent);
-    expect(true).toBe(true);
+  afterEach(() => {
+    (SlackService as any).instance = undefined;
+    jest.clearAllMocks();
+  });
+
+  it('handles message event', async () => {
+    const event = { type: 'message', text: 'hi', channel: 'C123', event_ts: '123' };
+    await listener.handleEvent(event);
+    expect(slackService.sendMessage).toHaveBeenCalledWith('C123', 'Hello back!', 'Jeeves', '123');
   });
 });
