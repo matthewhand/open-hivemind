@@ -1,37 +1,42 @@
-import { SlackEventListener } from '@integrations/slack/SlackEventListener';
-import { Request, Response, NextFunction } from 'express';
+import { SlackEventListener } from '@integrations/slack/SlackEventListener'; // Use alias
+import { SlackService } from '@integrations/slack/SlackService';
+import { getLlmProvider } from '@llm/getLlmProvider'; // Use alias
 
-const flowiseConfigured = !!(process.env.FLOWISE_API_KEY &&
-  process.env.FLOWISE_CONVERSATION_CHATFLOW_ID &&
-  process.env.FLOWISE_COMPLETION_CHATFLOW_ID &&
-  process.env.FLOWISE_API_ENDPOINT);
+jest.mock('@slack/web-api', () => ({
+  WebClient: jest.fn().mockImplementation(() => ({
+    chat: { postMessage: jest.fn().mockResolvedValue({}) },
+  })),
+}));
 
-const describeOrSkip = flowiseConfigured ? describe : describe.skip;
+jest.mock('@llm/getLlmProvider', () => ({
+  getLlmProvider: () => ({
+    generateChatCompletion: jest.fn().mockResolvedValue('Hello with metadata!'), // Mock LLM response
+    supportsChatCompletion: () => true,
+    supportsCompletion: () => true,
+    generateCompletion: jest.fn().mockResolvedValue('Completed!'),
+  }),
+}));
 
-describeOrSkip('SlackEventListener Metadata', () => {
-  let req: Request;
-  let res: Response;
-  let next: NextFunction;
+describe('SlackEventListener with Metadata', () => {
   let listener: SlackEventListener;
+  let slackService: SlackService;
 
   beforeEach(() => {
-    req = {} as Request;
-    res = {} as Response;
-    next = jest.fn();
-    listener = new SlackEventListener(req, res, next);
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
+    process.env.INCLUDE_SLACK_METADATA = 'true';
+    slackService = SlackService.getInstance();
+    listener = new SlackEventListener({} as any, {} as any, jest.fn());
+    jest.spyOn(slackService, 'sendMessage').mockResolvedValue(undefined);
   });
 
-  test('should process a Slack event and capture metadata', async () => {
-    const dummyEvent = {
-      type: 'message',
-      channel: 'C123456',
-      text: 'Hello Slack!',
-      user: 'U123456',
-      ts: '1623456789.000200',
-      thread_ts: '1623456789.000100',
-      team: 'T123456'
-    };
-    await listener.handleEvent(dummyEvent);
-    expect(true).toBe(true);
+  afterEach(() => {
+    (SlackService as any).instance = undefined;
+    jest.clearAllMocks();
+  });
+
+  it('includes metadata for message event', async () => {
+    const event = { type: 'message', text: 'hi', channel: 'C123', user: 'U123', event_ts: '123' }; // Use event_ts
+    await listener.handleEvent(event);
+    expect(slackService.sendMessage).toHaveBeenCalledWith('C123', 'Hello with metadata!', 'Jeeves', '123');
   });
 });
