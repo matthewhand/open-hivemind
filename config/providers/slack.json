@@ -1,0 +1,9 @@
+{
+  "SLACK_BOT_TOKEN": "",
+  "SLACK_APP_TOKEN": "",
+  "SLACK_SIGNING_SECRET": "",
+  "SLACK_USERNAME_OVERRIDE": "Jeeves,Mycroft,Cortana,Gutenberg",
+  "SLACK_JOIN_CHANNELS": "C08BC0X4DFD",
+  "SLACK_DEFAULT_CHANNEL_ID": "C08BC0X4DFD",
+  "SLACK_MODE": "socket"
+}
