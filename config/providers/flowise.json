@@ -1,4 +1,7 @@
 {
-  "FLOWISE_BASE_URL": "http://localhost:3000/api/v1",
-  "FLOWISE_API_KEY": "default-flowise-api-key"
+  "FLOWISE_API_ENDPOINT": "",
+  "FLOWISE_API_KEY": "",
+  "FLOWISE_CONVERSATION_CHATFLOW_ID": "",
+  "FLOWISE_COMPLETION_CHATFLOW_ID": "",
+  "FLOWISE_USE_REST": false
 }
