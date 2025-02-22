@@ -1,7 +1,7 @@
 const addHintModule = require('@src/message/helpers/processing/addUserHint');
-const addHintMsgConfig = require('@message/interfaces/messageConfig');
+const addHintMsgConfig = require('@config/messageConfig');
 
-jest.mock('@message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
   get: jest.fn()
 }));
 
