@@ -2,7 +2,7 @@ const DiscordMsgProviderInt = require('@integrations/discord/providers/DiscordMe
 const SlackMsgProviderInt = require('@integrations/slack/providers/SlackMessageProvider');
 const { getMessageProvider: getMessageProviderInt } = require('@message/management/getMessageProvider');
 
-jest.mock('@message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
   get: jest.fn()
 }));
 
@@ -10,7 +10,7 @@ describe('getMessageProvider Unit Test', () => {
   let mockConfig: any;
 
   beforeEach(() => {
-    mockConfig = require('@message/interfaces/messageConfig');
+    mockConfig = require('@config/messageConfig');
     jest.clearAllMocks();
   });
 
