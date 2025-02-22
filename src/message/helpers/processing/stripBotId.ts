@@ -13,7 +13,7 @@ export function stripBotId(message: string, botId: string): string {
     const botIdRegex = new RegExp(`<@${botId}>`, 'g');
     debug(`Stripping bot ID: ${botId} from message: "${message}"`);
 
-    if (messageConfig.get('MESSAGE_STRIP_BOT_ID')) {
+    if (Boolean(messageConfig.get<any>('MESSAGE_STRIP_BOT_ID'))) {
         const result = message.replace(botIdRegex, '');
         debug(`Result after stripping: "${result}"`);
         return result;
