@@ -1,5 +1,5 @@
 const DiscordLibSvc = require('discord.js');
-const discordMsgConfig = require('@message/interfaces/messageConfig');
+const discordMsgConfig = require('@config/messageConfig');
 const DiscordDebug = require('debug');
 
 const DiscordSvc: any = {};
