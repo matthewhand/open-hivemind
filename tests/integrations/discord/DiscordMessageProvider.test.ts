@@ -33,14 +33,13 @@ describe('DiscordMessageProvider', () => {
     jest.resetModules();
     jest.clearAllMocks();
     process.env.DISCORD_BOT_TOKEN = 'token1';
-    SvcModule.DiscordService.instance = undefined;
-
+    SvcModule.Discord.DiscordService.instance = undefined;
     testProvider = new ProviderModule.DiscordMessageProvider();
-    await SvcModule.DiscordService.getInstance().initialize();
+    await SvcModule.Discord.DiscordService.getInstance().initialize();
   });
 
   afterEach(() => {
-    SvcModule.DiscordService.instance = undefined;
+    SvcModule.Discord.DiscordService.instance = undefined;
   });
 
   it('should fetch messages from DiscordService', async () => {
