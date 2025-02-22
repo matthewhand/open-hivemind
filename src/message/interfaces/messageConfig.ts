@@ -1,5 +1,5 @@
-const convict = require('convict');
-const path = require('path');
+import convict from 'convict';
+import path from 'path';
 
 const messageConfig = convict({
   MESSAGE_PROVIDER: { doc: 'Messaging platform', format: 'string', default: 'discord', env: 'MESSAGE_PROVIDER' },
@@ -29,10 +29,14 @@ const messageConfig = convict({
   OPENAI_STOP: { doc: 'Stop sequences', format: Array, default: ['\n', '.', '?', '!'], env: 'OPENAI_STOP' },
   OPENAI_TOP_P: { doc: 'Top-p sampling', format: 'number', default: 0.9, env: 'OPENAI_TOP_P' },
   OPENAI_SYSTEM_PROMPT: { doc: 'System prompt', format: 'string', default: 'Greetings, human...', env: 'OPENAI_SYSTEM_PROMPT' },
-  OPENAI_RESPONSE_MAX_TOKENS: { doc: 'Max tokens for response', format: 'int', default: 100, env: 'OPENAI_RESPONSE_MAX_TOKENS' }
+  OPENAI_RESPONSE_MAX_TOKENS: { doc: 'Max tokens for response', format: 'int', default: 100, env: 'OPENAI_RESPONSE_MAX_TOKENS' },
+  BOT_ID: { doc: 'Bot Identifier', format: 'string', default: 'BOT_ID', env: 'BOT_ID' },
+  MESSAGE_COMMAND_INLINE: { doc: 'Inline command flag', format: 'boolean', default: false, env: 'MESSAGE_COMMAND_INLINE' },
+  MESSAGE_COMMAND_AUTHORISED_USERS: { doc: 'Command authorised users', format: 'string', default: '', env: 'MESSAGE_COMMAND_AUTHORISED_USERS' },
+  MESSAGE_LLM_FOLLOW_UP: { doc: 'Follow-up flag for LLM', format: 'boolean', default: false, env: 'MESSAGE_LLM_FOLLOW_UP' }
 });
 
 messageConfig.loadFile(path.join(__dirname, '../../../config/default.json'));
 messageConfig.validate({ allowed: 'strict' });
 
-module.exports = messageConfig;
+export default messageConfig;
