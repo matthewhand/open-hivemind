@@ -7,7 +7,7 @@ import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import { processCommand } from '../helpers/handler/processCommand';
-import messageHandlerConfig from '@message/interfaces/messageConfig';
+import messageHandlerConfig from '@config/messageConfig';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
