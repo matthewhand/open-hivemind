@@ -1,8 +1,9 @@
-import Debug from 'debug';
-import { getRandomDelay } from '@src/common/getRandomDelay';
-import messageConfig from '@message/interfaces/messageConfig';
+const schedulerDebug = require('debug')('app:MessageDelayScheduler');
+const { getRandomDelay } = require('@src/common/getRandomDelay');
+const schedulerMsgConfig = require('@message/interfaces/messageConfig');
 
-const debug = Debug('app:MessageDelayScheduler');
+// Debug to inspect config
+schedulerDebug('Loaded schedulerMsgConfig:', schedulerMsgConfig);
 
 interface ChannelState {
   lastMessageTime: number;
@@ -12,13 +13,13 @@ interface ChannelState {
   userThreads: Map<string, { threadId: string; lastPostTime: number }>;
 }
 
-export class MessageDelayScheduler {
+class MessageDelayScheduler {
   private static instance: MessageDelayScheduler | undefined;
   private channelStates: Map<string, ChannelState> = new Map();
-  private readonly silenceThreshold: number = messageConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW') || 300000;
-  private readonly threadRelationWindow: number = messageConfig.get('MESSAGE_THREAD_RELATION_WINDOW') || 300000;
-  private readonly minDelay: number = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
-  private readonly maxDelay: number = messageConfig.get('MESSAGE_MAX_DELAY') || 10000;
+  private readonly silenceThreshold: number = (typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW') : undefined) || 300000;
+  private readonly threadRelationWindow: number = (typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_THREAD_RELATION_WINDOW') : undefined) || 300000;
+  private readonly minDelay: number = (typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_MIN_DELAY') : undefined) || 1000;
+  private readonly maxDelay: number = (typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_MAX_DELAY') : undefined) || 10000;
 
   private constructor() {}
 
@@ -30,12 +31,12 @@ export class MessageDelayScheduler {
   }
 
   public async scheduleMessage(channelId: string, messageId: string, content: string, userId: string, sendMessage: (text: string, threadId?: string) => Promise<string>, isDirectlyAddressed: boolean = false): Promise<void> {
-    let state = this.channelStates.get(channelId) || { 
-      lastMessageTime: 0, 
-      isAddressed: false, 
-      pendingMessages: new Map(), 
-      silenceTimeout: undefined, // Explicitly initialize as undefined
-      userThreads: new Map() 
+    let state = this.channelStates.get(channelId) || {
+      lastMessageTime: 0,
+      isAddressed: false,
+      pendingMessages: new Map(),
+      silenceTimeout: undefined,
+      userThreads: new Map()
     };
     this.channelStates.set(channelId, state);
 
@@ -43,13 +44,13 @@ export class MessageDelayScheduler {
     state.lastMessageTime = Date.now();
     if (state.silenceTimeout) clearTimeout(state.silenceTimeout);
 
-    const onlyWhenSpokenTo = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO');
-    const interactiveFollowups = messageConfig.get('MESSAGE_INTERACTIVE_FOLLOWUPS');
-    const unsolicitedAddressed = messageConfig.get('MESSAGE_UNSOLICITED_ADDRESSED');
-    const unsolicitedUnaddressed = messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED');
-    const respondInThread = messageConfig.get('MESSAGE_RESPOND_IN_THREAD');
+    const onlyWhenSpokenTo = typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO') : true;
+    const interactiveFollowups = typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_INTERACTIVE_FOLLOWUPS') : false;
+    const unsolicitedAddressed = typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_UNSOLICITED_ADDRESSED') : false;
+    const unsolicitedUnaddressed = typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED') : false;
+    const respondInThread = typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_RESPOND_IN_THREAD') : false;
 
-    const isCommand = messageConfig.get('MESSAGE_WAKEWORDS')?.split(',').some(w => content.startsWith(w)) || isDirectlyAddressed;
+    const isCommand = (typeof schedulerMsgConfig.get === 'function' ? schedulerMsgConfig.get('MESSAGE_WAKEWORDS')?.split(',').some((w: string) => content.startsWith(w)) : false) || isDirectlyAddressed;
     if (isCommand) state.isAddressed = true;
 
     let shouldRespond = false;
@@ -68,7 +69,7 @@ export class MessageDelayScheduler {
     let threadId = userThread?.threadId;
 
     if (userThread && (Date.now() - userThread.lastPostTime) < this.threadRelationWindow) {
-      debug(`User ${userId} posted outside thread ${threadId} in channel ${channelId}`);
+      schedulerDebug(`User ${userId} posted outside thread ${threadId} in channel ${channelId}`);
       await sendMessage(`Hey <@${userId}>, let’s keep this in the thread: <#${threadId}>`, undefined); // Nudge
       return;
     }
@@ -95,9 +96,11 @@ export class MessageDelayScheduler {
     state.silenceTimeout = setTimeout(async () => {
       const timeSinceLast = Date.now() - state.lastMessageTime;
       if (timeSinceLast >= this.silenceThreshold) {
-        debug(`Channel ${channelId} silent for ${timeSinceLast}ms—sending follow-up`);
+        schedulerDebug(`Channel ${channelId} silent for ${timeSinceLast}ms—sending follow-up`);
         await sendMessage("Hey, quiet in here! Anything I can help with?", threadId);
       }
     }, this.silenceThreshold);
   }
 }
+
+module.exports = { MessageDelayScheduler };
