@@ -1,11 +1,13 @@
 const DiscordLib = require('discord.js');
-const Debug = require('debug');
+const DebugSA = require('debug');
 const Discord = require('../DiscordService');
 
-const log = Debug('app:sendPublicAnnouncement');
+const discordSvc = Discord.DiscordService.getInstance();
 
-async function sendPublicAnnouncement(channelId, announcement) {
-  const client = Discord.DiscordService.getInstance().client;
+const log = DebugSA('app:sendPublicAnnouncement');
+
+async function sendPublicAnnouncement(channelId: string, announcement: { title?: string; description?: string; color?: string }): Promise<void> {
+  const client = discordSvc.client;
 
   const embed = new DiscordLib.EmbedBuilder()
     .setTitle(announcement.title || '📢 Public Announcement')
@@ -24,9 +26,10 @@ async function sendPublicAnnouncement(channelId, announcement) {
 
     await channel.send({ embeds: [embed] });
     log(`Announcement sent to channel ${channelId}`);
-  } catch (error) {
-    log(`Failed to send announcement: ${error.message}`);
-    throw error;
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    log(`Failed to send announcement: ${err.message}`);
+    throw err;
   }
 }
 
