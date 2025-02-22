@@ -1,4 +1,4 @@
-import { getLlmProvider } from '@src/message/management/getLlmProvider';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
 // import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
