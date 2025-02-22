@@ -19,9 +19,10 @@ class FlowiseProvider {
     return false;
   }
 
-  async generateChatCompletion(messages: any) {
-    throw new Error('Chat completion not supported');
+  async generateChatCompletion(messages: any): Promise<string> {
+    flowiseDebug('Chat completion not supported, returning empty string');
+    return '';
   }
 }
 
-module.exports = { FlowiseProvider };
+export default new FlowiseProvider();
