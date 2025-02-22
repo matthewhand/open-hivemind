@@ -7,7 +7,7 @@ const debug = Debug('app:shouldReplyToMessage');
 // Store for tracking interactions in channels
 const channelsWithBotInteraction = new Map<string, number>();
 
-let recentActivityDecayRate = messageConfig.get('MESSAGE_RECENT_ACTIVITY_DECAY_RATE');
+let recentActivityDecayRate = Number(messageConfig.get<any>('MESSAGE_RECENT_ACTIVITY_DECAY_RATE') || 0);
 let activityTimeWindow = messageConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW');
 
 export function setDecayConfig(newDecayRate: number, newTimeWindow: number): void {
@@ -79,20 +79,21 @@ function applyModifiers(
     return 1;
   }
 
-  const wakewords = messageConfig.get('MESSAGE_WAKEWORDS');
-  if (wakewords.some((word: string) => text.startsWith(word))) {
+  const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
+  const wakewords = Array.isArray(wakewordsRaw) ? wakewordsRaw : String(wakewordsRaw).split(',');
+  if (wakewords.some((word: string) => text.startsWith(word.trim()))) {
     debug(`Wakeword detected. Chance set to 1.`);
     return 1;
   }
-
+  
   if (/[!?]/.test(text.slice(-1))) {
-    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS') || 0.3;
+    const interrobangBonus = Number(messageConfig.get<any>('MESSAGE_INTERROBANG_BONUS') || 0.3);
     chance += interrobangBonus;
     debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
   }
-
+  
   if (message.isFromBot()) {
-    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || -1.0;
+    const botModifier = Number(messageConfig.get<any>('MESSAGE_BOT_RESPONSE_MODIFIER') || -1.0);
     chance += botModifier;
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }
