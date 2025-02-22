@@ -102,5 +102,5 @@ class MessageDelayScheduler {
     }, this.silenceThreshold);
   }
 }
-
+export default MessageDelayScheduler;
 module.exports = { MessageDelayScheduler };
