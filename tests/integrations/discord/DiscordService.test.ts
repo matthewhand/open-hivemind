@@ -1,4 +1,3 @@
-// Define mockChannel first
 const mockChannel = {
   isTextBased: jest.fn().mockReturnValue(true),
   send: jest.fn().mockResolvedValue({ id: 'msg123' }),
@@ -28,7 +27,7 @@ jest.mock('discord.js', () => {
 });
 
 jest.mock('@message/interfaces/messageConfig', () => ({
-  get: jest.fn().mockReturnValue(false), // Default to false for MESSAGE_RESPOND_IN_THREAD
+  get: jest.fn().mockReturnValue(false),
 }));
 
 const DiscordSvcModule = require('@integrations/discord/DiscordService');
@@ -40,13 +39,13 @@ describe('DiscordService', () => {
     process.env.DISCORD_BOT_TOKEN = 'token1';
     process.env.DISCORD_USERNAME_OVERRIDE = 'Bot1';
     process.env.MESSAGE_WAKEWORDS = '!help,!ping';
-    DiscordSvcModule.DiscordService.instance = undefined;
+    DiscordSvcModule.Discord.DiscordService.instance = undefined;
     jest.clearAllMocks();
-    testService = DiscordSvcModule.DiscordService.getInstance();
+    testService = DiscordSvcModule.Discord.DiscordService.getInstance();
   });
 
   afterEach(() => {
-    DiscordSvcModule.DiscordService.instance = undefined;
+    DiscordSvcModule.Discord.DiscordService.instance = undefined;
   });
 
   it('initializes bot', async () => {
