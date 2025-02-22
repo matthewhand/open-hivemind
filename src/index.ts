@@ -26,7 +26,10 @@ async function startBot(messengerService: IMessengerService) {
   try {
     debugEnvVars();
     log('[DEBUG] Starting bot initialization...');
-    await messengerService.initialize(app);
+    if (typeof (messengerService as any).setApp === 'function') {
+        (messengerService as any).setApp(app);
+    }
+    await messengerService.initialize();
     log('[DEBUG] Bot initialization completed.');
 
     log('[DEBUG] Setting up message handler...');
@@ -55,7 +58,7 @@ async function main() {
     console.log('HTTP server is disabled (HTTP_ENABLED=false).');
   }
 
-  const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
+  const isWebhookEnabled = messageConfig.get<any>('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, registering routes...');
     const channelId = messengerService.getDefaultChannel();
