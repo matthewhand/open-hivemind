@@ -1,53 +1,51 @@
 require('dotenv/config');
-import 'module-alias/register';
-import debug from 'debug';
-import { getMessengerProvider } from '@message/management/getMessengerProvider';
-import { handleMessage } from '@message/handlers/messageHandler';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { webhookService } from '@webhook/webhookService';
+require('module-alias/register');
+const indexDebug = require('debug');
+const { getMessengerProvider: indexGetMessengerProvider } = require('@message/management/getMessengerProvider');
+const { handleMessage: indexHandleMessage } = require('@message/handlers/messageHandler');
 const { debugEnvVars } = require('@config/debugEnvVars');
-import llmConfig from '@llm/interfaces/llmConfig';
-import messageConfig from '@message/interfaces/messageConfig';
-import express from 'express';
-import bodyParser from 'body-parser';
-import healthRoute from './routes/health';
+const indexLlmConfig = require('@llm/interfaces/llmConfig');
+const indexMessageConfig = require('@message/interfaces/messageConfig');
+const express = require('express');
+const bodyParser = require('body-parser');
+const healthRoute = require('./routes/health');
+const { webhookService } = require('@webhook/webhookService');
 
-const log = debug('app:index');
+const indexLog = indexDebug('app:index');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use((req, res, next) => {
+app.use((req: any, res: any, next: any) => {
     console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
     next();
 });
 app.use(healthRoute);
 
-async function startBot(messengerService: IMessengerService) {
+async function startBot(messengerService: any) {
   try {
     debugEnvVars();
-    log('[DEBUG] Starting bot initialization...');
-    if (typeof (messengerService as any).setApp === 'function') {
-        (messengerService as any).setApp(app);
+    indexLog('[DEBUG] Starting bot initialization...');
+    if (typeof messengerService.setApp === 'function') {
+        messengerService.setApp(app);
     }
     await messengerService.initialize();
-    log('[DEBUG] Bot initialization completed.');
+    indexLog('[DEBUG] Bot initialization completed.');
 
-    log('[DEBUG] Setting up message handler...');
-    messengerService.setMessageHandler(handleMessage);
-    log('[DEBUG] Message handler set up successfully.');
+    indexLog('[DEBUG] Setting up message handler...');
+    messengerService.setMessageHandler(indexHandleMessage);
+    indexLog('[DEBUG] Message handler set up successfully.');
   } catch (error) {
-    log('[DEBUG] Error starting bot service:', error);
+    indexLog('[DEBUG] Error starting bot service:', error);
   }
 }
 
 async function main() {
-  console.log('LLM Provider in use:', llmConfig.get('LLM_PROVIDER') || 'Default OpenAI');
-  console.log('Message Provider in use:', messageConfig.get('MESSAGE_PROVIDER') || 'Default Message Service');
+  console.log('LLM Provider in use:', indexLlmConfig.get('LLM_PROVIDER') || 'Default OpenAI');
+  console.log('Message Provider in use:', indexMessageConfig.get('MESSAGE_PROVIDER') || 'Default Message Service');
 
-  const messengerService = getMessengerProvider();
+  const messengerService = indexGetMessengerProvider();
   await startBot(messengerService);
 
-  // Only start the HTTP server if HTTP_ENABLED is not set to "false"
   const httpEnabled = process.env.HTTP_ENABLED !== 'false';
   if (httpEnabled) {
     const port = process.env.PORT || 5005;
@@ -58,7 +56,7 @@ async function main() {
     console.log('HTTP server is disabled (HTTP_ENABLED=false).');
   }
 
-  const isWebhookEnabled = messageConfig.get<any>('MESSAGE_WEBHOOK_ENABLED') || false;
+  const isWebhookEnabled = indexMessageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
     console.log('Webhook service is enabled, registering routes...');
     const channelId = messengerService.getDefaultChannel();
