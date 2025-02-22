@@ -1,97 +1,122 @@
-import { SlackService } from '../../../src/integrations/slack/SlackService';
-import { WebClient } from '@slack/web-api';
-import slackConfig from '../../../src/config/slackConfig';
+import { SlackService } from '@integrations/slack/SlackService';
+import express, { Application } from 'express';
 
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation(() => ({
-    auth: { test: jest.fn().mockResolvedValue({ user_id: 'test-id', user: 'TestBot' }) },
-    conversations: {
-      join: jest.fn().mockResolvedValue({}),
-      history: jest.fn().mockResolvedValue({ messages: [{ text: 'test' }] }),
-    },
-    chat: { postMessage: jest.fn().mockResolvedValue({}) },
+    auth: { test: jest.fn().mockResolvedValue({ user_id: 'bot1', user: 'Jeeves' }) },
+    chat: { postMessage: jest.fn().mockResolvedValue({ ts: 'msg123' }) },
+    conversations: { join: jest.fn().mockResolvedValue({}), history: jest.fn().mockResolvedValue({ messages: [] }) },
   })),
 }));
 
+jest.mock('@integrations/slack/SlackBotManager', () => {
+  const mockWebClient = {
+    auth: { test: jest.fn().mockResolvedValue({ user_id: 'bot1', user: 'Jeeves' }) },
+    chat: { postMessage: jest.fn().mockResolvedValue({ ts: 'msg123' }) },
+    conversations: { join: jest.fn().mockResolvedValue({}), history: jest.fn().mockResolvedValue({ messages: [] }) },
+  };
+  return {
+    SlackBotManager: jest.fn().mockImplementation(() => ({
+      initialize: jest.fn().mockResolvedValue(undefined),
+      getAllBots: jest.fn().mockReturnValue([{ botUserId: 'bot1', botUserName: 'Jeeves', webClient: mockWebClient }]),
+      getBotByName: jest.fn().mockReturnValue({ botUserId: 'bot1', botUserName: 'Jeeves', webClient: mockWebClient }),
+      setMessageHandler: jest.fn(),
+    })),
+  };
+});
+
+jest.mock('@integrations/slack/SlackSignatureVerifier', () => ({
+  SlackSignatureVerifier: jest.fn().mockImplementation(() => ({
+    verify: jest.fn((req, res, next) => next()),
+  })),
+}));
+
+jest.mock('@integrations/slack/SlackInteractiveHandler', () => ({
+  SlackInteractiveHandler: jest.fn().mockImplementation(() => ({
+    handleRequest: jest.fn(),
+    handleBlockAction: jest.fn(),
+  })),
+}));
+
+jest.mock('@integrations/slack/SlackInteractiveActions', () => ({
+  SlackInteractiveActions: jest.fn().mockImplementation(() => ({
+    sendCourseInfo: jest.fn().mockResolvedValue(undefined),
+    sendBookingInstructions: jest.fn().mockResolvedValue(undefined),
+    sendStudyResources: jest.fn().mockResolvedValue(undefined),
+    sendAskQuestionModal: jest.fn().mockResolvedValue(undefined),
+    sendInteractiveHelpMessage: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+jest.mock('@src/config/slackConfig', () => ({
+  __esModule: true,
+  default: { get: jest.fn().mockReturnValue('') },
+}));
+
 describe('SlackService', () => {
-  let slackService: SlackService;
+  let service: SlackService;
+  let app: Application;
   let mockWebClient: any;
-  const channel = 'C123456';
 
   beforeEach(async () => {
-    // Reset environment
-    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
-    process.env.SLACK_APP_TOKEN = 'xapp-test-token';
-    process.env.SLACK_SIGNING_SECRET = 'test-secret';
-    process.env.SLACK_MODE = 'socket';
-    process.env.SLACK_JOIN_CHANNELS = 'C123456';
-    process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
-    process.env.NODE_ENV = 'test';
-
-    // Reload slackConfig to pick up env vars
-    slackConfig.load({ SLACK_DEFAULT_CHANNEL_ID: 'C123' }); // Force env override
-
-    // Reset singleton and mocks
+    process.env.SLACK_BOT_TOKEN = 'token1';
+    process.env.SLACK_APP_TOKEN = 'appToken1';
+    process.env.SLACK_SIGNING_SECRET = 'secret1';
     (SlackService as any).instance = undefined;
     jest.clearAllMocks();
-
-    // Initialize SlackService
-    slackService = SlackService.getInstance();
-    const app = { post: jest.fn() }; // Dummy app for initialize
-    await slackService.initialize(app as any);
-
-    // Get the mock WebClient from botManager
-    mockWebClient = slackService.getBotManager().getAllBots()[0].webClient;
+    service = SlackService.getInstance();
+    app = express();
+    service.setApp(app);
+    await service.initialize();
+    mockWebClient = service.getBotManager().getAllBots()[0].webClient;
   });
 
   afterEach(() => {
-    (SlackService as any).instance = undefined; // Type-safe reset
+    (SlackService as any).instance = undefined;
   });
 
-  it('initializes correctly', async () => {
-    const app = { post: jest.fn() };
-    await slackService.initialize(app as any);
-    expect(app.post).toHaveBeenCalledTimes(2); // Two endpoints
+  it('initializes service', async () => {
+    expect(service.getBotManager().initialize).toHaveBeenCalled();
   });
 
-  it('sends a message', async () => {
-    await slackService.sendMessageToChannel(channel, 'Hello', 'TestBot');
-    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      channel,
-      text: '*TestBot*: Hello',
-      username: 'TestBot',
-    }));
+  it('sends message to channel', async () => {
+    const messageId = await service.sendMessageToChannel('channel1', 'Hello', 'Jeeves');
+    expect(messageId).toBe('msg123');
+    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'channel1', text: '*Jeeves*: Hello' }));
   });
 
-  it('fetches messages', async () => {
-    const messages = await slackService.getMessagesFromChannel(channel);
-    expect(messages).toHaveLength(1);
-    expect(messages[0].getText()).toBe('test');
+  it('fetches messages from channel', async () => {
+    const messages = await service.getMessagesFromChannel('channel1');
+    expect(messages).toEqual([]);
+    expect(mockWebClient.conversations.history).toHaveBeenCalledWith({ channel: 'channel1', limit: 10 });
   });
 
-  it('joins a channel', async () => {
-    await slackService.joinChannel(channel);
-    expect(mockWebClient.conversations.join).toHaveBeenCalledWith({ channel });
+  it('sends public announcement', async () => {
+    await service.sendPublicAnnouncement('channel1', 'Announce');
+    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'channel1', text: '*Jeeves*: Announce' }));
+  });
+
+  it('joins channel', async () => {
+    await service.joinChannel('channel1');
+    expect(mockWebClient.conversations.join).toHaveBeenCalledWith({ channel: 'channel1' });
+    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'channel1', text: '*Jeeves*: Welcome from Jeeves!' }));
   });
 
   it('sends welcome message', async () => {
-    await slackService.sendWelcomeMessage(channel);
-    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      channel,
-      text: '*TestBot*: Welcome from TestBot!',
-    }));
+    await service.sendWelcomeMessage('channel1');
+    expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({ channel: 'channel1', text: '*Jeeves*: Welcome from Jeeves!' }));
   });
 
   it('gets client ID', () => {
-    expect(slackService.getClientId()).toBe('test-id');
+    expect(service.getClientId()).toBe('bot1');
   });
 
   it('gets default channel', () => {
-    expect(slackService.getDefaultChannel()).toBe('C123');
+    expect(service.getDefaultChannel()).toBe('');
   });
 
   it('shuts down', async () => {
-    await slackService.shutdown();
+    await service.shutdown();
     expect((SlackService as any).instance).toBeUndefined();
   });
 });

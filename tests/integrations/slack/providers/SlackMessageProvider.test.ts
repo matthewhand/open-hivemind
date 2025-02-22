@@ -4,7 +4,7 @@ import { IMessage } from '@message/interfaces/IMessage';
 
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation(() => ({
-    chat: { postMessage: jest.fn().mockResolvedValue({}) },
+    chat: { postMessage: jest.fn().mockResolvedValue({ ts: 'msg123' }) },
   })),
 }));
 

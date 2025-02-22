@@ -1,5 +1,5 @@
-import { IMessageProvider } from '@message/interfaces/IMessageProvider'; // Absolute path
-import { SlackService } from '@integrations/slack/SlackService'; // Absolute path
+import { IMessageProvider } from '@message/interfaces/IMessageProvider';
+import { SlackService } from '@integrations/slack/SlackService';
 
 export class SlackMessageProvider implements IMessageProvider {
   private _slackService?: SlackService;
@@ -13,16 +13,16 @@ export class SlackMessageProvider implements IMessageProvider {
     return this._slackService;
   }
 
-  async sendMessage(channelId: string, message: string, senderName?: string) {
-    await this.slackService.sendMessage(channelId, message, senderName);
+  async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
+    return await this.slackService.sendMessageToChannel(channelId, message, senderName);
   }
 
   async getMessages(channelId: string) {
     return await this.slackService.fetchMessages(channelId);
   }
 
-  async sendMessageToChannel(channelId: string, message: string, senderName?: string) {
-    return this.sendMessage(channelId, message, senderName);
+  async sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string> {
+    return await this.sendMessage(channelId, message, active_agent_name);
   }
 
   getClientId(): string {

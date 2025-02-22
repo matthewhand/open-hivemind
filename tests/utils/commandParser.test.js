@@ -1,4 +1,4 @@
-const commandParser = require('../../utils/commandParser');
+const commandParser = require('../../src/message/helpers/commands/commandParser');
 
 describe('Command Parser', () => {
     test('parses a command without arguments', () => {
