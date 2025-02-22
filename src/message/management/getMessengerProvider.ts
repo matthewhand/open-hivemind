@@ -1,7 +1,9 @@
 const gmpDebug = require('debug')('app:getMessengerProvider');
-const gmpMessageConfig = require('@message/interfaces/messageConfig');
+const gmpMessageConfigModule = require('@config/messageConfig');
 const DiscordMgr = require('@integrations/discord/DiscordService');
 const SlackMgr = require('@integrations/slack/SlackService');
+
+const gmpMessageConfig = gmpMessageConfigModule.default || gmpMessageConfigModule;
 
 function getMessengerProvider() {
   const provider = gmpMessageConfig.get('MESSAGE_PROVIDER');
