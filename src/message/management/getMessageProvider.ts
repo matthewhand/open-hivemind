@@ -1,24 +1,23 @@
-import Debug from 'debug';
-import messageConfig from '@message/interfaces/messageConfig';
-import { IMessageProvider } from '@message/interfaces/IMessageProvider';
-import { DiscordMessageProvider } from '@integrations/discord/providers/DiscordMessageProvider'; // Updated path
-import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider'; // Updated path
+const mgrDebug = require('debug');
+const mgrMessageConfig = require('@message/interfaces/messageConfig');
+const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
+const SlackMsgProvider = require('@integrations/slack/providers/SlackMessageProvider');
 
-const debug = Debug('app:getMessageProvider');
+const mgrLog = mgrDebug('app:getMessageProvider');
 
-export function getMessageProvider(): IMessageProvider {
-  const providerName = messageConfig.get('MESSAGE_PROVIDER') || 'discord'; // Default from config/default.json
-  debug(`Selecting message provider: ${providerName}`);
+function getMessageProvider() {
+  const provider = mgrMessageConfig.get('MESSAGE_PROVIDER');
+  mgrLog(`Getting provider ${provider}`);
 
-  switch (providerName.toLowerCase()) {
+  switch (provider) {
     case 'discord':
-      debug('Returning DiscordMessageProvider');
       return new DiscordMessageProvider();
     case 'slack':
-      debug('Returning SlackMessageProvider');
-      return new SlackMessageProvider();
+      return new SlackMsgProvider.SlackMessageProvider();
     default:
-      debug(`Unknown MESSAGE_PROVIDER '${providerName}', defaulting to DiscordMessageProvider`);
-      return new DiscordMessageProvider();
+      mgrLog('Unknown provider, defaulting to Slack');
+      return new SlackMsgProvider.SlackMessageProvider();
   }
 }
+
+module.exports = { getMessageProvider };
