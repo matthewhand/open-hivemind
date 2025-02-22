@@ -1,28 +1,14 @@
-import { DiscordMessageProvider } from '@integrations/discord/providers/DiscordMessageProvider';
-import { DiscordService } from '@integrations/discord/DiscordService';
-import DiscordMessage from '@integrations/discord/DiscordMessage';
-import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
-
-// Reset modules to ensure fresh mock application
-beforeEach(() => {
-  jest.resetModules();
-  jest.clearAllMocks();
-});
-
 jest.mock('discord.js', () => {
   const mockClient = {
+    on: jest.fn(),
+    login: jest.fn().mockResolvedValue(undefined),
     channels: {
       fetch: jest.fn().mockResolvedValue({
         isTextBased: jest.fn().mockReturnValue(true),
-        messages: {
-          fetch: jest.fn().mockResolvedValue(new Map([['1', { content: 'Test message from Discord', id: '1' }]])),
-        },
+        messages: { fetch: jest.fn().mockResolvedValue(new Map([['1', { content: 'Test message from Discord', id: '1' }]])) },
       }),
     },
-    login: jest.fn().mockResolvedValue(undefined),
-    destroy: jest.fn().mockResolvedValue(undefined),
-    on: jest.fn(), // Mock client.on
-    user: { id: 'bot1', tag: 'Bot1#1234' }, // Mock user for ready event
+    user: { id: 'bot1', tag: 'Bot1#1234' },
   };
   return {
     Client: jest.fn(() => mockClient),
@@ -32,26 +18,33 @@ jest.mock('discord.js', () => {
       MessageContent: 4,
       GuildVoiceStates: 8,
     },
-    TextChannel: jest.fn(), // Mock TextChannel
+    TextChannel: jest.fn(),
+    ThreadChannel: jest.fn(),
   };
 });
 
+const ProviderModule = require('@integrations/discord/providers/DiscordMessageProvider');
+const SvcModule = require('@integrations/discord/DiscordService');
+
 describe('DiscordMessageProvider', () => {
-  let provider: DiscordMessageProvider;
+  let testProvider: any;
 
   beforeEach(async () => {
-    process.env.DISCORD_BOT_TOKEN = 'token1'; // Ensure token is set
-    (DiscordService as any).instance = undefined;
-    provider = new DiscordMessageProvider();
-    await DiscordService.getInstance().initialize(); // Initialize with mocked client
+    jest.resetModules();
+    jest.clearAllMocks();
+    process.env.DISCORD_BOT_TOKEN = 'token1';
+    SvcModule.DiscordService.instance = undefined;
+
+    testProvider = new ProviderModule.DiscordMessageProvider();
+    await SvcModule.DiscordService.getInstance().initialize();
   });
 
   afterEach(() => {
-    (DiscordService as any).instance = undefined;
+    SvcModule.DiscordService.instance = undefined;
   });
 
   it('should fetch messages from DiscordService', async () => {
-    const messages = await provider.getMessages('test-channel');
+    const messages = await testProvider.getMessages('test-channel');
     expect(messages).toHaveLength(1);
     expect(messages[0].getText()).toBe('Test message from Discord');
   });
