@@ -1,3 +1,4 @@
+jest.mock('@config/messageConfig', () => require('@config/messageConfig'));
 jest.mock('discord.js', () => ({
   Client: jest.fn(() => ({
     on: jest.fn(),
@@ -20,7 +21,11 @@ jest.mock('discord.js', () => ({
   },
 }));
 
-jest.mock('@message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
+  get: jest.fn().mockImplementation((key) => key === 'DISCORD_MESSAGE_LIMIT' ? 10 : undefined),
+}));
+
+jest.mock('@config/messageConfig', () => ({
   get: jest.fn().mockImplementation((key) => key === 'DISCORD_MESSAGE_LIMIT' ? 10 : undefined),
 }));
 
