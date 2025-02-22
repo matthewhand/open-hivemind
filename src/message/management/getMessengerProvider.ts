@@ -1,13 +1,11 @@
-const mgrDebug = require('debug');
-const mgrMessageConfig = require('@message/interfaces/messageConfig');
+const gmpDebug = require('debug')('app:getMessengerProvider');
+const gmpMessageConfig = require('@message/interfaces/messageConfig');
 const DiscordMgr = require('@integrations/discord/DiscordService');
 const SlackMgr = require('@integrations/slack/SlackService');
 
-const mgrLog = mgrDebug('app:getMessengerProvider');
-
 function getMessengerProvider() {
-  const provider = mgrMessageConfig.get('MESSAGE_PROVIDER');
-  mgrLog(`Getting provider ${provider}`);
+  const provider = gmpMessageConfig.get('MESSAGE_PROVIDER');
+  gmpDebug(`Getting provider ${provider}`);
 
   switch (provider) {
     case 'discord':
@@ -15,7 +13,7 @@ function getMessengerProvider() {
     case 'slack':
       return new SlackMgr.SlackService();
     default:
-      mgrLog('Unknown provider, defaulting to Slack');
+      gmpDebug('Unknown provider, defaulting to Slack');
       return new SlackMgr.SlackService();
   }
 }
