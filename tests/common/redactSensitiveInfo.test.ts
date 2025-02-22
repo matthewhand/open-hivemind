@@ -1,4 +1,4 @@
-const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 
 describe('redactSensitiveInfo', () => {
   it('should redact sensitive keys in key-value pairs', () => {
