@@ -1,7 +1,7 @@
-import { } from '../src/index';
+const indexModule = require('../src/index');
 
 describe('Index Module', () => {
-    it('should exist', () => {
-        expect(true).toBe(true);
-    });
+  it('should exist', () => {
+    expect(indexModule).toBeDefined();
+  });
 });
