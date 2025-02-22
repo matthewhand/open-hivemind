@@ -23,7 +23,7 @@ export class SlackEventListener {
       const llmProvider = getLlmProvider();
       if (!('generateChatCompletion' in llmProvider)) throw new Error('llmProvider lacks generateChatCompletion');
       const response = await (llmProvider as ILlmProvider).generateChatCompletion(event.text, [], metadata);
-      await this.slackService.sendMessage(event.channel, response, 'Jeeves', event.event_ts); // Default to Jeeves
+      await this.slackService.sendMessageToChannel(event.channel, 'Jeeves', event.event_ts); // Default to Jeeves
     }
   }
 }
