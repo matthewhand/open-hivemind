@@ -1,22 +1,33 @@
-const gpmDebug = require('debug')('app:getMessageProvider');
-const gpmConfig = require('@message/interfaces/messageConfig');
-const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
-const { SlackMessageProvider } = require('@integrations/slack/providers/SlackMessageProvider');
+const discordModule = require('../../integrations/discord/DiscordService');
+const SlackMessageProvider = require('../providers/SlackMessageProvider');
+const Debug = require('debug');
+const messageConfig = require('../interfaces/messageConfig');
 
-function getMessageProvider(): any {
-  const provider = (gpmConfig.get('MESSAGE_PROVIDER') || 'discord').toLowerCase();
-  gpmDebug(`Getting provider ${provider}`);
+const debug = Debug('app:getMessageProvider');
 
-  if (provider === 'discord') {
-    gpmDebug('Returning DiscordMessageProvider');
-    return new DiscordMessageProvider();
-  } else if (provider === 'slack') {
-    gpmDebug('Returning SlackMessageProvider');
-    return new SlackMessageProvider();
-  } else {
-    gpmDebug(`Unknown provider '${provider}', defaulting to DiscordMessageProvider`);
-    return new DiscordMessageProvider();
+/**
+ * Get Message Provider
+ *
+ * Determines and returns the appropriate message provider based on the
+ * configuration specified in the message configuration.
+ *
+ * @returns The instance of the configured message provider.
+ * @throws An error if the provider is unsupported.
+ */
+export function getMessageProvider() {
+  const provider = messageConfig.get('MESSAGE_PROVIDER');
+  debug('Configured message provider:', provider);
+
+  if (!provider) {
+    throw new Error('MESSAGE_PROVIDER is not configured.');
+  }
+
+  switch (provider.toLowerCase()) {
+    case 'discord':
+      return discordModule.Discord.DiscordService.getInstance();  // Singleton for Discord
+    case 'slack':
+      return new SlackMessageProvider();      // New instance for Slack
+    default:
+      throw new Error(`Unsupported message provider: ${provider}`);
   }
 }
-
-module.exports = { getMessageProvider };
