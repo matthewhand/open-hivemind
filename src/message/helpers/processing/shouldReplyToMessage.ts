@@ -1,3 +1,3 @@
-const { setDecayConfig, markChannelAsInteracted, shouldReplyToMessage } = require('./messageUtils');
+const utils = require('./messageUtils');
 
-module.exports = { setDecayConfig, markChannelAsInteracted, shouldReplyToMessage };
+module.exports = utils;
