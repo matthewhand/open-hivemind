@@ -31,10 +31,11 @@ convict.addFormat({
 
 const messageConfig = convict({
   MESSAGE_PROVIDER: { 
-    doc: 'Messaging platform', 
+    doc: 'Comma-separated messaging platforms (e.g., slack,discord)', 
     format: String, 
     default: 'slack', 
-    env: 'MESSAGE_PROVIDER' 
+    env: 'MESSAGE_PROVIDER',
+    coerce: (val: string) => val.split(',').map((v: string) => v.trim())
   },
   MESSAGE_IGNORE_BOTS: { 
     doc: 'Ignore bot messages', 
@@ -237,7 +238,7 @@ const messageConfig = convict({
   SLACK_WORKSPACES: {
     doc: 'Array of Slack workspaces with bot tokens and channels (optional, falls back to SLACK_BOT_TOKEN)',
     format: 'slack-workspaces',
-    default: [],  // Empty array as default to allow fallback
+    default: [],
     env: 'SLACK_WORKSPACES'
   }
 });
