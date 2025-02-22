@@ -1,173 +1,154 @@
-const Discord = require('discord.js');
-const { GatewayIntentBits, TextChannel, ThreadChannel } = Discord;
-const discordDebug = require('debug')('app:DiscordService');
-const DiscordMessage = require('./DiscordMessage');
-const MessageDelaySchedulerLib = require('@message/helpers/handler/MessageDelayScheduler');
+const DiscordLibSvc = require('discord.js');
 const discordMsgConfig = require('@message/interfaces/messageConfig');
+const DiscordDebug = require('debug');
 
-interface DiscordBotInfo {
-  client: any;
-  botUserId: string;
-  botUserName: string;
-}
+const DiscordSvc: any = {};
 
-class DiscordService {
-  static instance: DiscordService | undefined;
-  bots: DiscordBotInfo[] = [];
+DiscordSvc.DiscordService = class {
+  static instance: any;
+  bots: any[];
   tokens: string[];
 
   constructor() {
-    this.tokens = process.env.DISCORD_BOT_TOKEN?.split(',').map(s => s.trim()) || [''];
-    const usernames = process.env.DISCORD_USERNAME_OVERRIDE?.split(',').map(s => s.trim()) || ['Bot1', 'Bot2', 'Bot3'];
-
-    this.tokens.forEach((token: string, index: number) => {
-      const client = new Discord.Client({
-        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
-      });
-      const botUserName = usernames[index] || `Bot${index + 1}`;
-      this.bots.push({ client, botUserId: '', botUserName });
-    });
+    this.bots = [];
+    this.tokens = (process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN').split(',');
+    const botUserName = process.env.DISCORD_USERNAME_OVERRIDE || 'Bot1';
+    const intents = [
+      DiscordLibSvc.GatewayIntentBits.Guilds,
+      DiscordLibSvc.GatewayIntentBits.GuildMessages,
+      DiscordLibSvc.GatewayIntentBits.MessageContent,
+      DiscordLibSvc.GatewayIntentBits.GuildVoiceStates,
+    ];
+    const client = new DiscordLibSvc.Client({ intents });
+    this.bots.push({ client, botUserId: '', botUserName });
   }
 
-  static getInstance(): DiscordService {
-    if (!DiscordService.instance) {
-      console.log('Creating new instance of DiscordService');
-      DiscordService.instance = new DiscordService();
+  static getInstance() {
+    if (!DiscordSvc.DiscordService.instance) {
+      DiscordSvc.DiscordService.instance = new DiscordSvc.DiscordService();
     }
-    return DiscordService.instance;
+    return DiscordSvc.DiscordService.instance;
   }
 
-  get client(): any {
+  getAllBots() {
+    return this.bots;
+  }
+
+  getClient() {
     return this.bots[0].client;
   }
 
-  async initialize(): Promise<void> {
-    const scheduler = MessageDelaySchedulerLib.MessageDelayScheduler.getInstance();
+  async initialize() {
+    const log = DiscordDebug('app:discordService');
     for (const bot of this.bots) {
       bot.client.on('ready', () => {
         console.log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
         bot.botUserId = bot.client.user?.id || '';
+        log(`Initialized ${bot.botUserName} OK`);
       });
 
       bot.client.on('messageCreate', async (message: any) => {
-        if (message.author.bot && discordMsgConfig.get('MESSAGE_IGNORE_BOTS')) return;
-        if (!message.content) return;
-        const isDirectlyAddressed = message.content.includes(bot.botUserId) || discordMsgConfig.get('MESSAGE_WAKEWORDS')?.split(',').some((w: string) => message.content.startsWith(w));
+        log(`Received message ${message.content} in ${message.channelId} from ${message.author.id}`);
 
-        await scheduler.scheduleMessage(
+        const isDirectlyAddressed = message.content.includes(bot.botUserId) || discordMsgConfig.get('MESSAGE_WAKEWORDS')?.split(',').some((w: any) => message.content.startsWith(w));
+        if (!isDirectlyAddressed) return;
+
+        const timingManager = require('@src/managers/TimingManager').TimingManager.getInstance();
+        await timingManager.scheduleMessage(
           message.channelId,
-          message.id,
-          `Echo: ${message.content}`,
+          'cmd',
+          message.content,
           message.author.id,
-          async (text: string, threadId?: string) => await this.sendMessageToChannel(message.channelId, text, bot.botUserName, threadId),
-          isDirectlyAddressed
+          async (text: any, threadId: any) => await this.sendMessageToChannel(message.channelId, text, bot.botUserName, threadId),
+          false
         );
       });
 
       await bot.client.login(this.tokens[this.bots.indexOf(bot)]);
+      log(`Bot ${bot.botUserName} logged in`);
     }
   }
 
-  setMessageHandler(handler: (message: any, historyMessages: any[]) => Promise<string>): void {
-    // Handler set via scheduler
+  setMessageHandler(handler: any) {
+    this.bots.forEach(bot => bot.client.on('messageCreate', handler));
   }
 
-  async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
-    const botInfo = this.getBotByName(senderName || 'Bot1') || this.bots[0];
+  async sendMessageToChannel(channelId: any, text: any, senderName: any, threadId: any) {
+    const log = DiscordDebug('app:discordService');
+    const botInfo = this.bots[0];
     try {
       console.log(`Sending to channel ${channelId} as ${botInfo.botUserName}`);
       const channel = await botInfo.client.channels.fetch(channelId);
-      console.log(`Fetched channel ${channelId}: ${channel ? 'exists' : 'null'}`);
-      if (!channel || !channel.isTextBased()) {
-        console.log(`Channel ${channelId} not found or not text-based`);
-        return '';
+      let message;
+
+      if (!channel.isTextBased()) {
+        throw new Error(`Channel ${channelId} is not text-based`);
       }
 
-      let message;
       if (threadId) {
         const thread = await botInfo.client.channels.fetch(threadId);
-        console.log(`Fetched thread ${threadId}: ${thread ? 'exists' : 'null'}`);
-        if (thread && thread.isThread()) {
-          message = await thread.send(`*${botInfo.botUserName}*: ${text}`);
-          console.log(`Sent to thread ${threadId}: ${message.id}`);
-        } else {
-          console.log(`Thread ${threadId} not found or invalid`);
-          return '';
+        if (!thread.isThread()) {
+          throw new Error(`Thread ${threadId} is not a valid thread`);
         }
+        message = await thread.send(`*${botInfo.botUserName}*: ${text}`);
       } else {
         console.log(`Attempting send to channel ${channelId}: *${botInfo.botUserName}*: ${text}`);
         message = await channel.send(`*${botInfo.botUserName}*: ${text}`);
-        console.log(`Sent to channel ${channelId}: ${message.id}`);
-        if (discordMsgConfig.get('MESSAGE_RESPOND_IN_THREAD') && !threadId) {
-          const thread = await message.startThread({ name: `Thread for ${text.slice(0, 50)}` });
-          console.log(`Started thread for ${channelId}: ${thread.id}`);
-          return thread.id;
-        }
       }
-      console.log(`Returning message ID for ${channelId}: ${message.id}`);
+
+      console.log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);
       return message.id;
-    } catch (error: unknown) {
-      console.log(`Error sending to ${channelId}${threadId ? `/${threadId}` : ''}: ${(error as Error).message}`);
+    } catch (error: any) {
+      console.log(`Error sending to ${channelId}${threadId ? `/${threadId}` : ''}: ${error.message}`);
       return '';
     }
   }
 
-  async getMessagesFromChannel(channelId: string): Promise<any[]> {
-    return this.fetchMessages(channelId);
+  async getMessagesFromChannel(channelId: any) {
+    return await this.fetchMessages(channelId);
   }
 
-  async fetchMessages(channelId: string): Promise<any[]> {
-    if (process.env.NODE_ENV === 'test' && channelId === 'test-channel') {
-      return [{
-        content: "Test message from Discord",
-        getText: () => "Test message from Discord",
-        getMessageId: () => "dummy-id",
-        getChannelId: () => channelId
-      }];
-    }
+  async fetchMessages(channelId: any) {
+    const log = DiscordDebug('app:discordService');
     const botInfo = this.bots[0];
     try {
       const channel = await botInfo.client.channels.fetch(channelId);
-      if (channel && channel.isTextBased()) {
-        const messages = await channel.messages.fetch({ limit: 10 });
-        return Array.from(messages.values()).map(msg => new DiscordMessage(msg));
+      if (!channel.isTextBased()) {
+        throw new Error('Channel is not text based');
       }
-      return [];
-    } catch (error: unknown) {
-      console.log(`Failed to fetch messages from ${channelId}: ${(error as Error).message}`);
+      const messages = await channel.messages.fetch({ limit: discordMsgConfig.get('DISCORD_MESSAGE_LIMIT') || 10 });
+      return Array.from(messages.values());
+    } catch (error: any) {
+      console.log(`Failed to fetch messages from ${channelId}: ${error.message}`);
       return [];
     }
   }
 
-  async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
-    const text = typeof announcement === 'string' ? announcement : announcement.message || 'Announcement';
-    await this.sendMessageToChannel(channelId, text, 'Bot1');
-    console.log(`Sent public announcement to ${channelId}: ${text}`);
+  async sendPublicAnnouncement(channelId: any, announcement: any) {
+    const text = `**Announcement**: ${announcement}`;
+    await this.sendMessageToChannel(channelId, text, 'Bot1', undefined);
   }
 
-  getClientId(): string {
+  getClientId() {
     return this.bots[0].botUserId || '';
   }
 
-  getDefaultChannel(): string {
-    return process.env.DISCORD_CHANNEL_ID || 'default_channel_id';
+  getDefaultChannel() {
+    return discordMsgConfig.get('DISCORD_DEFAULT_CHANNEL') || '';
   }
 
-  async shutdown(): Promise<void> {
+  async shutdown() {
+    const log = DiscordDebug('app:discordService');
     for (const bot of this.bots) {
       await bot.client.destroy();
+      log(`Bot ${bot.botUserName} shut down`);
     }
-    DiscordService.instance = undefined;
-    console.log('DiscordService shut down');
+    DiscordSvc.DiscordService.instance = undefined;
   }
 
-  getBotByName(name: string): DiscordBotInfo | undefined {
+  getBotByName(name: any) {
     return this.bots.find(bot => bot.botUserName === name);
   }
+};
 
-  getAllBots(): DiscordBotInfo[] {
-    return this.bots;
-  }
-}
-
-module.exports = { DiscordService };
+module.exports = DiscordSvc;
