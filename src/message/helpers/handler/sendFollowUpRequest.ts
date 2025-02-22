@@ -4,6 +4,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 // import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
 import { Client } from 'discord.js';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -21,7 +22,7 @@ export async function sendFollowUpRequest(
   const llmProvider = getLlmProvider();  // No argument needed
 
   // Guard: Ensure the provider supports chat completions
-  if (!llmProvider.supportsChatCompletion()) {
+  if (!(llmProvider as ILlmProvider).supportsChatCompletion()) {
     debug(`[sendFollowUpRequest] LLM provider does not support chat completions for channel: ${channelId}.`);
     return;
   }
