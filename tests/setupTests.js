@@ -1,5 +1,5 @@
 // Mock messageConfig globally
-jest.mock('@src/message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
   __esModule: true,
   default: {
     get: jest.fn(),
