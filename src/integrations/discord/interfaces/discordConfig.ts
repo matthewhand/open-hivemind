@@ -136,6 +136,18 @@ const discordConfig = convict({
         format: Boolean,
         default: false,
         env: 'DISCORD_LOGGING_ENABLED'
+    },
+    DISCORD_USERNAME_OVERRIDE: {
+        doc: 'Overrides for Discord username as a comma-separated string.',
+        format: String,
+        default: '',
+        env: 'DISCORD_USERNAME_OVERRIDE'
+    },
+    DISCORD_MESSAGE_PROCESSING_DELAY_MS: {
+        doc: 'Processing delay for Discord messages in milliseconds.',
+        format: 'int',
+        default: 0,
+        env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS'
     }
 });
 
