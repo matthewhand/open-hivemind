@@ -11,16 +11,27 @@ DiscordSvc.DiscordService = class {
 
   constructor() {
     this.bots = [];
-    this.tokens = (process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN').split(',');
-    const botUserName = process.env.DISCORD_USERNAME_OVERRIDE || 'Bot1';
+    this.tokens = (process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN').split(',').map((t: string) => t.trim());
+    const usernames = (process.env.DISCORD_USERNAME_OVERRIDE || 'Bot1').split(',').map((u: string) => u.trim());
+
+    // Ensure we have at least as many usernames as tokens, filling with defaults if needed
+    while (usernames.length < this.tokens.length) {
+      usernames.push(`Bot${usernames.length + 1}`);
+    }
+
     const intents = [
       DiscordLibSvc.GatewayIntentBits.Guilds,
       DiscordLibSvc.GatewayIntentBits.GuildMessages,
       DiscordLibSvc.GatewayIntentBits.MessageContent,
       DiscordLibSvc.GatewayIntentBits.GuildVoiceStates,
     ];
-    const client = new DiscordLibSvc.Client({ intents });
-    this.bots.push({ client, botUserId: '', botUserName });
+
+    // Initialize a bot for each token
+    this.tokens.forEach((token: string, index: number) => {
+      const botUserName = usernames[index];
+      const client = new DiscordLibSvc.Client({ intents });
+      this.bots.push({ client, botUserId: '', botUserName });
+    });
   }
 
   static getInstance() {
@@ -35,7 +46,7 @@ DiscordSvc.DiscordService = class {
   }
 
   getClient() {
-    return this.bots[0].client;
+    return this.bots[0].client; // Default to first bot for compatibility
   }
 
   async initialize() {
@@ -76,7 +87,7 @@ DiscordSvc.DiscordService = class {
 
   async sendMessageToChannel(channelId: any, text: any, senderName: any, threadId: any) {
     const log = DiscordDebug('app:discordService');
-    const botInfo = this.bots[0];
+    const botInfo = this.bots.find(b => b.botUserName === senderName) || this.bots[0]; // Match by name or default to first
     try {
       console.log(`Sending to channel ${channelId} as ${botInfo.botUserName}`);
       const channel = await botInfo.client.channels.fetch(channelId);
@@ -111,7 +122,7 @@ DiscordSvc.DiscordService = class {
 
   async fetchMessages(channelId: any) {
     const log = DiscordDebug('app:discordService');
-    const botInfo = this.bots[0];
+    const botInfo = this.bots[0]; // Default to first bot for fetching
     try {
       const channel = await botInfo.client.channels.fetch(channelId);
       if (!channel.isTextBased()) {
@@ -127,11 +138,11 @@ DiscordSvc.DiscordService = class {
 
   async sendPublicAnnouncement(channelId: any, announcement: any) {
     const text = `**Announcement**: ${announcement}`;
-    await this.sendMessageToChannel(channelId, text, 'Bot1', undefined);
+    await this.sendMessageToChannel(channelId, text, this.bots[0].botUserName, undefined);
   }
 
   getClientId() {
-    return this.bots[0].botUserId || '';
+    return this.bots[0].botUserId || ''; // Default to first bot
   }
 
   getDefaultChannel() {
