@@ -15,21 +15,9 @@ const webhookServiceModule = require('@webhook/webhookService');
 const indexLog = debug('app:index');
 const app = express();
 
-// Debug the healthRoute import
 const healthRoute = healthRouteModule.default || healthRouteModule;
-console.log('healthRoute:', healthRoute);
-console.log('healthRoute type:', typeof healthRoute);
-console.log('healthRoute is function:', typeof healthRoute === 'function');
-
-// Debug the llmConfig import
 const llmConfig = llmConfigModule.default || llmConfigModule;
-console.log('llmConfig:', llmConfig);
-console.log('llmConfig.get exists:', typeof llmConfig.get === 'function');
-
-// Debug the messageConfig import
 const messageConfig = messageConfigModule.default || messageConfigModule;
-console.log('messageConfig:', messageConfig);
-console.log('messageConfig.get exists:', typeof messageConfig.get === 'function');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -49,7 +37,9 @@ async function startBot(messengerService: any) {
         await messengerService.initialize();
         indexLog('[DEBUG] Bot initialization completed.');
         indexLog('[DEBUG] Setting up message handler...');
-        messengerService.setMessageHandler(messageHandlerModule.handleMessage);
+        messengerService.setMessageHandler((message: any, historyMessages: any[]) =>
+            messageHandlerModule.handleMessage(message, historyMessages, messengerService)
+        );
         indexLog('[DEBUG] Message handler set up successfully.');
     } catch (error) {
         indexLog('[DEBUG] Error starting bot service:', error);
@@ -58,11 +48,21 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-    console.log('LLM Provider in use:', llmConfig.get('LLM_PROVIDER') || 'Default OpenAI');
-    console.log('Message Provider in use:', messageConfig.get('MESSAGE_PROVIDER') || 'Default Message Service');
+    const llmProviders = llmConfig.get('LLM_PROVIDER') as string[];
+    console.log('LLM Providers in use:', llmProviders.join(', ') || 'Default OpenAI');
 
-    const messengerService = messengerProviderModule.getMessengerProvider();
-    await startBot(messengerService);
+    const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+    const messageProviders = (typeof rawMessageProviders === 'string'
+        ? rawMessageProviders.split(',').map((v: string) => v.trim())
+        : Array.isArray(rawMessageProviders)
+        ? rawMessageProviders
+        : ['slack']) as string[];
+    console.log('Message Providers in use:', messageProviders.join(', ') || 'Default Message Service');
+
+    const messengerServices = messengerProviderModule.getMessengerProvider();
+    for (const messengerService of messengerServices) {
+        await startBot(messengerService);
+    }
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
@@ -77,8 +77,12 @@ async function main() {
     const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
         console.log('Webhook service is enabled, registering routes...');
-        const channelId = messengerService.getDefaultChannel();
-        await webhookServiceModule.webhookService.start(app, messengerService, channelId);
+        for (const messengerService of messengerServices) {
+            const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
+            if (channelId) {
+                await webhookServiceModule.webhookService.start(app, messengerService, channelId);
+            }
+        }
     } else {
         console.log('Webhook service is disabled.');
     }
