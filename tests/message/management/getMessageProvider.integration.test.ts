@@ -1,35 +1,34 @@
-import { getMessageProvider } from '@message/management/getMessageProvider';
+const DiscordMsgProviderInt = require('@integrations/discord/providers/DiscordMessageProvider');
+const SlackMsgProviderInt = require('@integrations/slack/providers/SlackMessageProvider');
+const { getMessageProvider: intGetMessageProvider } = require('@message/management/getMessageProvider');
 
-jest.mock('@src/message/interfaces/messageConfig', () => ({
-  get: (key: string) => {
-    const testConfig: Record<string, string> = {
-      MESSAGE_PROVIDER: process.env.MESSAGE_PROVIDER || 'discord',
-    };
-    return testConfig[key];
-  },
+jest.mock('@message/interfaces/messageConfig', () => ({
+  get: jest.fn()
 }));
 
 describe('getMessageProvider Unit Test', () => {
+  let mockConfig: any;
+
   beforeEach(() => {
-    jest.resetModules();
-    delete process.env.MESSAGE_PROVIDER;
+    mockConfig = require('@message/interfaces/messageConfig');
+    jest.clearAllMocks();
   });
 
-  test('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "discord"', () => {
-    process.env.MESSAGE_PROVIDER = 'discord';
-    const provider = getMessageProvider();
-
+  it('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "discord"', () => {
+    mockConfig.get.mockReturnValue('discord');
+    const provider = intGetMessageProvider();
     console.log('[DEBUG] Returned provider (Discord):', provider);
-
-    expect(provider).toHaveProperty('sendMessageToChannel');
+    expect(provider).toBeInstanceOf(DiscordMsgProviderInt.DiscordMessageProvider);
+    expect(provider.sendMessageToChannel).toBeDefined();
+    expect(provider.getClientId).toBeDefined();
   });
 
-  test('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "slack"', () => {
-    process.env.MESSAGE_PROVIDER = 'slack';
-    const provider = getMessageProvider();
-
+  it('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "slack"', () => {
+    mockConfig.get.mockReturnValue('slack');
+    const provider = intGetMessageProvider();
     console.log('[DEBUG] Returned provider (Slack):', provider);
-
-    expect(provider).toHaveProperty('sendMessageToChannel');
+    expect(provider).toBeInstanceOf(SlackMsgProviderInt.SlackMessageProvider);
+    expect(provider.sendMessageToChannel).toBeDefined();
+    expect(provider.getClientId).toBeDefined();
   });
 });
