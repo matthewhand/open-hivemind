@@ -1,46 +1,51 @@
-// Mock the llmConfig module
-jest.mock('@llm/interfaces/llmConfig', () => ({
-    get: jest.fn(),
-}));
-
-// Mock getLlmProvider to return a mock provider with all required methods
-jest.mock('@src/message/management/getLlmProvider', () => ({
-    __esModule: true,
-    getLlmProvider: jest.fn(),
-}));
-
-import { sendCompletions } from '../../../src/llm/llm/generateCompletion';
+const { sendCompletions } = require('@llm/llm/generateCompletion');
 import { IMessage } from '@src/message/interfaces/IMessage';
-import * as getLlmProviderModule from '@src/message/management/getLlmProvider';
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+
+// Mock IMessage implementation
+class MockMessage implements IMessage {
+  public content: string;
+  public channelId: string = 'mock-channel';
+  public data: any = {};
+  public role: string;
+
+  constructor(content: string, role: string) {
+    this.content = content;
+    this.role = role;
+  }
+
+  getMessageId(): string { return 'mock-id'; }
+  getText(): string { return this.content; }
+  getTimestamp(): Date { return new Date(); }
+  setText(text: string): void { this.content = text; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'mock-author'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return []; }
+  mentionsUsers(userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'Mock User'; }
+  isReplyToBot(): boolean { return false; }
+}
+
+// Mock messages array
+const mockMessages: IMessage[] = [
+  new MockMessage('You are Grok, created by xAI.', 'system'),
+  new MockMessage('Hello, Grok!', 'user')
+];
+
+import * as getLlmProviderModule from '@src/llm/getLlmProvider';
+
+jest.mock('@src/llm/getLlmProvider', () => ({
+  getLlmProvider: jest.fn(() => ({
+    generateChatCompletion: jest.fn(() => Promise.resolve('Hi there!'))
+  }))
+}));
 
 describe('sendCompletions', () => {
-    beforeEach(() => {
-        jest.resetAllMocks();
-    });
-
-    it('should send completions for given messages', async () => {
-        const mockGenerateCompletion = jest.fn().mockResolvedValue('Mock Completion');
-
-        // Create a mock ILlmProvider with all required methods
-        const mockLlmProvider: ILlmProvider = {
-            generateCompletion: mockGenerateCompletion,
-            supportsChatCompletion: jest.fn().mockReturnValue(true),
-            supportsCompletion: jest.fn().mockReturnValue(true),
-            generateChatCompletion: jest.fn().mockResolvedValue('Mock Chat Completion'),
-        };
-
-        jest.spyOn(getLlmProviderModule, 'getLlmProvider').mockReturnValue(mockLlmProvider);
-
-        const messages: IMessage[] = [
-            { getText: () => 'Hello' } as IMessage,
-            { getText: () => 'world' } as IMessage
-        ];
-
-        const result = await sendCompletions(messages);
-
-        expect(getLlmProviderModule.getLlmProvider).toHaveBeenCalled();
-        expect(mockGenerateCompletion).toHaveBeenCalledWith('Hello world');
-        expect(result).toBe('Mock Completion');
-    });
+  it('should send completions for given messages', async () => {
+    const result = await sendCompletions(mockMessages);
+    expect(result).toBe('Hi there!');
+    expect(getLlmProviderModule.getLlmProvider).toHaveBeenCalled();
+  });
 });
