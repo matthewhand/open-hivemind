@@ -1,21 +1,23 @@
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import messageConfig from '@message/interfaces/messageConfig';
-import { DiscordService } from '@integrations/discord/DiscordService';
-import { SlackService } from '@integrations/slack/SlackService'; // Assuming this exists
-import debug from 'debug';
+const mgrDebug = require('debug');
+const mgrMessageConfig = require('@message/interfaces/messageConfig');
+const DiscordMgr = require('@integrations/discord/DiscordService');
+const SlackMgr = require('@integrations/slack/SlackService');
 
-const log = debug('app:getMessengerProvider');
+const mgrLog = mgrDebug('app:getMessengerProvider');
 
-export function getMessengerProvider(): IMessengerService {
-  const provider = messageConfig.get('MESSAGE_PROVIDER');
-  log(`Selecting Messenger Provider: ${provider}`);
+function getMessengerProvider() {
+  const provider = mgrMessageConfig.get('MESSAGE_PROVIDER');
+  mgrLog(`Getting provider ${provider}`);
 
   switch (provider) {
     case 'discord':
-      return DiscordService.getInstance();
+      return DiscordMgr.Discord.DiscordService.getInstance();
     case 'slack':
-      return SlackService.getInstance();
+      return new SlackMgr.SlackService();
     default:
-      throw new Error(`Unknown MESSAGE_PROVIDER: ${provider}`);
+      mgrLog('Unknown provider, defaulting to Slack');
+      return new SlackMgr.SlackService();
   }
 }
+
+module.exports = { getMessengerProvider };
