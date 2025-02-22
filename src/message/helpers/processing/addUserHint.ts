@@ -1,9 +1,9 @@
 import debug from 'debug';
-import addHintConfig from '@message/interfaces/messageConfig';
+import addHintConfig from '@config/messageConfig';
 
 const addHintDebug = debug('app:addUserHint');
 
-export function addUserHintFn(content: any, userId: any, botId: any): any {
+export function addUserHintFn(content: string, userId: string, botId: string): string {
   const shouldAddHint = addHintConfig.get('MESSAGE_ADD_USER_HINT');
   if (!shouldAddHint) {
     addHintDebug('User hint disabled by config');
