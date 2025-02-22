@@ -1,23 +1,14 @@
-import messageConfig from '../../interfaces/messageConfig';
-import Debug from 'debug';
+const stripDebug = require('debug')('app:stripBotId');
+const stripMsgConfig = require('../../interfaces/messageConfig');
 
-const debug = Debug('app:stripBotId');
-
-/**
- * Strips all references to the bot's ID from the message.
- * @param message - The original message string.
- * @param botId - The bot's unique ID to be removed.
- * @returns Message without bot ID references.
- */
-export function stripBotId(message: string, botId: string): string {
-    const botIdRegex = new RegExp(`<@${botId}>`, 'g');
-    debug(`Stripping bot ID: ${botId} from message: "${message}"`);
-
-    if (Boolean(messageConfig.get<any>('MESSAGE_STRIP_BOT_ID'))) {
-        const result = message.replace(botIdRegex, '');
-        debug(`Result after stripping: "${result}"`);
-        return result;
-    }
-
-    return message;
+function stripBotId(content: any, botId: any) {
+  const botMention = `<@${botId}>`;
+  if (content.includes(botMention)) {
+    const strippedContent = content.split(botMention).join('').trim();
+    stripDebug(`Stripped bot ID ${botId} from content: ${strippedContent}`);
+    return strippedContent;
+  }
+  return content;
 }
+
+module.exports = { stripBotId };
