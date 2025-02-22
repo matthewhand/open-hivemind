@@ -1,9 +1,9 @@
-jest.mock('@message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
   get: jest.fn()
 }));
 
 const shouldProcessModule = require('@message/helpers/processing/shouldProcessMessage');
-const msgConfigMock = require('@message/interfaces/messageConfig');
+const msgConfigMock = require('@config/messageConfig');
 
 describe('getMinIntervalMs', () => {
   beforeEach(() => {
