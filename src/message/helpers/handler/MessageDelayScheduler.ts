@@ -1,6 +1,6 @@
 const schedulerDebug = require('debug')('app:MessageDelayScheduler');
 const { getRandomDelay } = require('@src/common/getRandomDelay');
-const schedulerMsgConfig = require('@message/interfaces/messageConfig');
+const schedulerMsgConfig = require('@config/messageConfig');
 
 // Debug to inspect config
 schedulerDebug('Loaded schedulerMsgConfig:', schedulerMsgConfig);
