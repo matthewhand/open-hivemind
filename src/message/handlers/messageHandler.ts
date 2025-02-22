@@ -10,7 +10,7 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage, markChannelAsInteracted } from '../helpers/processing/shouldReplyToMessage';
 import { MessageDelayScheduler } from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
-import messageConfig from '@src/config/messageConfig'; // Updated import
+import messageConfig from '@message/interfaces/messageConfig';
 import { getMessageProvider } from '@src/message/management/getMessageProvider';
 
 const debug = Debug('app:messageHandler');
@@ -39,7 +39,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     let processedMessage = message.getText();
-    const botId = messageConfig.get('BOT_ID') || messageProvider.getClientId();
+    const botId = String(messageConfig.get<any>('BOT_ID') || messageProvider.getClientId());
     const userId = message.getAuthorId();
     processedMessage = stripBotId(processedMessage, botId);
     processedMessage = addUserHint(processedMessage, userId, botId);
@@ -48,9 +48,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     console.log(`Processed message: "${processedMessage}"`);
 
     let commandProcessed = false;
-    if (messageConfig.get('MESSAGE_COMMAND_INLINE')) {
+    if (Boolean(messageConfig.get<any>('MESSAGE_COMMAND_INLINE'))) {
       await processCommand(message, async (result: string) => {
-        const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') || '';
+        const authorisedUsers = String(messageConfig.get<any>('MESSAGE_COMMAND_AUTHORISED_USERS') || '');
         const allowedUsers = authorisedUsers.split(',').map(user => user.trim());
         if (!allowedUsers.includes(message.getAuthorId())) {
           debug('User not authorized:', message.getAuthorId());
@@ -65,27 +65,28 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       if (commandProcessed) return '';
     }
 
-    if (!shouldReplyToMessage(message, botId, messageConfig.get('MESSAGE_PROVIDER'))) return '';
+    const messageProviderType = String(messageConfig.get<any>('MESSAGE_PROVIDER'));
+    const providerType = (messageProviderType === 'discord' ? 'discord' : 'generic');
+    if (!shouldReplyToMessage(message, botId, providerType)) return '';
 
     const timingManager = MessageDelayScheduler.getInstance();
     const startTime = Date.now();
-    timingManager.scheduleMessage(
+    await timingManager.scheduleMessage(
       message.getChannelId(),
-      message,
-      0,
-      async (responseContent: string) => {
+      "cmd", // dummy message id
+      message.getText(),
+      message.getAuthorId(),
+      async (text: string, threadId?: string): Promise<string> => {
         const activeAgentName = message.metadata?.active_agent_name || 'Jeeves';
-        await messageProvider.sendMessageToChannel(message.getChannelId(), responseContent, activeAgentName);
-        debug(`Sent LLM response from "${activeAgentName}": ${responseContent}`);
-        markChannelAsInteracted(message.getChannelId());
-
-        if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
+        const sentResult = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
+        if (Boolean(messageConfig.get<any>('MESSAGE_LLM_FOLLOW_UP'))) {
           const followUpText = 'Follow-up text';
           await sendFollowUpRequest(message, message.getChannelId(), followUpText);
           debug('Sent follow-up request.');
         }
+        return sentResult;
       },
-      llmProvider
+      false
     );
     const endTime = Date.now();
     const processingTime = endTime - startTime;
