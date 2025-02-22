@@ -1,7 +1,9 @@
-const addHintDebug = require('debug')('app:addUserHint');
-const addHintConfig = require('@message/interfaces/messageConfig');
+import debug from 'debug';
+import addHintConfig from '@message/interfaces/messageConfig';
 
-function addUserHintFn(content: any, userId: any, botId: any) {
+const addHintDebug = debug('app:addUserHint');
+
+export function addUserHintFn(content: any, userId: any, botId: any): any {
   const shouldAddHint = addHintConfig.get('MESSAGE_ADD_USER_HINT');
   if (!shouldAddHint) {
     addHintDebug('User hint disabled by config');
@@ -19,7 +21,3 @@ function addUserHintFn(content: any, userId: any, botId: any) {
   addHintDebug(`Added user hint: ${updatedContent}`);
   return updatedContent;
 }
-
-module.exports = {
-  addUserHintFn
-};
