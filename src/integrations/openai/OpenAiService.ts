@@ -5,7 +5,7 @@
  * configuration sources like 'openaiConfig' and 'llmConfig'.
  */
 import Debug from 'debug';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo'; // Adjusted alias
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { OpenAI, ClientOptions } from 'openai';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
@@ -13,7 +13,6 @@ import llmConfig from '@llm/interfaces/llmConfig';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@common/getEmoji';
-import { NONAME } from 'dns';
 
 const debug = Debug('app:OpenAiService');
 
@@ -64,10 +63,10 @@ export class OpenAiService {
     this.openai = new OpenAI(options);
     debug('[DEBUG] OpenAI client initialized successfully');
 
-    this.parallelExecution = Boolean(llmConfig.get('LLM_PARALLEL_EXECUTION'));
+    this.parallelExecution = llmConfig.get('LLM_PARALLEL_EXECUTION') === true; // Explicitly check for boolean
     debug(`[DEBUG] Parallel execution: ${this.parallelExecution}`);
 
-    this.finishReasonRetry = openaiConfig.get<'OPENAI_FINISH_REASON_RETRY'>('OPENAI_FINISH_REASON_RETRY') || 'stop';
+    this.finishReasonRetry = openaiConfig.get('OPENAI_FINISH_REASON_RETRY') || 'stop';
     debug(`[DEBUG] Finish reason retry set to: ${this.finishReasonRetry}`);
 
     this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
@@ -218,15 +217,15 @@ export class OpenAiService {
     const toolCallId = "matches-tool_call_id-in-tool-message";
 
     const chatParams: ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemMessageContent }, // ✅ System message first
-      { role: 'user', content: message }, // ✅ User message should always come first
+      { role: 'system', content: systemMessageContent },
+      { role: 'user', content: message },
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
         content: msg.getText() || ""
       })),
       {
         role: 'assistant',
-        content: "", // Assistant makes a tool call
+        content: "",
         tool_calls: [
           {
             id: toolCallId,
@@ -286,12 +285,10 @@ export class OpenAiService {
 
       // --- Attach agent metadata ---
       let activeAgentName: string | undefined;
-      // Look for active agent name in full_response if available.
       if ((response as any).full_response && (response as any).full_response.agent && (response as any).full_response.agent.name) {
         activeAgentName = (response as any).full_response.agent.name;
       }
 
-      // Return an object that includes the text and context_variables.
       return {
         text: content,
         context_variables: { active_agent_name: activeAgentName }
