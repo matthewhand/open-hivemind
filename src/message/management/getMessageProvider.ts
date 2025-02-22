@@ -1,22 +1,21 @@
-const mgrDebug = require('debug');
-const mgrMessageConfig = require('@message/interfaces/messageConfig');
+const gpmDebug = require('debug')('app:getMessageProvider');
+const gpmConfig = require('@message/interfaces/messageConfig');
 const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
-const SlackMsgProvider = require('@integrations/slack/providers/SlackMessageProvider');
+const { SlackMessageProvider } = require('@integrations/slack/providers/SlackMessageProvider');
 
-const mgrLog = mgrDebug('app:getMessageProvider');
+function getMessageProvider(): any {
+  const provider = (gpmConfig.get('MESSAGE_PROVIDER') || 'discord').toLowerCase();
+  gpmDebug(`Getting provider ${provider}`);
 
-function getMessageProvider() {
-  const provider = mgrMessageConfig.get('MESSAGE_PROVIDER');
-  mgrLog(`Getting provider ${provider}`);
-
-  switch (provider) {
-    case 'discord':
-      return new DiscordMessageProvider();
-    case 'slack':
-      return new SlackMsgProvider.SlackMessageProvider();
-    default:
-      mgrLog('Unknown provider, defaulting to Slack');
-      return new SlackMsgProvider.SlackMessageProvider();
+  if (provider === 'discord') {
+    gpmDebug('Returning DiscordMessageProvider');
+    return new DiscordMessageProvider();
+  } else if (provider === 'slack') {
+    gpmDebug('Returning SlackMessageProvider');
+    return new SlackMessageProvider();
+  } else {
+    gpmDebug(`Unknown provider '${provider}', defaulting to DiscordMessageProvider`);
+    return new DiscordMessageProvider();
   }
 }
 
