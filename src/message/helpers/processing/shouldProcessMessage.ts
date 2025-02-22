@@ -1,34 +1,58 @@
-import llmConfig from '@llm/interfaces/llmConfig';
-import messageConfig from '@src/message/interfaces/messageConfig';
+const shouldDebug = require('debug')('app:shouldReplyToMessage');
+const msgConfig = require('@message/interfaces/messageConfig');
 
-/**
- * Determines whether the message should be processed based on the last message time
- * and rate-limiting settings.
- *
- * @param {number} lastMessageTime - Timestamp of the last processed message.
- * @returns {boolean} - True if the message can be processed, false otherwise.
- */
-export function shouldProcessMessage(lastMessageTime: number): boolean {
-  // Guard: Ensure messageConfig and llmConfig are loaded properly
-  if (!messageConfig || !llmConfig) {
-    throw new Error('Message or LLM configuration is missing.');
-  }
+const channelsWithBotInteraction = new Map<string, number>();
 
-  // Add default value and guard for message interval
-  const minIntervalMs = messageConfig.get('MESSAGE_MIN_INTERVAL_MS') || 1000; // Default to 1000ms
-  const limitPerHour = llmConfig.get('LLM_RESPONSE_MAX_TOKENS') || 100;  // Default to 100
-  const now = Date.now();
-  const timeSinceLastMessage = now - lastMessageTime;
+let recentActivityDecayRate = Number(msgConfig.get('MESSAGE_RECENT_ACTIVITY_DECAY_RATE') || 0);
+let activityTimeWindow = msgConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW');
 
-  console.debug(`Time since last message: ${timeSinceLastMessage}ms, Min interval: ${minIntervalMs}ms, Limit per hour: ${limitPerHour}`);
-
-  if (timeSinceLastMessage < minIntervalMs) {
-    console.debug('Message too soon. Not processing.');
-    return false;
-  }
-
-  // Additional checks for message limits
-  const allowed = timeSinceLastMessage >= (60 * 60 * 1000) / limitPerHour;
-  console.debug(`Message processing allowed: ${allowed}`);
-  return allowed;
+function setDecayConfig(newDecayRate: number, newTimeWindow: number): void {
+  recentActivityDecayRate = newDecayRate;
+  activityTimeWindow = newTimeWindow;
+  shouldDebug(`Updated decay config: rate = ${recentActivityDecayRate}, window = ${activityTimeWindow}ms`);
 }
+
+function markChannelAsInteracted(channelId: string): void {
+  channelsWithBotInteraction.set(channelId, Date.now());
+  shouldDebug(`Channel ${channelId} marked as interacted at ${Date.now()}.`);
+}
+
+function shouldReplyToMessage(message: { getChannelId: () => string }, botId: string, platform: string): boolean {
+  if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
+    shouldDebug('FORCE_REPLY env var enabled. Forcing reply.');
+    return true;
+  }
+
+  const channelId = message.getChannelId();
+  shouldDebug(`Evaluating message in channel: ${channelId}`);
+
+  const lastInteractionTime = channelsWithBotInteraction.get(channelId) || 0;
+  const timeSinceLastActivity = Date.now() - lastInteractionTime;
+  shouldDebug(`Time since last activity: ${timeSinceLastActivity}ms`);
+
+  let chance = 0.2;
+  shouldDebug(`Initial base chance: ${chance}`);
+
+  const decayFactor = Math.max(
+    0.5,
+    Math.exp(-recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow))
+  );
+  chance *= decayFactor;
+  shouldDebug(`Chance after decay: ${chance} (decay factor: ${decayFactor})`);
+
+  const decision = Math.random() < chance;
+  shouldDebug(`Decision: ${decision} (chance = ${chance})`);
+
+  return decision;
+}
+
+function getMinIntervalMs(): number {
+  return Number(msgConfig.get('MESSAGE_MIN_INTERVAL_MS') || 1000);
+}
+
+module.exports = {
+  setDecayConfig,
+  markChannelAsInteracted,
+  shouldReplyToMessage,
+  getMinIntervalMs
+};
