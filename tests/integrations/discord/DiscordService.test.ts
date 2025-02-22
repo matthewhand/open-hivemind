@@ -26,7 +26,7 @@ jest.mock('discord.js', () => {
   };
 });
 
-jest.mock('@message/interfaces/messageConfig', () => ({
+jest.mock('@config/messageConfig', () => ({
   get: jest.fn().mockReturnValue(false),
 }));
 
