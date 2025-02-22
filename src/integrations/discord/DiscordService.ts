@@ -54,12 +54,13 @@ DiscordSvc.DiscordService = class {
         if (!isDirectlyAddressed) return;
 
         const timingManager = require('@src/managers/TimingManager').TimingManager.getInstance();
+        const greeting = `Greetings, <@${message.author.id}>! How can I assist?`;
         await timingManager.scheduleMessage(
           message.channelId,
           'cmd',
           message.content,
           message.author.id,
-          async (text: any, threadId: any) => await this.sendMessageToChannel(message.channelId, text, bot.botUserName, threadId),
+          async (text: any, threadId: any) => await this.sendMessageToChannel(message.channelId, `${greeting}\n${text}`, bot.botUserName, threadId),
           false
         );
       });
@@ -151,4 +152,4 @@ DiscordSvc.DiscordService = class {
   }
 };
 
-module.exports = DiscordSvc;
+module.exports = { Discord: DiscordSvc };
