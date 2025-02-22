@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import messageConfig from '@src/config/messageConfig';
+import messageConfig from '@message/interfaces/messageConfig';
 import { IMessageProvider } from '@message/interfaces/IMessageProvider';
 import { DiscordMessageProvider } from '@integrations/discord/providers/DiscordMessageProvider'; // Updated path
 import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider'; // Updated path
