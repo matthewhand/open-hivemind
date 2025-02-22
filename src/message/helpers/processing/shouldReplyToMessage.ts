@@ -1,4 +1,4 @@
-import messageConfig from '@message/interfaces/messageConfig';
+import messageConfig from '@config/messageConfig';
 import discordConfig from '@integrations/discord/interfaces/discordConfig';
 import Debug from 'debug';
 
