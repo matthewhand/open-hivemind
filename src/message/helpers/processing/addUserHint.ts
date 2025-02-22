@@ -1,24 +1,23 @@
-import messageConfig from '../../interfaces/messageConfig';
-import Debug from 'debug';
+const addHintDebug = require('debug')('app:addUserHint');
+const addHintConfig = require('@message/interfaces/messageConfig');
 
-const debug = Debug('app:addUserHint');
+function addUserHint(content: string, userId: string, botId: string): string {
+  const shouldAddHint = addHintConfig.get('MESSAGE_ADD_USER_HINT');
+  if (!shouldAddHint) {
+    addHintDebug('User hint disabled by config');
+    return content;
+  }
 
-/**
- * Adds a user hint to the message if enabled.
- * @param message - The original message string.
- * @param userId - The user ID to insert as a hint.
- * @param botId - The bot's unique ID to be replaced.
- * @returns Message with the user hint added.
- */
-export function addUserHint(message: string, userId: string, botId: string): string {
-    const botIdRegex = new RegExp(`<@${botId}>`, 'g');
-    debug(`Adding user hint for user ${userId} in message: "${message}"`);
+  const botMention = `<@${botId}>`;
+  if (!content.includes(botMention)) {
+    addHintDebug('No bot mention found, returning original content');
+    return content;
+  }
 
-    if (messageConfig.get('MESSAGE_ADD_USER_HINT')) {
-        const result = message.replace(botIdRegex, `(from <@${userId}>)`);
-        debug(`Result after adding user hint: "${result}"`);
-        return result;
-    }
-
-    return message;
+  const userHint = `(from <@${userId}>)`;
+  const updatedContent = content.split(botMention).join(userHint);
+  addHintDebug(`Added user hint: ${updatedContent}`);
+  return updatedContent;
 }
+
+module.exports = { addUserHint };
