@@ -1,16 +1,13 @@
-import { EmbedBuilder, TextChannel, DMChannel, PartialGroupDMChannel } from 'discord.js';
-import Debug from 'debug';
-import { DiscordService } from '../DiscordService';
+const DiscordLib = require('discord.js');
+const Debug = require('debug');
+const Discord = require('../DiscordService');
 
 const log = Debug('app:sendPublicAnnouncement');
 
-/**
- * Sends a public announcement using an embedded message.
- */
-export async function sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
-  const client = DiscordService.getInstance().client;
+async function sendPublicAnnouncement(channelId, announcement) {
+  const client = Discord.DiscordService.getInstance().client;
 
-  const embed = new EmbedBuilder()
+  const embed = new DiscordLib.EmbedBuilder()
     .setTitle(announcement.title || '📢 Public Announcement')
     .setDescription(announcement.description || 'No description provided')
     .setColor(announcement.color || '#0099ff')
@@ -18,18 +15,19 @@ export async function sendPublicAnnouncement(channelId: string, announcement: an
 
   try {
     const channel = await client.channels.fetch(channelId);
-    if (!(channel instanceof TextChannel || channel instanceof DMChannel)) {
+    if (!(channel instanceof DiscordLib.TextChannel || channel instanceof DiscordLib.DMChannel)) {
       throw new Error('Unsupported channel type.');
     }
-    if (channel instanceof PartialGroupDMChannel) {
+    if (channel instanceof DiscordLib.PartialGroupDMChannel) {
       throw new Error('Cannot send messages to PartialGroupDMChannel.');
     }
 
     await channel.send({ embeds: [embed] });
     log(`Announcement sent to channel ${channelId}`);
   } catch (error) {
-    const err = error as Error
-    log(`Failed to send announcement: ${err.message}`);
-    throw err;
+    log(`Failed to send announcement: ${error.message}`);
+    throw error;
   }
 }
+
+module.exports = { sendPublicAnnouncement };
