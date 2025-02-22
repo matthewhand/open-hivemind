@@ -1,5 +1,5 @@
-import { Application, Request, Response, NextFunction } from 'express';
-import * as express from 'express'; // Add express import
+import { Application } from 'express';
+import express from 'express'; // Fixed import
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
@@ -9,7 +9,7 @@ import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { InteractiveActionHandlers } from './InteractiveActionHandlers';
 import slackConfig from '@src/config/slackConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
-import SlackMessage from './SlackMessage'; // Fix: Use default import
+import SlackMessage from './SlackMessage';
 
 const debug = Debug('app:SlackService');
 
@@ -21,6 +21,7 @@ export class SlackService implements IMessengerService {
   private interactiveActions: SlackInteractiveActions;
   private lastEventTs: string | null = null;
   private lastSentTs: string | null = null;
+  private app?: Application;
 
   private constructor() {
     const botTokens = process.env.SLACK_BOT_TOKEN?.split(',').map(s => s.trim()) || [];
@@ -29,13 +30,13 @@ export class SlackService implements IMessengerService {
     const mode = process.env.SLACK_MODE === 'rtm' ? 'rtm' : 'socket';
     this.botManager = new SlackBotManager(botTokens, appTokens, signingSecrets, mode);
     this.signatureVerifier = new SlackSignatureVerifier(signingSecrets[0]);
-    this.interactiveActions = new SlackInteractiveActions(this.botManager);
+    this.interactiveActions = new SlackInteractiveActions(this); // Pass this (SlackService) instead of botManager
     const interactiveHandlers: InteractiveActionHandlers = {
       sendCourseInfo: async (channel) => this.interactiveActions.sendCourseInfo(channel),
       sendBookingInstructions: async (channel) => this.interactiveActions.sendBookingInstructions(channel),
       sendStudyResources: async (channel) => this.interactiveActions.sendStudyResources(channel),
       sendAskQuestionModal: async (triggerId) => this.interactiveActions.sendAskQuestionModal(triggerId),
-      sendInteractiveHelpMessage: async (channel, userId) => this.interactiveActions.sendInteractiveHelpMessage(channel, userId)
+      sendInteractiveHelpMessage: async (channel, userId) => this.interactiveActions.sendInteractiveHelpMessage(channel, userId),
     };
     this.interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
   }
@@ -45,13 +46,17 @@ export class SlackService implements IMessengerService {
     return SlackService.instance;
   }
 
-  public async initialize(app: Application): Promise<void> {
-    app.post('/slack/action-endpoint', 
+  public async initialize(): Promise<void> {
+    if (!this.app) {
+      debug('Express app not set; call setApp() before initialize() for Slack routing');
+      return;
+    }
+    this.app.post('/slack/action-endpoint',
       express.urlencoded({ extended: true }),
       (req, res, next) => this.signatureVerifier.verify(req, res, next),
       this.handleActionRequest.bind(this)
     );
-    app.post('/slack/interactive-endpoint', 
+    this.app.post('/slack/interactive-endpoint',
       express.urlencoded({ extended: true }),
       (req, res, next) => this.signatureVerifier.verify(req, res, next),
       (req, res) => this.interactiveHandler.handleRequest(req, res)
@@ -62,45 +67,49 @@ export class SlackService implements IMessengerService {
     }
   }
 
+  public setApp(app: Application): void {
+    this.app = app;
+  }
+
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(handler);
   }
 
-  public async sendMessageToChannel(channel: string, text: string, senderName?: string) {
-    await this.sendMessage(channel, text, senderName);
-  }
-
-  public async sendMessage(channel: string, text: string, senderName?: string, ts?: string) {
+  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
     const botInfo = this.botManager.getBotByName(senderName || 'Jeeves') || this.botManager.getAllBots()[0];
-    if (ts && ts === this.lastSentTs) {
-      debug(`Duplicate message TS: ${ts}, skipping`);
-      return;
+    if (this.lastSentTs === threadId || this.lastSentTs === Date.now().toString()) {
+      debug(`Duplicate message TS: ${threadId || this.lastSentTs}, skipping`);
+      return '';
     }
     try {
-      await botInfo.webClient.chat.postMessage({
-        channel,
+      const options: any = {
+        channel: channelId,
         text: `*${botInfo.botUserName || senderName || 'Jeeves'}*: ${text}`,
         username: botInfo.botUserName || senderName || 'Jeeves',
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-      });
-      debug(`Sent message to #${channel} as ${botInfo.botUserName || senderName}`);
-      this.lastSentTs = ts || Date.now().toString();
+      };
+      if (threadId) options.thread_ts = threadId;
+      const result = await botInfo.webClient.chat.postMessage(options);
+      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${botInfo.botUserName || senderName}`);
+      this.lastSentTs = result.ts || Date.now().toString();
+      return result.ts || '';
     } catch (error) {
       debug(`Failed to send message: ${error}`);
+      return '';
     }
   }
 
-  public async getMessagesFromChannel(channel: string): Promise<IMessage[]> {
-    return this.fetchMessages(channel);
+  public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
+    return this.fetchMessages(channelId);
   }
 
-  public async fetchMessages(channel: string): Promise<IMessage[]> {
+  public async fetchMessages(channelId: string): Promise<IMessage[]> {
     const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
     try {
-      const result = await botInfo.webClient.conversations.history({ channel, limit: 10 });
-      return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg));
+      const result = await botInfo.webClient.conversations.history({ channel: channelId, limit: 10 });
+      return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channelId, msg));
     } catch (error) {
       debug(`Failed to fetch messages: ${error}`);
       return [];
@@ -108,10 +117,11 @@ export class SlackService implements IMessengerService {
   }
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
-    await this.sendMessage(channelId, announcement.message || announcement, 'Jeeves');
+    const text = typeof announcement === 'string' ? announcement : announcement.message || 'Announcement';
+    await this.sendMessageToChannel(channelId, text, 'Jeeves');
   }
 
-  private async handleActionRequest(req: Request, res: Response) {
+  private async handleActionRequest(req: express.Request, res: express.Response) {
     try {
       let body = req.body || {};
       if (typeof body === 'string') body = JSON.parse(body);
@@ -161,7 +171,7 @@ export class SlackService implements IMessengerService {
       try {
         await botInfo.webClient.conversations.join({ channel });
         debug(`Joined #${channel} for ${botInfo.botUserName}`);
-        await this.sendMessage(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+        await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
       } catch (error) {
         debug(`Failed to join #${channel}: ${error}`);
       }
@@ -171,12 +181,12 @@ export class SlackService implements IMessengerService {
   public async joinChannel(channel: string): Promise<void> {
     const botInfo = this.botManager.getAllBots()[0];
     await botInfo.webClient.conversations.join({ channel });
-    await this.sendMessage(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+    await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
   }
 
   public async sendWelcomeMessage(channel: string): Promise<void> {
     const botInfo = this.botManager.getAllBots()[0];
-    await this.sendMessage(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+    await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
   }
 
   public getClientId(): string { return this.botManager.getAllBots()[0]?.botUserId || ''; }

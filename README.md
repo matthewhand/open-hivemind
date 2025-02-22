@@ -1,222 +1,175 @@
-# Open‑Hivemind
+# Open-Hivemind
 
-![Project Logo Placeholder](path/to/logo.png)
+![Project Logo](path/to/logo.png)
 
-Open‑Hivemind is a sophisticated bot that leverages cutting‑edge language models, image analysis, and diverse AI services—designed to enrich user interactions on both Discord and Slack. The project abstracts messaging (via a common messaging interface) and LLM inference (supporting multiple providers such as OpenAI, Flowise, and Open WebUI) so that you can mix and match any messaging platform with any LLM inference service.
+Open-Hivemind is an open‑source bot framework designed to enhance interactions on Discord and Slack using AI‑driven capabilities. Built with TypeScript, it supports a single bot per instance and integrates seamlessly with various LLM providers such as OpenAI, Flowise, OpenWebUI, and optionally [Open‑Swarm](https://github.com/matthewhand/open-swarm) for multi‑agent functionality. Its modular architecture makes it easy to deploy, customize, and extend.
 
-> **Note:** While FlowiseAI and Open WebUI are not LLM providers in the traditional sense, they offer open‑source platforms for building LLM applications. Open‑Hivemind supports these integrations via configuration; however, for simplicity, many users may choose to use a simple OpenAI API endpoint which only requires an OpenAI API key.
+## Table of Contents
 
-## 🌟 Overview
+- [Overview](#overview)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Running the Bot](#running-the-bot)
+  - [Testing](#testing)
+- [Environment Sample](#environment-sample)
+- [Usage](#usage)
+- [Development](#development)
+- [Future Enhancements](#future-enhancements)
+- [License](#license)
 
-The bot is built to be platform‑agnostic. Whether you deploy it on Discord or Slack, it uses a common interface for messages and a dynamic LLM provider adapter to generate AI responses. This design allows you to extend or swap integrations with minimal changes.
+## Overview
 
-## 🚀 Features
+Open-Hivemind runs a single bot on your chosen messaging platform—Discord or Slack—and leverages an LLM to deliver intelligent conversational experiences. With built‑in support for multi‑agent systems via Open‑Swarm, you can configure flexible combinations such as OpenAI+Discord, Flowise+Slack, or Open‑Swarm+Discord, with additional platforms on the horizon.
+
+## Features
 
 - **Multi‑Platform Messaging**
-  - **Discord Integration:**
-    - Advanced command handling (via `!command` syntax and slash commands)
-    - Voice channel support (joining channels, playing audio, and sending typing indicators)
-    - Robust moderation and rate limiting
-  - **Slack Integration:**
-    - Utilizes Slack Socket Mode to run without a public-facing URL
-    - Captures rich metadata from Slack events (user ID, channel ID, thread ID, team/workspace ID)
-    - Supports interactive UI elements via Slack’s Block Kit (e.g., “Getting Started” button)
-- **Advanced LLM AI Interaction**
-  - Supports multiple LLM providers including OpenAI, Flowise, and Open WebUI
-  - Context‑aware chat completions with history aggregation
-  - Dynamic provider selection via configuration
-  - Optional inclusion of Slack metadata in the LLM payload (toggled by an environment variable)
-- **Comprehensive Image Analysis**
-  - Integration with Replicate and other ML models to generate detailed image descriptions
-- **Secure Code Execution**
-  - Executes Python and Bash commands securely with proper permissions
-- **Dynamic Configuration**
-  - Environment‑driven configuration (via `.env` and convict schemas) for all major components
-- **Monitoring & Diagnostics**
-  - `/health` and `/uptime` endpoints for real‑time diagnostics
-- **Robust Moderation & Resilience**
-  - AI‑assisted voting for server moderation
-  - Error handling, rate limiting, and auto‑restart mechanisms
+  - **Discord**: Operate a single bot with the option of multiple tokens when paired with Open‑Swarm (e.g., `Agent1`, `Agent2`).
+  - **Slack**: Single‑bot support with channel joining and message handling via `SlackService`.
+  - Easily switch between platforms using the `MESSAGE_PROVIDER` setting (defaults to Discord).
 
-## 🛠 Deployment
+- **LLM Integration**
+  - Compatible with multiple providers: OpenAI, Flowise, OpenWebUI, and Open‑Swarm (for multi‑agent scenarios).
+  - Core chat capabilities via `handleMessage` (designed for easy extension).
+  - Basic image processing support (`handleImageMessage.ts`) lays the groundwork for future ML integrations.
+
+- **Message Handling**
+  - Listens for messages (e.g., via Discord’s `messageCreate` event) and filters out bot messages if `MESSAGE_IGNORE_BOTS` is enabled.
+  - Retrieves recent conversation history (up to 10 messages) and supports intuitive command parsing (e.g., `!status`).
+
+- **Configuration**
+  - Uses [convict](https://github.com/mozilla/node-convict) for environment‑driven configuration, supporting settings loaded from `.env` files or JSON files in `config/providers/`.
+  - Environment variables offer quick customization of messaging behavior and LLM integrations.
+
+- **Robustness**
+  - Implements graceful error handling with detailed debug logging using the `Debug` library.
+  - Ensures a clean shutdown via the `shutdown()` method.
+
+- **Testing & Deployment**
+  - Comes with 33 Jest test suites to ensure reliability.
+  - Simple Node.js deployment that requires minimal setup.
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18.x or higher recommended)
-- Docker (optional for containerized deployment)
-- Valid Discord and/or Slack bot tokens and client IDs
-- API keys for your chosen LLM providers (e.g., OpenAI, Flowise)
+- **Node.js**: v18 or higher is recommended.
+- **Discord**: A bot token from the [Discord Developer Portal](https://discord.com/developers/applications).
+- **Slack**: A bot token from the [Slack API](https://api.slack.com/apps) (if using Slack).
+- **LLM Provider**: An API key for OpenAI, Flowise, OpenWebUI, or an Open‑Swarm setup.
 
-### Environment Setup
+### Installation
 
-1. **Clone the repository.**
-2. **Install dependencies:**
+1. **Clone the Repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd open-hivemind
+   ```
+2. **Install Dependencies**:
    ```bash
    npm install
    ```
-3. **Create a `.env` file at the project root** (use the provided sample files as templates):
-   - `.env.sample` for a default Discord + LLM (OpenAI, Flowise, or Open WebUI) setup.
-   - `.env.sample.slack` for a Slack + LLM (e.g., OpenAI) setup.
-4. **Configure platform‑specific variables:**
-   - **Discord:** `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, `DISCORD_CHANNEL_ID`, etc.
-   - **Slack:** `SLACK_BOT_TOKEN`, `SLACK_JOIN_CHANNELS`, etc.
-   - **LLM Providers:** `LLM_PROVIDER`, `OPENAI_API_KEY`, `FLOWISE_API_KEY`, etc.
-   - **Optional Metadata Toggle:**  
-     To include Slack message metadata (user ID, thread ID, channel ID, team ID) in the payload sent to your LLM endpoint, set an environment variable such as `INCLUDE_SLACK_METADATA=true`.
 
-### Deployment Options
+### Configuration
 
-#### Local Development
-
-1. Ensure your `.env` is properly configured.
-2. Start the bot with:
+1. **Copy the Sample Environment File**:
    ```bash
-   npm start
+   cp .env.sample .env
    ```
-3. The bot will connect to your messaging platform and start processing commands.
+2. **Edit the `.env` File**:
+   - Set `MESSAGE_PROVIDER` to `discord` or `slack`.
+   - Set `LLM_PROVIDER` to `openai`, `flowise`, `openwebui`, or `open-swarm`.
+   - Provide the necessary platform‑specific tokens (e.g., `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`).
 
-#### Docker
+### Running the Bot
 
-1. Make sure your `.env` file is set up.
-2. From the project root, run:
-   ```bash
-   docker-compose up --build -d
-   ```
-3. Monitor the logs with:
-   ```bash
-   docker-compose logs -f
-   ```
-
-#### Cloud Deployment
-
-Refer to your cloud provider’s instructions. Detailed backend setup instructions are available in [llm_backend/README.md](./llm_backend/README.md).
-
-## 🛠 Usage
-
-### Commands
-
-- **Discord:**  
-  Use commands prefixed with `!` (e.g., `!status`, `!perplexity`). Slash commands are also supported.
-- **Slack:**  
-  The bot uses Slack Socket Mode to process incoming events. Upon joining a channel, it posts a welcome message with a “Getting Started” button. Slack events include metadata such as user ID, channel ID, thread ID, and team ID.
-
-### Metadata in Slack
-
-When a Slack user sends a message, the event payload includes metadata:
-- `user`: ID of the user who sent the message
-- `channel`: ID of the channel where the message was sent
-- `ts`: Timestamp (unique message identifier)
-- `thread_ts`: Timestamp of the parent message if the message is in a thread
-- `team`: Workspace (server) ID
-
-If the environment variable `INCLUDE_SLACK_METADATA=true` is set, this metadata will be merged into the payload sent to the LLM inference endpoint, enabling context‑rich responses.
-
-### Configuration & Customization
-
-- **Messaging Configuration:**  
-  Set via `MESSAGE_*` variables in your `.env` and configured using convict in `src/message/interfaces/messageConfig.ts`.
-- **LLM Provider Selection:**  
-  Choose your provider by setting `LLM_PROVIDER` (e.g., `openai`, `flowise`, or `openwebui`). Provider‑specific configurations are handled in `src/llm/interfaces/llmConfig.ts`.
-- **Platform-Specific Settings:**
-  - Discord-specific settings in `src/integrations/discord/interfaces/discordConfig.ts`
-  - Slack-specific settings in `src/integrations/slack/SlackService.ts` and `SlackEventListener.ts`
-
-## 📄 Environment Samples
-
-### Default (Discord + LLM)
-
-```
-MESSAGE_PROVIDER=discord
-LLM_PROVIDER=openai
-
-# Discord Configuration
-DISCORD_BOT_TOKEN=your-discord-token
-DISCORD_CLIENT_ID=your-discord-client-id
-DISCORD_GUILD_ID=your-discord-guild-id
-DISCORD_CHANNEL_ID=your-discord-channel
-
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_BASE_URL=https://api.openai.com/v1/
-OPENAI_MODEL=gpt-4
-
-# Flowise Configuration (if using Flowise)
-FLOWISE_API_ENDPOINT=http://your-flowise-api-endpoint
-FLOWISE_API_KEY=your-flowise-api-key
-FLOWISE_CONVERSATION_CHATFLOW_ID=your-conversation-chatflow-id
-FLOWISE_COMPLETION_CHATFLOW_ID=your-completion-chatflow-id
-
-# Open WebUI Configuration (if using Open WebUI)
-OPEN_WEBUI_API_URL=http://your-openwebui-api-url
-OPEN_WEBUI_USERNAME=your_username
-OPEN_WEBUI_PASSWORD=your_password
-OPEN_WEBUI_KNOWLEDGE_FILE=/path/to/knowledge.json
-
-# Optional Metadata Toggle for Slack (if applicable)
-INCLUDE_SLACK_METADATA=false
-
-# Additional Messaging Settings
-MESSAGE_INTERROBANG_BONUS=0.1
-MESSAGE_MENTION_BONUS=0.5
-MESSAGE_BOT_RESPONSE_MODIFIER=-1.0
-```
-
-### Slack + OpenAI Example
-
-```
-MESSAGE_PROVIDER=slack
-LLM_PROVIDER=openai
-
-# Slack Configuration
-SLACK_BOT_TOKEN=your-slack-bot-token
-SLACK_JOIN_CHANNELS=channelID1,channelID2
-
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_BASE_URL=https://api.openai.com/v1/
-OPENAI_MODEL=gpt-4
-
-# Optional Metadata Toggle to include Slack event metadata in LLM payloads
-INCLUDE_SLACK_METADATA=true
-
-# Additional Messaging Settings
-MESSAGE_INTERROBANG_BONUS=0.1
-MESSAGE_MENTION_BONUS=0.5
-MESSAGE_BOT_RESPONSE_MODIFIER=-1.0
-```
-
-## 📊 Monitoring
-
-- Health and uptime are available via the `/health` endpoint.
-- Logging and error handling provide detailed insights into the bot’s operation.
-
-## 🔧 Development
-
-To ensure code quality, run the combined test and linting command before committing:
-
+Start the bot with:
 ```bash
-npm run validate
+npm start
+```
+The bot will connect to your configured platform and begin processing incoming messages.
+
+### Testing
+
+Run the test suite with:
+```bash
+npm run test
+```
+This command validates 33 test suites covering core functionality, including multi‑agent support via Open‑Swarm.
+
+## Environment Sample (.env.sample)
+
+```env
+# Messaging Platform
+MESSAGE_PROVIDER=discord  # Options: "discord" or "slack"
+
+# LLM Provider
+LLM_PROVIDER=openai       # Options: openai, flowise, openwebui, open-swarm (for multi-agent setups)
+
+# Discord Configuration (Single Bot; Multi-Agent with Open-Swarm)
+DISCORD_BOT_TOKEN=your-token         # Single token or comma-separated tokens for multi-agent setups
+DISCORD_USERNAME_OVERRIDE=BotName      # Single name or comma-separated names for multi-agent setups
+DISCORD_CLIENT_ID=your-client-id       # Optional
+DISCORD_GUILD_ID=your-guild-id         # Optional
+DISCORD_CHANNEL_ID=your-channel-id     # Optional
+
+# Slack Configuration (Single Bot)
+SLACK_BOT_TOKEN=your-slack-bot-token   # Required for Slack
+SLACK_JOIN_CHANNELS=channel1,channel2  # Optional
+
+# Messaging Behavior
+MESSAGE_IGNORE_BOTS=true               # Ignore bot messages
+MESSAGE_ADD_USER_HINT=true             # Add user hints to messages
+MESSAGE_RATE_LIMIT_PER_CHANNEL=5       # Maximum messages per minute
+
+# OpenAI (if LLM_PROVIDER=openai)
+OPENAI_API_KEY=your-openai-key
+OPENAI_BASE_URL=https://api.openai.com/v1/
+OPENAI_MODEL=gpt-4o-mini
+
+# Flowise (if LLM_PROVIDER=flowise)
+FLOWISE_API_ENDPOINT=http://localhost:3002/api/v1
+FLOWISE_API_KEY=your-flowise-key
+FLOWISE_CONVERSATION_CHATFLOW_ID=your-chatflow-id
+
+# OpenWebUI (if LLM_PROVIDER=openwebui)
+OPEN_WEBUI_API_URL=http://localhost:3000/api
+OPEN_WEBUI_USERNAME=your-username
+OPEN_WEBUI_PASSWORD=your-password
+
+# Open-Swarm (if LLM_PROVIDER=open-swarm for multi-agent)
+OPEN_SWARM_API_URL=http://localhost:your-swarm-port
+DISCORD_BOT_TOKEN=token1,token2               # Multiple tokens for agents
+DISCORD_USERNAME_OVERRIDE=Agent1,Agent2         # Multiple names for agents
 ```
 
-## 📄 Additional Documentation
+## Usage
 
-- **Configuration Guide:** [docs/CONFIGURATION.chatgpt.md](./docs/CONFIGURATION.chatgpt.md)
-- **License:** [docs/LICENSE.chatgpt.md](./docs/LICENSE.chatgpt.md)
+- **Single Bot**: Deploy using a single `DISCORD_BOT_TOKEN` or `SLACK_BOT_TOKEN` with your chosen LLM provider.
+- **Multi-Agent**: For Open‑Swarm configurations, use multiple tokens and names formatted as comma-separated lists.
+- **Commands**: Test the bot by sending commands such as `!status` or customize behavior within `messageHandler.ts`.
 
-## ⚖ Compliance
+## Development
 
-This project complies with Discord’s and Slack’s developer policies by:
+- **Run Tests**:
+  ```bash
+  npm run test
+  ```
+- **Enable Debugging** (if needed):
+  ```bash
+  DEBUG=app:* npm start
+  ```
+- **Extend Functionality**: Add new integrations or LLM connectors in the `src/integrations/` or `src/llm/` directories.
 
-- **Encrypted Data Storage:** All sensitive data is stored securely.
-- **Access Control:** Strict permissions and audit logs are in place.
-- **User Consent:** The bot obtains explicit user consent before storing any message data.
+## Future Enhancements
 
-## 🔮 Future Enhancements
+- Improve full LLM integration within `messageHandler.ts`.
+- Enhance multi-bot support, particularly for Slack.
+- Integrate additional platforms (e.g., Telegram).
 
-- Further Slack UI improvements (rich interactive elements, more granular metadata capture)
-- Additional messaging platform integrations
-- Enhanced LLM provider features and customizations
+## License
 
----
-
-Enjoy using AI to transform your community interactions.
+MIT License. See the [LICENSE](LICENSE) file for details.

@@ -9,7 +9,7 @@ module.exports = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest'
   },
-  testRegex: '(\\.|/)test\\.tsx?$',
+  testRegex: '(\\.|/)test\\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',

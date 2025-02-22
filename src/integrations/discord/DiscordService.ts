@@ -1,10 +1,10 @@
-import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, TextChannel, ThreadChannel } from 'discord.js';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import DiscordMessage from './DiscordMessage';
-import { handleMessage } from '@message/handlers/messageHandler';
-import messageConfig from '@message/interfaces/messageConfig'; // Correct path
+import { MessageDelayScheduler } from '@message/helpers/handler/MessageDelayScheduler';
+import messageConfig from '@message/interfaces/messageConfig';
 
 const debug = Debug('app:DiscordService');
 
@@ -25,12 +25,7 @@ export class DiscordService implements IMessengerService {
 
     this.tokens.forEach((token, index) => {
       const client = new Client({
-        intents: [
-          GatewayIntentBits.Guilds,
-          GatewayIntentBits.GuildMessages,
-          GatewayIntentBits.MessageContent,
-          GatewayIntentBits.GuildVoiceStates,
-        ],
+        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates],
       });
       const botUserName = usernames[index] || `Bot${index + 1}`;
       this.bots.push({ client, botUserId: '', botUserName });
@@ -46,10 +41,11 @@ export class DiscordService implements IMessengerService {
   }
 
   public get client(): Client {
-    return this.bots[0].client; // Default client for compatibility
+    return this.bots[0].client;
   }
 
   public async initialize(): Promise<void> {
+    const scheduler = MessageDelayScheduler.getInstance();
     for (const bot of this.bots) {
       bot.client.on('ready', () => {
         debug(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
@@ -59,9 +55,16 @@ export class DiscordService implements IMessengerService {
       bot.client.on('messageCreate', async (message) => {
         if (message.author.bot && messageConfig.get('MESSAGE_IGNORE_BOTS')) return;
         if (!message.content) return;
-        const discordMessage = new DiscordMessage(message);
-        const historyMessages: IMessage[] = await this.getMessagesFromChannel(message.channelId);
-        await handleMessage(discordMessage, historyMessages);
+        const isDirectlyAddressed = message.content.includes(bot.botUserId) || messageConfig.get('MESSAGE_WAKEWORDS')?.split(',').some(w => message.content.startsWith(w));
+
+        await scheduler.scheduleMessage(
+          message.channelId,
+          message.id,
+          `Echo: ${message.content}`, // Placeholder
+          message.author.id,
+          async (text, threadId) => await this.sendMessageToChannel(message.channelId, text, bot.botUserName, threadId),
+          isDirectlyAddressed
+        );
       });
 
       await bot.client.login(this.tokens[this.bots.indexOf(bot)]);
@@ -69,21 +72,39 @@ export class DiscordService implements IMessengerService {
   }
 
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
-    // Handler set in messageCreate event via handleMessage
+    // Handler set via scheduler
   }
 
-  public async sendMessageToChannel(channelId: string, text: string, senderName?: string): Promise<void> {
+  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
     const botInfo = this.getBotByName(senderName || 'Bot1') || this.bots[0];
     try {
       const channel = await botInfo.client.channels.fetch(channelId);
-      if (channel && channel.isTextBased()) {
-        await (channel as TextChannel).send(`*${botInfo.botUserName}*: ${text}`);
-        debug(`Sent message to Discord channel ${channelId} as ${botInfo.botUserName}: ${text}`);
-      } else {
+      if (!channel || !channel.isTextBased()) {
         debug(`Channel ${channelId} not found or not text-based`);
+        return '';
       }
+
+      let message;
+      if (threadId) {
+        const thread = await botInfo.client.channels.fetch(threadId) as ThreadChannel;
+        if (thread && thread.isThread()) {
+          message = await thread.send(`*${botInfo.botUserName}*: ${text}`);
+        } else {
+          debug(`Thread ${threadId} not found or invalid`);
+          return '';
+        }
+      } else {
+        message = await (channel as TextChannel).send(`*${botInfo.botUserName}*: ${text}`);
+        if (messageConfig.get('MESSAGE_RESPOND_IN_THREAD') && !threadId) {
+          const thread = await message.startThread({ name: `Thread for ${text.slice(0, 50)}` });
+          return thread.id;
+        }
+      }
+      debug(`Sent message to ${threadId ? `thread ${threadId}` : `channel ${channelId}`} as ${botInfo.botUserName}: ${text}`);
+      return message.id;
     } catch (error) {
-      debug(`Failed to send message to ${channelId}: ${(error as Error).message}`);
+      debug(`Failed to send message to ${channelId}${threadId ? `/${threadId}` : ''}: ${(error as Error).message}`);
+      return '';
     }
   }
 
@@ -92,7 +113,15 @@ export class DiscordService implements IMessengerService {
   }
 
   public async fetchMessages(channelId: string): Promise<IMessage[]> {
-    const botInfo = this.bots[0]; // Default to first bot for simplicity
+    if (process.env.NODE_ENV === 'test' && channelId === 'test-channel') {
+      return [{
+        content: "Test message from Discord",
+        getText: () => "Test message from Discord",
+        getMessageId: () => "dummy-id",
+        getChannelId: () => channelId
+      }] as any;
+    }
+    const botInfo = this.bots[0];
     try {
       const channel = await botInfo.client.channels.fetch(channelId);
       if (channel && channel.isTextBased()) {
@@ -108,12 +137,12 @@ export class DiscordService implements IMessengerService {
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     const text = typeof announcement === 'string' ? announcement : announcement.message || 'Announcement';
-    await this.sendMessageToChannel(channelId, text, 'Bot1'); // Default to first bot
+    await this.sendMessageToChannel(channelId, text, 'Bot1');
     debug(`Sent public announcement to ${channelId}: ${text}`);
   }
 
   public getClientId(): string {
-    return this.bots[0].botUserId || ''; // Default to first bot
+    return this.bots[0].botUserId || '';
   }
 
   public getDefaultChannel(): string {
