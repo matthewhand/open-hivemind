@@ -1,7 +1,7 @@
 const discordModule = require('../../integrations/discord/DiscordService');
-const SlackMessageProvider = require('../providers/SlackMessageProvider');
+const SlackMessageProvider = require('../../integrations/slack/providers/SlackMessageProvider');
 const Debug = require('debug');
-const messageConfig = require('../interfaces/messageConfig');
+const messageConfig = require('@config/messageConfig');
 
 const debug = Debug('app:getMessageProvider');
 
