@@ -1,33 +1,18 @@
-const redactDebug = require('debug')('app:redactSensitiveInfo');
+import debug from 'debug';
+const redactDebug = debug('app:redactSensitiveInfo');
 
-function redactSensitiveInfo(key: string, value: any): string {
-  const sensitiveKeys = ['password', 'apiKey', 'auth_token', 'secret', 'key'];
-  const sensitiveValuePatterns = ['Bearer', 'Token'];
-
+export function redactSensitiveInfo(key: string, value: any): string {
+  const sensitiveKeys = ['password', 'apikey', 'auth_token', 'secret'];
   try {
-    // If value is not a string, return a simple string representation
     if (typeof value !== 'string') {
-      return `${key}: [Object]`;
+      return String(value);
     }
-
-    const lowerKey = key.toLowerCase();
-    if (sensitiveKeys.some(k => lowerKey.includes(k))) {
-      return `${key}: ${value.slice(0, 5)}...${value.slice(-5)}`;
+    if (sensitiveKeys.includes(key.toLowerCase())) {
+      return '********';
     }
-
-    for (const pattern of sensitiveValuePatterns) {
-      if (value.startsWith(pattern)) {
-        const parts = value.split(' ');
-        const secret = parts[1] || '';
-        return `${key}: ${pattern} ${secret.slice(0, 5)}...${secret.slice(-5)}`;
-      }
-    }
-
-    return `${key}: ${value}`;
+    return value;
   } catch (error: unknown) {
-    redactDebug(`Error stringifying value: ${(error as Error).message}`);
-    return `${key}: [Redacted due to error]`;
+    redactDebug(`Error processing value: ${(error as Error).message}`);
+    return '********';
   }
 }
-
-module.exports = redactSensitiveInfo;
