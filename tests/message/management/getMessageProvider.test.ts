@@ -1,27 +1,34 @@
-import { getMessageProvider } from '@message/management/getMessageProvider';
+const DiscordMsgProvider = require('@integrations/discord/providers/DiscordMessageProvider');
+const SlackMsgProviderTest = require('@integrations/slack/providers/SlackMessageProvider');
+const { getMessageProvider: testGetMessageProvider } = require('@message/management/getMessageProvider');
+
+jest.mock('@message/interfaces/messageConfig', () => ({
+  get: jest.fn()
+}));
 
 describe('getMessageProvider', () => {
+  let mockConfig: any;
+
   beforeEach(() => {
-    process.env.MESSAGE_PROVIDER = ''; // Reset environment variable
+    mockConfig = require('@message/interfaces/messageConfig');
+    jest.clearAllMocks();
   });
 
-  test('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "discord"', () => {
-    process.env.MESSAGE_PROVIDER = 'discord';
-    const provider = getMessageProvider();
-    
+  it('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "discord"', () => {
+    mockConfig.get.mockReturnValue('discord');
+    const provider = testGetMessageProvider();
     console.log('[DEBUG] Returned provider (Discord):', provider);
-
-    // ✅ Instead of `instanceof`, check for a known method
-    expect(provider).toHaveProperty('sendMessageToChannel');
+    expect(provider).toBeInstanceOf(DiscordMsgProvider.DiscordMessageProvider);
+    expect(provider.sendMessageToChannel).toBeDefined();
+    expect(provider.getClientId).toBeDefined();
   });
 
-  test('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "slack"', () => {
-    process.env.MESSAGE_PROVIDER = 'slack';
-    const provider = getMessageProvider();
-
+  it('should return an object with sendMessageToChannel when MESSAGE_PROVIDER is "slack"', () => {
+    mockConfig.get.mockReturnValue('slack');
+    const provider = testGetMessageProvider();
     console.log('[DEBUG] Returned provider (Slack):', provider);
-
-    // ✅ Instead of `instanceof`, check for a known method
-    expect(provider).toHaveProperty('sendMessageToChannel');
+    expect(provider).toBeInstanceOf(SlackMsgProviderTest.SlackMessageProvider);
+    expect(provider.sendMessageToChannel).toBeDefined();
+    expect(provider.getClientId).toBeDefined();
   });
 });
