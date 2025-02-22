@@ -1,5 +1,5 @@
 const utilsDebug = require('debug')('app:messageUtils');
-const utilsConfig = require('@message/interfaces/messageConfig');
+const utilsConfig = require('@config/messageConfig');
 const shouldReplyToMessage = require('./processing/shouldReplyToMessage');
 
 const channelsWithBotInteraction = new Map();
