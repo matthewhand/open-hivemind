@@ -1,11 +1,11 @@
-/** 
+/**
  * OpenAiService provides a singleton interface for interacting with the OpenAI API.
  * It includes functionality for generating chat completions, checking service status,
  * and listing available models. Configuration details are retrieved from external
  * configuration sources like 'openaiConfig' and 'llmConfig'.
  */
 import Debug from 'debug';
-const { redactSensitiveInfo } = require('@common/redactSensitiveInfo');
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo'; // Adjusted alias
 import { OpenAI, ClientOptions } from 'openai';
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
@@ -130,7 +130,7 @@ export class OpenAiService {
     debug('[DEBUG] generateChatCompletion called');
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
     debug('[DEBUG] History messages count:', historyMessages.length);
-  
+
     const fullMetadata = {
       workspaceInfo: {
         workspaceId: "T123456",
@@ -213,44 +213,40 @@ export class OpenAiService {
         }
       ]
     };
-  
+
     const conversationId = "conversation-id-string-less-than-40-char";
     const toolCallId = "matches-tool_call_id-in-tool-message";
-  
+
     const chatParams: ChatCompletionMessageParam[] = [
       { role: 'system', content: systemMessageContent }, // ✅ System message first
-    
       { role: 'user', content: message }, // ✅ User message should always come first
-      
       ...historyMessages.map((msg) => ({
         role: msg.isFromBot() ? ('assistant' as const) : ('user' as const),
         content: msg.getText() || ""
-      })), 
-    
-      { 
-        role: 'assistant', 
+      })),
+      {
+        role: 'assistant',
         content: "", // Assistant makes a tool call
         tool_calls: [
           {
             id: toolCallId,
             type: "function",
-            function: { 
-              name: "metadata_for_conversation", 
-              arguments: conversationId 
+            function: {
+              name: "metadata_for_conversation",
+              arguments: conversationId
             }
           }
         ]
       },
-    
-      { 
-        role: 'tool', 
+      {
+        role: 'tool',
         tool_call_id: toolCallId,
         content: JSON.stringify(fullMetadata)
       }
     ];
-      
+
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
-  
+
     try {
       const response = await this.openai.chat.completions.create({
         model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
@@ -259,15 +255,15 @@ export class OpenAiService {
         temperature,
         stream: false
       });
-  
+
       debug('[DEBUG] OpenAI API response received:', response);
-  
+
       const choice = response.choices && response.choices[0];
       debug('[DEBUG] Raw first choice:', JSON.stringify(choice));
-  
+
       let content = choice?.message?.content || "";
       debug('[DEBUG] Extracted content from choices:', content);
-  
+
       if (!content && (response as any).full_response && Array.isArray((response as any).full_response.messages)) {
         const messages = (response as any).full_response.messages;
         debug('[DEBUG] Iterating through full_response.messages for assistant content. Total messages:', messages.length);
@@ -285,27 +281,27 @@ export class OpenAiService {
           }
         }
       }
-  
+
       debug('[DEBUG] Final extracted content:', content);
-  
+
       // --- Attach agent metadata ---
       let activeAgentName: string | undefined;
       // Look for active agent name in full_response if available.
       if ((response as any).full_response && (response as any).full_response.agent && (response as any).full_response.agent.name) {
         activeAgentName = (response as any).full_response.agent.name;
       }
-  
+
       // Return an object that includes the text and context_variables.
-      return { 
-        text: content, 
-        context_variables: { active_agent_name: activeAgentName } 
+      return {
+        text: content,
+        context_variables: { active_agent_name: activeAgentName }
       };
     } catch (error: any) {
       debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: error.message });
       throw new Error(`Failed to generate chat completion: ${error.message}`);
     }
   }
-          
+
   /**
    * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
    */
