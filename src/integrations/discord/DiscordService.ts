@@ -17,16 +17,12 @@ export const Discord = {
     private static instance: DiscordService;
     private bots: Bot[];
     private tokens: string[];
-    private handlerSet: boolean = false; // Track if handler is already set
+    private handlerSet: boolean = false;
 
     public constructor() {
       this.bots = [];
       this.tokens = (process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN').split(',').map((t) => t.trim());
-      const usernames = (process.env.DISCORD_USERNAME_OVERRIDE || 'Bot1').split(',').map((u) => u.trim());
-
-      while (usernames.length < this.tokens.length) {
-        usernames.push(`Bot${usernames.length + 1}`);
-      }
+      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
 
       const intents = [
         GatewayIntentBits.Guilds,
@@ -35,8 +31,8 @@ export const Discord = {
         GatewayIntentBits.GuildVoiceStates,
       ];
 
-      this.tokens.forEach((token, index) => {
-        const botUserName = usernames[index];
+      this.tokens.forEach((token) => {
+        const botUserName = displayName; // Use env var directly
         const client = new Client({ intents });
         this.bots.push({ client, botUserId: '', botUserName });
       });
@@ -71,12 +67,11 @@ export const Discord = {
     }
 
     public setMessageHandler(handler: (message: Message) => void): void {
-      if (this.handlerSet) return; // Prevent multiple registrations
+      if (this.handlerSet) return;
       this.handlerSet = true;
 
-      // Set handler only on the first bot (Jeeves)
       this.bots[0].client.on('messageCreate', (message) => {
-        if (message.author.bot) return; // Ignore bot messages
+        if (message.author.bot) return;
 
         const wrappedMessage = new DiscordMessage(message);
         handler(wrappedMessage as any);
@@ -84,9 +79,11 @@ export const Discord = {
     }
 
     public async sendMessageToChannel(channelId: string, text: string, senderName: string, threadId?: string): Promise<string> {
-      const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
+      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+      const effectiveSender = senderName || displayName;
+      const botInfo = this.bots.find((b) => b.botUserName === effectiveSender) || this.bots[0];
       try {
-        console.log(`Sending to channel ${channelId} as ${botInfo.botUserName}`);
+        console.log(`Sending to channel ${channelId} as ${effectiveSender}`);
         const channel = await botInfo.client.channels.fetch(channelId);
         if (!channel || !channel.isTextBased()) {
           throw new Error(`Channel ${channelId} is not text-based or was not found`);
@@ -98,10 +95,10 @@ export const Discord = {
           if (!thread || !thread.isThread()) {
             throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
           }
-          message = await thread.send(`*${botInfo.botUserName}*: ${text}`);
+          message = await thread.send(`*${effectiveSender}*: ${text}`);
         } else {
-          console.log(`Attempting send to channel ${channelId}: *${botInfo.botUserName}*: ${text}`);
-          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(`*${botInfo.botUserName}*: ${text}`);
+          console.log(`Attempting send to channel ${channelId}: *${effectiveSender}*: ${text}`);
+          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(`*${effectiveSender}*: ${text}`);
         }
 
         console.log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);
@@ -133,8 +130,9 @@ export const Discord = {
     }
 
     public async sendPublicAnnouncement(channelId: string, announcement: string): Promise<void> {
+      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
       const text = `**Announcement**: ${announcement}`;
-      await this.sendMessageToChannel(channelId, text, this.bots[0].botUserName, undefined);
+      await this.sendMessageToChannel(channelId, text, displayName, undefined);
     }
 
     public getClientId(): string {
