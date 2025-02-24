@@ -1,28 +1,15 @@
-import Debug from 'debug';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { IMessage } from '@message/interfaces/IMessage';
+import axios from 'axios';
 
-const debug = Debug('app:generateCompletion');
+export async function generateCompletion(prompt: string): Promise<string> {
+  const response = await axios.post('https://open-swarm.fly.dev/v1/completions', {
+    model: 'university',
+    prompt,
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.API_AUTH_TOKEN}`,
+    },
+  });
 
-/**
- * Generates a chat completion using the configured LLM provider.
- * @param prompt - The user message to process.
- * @param messages - The message history.
- * @param metadata - Metadata for the message context.
- * @returns A promise resolving to the generated completion text.
- */
-export async function generateCompletion(prompt: string, messages: IMessage[], metadata: Record<string, any>): Promise<string> {
-  try {
-    debug('Starting completion generation for prompt:', prompt);
-    const llmProvider = getLlmProvider();
-    if (!llmProvider.length) {
-      throw new Error('No LLM providers available');
-    }
-    const result = await llmProvider[0].generateChatCompletion(prompt, messages, metadata);
-    debug('Completion generated:', result);
-    return result;
-  } catch (error: unknown) {
-    debug('Error generating completion:', error instanceof Error ? error.message : String(error));
-    throw error;
-  }
+  return response.data.choices[0].text;
 }
