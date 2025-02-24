@@ -1,10 +1,9 @@
 import messageConfig from '@config/messageConfig';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import discordConfig from '@config/discordConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:shouldReplyToMessage');
 
-// Store for tracking interactions in channels
 const channelsWithBotInteraction = new Map<string, number>();
 
 let recentActivityDecayRate = messageConfig.get('MESSAGE_RECENT_ACTIVITY_DECAY_RATE');
@@ -21,12 +20,10 @@ export function shouldReplyToMessage(
   botId: string,
   platform: 'discord' | 'generic'
 ): boolean {
-  // --- Force reply override ---
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
     return true;
   }
-  // --- End override ---
 
   const channelId = message.getChannelId();
   debug(`Evaluating message in channel: ${channelId}`);
@@ -35,18 +32,16 @@ export function shouldReplyToMessage(
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
   debug(`Time since last activity: ${timeSinceLastActivity}ms`);
 
-  let chance = 0.2; // Base chance before decay
+  let chance = 0.2;
   debug(`Initial base chance: ${chance}`);
 
-  // Apply decay to the initial base chance
   const decayFactor = Math.max(
-    0.5, // Minimum 50% chance retention
+    0.5,
     Math.exp(-recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow))
   );
   chance *= decayFactor;
   debug(`Chance after decay: ${chance} (decay factor: ${decayFactor})`);
 
-  // Apply key modifiers after decay
   chance = applyModifiers(message, botId, platform, chance);
   debug(`Final chance after applying all modifiers: ${chance}`);
 
@@ -82,15 +77,13 @@ function applyModifiers(
   }
 
   if (/[!?]/.test(text.slice(-1))) {
-    // Cast messageConfig to any to bypass type restrictions
-    const interrobangBonus = Number((messageConfig as any).get('MESSAGE_INTERROBANG_BONUS')) || 0.3;
+    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS');
     chance += interrobangBonus;
     debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
   }
 
   if (message.isFromBot()) {
-    // Cast messageConfig to any to bypass type restrictions
-    const botModifier = Number((messageConfig as any).get('MESSAGE_BOT_RESPONSE_MODIFIER')) || -1.0;
+    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER');
     chance += botModifier;
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }
@@ -106,12 +99,12 @@ function applyModifiers(
 function applyDiscordBonuses(message: any, chance: number): number {
   const priorityChannel = discordConfig.get('DISCORD_PRIORITY_CHANNEL');
   if (priorityChannel && message.getChannelId() === priorityChannel) {
-    const bonus = discordConfig.get('DISCORD_PRIORITY_CHANNEL_BONUS') || 1.1;
+    const bonus = discordConfig.get('DISCORD_PRIORITY_CHANNEL_BONUS');
     chance += bonus;
     debug(`Priority channel detected. Applied bonus: ${bonus}. New chance: ${chance}`);
   }
 
-  const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
+  const channelBonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
   const channelBonus = channelBonuses[message.getChannelId()] ?? 0.0;
   debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
 
