@@ -1,28 +1,28 @@
 import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
 
-const debug = Debug('app:sendCompletions');
+const debug = Debug('app:generateCompletion');
 
 /**
- * Sends a completion request using the configured LLM provider (e.g., OpenAI or Flowise).
- * @param {IMessage[]} messages - Array of messages for the completion.
- * @returns {Promise<string>} - The generated response.
+ * Generates a chat completion using the configured LLM provider.
+ * @param prompt - The user message to process.
+ * @param messages - The message history.
+ * @param metadata - Metadata for the message context.
+ * @returns A promise resolving to the generated completion text.
  */
-export async function sendCompletions(messages: IMessage[]): Promise<string> {
-  const prompt = messages.map(msg => msg.getText()).join(' ');
-  debug(`Generated prompt: ${prompt}`);
-
-  // Retrieve the LLM provider dynamically
-  const llmProvider = getLlmProvider();
-
+export async function generateCompletion(prompt: string, messages: IMessage[], metadata: Record<string, any>): Promise<string> {
   try {
-    // Delegate the completion generation to the appropriate provider
-    const result = await llmProvider.generateChatCompletion(prompt, messages);
-    debug('Generated completion from provider:', result);
+    debug('Starting completion generation for prompt:', prompt);
+    const llmProvider = getLlmProvider();
+    if (!llmProvider.length) {
+      throw new Error('No LLM providers available');
+    }
+    const result = await llmProvider[0].generateChatCompletion(prompt, messages, metadata);
+    debug('Completion generated:', result);
     return result;
-  } catch (error: any) {
-    debug('Error sending completion via provider:', error.message);
-    throw new Error(`Failed to send completion: ${error.message}`);
+  } catch (error: unknown) {
+    debug('Error generating completion:', error instanceof Error ? error.message : String(error));
+    throw error;
   }
 }
