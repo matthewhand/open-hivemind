@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { SlackService } from './SlackService';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { extractSlackMetadata } from './slackMetadata';
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 export class SlackEventListener {
   private slackService: SlackService;
@@ -19,11 +18,11 @@ export class SlackEventListener {
 
   public async handleEvent(event: any) {
     if (event && event.type === 'message' && !event.bot_id) {
-      let metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
+      const metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
       const llmProvider = getLlmProvider();
-      if (!('generateChatCompletion' in llmProvider)) throw new Error('llmProvider lacks generateChatCompletion');
-      const response = await (llmProvider as ILlmProvider).generateChatCompletion(event.text, [], metadata);
-      await this.slackService.sendMessageToChannel(event.channel, 'Jeeves', event.event_ts); // Default to Jeeves
+      if (!llmProvider.length) throw new Error('No LLM providers available');
+      const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);
+      await this.slackService.sendMessageToChannel(event.channel, response, 'Jeeves', event.event_ts);
     }
   }
 }
