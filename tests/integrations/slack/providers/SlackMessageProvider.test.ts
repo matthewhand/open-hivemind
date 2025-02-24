@@ -5,7 +5,20 @@ import { IMessage } from '@message/interfaces/IMessage';
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation(() => ({
     chat: { postMessage: jest.fn().mockResolvedValue({ ts: 'msg123' }) },
+    conversations: { history: jest.fn().mockResolvedValue({ messages: [{ text: 'test' }] }) },
   })),
+}));
+
+jest.mock('@src/config/messageConfig', () => ({
+  default: {
+    get: jest.fn((key) => (key === 'MESSAGE_USERNAME_OVERRIDE' ? 'MadgwickAI' : undefined)),
+  },
+}));
+
+jest.mock('@src/config/slackConfig', () => ({
+  default: {
+    get: jest.fn(() => undefined),
+  },
 }));
 
 class MockMessage implements IMessage {
@@ -42,6 +55,7 @@ describe('SlackMessageProvider', () => {
   let provider: SlackMessageProvider;
 
   beforeEach(() => {
+    delete process.env.SLACK_USERNAME_OVERRIDE;
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
     (SlackService as any).instance = undefined;
     jest.spyOn(SlackService.prototype, 'fetchMessages').mockResolvedValue([new MockMessage('test')]);
