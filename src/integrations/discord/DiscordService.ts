@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
 import Debug from 'debug';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
+import discordConfig from '@config/discordConfig';
 import messageConfig from '@config/messageConfig';
 import DiscordMessage from './DiscordMessage';
 
