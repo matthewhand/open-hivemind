@@ -1,23 +1,25 @@
 import axios from 'axios';
+import Debug from 'debug';
+import { IMessage } from '@message/interfaces/IMessage';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
 import openWebUIConfig from './openWebUIConfig';
-import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';  // Import IMessage
 
 const debug = Debug('app:runInference');
 
 /**
- * Executes inference using Open WebUI with the provided user message and optional chat history.
+ * Executes inference using Open WebUI with the provided user message, chat history, and metadata.
  * 
  * @param userMessage - The input from the user.
- * @param historyMessages - Optional message history.
- * @returns A promise resolving to the inference result.
+ * @param historyMessages - The message history.
+ * @param metadata - Optional metadata for additional context.
+ * @returns A promise resolving to the inference result with a text property.
  */
 export async function generateChatCompletion(
   userMessage: string,
-  historyMessages: IMessage[] = []
-): Promise<any> {
+  historyMessages: IMessage[],
+  metadata?: Record<string, any>
+): Promise<{ text: string }> {
   const { apiUrl } = openWebUIConfig.getProperties();
 
   if (!userMessage || userMessage.trim() === '') {
@@ -30,6 +32,7 @@ export async function generateChatCompletion(
   debug('Running inference with user message:', userMessage);
   debug('Using knowledge file ID:', knowledgeFileId);
   debug('History Messages:', historyMessages);
+  debug('Metadata:', metadata);
 
   try {
     const sessionKey = await getSessionKey();
@@ -43,11 +46,14 @@ export async function generateChatCompletion(
       prompt: userMessage,
       knowledgeFileId,
       history: historyMessages.map(msg => msg.getText()), // Convert to plain text
+      metadata: metadata || {}, // Include metadata in payload
     };
     const response = await axios.post(url, payload, { headers });
 
     debug('Inference result:', response.data);
-    return response.data;
+    // Assume OpenWebUI returns a string or object with a text field; adjust as needed
+    const responseText = typeof response.data === 'string' ? response.data : response.data.text || 'No response';
+    return { text: responseText };
   } catch (error) {
     debug('Inference request failed:', error);
     throw new Error('Inference failed. Please try again.');
