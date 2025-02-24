@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import webhookConfig from '@src/webhook/interfaces/webhookConfig';
+import webhookConfig from '@config/webhookConfig';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
     const providedToken: string = req.headers['x-webhook-token'] ? String(req.headers['x-webhook-token']) : '';
