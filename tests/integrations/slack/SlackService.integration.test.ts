@@ -5,6 +5,7 @@ describe('SlackService Integration', () => {
   const botToken = process.env.SLACK_BOT_TOKEN;
 
   beforeAll(() => {
+    console.log("SLACK_BOT_TOKEN:", process.env.SLACK_BOT_TOKEN);
     if (!botToken || !botToken.startsWith('xoxb-')) {
       console.log('Skipping SlackService integration tests: Valid SLACK_BOT_TOKEN (xoxb-...) not provided');
       return;
@@ -49,5 +50,15 @@ describe('SlackService Integration', () => {
   (botToken && botToken.startsWith('xoxb-') ? it : it.skip)('gets default channel', async () => {
     const channel = service.getDefaultChannel();
     expect(channel).toBeDefined();
+  });
+
+  (botToken && botToken.startsWith('xoxb-') ? it : it.skip)('sends message with data to LLM', async () => {
+    const channelId = process.env.SLACK_DEFAULT_CHANNEL_ID || 'C123';
+    service.setMessageHandler(async (msg, history) => {
+      console.log('SlackMessage Data:', JSON.stringify(msg.data));
+      return 'Received';
+    });
+    const ts = await service.sendMessageToChannel(channelId, 'Test LLM', 'Madgwick AI');
+    expect(ts).toBeDefined();
   });
 });
