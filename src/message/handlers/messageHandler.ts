@@ -15,7 +15,7 @@ const messageProvider = getMessengerProvider()[0]; // Use first provider
 const llmProvider = getLlmProvider()[0]; // Returns ILlmProvider
 const timingManager = MessageDelayScheduler.getInstance();
 
-export async function handleMessage(message: IMessage, historyMessages: IMessage[]): Promise<string> {
+export async function handleMessage(message: IMessage, historyMessages: IMessage[] = []): Promise<string> {
   try {
     const text = message.getText();
     if (!text) {
@@ -37,12 +37,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       await processCommand(message, async (result: string): Promise<void> => {
         const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') || '';
         const allowedUsers = authorisedUsers.split(',').map((user) => user.trim());
+        const rawBotName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'MadgwickAI';
+        const botName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         if (!allowedUsers.includes(userId)) {
           logger('User not authorized:', userId);
-          await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', 'Jeeves');
+          await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', botName);
           return;
         }
-        await messageProvider.sendMessageToChannel(message.getChannelId(), result, 'Jeeves');
+        await messageProvider.sendMessageToChannel(message.getChannelId(), result, botName);
         commandProcessed = true;
       });
       if (commandProcessed) return '';
@@ -73,7 +75,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       reply,
       userId,
       async (text: string, threadId?: string): Promise<string> => {
-        const activeAgentName = message.metadata?.active_agent_name || 'Jeeves';
+        const rawBotName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'MadgwickAI';
+        const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
         logger(`Sent message from ${activeAgentName}: ${text}`);
 
