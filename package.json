@@ -11,7 +11,7 @@
     "start": "node --max-old-space-size=256 dist/src/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",
-    "test": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --runInBand",
+    "test": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand",
     "test:coverage": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand",
     "test:debug": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
