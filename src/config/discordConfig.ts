@@ -19,27 +19,17 @@ convict.addFormat({
   }
 });
 
-convict.addFormat({
-  name: 'csv-array',
-  validate: (val) => {
-    if (typeof val !== 'string' && !Array.isArray(val)) {
-      throw new Error('Must be a comma-separated string or array');
-    }
-  },
-  coerce: (val) => Array.isArray(val) ? val : val.split(',').map((s: string) => s.trim())
-});
-
 const discordConfig = convict({
   DISCORD_BOT_TOKEN: {
     doc: 'Comma-separated Discord bot tokens',
-    format: 'csv-array',
-    default: [],
+    format: String,
+    default: '',
     env: 'DISCORD_BOT_TOKEN'
   },
   DISCORD_CLIENT_ID: {
-    doc: 'Comma-separated Discord client IDs',
-    format: 'csv-array',
-    default: [],
+    doc: 'Discord client ID',
+    format: String,
+    default: '',
     env: 'DISCORD_CLIENT_ID'
   },
   DISCORD_GUILD_ID: {
@@ -69,7 +59,7 @@ const discordConfig = convict({
   DISCORD_CHANNEL_ID: {
     doc: 'Default channel ID',
     format: String,
-    default: 'default_channel_id',
+    default: '',
     env: 'DISCORD_CHANNEL_ID'
   },
   DISCORD_DEFAULT_CHANNEL_ID: {
@@ -93,7 +83,7 @@ const discordConfig = convict({
   DISCORD_VOICE_CHANNEL_ID: {
     doc: 'Voice channel ID for interactions',
     format: String,
-    default: 'default_voice_channel_id',
+    default: '',
     env: 'DISCORD_VOICE_CHANNEL_ID'
   },
   DISCORD_MAX_MESSAGE_LENGTH: {
@@ -131,6 +121,18 @@ const discordConfig = convict({
     format: Boolean,
     default: false,
     env: 'DISCORD_LOGGING_ENABLED'
+  },
+  DISCORD_USERNAME_OVERRIDE: {
+    doc: 'Override username for Discord bot',
+    format: String,
+    default: '',
+    env: 'DISCORD_USERNAME_OVERRIDE'
+  },
+  DISCORD_MESSAGE_PROCESSING_DELAY_MS: {
+    doc: 'Delay for processing messages (ms)',
+    format: 'int',
+    default: 0,
+    env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS'
   }
 });
 
