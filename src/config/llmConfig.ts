@@ -1,5 +1,4 @@
 import convict from 'convict';
-import path from 'path';
 
 const llmConfig = convict({
   LLM_PROVIDER: {
@@ -16,7 +15,6 @@ const llmConfig = convict({
   }
 });
 
-llmConfig.loadFile(path.join(__dirname, '../../config/default.json'));
 llmConfig.validate({ allowed: 'strict' });
 
 export default llmConfig;
