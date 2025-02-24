@@ -1,10 +1,7 @@
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import Debug from 'debug';
-import { IMessage } from '@src/message/interfaces/IMessage';
-// import { sendMessageToChannel } from '@src/integrations/discord/channel/sendMessageToChannel';
-import { Client } from 'discord.js';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
-import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
+import discordConfig from '@config/discordConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
 
@@ -19,35 +16,37 @@ export async function sendFollowUpRequest(
   channelId: string,
   followUpText: string
 ): Promise<void> {
-  const llmProvider = getLlmProvider();  // No argument needed
+  const llmProvider = getLlmProvider();
+  if (!llmProvider.length) {
+    debug('No LLM providers available');
+    return;
+  }
 
-  // Guard: Ensure the provider supports chat completions
-  if (!(llmProvider as ILlmProvider).supportsChatCompletion()) {
-    debug(`[sendFollowUpRequest] LLM provider does not support chat completions for channel: ${channelId}.`);
+  if (!llmProvider[0].supportsChatCompletion()) {
+    debug(`LLM provider does not support chat completions for channel: ${channelId}`);
     return;
   }
 
   const bonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
   const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
   const bonus = bonuses[channelId] ?? globalModifier;
-  const baseChance = 0.1; // Default chance
+  const baseChance = 0.1;
   const finalChance = baseChance * bonus;
 
   if (Math.random() >= finalChance) {
-    debug(`[sendFollowUpRequest] Skipped follow-up due to chance limit (finalChance: ${finalChance}).`);
+    debug(`Skipped follow-up due to chance limit (finalChance: ${finalChance})`);
     return;
   }
 
-  const historyMessages = [msg]; // Track message history if needed
-  debug(`[sendFollowUpRequest] Using LLM provider for follow-up in channel: ${channelId}`);
+  const historyMessages = [msg];
+  debug(`Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider.generateChatCompletion(followUpText, historyMessages);
+    const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
     const followUpMessage = followUpText + ' ' + response;
-    debug('TODO [sendFollowUpRequest] Sending follow-up message:', followUpMessage);
-
-    // await sendMessageToChannel(channelId, followUpMessage);
+    debug('TODO Sending follow-up message:', followUpMessage);
+    // await sendMessageToChannel(channelId, followUpMessage); // Uncomment when implemented
   } catch (error) {
-    debug('[sendFollowUpRequest] Error generating follow-up:', error);
+    debug('Error generating follow-up:', error);
   }
 }
