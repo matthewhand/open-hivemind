@@ -20,7 +20,7 @@ describe('SlackEventListener Integration', () => {
     service = SlackService.getInstance();
     await service.initialize();
     service.setMessageHandler(async (message: SlackMessage) => {
-      console.log('Received message:', message.getText());
+      console.log('Received message:', message.getText(), 'Data:', JSON.stringify(message.data));
       return `Echo: ${message.getText()}`;
     });
   });
