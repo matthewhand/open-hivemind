@@ -14,6 +14,18 @@ import SlackMessage from './SlackMessage';
 
 const debug = Debug('app:SlackService');
 
+interface SlackUserInfo {
+  user?: {
+    name?: string;
+    profile?: {
+      email?: string;
+      real_name?: string;
+    };
+    is_admin?: boolean;
+    is_owner?: boolean;
+  };
+}
+
 export class SlackService implements IMessengerService {
   private static instance: SlackService | undefined;
   private botManager: SlackBotManager;
@@ -73,7 +85,87 @@ export class SlackService implements IMessengerService {
   }
 
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
-    this.botManager.setMessageHandler(handler);
+    this.botManager.setMessageHandler(async (message, history) => {
+      const enrichedMessage = await this.enrichSlackMessage(message);
+      return handler(enrichedMessage, history);
+    });
+  }
+
+  private async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
+    const botInfo = this.botManager.getAllBots()[0];
+    const channelId = message.getChannelId();
+    const userId = message.getAuthorId();
+    const threadTs = message.data.thread_ts;
+
+    try {
+      // Workspace info
+      const authInfo = await botInfo.webClient.auth.test();
+      const workspaceInfo = { workspaceId: authInfo.team_id, workspaceName: authInfo.team };
+
+      // Channel info
+      const channelInfoResp = await botInfo.webClient.conversations.info({ channel: channelId });
+      const channelInfo = {
+        channelId,
+        channelName: channelInfoResp.channel?.name,
+        description: channelInfoResp.channel?.purpose?.value,
+        createdDate: channelInfoResp.channel?.created ? new Date(channelInfoResp.channel.created * 1000).toISOString() : undefined
+      };
+
+      // Thread info
+      const threadInfo = {
+        isThread: !!threadTs,
+        threadTs,
+        threadOwnerUserId: threadTs ? message.data.user : undefined,
+        threadParticipants: threadTs ? await this.getThreadParticipants(channelId, threadTs) : [],
+        messageCount: threadTs ? await this.getThreadMessageCount(channelId, threadTs) : 0
+      };
+
+      // User info
+      const userInfo: SlackUserInfo = userId && userId !== 'unknown' ? await botInfo.webClient.users.info({ user: userId }) : {};
+      const slackUser = {
+        slackUserId: userId,
+        userName: userInfo.user?.name || 'Unknown',
+        email: userInfo.user?.profile?.email,
+        preferredName: userInfo.user?.profile?.real_name,
+        isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false,
+        dateOfBirth: undefined,
+        userCreatedDate: undefined
+      };
+
+      // Placeholder student data
+      const studentData = {
+        studentCourseAttempt: { courseCd: 'ENAB101', courseStatus: 'ENROLLED', commencedDate: '2024-02-01T00:00:00Z' },
+        unitAttempts: { unitAttempt: [] },
+        learningCanvas: {},
+        messageAttachments: message.data.files || [],
+        messageReactions: message.data.reactions || []
+      };
+
+      message.data = {
+        ...message.data,
+        workspaceInfo,
+        channelInfo,
+        threadInfo,
+        slackUser,
+        ...studentData
+      };
+    } catch (error) {
+      debug(`Failed to enrich message: ${error}`);
+    }
+
+    return message;
+  }
+
+  private async getThreadParticipants(channelId: string, threadTs: string): Promise<string[]> {
+    const botInfo = this.botManager.getAllBots()[0];
+    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
+    return [...new Set(replies.messages?.map(m => m.user).filter(Boolean) as string[])];
+  }
+
+  private async getThreadMessageCount(channelId: string, threadTs: string): Promise<number> {
+    const botInfo = this.botManager.getAllBots()[0];
+    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
+    return replies.messages?.length || 0;
   }
 
   public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
