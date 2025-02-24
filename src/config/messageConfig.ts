@@ -139,6 +139,12 @@ const messageConfig = convict({
     format: Boolean,
     default: true,
     env: 'MESSAGE_STRIP_BOT_ID'
+  },
+  MESSAGE_USERNAME_OVERRIDE: {
+    doc: 'Override username for the bot across all platforms',
+    format: String,
+    default: 'MadgwickAI',
+    env: 'MESSAGE_USERNAME_OVERRIDE'
   }
 });
 
