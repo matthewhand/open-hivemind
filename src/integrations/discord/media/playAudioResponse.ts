@@ -3,7 +3,7 @@ import { createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnect
 import axios from 'axios';
 import fs from 'fs';
 import util from 'util';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:playAudioResponse');
 
