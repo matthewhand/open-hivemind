@@ -1,29 +1,16 @@
-class DiscordMessageProviderImpl {
-  discordService: any;
-  discordSvcLib: any;
-  
+import { Discord } from '@integrations/discord/DiscordService';
+import { IMessage } from '@message/interfaces/IMessage';
+import DiscordMessage from '../DiscordMessage';
+
+export class DiscordMessageProvider {
+  private discordSvc: any;
+
   constructor() {
-    this.discordSvcLib = require('../DiscordService');
-    this.discordService = this.discordSvcLib.Discord.DiscordService.getInstance();
+    this.discordSvc = Discord.DiscordService.getInstance();
   }
-  
-  async sendMessage(channelId: any, message: any, senderName: any) {
-    return await this.discordService.sendMessageToChannel(channelId, message, senderName);
-  }
-  
-  async getMessages(channelId: any) {
-    const messages = await this.discordService.fetchMessages(channelId);
-    return messages.map((msg: any) => new this.discordSvcLib.DiscordMessage(msg));
-  }
-  
-  async sendMessageToChannel(channelId: any, message: any, active_agent_name: any) {
-    return await this.discordService.sendMessageToChannel(channelId, message, active_agent_name);
-  }
-  
-  getClientId() {
-    return this.discordService.getClientId();
+
+  public async getMessages(channelId: string): Promise<IMessage[]> {
+    const messages = await this.discordSvc.getMessagesFromChannel(channelId);
+    return messages.map((msg: any) => new DiscordMessage(msg));
   }
 }
- 
-module.exports = DiscordMessageProviderImpl;
-module.exports.DiscordMessageProvider = DiscordMessageProviderImpl;
