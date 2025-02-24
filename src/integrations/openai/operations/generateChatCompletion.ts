@@ -1,7 +1,7 @@
 import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import axios from 'axios';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:OpenAiService');
 
