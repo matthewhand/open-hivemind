@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:sendCompletions');
 
