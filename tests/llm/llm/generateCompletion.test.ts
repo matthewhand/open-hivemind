@@ -1,5 +1,5 @@
-const { sendCompletions } = require('@llm/llm/generateCompletion');
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { generateCompletion } from '@llm/llm/generateCompletion';
+import { IMessage } from '@message/interfaces/IMessage';
 
 // Mock IMessage implementation
 class MockMessage implements IMessage {
@@ -37,14 +37,14 @@ const mockMessages: IMessage[] = [
 import * as getLlmProviderModule from '@src/llm/getLlmProvider';
 
 jest.mock('@src/llm/getLlmProvider', () => ({
-  getLlmProvider: jest.fn(() => ({
+  getLlmProvider: jest.fn(() => ([{
     generateChatCompletion: jest.fn(() => Promise.resolve('Hi there!'))
-  }))
+  }]))
 }));
 
-describe('sendCompletions', () => {
+describe('generateCompletion', () => {
   it('should send completions for given messages', async () => {
-    const result = await sendCompletions(mockMessages);
+    const result = await generateCompletion('Hello, Grok!', mockMessages, {});
     expect(result).toBe('Hi there!');
     expect(getLlmProviderModule.getLlmProvider).toHaveBeenCalled();
   });
