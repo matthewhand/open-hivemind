@@ -20,12 +20,6 @@ const slackConfig = convict({
     default: '',
     env: 'SLACK_SIGNING_SECRET'
   },
-  SLACK_USERNAME_OVERRIDE: {
-    doc: 'Comma-separated bot username overrides',
-    format: String,
-    default: 'Jeeves,Mycroft,Cortana,Gutenberg',
-    env: 'SLACK_USERNAME_OVERRIDE'
-  },
   SLACK_JOIN_CHANNELS: {
     doc: 'Comma-separated channel IDs to join',
     format: String,
