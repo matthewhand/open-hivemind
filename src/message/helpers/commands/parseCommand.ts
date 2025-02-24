@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import llmConfig from '@llm/interfaces/llmConfig';
+import llmConfig from '@config/llmConfig';
 
 const debug = Debug('app:parseCommand');
 
