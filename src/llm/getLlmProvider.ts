@@ -1,46 +1,74 @@
-import { openAiProvider } from '@src/integrations/openai/openAiProvider';
-import flowiseProvider from '@src/integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '@src/integrations/openwebui/runInference';
-import llmConfig from '@llm/interfaces/llmConfig';
 import Debug from 'debug';
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { IMessage } from '@message/interfaces/IMessage';
+import { openAiProvider } from '@integrations/openai/openAiProvider';
+import flowiseProvider from '@integrations/flowise/flowiseProvider';
+import * as openWebUIImport from '@integrations/openwebui/runInference';
+import llmConfig from '@config/llmConfig';
 
 const debug = Debug('app:getLlmProvider');
 
 // Wrap openWebUI to conform to ILlmProvider
 const openWebUI: ILlmProvider = {
   supportsChatCompletion: () => true,
-  supportsCompletion: () => false, // openWebUI only supports chat completions
-  generateChatCompletion: (userMessage: string, historyMessages: IMessage[]) => 
-    openWebUIImport.generateChatCompletion(userMessage, historyMessages).then(result => result.text || ''),
+  supportsCompletion: () => false,
+  generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
+    // Check if openWebUI supports metadata by inspecting parameter count
+    if (openWebUIImport.generateChatCompletion.length === 3) {
+      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages, metadata);
+      return result.text || '';
+    } else {
+      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages);
+      return result.text || '';
+    }
+  },
   generateCompletion: async (prompt: string) => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
-  }
+  },
 };
 
 /**
- * Returns the appropriate LLM provider based on configuration.
- * @returns {ILlmProvider} Selected LLM provider.
+ * Returns an array of configured LLM providers based on the LLM_PROVIDER config.
+ * @returns {ILlmProvider[]} Array of LLM providers.
+ * @throws {Error} If no valid providers are configured.
  */
-export function getLlmProvider(): ILlmProvider {
-  const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown; // Avoid direct string cast
-  const providers = (typeof rawProvider === 'string' 
-    ? rawProvider.split(',').map((v: string) => v.trim()) 
-    : Array.isArray(rawProvider) 
-      ? rawProvider 
-      : ['openai']) as string[]; // Fallback to 'openai' if invalid
-  const provider = providers[0]; // Use the first provider
-  debug('LLM Provider selected:', provider);
+export function getLlmProvider(): ILlmProvider[] {
+  const rawProvider = llmConfig.get('LLM_PROVIDER') as unknown;
+  const providers = (typeof rawProvider === 'string'
+    ? rawProvider.split(',').map((v: string) => v.trim())
+    : Array.isArray(rawProvider)
+      ? rawProvider
+      : ['openai']) as string[];
 
-  switch (provider.toLowerCase()) {
-    case 'openai':
-      return openAiProvider;
-    case 'flowise':
-      return flowiseProvider;
-    case 'openwebui':
-      return openWebUI;
-    default:
-      throw new Error('Unknown LLM provider: ' + provider);
+  debug(`Configured LLM providers: ${providers.join(', ')}`);
+  const llmProviders: ILlmProvider[] = [];
+
+  providers.forEach((provider) => {
+    try {
+      switch (provider.toLowerCase()) {
+        case 'openai':
+          llmProviders.push(openAiProvider);
+          debug('Initialized OpenAI provider');
+          break;
+        case 'flowise':
+          llmProviders.push(flowiseProvider);
+          debug('Initialized Flowise provider');
+          break;
+        case 'openwebui':
+          llmProviders.push(openWebUI);
+          debug('Initialized OpenWebUI provider');
+          break;
+        default:
+          debug(`Unknown LLM provider: ${provider}, skipping`);
+      }
+    } catch (error) {
+      debug(`Failed to initialize provider ${provider}: ${error}`);
+    }
+  });
+
+  if (llmProviders.length === 0) {
+    throw new Error('No valid LLM providers initialized');
   }
+
+  return llmProviders;
 }
