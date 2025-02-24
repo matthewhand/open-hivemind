@@ -4,8 +4,8 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import util from 'util';
 import path from 'path';
-import discordConfig from '@integrations/discord/interfaces/discordConfig';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import discordConfig from '@config/discordConfig';
+import openaiConfig from '@config/openaiConfig';
 
 const debug = Debug('app:playWelcomeMessage');
 
