@@ -1,66 +1,77 @@
-import { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
-import { IMessage } from '@src/message/interfaces/IMessage';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
+import { OpenAI } from 'openai';
+import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
-import { OpenAiService } from './OpenAiService';
 
 const debug = Debug('app:openAiProvider');
-const openAiService = OpenAiService.getInstance();
-
-// Create a dummy IMessage implementation for fallback.
-const createDummyMessage = (userMessage: string): IMessage => {
-  return {
-    content: userMessage,
-    channelId: "dummy-channel",
-    data: {},
-    role: "user",
-    getText: () => userMessage,
-    isFromBot: () => false,
-    getAuthorId: () => "dummy-user",
-    getChannelId: () => "dummy-channel",
-    getTimestamp: () => new Date(),
-    setText: (text: string) => { /* no-op for test */ },
-    getChannelTopic: () => null,
-    getUserMentions: () => [], // **Fix: Return an empty string array instead of `false`**
-    getChannelUsers: () => [],
-    getAuthorName: () => "Dummy User",
-    isReplyToBot: () => false,
-    getMessageId: () => "dummy-id",
-    mentionsUsers: () => false, // Assuming `mentionsUsers` expects a boolean
-  };
-};
 
 export const openAiProvider: ILlmProvider = {
   supportsChatCompletion: (): boolean => true,
+  supportsCompletion: (): boolean => true,
 
-  supportsCompletion: (): boolean => {
-    debug('OpenAI supports non-chat completions: true');
-    return true;
-  },
-
-  /**
-   * Generates a chat completion using OpenAI's service.
-   */
-  generateChatCompletion: async (
+  async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = []
-  ): Promise<string> => {
-    debug('Delegating chat completion to OpenAiService...');
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    debug('Generating chat completion with OpenAI:', { userMessage, historyMessages, metadata });
+    const openai = new OpenAI({
+      apiKey: openaiConfig.get('OPENAI_API_KEY'),
+      baseURL: openaiConfig.get('OPENAI_BASE_URL'),
+      timeout: openaiConfig.get('OPENAI_TIMEOUT'),
+      organization: openaiConfig.get('OPENAI_ORGANIZATION')
+    });
 
-    if (!historyMessages.length) {
-      historyMessages = [createDummyMessage(userMessage)];
+    try {
+      const response = await openai.chat.completions.create({
+        model: openaiConfig.get('OPENAI_MODEL'),
+        messages: [
+          { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') },
+          ...historyMessages.map(msg => ({
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.getText()
+          })),
+          { role: 'user' as const, content: userMessage }
+        ],
+        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS'),
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE'),
+        frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
+        presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
+        top_p: openaiConfig.get('OPENAI_TOP_P'),
+        stop: openaiConfig.get('OPENAI_STOP') || null  // Directly use array or null
+      });
+      return response.choices[0].message.content || '';
+    } catch (error) {
+      debug('Error generating chat completion:', error);
+      throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    debug('History Messages:', historyMessages);
-
-    const result = await openAiService.generateChatCompletion(userMessage, historyMessages);
-    return result ?? '';
   },
 
-  /**
-   * Minimal implementation of generateCompletion to satisfy ILlmProvider.
-   */
-  generateCompletion: async (prompt: string): Promise<string> => {
-    debug('Generating non-chat completion from OpenAI with prompt:', prompt);
-    return `Completion for: ${prompt}`;
-  },
+  async generateCompletion(prompt: string): Promise<string> {
+    debug('Generating non-chat completion with OpenAI:', { prompt });
+    const openai = new OpenAI({
+      apiKey: openaiConfig.get('OPENAI_API_KEY'),
+      baseURL: openaiConfig.get('OPENAI_BASE_URL'),
+      timeout: openaiConfig.get('OPENAI_TIMEOUT'),
+      organization: openaiConfig.get('OPENAI_ORGANIZATION')
+    });
+
+    try {
+      const response = await openai.completions.create({
+        model: openaiConfig.get('OPENAI_MODEL'),
+        prompt,
+        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS'),
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE'),
+        frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
+        presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
+        top_p: openaiConfig.get('OPENAI_TOP_P'),
+        stop: openaiConfig.get('OPENAI_STOP') || null  // Directly use array or null
+      });
+      return response.choices[0].text || '';
+    } catch (error) {
+      debug('Error generating non-chat completion:', error);
+      throw new Error(`Non-chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 };
