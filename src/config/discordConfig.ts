@@ -122,12 +122,6 @@ const discordConfig = convict({
     default: false,
     env: 'DISCORD_LOGGING_ENABLED'
   },
-  DISCORD_USERNAME_OVERRIDE: {
-    doc: 'Override username for Discord bot',
-    format: String,
-    default: '',
-    env: 'DISCORD_USERNAME_OVERRIDE'
-  },
   DISCORD_MESSAGE_PROCESSING_DELAY_MS: {
     doc: 'Delay for processing messages (ms)',
     format: 'int',
