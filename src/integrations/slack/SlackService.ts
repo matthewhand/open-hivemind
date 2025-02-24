@@ -1,5 +1,5 @@
 import { Application } from 'express';
-import express from 'express'; // Fixed import
+import express from 'express';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
@@ -8,6 +8,7 @@ import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { InteractiveActionHandlers } from './InteractiveActionHandlers';
 import slackConfig from '@src/config/slackConfig';
+import messageConfig from '@src/config/messageConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
 import SlackMessage from './SlackMessage';
 
@@ -30,7 +31,7 @@ export class SlackService implements IMessengerService {
     const mode = process.env.SLACK_MODE === 'rtm' ? 'rtm' : 'socket';
     this.botManager = new SlackBotManager(botTokens, appTokens, signingSecrets, mode);
     this.signatureVerifier = new SlackSignatureVerifier(signingSecrets[0]);
-    this.interactiveActions = new SlackInteractiveActions(this); // Pass this (SlackService) instead of botManager
+    this.interactiveActions = new SlackInteractiveActions(this);
     const interactiveHandlers: InteractiveActionHandlers = {
       sendCourseInfo: async (channel) => this.interactiveActions.sendCourseInfo(channel),
       sendBookingInstructions: async (channel) => this.interactiveActions.sendBookingInstructions(channel),
@@ -76,7 +77,9 @@ export class SlackService implements IMessengerService {
   }
 
   public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
-    const botInfo = this.botManager.getBotByName(senderName || 'Jeeves') || this.botManager.getAllBots()[0];
+    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    const effectiveSender = senderName || displayName;
+    const botInfo = this.botManager.getBotByName(effectiveSender) || this.botManager.getAllBots()[0];
     if (this.lastSentTs === threadId || this.lastSentTs === Date.now().toString()) {
       debug(`Duplicate message TS: ${threadId || this.lastSentTs}, skipping`);
       return '';
@@ -84,15 +87,15 @@ export class SlackService implements IMessengerService {
     try {
       const options: any = {
         channel: channelId,
-        text: `*${botInfo.botUserName || senderName || 'Jeeves'}*: ${text}`,
-        username: botInfo.botUserName || senderName || 'Jeeves',
+        text: `*${effectiveSender}*: ${text}`,
+        username: effectiveSender,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
       };
       if (threadId) options.thread_ts = threadId;
       const result = await botInfo.webClient.chat.postMessage(options);
-      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${botInfo.botUserName || senderName}`);
+      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${effectiveSender}`);
       this.lastSentTs = result.ts || Date.now().toString();
       return result.ts || '';
     } catch (error) {
@@ -106,7 +109,7 @@ export class SlackService implements IMessengerService {
   }
 
   public async fetchMessages(channelId: string): Promise<IMessage[]> {
-    const botInfo = this.botManager.getBotByName('Jeeves') || this.botManager.getAllBots()[0];
+    const botInfo = this.botManager.getAllBots()[0];
     try {
       const result = await botInfo.webClient.conversations.history({ channel: channelId, limit: 10 });
       return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channelId, msg));
@@ -118,7 +121,8 @@ export class SlackService implements IMessengerService {
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     const text = typeof announcement === 'string' ? announcement : announcement.message || 'Announcement';
-    await this.sendMessageToChannel(channelId, text, 'Jeeves');
+    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    await this.sendMessageToChannel(channelId, text, displayName);
   }
 
   private async handleActionRequest(req: express.Request, res: express.Response) {
@@ -153,7 +157,7 @@ export class SlackService implements IMessengerService {
         }
         debug(`Processing event: ${JSON.stringify(event)}`);
         this.lastEventTs = event.event_ts;
-        res.status(200).send(); // Event handled by botManager
+        res.status(200).send();
         return;
       }
       res.status(400).send('Bad Request');
@@ -171,7 +175,8 @@ export class SlackService implements IMessengerService {
       try {
         await botInfo.webClient.conversations.join({ channel });
         debug(`Joined #${channel} for ${botInfo.botUserName}`);
-        await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+        const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+        await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
       } catch (error) {
         debug(`Failed to join #${channel}: ${error}`);
       }
@@ -181,16 +186,17 @@ export class SlackService implements IMessengerService {
   public async joinChannel(channel: string): Promise<void> {
     const botInfo = this.botManager.getAllBots()[0];
     await botInfo.webClient.conversations.join({ channel });
-    await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
   }
 
   public async sendWelcomeMessage(channel: string): Promise<void> {
-    const botInfo = this.botManager.getAllBots()[0];
-    await this.sendMessageToChannel(channel, `Welcome from ${botInfo.botUserName}!`, botInfo.botUserName);
+    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
   }
 
   public getClientId(): string { return this.botManager.getAllBots()[0]?.botUserId || ''; }
   public getDefaultChannel(): string { return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || ''; }
   public async shutdown(): Promise<void> { SlackService.instance = undefined; }
-  public getBotManager(): SlackBotManager { return this.botManager; } // For tests
+  public getBotManager(): SlackBotManager { return this.botManager; }
 }
