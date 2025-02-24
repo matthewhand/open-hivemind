@@ -7,10 +7,12 @@ const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
-const llmConfigModule = require('@llm/interfaces/llmConfig');
+const llmConfigModule = require('@config/llmConfig');
 const messageConfigModule = require('@config/messageConfig');
+const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+import { getLlmProvider } from '@llm/getLlmProvider';
 
 const indexLog = debug('app:index');
 const app = express();
@@ -18,6 +20,7 @@ const app = express();
 const healthRoute = healthRouteModule.default || healthRouteModule;
 const llmConfig = llmConfigModule.default || llmConfigModule;
 const messageConfig = messageConfigModule.default || messageConfigModule;
+const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -48,8 +51,8 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-    const llmProviders = llmConfig.get('LLM_PROVIDER') as string[];
-    console.log('LLM Providers in use:', llmProviders.join(', ') || 'Default OpenAI');
+    const llmProviders = getLlmProvider();
+    console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
     const messageProviders = (typeof rawMessageProviders === 'string'
@@ -74,7 +77,7 @@ async function main() {
         console.log('HTTP server is disabled (HTTP_ENABLED=false).');
     }
 
-    const isWebhookEnabled = messageConfig.get('MESSAGE_WEBHOOK_ENABLED') || false;
+    const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
         console.log('Webhook service is enabled, registering routes...');
         for (const messengerService of messengerServices) {
