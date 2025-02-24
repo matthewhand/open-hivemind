@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
-import openaiConfig from '@integrations/openai/interfaces/openaiConfig';
+import openaiConfig from '@config/openaiConfig';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 const debug = Debug('app:sendChatCompletion');
