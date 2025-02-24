@@ -1,12 +1,20 @@
 const gmpDebug = require('debug')('app:getMessengerProvider');
-const gmpMessageConfigModule = require('@config/messageConfig');
+const messageConfigModule = require('@config/messageConfig');
 const DiscordMgr = require('@integrations/discord/DiscordService');
 const SlackMgr = require('@integrations/slack/SlackService');
 
-const gmpMessageConfig = gmpMessageConfigModule.default || gmpMessageConfigModule;
+const messageConfig = messageConfigModule.default || messageConfigModule;
 
-function getMessengerProvider() {
-  const rawProviders = gmpMessageConfig.get('MESSAGE_PROVIDER') as unknown;
+/**
+ * Get Messenger Providers
+ *
+ * Determines and returns an array of message provider instances based on the
+ * configuration specified in MESSAGE_PROVIDER (comma-separated list).
+ *
+ * @returns Array of initialized message provider instances.
+ */
+export function getMessengerProvider() {
+  const rawProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
   const providers = (typeof rawProviders === 'string'
     ? rawProviders.split(',').map((v: string) => v.trim())
     : Array.isArray(rawProviders)
