@@ -12,7 +12,7 @@
  */
 
 import express from 'express';
-import webhookConfig from '@webhook/interfaces/webhookConfig';
+import webhookConfig from '@config/webhookConfig';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
