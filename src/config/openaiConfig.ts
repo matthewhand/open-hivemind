@@ -3,92 +3,86 @@ import path from 'path';
 
 const openaiConfig = convict({
   OPENAI_API_KEY: {
-    doc: 'OpenAI API Key',
+    doc: 'OpenAI API key',
     format: String,
     default: '',
     env: 'OPENAI_API_KEY'
   },
-  OPENAI_MODEL: {
-    doc: 'OpenAI Model',
-    format: String,
-    default: 'gpt-4',
-    env: 'OPENAI_MODEL'
-  },
-  OPENAI_VOICE: {
-    doc: 'OpenAI Voice for TTS',
-    format: String,
-    default: 'nova',
-    env: 'OPENAI_VOICE'
-  },
-  OPENAI_BASE_URL: {
-    doc: 'OpenAI API Base URL',
-    format: String,
-    default: 'https://api.openai.com',
-    env: 'OPENAI_BASE_URL'
-  },
-  OPENAI_TIMEOUT: {
-    doc: 'Timeout for OpenAI requests (ms)',
-    format: 'nat',
-    default: 10000,
-    env: 'OPENAI_TIMEOUT'
-  },
   OPENAI_TEMPERATURE: {
-    doc: 'OpenAI Temperature',
+    doc: 'Sampling temperature for OpenAI',
     format: Number,
     default: 0.7,
     env: 'OPENAI_TEMPERATURE'
   },
   OPENAI_MAX_TOKENS: {
-    doc: 'OpenAI Max Tokens',
-    format: Number,
+    doc: 'Max tokens for OpenAI completion',
+    format: 'int',
     default: 150,
     env: 'OPENAI_MAX_TOKENS'
   },
   OPENAI_FREQUENCY_PENALTY: {
-    doc: 'OpenAI Frequency Penalty',
+    doc: 'Frequency penalty for OpenAI',
     format: Number,
     default: 0.1,
     env: 'OPENAI_FREQUENCY_PENALTY'
   },
   OPENAI_PRESENCE_PENALTY: {
-    doc: 'OpenAI Presence Penalty',
+    doc: 'Presence penalty for OpenAI',
     format: Number,
     default: 0.05,
     env: 'OPENAI_PRESENCE_PENALTY'
   },
+  OPENAI_BASE_URL: {
+    doc: 'Base URL for OpenAI API',
+    format: String,
+    default: 'https://api.openai.com/v1',
+    env: 'OPENAI_BASE_URL'
+  },
+  OPENAI_TIMEOUT: {
+    doc: 'API request timeout for OpenAI (ms)',
+    format: 'int',
+    default: 10000,
+    env: 'OPENAI_TIMEOUT'
+  },
   OPENAI_ORGANIZATION: {
-    doc: 'OpenAI Organization',
+    doc: 'OpenAI organization ID',
     format: String,
     default: '',
     env: 'OPENAI_ORGANIZATION'
   },
-  OPENAI_STOP: {
-    doc: 'OpenAI Stop Sequences (comma-separated)',
+  OPENAI_MODEL: {
+    doc: 'OpenAI model to use',
     format: String,
-    default: '',
+    default: 'gpt-3.5-turbo',
+    env: 'OPENAI_MODEL'
+  },
+  OPENAI_STOP: {
+    doc: 'Stop sequences for OpenAI',
+    format: Array,
+    default: [],
     env: 'OPENAI_STOP'
   },
   OPENAI_TOP_P: {
-    doc: 'OpenAI Top P',
+    doc: 'Top-p sampling for OpenAI',
     format: Number,
-    default: 0.9,
+    default: 1.0,
     env: 'OPENAI_TOP_P'
   },
   OPENAI_SYSTEM_PROMPT: {
-    doc: 'OpenAI System Prompt',
+    doc: 'System prompt for OpenAI',
     format: String,
     default: 'Greetings, human...',
     env: 'OPENAI_SYSTEM_PROMPT'
   },
   OPENAI_RESPONSE_MAX_TOKENS: {
-    doc: 'OpenAI Response Max Tokens',
-    format: Number,
+    doc: 'Max tokens for OpenAI response',
+    format: 'int',
     default: 100,
     env: 'OPENAI_RESPONSE_MAX_TOKENS'
   },
   OPENAI_MAX_RETRIES: {
     doc: 'Maximum number of retries for OpenAI requests',
-    format: 'nat',
+    format: 'int',
     default: 3,
     env: 'OPENAI_MAX_RETRIES'
   },
@@ -97,6 +91,12 @@ const openaiConfig = convict({
     format: String,
     default: 'stop',
     env: 'OPENAI_FINISH_REASON_RETRY'
+  },
+  OPENAI_VOICE: {
+    doc: 'OpenAI Voice for TTS',
+    format: String,
+    default: 'nova',
+    env: 'OPENAI_VOICE'
   }
 });
 
