@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import express from 'express';
 import Debug from 'debug';
-import axios from 'axios'; // Import axios for HTTP requests
+import axios from 'axios';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import { SlackBotManager } from './SlackBotManager';
@@ -13,8 +13,8 @@ import messageConfig from '@src/config/messageConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
 import SlackMessage from './SlackMessage';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { markdownToBlocks } from '@tryfabric/mack'; // Import Mack for Markdown to Slack Blocks
-import { KnownBlock, Block } from '@slack/web-api'; // Import KnownBlock and Block for type safety
+import { markdownToBlocks } from '@tryfabric/mack';
+import { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackService:verbose');
 
@@ -91,25 +91,33 @@ export class SlackService implements IMessengerService {
 
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(async (message, history) => {
-        const enrichedMessage = await this.enrichSlackMessage(message);
-        const payload = await this.constructPayload(enrichedMessage, history);
+      const enrichedMessage = await this.enrichSlackMessage(message);
+      const payload = await this.constructPayload(enrichedMessage, history);
 
-        const userMessage = payload.messages[payload.messages.length - 1].content;
-        const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
-        const metadataWithMessages = {
-            ...payload.metadata,
-            messages: payload.messages // Hack: Pass full messages array in metadata
-        };
+      const userMessage = payload.messages[payload.messages.length - 1].content;
+      const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
+      const metadataWithMessages = {
+        ...payload.metadata,
+        messages: payload.messages // Hack: Pass full messages array in metadata
+      };
 
-        const llmProvider = getLlmProvider()[0];
-        const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
-        debug('LLM Response:', response);
-        const channelId = enrichedMessage.getChannelId();
-        const threadTs = enrichedMessage.data.thread_ts;
-        await this.sendMessageToChannel(channelId, response, undefined, threadTs);
-        return response;
+      const llmProvider = getLlmProvider()[0];
+      const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
+      debug('LLM Response:', response);
+
+      // Convert LLM response Markdown to Slack Blocks
+      const blocks = await markdownToBlocks(response, {
+        lists: {
+          checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ',
+        },
+      });
+
+      const channelId = enrichedMessage.getChannelId();
+      const threadTs = enrichedMessage.data.thread_ts;
+      await this.sendMessageToChannel(channelId, response, undefined, threadTs, blocks);
+      return response;
     });
-}
+  }
 
   private async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
     const botInfo = this.botManager.getAllBots()[0];
@@ -119,11 +127,9 @@ export class SlackService implements IMessengerService {
     const suppressCanvasContent = process.env.SUPPRESS_CANVAS_CONTENT === 'true';
 
     try {
-      // Workspace info
       const authInfo = await botInfo.webClient.auth.test();
       const workspaceInfo = { workspaceId: authInfo.team_id, workspaceName: authInfo.team };
 
-      // Channel info
       const channelInfoResp = await botInfo.webClient.conversations.info({ channel: channelId });
       const channelInfo = {
         channelId,
@@ -132,7 +138,6 @@ export class SlackService implements IMessengerService {
         createdDate: channelInfoResp.channel?.created ? new Date(channelInfoResp.channel.created * 1000).toISOString() : undefined
       };
 
-      // Thread info
       const threadInfo = {
         isThread: !!threadTs,
         threadTs,
@@ -141,10 +146,9 @@ export class SlackService implements IMessengerService {
         messageCount: threadTs ? await this.getThreadMessageCount(channelId, threadTs) : 0
       };
 
-      // User info (attempt to fetch, handle user_not_found with fallback)
       let slackUser = {
         slackUserId: userId,
-        userName: 'Unknown',
+        userName: 'User',
         email: null as string | null,
         preferredName: null as string | null,
         isStaff: false
@@ -153,7 +157,7 @@ export class SlackService implements IMessengerService {
         const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId || '' });
         slackUser = {
           slackUserId: userId,
-          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'Unknown',
+          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User',
           email: userInfo.user?.profile?.email || null,
           preferredName: userInfo.user?.profile?.real_name || null,
           isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
@@ -162,7 +166,6 @@ export class SlackService implements IMessengerService {
         debug(`Failed to fetch user info for userId ${userId}: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      // Channel content (canvas)
       let channelContent = message.data.channelContent ? { ...message.data.channelContent } : undefined;
       if (!suppressCanvasContent) {
         debug('Attempting to fetch canvas content for channel:', channelId);
@@ -236,13 +239,10 @@ export class SlackService implements IMessengerService {
         channelContent = { content: '', info: null };
       }
 
-      // Escape channel content for JSON
       const channelContentStr = (channelContent?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
-
-      // Construct metadata
       const metadata = {
         channelInfo: { channelId: channelInfo.channelId },
-        userInfo: { userName: slackUser.userName }
+        userInfo: { userName: slackUser.userName } // Use real username here
       };
 
       const messageAttachments = message.data.files?.map((file: any, index: number) => ({
@@ -284,7 +284,7 @@ export class SlackService implements IMessengerService {
 
     const metadata = message.data.metadata || {
       channelInfo: { channelId: message.getChannelId() },
-      userInfo: { userName: 'Unknown' }
+      userInfo: { userName: message.data.slackUser?.userName || 'User' } // Use slackUser.userName if available
     };
 
     const payload = {
@@ -350,7 +350,7 @@ export class SlackService implements IMessengerService {
     return payload;
   }
 
-  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string, blocks?: KnownBlock[]): Promise<string> {
     const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
     const botInfo = this.botManager.getBotByName(senderName || '') || this.botManager.getAllBots()[0];
     if (this.lastSentTs === threadId || this.lastSentTs === Date.now().toString()) {
@@ -367,6 +367,7 @@ export class SlackService implements IMessengerService {
         unfurl_media: true,
       };
       if (threadId) options.thread_ts = threadId;
+      if (blocks && blocks.length > 0) options.blocks = blocks;
       const result = await botInfo.webClient.chat.postMessage(options);
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${senderName || displayName}`);
       this.lastSentTs = result.ts || Date.now().toString();

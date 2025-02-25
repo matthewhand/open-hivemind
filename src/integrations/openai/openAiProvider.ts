@@ -28,7 +28,6 @@ export const openAiProvider: ILlmProvider = {
     });
 
     try {
-      // Base messages from history and user input
       let messages = [
         { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') },
         ...historyMessages.map(msg => ({
@@ -38,12 +37,10 @@ export const openAiProvider: ILlmProvider = {
         { role: 'user' as const, content: userMessage }
       ];
 
-      // Hack: Spoof tool messages from metadata.messages if present
       if (metadata && metadata.messages && Array.isArray(metadata.messages)) {
         const toolRelatedMessages = metadata.messages.filter((msg: any) => 
           (msg.role === 'assistant' && msg.tool_calls) || msg.role === 'tool'
         );
-        // Prepend raw tool-related messages as-is
         messages = [...toolRelatedMessages, ...messages];
       }
 
@@ -59,10 +56,16 @@ export const openAiProvider: ILlmProvider = {
         top_p: openaiConfig.get('OPENAI_TOP_P'),
         stop: openaiConfig.get('OPENAI_STOP') || null
       });
+
       return response.choices[0].message.content || '';
     } catch (error) {
       debug('Error generating chat completion:', error);
-      // throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+      // Hack: Silently ignore timeout by returning empty string
+      if (error instanceof Error && error.message.includes('timed out')) {
+        debug('Request timed out, silently ignoring');
+        return '';
+      }
+      throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 
@@ -89,6 +92,11 @@ export const openAiProvider: ILlmProvider = {
       return response.choices[0].text || '';
     } catch (error) {
       debug('Error generating non-chat completion:', error);
+      // Hack: Silently ignore timeout here too
+      if (error instanceof Error && error.message.includes('timed out')) {
+        debug('Request timed out, silently ignoring');
+        return '';
+      }
       throw new Error(`Non-chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
