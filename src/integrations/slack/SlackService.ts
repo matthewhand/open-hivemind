@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import express from 'express';
 import Debug from 'debug';
-import axios from 'axios';
+import axios from 'axios'; // Import axios for HTTP requests
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import { SlackBotManager } from './SlackBotManager';
@@ -92,9 +92,16 @@ export class SlackService implements IMessengerService {
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(async (message, history) => {
       const enrichedMessage = await this.enrichSlackMessage(message);
-      const metadata = enrichedMessage.data;
+      const payload = await this.constructPayload(enrichedMessage, history);
+      
+      // Extract payload components for OpenAI provider
+      const userMessage = payload.messages[payload.messages.length - 1].content; // Last message is the user query
+      // Convert history to IMessage objects using SlackMessage
+      const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
+      const metadata = payload.metadata; // Only include metadata as specified, no tool calls here
+
       const llmProvider = getLlmProvider()[0];
-      const response = await llmProvider.generateChatCompletion(enrichedMessage.getText(), history, metadata);
+      const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadata);
       debug('LLM Response:', response);
       const channelId = enrichedMessage.getChannelId();
       const threadTs = enrichedMessage.data.thread_ts;
@@ -133,21 +140,32 @@ export class SlackService implements IMessengerService {
         messageCount: threadTs ? await this.getThreadMessageCount(channelId, threadTs) : 0
       };
 
-      // User info
-      const userInfo: SlackUserInfo = userId && userId !== 'unknown' ? await botInfo.webClient.users.info({ user: userId }) : {};
-      const slackUser = {
+      // User info (attempt to fetch, handle user_not_found with fallback)
+      let slackUser = {
         slackUserId: userId,
-        userName: userInfo.user?.name || 'Unknown',
-        email: userInfo.user?.profile?.email,
-        preferredName: userInfo.user?.profile?.real_name,
-        isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
+        userName: 'Unknown',
+        email: null as string | null, // Updated to allow string | null
+        preferredName: null as string | null, // Updated to allow string | null
+        isStaff: false
       };
+      try {
+        const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId || '' });
+        slackUser = {
+          slackUserId: userId,
+          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'Unknown', // Use real_name or name as fallback
+          email: userInfo.user?.profile?.email || null, // Updated to string | null
+          preferredName: userInfo.user?.profile?.real_name || null, // Updated to string | null
+          isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
+        };
+      } catch (error) {
+        debug(`Failed to fetch user info for userId ${userId}: ${error instanceof Error ? error.message : String(error)}`);
+      }
 
-      // Canvas content
-      let canvas = message.data.canvas ? { ...message.data.canvas } : undefined;
+      // Channel content (formerly canvas, now neutral)
+      let channelContent = message.data.channelContent ? { ...message.data.channelContent } : undefined;
       if (!suppressCanvasContent) {
         try {
-          // Fetch all canvases in the channel
+          // Fetch all channel content in the channel
           const listResponse = await botInfo.webClient.files.list({
             types: 'canvas',
             channel: channelId
@@ -155,68 +173,77 @@ export class SlackService implements IMessengerService {
           debug('files.list response:', JSON.stringify(listResponse, null, 2));
 
           if (listResponse.ok && listResponse.files?.length) {
-            // Find the channel canvas
-            const targetCanvas = listResponse.files.find(f => f.linked_channel_id === channelId) || listResponse.files[0];
-            debug('Selected canvas from files.list:', targetCanvas?.id, targetCanvas?.url_private);
+            // Find the channel content
+            const targetContent = listResponse.files.find(f => f.linked_channel_id === channelId) || listResponse.files[0];
+            debug('Selected content from files.list:', targetContent?.id, targetContent?.url_private);
 
-            if (targetCanvas && targetCanvas.id) {
-              const canvasInfo = await botInfo.webClient.files.info({ file: targetCanvas.id });
-              debug('files.info response:', JSON.stringify(canvasInfo, null, 2));
-              if (canvasInfo.ok) {
-                debug('Canvas content field:', canvasInfo.content || 'Not present');
-                if (canvasInfo.file?.filetype === 'canvas' || canvasInfo.file?.filetype === 'quip') {
-                  canvas = {
-                    ...targetCanvas,
-                    content: canvasInfo.content || 'No content returned by API',
-                    info: canvasInfo.file
+            if (targetContent && targetContent.id) {
+              const contentInfo = await botInfo.webClient.files.info({ file: targetContent.id });
+              debug('files.info response:', JSON.stringify(contentInfo, null, 2));
+              if (contentInfo.ok) {
+                debug('Channel content field:', contentInfo.content || 'Not present');
+                if (contentInfo.file?.filetype === 'canvas' || contentInfo.file?.filetype === 'quip') {
+                  channelContent = {
+                    ...targetContent,
+                    content: contentInfo.content || 'No content returned by API',
+                    info: contentInfo.file
                   };
                   // If no content, try fetching from url_private as a fallback
-                  if (!canvasInfo.content && canvasInfo.file?.url_private) {
+                  if (!contentInfo.content && contentInfo.file?.url_private) {
                     try {
-                      const contentResponse = await axios.get(canvasInfo.file.url_private, {
+                      const contentResponse = await axios.get(contentInfo.file.url_private, {
                         headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` }
                       });
-                      canvas.content = contentResponse.data || 'No content available';
-                      debug('Fetched content from url_private:', canvas.content.substring(0, 50) + '...');
+                      channelContent.content = contentResponse.data || 'No content available';
+                      debug('Fetched content from url_private:', channelContent.content.substring(0, 50) + '...');
                     } catch (fetchError) {
                       debug('Failed to fetch content from url_private:', fetchError);
-                      canvas.content = 'No content available';
+                      channelContent.content = 'No content available';
                     }
                   }
-                } else if (canvasInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(canvasInfo.file.filetype || '')) {
-                  const fileResponse = await axios.get(canvasInfo.file.url_private!, {
+                } else if (contentInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfo.file.filetype || '')) {
+                  const fileResponse = await axios.get(contentInfo.file.url_private!, {
                     headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer'
                   });
                   const base64Content = Buffer.from(fileResponse.data).toString('base64');
-                  canvas = {
-                    ...targetCanvas,
-                    content: `data:${canvasInfo.file.mimetype};base64,${base64Content}`,
-                    info: canvasInfo.file
+                  channelContent = {
+                    ...targetContent,
+                    content: `data:${contentInfo.file.mimetype};base64,${base64Content}`,
+                    info: contentInfo.file
                   };
-                  debug('Binary canvas content base64-encoded:', canvas.content.substring(0, 50) + '...');
+                  debug('Binary content base64-encoded:', channelContent.content.substring(0, 50) + '...');
                 } else {
-                  throw new Error('Unsupported file type: ' + (canvasInfo.file?.filetype || 'unknown'));
+                  throw new Error('Unsupported file type: ' + (contentInfo.file?.filetype || 'unknown'));
                 }
               } else {
-                throw new Error(canvasInfo.error || 'Unknown error fetching canvas info');
+                throw new Error(contentInfo.error || 'Unknown error fetching channel content');
               }
-              debug('Canvas content retrieved:', canvas.content);
+              debug('Channel content retrieved:', channelContent.content);
             } else {
-              debug('No valid canvas found in files.list');
-              canvas = { content: '', info: null }; // Default to empty content if no canvas found
+              debug('No valid content found in files.list');
+              channelContent = { content: '', info: null }; // Default to empty content if no content found
             }
           } else {
-            debug('No canvases found in files.list for channel:', channelId);
-            canvas = { content: '', info: null }; // Default to empty content if no canvases
+            debug('No content found in files.list for channel:', channelId);
+            channelContent = { content: '', info: null }; // Default to empty content if no content
           }
         } catch (error) {
-          debug(`Failed to retrieve Canvas content: ${error}`);
-          canvas = { content: '', info: null }; // Default to empty content on error
+          debug(`Failed to retrieve Channel content: ${error}`);
+          channelContent = { content: '', info: null }; // Default to empty content on error
         }
       } else {
-        canvas = { content: '', info: null }; // Default to empty content if suppressed
+        channelContent = { content: '', info: null }; // Default to empty content if suppressed
       }
+
+      // Escape channel content for JSON
+      const channelContentStr = (channelContent?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
+
+      // Construct metadata as per revised instructions (university-agnostic)
+      const metadata = {
+        channelInfo: { channelId: channelInfo.channelId },
+        userInfo: { userName: slackUser.userName }
+      };
 
       const messageAttachments = message.data.files?.map((file: any, index: number) => ({
         id: index + 9999,
@@ -235,11 +262,12 @@ export class SlackService implements IMessengerService {
 
       message.data = {
         ...message.data,
+        metadata,
+        channelContent: { content: channelContentStr },
         workspaceInfo,
         channelInfo,
         threadInfo,
         slackUser,
-        canvas,
         messageAttachments,
         messageReactions
       };
@@ -251,22 +279,78 @@ export class SlackService implements IMessengerService {
     return message;
   }
 
-  private async getThreadParticipants(channelId: string, threadTs: string): Promise<string[]> {
-    const botInfo = this.botManager.getAllBots()[0];
-    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
-    return [...new Set(replies.messages?.map(m => m.user).filter(Boolean) as string[])];
-  }
+  private async constructPayload(message: SlackMessage, history: IMessage[]): Promise<any> {
+    const currentTs = `${Math.floor(Date.now() / 1000)}.2345`;
 
-  private async getThreadMessageCount(channelId: string, threadTs: string): Promise<number> {
-    const botInfo = this.botManager.getAllBots()[0];
-    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
-    return replies.messages?.length || 0;
+    // Ensure metadata exists, even if enrichSlackMessage failed
+    const metadata = message.data.metadata || {
+      channelInfo: { channelId: message.getChannelId() },
+      userInfo: { userName: 'Unknown' }
+    };
+
+    const payload = {
+      metadata,
+      messages: [
+        { role: "system", content: "You are a bot that assists slack users." },
+        {
+          role: "assistant",
+          content: "",
+          tool_calls: [
+            {
+              id: currentTs,
+              type: "function",
+              function: {
+                name: "get_user_info",
+                arguments: JSON.stringify({ username: metadata.userInfo.userName })
+              }
+            },
+            {
+              id: `${parseFloat(currentTs) + 0.0001}`,
+              type: "function",
+              function: {
+                name: "get_channel_info",
+                arguments: JSON.stringify({ channelId: metadata.channelInfo.channelId })
+              }
+            }
+          ]
+        },
+        {
+          role: "tool",
+          tool_call_id: currentTs,
+          tool_name: "get_user_info",
+          content: JSON.stringify({
+            slackUser: {
+              slackUserId: message.data.slackUser?.slackUserId || 'unknown',
+              userName: metadata.userInfo.userName,
+              email: message.data.slackUser?.email || null, // Updated to string | null
+              preferredName: message.data.slackUser?.preferredName || null // Updated to string | null
+            }
+          })
+        },
+        {
+          role: "tool",
+          tool_call_id: `${parseFloat(currentTs) + 0.0001}`,
+          tool_name: "get_channel_info",
+          content: JSON.stringify({ channelContent: { content: message.data.channelContent?.content || '' } })
+        },
+        { role: "user", content: message.getText() }
+      ]
+    };
+
+    if (history.length > 0) {
+      payload.messages = [
+        ...history.map(h => ({ role: h.role, content: h.getText() })),
+        ...payload.messages
+      ];
+    }
+
+    debug('Constructed Payload:', JSON.stringify(payload, null, 2));
+    return payload;
   }
 
   public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
     const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    const effectiveSender = senderName || displayName;
-    const botInfo = this.botManager.getBotByName(effectiveSender) || this.botManager.getAllBots()[0];
+    const botInfo = this.botManager.getBotByName(senderName || '') || this.botManager.getAllBots()[0]; // Updated to handle undefined senderName
     if (this.lastSentTs === threadId || this.lastSentTs === Date.now().toString()) {
       debug(`Duplicate message TS: ${threadId || this.lastSentTs}, skipping`);
       return '';
@@ -274,15 +358,15 @@ export class SlackService implements IMessengerService {
     try {
       const options: any = {
         channel: channelId,
-        text: `*${effectiveSender}*: ${text}`,
-        username: effectiveSender,
+        text: text, // Removed *${effectiveSender}*: prefix
+        username: senderName || displayName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
       };
       if (threadId) options.thread_ts = threadId;
       const result = await botInfo.webClient.chat.postMessage(options);
-      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${effectiveSender}`);
+      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''} as ${senderName || displayName}`);
       this.lastSentTs = result.ts || Date.now().toString();
       return result.ts || '';
     } catch (error) {
@@ -333,7 +417,7 @@ export class SlackService implements IMessengerService {
       if (body.type === 'event_callback') {
         const event = body.event;
         if (event.subtype === 'bot_message') {
-          debug('Ignoring bot message.');
+          debug('Ignoring bot_message.');
           res.status(200).send();
           return;
         }
@@ -463,6 +547,18 @@ export class SlackService implements IMessengerService {
     } else {
       debug(`Unknown action ID ${actionId}, logging with detailed granularity`);
     }
+  }
+
+  private async getThreadParticipants(channelId: string, threadTs: string): Promise<string[]> {
+    const botInfo = this.botManager.getAllBots()[0];
+    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
+    return [...new Set(replies.messages?.map(m => m.user).filter(Boolean) as string[])];
+  }
+
+  private async getThreadMessageCount(channelId: string, threadTs: string): Promise<number> {
+    const botInfo = this.botManager.getAllBots()[0];
+    const replies = await botInfo.webClient.conversations.replies({ channel: channelId, ts: threadTs });
+    return replies.messages?.length || 0;
   }
 
   public getClientId(): string { return this.botManager.getAllBots()[0]?.botUserId || ''; }
