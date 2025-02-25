@@ -13,6 +13,8 @@ import messageConfig from '@src/config/messageConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
 import SlackMessage from './SlackMessage';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { markdownToBlocks } from '@tryfabric/mack'; // Import Mack for Markdown to Slack Blocks
+import { KnownBlock, Block } from '@slack/web-api'; // Import KnownBlock and Block for type safety
 
 const debug = Debug('app:SlackService');
 
@@ -39,10 +41,10 @@ export class SlackService implements IMessengerService {
   private app?: Application;
 
   private constructor() {
-    const botTokens = process.env.SLACK_BOT_TOKEN?.split(',').map(s => s.trim()) || [];
-    const appTokens = process.env.SLACK_APP_TOKEN?.split(',').map(s => s.trim()) || [];
-    const signingSecrets = process.env.SLACK_SIGNING_SECRET?.split(',').map(s => s.trim()) || [];
-    const mode = process.env.SLACK_MODE === 'rtm' ? 'rtm' : 'socket';
+    const botTokens = slackConfig.get('SLACK_BOT_TOKEN').split(',').map(s => s.trim()) || [];
+    const appTokens = slackConfig.get('SLACK_APP_TOKEN').split(',').map(s => s.trim()) || [];
+    const signingSecrets = slackConfig.get('SLACK_SIGNING_SECRET').split(',').map(s => s.trim()) || [];
+    const mode = slackConfig.get('SLACK_MODE') as 'socket' | 'rtm';
     this.botManager = new SlackBotManager(botTokens, appTokens, signingSecrets, mode);
     this.signatureVerifier = new SlackSignatureVerifier(signingSecrets[0]);
     this.interactiveActions = new SlackInteractiveActions(this);
@@ -52,6 +54,7 @@ export class SlackService implements IMessengerService {
       sendStudyResources: async (channel) => this.interactiveActions.sendStudyResources(channel),
       sendAskQuestionModal: async (triggerId) => this.interactiveActions.sendAskQuestionModal(triggerId),
       sendInteractiveHelpMessage: async (channel, userId) => this.interactiveActions.sendInteractiveHelpMessage(channel, userId),
+      handleButtonClick: async (channel: string, userId: string, actionId: string) => this.handleButtonClick(channel, userId, actionId),
     };
     this.interactiveHandler = new SlackInteractiveHandler(interactiveHandlers);
   }
@@ -173,11 +176,11 @@ export class SlackService implements IMessengerService {
                       const contentResponse = await axios.get(canvasInfo.file.url_private, {
                         headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` }
                       });
-                      canvas.content = contentResponse.data || 'Failed to fetch content from URL';
+                      canvas.content = contentResponse.data || 'No content available';
                       debug('Fetched content from url_private:', canvas.content.substring(0, 50) + '...');
                     } catch (fetchError) {
                       debug('Failed to fetch content from url_private:', fetchError);
-                      canvas.content = 'Failed to fetch content from URL';
+                      canvas.content = 'No content available';
                     }
                   }
                 } else if (canvasInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(canvasInfo.file.filetype || '')) {
@@ -201,46 +204,18 @@ export class SlackService implements IMessengerService {
               debug('Canvas content retrieved:', canvas.content);
             } else {
               debug('No valid canvas found in files.list');
+              canvas = { content: '', info: null }; // Default to empty content if no canvas found
             }
           } else {
             debug('No canvases found in files.list for channel:', channelId);
-            canvas = { contentUrl: process.env.SLACK_CANVAS_URL || 'https://une-n70.slack.com/canvas/C07GNG6MAV9' };
-            const fallbackId = `F${canvas.contentUrl.split('/').pop()}`;
-            const canvasInfo = await botInfo.webClient.files.info({ file: fallbackId });
-            debug('Fallback files.info response:', JSON.stringify(canvasInfo, null, 2));
-            if (canvasInfo.ok) {
-              if (canvasInfo.file?.filetype === 'canvas' || canvasInfo.file?.filetype === 'quip') {
-                canvas = {
-                  ...canvas,
-                  content: canvasInfo.content || 'No content returned by API',
-                  info: canvasInfo.file
-                };
-              } else if (canvasInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(canvasInfo.file.filetype || '')) {
-                const fileResponse = await axios.get(canvasInfo.file.url_private!, {
-                  headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
-                  responseType: 'arraybuffer'
-                });
-                const base64Content = Buffer.from(fileResponse.data).toString('base64');
-                canvas = {
-                  ...canvas,
-                  content: `data:${canvasInfo.file.mimetype};base64,${base64Content}`,
-                  info: canvasInfo.file
-                };
-                debug('Fallback binary canvas content base64-encoded:', canvas.content.substring(0, 50) + '...');
-              } else {
-                canvas.content = 'Fallback canvas not found';
-                debug('Fallback canvas fetch failed:', canvasInfo.error || 'Unknown error');
-              }
-            } else {
-              canvas.content = 'Fallback canvas fetch failed';
-              debug('Fallback canvas fetch failed:', canvasInfo.error || 'Unknown error');
-            }
+            canvas = { content: '', info: null }; // Default to empty content if no canvases
           }
         } catch (error) {
           debug(`Failed to retrieve Canvas content: ${error}`);
-          canvas = canvas || { contentUrl: process.env.SLACK_CANVAS_URL || 'https://une-n70.slack.com/canvas/C07GNG6MAV9' };
-          canvas.content = 'Error retrieving content';
+          canvas = { content: '', info: null }; // Default to empty content on error
         }
+      } else {
+        canvas = { content: '', info: null }; // Default to empty content if suppressed
       }
 
       const messageAttachments = message.data.files?.map((file: any, index: number) => ({
@@ -387,8 +362,7 @@ export class SlackService implements IMessengerService {
       try {
         await botInfo.webClient.conversations.join({ channel });
         debug(`Joined #${channel} for ${botInfo.botUserName}`);
-        const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-        await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
+        await this.sendBotWelcomeMessage(channel);
       } catch (error) {
         debug(`Failed to join #${channel}: ${error}`);
       }
@@ -398,13 +372,97 @@ export class SlackService implements IMessengerService {
   public async joinChannel(channel: string): Promise<void> {
     const botInfo = this.botManager.getAllBots()[0];
     await botInfo.webClient.conversations.join({ channel });
-    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
+    await this.sendBotWelcomeMessage(channel);
   }
 
-  public async sendWelcomeMessage(channel: string): Promise<void> {
+  public async sendBotWelcomeMessage(channel: string): Promise<void> {
     const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    await this.sendMessageToChannel(channel, `Welcome from ${displayName}!`, displayName);
+    const markdownMessage = slackConfig.get('SLACK_BOT_JOIN_CHANNEL_MESSAGE');
+    const formattedMessage = markdownMessage.replace('{channel}', channel);
+    const blocks = await this.processWelcomeMessage(formattedMessage, channel);
+    const botInfo = this.botManager.getBotByName(displayName) || this.botManager.getAllBots()[0];
+    try {
+      await botInfo.webClient.chat.postMessage({
+        channel,
+        blocks,
+      });
+      debug(`Sent bot welcome message to #${channel} as ${displayName} with careful precision`);
+    } catch (error) {
+      debug(`Failed to send bot welcome message: ${error}`);
+    }
+  }
+
+  public async sendUserWelcomeMessage(channel: string, userName: string): Promise<void> {
+    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    const markdownMessage = slackConfig.get('SLACK_USER_JOIN_CHANNEL_MESSAGE');
+    const formattedMessage = markdownMessage.replace('{user}', userName).replace('{channel}', channel);
+    const blocks = await this.processWelcomeMessage(formattedMessage, channel);
+    const botInfo = this.botManager.getBotByName(displayName) || this.botManager.getAllBots()[0];
+    try {
+      await botInfo.webClient.chat.postMessage({
+        channel,
+        blocks,
+      });
+      debug(`Sent user welcome message to #${channel} for ${userName} with careful precision`);
+    } catch (error) {
+      debug(`Failed to send user welcome message: ${error}`);
+    }
+  }
+
+  private async processWelcomeMessage(markdown: string, channel: string): Promise<KnownBlock[]> {
+    // Split the markdown into content (before buttons) and buttons (at the end)
+    const [content, buttonsPart] = markdown.split('\n## Actions\n');
+    let blocks: KnownBlock[] = [];
+
+    // Process the content (before buttons) with Mack
+    if (content) {
+      const contentBlocks = await markdownToBlocks(content, {
+        lists: {
+          checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ',
+        },
+      });
+      blocks = blocks.concat(contentBlocks.filter(b => b.type !== 'actions' && b.type !== 'section' && !('elements' in b)));
+    }
+
+    // Process buttons (assumed to be at the end, under "## Actions")
+    if (buttonsPart) {
+      const buttonLines = buttonsPart.trim().split('\n').filter(line => line.trim().startsWith('- ['));
+      const actionsBlock: KnownBlock = { type: 'actions', elements: [] };
+      for (const line of buttonLines) {
+        const actionMatch = line.match(/-\s*\[([^\]]+)\]\(action:([^\)]+)\)/);
+        if (actionMatch) {
+          const buttonText = actionMatch[1];
+          const actionId = actionMatch[2].replace('{channel}', channel); // Replace {channel} placeholder
+          (actionsBlock.elements as any[]).push({
+            type: 'button',
+            text: { type: 'plain_text', text: buttonText },
+            action_id: actionId,
+            value: actionId, // Use actionId as value, mappable in SLACK_BUTTON_MAPPINGS
+            style: 'primary' // Makes buttons more visible in Slack
+          });
+        }
+      }
+      if (actionsBlock.elements.length > 0) {
+        blocks.push(actionsBlock);
+      }
+    }
+
+    debug('Processed Slack blocks:', JSON.stringify(blocks, null, 2));
+    return blocks;
+  }
+
+  private async handleButtonClick(channel: string, userId: string, actionId: string): Promise<void> {
+    // Fetch button mappings from environment variables or configuration
+    const buttonMappings = process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
+    const mappings: { [key: string]: string } = JSON.parse(buttonMappings);
+
+    const hardcodedMessage = mappings[actionId] || 'Unknown action';
+    if (hardcodedMessage !== 'Unknown action') {
+      await this.sendMessageToChannel(channel, hardcodedMessage, userId);
+      debug(`User prompted to post hardcoded message in #${channel}: ${hardcodedMessage}`);
+    } else {
+      debug(`Unknown action ID ${actionId}, logging with detailed granularity`);
+    }
   }
 
   public getClientId(): string { return this.botManager.getAllBots()[0]?.botUserId || ''; }
