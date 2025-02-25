@@ -15,7 +15,11 @@ export const openAiProvider: ILlmProvider = {
     historyMessages: IMessage[],
     metadata?: Record<string, any>
   ): Promise<string> {
-    debug('Generating chat completion with OpenAI:', { userMessage, historyMessages, metadata });
+    debug('Generating chat completion with OpenAI');
+    debug('User message:', userMessage);
+    debug('History messages:', JSON.stringify(historyMessages.map(m => ({ role: m.role, content: m.getText() }))));
+    debug('Metadata:', JSON.stringify(metadata || {}));
+
     const openai = new OpenAI({
       apiKey: openaiConfig.get('OPENAI_API_KEY'),
       baseURL: openaiConfig.get('OPENAI_BASE_URL'),
@@ -24,27 +28,41 @@ export const openAiProvider: ILlmProvider = {
     });
 
     try {
+      // Base messages from history and user input
+      let messages = [
+        { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') },
+        ...historyMessages.map(msg => ({
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.getText()
+        })),
+        { role: 'user' as const, content: userMessage }
+      ];
+
+      // Hack: Spoof tool messages from metadata.messages if present
+      if (metadata && metadata.messages && Array.isArray(metadata.messages)) {
+        const toolRelatedMessages = metadata.messages.filter((msg: any) => 
+          (msg.role === 'assistant' && msg.tool_calls) || msg.role === 'tool'
+        );
+        // Prepend raw tool-related messages as-is
+        messages = [...toolRelatedMessages, ...messages];
+      }
+
+      debug('Final messages sent to OpenAI:', JSON.stringify(messages));
+
       const response = await openai.chat.completions.create({
         model: openaiConfig.get('OPENAI_MODEL'),
-        messages: [
-          { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') },
-          ...historyMessages.map(msg => ({
-            role: msg.role as 'user' | 'assistant' | 'system',
-            content: msg.getText()
-          })),
-          { role: 'user' as const, content: userMessage }
-        ],
+        messages,
         max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS'),
         temperature: openaiConfig.get('OPENAI_TEMPERATURE'),
         frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
         presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
         top_p: openaiConfig.get('OPENAI_TOP_P'),
-        stop: openaiConfig.get('OPENAI_STOP') || null  // Directly use array or null
+        stop: openaiConfig.get('OPENAI_STOP') || null
       });
       return response.choices[0].message.content || '';
     } catch (error) {
       debug('Error generating chat completion:', error);
-      throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+      // throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 
@@ -66,7 +84,7 @@ export const openAiProvider: ILlmProvider = {
         frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
         presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
         top_p: openaiConfig.get('OPENAI_TOP_P'),
-        stop: openaiConfig.get('OPENAI_STOP') || null  // Directly use array or null
+        stop: openaiConfig.get('OPENAI_STOP') || null
       });
       return response.choices[0].text || '';
     } catch (error) {

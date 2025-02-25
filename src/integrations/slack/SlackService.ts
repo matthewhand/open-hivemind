@@ -16,7 +16,7 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { markdownToBlocks } from '@tryfabric/mack'; // Import Mack for Markdown to Slack Blocks
 import { KnownBlock, Block } from '@slack/web-api'; // Import KnownBlock and Block for type safety
 
-const debug = Debug('app:SlackService');
+const debug = Debug('app:SlackService:verbose');
 
 interface SlackUserInfo {
   user?: {
@@ -91,24 +91,25 @@ export class SlackService implements IMessengerService {
 
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(async (message, history) => {
-      const enrichedMessage = await this.enrichSlackMessage(message);
-      const payload = await this.constructPayload(enrichedMessage, history);
-      
-      // Extract payload components for OpenAI provider
-      const userMessage = payload.messages[payload.messages.length - 1].content; // Last message is the user query
-      // Convert history to IMessage objects using SlackMessage
-      const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
-      const metadata = payload.metadata; // Only include metadata as specified, no tool calls here
+        const enrichedMessage = await this.enrichSlackMessage(message);
+        const payload = await this.constructPayload(enrichedMessage, history);
 
-      const llmProvider = getLlmProvider()[0];
-      const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadata);
-      debug('LLM Response:', response);
-      const channelId = enrichedMessage.getChannelId();
-      const threadTs = enrichedMessage.data.thread_ts;
-      await this.sendMessageToChannel(channelId, response, undefined, threadTs);
-      return response;
+        const userMessage = payload.messages[payload.messages.length - 1].content;
+        const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
+        const metadataWithMessages = {
+            ...payload.metadata,
+            messages: payload.messages // Hack: Pass full messages array in metadata
+        };
+
+        const llmProvider = getLlmProvider()[0];
+        const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
+        debug('LLM Response:', response);
+        const channelId = enrichedMessage.getChannelId();
+        const threadTs = enrichedMessage.data.thread_ts;
+        await this.sendMessageToChannel(channelId, response, undefined, threadTs);
+        return response;
     });
-  }
+}
 
   private async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
     const botInfo = this.botManager.getAllBots()[0];
@@ -144,36 +145,36 @@ export class SlackService implements IMessengerService {
       let slackUser = {
         slackUserId: userId,
         userName: 'Unknown',
-        email: null as string | null, // Updated to allow string | null
-        preferredName: null as string | null, // Updated to allow string | null
+        email: null as string | null,
+        preferredName: null as string | null,
         isStaff: false
       };
       try {
         const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId || '' });
         slackUser = {
           slackUserId: userId,
-          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'Unknown', // Use real_name or name as fallback
-          email: userInfo.user?.profile?.email || null, // Updated to string | null
-          preferredName: userInfo.user?.profile?.real_name || null, // Updated to string | null
+          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'Unknown',
+          email: userInfo.user?.profile?.email || null,
+          preferredName: userInfo.user?.profile?.real_name || null,
           isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
         };
       } catch (error) {
         debug(`Failed to fetch user info for userId ${userId}: ${error instanceof Error ? error.message : String(error)}`);
       }
 
-      // Channel content (formerly canvas, now neutral)
+      // Channel content (canvas)
       let channelContent = message.data.channelContent ? { ...message.data.channelContent } : undefined;
       if (!suppressCanvasContent) {
+        debug('Attempting to fetch canvas content for channel:', channelId);
         try {
-          // Fetch all channel content in the channel
           const listResponse = await botInfo.webClient.files.list({
             types: 'canvas',
             channel: channelId
           });
           debug('files.list response:', JSON.stringify(listResponse, null, 2));
+          debug('Total files found:', listResponse.files?.length || 0);
 
           if (listResponse.ok && listResponse.files?.length) {
-            // Find the channel content
             const targetContent = listResponse.files.find(f => f.linked_channel_id === channelId) || listResponse.files[0];
             debug('Selected content from files.list:', targetContent?.id, targetContent?.url_private);
 
@@ -188,7 +189,6 @@ export class SlackService implements IMessengerService {
                     content: contentInfo.content || 'No content returned by API',
                     info: contentInfo.file
                   };
-                  // If no content, try fetching from url_private as a fallback
                   if (!contentInfo.content && contentInfo.file?.url_private) {
                     try {
                       const contentResponse = await axios.get(contentInfo.file.url_private, {
@@ -222,24 +222,24 @@ export class SlackService implements IMessengerService {
               debug('Channel content retrieved:', channelContent.content);
             } else {
               debug('No valid content found in files.list');
-              channelContent = { content: '', info: null }; // Default to empty content if no content found
+              channelContent = { content: '', info: null };
             }
           } else {
             debug('No content found in files.list for channel:', channelId);
-            channelContent = { content: '', info: null }; // Default to empty content if no content
+            channelContent = { content: '', info: null };
           }
         } catch (error) {
           debug(`Failed to retrieve Channel content: ${error}`);
-          channelContent = { content: '', info: null }; // Default to empty content on error
+          channelContent = { content: '', info: null };
         }
       } else {
-        channelContent = { content: '', info: null }; // Default to empty content if suppressed
+        channelContent = { content: '', info: null };
       }
 
       // Escape channel content for JSON
       const channelContentStr = (channelContent?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
 
-      // Construct metadata as per revised instructions (university-agnostic)
+      // Construct metadata
       const metadata = {
         channelInfo: { channelId: channelInfo.channelId },
         userInfo: { userName: slackUser.userName }
@@ -282,7 +282,6 @@ export class SlackService implements IMessengerService {
   private async constructPayload(message: SlackMessage, history: IMessage[]): Promise<any> {
     const currentTs = `${Math.floor(Date.now() / 1000)}.2345`;
 
-    // Ensure metadata exists, even if enrichSlackMessage failed
     const metadata = message.data.metadata || {
       channelInfo: { channelId: message.getChannelId() },
       userInfo: { userName: 'Unknown' }
@@ -322,8 +321,8 @@ export class SlackService implements IMessengerService {
             slackUser: {
               slackUserId: message.data.slackUser?.slackUserId || 'unknown',
               userName: metadata.userInfo.userName,
-              email: message.data.slackUser?.email || null, // Updated to string | null
-              preferredName: message.data.slackUser?.preferredName || null // Updated to string | null
+              email: message.data.slackUser?.email || null,
+              preferredName: message.data.slackUser?.preferredName || null
             }
           })
         },
@@ -344,13 +343,16 @@ export class SlackService implements IMessengerService {
       ];
     }
 
-    debug('Constructed Payload:', JSON.stringify(payload, null, 2));
+    debug('Final constructed payload before sending to LLM:', JSON.stringify(payload, null, 2));
+    if (!payload.messages.some(m => m.content.includes('channelContent'))) {
+      debug('Warning: Canvas content not found in payload messages');
+    }
     return payload;
   }
 
   public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
     const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    const botInfo = this.botManager.getBotByName(senderName || '') || this.botManager.getAllBots()[0]; // Updated to handle undefined senderName
+    const botInfo = this.botManager.getBotByName(senderName || '') || this.botManager.getAllBots()[0];
     if (this.lastSentTs === threadId || this.lastSentTs === Date.now().toString()) {
       debug(`Duplicate message TS: ${threadId || this.lastSentTs}, skipping`);
       return '';
@@ -358,7 +360,7 @@ export class SlackService implements IMessengerService {
     try {
       const options: any = {
         channel: channelId,
-        text: text, // Removed *${effectiveSender}*: prefix
+        text: text,
         username: senderName || displayName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
@@ -494,11 +496,9 @@ export class SlackService implements IMessengerService {
   }
 
   private async processWelcomeMessage(markdown: string, channel: string): Promise<KnownBlock[]> {
-    // Split the markdown into content (before buttons) and buttons (at the end)
     const [content, buttonsPart] = markdown.split('\n## Actions\n');
     let blocks: KnownBlock[] = [];
 
-    // Process the content (before buttons) with Mack
     if (content) {
       const contentBlocks = await markdownToBlocks(content, {
         lists: {
@@ -508,7 +508,6 @@ export class SlackService implements IMessengerService {
       blocks = blocks.concat(contentBlocks.filter(b => b.type !== 'actions' && b.type !== 'section' && !('elements' in b)));
     }
 
-    // Process buttons (assumed to be at the end, under "## Actions")
     if (buttonsPart) {
       const buttonLines = buttonsPart.trim().split('\n').filter(line => line.trim().startsWith('- ['));
       const actionsBlock: KnownBlock = { type: 'actions', elements: [] };
@@ -516,13 +515,13 @@ export class SlackService implements IMessengerService {
         const actionMatch = line.match(/-\s*\[([^\]]+)\]\(action:([^\)]+)\)/);
         if (actionMatch) {
           const buttonText = actionMatch[1];
-          const actionId = actionMatch[2].replace('{channel}', channel); // Replace {channel} placeholder
+          const actionId = actionMatch[2].replace('{channel}', channel);
           (actionsBlock.elements as any[]).push({
             type: 'button',
             text: { type: 'plain_text', text: buttonText },
             action_id: actionId,
-            value: actionId, // Use actionId as value, mappable in SLACK_BUTTON_MAPPINGS
-            style: 'primary' // Makes buttons more visible in Slack
+            value: actionId,
+            style: 'primary'
           });
         }
       }
@@ -536,7 +535,6 @@ export class SlackService implements IMessengerService {
   }
 
   private async handleButtonClick(channel: string, userId: string, actionId: string): Promise<void> {
-    // Fetch button mappings from environment variables or configuration
     const buttonMappings = process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
     const mappings: { [key: string]: string } = JSON.parse(buttonMappings);
 
