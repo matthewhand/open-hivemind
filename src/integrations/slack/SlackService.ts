@@ -98,14 +98,13 @@ export class SlackService implements IMessengerService {
       const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
       const metadataWithMessages = {
         ...payload.metadata,
-        messages: payload.messages // Hack: Pass full messages array in metadata
+        messages: payload.messages
       };
 
       const llmProvider = getLlmProvider()[0];
       const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
       debug('LLM Response:', response);
 
-      // Convert LLM response Markdown to Slack Blocks
       const blocks = await markdownToBlocks(response, {
         lists: {
           checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ',
@@ -148,7 +147,7 @@ export class SlackService implements IMessengerService {
 
       let slackUser = {
         slackUserId: userId,
-        userName: 'User',
+        userName: 'User', // Changed from 'Unknown' to 'User'
         email: null as string | null,
         preferredName: null as string | null,
         isStaff: false
@@ -157,7 +156,7 @@ export class SlackService implements IMessengerService {
         const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId || '' });
         slackUser = {
           slackUserId: userId,
-          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User',
+          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User', // Changed fallback to 'User'
           email: userInfo.user?.profile?.email || null,
           preferredName: userInfo.user?.profile?.real_name || null,
           isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
@@ -242,7 +241,7 @@ export class SlackService implements IMessengerService {
       const channelContentStr = (channelContent?.content || '').replace(/\n/g, '\\n').replace(/"/g, '\\"');
       const metadata = {
         channelInfo: { channelId: channelInfo.channelId },
-        userInfo: { userName: slackUser.userName } // Use real username here
+        userInfo: { userName: slackUser.userName }
       };
 
       const messageAttachments = message.data.files?.map((file: any, index: number) => ({
@@ -284,7 +283,7 @@ export class SlackService implements IMessengerService {
 
     const metadata = message.data.metadata || {
       channelInfo: { channelId: message.getChannelId() },
-      userInfo: { userName: message.data.slackUser?.userName || 'User' } // Use slackUser.userName if available
+      userInfo: { userName: message.data.slackUser?.userName || 'User' } // Changed 'Unknown' to 'User'
     };
 
     const payload = {
