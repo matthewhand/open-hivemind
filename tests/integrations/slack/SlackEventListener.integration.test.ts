@@ -6,6 +6,7 @@ describe('SlackEventListener Integration', () => {
   const botToken = process.env.SLACK_BOT_TOKEN;
 
   beforeAll(() => {
+    console.log('SLACK_BOT_TOKEN from process.env:', process.env.SLACK_BOT_TOKEN);
     if (!botToken || !botToken.startsWith('xoxb-')) {
       console.log('Skipping SlackEventListener integration tests: Valid SLACK_BOT_TOKEN (xoxb-...) not provided');
       return;

@@ -1,6 +1,7 @@
 import { Application } from 'express';
 import express from 'express';
 import Debug from 'debug';
+import axios from 'axios';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import { SlackBotManager } from './SlackBotManager';
@@ -11,6 +12,7 @@ import slackConfig from '@src/config/slackConfig';
 import messageConfig from '@src/config/messageConfig';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
 import SlackMessage from './SlackMessage';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 
 const debug = Debug('app:SlackService');
 
@@ -87,7 +89,14 @@ export class SlackService implements IMessengerService {
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(async (message, history) => {
       const enrichedMessage = await this.enrichSlackMessage(message);
-      return handler(enrichedMessage, history);
+      const metadata = enrichedMessage.data;
+      const llmProvider = getLlmProvider()[0];
+      const response = await llmProvider.generateChatCompletion(enrichedMessage.getText(), history, metadata);
+      debug('LLM Response:', response);
+      const channelId = enrichedMessage.getChannelId();
+      const threadTs = enrichedMessage.data.thread_ts;
+      await this.sendMessageToChannel(channelId, response, undefined, threadTs);
+      return response;
     });
   }
 
@@ -96,6 +105,7 @@ export class SlackService implements IMessengerService {
     const channelId = message.getChannelId();
     const userId = message.getAuthorId();
     const threadTs = message.data.thread_ts;
+    const suppressCanvasContent = process.env.SUPPRESS_CANVAS_CONTENT === 'true';
 
     try {
       // Workspace info
@@ -127,19 +137,126 @@ export class SlackService implements IMessengerService {
         userName: userInfo.user?.name || 'Unknown',
         email: userInfo.user?.profile?.email,
         preferredName: userInfo.user?.profile?.real_name,
-        isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false,
-        dateOfBirth: undefined,
-        userCreatedDate: undefined
+        isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
       };
 
-      // Placeholder student data
-      const studentData = {
-        studentCourseAttempt: { courseCd: 'ENAB101', courseStatus: 'ENROLLED', commencedDate: '2024-02-01T00:00:00Z' },
-        unitAttempts: { unitAttempt: [] },
-        learningCanvas: {},
-        messageAttachments: message.data.files || [],
-        messageReactions: message.data.reactions || []
-      };
+      // Canvas content
+      let canvas = message.data.canvas ? { ...message.data.canvas } : undefined;
+      if (!suppressCanvasContent) {
+        try {
+          // Fetch all canvases in the channel
+          const listResponse = await botInfo.webClient.files.list({
+            types: 'canvas',
+            channel: channelId
+          });
+          debug('files.list response:', JSON.stringify(listResponse, null, 2));
+
+          if (listResponse.ok && listResponse.files?.length) {
+            // Find the channel canvas
+            const targetCanvas = listResponse.files.find(f => f.linked_channel_id === channelId) || listResponse.files[0];
+            debug('Selected canvas from files.list:', targetCanvas?.id, targetCanvas?.url_private);
+
+            if (targetCanvas && targetCanvas.id) {
+              const canvasInfo = await botInfo.webClient.files.info({ file: targetCanvas.id });
+              debug('files.info response:', JSON.stringify(canvasInfo, null, 2));
+              if (canvasInfo.ok) {
+                debug('Canvas content field:', canvasInfo.content || 'Not present');
+                if (canvasInfo.file?.filetype === 'canvas' || canvasInfo.file?.filetype === 'quip') {
+                  canvas = {
+                    ...targetCanvas,
+                    content: canvasInfo.content || 'No content returned by API',
+                    info: canvasInfo.file
+                  };
+                  // If no content, try fetching from url_private as a fallback
+                  if (!canvasInfo.content && canvasInfo.file?.url_private) {
+                    try {
+                      const contentResponse = await axios.get(canvasInfo.file.url_private, {
+                        headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` }
+                      });
+                      canvas.content = contentResponse.data || 'Failed to fetch content from URL';
+                      debug('Fetched content from url_private:', canvas.content.substring(0, 50) + '...');
+                    } catch (fetchError) {
+                      debug('Failed to fetch content from url_private:', fetchError);
+                      canvas.content = 'Failed to fetch content from URL';
+                    }
+                  }
+                } else if (canvasInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(canvasInfo.file.filetype || '')) {
+                  const fileResponse = await axios.get(canvasInfo.file.url_private!, {
+                    headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                    responseType: 'arraybuffer'
+                  });
+                  const base64Content = Buffer.from(fileResponse.data).toString('base64');
+                  canvas = {
+                    ...targetCanvas,
+                    content: `data:${canvasInfo.file.mimetype};base64,${base64Content}`,
+                    info: canvasInfo.file
+                  };
+                  debug('Binary canvas content base64-encoded:', canvas.content.substring(0, 50) + '...');
+                } else {
+                  throw new Error('Unsupported file type: ' + (canvasInfo.file?.filetype || 'unknown'));
+                }
+              } else {
+                throw new Error(canvasInfo.error || 'Unknown error fetching canvas info');
+              }
+              debug('Canvas content retrieved:', canvas.content);
+            } else {
+              debug('No valid canvas found in files.list');
+            }
+          } else {
+            debug('No canvases found in files.list for channel:', channelId);
+            canvas = { contentUrl: process.env.SLACK_CANVAS_URL || 'https://une-n70.slack.com/canvas/C07GNG6MAV9' };
+            const fallbackId = `F${canvas.contentUrl.split('/').pop()}`;
+            const canvasInfo = await botInfo.webClient.files.info({ file: fallbackId });
+            debug('Fallback files.info response:', JSON.stringify(canvasInfo, null, 2));
+            if (canvasInfo.ok) {
+              if (canvasInfo.file?.filetype === 'canvas' || canvasInfo.file?.filetype === 'quip') {
+                canvas = {
+                  ...canvas,
+                  content: canvasInfo.content || 'No content returned by API',
+                  info: canvasInfo.file
+                };
+              } else if (canvasInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(canvasInfo.file.filetype || '')) {
+                const fileResponse = await axios.get(canvasInfo.file.url_private!, {
+                  headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                  responseType: 'arraybuffer'
+                });
+                const base64Content = Buffer.from(fileResponse.data).toString('base64');
+                canvas = {
+                  ...canvas,
+                  content: `data:${canvasInfo.file.mimetype};base64,${base64Content}`,
+                  info: canvasInfo.file
+                };
+                debug('Fallback binary canvas content base64-encoded:', canvas.content.substring(0, 50) + '...');
+              } else {
+                canvas.content = 'Fallback canvas not found';
+                debug('Fallback canvas fetch failed:', canvasInfo.error || 'Unknown error');
+              }
+            } else {
+              canvas.content = 'Fallback canvas fetch failed';
+              debug('Fallback canvas fetch failed:', canvasInfo.error || 'Unknown error');
+            }
+          }
+        } catch (error) {
+          debug(`Failed to retrieve Canvas content: ${error}`);
+          canvas = canvas || { contentUrl: process.env.SLACK_CANVAS_URL || 'https://une-n70.slack.com/canvas/C07GNG6MAV9' };
+          canvas.content = 'Error retrieving content';
+        }
+      }
+
+      const messageAttachments = message.data.files?.map((file: any, index: number) => ({
+        id: index + 9999,
+        fileName: file.name,
+        fileType: file.filetype,
+        url: file.url_private,
+        size: file.size
+      })) || [];
+
+      const messageReactions = message.data.reactions?.map((reaction: any) => ({
+        reaction: reaction.name,
+        reactedUserId: reaction.users[0],
+        messageId: message.getMessageId(),
+        messageChannelId: channelId
+      })) || [];
 
       message.data = {
         ...message.data,
@@ -147,8 +264,11 @@ export class SlackService implements IMessengerService {
         channelInfo,
         threadInfo,
         slackUser,
-        ...studentData
+        canvas,
+        messageAttachments,
+        messageReactions
       };
+      debug('Enriched Message Data:', JSON.stringify(message.data, null, 2));
     } catch (error) {
       debug(`Failed to enrich message: ${error}`);
     }
