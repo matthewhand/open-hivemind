@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
+import { SlackService } from './SlackService';
+
 const debug = Debug('app:SlackEventProcessor');
 
 export class SlackEventProcessor {
@@ -23,7 +25,19 @@ export class SlackEventProcessor {
           res.status(200).send();
           return;
         }
-        // Insert your event processing logic here.
+
+        // Handle bot and user join events for welcome messages
+        const slackService = SlackService.getInstance();
+        if (event.type === 'bot_joined_channel') {
+          debug(`Bot joined channel ${event.channel}, sending welcome message`);
+          await slackService.sendBotWelcomeMessage(event.channel);
+        } else if (event.type === 'member_joined_channel') {
+          debug(`User ${event.user} joined channel ${event.channel}, sending welcome message`);
+          const userInfo = await slackService.getBotManager().getAllBots()[0].webClient.users.info({ user: event.user });
+          const userName = userInfo.user?.name || 'New User';
+          await slackService.sendUserWelcomeMessage(event.channel, userName);
+        }
+
         debug(`Processing event: ${JSON.stringify(event)}`);
         this.lastEventTs = event.event_ts;
       }
