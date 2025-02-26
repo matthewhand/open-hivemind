@@ -91,6 +91,10 @@ export class SlackService implements IMessengerService {
 
   public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
     this.botManager.setMessageHandler(async (message, history) => {
+      if (!message.getText() || message.getText().trim() === '') {
+        debug('Empty message text detected, skipping response.');
+        return '';
+      }
       const enrichedMessage = await this.enrichSlackMessage(message);
       const payload = await this.constructPayload(enrichedMessage, history);
 
@@ -104,16 +108,19 @@ export class SlackService implements IMessengerService {
       const llmProvider = getLlmProvider()[0];
       const response = await llmProvider.generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
       debug('LLM Response:', response);
+      debug('enrichedMessage.data.slackUser:', enrichedMessage.data.slackUser);
 
       const blocks = await markdownToBlocks(response, {
         lists: {
           checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ',
         },
       });
-
+      const userName = enrichedMessage.data.slackUser?.userName || 'User';
+      const modifiedResponse = `Hi ${userName}, ${response}`;
       const channelId = enrichedMessage.getChannelId();
       const threadTs = enrichedMessage.data.thread_ts;
-      await this.sendMessageToChannel(channelId, response, undefined, threadTs, blocks);
+      await this.sendMessageToChannel(channelId, modifiedResponse, undefined, threadTs, blocks);
+      return modifiedResponse;
       return response;
     });
   }
@@ -121,7 +128,10 @@ export class SlackService implements IMessengerService {
   private async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
     const botInfo = this.botManager.getAllBots()[0];
     const channelId = message.getChannelId();
-    const userId = message.getAuthorId();
+    let userId = message.getAuthorId();
+    if ((userId === 'unknown' || !userId) && message.data.user) {
+      userId = message.data.user;
+    }
     debug('User ID from message:', userId); // Debug userId
     const threadTs = message.data.thread_ts;
     const suppressCanvasContent = process.env.SUPPRESS_CANVAS_CONTENT === 'true';
@@ -277,7 +287,8 @@ export class SlackService implements IMessengerService {
         messageReactions
       };
       debug('Enriched Message Data:', JSON.stringify(message.data, null, 2));
-    } catch (error) {
+      debug('Metadata User Info:', JSON.stringify(message.data.metadata.userInfo));
+     } catch (error) {
       debug(`Failed to enrich message: ${error}`);
     }
 
