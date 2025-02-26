@@ -122,6 +122,7 @@ export class SlackService implements IMessengerService {
     const botInfo = this.botManager.getAllBots()[0];
     const channelId = message.getChannelId();
     const userId = message.getAuthorId();
+    debug('User ID from message:', userId); // Debug userId
     const threadTs = message.data.thread_ts;
     const suppressCanvasContent = process.env.SUPPRESS_CANVAS_CONTENT === 'true';
 
@@ -147,20 +148,25 @@ export class SlackService implements IMessengerService {
 
       let slackUser = {
         slackUserId: userId,
-        userName: 'User', // Changed from 'Unknown' to 'User'
+        userName: 'User',
         email: null as string | null,
         preferredName: null as string | null,
         isStaff: false
       };
       try {
-        const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId || '' });
-        slackUser = {
-          slackUserId: userId,
-          userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User', // Changed fallback to 'User'
-          email: userInfo.user?.profile?.email || null,
-          preferredName: userInfo.user?.profile?.real_name || null,
-          isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
-        };
+        if (userId && userId !== 'unknown' && userId.startsWith('U')) { // Only call if valid ID
+          const userInfo: SlackUserInfo = await botInfo.webClient.users.info({ user: userId });
+          slackUser = {
+            slackUserId: userId,
+            userName: userInfo.user?.profile?.real_name || userInfo.user?.name || 'User',
+            email: userInfo.user?.profile?.email || null,
+            preferredName: userInfo.user?.profile?.real_name || null,
+            isStaff: userInfo.user?.is_admin || userInfo.user?.is_owner || false
+          };
+          debug('Fetched user info:', slackUser);
+        } else {
+          debug('Invalid userId, skipping users.info call:', userId);
+        }
       } catch (error) {
         debug(`Failed to fetch user info for userId ${userId}: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -283,7 +289,7 @@ export class SlackService implements IMessengerService {
 
     const metadata = message.data.metadata || {
       channelInfo: { channelId: message.getChannelId() },
-      userInfo: { userName: message.data.slackUser?.userName || 'User' } // Changed 'Unknown' to 'User'
+      userInfo: { userName: message.data.slackUser?.userName || 'User' }
     };
 
     const payload = {
