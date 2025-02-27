@@ -42,11 +42,14 @@ export class SlackWelcomeHandler {
     if (!llmProvider) {
       debug('Warning: No LLM provider available, using fallback quote');
     }
-    const prompt = `Provide a thought-provoking, made-up quote about the dynamics of Slack channel #${channelName}.`;
+    // Clarify this is a channel welcome, no user-specific greeting
+    const prompt = `Provide a thought-provoking, made-up quote about the dynamics of Slack channel #${channelName}. Do not include any user-specific greetings or placeholders like slackUser.userName—just focus on the channel itself.`;
     let llmText = '';
     try {
       llmText = await llmProvider.generateChatCompletion(prompt, [], {});
-      debug(`Generated LLM text: ${llmText}`);
+      debug(`Raw LLM text: ${llmText}`);
+      // Strip any accidental user references
+      llmText = llmText.replace(/slackUser\.userName/g, 'matey');
     } catch (error) {
       debug(`Failed to generate LLM quote: ${error}`);
       llmText = "Welcome to the channel! (No quote available)";
@@ -54,6 +57,7 @@ export class SlackWelcomeHandler {
 
     const attributions = ["ChatGPT", "Claude", "Gemini"];
     const chosenAttribution = attributions[Math.floor(Math.random() * attributions.length)];
+    // Generic greeting, no user-specific reference
     const welcomeText = `*Welcome to #${channelName}*\n\n${llmText.trim() || '"Writing is fun and easy"'}\n\n— ${chosenAttribution}`;
     const textBlock: KnownBlock = {
       type: 'section',
@@ -225,11 +229,11 @@ export class SlackWelcomeHandler {
     debug('Entering sendMessageToChannel (internal)', { channelId, text: text.substring(0, 50) + '...', senderName, threadId });
     const rawText = text;
     const decodedText = rawText
-      .replace(/&#39;|'|'/g, "'")  // Catch numeric and named apostrophes
-      .replace(/&#34;|'|"/g, '"')  // Catch numeric and named quotes
-      .replace(/&#60;|<|</g, '<')    // Less-than
-      .replace(/&#62;|>|>/g, '>')    // Greater-than
-      .replace(/&#38;|&|&/g, '&');  // Ampersand
+      .replace(/'|'|'/g, "'")  // Catch numeric and named apostrophes
+      .replace(/"|'|"/g, '"')  // Catch numeric and named quotes
+      .replace(/<|<|</g, '<')    // Less-than
+      .replace(/>|>|>/g, '>')    // Greater-than
+      .replace(/&|&|&/g, '&');  // Ampersand
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
