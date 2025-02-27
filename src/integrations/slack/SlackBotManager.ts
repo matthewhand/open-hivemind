@@ -71,14 +71,25 @@ export class SlackBotManager {
     const allBotUserIds = this.slackBots.map(b => b.botUserId).filter(Boolean) as string[];
 
     if (this.mode === 'socket' && primaryBot.socketClient) {
+      // Connection state listeners
+      primaryBot.socketClient.on('connected', () => debug('Socket Mode connected'));
+      primaryBot.socketClient.on('disconnected', () => debug('Socket Mode disconnected'));
+      primaryBot.socketClient.on('error', (error) => debug('Socket Mode error:', error));
+
+      // General event listener
+      primaryBot.socketClient.on('slack_event', (event) => {
+        debug(`General Slack event received: ${JSON.stringify(event)}`);
+      });
+
+      // Message-specific listener with existing logic
       primaryBot.socketClient.on('message', async ({ event }) => {
-        debug(`Socket event received: ${JSON.stringify(event)}`);
+        debug(`Socket message event received: ${JSON.stringify(event)}`);
         if (!event.text || event.subtype === 'bot_message' || allBotUserIds.includes(event.user)) {
-          debug('Event filtered out: no text, bot message, or self-message');
+          debug('Message event filtered out: no text, bot message, or self-message');
           return;
         }
         if (event.event_ts === this.lastEventTs) {
-          debug('Duplicate event ignored:', event.event_ts);
+          debug('Duplicate message event ignored:', event.event_ts);
           return;
         }
         debug(`Primary bot received channel message: ${event.text}`);
@@ -87,14 +98,22 @@ export class SlackBotManager {
           const history = this.includeHistory ? await this.fetchMessagesForBot(primaryBot, event.channel, 10) : [];
           await this.messageHandler(slackMessage, history);
         } else {
-          debug('No message handler set for event');
+          debug('No message handler set for message event');
         }
         this.lastEventTs = event.event_ts;
       });
+
       try {
         debug('Starting primary socket client');
         await primaryBot.socketClient.start();
         debug('Primary socket client started for channels');
+        // Periodic connection status check
+        setInterval(() => {
+          if (primaryBot.socketClient) {
+            // Use event-based status since isConnected isn't available
+            debug('Socket Mode connection status checked - relying on connected/disconnected events');
+          }
+        }, 5000);
       } catch (error) {
         debug('Failed to start primary socket client:', error);
         throw error;
@@ -103,14 +122,18 @@ export class SlackBotManager {
 
     for (const botInfo of this.slackBots) {
       if (this.mode === 'socket' && botInfo.socketClient) {
+        botInfo.socketClient.on('slack_event', (event) => {
+          debug(`General Slack event received for DM bot ${botInfo.botUserName}: ${JSON.stringify(event)}`);
+        });
+
         botInfo.socketClient.on('message', async ({ event }) => {
-          debug(`Socket event received for DM: ${JSON.stringify(event)}`);
+          debug(`Socket message event received for DM: ${JSON.stringify(event)}`);
           if (event.channel_type !== 'im' || !event.text || event.subtype === 'bot_message' || event.user === botInfo.botUserId) {
-            debug('DM event filtered out');
+            debug('DM message event filtered out');
             return;
           }
           if (event.event_ts === this.lastEventTs) {
-            debug('Duplicate DM event ignored:', event.event_ts);
+            debug('Duplicate DM message event ignored:', event.event_ts);
             return;
           }
           debug(`${botInfo.botUserName} received DM: ${event.text}`);
@@ -120,6 +143,7 @@ export class SlackBotManager {
           }
           this.lastEventTs = event.event_ts;
         });
+
         if (botInfo !== primaryBot) {
           try {
             debug(`Starting DM socket client for ${botInfo.botUserName}`);
