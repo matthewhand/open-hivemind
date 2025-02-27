@@ -1,35 +1,56 @@
+import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
 import Debug from 'debug';
 
-const debug = Debug('app:utils:environmentUtils');
+const debug = Debug('app:debugEnvVars');
 
-export function debugEnvVars(): void {
-    const messageProvider = process.env.MESSAGE_PROVIDER || 'discord';
-    const llmProvider = process.env.LLM_PROVIDER || 'openai';
-
-    // Required environment variables based on MESSAGE and LLM values
-    const requiredEnvVars: string[] = [];
-
-    if (messageProvider === 'discord') {
-        requiredEnvVars.push('DISCORD_BOT_TOKEN', 'DISCORD_CLIENT_ID', 'DISCORD_GUILD_ID');
+export function debugEnvVars() {
+  debug('=== Environment Variables ===');
+  
+  // Iterate over all environment variables
+  Object.keys(process.env).forEach(key => {
+    if (key === 'BOT_DEBUG_MODE') {
+      return; // Skip BOT_DEBUG_MODE
     }
-
-    if (llmProvider === 'openai') {
-        requiredEnvVars.push('OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL');
+    let value = process.env[key] || '';
+    const upperKey = key.toUpperCase();
+    // Redact variables containing KEY, TOKEN, or ending with SECRET
+    if (upperKey.includes('KEY') || upperKey.includes('TOKEN') || upperKey.endsWith('SECRET')) {
+      value = redactSensitiveInfo(value, 4);
     }
+    debug(`${key} = ${value}`);
+  });
 
-    // Debug required variables if in debug mode
-    if (process.env.BOT_DEBUG_MODE && process.env.BOT_DEBUG_MODE.toLowerCase() === 'true') {
-        requiredEnvVars.forEach(varName => {
-            const value = process.env[varName];
-            debug(`${varName}: ${value}`);
-        });
-    }
+  // Check for required environment variables based on configured providers
+  const requiredEnvVars = new Set<string>();
+  const messageProvider = process.env['MESSAGE_PROVIDER'] || '';
+  const llmProvider = process.env['LLM_PROVIDER'] || '';
 
-    // Check for missing required variables
-    const unsetRequiredVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  if (messageProvider.toLowerCase().includes('discord')) {
+    requiredEnvVars.add('DISCORD_BOT_TOKEN');
+    requiredEnvVars.add('DISCORD_CLIENT_ID');
+    requiredEnvVars.add('DISCORD_GUILD_ID');
+  }
+  if (messageProvider.toLowerCase().includes('slack')) {
+    requiredEnvVars.add('SLACK_BOT_TOKEN');
+    requiredEnvVars.add('SLACK_APP_TOKEN');
+    requiredEnvVars.add('SLACK_SIGNING_SECRET');
+  }
+  if (llmProvider.toLowerCase().includes('openai')) {
+    requiredEnvVars.add('OPENAI_API_KEY');
+    requiredEnvVars.add('OPENAI_BASE_URL');
+    requiredEnvVars.add('OPENAI_MODEL');
+  }
+  if (llmProvider.toLowerCase().includes('flowise')) {
+    requiredEnvVars.add('FLOWISE_API_KEY');
+    requiredEnvVars.add('FLOWISE_API_ENDPOINT');
+  }
 
-    if (unsetRequiredVars.length > 0) {
-        console.error(`The following required environment variables are not set: ${unsetRequiredVars.join(', ')}`);
-        process.exit(1);
-    }
+  if (requiredEnvVars.size > 0) {
+    debug('=== Checking for Missing Required Environment Variables ===');
+    requiredEnvVars.forEach(varName => {
+      if (!process.env[varName]) {
+        debug(`WARNING: Required environment variable ${varName} is missing!`);
+      }
+    });
+  }
 }
