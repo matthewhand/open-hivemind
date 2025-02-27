@@ -47,14 +47,32 @@ const slackConfig = convict({
   SLACK_USER_JOIN_CHANNEL_MESSAGE: {
     doc: 'Markdown welcome message for a user joining a channel (use {user} and {channel} for dynamic values)',
     format: String,
-    default: '# Welcome, {user}, to the {channel} channel! :wave:\n\n',
+    default: `# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](${process.env.WELCOME_RESOURCE_URL || 'https://university.example.com/resources'})\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})`,
     env: 'SLACK_USER_JOIN_CHANNEL_MESSAGE'
+  },
+  SLACK_BOT_LEARN_MORE_MESSAGE: {
+    doc: 'Message sent when "Learn More" button is clicked after bot joins a channel (use {channel} for dynamic channel ID)',
+    format: String,
+    default: 'Here’s more info about channel {channel}!',
+    env: 'SLACK_BOT_LEARN_MORE_MESSAGE'
   },
   SLACK_BUTTON_MAPPINGS: {
     doc: 'JSON string mapping button action IDs to hardcoded user messages (e.g., {"action_id": "message"})',
     format: String,
-    default: '{}',
+    default: '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
     env: 'SLACK_BUTTON_MAPPINGS'
+  },
+  WELCOME_RESOURCE_URL: {
+    doc: 'URL for welcome resources linked in user join message',
+    format: String,
+    default: 'https://university.example.com/resources',
+    env: 'WELCOME_RESOURCE_URL'
+  },
+  REPORT_ISSUE_URL: {
+    doc: 'URL for reporting issues with the bot',
+    format: String,
+    default: 'https://university.example.com/report-issue',
+    env: 'REPORT_ISSUE_URL'
   }
 });
 
