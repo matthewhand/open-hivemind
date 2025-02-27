@@ -16,9 +16,10 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 
 const indexLog = debug('app:index');
 const app = express();
+debug("Messenger services are being initialized...");
 
 const healthRoute = healthRouteModule.default || healthRouteModule;
-const llmConfig = llmConfigModule.default || llmConfigModule;
+// const llmConfig = llmConfigModule.default || llmConfigModule;
 const messageConfig = messageConfigModule.default || messageConfigModule;
 const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
@@ -63,8 +64,22 @@ async function main() {
     console.log('Message Providers in use:', messageProviders.join(', ') || 'Default Message Service');
 
     const messengerServices = messengerProviderModule.getMessengerProvider();
-    for (const messengerService of messengerServices) {
-        await startBot(messengerService);
+    // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
+    const filteredMessengers = messengerServices.filter((service: any) => {
+        // If providerName is not defined, assume 'slack' by default.
+        const providerName = service.providerName || 'slack';
+        return messageProviders.includes(providerName.toLowerCase());
+    });
+    if (filteredMessengers.length > 0) {
+        indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
+        for (const service of filteredMessengers) {
+            await startBot(service);
+        }
+    } else {
+        indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
+        for (const service of messengerServices) {
+            await startBot(service);
+        }
     }
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
