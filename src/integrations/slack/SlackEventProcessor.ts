@@ -1,50 +1,186 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
+import axios from 'axios';
+import slackConfig from '@src/config/slackConfig';
 import { SlackService } from './SlackService';
+import SlackMessage from './SlackMessage';
+import { IMessage } from '@message/interfaces/IMessage';
+import { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackEventProcessor');
 
 export class SlackEventProcessor {
+  private slackService: SlackService;
   private lastEventTs: string | null = null;
+  private deletedMessages: Set<string> = new Set();
 
-  public async process(req: Request, res: Response): Promise<void> {
+  constructor(slackService: SlackService) {
+    if (!slackService) {
+      debug('Error: SlackService instance required');
+      throw new Error('SlackService instance required');
+    }
+    this.slackService = slackService;
+    debug('SlackEventProcessor initialized');
+  }
+
+  public async handleActionRequest(req: Request, res: Response): Promise<void> {
+    debug('Entering handleActionRequest', { method: req.method, body: req.body ? JSON.stringify(req.body).substring(0, 100) + '...' : 'empty' });
     try {
-      let body = req.body;
-      if (typeof body === 'string') {
-        body = JSON.parse(body);
+      let body = req.body || {};
+      if (typeof body === 'string') body = JSON.parse(body);
+      debug(`Parsed body: type=${body.type}, event=${body.event ? JSON.stringify(body.event).substring(0, 50) + '...' : 'none'}`);
+
+      if (body.type === 'url_verification' && body.challenge) {
+        debug(`URL verification request, challenge: ${body.challenge}`);
+        res.set('Content-Type', 'text/plain');
+        res.status(200).send(body.challenge);
+        return;
       }
+
+      if (body.payload) {
+        const payload = typeof body.payload === 'string' ? JSON.parse(body.payload) : body.payload;
+        debug(`Payload received: ${JSON.stringify(payload).substring(0, 100)}...`);
+        if (!payload || !payload.actions || !Array.isArray(payload.actions) || payload.actions.length === 0) {
+          debug('Invalid payload: missing or malformed actions');
+          res.status(400).send('Bad Request');
+          return;
+        }
+        await this.slackService.getBotManager().handleMessage(new SlackMessage(payload.text || '', payload.channel?.id || '', payload));
+        res.status(200).send();
+        return;
+      }
+
       if (body.type === 'event_callback') {
         const event = body.event;
+        debug(`Event callback: type=${event.type}, subtype=${event.subtype || 'none'}, ts=${event.event_ts}`);
+
         if (event.subtype === 'bot_message') {
-          debug('Ignoring bot message.');
+          debug('Ignoring bot_message event');
+          res.status(200).send();
+          return;
+        }
+        if (event.subtype === 'message_deleted' && event.previous_message?.ts) {
+          this.deletedMessages.add(event.previous_message.ts);
+          debug(`Marked message as deleted: ts=${event.previous_message.ts}, total deleted=${this.deletedMessages.size}`);
           res.status(200).send();
           return;
         }
         if (event.event_ts && this.lastEventTs === event.event_ts) {
-          debug(`Duplicate event detected (event_ts: ${event.event_ts}). Ignoring.`);
+          debug(`Duplicate event detected: event_ts=${event.event_ts}, lastEventTs=${this.lastEventTs}`);
           res.status(200).send();
           return;
         }
 
-        // Handle bot and user join events for welcome messages
-        const slackService = SlackService.getInstance();
-        if (event.type === 'bot_joined_channel') {
-          debug(`Bot joined channel ${event.channel}, sending welcome message`);
-          await slackService.sendBotWelcomeMessage(event.channel);
-        } else if (event.type === 'member_joined_channel') {
-          debug(`User ${event.user} joined channel ${event.channel}, sending welcome message`);
-          const userInfo = await slackService.getBotManager().getAllBots()[0].webClient.users.info({ user: event.user });
-          const userName = userInfo.user?.name || 'New User';
-          await slackService.sendUserWelcomeMessage(event.channel, userName);
-        }
-
-        debug(`Processing event: ${JSON.stringify(event)}`);
         this.lastEventTs = event.event_ts;
+        debug(`Updated lastEventTs: ${this.lastEventTs}`);
+
+        if (event.type === 'message' && !event.subtype) {
+          debug(`Processing message event: text="${event.text}", channel=${event.channel}`);
+          const message = new SlackMessage(event.text || '', event.channel, event);
+          const history: IMessage[] = [];
+          await this.slackService.getBotManager().handleMessage(message, history);
+        }
+        res.status(200).send();
+        return;
       }
-      res.status(200).send();
+
+      debug('Unhandled request type');
+      res.status(400).send('Bad Request');
     } catch (error) {
-      debug(`Error processing event: ${error}`);
+      debug(`Error handling action request: ${error}`);
       res.status(400).send('Bad Request');
     }
+  }
+
+  public async handleHelpRequest(req: Request, res: Response): Promise<void> {
+    debug('Entering handleHelpRequest', { token: req.body.token ? 'provided' : 'missing', user_id: req.body.user_id });
+    const token = req.body.token;
+    const expectedToken = slackConfig.get<any>('SLACK_HELP_COMMAND_TOKEN') as string;
+
+    if (!token || token !== expectedToken) {
+      debug(`Unauthorized request: received token=${token}, expected=${expectedToken ? 'set' : 'unset'}`);
+      res.status(401).send('Unauthorized');
+      return;
+    }
+
+    const userId = req.body.user_id;
+    if (!userId) {
+      debug('Error: Missing user_id in request body');
+      res.status(400).send('Missing user ID');
+      return;
+    }
+
+    // Acknowledge the command immediately
+    res.status(200).send();
+
+    // Send DM asynchronously
+    setImmediate(async () => {
+      try {
+        const channels = slackConfig.get('SLACK_JOIN_CHANNELS') || 'None';
+        const mode = slackConfig.get('SLACK_MODE') || 'None';
+        const defaultChannel = slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || 'None';
+        const helpText = `*Hi <@${userId}>, here’s my configuration:*\n- *Channels joined:* ${channels}\n- *Mode:* ${mode}\n- *Default Channel:* ${defaultChannel}\n\nHow can I assist you?`;
+
+        const helpBlocks: KnownBlock[] = [
+          {
+            type: 'section',
+            text: { type: 'mrkdwn', text: helpText }
+          },
+          {
+            type: 'actions',
+            elements: [
+              { type: 'button', text: { type: 'plain_text', text: 'Learning Objectives' }, action_id: `learn_objectives_${userId}`, value: 'learn_objectives' },
+              { type: 'button', text: { type: 'plain_text', text: 'How-To' }, action_id: `how_to_${userId}`, value: 'how_to' },
+              { type: 'button', text: { type: 'plain_text', text: 'Contact Support' }, action_id: `contact_support_${userId}`, value: 'contact_support' },
+              { type: 'button', text: { type: 'plain_text', text: 'Report Issue' }, action_id: `report_issue_${userId}`, value: 'report_issue' }
+            ]
+          }
+        ];
+
+        const botInfo = this.slackService.getBotManager().getAllBots()[0];
+        await botInfo.webClient.chat.postMessage({
+          channel: userId,
+          text: helpText,
+          blocks: helpBlocks,
+          username: 'Madgwick AI',
+          icon_emoji: ':robot_face:'
+        });
+        debug(`Sent DM help message with buttons to user ${userId}`);
+      } catch (error) {
+        debug(`Error sending help DM to user ${userId}: ${error}`);
+      }
+    });
+  }
+
+  public async debugEventPermissions(): Promise<void> {
+    debug('Entering debugEventPermissions');
+    const bots = this.slackService.getBotManager().getAllBots();
+    debug(`Checking permissions for ${bots.length} bots`);
+
+    for (const botInfo of bots) {
+      const botId = botInfo.botUserId || botInfo.botToken.substring(0, 8);
+      try {
+        const authTest = await botInfo.webClient.auth.test();
+        debug(`Bot ${botId} auth test: ${JSON.stringify(authTest)}`);
+      } catch (error) {
+        debug(`Error running auth test for bot ${botId}: ${error}`);
+      }
+      try {
+        const channelsResponse = await botInfo.webClient.conversations.list({ types: 'public_channel,private_channel' });
+        if (channelsResponse.ok) {
+          debug(`Bot ${botId} channel list retrieved; total channels: ${channelsResponse.channels?.length || 0}`);
+        } else {
+          debug(`Bot ${botId} failed to retrieve channels list: ${channelsResponse.error}`);
+        }
+      } catch (error) {
+        debug(`Error retrieving channels for bot ${botId}: ${error}`);
+      }
+    }
+  }
+
+  public hasDeletedMessage(ts: string): boolean {
+    const isDeleted = this.deletedMessages.has(ts);
+    debug(`Checking if message is deleted: ts=${ts}, isDeleted=${isDeleted}`);
+    return isDeleted;
   }
 }
