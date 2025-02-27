@@ -21,9 +21,10 @@ interface SlackBotInfo {
 export class SlackBotManager {
   private slackBots: SlackBotInfo[] = [];
   private mode: 'socket' | 'rtm';
-  public messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
+  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
   private includeHistory: boolean = process.env.SLACK_INCLUDE_HISTORY === 'true';
-  private lastEventTs: string | null = null;
+  private processedEvents: Set<string> = new Set();
+  private lastEventTsByChannel: Map<string, string> = new Map();
 
   constructor(botTokens: string[], appTokens: string[], signingSecrets: string[], mode: 'socket' | 'rtm') {
     debug('Entering constructor');
@@ -71,27 +72,42 @@ export class SlackBotManager {
     const allBotUserIds = this.slackBots.map(b => b.botUserId).filter(Boolean) as string[];
 
     if (this.mode === 'socket' && primaryBot.socketClient) {
-      // Connection state listeners
       primaryBot.socketClient.on('connected', () => debug('Socket Mode connected'));
-      primaryBot.socketClient.on('disconnected', () => debug('Socket Mode disconnected'));
+      primaryBot.socketClient.on('disconnected', () => debug('Socket Mode disconnected - check connectivity'));
       primaryBot.socketClient.on('error', (error) => debug('Socket Mode error:', error));
 
-      // General event listener
       primaryBot.socketClient.on('slack_event', (event) => {
-        debug(`General Slack event received: ${JSON.stringify(event)}`);
+        const eventId = event.body?.event_id || event.event_ts;
+        debug(`General Slack event received: type=${event.type || event.body?.event?.type}, event_id=${eventId}`);
+        if (this.processedEvents.has(eventId)) {
+          debug(`Duplicate general event skipped: event_id=${eventId}`);
+          return;
+        }
+        this.processedEvents.add(eventId);
       });
 
-      // Message-specific listener with existing logic
       primaryBot.socketClient.on('message', async ({ event }) => {
         debug(`Socket message event received: ${JSON.stringify(event)}`);
+        const eventId = event.event_ts;
+        if (this.processedEvents.has(eventId)) {
+          debug(`Duplicate message event skipped: event_id=${eventId}`);
+          return;
+        }
+
         if (!event.text || event.subtype === 'bot_message' || allBotUserIds.includes(event.user)) {
           debug('Message event filtered out: no text, bot message, or self-message');
           return;
         }
-        if (event.event_ts === this.lastEventTs) {
-          debug('Duplicate message event ignored:', event.event_ts);
+
+        const channel = event.channel || 'unknown';
+        const lastTs = this.lastEventTsByChannel.get(channel);
+        if (lastTs === event.event_ts) {
+          debug(`Duplicate message TS detected in channel ${channel}: ${event.event_ts}`);
           return;
         }
+        this.lastEventTsByChannel.set(channel, event.event_ts);
+        this.processedEvents.add(eventId);
+
         debug(`Primary bot received channel message: ${event.text}`);
         if (this.messageHandler) {
           const slackMessage = new SlackMessage(event.text, event.channel, event);
@@ -100,20 +116,12 @@ export class SlackBotManager {
         } else {
           debug('No message handler set for message event');
         }
-        this.lastEventTs = event.event_ts;
       });
 
       try {
         debug('Starting primary socket client');
         await primaryBot.socketClient.start();
         debug('Primary socket client started for channels');
-        // Periodic connection status check
-        setInterval(() => {
-          if (primaryBot.socketClient) {
-            // Use event-based status since isConnected isn't available
-            debug('Socket Mode connection status checked - relying on connected/disconnected events');
-          }
-        }, 5000);
       } catch (error) {
         debug('Failed to start primary socket client:', error);
         throw error;
@@ -123,25 +131,47 @@ export class SlackBotManager {
     for (const botInfo of this.slackBots) {
       if (this.mode === 'socket' && botInfo.socketClient) {
         botInfo.socketClient.on('slack_event', (event) => {
+          const eventId = event.body?.event_id || event.event_ts;
+          // Only process message events for DMs here, skip interactive payloads
+          if (event.type !== 'message') {
+            debug(`Skipping non-message event for DM bot ${botInfo.botUserName}: type=${event.type}`);
+            return;
+          }
           debug(`General Slack event received for DM bot ${botInfo.botUserName}: ${JSON.stringify(event)}`);
+          if (this.processedEvents.has(eventId)) {
+            debug(`Duplicate DM general event skipped: event_id=${eventId}`);
+            return;
+          }
+          this.processedEvents.add(eventId);
         });
 
         botInfo.socketClient.on('message', async ({ event }) => {
           debug(`Socket message event received for DM: ${JSON.stringify(event)}`);
+          const eventId = event.event_ts;
+          if (this.processedEvents.has(eventId)) {
+            debug(`Duplicate DM message event skipped: event_id=${eventId}`);
+            return;
+          }
+
           if (event.channel_type !== 'im' || !event.text || event.subtype === 'bot_message' || event.user === botInfo.botUserId) {
             debug('DM message event filtered out');
             return;
           }
-          if (event.event_ts === this.lastEventTs) {
-            debug('Duplicate DM message event ignored:', event.event_ts);
+
+          const channel = event.channel || 'unknown';
+          const lastTs = this.lastEventTsByChannel.get(channel);
+          if (lastTs === event.event_ts) {
+            debug(`Duplicate DM message TS detected in channel ${channel}: ${event.event_ts}`);
             return;
           }
+          this.lastEventTsByChannel.set(channel, event.event_ts);
+          this.processedEvents.add(eventId);
+
           debug(`${botInfo.botUserName} received DM: ${event.text}`);
           if (this.messageHandler) {
             const slackMessage = new SlackMessage(event.text, event.channel, event);
             await this.messageHandler(slackMessage, []);
           }
-          this.lastEventTs = event.event_ts;
         });
 
         if (botInfo !== primaryBot) {
@@ -177,7 +207,7 @@ export class SlackBotManager {
   public async handleMessage(message: IMessage, history: IMessage[] = []): Promise<string> {
     debug('Entering handleMessage');
     if (this.messageHandler) {
-      debug('Invoking messageHandler');
+      debug(`Handling message: "${message.getText()}"`);
       return await this.messageHandler(message, history);
     }
     debug('No message handler set');
