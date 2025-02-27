@@ -42,14 +42,22 @@ export class SlackWelcomeHandler {
     if (!llmProvider) {
       debug('Warning: No LLM provider available, using fallback quote');
     }
-    // Clarify this is a channel welcome, no user-specific greeting
-    const prompt = `Provide a thought-provoking, made-up quote about the dynamics of Slack channel #${channelName}. Do not include any user-specific greetings or placeholders like slackUser.userName—just focus on the channel itself.`;
+    const prompt = `Provide a thought-provoking, made-up quote about the dynamics of Slack channel #${channelName}. Do not include user-specific greetings or placeholders like slackUser.userName. Use plain quotation marks (") around the quote, not encoded forms like " or any HTML entities—just focus on the channel itself.`;
     let llmText = '';
     try {
       llmText = await llmProvider.generateChatCompletion(prompt, [], {});
+      const hexText = Buffer.from(llmText).toString('hex');
       debug(`Raw LLM text: ${llmText}`);
-      // Strip any accidental user references
-      llmText = llmText.replace(/slackUser\.userName/g, 'matey');
+      debug(`Raw LLM text (hex): ${hexText}`);
+      // Hammer all encoded quotes
+      llmText = llmText
+        .replace(/slackUser\.userName/g, 'matey')
+        .replace(/"/gi, '"') // Triple-encoded
+        .replace(/"/gi, '"') // Double-encoded
+        .replace(/["'"]|["'"]|["'"]/gi, '"') // All quote variants
+        .replace(/&(?:amp;)?quot;/gi, '"') // &quot; and &quot;
+        .replace(/&#\d+;/g, match => String.fromCharCode(parseInt(match.slice(2, -1), 10))) // Numeric once
+        .replace(/&(?:amp;)?#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10))); // Numeric double
     } catch (error) {
       debug(`Failed to generate LLM quote: ${error}`);
       llmText = "Welcome to the channel! (No quote available)";
@@ -57,11 +65,10 @@ export class SlackWelcomeHandler {
 
     const attributions = ["ChatGPT", "Claude", "Gemini"];
     const chosenAttribution = attributions[Math.floor(Math.random() * attributions.length)];
-    // Generic greeting, no user-specific reference
     const welcomeText = `*Welcome to #${channelName}*\n\n${llmText.trim() || '"Writing is fun and easy"'}\n\n— ${chosenAttribution}`;
     const textBlock: KnownBlock = {
       type: 'section',
-      text: { type: 'mrkdwn', text: welcomeText }
+      text: { type: 'mrkdwn', text: welcomeText, verbatim: true }
     };
 
     try {
@@ -229,11 +236,16 @@ export class SlackWelcomeHandler {
     debug('Entering sendMessageToChannel (internal)', { channelId, text: text.substring(0, 50) + '...', senderName, threadId });
     const rawText = text;
     const decodedText = rawText
-      .replace(/'|'|'/g, "'")  // Catch numeric and named apostrophes
-      .replace(/"|'|"/g, '"')  // Catch numeric and named quotes
-      .replace(/<|<|</g, '<')    // Less-than
-      .replace(/>|>|>/g, '>')    // Greater-than
-      .replace(/&|&|&/g, '&');  // Ampersand
+      .replace(/"/gi, '"') // Triple-encoded
+      .replace(/"/gi, '"') // Double-encoded
+      .replace(/["'"]|["'"]|["'"]/gi, '"') // All quote variants
+      .replace(/&(?:amp;)?quot;/gi, '"') // &quot; and &quot;
+      .replace(/'|'|'/g, "'")
+      .replace(/<|<|</g, '<')
+      .replace(/>|>|>/g, '>')
+      .replace(/&|&|&/g, '&')
+      .replace(/&#\d+;/g, match => String.fromCharCode(parseInt(match.slice(2, -1), 10))) // Single decode
+      .replace(/&(?:amp;)?#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10))); // Double decode
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
@@ -247,10 +259,17 @@ export class SlackWelcomeHandler {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-        parse: 'none' // Force raw text rendering
+        parse: 'none'
       };
       if (threadId) options.thread_ts = threadId;
-      if (blocks?.length) options.blocks = blocks;
+      if (blocks?.length) {
+        options.blocks = blocks.map(block => {
+          if (block.type === 'section' && block.text?.type === 'mrkdwn') {
+            return { ...block, text: { ...block.text, verbatim: true } };
+          }
+          return block;
+        });
+      }
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
       const result = await botInfo.webClient.chat.postMessage(options);
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);

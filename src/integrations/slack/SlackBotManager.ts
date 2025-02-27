@@ -139,35 +139,35 @@ export class SlackBotManager {
           }
           debug(`General Slack event received for DM bot ${botInfo.botUserName}: ${JSON.stringify(event)}`);
           if (this.processedEvents.has(eventId)) {
-            debug(`Duplicate DM general event skipped: event_id=${eventId}`);
+            debug(`Duplicate general event skipped: event_id=${eventId}`);
             return;
           }
           this.processedEvents.add(eventId);
         });
 
         botInfo.socketClient.on('message', async ({ event }) => {
-          debug(`Socket message event received for DM: ${JSON.stringify(event)}`);
+          debug(`Socket message event received: ${JSON.stringify(event)}`);
           const eventId = event.event_ts;
           if (this.processedEvents.has(eventId)) {
-            debug(`Duplicate DM message event skipped: event_id=${eventId}`);
+            debug(`Duplicate message event skipped: event_id=${eventId}`);
             return;
           }
 
           if (event.channel_type !== 'im' || !event.text || event.subtype === 'bot_message' || event.user === botInfo.botUserId) {
-            debug('DM message event filtered out');
+            debug('Message event filtered out');
             return;
           }
 
           const channel = event.channel || 'unknown';
           const lastTs = this.lastEventTsByChannel.get(channel);
           if (lastTs === event.event_ts) {
-            debug(`Duplicate DM message TS detected in channel ${channel}: ${event.event_ts}`);
+            debug(`Duplicate message TS detected in channel ${channel}: ${event.event_ts}`);
             return;
           }
           this.lastEventTsByChannel.set(channel, event.event_ts);
           this.processedEvents.add(eventId);
 
-          debug(`${botInfo.botUserName} received DM: ${event.text}`);
+          debug(`${botInfo.botUserName} received: ${event.text}`);
           if (this.messageHandler) {
             const slackMessage = new SlackMessage(event.text, event.channel, event);
             await this.messageHandler(slackMessage, []);
@@ -176,11 +176,11 @@ export class SlackBotManager {
 
         if (botInfo !== primaryBot) {
           try {
-            debug(`Starting DM socket client for ${botInfo.botUserName}`);
+            debug(`Starting socket client for ${botInfo.botUserName}`);
             await botInfo.socketClient.start();
-            debug(`DM listener started for ${botInfo.botUserName}`);
+            debug(`Listener started for ${botInfo.botUserName}`);
           } catch (error) {
-            debug(`Failed to start DM socket client for ${botInfo.botUserName}:`, error);
+            debug(`Failed to start socket client for ${botInfo.botUserName}:`, error);
             throw error;
           }
         }

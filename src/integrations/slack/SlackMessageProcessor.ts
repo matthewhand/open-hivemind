@@ -3,7 +3,6 @@ import axios from 'axios';
 import { SlackBotManager } from './SlackBotManager';
 import SlackMessage from './SlackMessage';
 import { IMessage } from '@message/interfaces/IMessage';
-import { markdownToBlocks } from '@tryfabric/mack';
 import { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackMessageProcessor');
@@ -279,36 +278,35 @@ export class SlackMessageProcessor {
     }
 
     try {
-      // Preprocess to replace numeric and named HTML entities
-      const preprocessedText = rawResponse
-        .replace(/&#39;|'|'/g, "'")  // Apostrophe
-        .replace(/&#34;|'|"/g, '"')  // Quote
-        .replace(/&#60;|<|</g, '<')    // Less-than
-        .replace(/&#62;|>|>/g, '>')    // Greater-than
-        .replace(/&#38;|&|&/g, '&');  // Ampersand
-      debug(`Preprocessed text (before mack): ${preprocessedText.substring(0, 50) + (preprocessedText.length > 50 ? '...' : '')}`);
+      // Strip HTML entities, then fix contractions
+      let preprocessedText = rawResponse
+        .replace(/"/gi, '"') // Triple-encoded quote
+        .replace(/"/gi, '"') // Double-encoded quote
+        .replace(/["'"]|["'"]|["'"]/gi, '"') // Quote variants
+        .replace(/&(?:amp;)?quot;/gi, '"') // " and "
+        .replace(/&[^;\s]+;/g, match => { // Annihilate other entities
+          const decoded = match
+            .replace(/&/gi, '&')
+            .replace(/"/gi, '"')
+            .replace(/"/gi, '"')
+            .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)));
+          return decoded;
+        });
+      // Fix contractions: replace " with ' where it makes sense
+      preprocessedText = preprocessedText
+        .replace(/(\w)"(\w)/g, "$1'$2") // e.g., roarin" → roarin'
+        .replace(/(\w)"(\s|$)/g, "$1'$2") // e.g., plunderin" → plunderin'
+        .replace(/['‘’]/g, "'"); // Normalize apostrophes
+      debug(`Preprocessed text: ${preprocessedText.substring(0, 50) + (preprocessedText.length > 50 ? '...' : '')}`);
 
-      const blocks = await markdownToBlocks(preprocessedText, {
-        lists: { checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ' }
-      });
-      const text = this.sanitizeForMrkdwn(preprocessedText);
-      debug(`Processed text (after mack): ${text.substring(0, 50) + (text.length > 50 ? '...' : '')}`);
-      return { text, blocks };
+      // Skip blocks, return plain text for demo
+      const finalText = preprocessedText;
+      debug(`Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`);
+      return { text: finalText };
     } catch (error) {
       debug(`Error processing response: ${error}`);
       return { text: 'Error processing response' };
     }
-  }
-
-  private sanitizeForMrkdwn(md: string): string {
-    debug('Entering sanitizeForMrkdwn', { input: md.substring(0, 50) + (md.length > 50 ? '...' : '') });
-    const sanitized = md
-      .replace(/#{1,6}\s/g, '') // Remove Markdown headers
-      .replace(/(\*\*|__)(.*?)\1/g, '*$2*') // Convert bold to Slack style
-      .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
-      .replace(/\n/g, ' '); // Replace newlines with spaces
-    debug(`Sanitized text: ${sanitized.substring(0, 50) + (sanitized.length > 50 ? '...' : '')}`);
-    return sanitized.trim();
   }
 
   private async getThreadParticipants(channelId: string, threadTs: string): Promise<string[]> {

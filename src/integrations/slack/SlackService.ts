@@ -174,10 +174,10 @@ export class SlackService implements IMessengerService {
         }
         const llmResponse = await llmProviders[0].generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
         debug('LLM Response:', llmResponse);
-        const { text: fallbackText, blocks } = await this.messageProcessor.processResponse(llmResponse);
+        const { text: fallbackText } = await this.messageProcessor.processResponse(llmResponse);
         const channelId = enrichedMessage.getChannelId();
         debug(`Sending response to channel ${channelId} with thread_ts: ${threadTs}`);
-        const sentTs = await this.sendMessageToChannel(channelId, fallbackText, undefined, threadTs, blocks);
+        const sentTs = await this.sendMessageToChannel(channelId, fallbackText, undefined, threadTs);
         if (sentTs) {
           this.lastSentEventTs = eventTs;
           debug(`Response sent successfully, lastSentEventTs updated to: ${this.lastSentEventTs}`);
@@ -196,13 +196,24 @@ export class SlackService implements IMessengerService {
       debug('Error: Missing channelId or text', { channelId, text });
       throw new Error('Channel ID and text are required');
     }
-    const decodedText = text
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
-    debug(`Raw text: ${text.substring(0, 50) + (text.length > 50 ? '...' : '')}`);
+    const rawText = text;
+    const decodedText = rawText
+      .replace(/"/gi, '"') // Triple-encoded quote
+      .replace(/"/gi, '"') // Double-encoded quote
+      .replace(/["'"]|["'"]|["'"]/gi, '"') // Quote variants
+      .replace(/&(?:amp;)?quot;/gi, '"') // " and "
+      .replace(/['‘’]/g, "'") // Normalize apostrophes first
+      .replace(/&[^;\s]+;/g, match => { // Then annihilate other entities
+        const decoded = match
+          .replace(/&/gi, '&')
+          .replace(/"/gi, '"')
+          .replace(/"/gi, '"')
+          .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)));
+        return decoded;
+      })
+      .replace(/(\w)"(\w)/g, "$1'$2") // Fix contractions: roarin" → roarin'
+      .replace(/(\w)"(\s|$)/g, "$1'$2"); // plunderin" → plunderin'
+    debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
     const botInfo = this.botManager.getBotByName(displayName) || this.botManager.getAllBots()[0];
@@ -213,18 +224,18 @@ export class SlackService implements IMessengerService {
     try {
       const options: any = {
         channel: channelId,
-        text: decodedText || (blocks?.length ? 'Message with interactive content' : 'No content provided'),
+        text: decodedText || 'No content provided',
         username: displayName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
+        parse: 'none' // Force raw text
       };
       if (threadId) options.thread_ts = threadId;
-      if (blocks?.length) options.blocks = blocks;
+      // Skip blocks for demo simplicity
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
       const result = await botInfo.webClient.chat.postMessage(options);
-      this.lastSentEventTs = result.ts || Date.now().toString();
-      debug(`Message sent successfully: channel=${channelId}, ts=${result.ts}, thread=${threadId || 'none'}`);
+      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
       return result.ts || '';
     } catch (error) {
       debug(`Failed to send message: ${error}`);
