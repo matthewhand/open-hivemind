@@ -6,98 +6,266 @@ import Debug from 'debug';
 
 const debug = Debug('app:openAiProvider');
 
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE_MS = 1000;
+
+// Utility to delay with exponential backoff
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
 export const openAiProvider: ILlmProvider = {
-  supportsChatCompletion: (): boolean => true,
-  supportsCompletion: (): boolean => true,
+  supportsChatCompletion: (): boolean => {
+    debug('Checking chat completion support: true');
+    return true;
+  },
+  supportsCompletion: (): boolean => {
+    debug('Checking non-chat completion support: true');
+    return true;
+  },
 
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],
     metadata?: Record<string, any>
   ): Promise<string> {
-    debug('Generating chat completion with OpenAI');
+    debug('Starting chat completion generation');
     debug('User message:', userMessage);
     debug('History messages:', JSON.stringify(historyMessages.map(m => ({ role: m.role, content: m.getText() }))));
     debug('Metadata:', JSON.stringify(metadata || {}));
 
-    const openai = new OpenAI({
-      apiKey: openaiConfig.get('OPENAI_API_KEY'),
-      baseURL: openaiConfig.get('OPENAI_BASE_URL'),
-      timeout: openaiConfig.get('OPENAI_TIMEOUT'),
-      organization: openaiConfig.get('OPENAI_ORGANIZATION')
+    // Load configuration
+    const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL = openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    const timeout = openaiConfig.get('OPENAI_TIMEOUT') || 10000;
+    const organization = openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const model = openaiConfig.get('OPENAI_MODEL') || 'gpt-4o'; // Fallback only if unset
+
+    if (!apiKey) {
+      debug('No API key found in config or environment');
+      throw new Error('OpenAI API key is missing');
+    }
+    debug('Loaded config:', {
+      apiKey: apiKey.slice(0, 4) + '...',
+      baseURL,
+      timeout,
+      organization: organization || 'none',
+      model
     });
 
+    // Validate baseURL
     try {
-      let messages = [
-        { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') },
-        ...historyMessages.map(msg => ({
-          role: msg.role as 'user' | 'assistant' | 'system',
-          content: msg.getText()
-        })),
-        { role: 'user' as const, content: userMessage }
-      ];
-
-      if (metadata && metadata.messages && Array.isArray(metadata.messages)) {
-        const toolRelatedMessages = metadata.messages.filter((msg: any) => 
-          (msg.role === 'assistant' && msg.tool_calls) || msg.role === 'tool'
-        );
-        messages = [...toolRelatedMessages, ...messages];
-      }
-
-      debug('Final messages sent to OpenAI:', JSON.stringify(messages));
-
-      const response = await openai.chat.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL'),
-        messages,
-        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS'),
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE'),
-        frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
-        presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
-        top_p: openaiConfig.get('OPENAI_TOP_P'),
-        stop: openaiConfig.get('OPENAI_STOP') || null
-      });
-
-      return response.choices[0].message.content || '';
-    } catch (error) {
-      debug('Error generating chat completion:', error);
-      // Hack: Silently ignore timeout by returning empty string
-      if (error instanceof Error && error.message.includes('timed out')) {
-        debug('Request timed out, silently ignoring');
-        return '';
-      }
-      throw new Error(`Chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+      new URL(baseURL);
+    } catch (e) {
+      debug(`Invalid baseURL '${baseURL}', falling back to '${DEFAULT_BASE_URL}'`);
+      baseURL = DEFAULT_BASE_URL;
     }
+
+    const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
+    debug('OpenAI client initialized with baseURL:', baseURL);
+
+    // Prepare messages
+    let messages = [
+      { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.' },
+      ...historyMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.getText() || ''
+      })),
+      { role: 'user' as const, content: userMessage }
+    ];
+
+    if (metadata && metadata.messages && Array.isArray(metadata.messages)) {
+      const toolRelatedMessages = metadata.messages.filter((msg: any) =>
+        (msg.role === 'assistant' && msg.tool_calls) || msg.role === 'tool'
+      );
+      messages = [...toolRelatedMessages, ...messages];
+    }
+    debug('Final messages prepared:', JSON.stringify(messages));
+
+    // Retry loop
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        debug(`Attempt ${attempt} of ${MAX_RETRIES} with model '${model}' at '${baseURL}'`);
+        const response = await openai.chat.completions.create({
+          model,
+          messages,
+          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+          frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
+          presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
+          top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
+          stop: openaiConfig.get('OPENAI_STOP') || null
+        });
+
+        debug('Raw API response:', JSON.stringify(response));
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          debug('No content in response');
+          return 'Sorry, I couldn’t generate a response.';
+        }
+        debug('Generated content:', content);
+        return content;
+
+      } catch (error: any) {
+        debug(`Attempt ${attempt} failed:`, error);
+
+        if (error instanceof Error) {
+          const errorMsg = error.message.toLowerCase();
+
+          if (errorMsg.includes('404') || errorMsg.includes('not found')) {
+            debug(`Model '${model}' not found at '${baseURL}'`);
+            if (baseURL === DEFAULT_BASE_URL) {
+              return 'The requested model isn’t available on this service.';
+            }
+            // Try default URL on next attempt
+            debug(`Switching to default '${DEFAULT_BASE_URL}' due to model not found`);
+            baseURL = DEFAULT_BASE_URL;
+            openai.baseURL = baseURL;
+          }
+
+          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+            debug('Connection error detected');
+            if (attempt === 1 && baseURL !== DEFAULT_BASE_URL) {
+              debug(`Switching to fallback '${DEFAULT_BASE_URL}'`);
+              baseURL = DEFAULT_BASE_URL;
+              openai.baseURL = baseURL;
+            }
+          }
+
+          if (errorMsg.includes('timed out')) {
+            debug('Request timed out');
+          }
+
+          if (attempt < MAX_RETRIES) {
+            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
+            debug(`Retrying in ${delayMs}ms...`);
+            await delay(delayMs);
+            continue;
+          }
+
+          debug('Max retries reached');
+          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+            return 'Unable to connect to the service, please try again later.';
+          }
+          if (errorMsg.includes('timed out')) {
+            return 'Request took too long, please try again.';
+          }
+          throw new Error(`Chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
+        }
+
+        throw new Error(`Chat completion failed: ${String(error)}`);
+      }
+    }
+
+    debug('Unexpected exit from retry loop');
+    return 'An unexpected error occurred.';
   },
 
   async generateCompletion(prompt: string): Promise<string> {
-    debug('Generating non-chat completion with OpenAI:', { prompt });
-    const openai = new OpenAI({
-      apiKey: openaiConfig.get('OPENAI_API_KEY'),
-      baseURL: openaiConfig.get('OPENAI_BASE_URL'),
-      timeout: openaiConfig.get('OPENAI_TIMEOUT'),
-      organization: openaiConfig.get('OPENAI_ORGANIZATION')
+    debug('Starting non-chat completion generation');
+    debug('Prompt:', prompt);
+
+    const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL = openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    const timeout = openaiConfig.get('OPENAI_TIMEOUT') || 10000;
+    const organization = openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const model = openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+
+    if (!apiKey) {
+      debug('No API key found in config or environment');
+      throw new Error('OpenAI API key is missing');
+    }
+    debug('Loaded config:', {
+      apiKey: apiKey.slice(0, 4) + '...',
+      baseURL,
+      timeout,
+      organization: organization || 'none',
+      model
     });
 
     try {
-      const response = await openai.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL'),
-        prompt,
-        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS'),
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE'),
-        frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY'),
-        presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY'),
-        top_p: openaiConfig.get('OPENAI_TOP_P'),
-        stop: openaiConfig.get('OPENAI_STOP') || null
-      });
-      return response.choices[0].text || '';
-    } catch (error) {
-      debug('Error generating non-chat completion:', error);
-      // Hack: Silently ignore timeout here too
-      if (error instanceof Error && error.message.includes('timed out')) {
-        debug('Request timed out, silently ignoring');
-        return '';
-      }
-      throw new Error(`Non-chat completion failed: ${error instanceof Error ? error.message : String(error)}`);
+      new URL(baseURL);
+    } catch (e) {
+      debug(`Invalid baseURL '${baseURL}', falling back to '${DEFAULT_BASE_URL}'`);
+      baseURL = DEFAULT_BASE_URL;
     }
+
+    const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
+    debug('OpenAI client initialized with baseURL:', baseURL);
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        debug(`Attempt ${attempt} of ${MAX_RETRIES} with model '${model}' at '${baseURL}'`);
+        const response = await openai.completions.create({
+          model,
+          prompt,
+          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+          frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
+          presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
+          top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
+          stop: openaiConfig.get('OPENAI_STOP') || null
+        });
+
+        debug('Raw API response:', JSON.stringify(response));
+        const text = response.choices[0]?.text;
+        if (!text) {
+          debug('No text in response');
+          return 'Sorry, I couldn’t generate a response.';
+        }
+        debug('Generated text:', text);
+        return text;
+
+      } catch (error: any) {
+        debug(`Attempt ${attempt} failed:`, error);
+
+        if (error instanceof Error) {
+          const errorMsg = error.message.toLowerCase();
+
+          if (errorMsg.includes('404') || errorMsg.includes('not found')) {
+            debug(`Model '${model}' not found at '${baseURL}'`);
+            if (baseURL === DEFAULT_BASE_URL) {
+              return 'The requested model isn’t available on this service.';
+            }
+            debug(`Switching to default '${DEFAULT_BASE_URL}' due to model not found`);
+            baseURL = DEFAULT_BASE_URL;
+            openai.baseURL = baseURL;
+          }
+
+          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+            debug('Connection error detected');
+            if (attempt === 1 && baseURL !== DEFAULT_BASE_URL) {
+              debug(`Switching to fallback '${DEFAULT_BASE_URL}'`);
+              baseURL = DEFAULT_BASE_URL;
+              openai.baseURL = baseURL;
+            }
+          }
+
+          if (errorMsg.includes('timed out')) {
+            debug('Request timed out');
+          }
+
+          if (attempt < MAX_RETRIES) {
+            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
+            debug(`Retrying in ${delayMs}ms...`);
+            await delay(delayMs);
+            continue;
+          }
+
+          debug('Max retries reached');
+          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+            return 'Unable to connect to the service, please try again later.';
+          }
+          if (errorMsg.includes('timed out')) {
+            return 'Request took too long, please try again.';
+          }
+          throw new Error(`Non-chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
+        }
+
+        throw new Error(`Non-chat completion failed: ${String(error)}`);
+      }
+    }
+
+    debug('Unexpected exit from retry loop');
+    return 'An unexpected error occurred.';
   }
 };
