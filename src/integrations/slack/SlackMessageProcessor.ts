@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import axios from 'axios';
-import { decode } from 'html-entities';
 import { SlackBotManager } from './SlackBotManager';
 import SlackMessage from './SlackMessage';
 import { IMessage } from '@message/interfaces/IMessage';
@@ -280,12 +279,20 @@ export class SlackMessageProcessor {
     }
 
     try {
-      const decoded = decode(rawResponse);
-      const blocks = await markdownToBlocks(decoded, {
+      // Preprocess to replace numeric and named HTML entities
+      const preprocessedText = rawResponse
+        .replace(/&#39;|'|'/g, "'")  // Apostrophe
+        .replace(/&#34;|'|"/g, '"')  // Quote
+        .replace(/&#60;|<|</g, '<')    // Less-than
+        .replace(/&#62;|>|>/g, '>')    // Greater-than
+        .replace(/&#38;|&|&/g, '&');  // Ampersand
+      debug(`Preprocessed text (before mack): ${preprocessedText.substring(0, 50) + (preprocessedText.length > 50 ? '...' : '')}`);
+
+      const blocks = await markdownToBlocks(preprocessedText, {
         lists: { checkboxPrefix: (checked: boolean) => checked ? ':white_check_mark: ' : ':ballot_box_with_check: ' }
       });
-      const text = this.sanitizeForMrkdwn(decoded);
-      debug(`Processed response: text="${text.substring(0, 50)}...", blocks=${blocks.length}`);
+      const text = this.sanitizeForMrkdwn(preprocessedText);
+      debug(`Processed text (after mack): ${text.substring(0, 50) + (text.length > 50 ? '...' : '')}`);
       return { text, blocks };
     } catch (error) {
       debug(`Error processing response: ${error}`);
@@ -295,12 +302,13 @@ export class SlackMessageProcessor {
 
   private sanitizeForMrkdwn(md: string): string {
     debug('Entering sanitizeForMrkdwn', { input: md.substring(0, 50) + (md.length > 50 ? '...' : '') });
-    return md
-      .replace(/#{1,6}\s/g, '')
-      .replace(/(\*\*|__)(.*?)\1/g, '*$2*')
-      .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\n/g, ' ')
-      .trim();
+    const sanitized = md
+      .replace(/#{1,6}\s/g, '') // Remove Markdown headers
+      .replace(/(\*\*|__)(.*?)\1/g, '*$2*') // Convert bold to Slack style
+      .replace(/!\[.*?\]\(.*?\)/g, '') // Remove images
+      .replace(/\n/g, ' '); // Replace newlines with spaces
+    debug(`Sanitized text: ${sanitized.substring(0, 50) + (sanitized.length > 50 ? '...' : '')}`);
+    return sanitized.trim();
   }
 
   private async getThreadParticipants(channelId: string, threadTs: string): Promise<string[]> {

@@ -59,16 +59,8 @@ export class SlackWelcomeHandler {
       type: 'section',
       text: { type: 'mrkdwn', text: welcomeText }
     };
-    // Commenting out the "Learn More" button until fixed
-    // const buttonsBlock: KnownBlock = {
-    //   type: 'actions',
-    //   elements: [
-    //     { type: 'button', text: { type: 'plain_text', text: 'Learn More' }, action_id: `learn_more_${channel}`, value: 'learn_more' }
-    //   ]
-    // };
 
     try {
-      // Only send textBlock without buttonsBlock
       const sentTs = await this.sendMessageToChannel(channel, welcomeText, undefined, undefined, [textBlock]);
       debug(`Sent bot welcome message to channel ${channel}, ts=${sentTs}`);
     } catch (error) {
@@ -233,11 +225,11 @@ export class SlackWelcomeHandler {
     debug('Entering sendMessageToChannel (internal)', { channelId, text: text.substring(0, 50) + '...', senderName, threadId });
     const rawText = text;
     const decodedText = rawText
-      .replace(/'/g, "'")
-      .replace(/"/g, '"')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/&/g, '&');
+      .replace(/&#39;|'|'/g, "'")  // Catch numeric and named apostrophes
+      .replace(/&#34;|'|"/g, '"')  // Catch numeric and named quotes
+      .replace(/&#60;|<|</g, '<')    // Less-than
+      .replace(/&#62;|>|>/g, '>')    // Greater-than
+      .replace(/&#38;|&|&/g, '&');  // Ampersand
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
@@ -251,6 +243,7 @@ export class SlackWelcomeHandler {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
+        parse: 'none' // Force raw text rendering
       };
       if (threadId) options.thread_ts = threadId;
       if (blocks?.length) options.blocks = blocks;
