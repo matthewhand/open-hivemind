@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { SlackService } from './SlackService';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { extractSlackMetadata } from './slackMetadata';
-import Debug from 'debug'; // Add debug import
+import Debug from 'debug';
 
-const debug = Debug('app:SlackEventListener'); // Update debug namespace for clarity
+const debug = Debug('app:SlackEventListener');
 
 export class SlackEventListener {
   private slackService: SlackService;
@@ -30,12 +30,12 @@ export class SlackEventListener {
         debug(`Processed message event in channel ${event.channel} with response: ${response.substring(0, 100)}${response.length > 100 ? '...' : ''}`);
       } else if (event.type === 'bot_joined_channel') {
         debug(`Bot joined channel ${event.channel}, sending welcome message`);
-        await this.slackService.sendBotWelcomeMessage(event.channel);
+        await this.slackService.getWelcomeHandler().sendBotWelcomeMessage(event.channel);
       } else if (event.type === 'member_joined_channel') {
         debug(`User ${event.user} joined channel ${event.channel}, sending welcome message`);
         const userInfo = await this.slackService.getBotManager().getAllBots()[0].webClient.users.info({ user: event.user });
         const userName = userInfo.user?.name || 'New User';
-        await this.slackService.sendUserWelcomeMessage(event.channel, userName);
+        await this.slackService.getWelcomeHandler().sendUserWelcomeMessage(event.channel, userName);
       }
     } catch (error) {
       debug(`Error handling event: ${error}`);
