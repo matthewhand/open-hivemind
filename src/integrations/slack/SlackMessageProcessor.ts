@@ -278,31 +278,51 @@ export class SlackMessageProcessor {
     }
 
     try {
-      // Strip HTML entities, then fix contractions
-      let preprocessedText = rawResponse
-        .replace(/"/gi, '"') // Triple-encoded quote
-        .replace(/"/gi, '"') // Double-encoded quote
-        .replace(/["'"]|["'"]|["'"]/gi, '"') // Quote variants
-        .replace(/&(?:amp;)?quot;/gi, '"') // " and "
-        .replace(/&[^;\s]+;/g, match => { // Annihilate other entities
+      // Preprocess: strip entities, fix quotes and contractions
+      let processedText = rawResponse
+        .replace(/"/gi, '"')
+        .replace(/"/gi, '"')
+        .replace(/["'"]|["'"]|["'"]/gi, '"')
+        .replace(/&(?:amp;)?quot;/gi, '"')
+        .replace(/'/gi, "'")
+        .replace(/&[^;\s]+;/g, match => {
           const decoded = match
             .replace(/&/gi, '&')
             .replace(/"/gi, '"')
             .replace(/"/gi, '"')
             .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)));
           return decoded;
-        });
-      // Fix contractions: replace " with ' where it makes sense
-      preprocessedText = preprocessedText
-        .replace(/(\w)"(\w)/g, "$1'$2") // e.g., roarin" → roarin'
-        .replace(/(\w)"(\s|$)/g, "$1'$2") // e.g., plunderin" → plunderin'
+        })
+        .replace(/(\w)"(\w)/g, "$1'$2") // roarin" → roarin'
+        .replace(/(\w)"(\s|$)/g, "$1'$2") // plunderin" → plunderin'
         .replace(/['‘’]/g, "'"); // Normalize apostrophes
-      debug(`Preprocessed text: ${preprocessedText.substring(0, 50) + (preprocessedText.length > 50 ? '...' : '')}`);
+      debug(`Processed text: ${processedText.substring(0, 50) + (processedText.length > 50 ? '...' : '')}`);
 
-      // Skip blocks, return plain text for demo
-      const finalText = preprocessedText;
+      // Manual mrkdwn formatting (bold and italics)
+      processedText = processedText
+        .replace(/\*\*(.*?)\*\*/g, '*$1*') // Convert **bold** to *bold* (Slack mrkdwn)
+        .replace(/__(.*?)__/g, '_$1_'); // Convert __italic__ to _italic_ (Slack mrkdwn)
+
+      // Triple-decode and substitute
+      let finalText = processedText
+        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+        .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+        .replace(/"/gi, '"') // Substitute "
+        .replace(/"/gi, "'"); // Substitute '
+
+      // Create a single mrkdwn block
+      const blocks: KnownBlock[] = [{
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: finalText,
+          verbatim: true // Prevent Slack from re-escaping
+        }
+      }];
+
       debug(`Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`);
-      return { text: finalText };
+      return { text: finalText, blocks };
     } catch (error) {
       debug(`Error processing response: ${error}`);
       return { text: 'Error processing response' };

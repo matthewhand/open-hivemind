@@ -174,10 +174,10 @@ export class SlackService implements IMessengerService {
         }
         const llmResponse = await llmProviders[0].generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
         debug('LLM Response:', llmResponse);
-        const { text: fallbackText } = await this.messageProcessor.processResponse(llmResponse);
+        const { text: fallbackText, blocks } = await this.messageProcessor.processResponse(llmResponse);
         const channelId = enrichedMessage.getChannelId();
         debug(`Sending response to channel ${channelId} with thread_ts: ${threadTs}`);
-        const sentTs = await this.sendMessageToChannel(channelId, fallbackText, undefined, threadTs);
+        const sentTs = await this.sendMessageToChannel(channelId, fallbackText, undefined, threadTs, blocks);
         if (sentTs) {
           this.lastSentEventTs = eventTs;
           debug(`Response sent successfully, lastSentEventTs updated to: ${this.lastSentEventTs}`);
@@ -197,13 +197,13 @@ export class SlackService implements IMessengerService {
       throw new Error('Channel ID and text are required');
     }
     const rawText = text;
-    const decodedText = rawText
-      .replace(/"/gi, '"') // Triple-encoded quote
-      .replace(/"/gi, '"') // Double-encoded quote
-      .replace(/["'"]|["'"]|["'"]/gi, '"') // Quote variants
-      .replace(/&(?:amp;)?quot;/gi, '"') // " and "
-      .replace(/['‘’]/g, "'") // Normalize apostrophes first
-      .replace(/&[^;\s]+;/g, match => { // Then annihilate other entities
+    let decodedText = rawText
+      .replace(/"/gi, '"')
+      .replace(/"/gi, '"')
+      .replace(/["'"]|["'"]|["'"]/gi, '"')
+      .replace(/&(?:amp;)?quot;/gi, '"')
+      .replace(/'/gi, "'")
+      .replace(/&[^;\s]+;/g, match => {
         const decoded = match
           .replace(/&/gi, '&')
           .replace(/"/gi, '"')
@@ -211,8 +211,15 @@ export class SlackService implements IMessengerService {
           .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)));
         return decoded;
       })
-      .replace(/(\w)"(\w)/g, "$1'$2") // Fix contractions: roarin" → roarin'
-      .replace(/(\w)"(\s|$)/g, "$1'$2"); // plunderin" → plunderin'
+      .replace(/(\w)"(\w)/g, "$1'$2")
+      .replace(/(\w)"(\s|$)/g, "$1'$2");
+    // Triple-decode and substitute as fallback
+    decodedText = decodedText
+      .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+      .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+      .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
+      .replace(/"/gi, '"') // Substitute "
+      .replace(/"/gi, "'"); // Substitute '
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
@@ -229,10 +236,10 @@ export class SlackService implements IMessengerService {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-        parse: 'none' // Force raw text
+        parse: 'none' // Fallback for text field
       };
       if (threadId) options.thread_ts = threadId;
-      // Skip blocks for demo simplicity
+      if (blocks?.length) options.blocks = blocks; // Use our manual blocks
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
       const result = await botInfo.webClient.chat.postMessage(options);
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
