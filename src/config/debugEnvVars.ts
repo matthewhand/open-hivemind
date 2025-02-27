@@ -14,7 +14,7 @@ export function debugEnvVars() {
     let value = process.env[key] || '';
     const upperKey = key.toUpperCase();
     // Redact variables containing KEY, TOKEN, or ending with SECRET
-    if (upperKey.includes('KEY') || upperKey.includes('TOKEN') || upperKey.endsWith('SECRET')) {
+    if (upperKey.includes('KEY') || upperKey.includes('TOKEN') || upperKey.endsWith('SECRET') || upperKey.endsWith('PASSWORD')) {
       value = redactSensitiveInfo(value, 4);
     }
     debug(`${key} = ${value}`);
