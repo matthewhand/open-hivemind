@@ -21,7 +21,10 @@ jest.mock('openai', () => {
   };
 });
 
-describe('openAiProvider', () => {
+const openaiKey = process.env.OPENAI_API_KEY;
+const describeTest = !openaiKey ? describe.skip : describe;
+
+describeTest('openAiProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
