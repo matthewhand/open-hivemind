@@ -163,9 +163,15 @@ export class SlackService implements IMessengerService {
       const threadTs = message.data.thread_ts || message.data.ts;
       try {
         const enrichedMessage = await this.messageProcessor.enrichSlackMessage(message);
-        const payload = await this.messageProcessor.constructPayload(enrichedMessage, history);
+        const channelId = enrichedMessage.getChannelId();
+
+        // Fetch last 10 messages from the channel (adjust limit as needed)
+        const historyMessages = await this.fetchMessages(channelId, 10);
+        debug(`Fetched ${historyMessages.length} history messages for channel ${channelId}`);
+
+        const payload = await this.messageProcessor.constructPayload(enrichedMessage, historyMessages);
         const userMessage = payload.messages[payload.messages.length - 1].content;
-        const formattedHistory: IMessage[] = history.map(h => new SlackMessage(h.getText(), message.getChannelId(), { role: h.role }));
+        const formattedHistory: IMessage[] = historyMessages.map(h => new SlackMessage(h.getText(), channelId, { role: h.isFromBot() ? 'assistant' : 'user' }));
         const metadataWithMessages = { ...payload.metadata, messages: payload.messages };
         const llmProviders = getLlmProvider();
         if (!llmProviders.length) {
@@ -175,7 +181,6 @@ export class SlackService implements IMessengerService {
         const llmResponse = await llmProviders[0].generateChatCompletion(userMessage, formattedHistory, metadataWithMessages);
         debug('LLM Response:', llmResponse);
         const { text: fallbackText, blocks } = await this.messageProcessor.processResponse(llmResponse);
-        const channelId = enrichedMessage.getChannelId();
         debug(`Sending response to channel ${channelId} with thread_ts: ${threadTs}`);
         const sentTs = await this.sendMessageToChannel(channelId, fallbackText, undefined, threadTs, blocks);
         if (sentTs) {
@@ -213,13 +218,12 @@ export class SlackService implements IMessengerService {
       })
       .replace(/(\w)"(\w)/g, "$1'$2")
       .replace(/(\w)"(\s|$)/g, "$1'$2");
-    // Triple-decode and substitute as fallback
     decodedText = decodedText
       .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
       .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
       .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
-      .replace(/"/gi, '"') // Substitute "
-      .replace(/"/gi, "'"); // Substitute '
+      .replace(/"/gi, '"')
+      .replace(/"/gi, "'");
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
     const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
@@ -236,10 +240,10 @@ export class SlackService implements IMessengerService {
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
-        parse: 'none' // Fallback for text field
+        parse: 'none'
       };
       if (threadId) options.thread_ts = threadId;
-      if (blocks?.length) options.blocks = blocks; // Use our manual blocks
+      if (blocks?.length) options.blocks = blocks;
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
       const result = await botInfo.webClient.chat.postMessage(options);
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
@@ -259,11 +263,11 @@ export class SlackService implements IMessengerService {
     return this.fetchMessages(channelId);
   }
 
-  public async fetchMessages(channelId: string): Promise<IMessage[]> {
-    debug('Entering fetchMessages', { channelId });
+  public async fetchMessages(channelId: string, limit: number = 10): Promise<IMessage[]> {
+    debug('Entering fetchMessages', { channelId, limit });
     const botInfo = this.botManager.getAllBots()[0];
     try {
-      const result = await botInfo.webClient.conversations.history({ channel: channelId, limit: 10 });
+      const result = await botInfo.webClient.conversations.history({ channel: channelId, limit });
       const messages = (result.messages || []).map(msg => new SlackMessage(msg.text || '', channelId, msg));
       debug(`Fetched ${messages.length} messages from channel ${channelId}`);
       return messages;

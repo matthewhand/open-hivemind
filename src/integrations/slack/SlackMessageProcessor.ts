@@ -293,6 +293,7 @@ export class SlackMessageProcessor {
             .replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10)));
           return decoded;
         })
+        // Fix contractions only, preserve double quotes for quotations
         .replace(/(\w)"(\w)/g, "$1'$2") // roarin" → roarin'
         .replace(/(\w)"(\s|$)/g, "$1'$2") // plunderin" → plunderin'
         .replace(/['‘’]/g, "'"); // Normalize apostrophes
@@ -303,13 +304,13 @@ export class SlackMessageProcessor {
         .replace(/\*\*(.*?)\*\*/g, '*$1*') // Convert **bold** to *bold* (Slack mrkdwn)
         .replace(/__(.*?)__/g, '_$1_'); // Convert __italic__ to _italic_ (Slack mrkdwn)
 
-      // Triple-decode and substitute
+      // Triple-decode and substitute entities, preserving " for quotes
       let finalText = processedText
         .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
         .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
         .replace(/&[^;\s]+;/g, match => match.replace(/&/gi, '&').replace(/"/gi, '"').replace(/"/gi, '"').replace(/&#(\d+);/gi, (_, num) => String.fromCharCode(parseInt(num, 10))))
-        .replace(/"/gi, '"') // Substitute "
-        .replace(/"/gi, "'"); // Substitute '
+        .replace(/"/gi, '"') // Ensure " stays "
+        .replace(/"/gi, "'"); // Substitute ' only
 
       // Create a single mrkdwn block
       const blocks: KnownBlock[] = [{
@@ -317,7 +318,7 @@ export class SlackMessageProcessor {
         text: {
           type: 'mrkdwn',
           text: finalText,
-          verbatim: true // Prevent Slack from re-escaping
+          verbatim: true // Prevent Slack re-escaping
         }
       }];
 
