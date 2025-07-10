@@ -1,23 +1,21 @@
 import flowiseProvider from '@integrations/flowise/flowiseProvider';
-import axios from 'axios';
-import flowiseConfig from '@config/flowiseConfig';
+import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getLlmProvider } from '@llm/getLlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
 
-
-jest.mock('axios');
-jest.mock('@config/flowiseConfig');
+jest.mock('@integrations/flowise/flowiseRestClient');
 jest.mock('@llm/getLlmProvider');
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-const mockedFlowiseConfig = flowiseConfig as jest.Mocked<typeof flowiseConfig>;
+const mockedGetFlowiseResponse = getFlowiseResponse as jest.Mock;
 const mockedGetLlmProvider = getLlmProvider as jest.Mock;
 
+const createMockMessage = (text: string): IMessage => ({
+    getText: () => text,
+} as any);
 
 describe('FlowiseProvider Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock the config for all tests in this suite
-    (mockedFlowiseConfig.get as jest.Mock).mockReturnValue('http://fake-flowise-endpoint');
   });
 
   it('should return FlowiseProvider when LLM_PROVIDER is flowise', () => {
@@ -26,23 +24,24 @@ describe('FlowiseProvider Integration', () => {
     expect(providers[0]).toBe(flowiseProvider);
   });
 
-  it('should return empty string for chat completion', async () => {
-    const result = await flowiseProvider.generateChatCompletion([]);
-    expect(result).toBe('');
+  it('should call getFlowiseResponse for chat completion', async () => {
+    mockedGetFlowiseResponse.mockResolvedValue('flowise response');
+    const result = await flowiseProvider.generateChatCompletion('test message', [], { channelId: 'test-channel' });
+    expect(mockedGetFlowiseResponse).toHaveBeenCalledWith('test-channel', 'test message');
+    expect(result).toBe('flowise response');
   });
 
-  it('should support completion', () => {
-    expect(flowiseProvider.supportsCompletion()).toBe(true);
+  it('should support chat completion', () => {
+    expect(flowiseProvider.supportsChatCompletion()).toBe(true);
   });
 
-  it('should not support chat completion', () => {
-    expect(flowiseProvider.supportsChatCompletion()).toBe(false);
+  it('should not support legacy completion', () => {
+    expect(flowiseProvider.supportsCompletion()).toBe(false);
   });
-
-  it('should generate completion successfully', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { completion: 'test completion' } });
-    const completion = await flowiseProvider.generateCompletion('test prompt');
-    expect(completion).toBe('test completion');
-    expect(mockedAxios.post).toHaveBeenCalledWith('http://fake-flowise-endpoint', { prompt: 'test prompt' });
+  
+  it('should handle missing channelId in metadata gracefully', async () => {
+      const response = await flowiseProvider.generateChatCompletion('test message', [], {}); // No channelId
+      expect(response).toContain('missing some context');
+      expect(mockedGetFlowiseResponse).not.toHaveBeenCalled();
   });
 });

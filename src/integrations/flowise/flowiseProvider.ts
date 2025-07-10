@@ -1,28 +1,45 @@
-import axios from 'axios';
-import flowiseConfig from '@config/flowiseConfig';
+import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { IMessage } from '@message/interfaces/IMessage';
+import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import Debug from 'debug';
 
 const flowiseDebug = Debug('app:flowiseProvider');
 
-class FlowiseProvider {
-  async generateCompletion(prompt: any) {
-    const apiUrl = flowiseConfig.get('FLOWISE_API_ENDPOINT'); // Corrected usage
-    const response = await axios.post(apiUrl, { prompt });
-    flowiseDebug(`Generated completion for prompt: ${prompt}`);
-    return response.data.completion;
+class FlowiseProvider implements ILlmProvider {
+  supportsCompletion(): boolean {
+    return false; // This provider now focuses on chat completions.
   }
 
-  supportsCompletion() {
+  supportsChatCompletion(): boolean {
     return true;
   }
 
-  supportsChatCompletion() {
-    return false;
+  async generateChatCompletion(
+    userMessage: string,
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    const channelId = metadata?.channelId;
+    if (!channelId) {
+      flowiseDebug('Error: channelId is missing from metadata for Flowise request.');
+      return 'Sorry, I am missing some context to respond. Please try again.';
+    }
+
+    try {
+      flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
+      const response = await getFlowiseResponse(channelId, userMessage);
+      return response;
+    } catch (error) {
+      flowiseDebug('Error getting response from Flowise:', error);
+      return 'There was an error communicating with the AI service.';
+    }
   }
 
-  async generateChatCompletion(messages: any): Promise<string> {
-    flowiseDebug('Chat completion not supported, returning empty string');
-    return '';
+  async generateCompletion(prompt: string): Promise<string> {
+    flowiseDebug('generateCompletion is not supported, redirecting to generateChatCompletion.');
+    // Fallback to chat completion with a dummy channelId if necessary,
+    // though this path should ideally not be taken.
+    return this.generateChatCompletion(prompt, [], { channelId: 'default-completion' });
   }
 }
 

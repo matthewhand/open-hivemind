@@ -3,6 +3,8 @@ import Debug from 'debug';
 import discordConfig from '@config/discordConfig';
 import messageConfig from '@config/messageConfig';
 import DiscordMessage from './DiscordMessage';
+import { IMessage } from '@message/interfaces/IMessage';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
 
 const log = Debug('app:discordService');
 
@@ -13,7 +15,7 @@ interface Bot {
 }
 
 export const Discord = {
-  DiscordService: class {
+  DiscordService: class implements IMessengerService {
     private static instance: DiscordService;
     private bots: Bot[];
     private tokens: string[];
@@ -66,19 +68,20 @@ export const Discord = {
       }
     }
 
-    public setMessageHandler(handler: (message: Message) => void): void {
+    public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void {
       if (this.handlerSet) return;
       this.handlerSet = true;
 
-      this.bots[0].client.on('messageCreate', (message) => {
+      this.bots[0].client.on('messageCreate', async (message) => {
         if (message.author.bot) return;
 
         const wrappedMessage = new DiscordMessage(message);
-        handler(wrappedMessage as any);
+        const history = await this.getMessagesFromChannel(message.channelId);
+        await handler(wrappedMessage, history);
       });
     }
 
-    public async sendMessageToChannel(channelId: string, text: string, senderName: string, threadId?: string): Promise<string> {
+    public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
       const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
       const effectiveSender = senderName || displayName;
       const botInfo = this.bots.find((b) => b.botUserName === effectiveSender) || this.bots[0];
@@ -109,8 +112,9 @@ export const Discord = {
       }
     }
 
-    public async getMessagesFromChannel(channelId: string): Promise<Message[]> {
-      return await this.fetchMessages(channelId);
+    public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
+      const rawMessages = await this.fetchMessages(channelId);
+      return rawMessages.map(msg => new DiscordMessage(msg));
     }
 
     public async fetchMessages(channelId: string): Promise<Message[]> {

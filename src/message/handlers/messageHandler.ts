@@ -59,13 +59,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // LLM processing
     const startTime = Date.now();
+    const metadata = { ...message.metadata, channelId: message.getChannelId() };
     const payload = {
       text: processedMessage,
       history: historyMessages.map((m) => ({ role: m.role, content: m.getText() })),
-      metadata: message.metadata,
+      metadata: metadata,
     };
     logger(`Sending to LLM: ${JSON.stringify(payload)}`);
-    const llmResponse = await llmProvider.generateChatCompletion(processedMessage, historyMessages, message.metadata);
+    const llmResponse = await llmProvider.generateChatCompletion(processedMessage, historyMessages, metadata);
     logger(`LLM response: ${llmResponse}`);
 
     const reply = llmResponse || 'No response'; // Assume string response
