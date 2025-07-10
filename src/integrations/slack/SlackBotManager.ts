@@ -184,6 +184,15 @@ export class SlackBotManager {
             throw error;
           }
         }
+      } else if (this.mode === 'rtm' && botInfo.rtmClient) {
+        try {
+          debug(`Starting RTM client for ${botInfo.botUserName}`);
+          await botInfo.rtmClient.start();
+          debug(`RTM client started for ${botInfo.botUserName}`);
+        } catch (error) {
+          debug(`Failed to start RTM client for ${botInfo.botUserName}:`, error);
+          throw error;
+        }
       }
     }
   }
@@ -196,7 +205,7 @@ export class SlackBotManager {
 
   public getBotByName(name: string): SlackBotInfo | undefined {
     debug('Entering getBotByName');
-    return this.slackBots.find(bot => bot.botUserName?.toLowerCase() === name.toLowerCase()) || this.slackBots[0];
+    return this.slackBots.find(bot => bot.botUserName?.toLowerCase() === name.toLowerCase());
   }
 
   public getAllBots(): SlackBotInfo[] {

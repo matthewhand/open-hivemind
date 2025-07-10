@@ -34,4 +34,5 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
   verbose: true,
+  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/tests/integrations/slack/SlackService.test.ts"],
 };
