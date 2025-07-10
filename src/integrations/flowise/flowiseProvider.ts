@@ -1,6 +1,8 @@
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { IMessage } from '@message/interfaces/IMessage';
 import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
+import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
+import flowiseConfig from '@config/flowiseConfig';
 import Debug from 'debug';
 
 const flowiseDebug = Debug('app:flowiseProvider');
@@ -27,7 +29,16 @@ class FlowiseProvider implements ILlmProvider {
 
     try {
       flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
-      const response = await getFlowiseResponse(channelId, userMessage);
+      let response: string;
+      if (flowiseConfig.get('FLOWISE_USE_REST')) {
+        response = await getFlowiseResponse(channelId, userMessage);
+      } else {
+        const chatflowId = flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+        if (!chatflowId) {
+          throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
+        }
+        response = await getFlowiseSdkResponse(userMessage, chatflowId);
+      }
       return response;
     } catch (error) {
       flowiseDebug('Error getting response from Flowise:', error);

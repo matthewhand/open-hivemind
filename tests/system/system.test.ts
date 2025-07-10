@@ -55,7 +55,7 @@ describeOrSkip('System Test', () => {
     console.log(`System Test: Attempting to send a message to channel: ${channelId}`);
     const llmProvider = getLlmProvider()[0];
     const llmResponse = await llmProvider.generateChatCompletion(
-      "Generate a short, positive message for a system test. Include the current timestamp.",
+      "Write a haiku about software testing.",
       [],
       { channelId: channelId }
     );
@@ -65,7 +65,7 @@ describeOrSkip('System Test', () => {
     if (isErrorResponse) {
       throw new Error(`LLM failed to generate a proper response. LLM says: ${llmResponse}. Test aborted.`);
     }
-    const testMessage = `✅ System test executed successfully at: ${new Date().toISOString()}. LLM says: ${llmResponse}`;
+    const testMessage = `✅ System test executed successfully at: ${new Date().toLocaleString()}. LLM says: ${llmResponse}`;
 
     const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
 
