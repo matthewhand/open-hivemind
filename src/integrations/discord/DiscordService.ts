@@ -56,16 +56,21 @@ export const Discord = {
     }
 
     public async initialize(): Promise<void> {
-      for (const bot of this.bots) {
-        bot.client.on('ready', () => {
-          console.log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
-          bot.botUserId = bot.client.user?.id || '';
-          log(`Initialized ${bot.botUserName} OK`);
-        });
+      const loginPromises = this.bots.map((bot, index) => {
+        return new Promise<void>(async (resolve) => {
+          bot.client.once('ready', () => {
+            console.log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
+            bot.botUserId = bot.client.user?.id || '';
+            log(`Initialized ${bot.botUserName} OK`);
+            resolve();
+          });
 
-        await bot.client.login(this.tokens[this.bots.indexOf(bot)]);
-        log(`Bot ${bot.botUserName} logged in`);
-      }
+          await bot.client.login(this.tokens[index]);
+          log(`Bot ${bot.botUserName} logged in`);
+        });
+      });
+
+      await Promise.all(loginPromises);
     }
 
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void {
@@ -98,10 +103,10 @@ export const Discord = {
           if (!thread || !thread.isThread()) {
             throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
           }
-          message = await thread.send(`*${effectiveSender}*: ${text}`);
+          message = await thread.send(text);
         } else {
           console.log(`Attempting send to channel ${channelId}: *${effectiveSender}*: ${text}`);
-          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(`*${effectiveSender}*: ${text}`);
+          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
         }
 
         console.log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);

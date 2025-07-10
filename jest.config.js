@@ -26,7 +26,8 @@ module.exports = {
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
-    '^discord.js$': '<rootDir>/__mocks__/discord.js.ts'
+    
+  'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/__mocks__/discord.js.ts',
   },
   setupFiles: [
     '<rootDir>/jest-setup.js'
