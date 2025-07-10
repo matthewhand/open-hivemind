@@ -65,7 +65,8 @@ describeOrSkip('System Test', () => {
     if (isErrorResponse) {
       throw new Error(`LLM failed to generate a proper response. LLM says: ${llmResponse}. Test aborted.`);
     }
-    const testMessage = `✅ System test executed successfully at: ${new Date().toLocaleString()}. LLM says: ${llmResponse}`;
+    const testMessage = `✅ System test executed successfully at: ${new Date().toLocaleString()}. LLM says:
+${llmResponse}`;
 
     const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
 
