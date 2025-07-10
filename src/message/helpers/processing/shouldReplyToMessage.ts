@@ -70,7 +70,8 @@ function applyModifiers(
   }
 
   const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
-  const wakewords = Array.isArray(wakewordsRaw) ? wakewordsRaw : String(wakewordsRaw).split(',').map(s => s.trim());
+  const wakewords = Array.isArray(wakewordsRaw) ? wakewordsRaw : String(wakewordsRaw).split(',').map(s => s.trim())
+;
   if (wakewords.some((word: string) => text.startsWith(word))) {
     debug(`Wakeword detected. Chance set to 1.`);
     return 1;
@@ -105,7 +106,7 @@ function applyDiscordBonuses(message: any, chance: number): number {
   }
 
   const channelBonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
-  const channelBonus = channelBonuses[message.getChannelId()] ?? 0.0;
+  const channelBonus = channelBonuses[message.getChannelId()] ?? 1.0;
   debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
 
   return chance * channelBonus;
