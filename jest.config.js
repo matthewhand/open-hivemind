@@ -7,9 +7,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.tsx?$': 'ts-jest'
+    '^.+\.tsx?$': 'ts-jest'
   },
-  testRegex: '(\\.|/)test\\.[tj]sx?$',
+  testRegex: '(\.|/)test\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
@@ -21,12 +21,12 @@ module.exports = {
     '^@message/(.*)$': '<rootDir>/src/message/$1',
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
-    '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
-    '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js'
+    '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
+    '^discord.js$': '<rootDir>/__mocks__/discord.js.ts'
   },
   setupFiles: [
     '<rootDir>/jest-setup.js'

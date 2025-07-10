@@ -95,8 +95,7 @@ export const Discord = {
           if (!thread || !thread.isThread()) {
             throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
           }
-          // message = await thread.send(`*${effectiveSender}*: ${text}`);
-          message = await thread.send(`${text}`);
+          message = await thread.send(`*${effectiveSender}*: ${text}`);
         } else {
           console.log(`Attempting send to channel ${channelId}: *${effectiveSender}*: ${text}`);
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(`*${effectiveSender}*: ${text}`);

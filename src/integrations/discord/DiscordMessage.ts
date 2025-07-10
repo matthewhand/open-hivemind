@@ -1,7 +1,7 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { Message, TextChannel } from 'discord.js';
+import { GuildMember, Message, TextChannel, User } from 'discord.js';
 
 const debug = Debug('app:DiscordMessage');
 
@@ -86,14 +86,56 @@ export default class DiscordMessage implements IMessage {
 
   getUserMentions(): string[] {
     debug('Getting user mentions from message: ' + this.message.id);
-    return Array.from(this.message.mentions.users.values()).map((user) => user.id);
+    const users = this.message.mentions?.users;
+    if (!users) {
+      return [];
+    }
+  
+    // A real Collection has a .map() method.
+    if (typeof users.map === 'function') {
+      return users.map(user => user.id);
+    }
+    
+    // Fallback for mock objects that are just plain objects.
+    const ids: string[] = [];
+    for (const key in users) {
+      if (Object.prototype.hasOwnProperty.call(users, key)) {
+        const potentialUser = (users as any)[key] as User;
+        if (potentialUser && typeof potentialUser.id === 'string') {
+          ids.push(potentialUser.id);
+        }
+      }
+    }
+    return ids;
   }
-
+  
   getChannelUsers(): string[] {
     debug('Fetching users from channel: ' + this.channelId);
     if (this.message.channel instanceof TextChannel) {
-      const members = this.message.channel.members;
-      return Array.from(members.values()).map((member) => member.user.id);
+      const membersManager = this.message.channel.members;
+      if (!membersManager) {
+        return [];
+      }
+  
+      // For real discord.js, the collection is in the `cache` property of the manager.
+      // For mocks, the manager itself might be the collection.
+      const collection = (membersManager as any).cache || membersManager;
+      
+      if (collection && typeof collection.map === 'function') {
+        return collection.map((member: GuildMember) => member.user.id);
+      }
+      
+      // Fallback for simple object mocks
+      const ids: string[] = [];
+      for (const key in collection) {
+        if (Object.prototype.hasOwnProperty.call(collection, key)) {
+          const potentialMember = (collection as any)[key] as GuildMember;
+          if (potentialMember && potentialMember.user && typeof potentialMember.user.id === 'string') {
+            ids.push(potentialMember.user.id);
+          }
+        }
+      }
+      return ids;
     }
     return [];
   }
@@ -121,6 +163,9 @@ export default class DiscordMessage implements IMessage {
 
   mentionsUsers(userId: string): boolean {
     debug('Checking if message mentions user: ' + userId);
+    if (!this.message.mentions || !this.message.mentions.users) {
+        return false;
+    }
     return this.message.mentions.users.has(userId);
   }
 

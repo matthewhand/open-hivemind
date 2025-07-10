@@ -111,30 +111,6 @@ export const openAiProvider: ILlmProvider = {
         if (error instanceof Error) {
           const errorMsg = error.message.toLowerCase();
 
-          if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-            debug(`Model '${model}' not found at '${baseURL}'`);
-            if (baseURL === DEFAULT_BASE_URL) {
-              return 'The requested model isn’t available on this service.';
-            }
-            // Try default URL on next attempt
-            debug(`Switching to default '${DEFAULT_BASE_URL}' due to model not found`);
-            baseURL = DEFAULT_BASE_URL;
-            openai.baseURL = baseURL;
-          }
-
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            debug('Connection error detected');
-            if (attempt === 1 && baseURL !== DEFAULT_BASE_URL) {
-              debug(`Switching to fallback '${DEFAULT_BASE_URL}'`);
-              baseURL = DEFAULT_BASE_URL;
-              openai.baseURL = baseURL;
-            }
-          }
-
-          if (errorMsg.includes('timed out')) {
-            debug('Request timed out');
-          }
-
           if (attempt < MAX_RETRIES) {
             const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
             debug(`Retrying in ${delayMs}ms...`);
@@ -220,29 +196,6 @@ export const openAiProvider: ILlmProvider = {
 
         if (error instanceof Error) {
           const errorMsg = error.message.toLowerCase();
-
-          if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-            debug(`Model '${model}' not found at '${baseURL}'`);
-            if (baseURL === DEFAULT_BASE_URL) {
-              return 'The requested model isn’t available on this service.';
-            }
-            debug(`Switching to default '${DEFAULT_BASE_URL}' due to model not found`);
-            baseURL = DEFAULT_BASE_URL;
-            openai.baseURL = baseURL;
-          }
-
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            debug('Connection error detected');
-            if (attempt === 1 && baseURL !== DEFAULT_BASE_URL) {
-              debug(`Switching to fallback '${DEFAULT_BASE_URL}'`);
-              baseURL = DEFAULT_BASE_URL;
-              openai.baseURL = baseURL;
-            }
-          }
-
-          if (errorMsg.includes('timed out')) {
-            debug('Request timed out');
-          }
 
           if (attempt < MAX_RETRIES) {
             const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
