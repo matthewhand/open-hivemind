@@ -1,21 +1,79 @@
 import DiscordMessage from '@integrations/discord/DiscordMessage';
 import { Message, TextChannel, Collection, GuildMember, User } from 'discord.js';
+import { isSystemTest, isUnitTest, setupTestEnvironment } from '../../testUtils';
+
+// Skip mock creation entirely in system test mode
+if (isUnitTest()) {
+    setupTestEnvironment();
+    
+    // Helper to create a mock TextChannel instance that passes `instanceof TextChannel` checks
+    const createMockTextChannel = (data: any = {}): TextChannel => {
+        const channel = Object.create(TextChannel.prototype);
+        const members = {
+            cache: data.members?.cache || new Collection<string, GuildMember>(),
+        };
+        
+        Object.defineProperty(channel, 'members', {
+            get: () => members,
+            configurable: true
+        });
+        
+        Object.assign(channel, {
+            id: 'channel-id',
+            topic: null,
+            messages: {
+                fetch: jest.fn(),
+            },
+            ...data,
+        });
+        
+        return channel;
+    };
+
+    // Helper to create a mock Message object
+    const createMockMessage = (data: any = {}): Message<boolean> => {
+        const message = Object.create(Message.prototype);
+        const finalData = {
+            id: 'message-id',
+            content: 'Hello, world!',
+            author: { id: 'author-id', bot: false },
+            createdAt: new Date(),
+            editable: false,
+            edit: jest.fn().mockResolvedValue(message),
+            mentions: {
+                users: data.mentions?.users || new Collection<string, User>(),
+            },
+            reference: null,
+            ...data,
+            channel: createMockTextChannel(data.channel),
+        };
+        finalData.channelId = finalData.channel.id;
+        return Object.assign(message, finalData);
+    };
+}
 
 // Helper to create a mock TextChannel instance that passes `instanceof TextChannel` checks
 const createMockTextChannel = (data: any = {}): TextChannel => {
     const channel = Object.create(TextChannel.prototype);
-    return Object.assign(channel, {
+    const members = {
+        cache: data.members?.cache || new Collection<string, GuildMember>(),
+    };
+    
+    Object.defineProperty(channel, 'members', {
+        get: () => members,
+        configurable: true
+    });
+    
+    Object.assign(channel, {
         id: 'channel-id',
         topic: null,
-        // The `members` property is a manager with a `cache` property that holds the collection
-        members: {
-            cache: data.members?.cache || new Collection<string, GuildMember>(),
-        },
         messages: {
             fetch: jest.fn(),
         },
         ...data,
     });
+    
+    return channel;
 };
 
 // Helper to create a mock Message object
@@ -40,12 +98,16 @@ const createMockMessage = (data: any = {}): Message<boolean> => {
     finalData.channelId = finalData.channel.id;
     return Object.assign(message, finalData);
 };
-
 describe('DiscordMessage Extended', () => {
+    if (isSystemTest()) {
+        it.skip('skipping all tests in system test mode - requires mocks', () => {});
+        return;
+    }
+    
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
 
   it('should return the correct timestamp', () => {
     const now = new Date();
