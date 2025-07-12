@@ -60,11 +60,16 @@ describe('DiscordService', () => {
     discordService = Discord.DiscordService.getInstance();
   });
 
-  it('should initialize with NO_TOKEN when DISCORD_BOT_TOKEN is not set', () => {
+  it('should throw error when no tokens are provided', () => {
     delete process.env.DISCORD_BOT_TOKEN;
     (Discord.DiscordService as any).instance = undefined;
-    const service = Discord.DiscordService.getInstance();
-    expect(service['tokens']).toEqual(['NO_TOKEN']);
+    expect(() => Discord.DiscordService.getInstance()).toThrow('No Discord bot tokens provided');
+  });
+
+  it('should throw error for empty token in list', () => {
+    process.env.DISCORD_BOT_TOKEN = 'token1,,token2';
+    (Discord.DiscordService as any).instance = undefined;
+    expect(() => Discord.DiscordService.getInstance()).toThrow('Empty token at position 2');
   });
 
   it('should be a singleton', () => {
@@ -73,37 +78,74 @@ describe('DiscordService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  it('should initialize bots and log in', async () => {
+  it('should initialize bots with numbered names and log in', async () => {
     await discordService.initialize();
 
     expect(MockDiscordClient).toHaveBeenCalledTimes(2);
     expect(MockDiscordClient.mock.results[0].value.login).toHaveBeenCalledWith('token1');
     expect(MockDiscordClient.mock.results[1].value.login).toHaveBeenCalledWith('token2');
     expect(discordService.getAllBots().length).toBe(2);
-    expect(discordService.getAllBots()[0].botUserName).toBe('TestBot');
+    expect(discordService.getAllBots()[0].botUserName).toBe('TestBot #1');
+    expect(discordService.getAllBots()[1].botUserName).toBe('TestBot #2');
   });
 
-  it('should set message handler and ignore bot messages', async () => {
+  it('should set message handlers on all bots and ignore bot messages', async () => {
     const mockHandler = jest.fn();
     const getMessagesFromChannelSpy = jest.spyOn(discordService, 'getMessagesFromChannel').mockResolvedValue([]);
     discordService.setMessageHandler(mockHandler);
     expect(discordService['handlerSet']).toBe(true);
 
-    // Simulate a bot message
+    // Verify handlers set on both bots
+    expect(MockDiscordClient.mock.results[0].value.on).toHaveBeenCalled();
+    expect(MockDiscordClient.mock.results[1].value.on).toHaveBeenCalled();
+
+    // Simulate bot messages on both instances
     const mockBotMessage = { author: { bot: true } };
     await MockDiscordClient.mock.results[0].value.on.mock.calls[0][1](mockBotMessage);
+    await MockDiscordClient.mock.results[1].value.on.mock.calls[0][1](mockBotMessage);
     expect(mockHandler).not.toHaveBeenCalled();
 
-    // Simulate a user message
-    const mockUserMessage = { author: { bot: false }, channelId: 'testChannel', content: 'user message' };
-    await MockDiscordClient.mock.results[0].value.on.mock.calls[0][1](mockUserMessage);
-    expect(mockHandler).toHaveBeenCalledTimes(1);
+    // Simulate user messages on both instances
+    const mockUserMessage1 = { author: { bot: false }, channelId: 'testChannel1', content: 'user message 1' };
+    const mockUserMessage2 = { author: { bot: false }, channelId: 'testChannel2', content: 'user message 2' };
+    await MockDiscordClient.mock.results[0].value.on.mock.calls[0][1](mockUserMessage1);
+    await MockDiscordClient.mock.results[1].value.on.mock.calls[0][1](mockUserMessage2);
+    expect(mockHandler).toHaveBeenCalledTimes(2);
 
     // Ensure it only sets once
     discordService.setMessageHandler(jest.fn());
     expect(discordService['handlerSet']).toBe(true);
 
     getMessagesFromChannelSpy.mockRestore();
+  });
+
+  it('should send messages using correct bot instance', async () => {
+    const mockChannelSend = jest.fn(() => Promise.resolve({ id: 'mockMessageId' }));
+    MockDiscordClient.mock.results[0].value.channels.fetch.mockResolvedValue({
+      isTextBased: () => true,
+      send: mockChannelSend,
+    });
+    MockDiscordClient.mock.results[1].value.channels.fetch.mockResolvedValue({
+      isTextBased: () => true,
+      send: mockChannelSend,
+    });
+
+    // Send with default bot
+    await discordService.sendMessageToChannel('channel123', 'Hello');
+    expect(mockChannelSend).toHaveBeenCalledWith('Hello');
+
+    // Send with specific bot name
+    await discordService.sendMessageToChannel('channel123', 'Hello 2', 'TestBot #2');
+    expect(mockChannelSend).toHaveBeenCalledWith('Hello 2');
+  });
+
+  it('should throw error when sending with no bots available', async () => {
+    (Discord.DiscordService as any).instance = undefined;
+    const emptyService = Discord.DiscordService.getInstance();
+    emptyService['bots'] = []; // Force empty bots array
+    
+    await expect(emptyService.sendMessageToChannel('channel123', 'test'))
+      .rejects.toThrow('No Discord bot instances available');
   });
 
   it('should send message to channel', async () => {

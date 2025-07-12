@@ -46,7 +46,7 @@ describe('SlackService', () => {
     mockedSlackConfig.get.mockImplementation((key) => {
       if (key === 'SLACK_BOT_TOKEN') return '';
       if (key === 'SLACK_SIGNING_SECRET') return 'mock-signing-secret';
-      return undefined;
+      return '';
     });
     expect(() => SlackService.getInstance()).toThrow('Slack configuration incomplete');
   });
@@ -55,7 +55,7 @@ describe('SlackService', () => {
     mockedSlackConfig.get.mockImplementation((key) => {
       if (key === 'SLACK_BOT_TOKEN') return 'xoxb-mock-token';
       if (key === 'SLACK_SIGNING_SECRET') return '';
-      return undefined;
+      return '';
     });
     expect(() => SlackService.getInstance()).toThrow('Slack configuration incomplete');
   });

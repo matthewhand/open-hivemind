@@ -23,7 +23,14 @@ export const Discord = {
 
     public constructor() {
       this.bots = [];
-      this.tokens = (process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN').split(',').map((t) => t.trim());
+      const tokenString = process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN';
+      this.tokens = tokenString.split(',').map((t) => t.trim());
+      
+      // Validate we have at least one token
+      if (this.tokens.length === 0 || this.tokens[0] === 'NO_TOKEN') {
+        throw new Error('No Discord bot tokens provided in DISCORD_BOT_TOKEN');
+      }
+
       const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
 
       const intents = [
@@ -33,8 +40,13 @@ export const Discord = {
         GatewayIntentBits.GuildVoiceStates,
       ];
 
-      this.tokens.forEach((token) => {
-        const botUserName = displayName; // Use env var directly
+      // Create bot instances with unique names and tokens
+      this.tokens.forEach((token, index) => {
+        if (!token) {
+          throw new Error(`Empty token at position ${index + 1} in DISCORD_BOT_TOKEN`);
+        }
+
+        const botUserName = `${displayName} #${index + 1}`;
         const client = new Client({ intents });
         this.bots.push({ client, botUserId: '', botUserName });
       });
@@ -51,8 +63,8 @@ export const Discord = {
       return this.bots;
     }
 
-    public getClient(): Client {
-      return this.bots[0].client;
+    public getClient(index = 0): Client {
+      return this.bots[index]?.client || this.bots[0].client;
     }
 
     public async initialize(): Promise<void> {
@@ -77,18 +89,35 @@ export const Discord = {
       if (this.handlerSet) return;
       this.handlerSet = true;
 
-      this.bots[0].client.on('messageCreate', async (message) => {
-        if (message.author.bot) return;
+      this.bots.forEach((bot) => {
+        bot.client.on('messageCreate', async (message) => {
+          if (message.author.bot) return;
 
-        const wrappedMessage = new DiscordMessage(message);
-        const history = await this.getMessagesFromChannel(message.channelId);
-        await handler(wrappedMessage, history);
+          const wrappedMessage = new DiscordMessage(message);
+          const history = await this.getMessagesFromChannel(message.channelId);
+          await handler(wrappedMessage, history);
+        });
       });
     }
 
+    /**
+     * Sends a message to a Discord channel using the specified bot instance
+     * @param channelId The target channel ID
+     * @param text The message text to send
+     * @param senderName Optional bot instance name (e.g. "Madgwick AI #2")
+     * @param threadId Optional thread ID if sending to a thread
+     * @returns The message ID or empty string on failure
+     * @throws Error if no bots are available
+     */
     public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+      if (this.bots.length === 0) {
+        throw new Error('No Discord bot instances available');
+      }
+
       const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
       const effectiveSender = senderName || displayName;
+      
+      // Find bot by name or use first bot as fallback
       const botInfo = this.bots.find((b) => b.botUserName === effectiveSender) || this.bots[0];
       try {
         console.log(`Sending to channel ${channelId} as ${effectiveSender}`);

@@ -21,11 +21,23 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 
 ### Solo or Swarm Modes
 - **Single Bot Simplicity:** Run a single bot using one `DISCORD_BOT_TOKEN` for straightforward management.
-- **Multi-Agent Swarm:** Embrace the power of Open‐Swarm by providing comma-separated tokens (e.g., `token1, token2`) and names (e.g., `Agent1, Agent2`). Each agent retains a unique personality while synchronizing as part of a collective, enabling flexible task distribution.
+- **Multi-Agent Swarm:** Provide comma-separated tokens in `DISCORD_BOT_TOKEN` (e.g., `token1,token2,token3`) to create multiple bot instances. Each instance will automatically be assigned a numbered name (e.g., "BotName #1", "BotName #2").
+- **Instance Configuration:**
+  - All instances share the same base name from `MESSAGE_USERNAME_OVERRIDE`
+  - Each instance maintains its own connection and message handlers
+  - Messages can be sent through specific instances by including the numbered name
+- **Validation:** The system validates tokens on startup and throws clear errors for:
+  - Missing tokens
+  - Empty tokens in the comma-separated list
+  - No available bot instances
 
 ### Channel Omniscience & Multi-Agent Choreography
-- **Event-Driven Vigilance:** Listens to every `messageCreate` event, filtering out bot messages to focus on human interactions. The system dynamically adapts to incoming messages, preserving context across channels, threads, and guilds.
-- **Synchronized Multi-Agent Responses:** Employs a choreography of agents where each bot’s token and username maps to distinct functions. Whether it’s greeting, information retrieval, or assistance, the orchestrated responses ensure that the hivemind operates with surgical precision.
+- **Event-Driven Vigilance:** Listens to every `messageCreate` event across all bot instances, filtering out bot messages to focus on human interactions.
+- **Instance-Specific Handling:** Each numbered bot instance maintains its own:
+  - Connection state
+  - Message handlers
+  - Channel mappings
+- **Coordinated Responses:** The system ensures responses are routed through the appropriate instance while maintaining a unified context across all interactions.
 
 ## Agent Presentation & Dynamic Response Crafting
 
