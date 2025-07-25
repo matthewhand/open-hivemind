@@ -8,5 +8,5 @@ export interface IMessengerService {
   getClientId(): string;
   getDefaultChannel(): string;
   shutdown(): Promise<void>;
-  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void;
+  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void;
 }

@@ -1,6 +1,3 @@
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { Discord } from '@integrations/discord/DiscordService';
-import { SlackService } from '@integrations/slack/SlackService';
 import 'dotenv/config';
 import { getLlmProvider } from '@llm/getLlmProvider';
 
@@ -10,16 +7,21 @@ const describeOrSkip = process.env.RUN_SYSTEM_TESTS === 'true'
   : describe.skip;
 
 describeOrSkip('System Test', () => {
-  let messengerService: IMessengerService;
+  let messengerService: any;
 
   // Set a longer timeout for network calls
   jest.setTimeout(30000); 
 
   beforeAll(async () => {
     const provider = process.env.MESSAGE_PROVIDER?.toLowerCase();
+    
     if (provider === 'discord') {
+      // Dynamic import to avoid issues when discord.js is not available
+      const { Discord } = await import('@integrations/discord/DiscordService');
       messengerService = Discord.DiscordService.getInstance();
     } else if (provider === 'slack') {
+      // Dynamic import to avoid issues when slack dependencies are not available
+      const { SlackService } = await import('@integrations/slack/SlackService');
       messengerService = SlackService.getInstance();
     } else {
       throw new Error(`System test not configured for MESSAGE_PROVIDER: '${provider}'. Please set it to 'discord' or 'slack'.`);

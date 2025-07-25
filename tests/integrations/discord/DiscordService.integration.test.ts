@@ -2,6 +2,8 @@ import { Discord } from '@integrations/discord/DiscordService';
 import { Client, GatewayIntentBits } from 'discord.js';
 import messageConfig from '@config/messageConfig';
 import discordConfig from '@config/discordConfig';
+import * as fs from 'fs';
+import * as path from 'path';
 
 jest.mock('discord.js', () => ({
   Client: jest.fn().mockImplementation(() => ({
@@ -54,22 +56,58 @@ describe('DiscordService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Set DISCORD_BOT_TOKEN before getting the instance for tests that need it
-    process.env.DISCORD_BOT_TOKEN = 'token1,token2';
+    process.env.DISCORD_BOT_TOKEN = 'YOUR_BOT_TOKEN_1,YOUR_BOT_TOKEN_2';
     // Reset the singleton instance before each test
     (Discord.DiscordService as any).instance = undefined;
     discordService = Discord.DiscordService.getInstance();
   });
 
-  it('should throw error when no tokens are provided', () => {
-    delete process.env.DISCORD_BOT_TOKEN;
-    (Discord.DiscordService as any).instance = undefined;
-    expect(() => Discord.DiscordService.getInstance()).toThrow('No Discord bot tokens provided');
-  });
+  describe('Token Validation', () => {
+    it('should throw error when no tokens are provided via env or config', () => {
+      // Create a temporary backup of the config file
+      const originalConfig = fs.readFileSync(path.join(__dirname, '../../../config/test/messengers.json'), 'utf-8');
+      
+      try {
+        // Empty the config file
+        fs.writeFileSync(path.join(__dirname, '../../../config/test/messengers.json'), JSON.stringify({}));
+        delete process.env.DISCORD_BOT_TOKEN;
+        (Discord.DiscordService as any).instance = undefined;
+        
+        expect(() => Discord.DiscordService.getInstance()).toThrow('No Discord bot tokens provided in configuration');
+      } finally {
+        // Restore the original config
+        fs.writeFileSync(path.join(__dirname, '../../../config/test/messengers.json'), originalConfig);
+      }
+    });
 
-  it('should throw error for empty token in list', () => {
-    process.env.DISCORD_BOT_TOKEN = 'token1,,token2';
-    (Discord.DiscordService as any).instance = undefined;
-    expect(() => Discord.DiscordService.getInstance()).toThrow('Empty token at position 2');
+    it('should throw error for empty token in env var list', () => {
+      process.env.DISCORD_BOT_TOKEN = 'YOUR_BOT_TOKEN_1,,YOUR_BOT_TOKEN_2';
+      (Discord.DiscordService as any).instance = undefined;
+      expect(() => Discord.DiscordService.getInstance()).toThrow('Empty token at position 2');
+    });
+
+    it('should throw error for empty token in config file', () => {
+      const originalConfig = fs.readFileSync(path.join(__dirname, '../../../config/test/messengers.json'), 'utf-8');
+      
+      try {
+        // Modify config to have empty token
+        const badConfig = {
+          discord: {
+            instances: [
+              { name: 'BadBot', token: '' }
+            ]
+          }
+        };
+        fs.writeFileSync(path.join(__dirname, '../../../config/test/messengers.json'), JSON.stringify(badConfig));
+        delete process.env.DISCORD_BOT_TOKEN;
+        (Discord.DiscordService as any).instance = undefined;
+        
+        expect(() => Discord.DiscordService.getInstance()).toThrow('Empty token at position 1 in config file');
+      } finally {
+        // Restore the original config
+        fs.writeFileSync(path.join(__dirname, '../../../config/test/messengers.json'), originalConfig);
+      }
+    });
   });
 
   it('should be a singleton', () => {
@@ -82,11 +120,11 @@ describe('DiscordService', () => {
     await discordService.initialize();
 
     expect(MockDiscordClient).toHaveBeenCalledTimes(2);
-    expect(MockDiscordClient.mock.results[0].value.login).toHaveBeenCalledWith('token1');
-    expect(MockDiscordClient.mock.results[1].value.login).toHaveBeenCalledWith('token2');
+    expect(MockDiscordClient.mock.results[0].value.login).toHaveBeenCalledWith('YOUR_BOT_TOKEN_1');
+    expect(MockDiscordClient.mock.results[1].value.login).toHaveBeenCalledWith('YOUR_BOT_TOKEN_2');
     expect(discordService.getAllBots().length).toBe(2);
-    expect(discordService.getAllBots()[0].botUserName).toBe('TestBot #1');
-    expect(discordService.getAllBots()[1].botUserName).toBe('TestBot #2');
+    expect(discordService.getAllBots()[0].botUserName).toBe('Bot1');
+    expect(discordService.getAllBots()[1].botUserName).toBe('Bot2');
   });
 
   it('should set message handlers on all bots and ignore bot messages', async () => {
@@ -214,7 +252,7 @@ describe('DiscordService', () => {
     mockSendMessage.mockResolvedValue('mockAnnouncementId');
 
     await discordService.sendPublicAnnouncement('channel123', 'Test Announcement');
-    expect(mockSendMessage).toHaveBeenCalledWith('channel123', '**Announcement**: Test Announcement', 'TestBot', undefined);
+    expect(mockSendMessage).toHaveBeenCalledWith('channel123', '**Announcement**: Test Announcement', 'Bot1', undefined);
   });
 
   it('should get client ID', () => {

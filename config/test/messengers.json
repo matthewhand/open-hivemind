@@ -1,0 +1,26 @@
+{
+  "discord": {
+    "instances": [
+      {
+        "name": "TestBot1",
+        "token": "test_token_1",
+        "channels": ["test_channel_1"]
+      },
+      {
+        "name": "TestBot2", 
+        "token": "test_token_2",
+        "channels": ["test_channel_2"]
+      }
+    ]
+  },
+  "slack": {
+    "instances": [
+      {
+        "botToken": "xoxb-test-token",
+        "appToken": "xapp-test-token",
+        "signingSecret": "test-secret",
+        "botUserId": "U_TESTBOT"
+      }
+    ]
+  }
+}

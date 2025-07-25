@@ -16,36 +16,36 @@ interface SlackBotInfo {
   rtmClient?: RTMClient;
   botUserId?: string;
   botUserName?: string;
+  config: any;
 }
 
 export class SlackBotManager {
   private slackBots: SlackBotInfo[] = [];
   private mode: 'socket' | 'rtm';
-  private messageHandler: ((message: IMessage, historyMessages: IMessage[]) => Promise<string>) | null = null;
+  private messageHandler: ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) | null = null;
   private includeHistory: boolean = process.env.SLACK_INCLUDE_HISTORY === 'true';
   private processedEvents: Set<string> = new Set();
   private lastEventTsByChannel: Map<string, string> = new Map();
 
-  constructor(botTokens: string[], appTokens: string[], signingSecrets: string[], mode: 'socket' | 'rtm') {
+  constructor(instanceConfigs: any[], mode: 'socket' | 'rtm') {
     debug('Entering constructor');
     this.mode = mode;
-    botTokens.forEach((botToken, index) => {
-      const appToken = index < appTokens.length ? appTokens[index] : undefined;
-      const signingSecret = index < signingSecrets.length ? signingSecrets[index] : signingSecrets[0];
-      const webClient = new WebClient(botToken);
-      const botInfo: SlackBotInfo = { botToken, appToken, signingSecret, webClient };
+    instanceConfigs.forEach((instanceConfig, index) => {
+      const { token, appToken, signingSecret } = instanceConfig;
+      const webClient = new WebClient(token);
+      const botInfo: SlackBotInfo = { botToken: token, appToken, signingSecret, webClient, config: instanceConfig };
       if (this.mode === 'socket' && appToken) {
         debug(`Initializing SocketModeClient with appToken: ${appToken?.substring(0, 8)}...`);
         botInfo.socketClient = new SocketModeClient({ appToken });
       } else if (this.mode === 'rtm') {
-        botInfo.rtmClient = new RTMClient(botToken);
+        botInfo.rtmClient = new RTMClient(token);
       }
       this.slackBots.push(botInfo);
-      debug(`Created bot #${index}: ${botInfo.botUserName || botToken.substring(0, 8)}...`);
+      debug(`Created bot #${index}: ${botInfo.botUserName || token.substring(0, 8)}...`);
     });
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>) {
+  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) {
     debug('Entering setMessageHandler');
     this.messageHandler = handler;
   }
@@ -112,7 +112,7 @@ export class SlackBotManager {
         if (this.messageHandler) {
           const slackMessage = new SlackMessage(event.text, event.channel, event);
           const history = this.includeHistory ? await this.fetchMessagesForBot(primaryBot, event.channel, 10) : [];
-          await this.messageHandler(slackMessage, history);
+          await this.messageHandler(slackMessage, history, primaryBot.config);
         } else {
           debug('No message handler set for message event');
         }
@@ -170,7 +170,7 @@ export class SlackBotManager {
           debug(`${botInfo.botUserName} received: ${event.text}`);
           if (this.messageHandler) {
             const slackMessage = new SlackMessage(event.text, event.channel, event);
-            await this.messageHandler(slackMessage, []);
+            await this.messageHandler(slackMessage, [], botInfo.config);
           }
         });
 
@@ -213,11 +213,11 @@ export class SlackBotManager {
     return this.slackBots;
   }
 
-  public async handleMessage(message: IMessage, history: IMessage[] = []): Promise<string> {
+  public async handleMessage(message: IMessage, history: IMessage[] = [], botConfig: any): Promise<string> {
     debug('Entering handleMessage');
     if (this.messageHandler) {
       debug(`Handling message: "${message.getText()}"`);
-      return await this.messageHandler(message, history);
+      return await this.messageHandler(message, history, botConfig);
     }
     debug('No message handler set');
     return '';

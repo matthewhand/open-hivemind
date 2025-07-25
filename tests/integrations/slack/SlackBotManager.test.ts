@@ -42,10 +42,11 @@ describe('SlackBotManager', () => {
   });
 
   it('should initialize with socket mode and multiple tokens', async () => {
-    const botTokens = ['botToken1', 'botToken2'];
-    const appTokens = ['appToken1', 'appToken2'];
-    const signingSecrets = ['secret1', 'secret2'];
-    const manager = new SlackBotManager(botTokens, appTokens, signingSecrets, 'socket');
+    const instances = [
+      { token: 'botToken1', appToken: 'appToken1', signingSecret: 'secret1' },
+      { token: 'botToken2', appToken: 'appToken2', signingSecret: 'secret2' },
+    ];
+    const manager = new SlackBotManager(instances, 'socket');
 
     await manager.initialize();
 
@@ -59,10 +60,8 @@ describe('SlackBotManager', () => {
   });
 
   it('should initialize with rtm mode', async () => {
-    const botTokens = ['botToken1'];
-    const appTokens: string[] = [];
-    const signingSecrets = ['secret1'];
-    const manager = new SlackBotManager(botTokens, appTokens, signingSecrets, 'rtm');
+    const instances = [{ token: 'botToken1', signingSecret: 'secret1' }];
+    const manager = new SlackBotManager(instances, 'rtm');
 
     await manager.initialize();
 
@@ -82,26 +81,30 @@ describe('SlackBotManager', () => {
       },
     } as any));
 
-    const manager = new SlackBotManager(['botToken1'], [], ['secret1'], 'socket');
+    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
     await expect(manager.initialize()).rejects.toThrow('Auth failed');
   });
 
   it('should set message handler', () => {
-    const manager = new SlackBotManager(['botToken1'], [], ['secret1'], 'socket');
+    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
     const mockHandler = jest.fn();
     manager.setMessageHandler(mockHandler);
     expect(manager['messageHandler']).toBe(mockHandler);
   });
 
   it('should return all bots', () => {
-    const manager = new SlackBotManager(['botToken1'], [], ['secret1'], 'socket');
+    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
     const bots = manager.getAllBots();
     expect(bots.length).toBe(1);
     expect(bots[0].botToken).toBe('botToken1');
   });
 
   it('should return bot by name', async () => {
-    const manager = new SlackBotManager(['botToken1', 'botToken2'], [], ['secret1'], 'socket');
+    const instances = [
+      { token: 'botToken1', signingSecret: 'secret1' },
+      { token: 'botToken2', signingSecret: 'secret2' },
+    ];
+    const manager = new SlackBotManager(instances, 'socket');
     // Manually set bot user names for testing getBotByName
     manager.getAllBots()[0].botUserName = 'BotOne';
     manager.getAllBots()[1].botUserName = 'BotTwo';
@@ -112,20 +115,20 @@ describe('SlackBotManager', () => {
   });
 
   it('should handle message with message handler', async () => {
-    const manager = new SlackBotManager(['botToken1'], [], ['secret1'], 'socket');
+    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
     const mockHandler = jest.fn(() => Promise.resolve('handled'));
     manager.setMessageHandler(mockHandler);
 
     const mockMessage = { getText: () => 'test', data: { event_ts: '123', ts: '123', channel: 'C123', user: 'U456' } };
-    const result = await manager.handleMessage(mockMessage as any);
-    expect(mockHandler).toHaveBeenCalledWith(mockMessage, []);
+    const result = await manager.handleMessage(mockMessage as any, [], {});
+    expect(mockHandler).toHaveBeenCalledWith(mockMessage, [], {});
     expect(result).toBe('handled');
   });
 
   it('should return empty string if no message handler set', async () => {
-    const manager = new SlackBotManager(['botToken1'], [], ['secret1'], 'socket');
+    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
     const mockMessage = { getText: () => 'test', data: { event_ts: '123', ts: '123', channel: 'C123', user: 'U456' } };
-    const result = await manager.handleMessage(mockMessage as any);
+    const result = await manager.handleMessage(mockMessage as any, [], {});
     expect(result).toBe('');
   });
 });

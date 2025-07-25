@@ -75,14 +75,14 @@ describe('handleMessage', () => {
 
     it('should not process an empty message', async () => {
         const message = createMockMessage('');
-        await handleMessage(message);
+        await handleMessage(message, [], {});
         expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
     });
 
     it('should process a message, call LLM, and schedule a reply', async () => {
         mockedShouldReplyToMessage.mockReturnValue(true);
         const message = createMockMessage('Hello bot');
-        await handleMessage(message);
+        await handleMessage(message, [], {});
 
         expect(mockedStripBotId).toHaveBeenCalledWith('Hello bot', 'bot-id');
         expect(mockedAddUserHint).toHaveBeenCalled();
@@ -95,23 +95,19 @@ describe('handleMessage', () => {
     it('should not reply if shouldReplyToMessage returns false', async () => {
         mockedShouldReplyToMessage.mockReturnValue(false);
         const message = createMockMessage('Just a random message');
-        await handleMessage(message);
+        await handleMessage(message, [], {});
         expect(mockedShouldReplyToMessage).toHaveBeenCalled();
         expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
     });
 
     it('should handle inline commands and skip LLM call', async () => {
-        mockedMessageConfigGet.mockImplementation(key => {
-            if (key === 'MESSAGE_COMMAND_INLINE') return true;
-            if (key === 'MESSAGE_COMMAND_AUTHORISED_USERS') return 'test-user';
-            return false;
-        });
+        const botConfig = { MESSAGE_COMMAND_INLINE: true, MESSAGE_COMMAND_AUTHORISED_USERS: 'test-user' };
         mockedProcessCommand.mockImplementation(async (message, callback) => {
             await callback('Command processed successfully');
         });
 
         const message = createMockMessage('!mycommand');
-        await handleMessage(message);
+        await handleMessage(message, [], botConfig);
 
         expect(mockedProcessCommand).toHaveBeenCalledTimes(1);
         expect(mockMessengerProvider.sendMessageToChannel).toHaveBeenCalledWith('test-channel', 'Command processed successfully', expect.any(String));
@@ -121,10 +117,10 @@ describe('handleMessage', () => {
     
     it('should call sendFollowUpRequest if enabled', async () => {
         mockedShouldReplyToMessage.mockReturnValue(true);
-        mockedMessageConfigGet.mockImplementation(key => key === 'MESSAGE_LLM_FOLLOW_UP');
+        const botConfig = { MESSAGE_LLM_FOLLOW_UP: true };
 
         const message = createMockMessage('Hello');
-        await handleMessage(message, []);
+        await handleMessage(message, [], botConfig);
         
         const scheduledSendFunction = mockScheduleMessage.mock.calls[0][4];
         await scheduledSendFunction('LLM response');

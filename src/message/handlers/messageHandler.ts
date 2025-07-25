@@ -7,7 +7,6 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage';
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
-import messageConfig from '@config/messageConfig';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 
 const logger = Debug('app:messageHandler');
@@ -15,7 +14,7 @@ const messageProvider = getMessengerProvider()[0]; // Use first provider
 const llmProvider = getLlmProvider()[0]; // Returns ILlmProvider
 const timingManager = MessageDelayScheduler.getInstance();
 
-export async function handleMessage(message: IMessage, historyMessages: IMessage[] = []): Promise<string> {
+export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string> {
   try {
     const text = message.getText();
     if (!text) {
@@ -23,7 +22,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       return '';
     }
 
-    const botId = messageConfig.get('BOT_ID') || messageProvider.getClientId();
+    const botId = botConfig.BOT_ID || messageProvider.getClientId();
     const userId = message.getAuthorId();
     let processedMessage = stripBotId(text, botId);
     processedMessage = addUserHint(processedMessage, userId, botId);
@@ -33,11 +32,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // Command processing
     let commandProcessed = false;
-    if (messageConfig.get('MESSAGE_COMMAND_INLINE')) {
+    if (botConfig.MESSAGE_COMMAND_INLINE) {
       await processCommand(message, async (result: string): Promise<void> => {
-        const authorisedUsers = messageConfig.get('MESSAGE_COMMAND_AUTHORISED_USERS') || '';
-        const allowedUsers = authorisedUsers.split(',').map((user) => user.trim());
-        const rawBotName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'MadgwickAI';
+        const authorisedUsers = botConfig.MESSAGE_COMMAND_AUTHORISED_USERS || '';
+        const allowedUsers = authorisedUsers.split(',').map((user: string) => user.trim());
+        const rawBotName = botConfig.MESSAGE_USERNAME_OVERRIDE || 'MadgwickAI';
         const botName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         if (!allowedUsers.includes(userId)) {
           logger('User not authorized:', userId);
@@ -51,7 +50,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     // Reply eligibility
-    const providerType = messageConfig.get('MESSAGE_PROVIDER') === 'discord' ? 'discord' : 'generic';
+    const providerType = botConfig.MESSAGE_PROVIDER === 'discord' ? 'discord' : 'generic';
     if (!shouldReplyToMessage(message, botId, providerType)) {
       logger('Message not eligible for reply');
       return '';
@@ -76,12 +75,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       reply,
       userId,
       async (text: string, threadId?: string): Promise<string> => {
-        const rawBotName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'MadgwickAI';
+        const rawBotName = botConfig.MESSAGE_USERNAME_OVERRIDE || 'MadgwickAI';
         const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
         logger(`Sent message from ${activeAgentName}: ${text}`);
 
-        if (messageConfig.get('MESSAGE_LLM_FOLLOW_UP')) {
+        if (botConfig.MESSAGE_LLM_FOLLOW_UP) {
           const followUpText = `Anything else I can help with after: "${text}"?`;
           await sendFollowUpRequest(message, message.getChannelId(), followUpText);
           logger('Sent follow-up request.');

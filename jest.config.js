@@ -9,7 +9,7 @@ module.exports = {
   transform: {
     '^.+\.tsx?$': 'ts-jest'
   },
-  testRegex: '(\.|/)test\.[tj]sx?$',
+  testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
@@ -34,5 +34,5 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
   verbose: true,
-  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/tests/integrations/slack/SlackService.test.ts"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };

@@ -41,8 +41,8 @@ async function startBot(messengerService: any) {
         await messengerService.initialize();
         indexLog('[DEBUG] Bot initialization completed.');
         indexLog('[DEBUG] Setting up message handler...');
-        messengerService.setMessageHandler((message: any, historyMessages: any[]) =>
-            messageHandlerModule.handleMessage(message, historyMessages, messengerService)
+        messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
+            messageHandlerModule.handleMessage(message, historyMessages, botConfig)
         );
         indexLog('[DEBUG] Message handler set up successfully.');
     } catch (error) {

@@ -45,7 +45,7 @@ export class SlackEventProcessor {
           res.status(400).send('Bad Request');
           return;
         }
-        await this.slackService.getBotManager().handleMessage(new SlackMessage(payload.text || '', payload.channel?.id || '', payload));
+        await this.slackService.getBotManager().handleMessage(new SlackMessage(payload.text || '', payload.channel?.id || '', payload), [], {});
         res.status(200).send();
         return;
       }
@@ -78,7 +78,7 @@ export class SlackEventProcessor {
           debug(`Processing message event: text="${event.text}", channel=${event.channel}`);
           const message = new SlackMessage(event.text || '', event.channel, event);
           const history: IMessage[] = [];
-          await this.slackService.getBotManager().handleMessage(message, history);
+          await this.slackService.getBotManager().handleMessage(message, history, {});
         }
         res.status(200).send();
         return;

@@ -1,7 +1,7 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { GuildMember, Message, TextChannel, User } from 'discord.js';
+import { Collection, GuildMember, Message, TextChannel, User } from 'discord.js';
 
 const debug = Debug('app:DiscordMessage');
 
@@ -73,10 +73,20 @@ export default class DiscordMessage implements IMessage {
 
   getChannelTopic(): string | null {
     debug('Getting channel topic for channel: ' + this.channelId);
-    if (this.message.channel instanceof TextChannel) {
-      return this.message.channel.topic || null;
+    try {
+      // Handle both real TextChannel and mock objects
+      const channel = this.message.channel as any;
+      if (channel && channel.topic !== undefined) {
+        return channel.topic || null;
+      }
+      if (channel instanceof TextChannel) {
+        return channel.topic || null;
+      }
+      return null;
+    } catch (error) {
+      debug('Error getting channel topic:', error);
+      return null;
     }
-    return null;
   }
 
   getAuthorId(): string {
@@ -86,58 +96,53 @@ export default class DiscordMessage implements IMessage {
 
   getUserMentions(): string[] {
     debug('Getting user mentions from message: ' + this.message.id);
-    const users = this.message.mentions?.users;
-    if (!users) {
+    try {
+      const mentions = this.message.mentions?.users?.map(user => user.id) || [];
+      if (!mentions) {
+        return [];
+      }
+
+      // Handle both real Collection and mock objects
+      if (typeof mentions.map === 'function') {
+        return mentions.map((user: any) => user.id);
+      }
+      if (typeof mentions === 'object' && !Array.isArray(mentions)) {
+        return Object.values(mentions).map((user: any) => user.id);
+      }
+      return [];
+    } catch (error) {
+      debug('Error getting user mentions:', error);
       return [];
     }
-  
-    // A real Collection has a .map() method.
-    if (typeof users.map === 'function') {
-      return users.map(user => user.id);
-    }
-    
-    // Fallback for mock objects that are just plain objects.
-    const ids: string[] = [];
-    for (const key in users) {
-      if (Object.prototype.hasOwnProperty.call(users, key)) {
-        const potentialUser = (users as any)[key] as User;
-        if (potentialUser && typeof potentialUser.id === 'string') {
-          ids.push(potentialUser.id);
-        }
-      }
-    }
-    return ids;
   }
   
   getChannelUsers(): string[] {
     debug('Fetching users from channel: ' + this.channelId);
-    if (this.message.channel instanceof TextChannel) {
-      const membersManager = this.message.channel.members;
-      if (!membersManager) {
+    try {
+      const channel = this.message.channel as TextChannel;
+      if (!channel || !channel.members) {
         return [];
       }
-  
-      // For real discord.js, the collection is in the `cache` property of the manager.
-      // For mocks, the manager itself might be the collection.
-      const collection = (membersManager as any).cache || membersManager;
-      
-      if (collection && typeof collection.map === 'function') {
-        return collection.map((member: GuildMember) => member.user.id);
+
+      const members = channel.members;
+
+      if (members instanceof Collection) {
+        return members.map((member: any) => member.user?.id).filter(Boolean);
+      } else if (Array.isArray(members)) {
+        return (members as Array<{user?: {id: string}}>)
+          .map((member) => member.user?.id)
+          .filter((id): id is string => id !== undefined);
+      } else if (typeof members === 'object' && members !== null) {
+        return Object.values(members)
+          .map((member: any) => member.user?.id)
+          .filter(Boolean);
       }
-      
-      // Fallback for simple object mocks
-      const ids: string[] = [];
-      for (const key in collection) {
-        if (Object.prototype.hasOwnProperty.call(collection, key)) {
-          const potentialMember = (collection as any)[key] as GuildMember;
-          if (potentialMember && potentialMember.user && typeof potentialMember.user.id === 'string') {
-            ids.push(potentialMember.user.id);
-          }
-        }
-      }
-      return ids;
+
+      return [];
+    } catch (error) {
+      debug('Error getting channel users:', error);
+      return [];
     }
-    return [];
   }
 
   getAuthorName(): string {

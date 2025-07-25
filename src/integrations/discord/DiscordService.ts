@@ -1,10 +1,11 @@
 import { Client, GatewayIntentBits, Message, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
 import Debug from 'debug';
 import discordConfig from '@config/discordConfig';
-import messageConfig from '@config/messageConfig';
 import DiscordMessage from './DiscordMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const log = Debug('app:discordService');
 
@@ -12,49 +13,91 @@ interface Bot {
   client: Client;
   botUserId: string;
   botUserName: string;
+  config: any;
 }
 
 export const Discord = {
   DiscordService: class implements IMessengerService {
     private static instance: DiscordService;
-    private bots: Bot[];
-    private tokens: string[];
+    private bots: Bot[] = [];
     private handlerSet: boolean = false;
+
+    private static readonly intents = [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildVoiceStates,
+    ];
 
     public constructor() {
       this.bots = [];
-      const tokenString = process.env.DISCORD_BOT_TOKEN || 'NO_TOKEN';
-      this.tokens = tokenString.split(',').map((t) => t.trim());
       
-      // Validate we have at least one token
-      if (this.tokens.length === 0 || this.tokens[0] === 'NO_TOKEN') {
-        throw new Error('No Discord bot tokens provided in DISCORD_BOT_TOKEN');
+      // First check if environment variable exists and is non-empty
+      const envTokenString = process.env.DISCORD_BOT_TOKEN;
+      let envTokens: string[] = [];
+      
+      if (envTokenString && envTokenString.trim() !== '') {
+        envTokens = envTokenString.split(',');
+        
+        // Validate env tokens if they exist
+        const emptyTokenIndex = envTokens.findIndex(t => !t.trim());
+        if (emptyTokenIndex !== -1) {
+          throw new Error(`Empty token at position ${emptyTokenIndex + 1} in environment variable`);
+        }
       }
-
-      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-
-      const intents = [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildVoiceStates,
-      ];
-
-      // Create bot instances with unique names and tokens
-      this.tokens.forEach((token, index) => {
-        if (!token) {
-          throw new Error(`Empty token at position ${index + 1} in DISCORD_BOT_TOKEN`);
+      
+      if (!envTokenString || envTokens.length === 0) {
+        // Fallback to config file
+        const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../../config');
+        const messengersConfigPath = path.join(configDir, 'messengers.json');
+        const messengersConfig = JSON.parse(fs.readFileSync(messengersConfigPath, 'utf-8'));
+        const configInstances = messengersConfig.discord?.instances || [];
+        
+        if (!configInstances || configInstances.length === 0) {
+          throw new Error('No Discord bot tokens provided in configuration');
         }
 
-        const botUserName = `${displayName} #${index + 1}`;
-        const client = new Client({ intents });
-        this.bots.push({ client, botUserId: '', botUserName });
-      });
+        // Validate config instances
+        const emptyTokenIndex = configInstances.findIndex(
+          (instance: { token?: string }) => !instance.token?.trim()
+        );
+        
+        if (emptyTokenIndex !== -1) {
+          throw new Error(`Empty token at position ${emptyTokenIndex + 1} in config file`);
+        }
+
+        // Create bots from config
+        configInstances.forEach((instanceConfig: any) => {
+          const client = new Client({ intents: Discord.DiscordService.intents });
+          this.bots.push({ client, botUserId: '', botUserName: instanceConfig.name, config: instanceConfig });
+        });
+      } else {
+        // Create bots from environment variable
+        envTokens.forEach((token, index) => {
+          const client = new Client({ intents: Discord.DiscordService.intents });
+          this.bots.push({
+            client,
+            botUserId: '',
+            botUserName: `Bot${index + 1}`,
+            config: { token, name: `Bot${index + 1}` }
+          });
+        });
+      }
+      
+      // Initialize all bots
+      this.bots.forEach((bot) => {
+  bot.client.login(bot.config.token);
+});
+  
     }
 
     public static getInstance(): DiscordService {
       if (!Discord.DiscordService.instance) {
-        Discord.DiscordService.instance = new Discord.DiscordService();
+        try {
+          Discord.DiscordService.instance = new Discord.DiscordService();
+        } catch (error: any) {
+          throw new Error(`Failed to create DiscordService instance: ${error.message}`);
+        }
       }
       return Discord.DiscordService.instance;
     }
@@ -68,7 +111,13 @@ export const Discord = {
     }
 
     public async initialize(): Promise<void> {
-      const loginPromises = this.bots.map((bot, index) => {
+      // Validate tokens before initializing
+      const hasEmptyToken = this.bots.some(bot => !bot.config.token || bot.config.token.trim() === '');
+      if (hasEmptyToken) {
+        throw new Error('Cannot initialize DiscordService: One or more bot tokens are empty');
+      }
+  
+      const loginPromises = this.bots.map((bot) => {
         return new Promise<void>(async (resolve) => {
           bot.client.once('ready', () => {
             console.log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
@@ -76,16 +125,16 @@ export const Discord = {
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
           });
-
-          await bot.client.login(this.tokens[index]);
+  
+          await bot.client.login(bot.config.token);
           log(`Bot ${bot.botUserName} logged in`);
         });
       });
-
+  
       await Promise.all(loginPromises);
     }
 
-    public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void {
+    public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
       if (this.handlerSet) return;
       this.handlerSet = true;
 
@@ -95,7 +144,7 @@ export const Discord = {
 
           const wrappedMessage = new DiscordMessage(message);
           const history = await this.getMessagesFromChannel(message.channelId);
-          await handler(wrappedMessage, history);
+          await handler(wrappedMessage, history, bot.config);
         });
       });
     }
@@ -114,13 +163,9 @@ export const Discord = {
         throw new Error('No Discord bot instances available');
       }
 
-      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-      const effectiveSender = senderName || displayName;
-      
-      // Find bot by name or use first bot as fallback
-      const botInfo = this.bots.find((b) => b.botUserName === effectiveSender) || this.bots[0];
+      const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
       try {
-        console.log(`Sending to channel ${channelId} as ${effectiveSender}`);
+        console.log(`Sending to channel ${channelId} as ${senderName}`);
         const channel = await botInfo.client.channels.fetch(channelId);
         if (!channel || !channel.isTextBased()) {
           throw new Error(`Channel ${channelId} is not text-based or was not found`);
@@ -134,7 +179,7 @@ export const Discord = {
           }
           message = await thread.send(text);
         } else {
-          console.log(`Attempting send to channel ${channelId}: *${effectiveSender}*: ${text}`);
+          console.log(`Attempting send to channel ${channelId}: *${senderName}*: ${text}`);
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
         }
 
@@ -167,10 +212,10 @@ export const Discord = {
       }
     }
 
-    public async sendPublicAnnouncement(channelId: string, announcement: string): Promise<void> {
-      const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    public async sendPublicAnnouncement(channelId: string, announcement: string, threadId?: string): Promise<void> {
+      const botInfo = this.bots[0];
       const text = `**Announcement**: ${announcement}`;
-      await this.sendMessageToChannel(channelId, text, displayName, undefined);
+      await this.sendMessageToChannel(channelId, text, botInfo.botUserName, threadId);
     }
 
     public getClientId(): string {

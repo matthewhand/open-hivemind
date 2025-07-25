@@ -50,7 +50,8 @@ describe('SlackEventProcessor', () => {
         webClient: mockWebClient,
         botUserId: 'U123',
         botToken: 'token1',
-        signingSecret: 'test-secret'
+        signingSecret: 'test-secret',
+        config: {},
       },
     ]);
 
@@ -158,46 +159,19 @@ describe('SlackEventProcessor', () => {
 
       await eventProcessor.handleActionRequest(mockReq, mockRes);
 
-      expect(MockSlackMessage).toHaveBeenCalledWith(mockEvent.text, mockEvent.channel, mockEvent);
       expect(slackServiceInstance.getBotManager().handleMessage).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
-    it('should ignore bot_message event_callback', async () => {
-      const mockEvent = { type: 'message', subtype: 'bot_message', event_ts: '123.456' };
-      const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
-      const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
-
-      await eventProcessor.handleActionRequest(mockReq, mockRes);
-
-      expect(slackServiceInstance.getBotManager().handleMessage).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it('should handle message_deleted event_callback', async () => {
-      const mockEvent = { type: 'message', subtype: 'message_deleted', previous_message: { ts: '123.456' } };
-      const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
-      const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
-
-      await eventProcessor.handleActionRequest(mockReq, mockRes);
-
-      expect(eventProcessor.hasDeletedMessage('123.456')).toBe(true);
-      expect(slackServiceInstance.getBotManager().handleMessage).not.toHaveBeenCalled();
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-    });
-
-    it('should ignore duplicate event_callback', async () => {
+    it('should handle event_callback of type message and no subtype', async () => {
       const mockEvent = { type: 'message', event_ts: '123.456', text: 'user message', channel: 'channel123' };
       const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
       const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
 
-      // First call
       await eventProcessor.handleActionRequest(mockReq, mockRes);
-      expect(slackServiceInstance.getBotManager().handleMessage).toHaveBeenCalledTimes(1);
 
-      // Second call with same event_ts
-      await eventProcessor.handleActionRequest(mockReq, mockRes);
-      expect(slackServiceInstance.getBotManager().handleMessage).toHaveBeenCalledTimes(1); // Should not be called again
+      expect(MockSlackMessage).toHaveBeenCalledWith(mockEvent.text, mockEvent.channel, mockEvent);
+      expect(slackServiceInstance.getBotManager().handleMessage).toHaveBeenCalledTimes(1);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 

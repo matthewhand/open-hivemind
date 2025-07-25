@@ -7,14 +7,15 @@ import { SlackBotManager } from './SlackBotManager';
 import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackInteractiveHandler } from './SlackInteractiveHandler';
 import { SlackInteractiveActions } from './SlackInteractiveActions';
-import slackConfig from '@src/config/slackConfig';
-import messageConfig from '@src/config/messageConfig';
 import { SlackEventProcessor } from './SlackEventProcessor';
 import { SlackMessageProcessor } from './SlackMessageProcessor';
 import { SlackWelcomeHandler } from './SlackWelcomeHandler';
 import SlackMessage from './SlackMessage';
 import { KnownBlock } from '@slack/web-api';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
+import slackConfig from '@config/slackConfig';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const debug = Debug('app:SlackService:verbose');
 
@@ -33,19 +34,46 @@ export class SlackService implements IMessengerService {
 
   private constructor() {
     debug('Entering constructor');
-    const botTokens = slackConfig.get('SLACK_BOT_TOKEN')?.split(',').map((s: string) => s.trim()) || [];
-    const appTokens = slackConfig.get('SLACK_APP_TOKEN')?.split(',').map((s: string) => s.trim()) || [];
-    const signingSecrets = slackConfig.get('SLACK_SIGNING_SECRET')?.split(',').map((s: string) => s.trim()) || [];
-    const mode = (slackConfig.get('SLACK_MODE') as 'socket' | 'rtm') || 'socket';
+    
+    let instances: Array<{token: string; signingSecret: string; name: string}> = [];
+    let mode: 'socket' | 'rtm' = 'socket';
+    
+    // First try to get config from config manager
+    const botToken = slackConfig.get('SLACK_BOT_TOKEN');
+    const signingSecret = slackConfig.get('SLACK_SIGNING_SECRET');
+    
+    // Check if we have valid tokens from config manager
+    const hasValidTokensFromConfig = botToken && signingSecret &&
+                                   botToken.trim() !== '' && signingSecret.trim() !== '';
+    
+    if (hasValidTokensFromConfig) {
+      instances = [{
+        token: botToken,
+        signingSecret: signingSecret,
+        name: 'DefaultBot'
+      }];
+      mode = slackConfig.get('SLACK_MODE') === 'rtm' ? 'rtm' : 'socket';
+    } else {
+      // Check if we're in test environment - if so, don't fall back to config file
+      const isTestEnv = process.env.NODE_ENV === 'test';
+      if (!isTestEnv) {
+        // Only fall back to config file in non-test environments
+        const configDir = process.env.NODE_CONFIG_DIR || 'config';
+        const messengersConfigPath = path.join(configDir, 'messengers.json');
+        const messengersConfig = JSON.parse(fs.readFileSync(messengersConfigPath, 'utf-8'));
+        instances = messengersConfig.slack?.instances || [];
+        mode = messengersConfig.slack?.mode || 'socket';
+      }
+    }
 
-    if (!botTokens.length || !signingSecrets.length) {
-      debug('Error: Missing required Slack configuration (bot tokens or signing secrets)');
+    if (!instances || instances.length === 0) {
+      debug('Error: Missing required Slack configuration');
       throw new Error('Slack configuration incomplete');
     }
 
-    debug(`Initializing with botTokens: ${botTokens.length}, appTokens: ${appTokens.length}, mode: ${mode}`);
-    this.botManager = new SlackBotManager(botTokens, appTokens, signingSecrets, mode);
-    this.signatureVerifier = new SlackSignatureVerifier(signingSecrets[0]);
+    debug(`Initializing with ${instances.length} instances in ${mode} mode`);
+    this.botManager = new SlackBotManager(instances, mode);
+    this.signatureVerifier = new SlackSignatureVerifier(instances[0].signingSecret);
     this.interactiveActions = new SlackInteractiveActions(this);
     const interactiveHandlers = {
       sendCourseInfo: async (channel: string) => this.interactiveActions.sendCourseInfo(channel),
@@ -132,13 +160,13 @@ export class SlackService implements IMessengerService {
     this.app = app;
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[]) => Promise<string>): void {
+  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
     debug('Entering setMessageHandler');
     if (typeof handler !== 'function') {
       debug('Error: Invalid message handler provided');
       throw new Error('Message handler must be a function');
     }
-    this.botManager.setMessageHandler(async (message, history) => {
+    this.botManager.setMessageHandler(async (message, history, botConfig) => {
       debug(`Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`);
       const messageTs = parseFloat(message.data.ts || '0');
       if (messageTs < this.joinTs) {
@@ -226,8 +254,11 @@ export class SlackService implements IMessengerService {
       .replace(/"/gi, "'");
     debug(`Raw text: ${rawText.substring(0, 50) + (rawText.length > 50 ? '...' : '')}`);
     debug(`Decoded text: ${decodedText.substring(0, 50) + (decodedText.length > 50 ? '...' : '')}`);
-    const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    const botInfo = this.botManager.getBotByName(displayName) || this.botManager.getAllBots()[0];
+    const botInfo = senderName ? this.botManager.getBotByName(senderName) : this.botManager.getAllBots()[0];
+    if (!botInfo) {
+      debug('Error: Bot not found');
+      throw new Error('Bot not found');
+    }
     if (this.lastSentEventTs === Date.now().toString()) {
       debug(`Immediate duplicate message detected: ${this.lastSentEventTs}, skipping`);
       return '';
@@ -236,7 +267,7 @@ export class SlackService implements IMessengerService {
       const options: any = {
         channel: channelId,
         text: decodedText || 'No content provided',
-        username: displayName,
+        username: botInfo.botUserName,
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
@@ -284,8 +315,8 @@ export class SlackService implements IMessengerService {
       throw new Error('Channel ID required');
     }
     const text = typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
-    const displayName = messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
-    await this.sendMessageToChannel(channelId, text, displayName);
+    const botInfo = this.botManager.getAllBots()[0];
+    await this.sendMessageToChannel(channelId, text, botInfo.botUserName);
   }
 
   public async joinChannel(channel: string): Promise<void> {
@@ -314,7 +345,7 @@ export class SlackService implements IMessengerService {
 
   public getDefaultChannel(): string {
     debug('Entering getDefaultChannel');
-    const defaultChannel = slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
+    const defaultChannel = this.botManager.getAllBots()[0]?.config.defaultChannel || '';
     debug(`Returning defaultChannel: ${defaultChannel}`);
     return defaultChannel;
   }
@@ -335,3 +366,4 @@ export class SlackService implements IMessengerService {
     return this.welcomeHandler;
   }
 }
+
