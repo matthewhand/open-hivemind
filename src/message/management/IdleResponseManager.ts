@@ -33,7 +33,12 @@ export class IdleResponseManager {
     "I notice it's been quiet for a bit. I'm here if you need assistance or want to continue our conversation.",
     "The channel has been idle. Would you like to explore any topics or need help with something?",
     "Taking a moment to check in - is there anything on your mind I can help with?",
-    "It looks like we have a pause in the conversation. What would you like to talk about next?"
+    "It looks like we have a pause in the conversation. What would you like to talk about next?",
+    "Silence falls... but I'm still here, ready to dive deeper into whatever thoughts are percolating.",
+    "The digital winds have stilled. What currents of thought are stirring beneath the surface?",
+    "A moment of quiet - perfect for reflection. What aspects of our discussion linger in your mind?",
+    "The conversation breathes... shall we explore new territories or revisit uncharted depths?",
+    "In this pause, I sense potential energy. What direction shall we channel it?"
   ];
 
   private constructor() {
@@ -200,11 +205,23 @@ export class IdleResponseManager {
       return;
     }
 
+    // Clear any existing timer before scheduling a new one
+    if (activity.timer) {
+      clearTimeout(activity.timer);
+      activity.timer = undefined;
+    }
+
     const delay = this.getRandomDelay();
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
+    // Create a unique timer ID to prevent duplicates
+    const timerId = Date.now() + Math.random();
     activity.timer = setTimeout(async () => {
-      await this.triggerIdleResponse(serviceName, channelId);
+      // Verify this is still the correct timer
+      const currentActivity = serviceActivity.channels.get(channelId);
+      if (currentActivity && currentActivity.timer === activity.timer) {
+        await this.triggerIdleResponse(serviceName, channelId);
+      }
     }, delay);
   }
 
@@ -247,6 +264,12 @@ export class IdleResponseManager {
         return;
       }
 
+      // Ensure we don't have an active timer already running
+      if (activity.timer && activity.timer.hasRef && activity.timer.hasRef()) {
+        log(`Timer already active for ${serviceName}:${channelId}, skipping duplicate trigger`);
+        return;
+      }
+
       log(`Triggering idle response for ${serviceName}:${channelId}`);
       
       // Get the most recent messages from the channel
@@ -257,16 +280,16 @@ export class IdleResponseManager {
         return;
       }
 
-      // Create a synthetic message that will trigger the LLM to generate a contextual response
-      const syntheticMessage = this.createSyntheticMessage(messages[0]);
+      // Create a unique synthetic message with contextual information
+      const syntheticMessage = this.createUniqueSyntheticMessage(messages, serviceName, channelId);
       
       // Process this through the normal message handler flow
       const response = await handleMessage(syntheticMessage, messages, serviceActivity.botConfig);
       
       if (response && response.trim()) {
         await serviceActivity.messengerService.sendMessageToChannel(
-          channelId, 
-          response, 
+          channelId,
+          response,
           serviceActivity.botConfig.MESSAGE_USERNAME_OVERRIDE || 'Assistant'
         );
         
@@ -274,17 +297,35 @@ export class IdleResponseManager {
         log(`Sent idle response to ${serviceName}:${channelId}: "${response.substring(0, 100)}..."`);
       }
       
-      // Schedule next idle response
-      this.scheduleIdleResponse(serviceName, channelId);
+      // Don't immediately reschedule - wait for next interaction
+      log(`Idle response completed for ${serviceName}:${channelId}, waiting for next interaction`);
       
     } catch (error) {
       log(`Error triggering idle response for ${serviceName}:${channelId}:`, error);
     }
   }
 
-  private createSyntheticMessage(originalMessage: IMessage): IMessage {
-    const prompt = this.idlePrompts[Math.floor(Math.random() * this.idlePrompts.length)];
-    return new SyntheticMessage(originalMessage, prompt);
+  private createUniqueSyntheticMessage(messages: IMessage[], serviceName: string, channelId: string): IMessage {
+    // Create a more unique prompt based on conversation context
+    const recentMessages = messages.slice(-5); // Last 5 messages
+    const conversationContext = recentMessages.map(m => m.getText()).join(' ').substring(0, 200);
+    
+    // Generate a unique prompt based on context
+    const basePrompts = [
+      "The conversation has naturally paused. Based on our recent discussion about: {context}",
+      "Taking a thoughtful pause here. Our last exchange touched on: {context}",
+      "In this moment of quiet, I'm curious about where our conversation about {context} might lead next.",
+      "The digital space breathes... our dialogue about {context} feels like it's opening new possibilities.",
+      "This pause invites reflection. Our exploration of {context} seems rich with potential directions."
+    ];
+    
+    const selectedPrompt = basePrompts[Math.floor(Math.random() * basePrompts.length)];
+    const contextualPrompt = selectedPrompt.replace('{context}', conversationContext || 'various topics');
+    
+    // Add timestamp and service info for uniqueness
+    const uniquePrompt = `${contextualPrompt} [${serviceName}:${channelId}:${Date.now()}]`;
+    
+    return new SyntheticMessage(messages[0], uniquePrompt);
   }
 
   public configure(config: {
