@@ -1,3 +1,6 @@
+import * as path from 'path';
+import * as fs from 'fs';
+
 const gmpDebug = require('debug')('app:getMessengerProvider');
 const DiscordMgr = require('@integrations/discord/DiscordService');
 const SlackMgr = require('@integrations/slack/SlackService');
