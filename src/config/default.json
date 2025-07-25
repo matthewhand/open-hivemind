@@ -60,6 +60,18 @@
                 "minDelayMs": 500,
                 "randomizeDelay": true,
                 "typingDelayMaxMs": 5000
+            },
+            "idleResponse": {
+                "enabled": true,
+                "minDelay": 60000,
+                "maxDelay": 3600000,
+                "prompts": [
+                    "The conversation seems to have paused. Is there anything else you'd like to discuss or any questions I can help with?",
+                    "I notice it's been quiet for a bit. I'm here if you need assistance or want to continue our conversation.",
+                    "The channel has been idle. Would you like to explore any topics or need help with something?",
+                    "Taking a moment to check in - is there anything on your mind I can help with?",
+                    "It looks like we have a pause in the conversation. What would you like to talk about next?"
+                ]
             }
         }
     },

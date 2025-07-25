@@ -8,11 +8,13 @@ import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
+import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 const logger = Debug('app:messageHandler');
 const messageProvider = getMessengerProvider()[0]; // Use first provider
 const llmProvider = getLlmProvider()[0]; // Returns ILlmProvider
 const timingManager = MessageDelayScheduler.getInstance();
+const idleResponseManager = IdleResponseManager.getInstance();
 
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string> {
   try {
@@ -51,6 +53,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // Reply eligibility
     const providerType = botConfig.MESSAGE_PROVIDER === 'discord' ? 'discord' : 'generic';
+    
+    // Record interaction for idle response tracking
+    const serviceName = botConfig.MESSAGE_PROVIDER || 'generic';
+    idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
+    
     if (!shouldReplyToMessage(message, botId, providerType)) {
       logger('Message not eligible for reply');
       return '';
@@ -79,6 +86,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
         logger(`Sent message from ${activeAgentName}: ${text}`);
+
+        // Record bot response for idle response tracking
+        idleResponseManager.recordBotResponse(serviceName, message.getChannelId());
 
         if (botConfig.MESSAGE_LLM_FOLLOW_UP) {
           const followUpText = `Anything else I can help with after: "${text}"?`;

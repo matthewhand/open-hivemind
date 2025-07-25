@@ -13,6 +13,7 @@ const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import { getLlmProvider } from '@llm/getLlmProvider';
+import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 const indexLog = debug('app:index');
 const app = express();
@@ -41,6 +42,11 @@ async function startBot(messengerService: any) {
         await messengerService.initialize();
         indexLog('[DEBUG] Bot initialization completed.');
         indexLog('[DEBUG] Setting up message handler...');
+        
+        // Initialize idle response manager
+        const idleResponseManager = IdleResponseManager.getInstance();
+        idleResponseManager.initialize();
+        
         messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
             messageHandlerModule.handleMessage(message, historyMessages, botConfig)
         );
