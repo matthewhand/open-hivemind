@@ -39,6 +39,26 @@ Configure idle responses in your `config/default.json` or environment-specific c
 - **maxDelay**: Maximum idle time in milliseconds before triggering (default: 3600000)
 - **prompts**: Array of prompts to send to the LLM for generating contextual idle responses
 
+### Environment Variable Overrides
+
+You can override configuration values using environment variables:
+
+- **IDLE_RESPONSE_ENABLED**: Override enabled state (`true`/`false`)
+- **IDLE_RESPONSE_MIN_DELAY**: Override minimum delay in milliseconds
+- **IDLE_RESPONSE_MAX_DELAY**: Override maximum delay in milliseconds
+
+**Example usage for testing:**
+```bash
+# Set short delays for quick testing
+IDLE_RESPONSE_MIN_DELAY=5000 IDLE_RESPONSE_MAX_DELAY=10000 npm start
+
+# Disable idle responses
+IDLE_RESPONSE_ENABLED=false npm start
+
+# Use timeout for testing
+timeout 30 IDLE_RESPONSE_MIN_DELAY=2000 IDLE_RESPONSE_MAX_DELAY=5000 npm start
+```
+
 ## How It Works
 
 1. **Interaction Tracking**: Every message processed by the bot is recorded
@@ -88,12 +108,18 @@ The manager provides statistics about idle response activity:
 const stats = IdleResponseManager.getInstance().getStats();
 // Returns:
 // {
-//   totalServices: 2,
+//   totalServices: 3,
 //   serviceDetails: [
 //     {
-//       serviceName: 'discord',
-//       totalChannels: 5,
+//       serviceName: 'discord-Bot1',
+//       totalChannels: 3,
 //       lastInteractedChannel: '123456789',
+//       channelDetails: [...]
+//     },
+//     {
+//       serviceName: 'discord-Bot2',
+//       totalChannels: 2,
+//       lastInteractedChannel: '987654321',
 //       channelDetails: [...]
 //     }
 //   ]
@@ -126,13 +152,58 @@ The idle response feature integrates seamlessly with:
 - Ensure the messenger service is properly implementing IMessengerService
 - Check platform-specific configuration in config files
 
+## Multi-Bot Instance Support
+
+The idle response feature now supports multiple bot instances within the same service type, particularly for Discord services with multiple bot tokens.
+
+### How Multi-Bot Support Works
+
+When multiple Discord bot instances are configured, each bot is tracked separately with unique service names:
+
+- **Discord Bot1**: `discord-Bot1`
+- **Discord Bot2**: `discord-Bot2`
+- **Unnamed bots**: `discord-bot1`, `discord-bot2`, etc.
+
+This ensures that:
+- Each bot instance maintains its own channel activity tracking
+- Idle responses are sent using the correct bot instance
+- No cross-contamination between bot instances occurs
+
+### Configuration for Multi-Bot Setup
+
+When using multiple Discord bot instances, configure idle responses for each bot:
+
+```json
+{
+  "message": {
+    "discord": {
+      "Bot1": {
+        "idleResponse": {
+          "enabled": true,
+          "minDelay": 60000,
+          "maxDelay": 3600000
+        }
+      },
+      "Bot2": {
+        "idleResponse": {
+          "enabled": true,
+          "minDelay": 120000,
+          "maxDelay": 7200000
+        }
+      }
+    }
+  }
+}
+```
+
 ## Architecture
 
 The feature is built on these key components:
 
-- **IdleResponseManager**: Central manager for idle response logic
+- **IdleResponseManager**: Central manager for idle response logic with multi-bot support
 - **SyntheticMessage**: Creates synthetic messages for LLM processing
 - **ChannelActivity**: Tracks interaction history per channel
-- **ServiceActivity**: Manages tracking per messenger service
+- **ServiceActivity**: Manages tracking per messenger service and bot instance
+- **BotInstanceWrapper**: Ensures correct bot instance is used for responses
 
-All components are designed to be platform-agnostic and integrate with existing infrastructure.
+All components are designed to be platform-agnostic and integrate with existing infrastructure while maintaining isolation between bot instances.

@@ -120,6 +120,60 @@ describe('IdleResponseManager', () => {
       expect(stats.totalServices).toBe(1);
       expect(stats.serviceDetails[0].serviceName).toBe('test-messenger');
     });
+
+    it('should handle Discord service with multiple bot instances', () => {
+      const mockDiscordService = {
+        providerName: 'discord',
+        getAllBots: jest.fn().mockReturnValue([
+          { botUserName: 'Bot1', botUserId: 'bot1-id' },
+          { botUserName: 'Bot2', botUserId: 'bot2-id' }
+        ]),
+        sendMessageToChannel: jest.fn(),
+        getMessagesFromChannel: jest.fn(),
+        getClientId: jest.fn().mockReturnValue('discord-client-id'),
+        initialize: jest.fn(),
+        sendPublicAnnouncement: jest.fn(),
+        getDefaultChannel: jest.fn().mockReturnValue('default-channel'),
+        shutdown: jest.fn(),
+        setMessageHandler: jest.fn()
+      };
+
+      (getMessengerProvider as jest.Mock).mockReturnValue([mockDiscordService]);
+      
+      idleResponseManager.initialize();
+      
+      const stats = idleResponseManager.getStats();
+      expect(stats.totalServices).toBe(2);
+      expect(stats.serviceDetails.map(s => s.serviceName)).toContain('discord-Bot1');
+      expect(stats.serviceDetails.map(s => s.serviceName)).toContain('discord-Bot2');
+    });
+
+    it('should handle Discord service with unnamed bots', () => {
+      const mockDiscordService = {
+        providerName: 'discord',
+        getAllBots: jest.fn().mockReturnValue([
+          { botUserId: 'bot1-id' },
+          { botUserId: 'bot2-id' }
+        ]),
+        sendMessageToChannel: jest.fn(),
+        getMessagesFromChannel: jest.fn(),
+        getClientId: jest.fn().mockReturnValue('discord-client-id'),
+        initialize: jest.fn(),
+        sendPublicAnnouncement: jest.fn(),
+        getDefaultChannel: jest.fn().mockReturnValue('default-channel'),
+        shutdown: jest.fn(),
+        setMessageHandler: jest.fn()
+      };
+
+      (getMessengerProvider as jest.Mock).mockReturnValue([mockDiscordService]);
+      
+      idleResponseManager.initialize();
+      
+      const stats = idleResponseManager.getStats();
+      expect(stats.totalServices).toBe(2);
+      expect(stats.serviceDetails.map(s => s.serviceName)).toContain('discord-bot1');
+      expect(stats.serviceDetails.map(s => s.serviceName)).toContain('discord-bot2');
+    });
   });
 
   describe('recordInteraction', () => {
@@ -240,6 +294,85 @@ describe('IdleResponseManager', () => {
       expect(stats.serviceDetails[0].serviceName).toBe('test-messenger');
       expect(stats.serviceDetails[0].totalChannels).toBe(1);
       expect(stats.serviceDetails[0].lastInteractedChannel).toBe('channel-123');
+    });
+  });
+
+  describe('environment variable configuration', () => {
+    let originalEnv: NodeJS.ProcessEnv;
+
+    beforeEach(() => {
+      originalEnv = process.env;
+      process.env = { ...originalEnv };
+      // Reset singleton instance before each test
+      (IdleResponseManager as any).instance = undefined;
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+      // Reset singleton instance after each test
+      (IdleResponseManager as any).instance = undefined;
+    });
+
+    it('should use environment variables for min delay override', () => {
+      process.env.IDLE_RESPONSE_MIN_DELAY = '5000';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      // Access private property for testing
+      expect((newManager as any).minDelay).toBe(5000);
+    });
+
+    it('should use environment variables for max delay override', () => {
+      process.env.IDLE_RESPONSE_MAX_DELAY = '10000';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      expect((newManager as any).maxDelay).toBe(10000);
+    });
+
+    it('should use environment variables for enabled override', () => {
+      process.env.IDLE_RESPONSE_ENABLED = 'false';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      expect((newManager as any).enabled).toBe(false);
+    });
+
+    it('should handle invalid environment variable values gracefully', () => {
+      process.env.IDLE_RESPONSE_MIN_DELAY = 'invalid';
+      process.env.IDLE_RESPONSE_MAX_DELAY = 'also-invalid';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      // Should fall back to config values
+      expect((newManager as any).minDelay).toBe(60000);
+      expect((newManager as any).maxDelay).toBe(3600000);
+    });
+
+    it('should ensure minDelay is not greater than maxDelay', () => {
+      process.env.IDLE_RESPONSE_MIN_DELAY = '10000';
+      process.env.IDLE_RESPONSE_MAX_DELAY = '5000';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      expect((newManager as any).minDelay).toBe(5000);
+      expect((newManager as any).maxDelay).toBe(5000);
+    });
+
+    it('should prioritize environment variables over config', () => {
+      process.env.IDLE_RESPONSE_MIN_DELAY = '15000';
+      process.env.IDLE_RESPONSE_MAX_DELAY = '30000';
+      
+      const newManager = IdleResponseManager.getInstance();
+      newManager.initialize(['test-messenger']);
+      
+      expect((newManager as any).minDelay).toBe(15000);
+      expect((newManager as any).maxDelay).toBe(30000);
     });
   });
 });

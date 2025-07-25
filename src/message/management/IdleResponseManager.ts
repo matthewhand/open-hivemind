@@ -54,18 +54,41 @@ export class IdleResponseManager {
 
   private loadConfiguration(): void {
     try {
+      // Check environment variables first for overrides
+      const envMinDelay = process.env.IDLE_RESPONSE_MIN_DELAY;
+      const envMaxDelay = process.env.IDLE_RESPONSE_MAX_DELAY;
+      const envEnabled = process.env.IDLE_RESPONSE_ENABLED;
+      
       const messageConfig = require('@config/messageConfig');
       const config = messageConfig.get('IDLE_RESPONSE') || {};
       
-      this.enabled = config.enabled ?? true;
-      this.minDelay = config.minDelay ?? 60000;
-      this.maxDelay = config.maxDelay ?? 3600000;
+      this.enabled = envEnabled !== undefined ? envEnabled === 'true' : (config.enabled ?? true);
+      
+      // Use environment variables with fallback to config, then defaults
+      const parseEnvInt = (value: string | undefined, fallback: number): number => {
+        if (!value) return fallback;
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? fallback : parsed;
+      };
+      
+      this.minDelay = parseEnvInt(envMinDelay, config.minDelay ?? 60000);
+      this.maxDelay = parseEnvInt(envMaxDelay, config.maxDelay ?? 3600000);
+      
+      // Ensure minDelay is not greater than maxDelay
+      if (this.minDelay > this.maxDelay) {
+        this.minDelay = this.maxDelay;
+      }
       
       if (config.prompts && Array.isArray(config.prompts)) {
         this.idlePrompts = config.prompts;
       }
       
       log(`Idle response configured: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`);
+      
+      // Log if environment variables are being used
+      if (envMinDelay || envMaxDelay || envEnabled) {
+        log(`Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`);
+      }
     } catch (error) {
       log('Using default idle response configuration');
     }
@@ -106,19 +129,60 @@ export class IdleResponseManager {
         }
       }
     } else {
-      // Use actual messenger services
+      // Use actual messenger services with unique identification
       for (const service of messengerServices) {
-        const serviceName = (service as any).providerName || 'generic';
+        let serviceName = (service as any).providerName || 'generic';
         
-        if (!this.serviceActivities.has(serviceName)) {
-          this.serviceActivities.set(serviceName, {
-            channels: new Map(),
-            lastInteractedChannelId: null,
-            messengerService: service,
-            botConfig: this.getBotConfig(serviceName)
-          });
+        // Handle Discord service with multiple bot instances
+        if (serviceName === 'discord' && (service as any).getAllBots) {
+          const discordService = service as any;
+          const bots = discordService.getAllBots();
           
-          log(`Initialized idle response tracking for service: ${serviceName}`);
+          // Create separate service entries for each Discord bot instance
+          bots.forEach((bot: any, index: number) => {
+            const botServiceName = `${serviceName}-${bot.botUserName || `bot${index + 1}`}`;
+            
+            if (!this.serviceActivities.has(botServiceName)) {
+              // Create a wrapper that uses the specific bot instance
+              const botWrapper: IMessengerService = {
+                sendMessageToChannel: async (channelId: string, text: string, senderName?: string) => {
+                  return await discordService.sendMessageToChannel(channelId, text, bot.botUserName || senderName);
+                },
+                getMessagesFromChannel: async (channelId: string) => {
+                  return await discordService.getMessagesFromChannel(channelId);
+                },
+                getClientId: () => bot.botUserId || discordService.getClientId(),
+                initialize: async () => {},
+                sendPublicAnnouncement: async (channelId: string, announcement: string, threadId?: string) => {
+                  return await discordService.sendPublicAnnouncement(channelId, announcement, threadId);
+                },
+                getDefaultChannel: () => discordService.getDefaultChannel(),
+                shutdown: async () => {},
+                setMessageHandler: (handler: any) => {}
+              };
+              
+              this.serviceActivities.set(botServiceName, {
+                channels: new Map(),
+                lastInteractedChannelId: null,
+                messengerService: botWrapper,
+                botConfig: this.getBotConfig(serviceName)
+              });
+              
+              log(`Initialized idle response tracking for Discord bot: ${botServiceName}`);
+            }
+          });
+        } else {
+          // Handle other services normally
+          if (!this.serviceActivities.has(serviceName)) {
+            this.serviceActivities.set(serviceName, {
+              channels: new Map(),
+              lastInteractedChannelId: null,
+              messengerService: service,
+              botConfig: this.getBotConfig(serviceName)
+            });
+            
+            log(`Initialized idle response tracking for service: ${serviceName}`);
+          }
         }
       }
     }
