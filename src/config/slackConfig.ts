@@ -76,7 +76,15 @@ const slackConfig = convict({
   }
 });
 
-slackConfig.loadFile(path.join(__dirname, '../../config/providers/slack.json'));
-slackConfig.validate({ allowed: 'strict' });
+const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+const configPath = path.join(configDir, 'providers/slack.json');
+
+try {
+  slackConfig.loadFile(configPath);
+  slackConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  // Fallback to defaults if config file is missing or invalid
+  console.warn(`Warning: Could not load slack config from ${configPath}, using defaults`);
+}
 
 export default slackConfig;

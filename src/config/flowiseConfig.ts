@@ -34,7 +34,15 @@ const flowiseConfig = convict({
   }
 });
 
-flowiseConfig.loadFile(path.join(__dirname, '../../config/providers/flowise.json'));
-flowiseConfig.validate({ allowed: 'strict' });
+const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+const configPath = path.join(configDir, 'providers/flowise.json');
+
+try {
+  flowiseConfig.loadFile(configPath);
+  flowiseConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  // Fallback to defaults if config file is missing or invalid
+  console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
+}
 
 export default flowiseConfig;

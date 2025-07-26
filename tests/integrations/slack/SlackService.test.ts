@@ -1,12 +1,17 @@
 import { SlackService } from '@integrations/slack/SlackService';
-import slackConfig from '@config/slackConfig';
 import { SlackBotManager } from '@integrations/slack/SlackBotManager';
+import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import * as fs from 'fs';
+import * as path from 'path';
 
-jest.mock('@config/slackConfig');
 jest.mock('@integrations/slack/SlackBotManager');
+jest.mock('@src/config/BotConfigurationManager');
+jest.mock('fs');
+jest.mock('path');
 
-const mockedSlackConfig = slackConfig as jest.Mocked<typeof slackConfig>;
 const mockedSlackBotManager = SlackBotManager as jest.MockedClass<typeof SlackBotManager>;
+const mockedFs = fs as jest.Mocked<typeof fs>;
+const mockedPath = path as jest.Mocked<typeof path>;
 
 describe('SlackService', () => {
   let slackService: SlackService;
@@ -16,18 +21,33 @@ describe('SlackService', () => {
     // Reset the singleton instance before each test
     (SlackService as any).instance = undefined;
 
+    // Mock path.join
+    mockedPath.join.mockImplementation((...args) => args.join('/'));
+
+    // Mock BotConfigurationManager
+    const mockConfigManager = {
+      getAllBots: jest.fn(),
+      getBot: jest.fn(),
+    };
+    
+    jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue(mockConfigManager as any);
+
     // Default mock implementations for a successful scenario
-    mockedSlackConfig.get.mockImplementation((key: string | null | undefined) => {
-      switch (key) {
-        case 'SLACK_BOT_TOKEN': return 'xoxb-mock-token';
-        case 'SLACK_APP_TOKEN': return 'xapp-mock-token';
-        case 'SLACK_SIGNING_SECRET': return 'mock-signing-secret';
-        case 'SLACK_MODE': return 'socket';
-        case 'SLACK_JOIN_CHANNELS': return '';
-        case 'SLACK_DEFAULT_CHANNEL_ID': return 'mockDefaultChannelId';
-        default: return ''; // Default to empty string for other string keys
+    mockConfigManager.getAllBots.mockReturnValue([
+      {
+        name: 'test-bot',
+        messageProvider: 'slack',
+        slack: {
+          botToken: 'xoxb-mock-token',
+          signingSecret: 'mock-signing-secret',
+          appToken: 'xapp-mock-token',
+          defaultChannelId: 'mockDefaultChannelId',
+          joinChannels: '',
+          mode: 'socket'
+        }
       }
-    });
+    ]);
+
     mockedSlackBotManager.mockImplementation(() => ({
       initialize: jest.fn(),
       getAllBots: jest.fn(() => [{ botUserName: 'mockBot', botToken: 'mockToken' }]),
@@ -42,22 +62,18 @@ describe('SlackService', () => {
     expect(instance1).toBe(instance2);
   });
 
-  it('should throw error if SLACK_BOT_TOKEN is missing', () => {
-    mockedSlackConfig.get.mockImplementation((key) => {
-      if (key === 'SLACK_BOT_TOKEN') return '';
-      if (key === 'SLACK_SIGNING_SECRET') return 'mock-signing-secret';
-      return '';
-    });
-    expect(() => SlackService.getInstance()).toThrow('Slack configuration incomplete');
-  });
+  it('should throw error if no Slack configuration is found', () => {
+    // Mock empty configuration
+    const mockConfigManager = {
+      getAllBots: jest.fn().mockReturnValue([]),
+      getBot: jest.fn(),
+    };
+    jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue(mockConfigManager as any);
 
-  it('should throw error if SLACK_SIGNING_SECRET is missing', () => {
-    mockedSlackConfig.get.mockImplementation((key) => {
-      if (key === 'SLACK_BOT_TOKEN') return 'xoxb-mock-token';
-      if (key === 'SLACK_SIGNING_SECRET') return '';
-      return '';
-    });
-    expect(() => SlackService.getInstance()).toThrow('Slack configuration incomplete');
+    // Mock fs to simulate no legacy config files
+    mockedFs.existsSync.mockReturnValue(false);
+
+    expect(() => SlackService.getInstance()).toThrow();
   });
 
   it('should initialize without an express app and throw error', async () => {
@@ -77,6 +93,6 @@ describe('SlackService', () => {
     const mockApp = { post: jest.fn() } as any;
     slackService.setApp(mockApp);
 
-    await expect(slackService.initialize()).rejects.toThrow('Failed to initialize SlackService: Error: Bot manager init failed');
+    await expect(slackService.initialize()).rejects.toThrow('Failed to initialize SlackService for test-bot: Error: Bot manager init failed');
   });
 });

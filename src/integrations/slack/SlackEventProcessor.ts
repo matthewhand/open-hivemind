@@ -45,7 +45,20 @@ export class SlackEventProcessor {
           res.status(400).send('Bad Request');
           return;
         }
-        await this.slackService.getBotManager().handleMessage(new SlackMessage(payload.text || '', payload.channel?.id || '', payload), [], {});
+        
+        // Get the first available bot manager for handling interactive actions
+        const botManagers = this.slackService.getBotManager();
+        if (botManagers) {
+          const bots = botManagers.getAllBots();
+          if (bots.length > 0) {
+            const botConfig = bots[0].config;
+            await botManagers.handleMessage(
+              new SlackMessage(payload.text || '', payload.channel?.id || '', payload),
+              [],
+              botConfig
+            );
+          }
+        }
         res.status(200).send();
         return;
       }
@@ -76,9 +89,19 @@ export class SlackEventProcessor {
 
         if (event.type === 'message' && !event.subtype) {
           debug(`Processing message event: text="${event.text}", channel=${event.channel}`);
-          const message = new SlackMessage(event.text || '', event.channel, event);
-          const history: IMessage[] = [];
-          await this.slackService.getBotManager().handleMessage(message, history, {});
+          
+          // Route message to appropriate bot manager
+          const botManager = this.slackService.getBotManager();
+          if (botManager) {
+            const bots = botManager.getAllBots();
+            for (const botInfo of bots) {
+              await botManager.handleMessage(
+                new SlackMessage(event.text || '', event.channel, event),
+                [],
+                botInfo.config
+              );
+            }
+          }
         }
         res.status(200).send();
         return;
@@ -137,15 +160,21 @@ export class SlackEventProcessor {
           }
         ];
 
-        const botInfo = this.slackService.getBotManager().getAllBots()[0];
-        await botInfo.webClient.chat.postMessage({
-          channel: userId,
-          text: helpText,
-          blocks: helpBlocks,
-          username: 'Madgwick AI',
-          icon_emoji: ':robot_face:'
-        });
-        debug(`Sent DM help message with buttons to user ${userId}`);
+        const botManager = this.slackService.getBotManager();
+        if (botManager) {
+          const bots = botManager.getAllBots();
+          if (bots.length > 0) {
+            const botInfo = bots[0];
+            await botInfo.webClient.chat.postMessage({
+              channel: userId,
+              text: helpText,
+              blocks: helpBlocks,
+              username: 'Madgwick AI',
+              icon_emoji: ':robot_face:'
+            });
+            debug(`Sent DM help message with buttons to user ${userId}`);
+          }
+        }
       } catch (error) {
         debug(`Error sending help DM to user ${userId}: ${error}`);
       }
@@ -154,7 +183,13 @@ export class SlackEventProcessor {
 
   public async debugEventPermissions(): Promise<void> {
     debug('Entering debugEventPermissions');
-    const bots = this.slackService.getBotManager().getAllBots();
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) {
+      debug('No bot manager available');
+      return;
+    }
+    
+    const bots = botManager.getAllBots();
     debug(`Checking permissions for ${bots.length} bots`);
 
     for (const botInfo of bots) {

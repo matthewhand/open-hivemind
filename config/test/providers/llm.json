@@ -1,0 +1,4 @@
+{
+  "LLM_PROVIDER": "openai",
+  "LLM_PARALLEL_EXECUTION": false
+}

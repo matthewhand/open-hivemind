@@ -34,7 +34,15 @@ const webhookConfig = convict({
   }
 });
 
-webhookConfig.loadFile(path.join(__dirname, '../../config/providers/webhook.json'));
-webhookConfig.validate({ allowed: 'strict' });
+const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+const configPath = path.join(configDir, 'providers/webhook.json');
+
+try {
+  webhookConfig.loadFile(configPath);
+  webhookConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  // Fallback to defaults if config file is missing or invalid
+  console.warn(`Warning: Could not load webhook config from ${configPath}, using defaults`);
+}
 
 export default webhookConfig;

@@ -20,7 +20,11 @@ describe('SlackService Integration', () => {
     (SlackService as any).instance = undefined;
     service = SlackService.getInstance();
     await service.initialize();
-    const botInfo = service.getBotManager().getAllBots()[0];
+    const botManager = service.getBotManager();
+    if (!botManager) throw new Error('Bot manager not initialized');
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) throw new Error('No bots configured');
+    const botInfo = bots[0];
     console.log('Bot Info after init:', { botUserId: botInfo.botUserId, botUserName: botInfo.botUserName });
   });
 

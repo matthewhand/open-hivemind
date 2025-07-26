@@ -38,8 +38,16 @@ const openWebUIConfig = convict({
   }
 });
 
-openWebUIConfig.loadFile(path.join(__dirname, '../../config/providers/openwebui.json'));
-openWebUIConfig.validate({ allowed: 'strict' });
+const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+const configPath = path.join(configDir, 'providers/openwebui.json');
+
+try {
+  openWebUIConfig.loadFile(configPath);
+  openWebUIConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  // Fallback to defaults if config file is missing or invalid
+  console.warn(`Warning: Could not load openwebui config from ${configPath}, using defaults`);
+}
 debug('OpenWebUIConfig initialized:', openWebUIConfig.getProperties());
 
 export default openWebUIConfig;

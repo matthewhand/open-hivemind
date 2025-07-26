@@ -66,6 +66,71 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_DISCORD_VOICE_CHANNEL_ID'
   },
+
+  // Slack-specific configuration
+  SLACK_BOT_TOKEN: {
+    doc: 'Slack bot token',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SLACK_BOT_TOKEN'
+  },
+  
+  SLACK_APP_TOKEN: {
+    doc: 'Slack app token for Socket Mode',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SLACK_APP_TOKEN'
+  },
+  
+  SLACK_SIGNING_SECRET: {
+    doc: 'Slack signing secret for verifying requests',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SLACK_SIGNING_SECRET'
+  },
+  
+  SLACK_JOIN_CHANNELS: {
+    doc: 'Comma-separated Slack channel IDs to join',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SLACK_JOIN_CHANNELS'
+  },
+  
+  SLACK_DEFAULT_CHANNEL_ID: {
+    doc: 'Default Slack channel ID for messages',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SLACK_DEFAULT_CHANNEL_ID'
+  },
+  
+  SLACK_MODE: {
+    doc: 'Slack connection mode (socket or rtm)',
+    format: ['socket', 'rtm'],
+    default: 'socket',
+    env: 'BOTS_{name}_SLACK_MODE'
+  },
+
+  // Mattermost-specific configuration
+  MATTERMOST_SERVER_URL: {
+    doc: 'Mattermost server endpoint',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MATTERMOST_SERVER_URL'
+  },
+  
+  MATTERMOST_TOKEN: {
+    doc: 'Mattermost authentication token',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MATTERMOST_TOKEN'
+  },
+  
+  MATTERMOST_CHANNEL: {
+    doc: 'Default Mattermost channel for messages',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MATTERMOST_CHANNEL'
+  },
   
   // OpenAI configuration
   OPENAI_API_KEY: {
@@ -123,6 +188,19 @@ export interface BotConfig {
     guildId?: string;
     channelId?: string;
     voiceChannelId?: string;
+  };
+  slack?: {
+    botToken: string;
+    appToken?: string;
+    signingSecret: string;
+    joinChannels?: string;
+    defaultChannelId?: string;
+    mode?: 'socket' | 'rtm';
+  };
+  mattermost?: {
+    serverUrl: string;
+    token: string;
+    channel?: string;
   };
   openai?: {
     apiKey: string;

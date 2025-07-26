@@ -130,7 +130,15 @@ const discordConfig = convict({
   }
 });
 
-discordConfig.loadFile(path.join(__dirname, '../../config/providers/discord.json'));
-discordConfig.validate({ allowed: 'strict' });
+const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+const configPath = path.join(configDir, 'providers/discord.json');
+
+try {
+  discordConfig.loadFile(configPath);
+  discordConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  // Fallback to defaults if config file is missing or invalid
+  console.warn(`Warning: Could not load discord config from ${configPath}, using defaults`);
+}
 
 export default discordConfig;

@@ -26,16 +26,34 @@ export class SlackEventListener {
         const llmProvider = getLlmProvider();
         if (!llmProvider.length) throw new Error('No LLM providers available');
         const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);
-        await this.slackService.sendMessageToChannel(event.channel, response, 'Jeeves', event.event_ts);
+        
+        // Use the first available bot for backward compatibility
+        const botName = this.slackService.getBotNames()[0];
+        if (botName) {
+          await this.slackService.sendMessageToChannel(event.channel, response, botName, event.event_ts);
+        }
         debug(`Processed message event in channel ${event.channel} with response: ${response.substring(0, 100)}${response.length > 100 ? '...' : ''}`);
       } else if (event.type === 'bot_joined_channel') {
         debug(`Bot joined channel ${event.channel}, sending welcome message`);
-        await this.slackService.getWelcomeHandler().sendBotWelcomeMessage(event.channel);
+        const botName = this.slackService.getBotNames()[0];
+        const welcomeHandler = this.slackService.getWelcomeHandler(botName);
+        if (welcomeHandler) {
+          await welcomeHandler.sendBotWelcomeMessage(event.channel);
+        }
       } else if (event.type === 'member_joined_channel') {
         debug(`User ${event.user} joined channel ${event.channel}, sending welcome message`);
-        const userInfo = await this.slackService.getBotManager().getAllBots()[0].webClient.users.info({ user: event.user });
-        const userName = userInfo.user?.name || 'New User';
-        await this.slackService.getWelcomeHandler().sendUserWelcomeMessage(event.channel, userName);
+        const botName = this.slackService.getBotNames()[0];
+        const botManager = this.slackService.getBotManager(botName);
+        const welcomeHandler = this.slackService.getWelcomeHandler(botName);
+        
+        if (botManager && welcomeHandler) {
+          const bots = botManager.getAllBots();
+          if (bots.length > 0) {
+            const userInfo = await bots[0].webClient.users.info({ user: event.user });
+            const userName = userInfo.user?.name || 'New User';
+            await welcomeHandler.sendUserWelcomeMessage(event.channel, userName);
+          }
+        }
       }
     } catch (error) {
       debug(`Error handling event: ${error}`);

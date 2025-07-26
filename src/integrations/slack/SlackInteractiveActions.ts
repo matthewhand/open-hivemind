@@ -13,22 +13,46 @@ export class SlackInteractiveActions {
   }
 
   public async sendCourseInfo(channel: string): Promise<void> {
-    const botInfo = this.slackService.getBotManager().getAllBots()[0];
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) return;
+    
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) return;
+    
+    const botInfo = bots[0];
     await this.slackService.sendMessageToChannel(channel, 'Course Info: Here are the details...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendBookingInstructions(channel: string): Promise<void> {
-    const botInfo = this.slackService.getBotManager().getAllBots()[0];
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) return;
+    
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) return;
+    
+    const botInfo = bots[0];
     await this.slackService.sendMessageToChannel(channel, 'Office Hours Booking: To book...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendStudyResources(channel: string): Promise<void> {
-    const botInfo = this.slackService.getBotManager().getAllBots()[0];
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) return;
+    
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) return;
+    
+    const botInfo = bots[0];
     await this.slackService.sendMessageToChannel(channel, 'Study Resources: Here are some...', botInfo.botUserName || 'Jeeves');
   }
 
   public async sendAskQuestionModal(triggerId: string): Promise<void> {
-    const botInfo = this.slackService.getBotManager().getAllBots()[0];
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) return;
+    
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) return;
+    
+    const botInfo = bots[0];
     try {
       await botInfo.webClient.views.open({
         trigger_id: triggerId,
@@ -52,7 +76,13 @@ export class SlackInteractiveActions {
   }
 
   public async sendInteractiveHelpMessage(channel: string, userId: string): Promise<void> {
-    const botInfo = this.slackService.getBotManager().getAllBots()[0];
+    const botManager = this.slackService.getBotManager();
+    if (!botManager) return;
+    
+    const bots = botManager.getAllBots();
+    if (bots.length === 0) return;
+    
+    const botInfo = bots[0];
     await this.slackService.sendMessageToChannel(channel, 'Welcome! Here’s how to interact.', botInfo.botUserName || 'Jeeves'); // Blocks need integration—simplified
   }
 

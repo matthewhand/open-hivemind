@@ -75,6 +75,8 @@ describe('SlackEventListener', () => {
   });
 
   it('handles message event', async () => {
-    expect(service.getBotManager().getAllBots().length).toBe(1);
+    const botManager = service.getBotManager();
+    expect(botManager).toBeDefined();
+    expect(botManager?.getAllBots().length).toBe(1);
   });
 });
