@@ -13,6 +13,47 @@ const RETRY_DELAY_BASE_MS = 1000;
 // Utility to delay with exponential backoff
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * OpenAI provider implementation that conforms to the ILlmProvider interface.
+ *
+ * PURPOSE:
+ * - Provides full OpenAI API integration including both chat and text completions
+ * - Handles configuration, retry logic, and error handling
+ * - Supports custom base URLs for OpenAI-compatible APIs (like Ollama, LM Studio)
+ *
+ * CONFIGURATION:
+ * - OPENAI_API_KEY: Required API key
+ * - OPENAI_BASE_URL: Optional custom endpoint (defaults to https://api.openai.com/v1)
+ * - OPENAI_MODEL: Model to use (defaults to gpt-4o)
+ * - OPENAI_TIMEOUT: Request timeout in ms (defaults to 10000)
+ *
+ * USAGE PATTERNS:
+ * - Direct usage: openAiProvider.generateChatCompletion(...)
+ * - Via getLlmProvider(): Automatically included when LLM_PROVIDER includes 'openai'
+ *
+ * ERROR HANDLING:
+ * - Automatic retry with exponential backoff (3 attempts)
+ * - Graceful error messages for common issues (timeout, connection errors)
+ * - Detailed debug logging for troubleshooting
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * const response = await openAiProvider.generateChatCompletion(
+ *   "Hello, how are you?",
+ *   [],
+ *   { channel: "general" }
+ * );
+ *
+ * // With conversation history
+ * const history = [new DiscordMessage(message1), new DiscordMessage(message2)];
+ * const response = await openAiProvider.generateChatCompletion(
+ *   "What's the weather like?",
+ *   history,
+ *   { channel: "weather", userId: "12345" }
+ * );
+ * ```
+ */
 export const openAiProvider: ILlmProvider = {
   supportsChatCompletion: (): boolean => {
     debug('Checking chat completion support: true');

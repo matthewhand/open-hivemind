@@ -18,6 +18,39 @@ interface Bot {
 }
 
 export const Discord = {
+  /**
+   * DiscordService - High-level Discord integration service implementing IMessengerService
+   *
+   * ARCHITECTURE OVERVIEW:
+   * - Multi-bot support: Can manage multiple Discord bot instances
+   * - Legacy compatibility: Supports both new configuration system and legacy formats
+   * - Platform abstraction: Provides Discord-specific implementation of IMessengerService
+   * - Error handling: Comprehensive validation and error reporting
+   *
+   * CONFIGURATION SOURCES (in order of priority):
+   * 1. New BotConfigurationManager (recommended)
+   * 2. Environment variables (DISCORD_BOT_TOKEN)
+   * 3. Legacy config files (messengers.json)
+   *
+   * USAGE PATTERNS:
+   * - Single bot: DISCORD_BOT_TOKEN="your-token"
+   * - Multi-bot: DISCORD_BOT_TOKEN="token1,token2,token3"
+   * - Config file: Use BotConfigurationManager for complex setups
+   *
+   * @example
+   * ```typescript
+   * // Basic initialization
+   * const service = Discord.DiscordService.getInstance();
+   * await service.initialize();
+   *
+   * // Multi-bot setup
+   * const bots = service.getAllBots();
+   * console.log(`Running ${bots.length} Discord bots`);
+   *
+   * // Send message as specific bot
+   * await service.sendMessageToChannel("123456789", "Hello", "Bot #2");
+   * ```
+   */
   DiscordService: class implements IMessengerService {
     private static instance: DiscordService;
     private bots: Bot[] = [];
@@ -30,6 +63,19 @@ export const Discord = {
       GatewayIntentBits.GuildVoiceStates,
     ];
 
+    /**
+     * Constructor handles multi-bot initialization from various configuration sources.
+     *
+     * CONFIGURATION PRIORITY:
+     * 1. Test mode: Uses legacy configuration for test compatibility
+     * 2. New system: Uses BotConfigurationManager for multi-bot setups
+     * 3. Legacy fallback: Environment variables or config files
+     *
+     * ERROR HANDLING:
+     * - Validates all tokens before initialization
+     * - Provides clear error messages for configuration issues
+     * - Supports graceful degradation with fallback options
+     */
     public constructor() {
       this.bots = [];
       
