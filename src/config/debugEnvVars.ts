@@ -1,8 +1,46 @@
+/**
+ * @fileoverview Debug utility for logging and validating environment variables
+ * @module config/debugEnvVars
+ * @description Provides functionality to debug environment variables by logging them
+ * in a secure manner (redacting sensitive information) and checking for required
+ * variables based on configured providers.
+ */
+
 import { redactSensitiveInfo } from '../common/redactSensitiveInfo';
 import Debug from 'debug';
 
 const debug = Debug('app:debugEnvVars');
 
+/**
+ * Debug and validate environment variables for the application.
+ *
+ * @function debugEnvVars
+ * @description This function performs two main tasks:
+ * 1. Logs all environment variables while redacting sensitive information
+ * 2. Checks for missing required environment variables based on configured providers
+ *
+ * @returns {void}
+ *
+ * @example
+ * ```typescript
+ * import { debugEnvVars } from './config/debugEnvVars';
+ *
+ * // Debug environment variables at startup
+ * debugEnvVars();
+ * ```
+ *
+ * @description
+ * The function automatically detects which environment variables are required
+ * based on the MESSAGE_PROVIDER and LLM_PROVIDER configuration:
+ *
+ * - Discord provider requires: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID
+ * - Slack provider requires: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET
+ * - OpenAI provider requires: OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
+ * - Flowise provider requires: FLOWISE_API_KEY, FLOWISE_API_ENDPOINT
+ *
+ * Sensitive information (variables containing KEY, TOKEN, SECRET, or PASSWORD)
+ * is automatically redacted before logging.
+ */
 export function debugEnvVars() {
   debug('=== Environment Variables ===');
   
