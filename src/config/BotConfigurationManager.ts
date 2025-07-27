@@ -7,14 +7,6 @@ const debug = Debug('app:BotConfigurationManager');
 
 // Define the schema for individual bot configuration
 const botSchema = {
-  // Bot identification
-  name: {
-    doc: 'Bot name identifier',
-    format: String,
-    default: '',
-    env: 'BOTS_{name}_NAME'
-  },
-  
   // Message provider configuration
   MESSAGE_PROVIDER: {
     doc: 'Message provider type (discord, slack, etc.)',
@@ -147,6 +139,13 @@ const botSchema = {
     env: 'BOTS_{name}_OPENAI_MODEL'
   },
   
+  OPENAI_BASE_URL: {
+    doc: 'OpenAI API base URL',
+    format: String,
+    default: 'https://api.openai.com/v1',
+    env: 'BOTS_{name}_OPENAI_BASE_URL'
+  },
+  
   // Flowise configuration
   FLOWISE_API_KEY: {
     doc: 'Flowise API key',
@@ -205,6 +204,7 @@ export interface BotConfig {
   openai?: {
     apiKey: string;
     model?: string;
+    baseUrl?: string;
   };
   flowise?: {
     apiKey: string;
@@ -305,7 +305,7 @@ export class BotConfigurationManager {
       botConfig.loadFile(botConfigPath);
     }
     
-    botConfig.validate({ allowed: 'strict' });
+    botConfig.validate({ allowed: 'warn' });
     
     // Build the bot configuration object
     const config: BotConfig = {
@@ -332,6 +332,7 @@ export class BotConfigurationManager {
       config.openai = {
         apiKey: openaiApiKey,
         model: botConfig.get('OPENAI_MODEL'),
+        baseUrl: botConfig.get('OPENAI_BASE_URL'),
       };
     }
     
