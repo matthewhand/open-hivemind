@@ -2,6 +2,11 @@ import { IMessage } from '@message/interfaces/IMessage';
 import { processCommand } from '@message/helpers/handler/processCommand';
 import { stripBotId } from '@message/helpers/processing/stripBotId';
 import { addUserHintFn as addUserHint } from '@message/helpers/processing/addUserHint';
+jest.mock('@src/llm/getLlmProvider', () => ({
+  getLlmProvider: () => [{
+    generateChatCompletion: jest.fn().mockResolvedValue('LLM response')
+  }]
+}));
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
 import MessageDelayScheduler from '@message/helpers/handler/MessageDelayScheduler';
@@ -10,19 +15,43 @@ import messageConfig from '@config/messageConfig';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 
 // 1. Mock all dependencies at the top. Jest hoists these.
-jest.mock('@message/helpers/handler/processCommand');
-jest.mock('@message/helpers/processing/stripBotId');
-jest.mock('@message/helpers/processing/addUserHint');
+jest.mock('@message/helpers/handler/processCommand', () => ({
+  __esModule: true,
+  processCommand: jest.fn()
+}));
+jest.mock('@message/helpers/processing/stripBotId', () => ({
+  __esModule: true,
+  stripBotId: jest.fn().mockImplementation(text => text)
+}));
+jest.mock('@message/helpers/processing/addUserHint', () => ({
+  __esModule: true,
+  addUserHintFn: jest.fn().mockImplementation(text => text)
+}));
 jest.mock('@src/llm/getLlmProvider');
-jest.mock('@message/helpers/processing/shouldReplyToMessage');
-jest.mock('@message/helpers/handler/MessageDelayScheduler');
+jest.mock('@message/helpers/processing/shouldReplyToMessage', () => ({
+  __esModule: true,
+  shouldReplyToMessage: jest.fn().mockReturnValue(true)
+}));
+jest.mock('@message/helpers/handler/MessageDelayScheduler', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn().mockReturnValue({
+      scheduleMessage: jest.fn().mockImplementation(async (channelId, messageId, text, userId, sendFn) => {
+        await sendFn(text);
+      })
+    })
+  }
+}));
 jest.mock('@message/helpers/handler/sendFollowUpRequest');
 jest.mock('@config/messageConfig');
 jest.mock('@message/management/getMessengerProvider');
 
 // 2. Provide a default implementation for the mocks that are called at module-level.
 // This runs before the messageHandler module is imported and its top-level code executes.
-const mockLlmProvider = { generateChatCompletion: jest.fn() };
+const mockLlmProvider = {
+  generateChatCompletion: jest.fn().mockResolvedValue('LLM response'),
+  validateConfig: jest.fn().mockReturnValue(true)
+};
 const mockMessengerProvider = { getClientId: jest.fn(), sendMessageToChannel: jest.fn() };
 (getLlmProvider as jest.Mock).mockReturnValue([mockLlmProvider]);
 (getMessengerProvider as jest.Mock).mockReturnValue([mockMessengerProvider]);
@@ -41,7 +70,7 @@ const mockedStripBotId = stripBotId as jest.Mock;
 const mockedAddUserHint = addUserHint as jest.Mock;
 const mockedShouldReplyToMessage = shouldReplyToMessage as jest.Mock;
 const mockedSendFollowUpRequest = sendFollowUpRequest as jest.Mock;
-const mockedMessageConfigGet = (messageConfig as any).get as jest.Mock;
+const mockedMessageConfigGet = messageConfig.get as jest.Mock;
 
 const createMockMessage = (text: string): IMessage => ({
     getText: () => text,
