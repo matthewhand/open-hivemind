@@ -7,7 +7,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\.tsx?$': 'ts-jest'
+    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.jsx?$': 'babel-jest',
+    '^.+\.js$': 'babel-jest'
   },
   testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
@@ -26,7 +28,7 @@ module.exports = {
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
-    
+
   'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/__mocks__/discord.js.ts',
   },
   setupFiles: [
@@ -35,4 +37,5 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
   verbose: true,
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  transformIgnorePatterns: ["/node_modules/(?!chai|other-esm-dependency)"],
 };
