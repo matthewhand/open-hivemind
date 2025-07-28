@@ -3,121 +3,121 @@ import path from 'path';
 
 const messageConfig = convict({
   MESSAGE_PROVIDER: {
-    doc: 'Messaging platform (e.g., slack, discord)',
+    doc: 'The messaging platform to use (discord, slack, etc.)',
     format: String,
     default: 'slack',
     env: 'MESSAGE_PROVIDER'
   },
   MESSAGE_IGNORE_BOTS: {
-    doc: 'Ignore messages from bots',
+    doc: 'Whether to ignore messages from bots',
     format: Boolean,
     default: true,
     env: 'MESSAGE_IGNORE_BOTS'
   },
   MESSAGE_ADD_USER_HINT: {
-    doc: 'Add user hints to messages',
+    doc: 'Whether to add user hint to messages',
     format: Boolean,
     default: true,
     env: 'MESSAGE_ADD_USER_HINT'
   },
   MESSAGE_RATE_LIMIT_PER_CHANNEL: {
-    doc: 'Max messages per minute per channel',
+    doc: 'Rate limit per channel (messages per minute)',
     format: 'int',
     default: 5,
     env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL'
   },
   MESSAGE_MIN_DELAY: {
-    doc: 'Minimum response delay (ms)',
+    doc: 'Minimum delay between messages (ms)',
     format: 'int',
     default: 1000,
     env: 'MESSAGE_MIN_DELAY'
   },
   MESSAGE_MAX_DELAY: {
-    doc: 'Maximum response delay (ms)',
+    doc: 'Maximum delay between messages (ms)',
     format: 'int',
     default: 10000,
     env: 'MESSAGE_MAX_DELAY'
   },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
-    doc: 'Silence window for follow-ups (ms)',
+    doc: 'Time window to consider for activity (ms)',
     format: 'int',
     default: 300000,
     env: 'MESSAGE_ACTIVITY_TIME_WINDOW'
   },
   MESSAGE_WAKEWORDS: {
-    doc: 'Comma-separated wakewords',
-    format: String,
-    default: '!help,!ping',
+    doc: 'Wakewords to trigger bot responses',
+    format: Array,
+    default: ['!help', '!ping'],
     env: 'MESSAGE_WAKEWORDS'
   },
   MESSAGE_ONLY_WHEN_SPOKEN_TO: {
-    doc: 'Only respond when directly addressed',
+    doc: 'Only respond when spoken to directly',
     format: Boolean,
     default: true,
     env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO'
   },
   MESSAGE_INTERACTIVE_FOLLOWUPS: {
-    doc: 'Enable interactive follow-ups',
+    doc: 'Allow interactive follow-up questions',
     format: Boolean,
     default: false,
     env: 'MESSAGE_INTERACTIVE_FOLLOWUPS'
   },
   MESSAGE_UNSOLICITED_ADDRESSED: {
-    doc: 'Allow unsolicited responses in addressed channels',
+    doc: 'Allow unsolicited addressed messages',
     format: Boolean,
     default: false,
     env: 'MESSAGE_UNSOLICITED_ADDRESSED'
   },
   MESSAGE_UNSOLICITED_UNADDRESSED: {
-    doc: 'Allow unsolicited responses in unaddressed channels',
+    doc: 'Allow unsolicited unaddressed messages',
     format: Boolean,
     default: false,
     env: 'MESSAGE_UNSOLICITED_UNADDRESSED'
   },
   MESSAGE_RESPOND_IN_THREAD: {
-    doc: 'Respond in threads',
+    doc: 'Respond in thread when possible',
     format: Boolean,
     default: false,
     env: 'MESSAGE_RESPOND_IN_THREAD'
   },
   MESSAGE_THREAD_RELATION_WINDOW: {
-    doc: 'Time window for thread relation (ms)',
+    doc: 'Time window to consider messages related to a thread (ms)',
     format: 'int',
     default: 300000,
     env: 'MESSAGE_THREAD_RELATION_WINDOW'
   },
   MESSAGE_RECENT_ACTIVITY_DECAY_RATE: {
-    doc: 'Decay rate for recent activity chance',
+    doc: 'Decay rate for recent activity scoring',
     format: Number,
-    default: 0.001,
+    default: 0.5,
     env: 'MESSAGE_RECENT_ACTIVITY_DECAY_RATE'
   },
   MESSAGE_INTERROBANG_BONUS: {
-    doc: 'Bonus chance for messages ending in ! or ?',
+    doc: 'Bonus for messages ending with interrobang',
     format: Number,
-    default: 0.3,
+    default: 0.4,
     env: 'MESSAGE_INTERROBANG_BONUS'
   },
   MESSAGE_BOT_RESPONSE_MODIFIER: {
-    doc: 'Modifier for responses to bot messages',
+    doc: 'Modifier for bot response probability',
     format: Number,
-    default: -1.0,
+    default: 0.1,
     env: 'MESSAGE_BOT_RESPONSE_MODIFIER'
   },
   MESSAGE_COMMAND_INLINE: {
     doc: 'Enable inline command processing',
     format: Boolean,
-    default: false,
+    default: true,
     env: 'MESSAGE_COMMAND_INLINE'
   },
   MESSAGE_COMMAND_AUTHORISED_USERS: {
-    doc: 'Comma-separated list of authorized user IDs',
+    doc: 'Comma-separated list of authorised users for commands',
     format: String,
     default: '',
     env: 'MESSAGE_COMMAND_AUTHORISED_USERS'
   },
   MESSAGE_LLM_FOLLOW_UP: {
-    doc: 'Enable LLM follow-up messages',
+    doc: 'Enable LLM follow-up responses',
     format: Boolean,
     default: false,
     env: 'MESSAGE_LLM_FOLLOW_UP'
@@ -125,29 +125,41 @@ const messageConfig = convict({
   BOT_ID: {
     doc: 'Bot identifier',
     format: String,
-    default: '',
+    default: 'slack-bot',
     env: 'BOT_ID'
   },
   MESSAGE_MIN_INTERVAL_MS: {
-    doc: 'Minimum interval between message processing (ms)',
+    doc: 'Minimum interval between messages (ms)',
     format: 'int',
-    default: 1000,
+    default: 3000,
     env: 'MESSAGE_MIN_INTERVAL_MS'
   },
   MESSAGE_STRIP_BOT_ID: {
-    doc: 'Whether to strip bot ID from messages',
+    doc: 'Strip bot ID from messages',
     format: Boolean,
     default: true,
     env: 'MESSAGE_STRIP_BOT_ID'
   },
   MESSAGE_USERNAME_OVERRIDE: {
-    doc: 'Override username for the bot across all platforms',
+    doc: 'Override username for bot messages',
     format: String,
     default: 'MadgwickAI',
     env: 'MESSAGE_USERNAME_OVERRIDE'
   }
 });
 
-messageConfig.validate({ allowed: 'strict' });
+// Determine config directory
+const configDir = process.env.NODE_CONFIG_DIR || './config/';
+
+// Load configuration from file
+const configPath = path.join(configDir, 'providers/message.json');
+
+try {
+  messageConfig.loadFile(configPath);
+  messageConfig.validate({ allowed: 'warn' });
+} catch (error) {
+  console.warn(`Warning: Could not load message config from ${configPath}, using defaults`);
+  console.error('Error loading config:', error);
+}
 
 export default messageConfig;

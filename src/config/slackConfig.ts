@@ -1,6 +1,27 @@
 import convict from 'convict';
 import path from 'path';
 
+/**
+ * Slack Configuration Module
+ *
+ * @module slackConfig
+ * @description Centralized configuration for Slack integration. Handles:
+ * - Bot tokens and authentication
+ * - Channel settings
+ * - Welcome messages and templates
+ * - Button mappings and action handlers
+ *
+ * Configuration can be set via:
+ * - Environment variables
+ * - JSON config file (config/providers/slack.json)
+ * - Default values (fallback)
+ *
+ * @example
+ * // Get configuration values
+ * import slackConfig from './slackConfig';
+ * const botToken = slackConfig.get('SLACK_BOT_TOKEN');
+ * const mode = slackConfig.get('SLACK_MODE');
+ */
 const slackConfig = convict({
   SLACK_BOT_TOKEN: {
     doc: 'Comma-separated Slack bot tokens for API access',
@@ -82,9 +103,11 @@ const configPath = path.join(configDir, 'providers/slack.json');
 try {
   slackConfig.loadFile(configPath);
   slackConfig.validate({ allowed: 'strict' });
+  console.log(`Successfully loaded Slack config from ${configPath}`);
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load slack config from ${configPath}, using defaults`);
+  console.debug('Configuration error details:', error);
 }
 
 export default slackConfig;
