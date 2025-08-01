@@ -1,6 +1,28 @@
 import convict from 'convict';
 import path from 'path';
 
+/**
+ * Discord Configuration Module
+ *
+ * @module discordConfig
+ * @description Centralized configuration for Discord integration. Handles:
+ * - Bot tokens and authentication
+ * - Guild and channel settings
+ * - Voice and message configurations
+ * - Channel-specific bonuses and priorities
+ *
+ * Features custom format validators for channel bonuses and supports:
+ * - Environment variables
+ * - JSON config file (config/providers/discord.json)
+ * - Default values (fallback)
+ *
+ * @example
+ * // Get configuration values
+ * import discordConfig from './discordConfig';
+ * const botToken = discordConfig.get('DISCORD_BOT_TOKEN');
+ * const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
+ */
+
 convict.addFormat({
   name: 'channel-bonuses',
   validate: (val) => {

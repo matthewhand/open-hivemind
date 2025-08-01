@@ -71,12 +71,13 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.28.0",
     "@babel/eslint-parser": "^7.23.10",
     "@babel/plugin-transform-class-properties": "^7.24.7",
     "@babel/plugin-transform-object-rest-spread": "^7.24.1",
-    "@babel/preset-env": "^7.23.9",
+    "@babel/preset-env": "^7.28.0",
     "@babel/preset-flow": "^7.24.1",
+    "@babel/preset-typescript": "^7.27.1",
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@types/chai": "^4.3.19",
