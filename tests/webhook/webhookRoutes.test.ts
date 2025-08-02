@@ -1,0 +1,121 @@
+import express, { Request, Response } from 'express';
+import request from 'supertest';
+import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+import * as security from '@webhook/security/webhookSecurity';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
+
+// Mock security middlewares to be controllable per test
+jest.mock('@webhook/security/webhookSecurity', () => {
+  return {
+    __esModule: true,
+    verifyWebhookToken: jest.fn((req: Request, res: Response, next: Function) => next()),
+    verifyIpWhitelist: jest.fn((req: Request, res: Response, next: Function) => next()),
+  };
+});
+
+describe('webhookRoutes', () => {
+  let app: express.Application;
+  let messageService: jest.Mocked<IMessengerService>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    app = express();
+    app.use(express.json());
+
+    // Minimal mock for IMessengerService with method used by route
+    messageService = {
+      sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
+    } as any;
+
+    configureWebhookRoutes(app, messageService);
+  });
+
+  it('returns 200 and sends message on succeeded prediction', async () => {
+    const body = {
+      id: 'pred-1',
+      status: 'succeeded',
+      output: ['Answer', 'is', '42'],
+    };
+
+    const res = await request(app).post('/webhook').send(body);
+    expect(res.status).toBe(200);
+
+    // The route sends a single announcement with constructed message
+    expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
+    const [channel, message] = messageService.sendPublicAnnouncement.mock.calls[0];
+    expect(channel).toBe(''); // empty per current implementation
+    expect(message).toContain('Answer is 42');
+    // Image URL may be undefined if not pre-populated; ensure message contains format when present
+  });
+
+  it('returns 200 and sends message on non-succeeded prediction', async () => {
+    const body = {
+      id: 'pred-2',
+      status: 'processing',
+      output: [],
+    };
+
+    const res = await request(app).post('/webhook').send(body);
+    expect(res.status).toBe(200);
+
+    expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
+    const [, message] = messageService.sendPublicAnnouncement.mock.calls[0];
+    expect(message).toContain('Prediction ID: pred-2');
+    expect(message).toContain('Status: processing');
+  });
+
+  it('returns 400 when predictionId or status is missing', async () => {
+    const res1 = await request(app).post('/webhook').send({ status: 'succeeded', output: [] });
+    expect(res1.status).toBe(400);
+
+    const res2 = await request(app).post('/webhook').send({ id: 'pred-x', output: [] });
+    expect(res2.status).toBe(400);
+
+    expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it('responds 200 even if sending message throws (logged internally)', async () => {
+    messageService.sendPublicAnnouncement.mockRejectedValueOnce(new Error('send failed'));
+
+    const res = await request(app).post('/webhook').send({
+      id: 'pred-err',
+      status: 'succeeded',
+      output: ['Hello'],
+    });
+
+    expect(res.status).toBe(200);
+    expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 403 when verifyWebhookToken blocks', async () => {
+    const { verifyWebhookToken } = jest.requireMock('@webhook/security/webhookSecurity') as typeof security;
+    (verifyWebhookToken as jest.Mock).mockImplementationOnce((req: Request, res: Response) => {
+      res.status(403).send('Forbidden: Invalid token');
+    });
+
+    const res = await request(app).post('/webhook').send({
+      id: 'pred-3',
+      status: 'succeeded',
+      output: [],
+    });
+
+    expect(res.status).toBe(403);
+    expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when verifyIpWhitelist blocks', async () => {
+    const { verifyIpWhitelist } = jest.requireMock('@webhook/security/webhookSecurity') as typeof security;
+    (verifyIpWhitelist as jest.Mock).mockImplementationOnce((req: Request, res: Response) => {
+      res.status(403).send('Forbidden: Unauthorized IP address');
+    });
+
+    const res = await request(app).post('/webhook').send({
+      id: 'pred-4',
+      status: 'succeeded',
+      output: [],
+    });
+
+    expect(res.status).toBe(403);
+    expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
+  });
+});
