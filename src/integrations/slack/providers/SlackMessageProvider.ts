@@ -4,9 +4,7 @@ import { SlackService } from '@integrations/slack/SlackService';
 export class SlackMessageProvider implements IMessageProvider {
   private _slackService?: SlackService;
   private get slackService() {
-    if (process.env.NODE_ENV === 'test') {
-      return SlackService.getInstance();
-    }
+    // Always use singleton accessor to avoid multiple instances
     if (!this._slackService) {
       this._slackService = SlackService.getInstance();
     }
@@ -26,6 +24,7 @@ export class SlackMessageProvider implements IMessageProvider {
   }
 
   getClientId(): string {
-    return "slack-bot"; // Replace with actual Slack bot client ID if needed
+    // Delegate to SlackService for the actual bot user ID
+    return this.slackService.getClientId();
   }
 }

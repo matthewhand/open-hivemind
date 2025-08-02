@@ -1,183 +1,146 @@
 import { IMessage } from '@message/interfaces/IMessage';
 
 /**
- * Slack-specific implementation of the IMessage interface.
- * 
- * This class provides a Slack-specific implementation of the IMessage interface.
- * Currently, this is a basic implementation that serves as a placeholder for
- * full Slack message integration. It provides the necessary structure to work
- * with Slack messages while maintaining compatibility with the IMessage contract.
- * 
- * @implements {IMessage}
- * @example
- * ```typescript
- * const slackMessage = new SlackMessage("Hello from Slack!", "general");
- * console.log(slackMessage.getText()); // "Hello from Slack!"
- * console.log(slackMessage.getChannelId()); // "general"
- * ```
+ * Slack-specific implementation of the IMessage interface with minimal real parsing.
+ *
+ * This normalizes common Slack message fields so downstream logic has reliable data:
+ * - authorId from data.user or data.user_id
+ * - messageId from data.ts
+ * - isFromBot from data.subtype === 'bot_message' or data.bot_id presence
+ * - mentions parsed from <@UXXXX> tokens in text
+ * - timestamp from data.ts (seconds.fraction) to Date
  */
 export default class SlackMessage implements IMessage {
-  /**
-   * The text content of the Slack message.
-   * @type {string}
-   */
   public content: string;
-
-  /**
-   * The Slack channel ID where this message was sent.
-   * @type {string}
-   */
   public channelId: string;
-
-  /**
-   * Raw Slack message data.
-   * Contains the original message data from the Slack API.
-   * @type {any}
-   */
   public data: any;
-
-  /**
-   * The role of the message sender (user, assistant, system, tool).
-   * Defaults to 'user' for basic implementation.
-   * @type {string}
-   */
   public role: string;
 
-  /**
-   * Creates a new SlackMessage instance.
-   * 
-   * @param {string} content - The text content of the message
-   * @param {string} channelId - The Slack channel identifier
-   * @param {any} [data={}] - Optional raw Slack message data
-   * 
-   * @example
-   * ```typescript
-   * const message = new SlackMessage("Hello world", "general");
-   * const messageWithData = new SlackMessage("Hello", "general", { ts: "1234567890" });
-   * ```
-   */
+  private authorId: string;
+  private authorName: string | undefined;
+  private messageId: string | undefined;
+  private isBot: boolean;
+  private mentions: string[];
+  private timestamp: Date;
+
   constructor(content: string, channelId: string, data: any = {}) {
-    this.content = content;
-    this.channelId = channelId;
-    this.data = data;
+    this.content = content ?? '';
+    this.channelId = channelId ?? '';
+    this.data = data || {};
     this.role = 'user';
+
+    this.authorId = this.resolveAuthorId(this.data);
+    this.authorName = this.resolveAuthorName(this.data);
+    this.messageId = this.resolveMessageId(this.data);
+    this.isBot = this.resolveIsBot(this.data);
+    this.mentions = this.extractMentions(this.content);
+    this.timestamp = this.resolveTimestamp(this.data) ?? new Date(0);
   }
 
-  /**
-   * Gets the text content of the Slack message.
-   * 
-   * @returns {string} The message text content
-   */
   getText(): string {
     return this.content;
   }
 
-  /**
-   * Gets the Slack channel ID.
-   * 
-   * @returns {string} The Slack channel ID
-   */
   getChannelId(): string {
     return this.channelId;
   }
 
-  /**
-   * Gets the Slack user ID of the message author.
-   * 
-   * @returns {string} The author's Slack user ID (placeholder implementation)
-   */
   getAuthorId(): string {
-    return 'unknown'; // Replace with actual author ID from Slack API
+    return this.authorId || 'unknown';
   }
 
-  /**
-   * Gets the timestamp when this Slack message was created.
-   * 
-   * @returns {Date} The message creation timestamp (placeholder implementation)
-   */
   getTimestamp(): Date {
-    return new Date(); // Replace with actual timestamp from Slack API
+    return this.timestamp;
   }
 
-  /**
-   * Updates the text content of the Slack message.
-   * 
-   * @param {string} text - The new text content
-   */
-  setText(text: string): void {
-    this.content = text;
+  public setText(text: string): void {
+    this.content = text ?? '';
+    // Re-extract mentions when text changes
+    this.mentions = this.extractMentions(this.content);
   }
 
-  /**
-   * Gets all user mentions in this Slack message.
-   * 
-   * @returns {string[]} Array of Slack user IDs mentioned in the message (placeholder implementation)
-   */
   getUserMentions(): string[] {
-    return []; // Implement mention extraction from Slack API
+    return [...this.mentions];
   }
 
-  /**
-   * Gets all users in the Slack channel.
-   * 
-   * @returns {string[]} Array of Slack user IDs in the channel (placeholder implementation)
-   */
   getChannelUsers(): string[] {
-    return []; // Fetch users from Slack API
+    // Not available without additional API calls; return empty list to satisfy interface.
+    return [];
   }
 
-  /**
-   * Gets the display name of the Slack message author.
-   * 
-   * @returns {string} The author's display name (placeholder implementation)
-   */
   getAuthorName(): string {
-    return 'Unknown User'; // Replace with actual Slack user name
+    return this.authorName || 'Unknown User';
   }
 
-  /**
-   * Checks if this Slack message was sent by a bot.
-   * 
-   * @returns {boolean} True if the message is from a bot (placeholder implementation)
-   */
   isFromBot(): boolean {
-    return false; // Modify based on Slack bot message identification
+    return this.isBot;
   }
 
-  /**
-   * Checks if this Slack message is a reply to a bot message.
-   * 
-   * @returns {boolean} True if this message is a reply to a bot (placeholder implementation)
-   */
   isReplyToBot(): boolean {
-    return false; // Implement based on Slack API reply structure
+    // Minimal heuristic: check if this is part of a thread replying to a bot ts stored in data.thread_ts with bot marker in parent (not available).
+    // Without parent fetch, return false by default.
+    return false;
   }
 
-  /**
-   * Gets the unique Slack message ID.
-   * 
-   * @returns {string} The Slack message ID (placeholder implementation)
-   */
   getMessageId(): string {
-    return 'mock-message-id'; // Replace with actual Slack message ID
+    return this.messageId || 'unknown';
   }
 
-  /**
-   * Gets the topic/description of the Slack channel.
-   * 
-   * @returns {string | null} The channel topic, or null if not available (placeholder implementation)
-   */
   getChannelTopic(): string | null {
-    return null; // Implement if necessary
+    // Not available on the event payload; requires conversations.info call.
+    return null;
   }
 
-  /**
-   * Checks if this Slack message mentions a specific user.
-   * 
-   * @param {string} userId - The Slack user ID to check for
-   * @returns {boolean} True if the user is mentioned in this message (placeholder implementation)
-   */
   mentionsUsers(userId: string): boolean {
-    return false; // Implement if needed
+    if (!userId) return false;
+    return this.mentions.includes(userId);
+  }
+
+  // Helpers
+
+  private resolveAuthorId(data: any): string {
+    // event.user or payload.user.id or message.user
+    return data?.user?.id || data?.user || data?.message?.user || data?.user_id || '';
+  }
+
+  private resolveAuthorName(data: any): string | undefined {
+    // payload.user.username or user.name from richer events
+    return data?.user?.username || data?.user?.name || data?.username;
+  }
+
+  private resolveMessageId(data: any): string | undefined {
+    // Slack ts (e.g., "1712345678.000200")
+    return data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
+  }
+
+  private resolveIsBot(data: any): boolean {
+    // subtype bot_message, presence of bot_id, or explicit flag
+    if (data?.subtype === 'bot_message') return true;
+    if (data?.bot_id) return true;
+    if (data?.message?.subtype === 'bot_message') return true;
+    return false;
+  }
+
+  private extractMentions(text: string): string[] {
+    if (!text) return [];
+    // Matches <@U123ABC456> or <@W123...> (Workspace apps may use W-prefixed IDs)
+    const regex = /<@([UW][A-Z0-9]+)>/g;
+    const ids = new Set<string>();
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      ids.add(m[1]);
+    }
+    return Array.from(ids);
+  }
+
+  private resolveTimestamp(data: any): Date | undefined {
+    const ts = data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
+    if (!ts || typeof ts !== 'string') return;
+    // Slack ts "seconds.millis"
+    const [secStr, fracStr] = ts.split('.');
+    const sec = Number(secStr);
+    const ms = Number((fracStr || '0').padEnd(3, '0').slice(0, 3));
+    if (!Number.isFinite(sec) || !Number.isFinite(ms)) return;
+    return new Date(sec * 1000 + ms);
   }
 }

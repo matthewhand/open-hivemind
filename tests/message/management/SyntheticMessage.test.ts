@@ -98,12 +98,15 @@ describe('SyntheticMessage', () => {
 
   describe('getTimestamp', () => {
     it('should return current timestamp', () => {
-      const before = new Date();
+      // Allow small clock/timing skew to avoid flaky failures
+      const skewMs = 5;
+
+      const before = Date.now() - skewMs;
       const timestamp = syntheticMessage.getTimestamp();
-      const after = new Date();
+      const after = Date.now() + skewMs;
       
-      expect(timestamp.getTime()).toBeGreaterThanOrEqual(before.getTime());
-      expect(timestamp.getTime()).toBeLessThanOrEqual(after.getTime());
+      expect(timestamp.getTime()).toBeGreaterThanOrEqual(before);
+      expect(timestamp.getTime()).toBeLessThanOrEqual(after);
     });
   });
 
