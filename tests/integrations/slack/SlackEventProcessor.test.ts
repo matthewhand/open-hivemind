@@ -190,6 +190,66 @@ describe('SlackEventProcessor', () => {
       expect(mockRes.send).toHaveBeenCalledWith('Bad Request');
     });
 
+    it('should ignore bot_message events (200 OK, no handling)', async () => {
+      const mockEvent = { type: 'message', subtype: 'bot_message', event_ts: '111.111' };
+      const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
+      const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
+
+      await eventProcessor.handleActionRequest(mockReq, mockRes);
+
+      const botManager = slackServiceInstance.getBotManager();
+      expect(botManager?.handleMessage).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should ignore duplicate events with same event_ts', async () => {
+      const mockEvent = { type: 'message', event_ts: '222.222', text: 'first', channel: 'C1' };
+      const mockReq1 = { body: { type: 'event_callback', event: mockEvent } } as any;
+      const mockRes1 = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
+      await eventProcessor.handleActionRequest(mockReq1, mockRes1);
+      expect(mockRes1.status).toHaveBeenCalledWith(200);
+
+      // Same event_ts should be ignored on second pass
+      const mockReq2 = { body: { type: 'event_callback', event: { ...mockEvent, text: 'dup' } } } as any;
+      const mockRes2 = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
+      const botManager = slackServiceInstance.getBotManager();
+      (botManager?.handleMessage as jest.Mock).mockClear();
+
+      await eventProcessor.handleActionRequest(mockReq2, mockRes2);
+
+      expect(botManager?.handleMessage).not.toHaveBeenCalled();
+      expect(mockRes2.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should handle message event with missing text safely', async () => {
+      const mockEvent = { type: 'message', event_ts: '333.333', text: undefined, channel: 'C2' };
+      const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
+      const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
+
+      const botManager = slackServiceInstance.getBotManager();
+      (botManager?.handleMessage as jest.Mock).mockClear();
+
+      await eventProcessor.handleActionRequest(mockReq, mockRes);
+
+      // Still constructs SlackMessage with empty string text
+      expect(MockSlackMessage).toHaveBeenCalledWith('', 'C2', mockEvent);
+      expect(botManager?.handleMessage).toHaveBeenCalledTimes((botManager?.getAllBots() || []).length || 1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should still 200 when botManager.handleMessage rejects (caught internally)', async () => {
+      const mockEvent = { type: 'message', event_ts: '444.444', text: 'oops', channel: 'C3' };
+      const mockReq = { body: { type: 'event_callback', event: mockEvent } } as any;
+      const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
+
+      const botManager = slackServiceInstance.getBotManager();
+      (botManager?.handleMessage as jest.Mock).mockRejectedValueOnce(new Error('handler failed'));
+
+      await eventProcessor.handleActionRequest(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+    });
+
     it('should handle errors during request processing', async () => {
       const mockReq = { body: 'invalid json' } as any; // This will cause JSON.parse to throw
       const mockRes = { status: jest.fn().mockReturnThis(), send: jest.fn() } as any;
