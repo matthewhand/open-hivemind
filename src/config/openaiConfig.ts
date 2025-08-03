@@ -103,12 +103,16 @@ const openaiConfig = convict({
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
 const configPath = path.join(configDir, 'providers/openai.json');
 
+import Debug from 'debug';
+const debug = Debug('app:openaiConfig');
+
 try {
   openaiConfig.loadFile(configPath);
   openaiConfig.validate({ allowed: 'strict' });
+  debug(`Successfully loaded OpenAI config from ${configPath}`);
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load openai config from ${configPath}, using defaults`);
+  debug(`Warning: Could not load openai config from ${configPath}, using defaults`);
 }
 
 export default openaiConfig;

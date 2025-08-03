@@ -25,12 +25,16 @@ const mattermostConfig = convict({
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
 const configPath = path.join(configDir, 'providers/mattermost.json');
 
+import Debug from 'debug';
+const debug = Debug('app:mattermostConfig');
+
 try {
   mattermostConfig.loadFile(configPath);
   mattermostConfig.validate({allowed: 'strict'});
+  debug(`Successfully loaded Mattermost config from ${configPath}`);
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load mattermost config from ${configPath}, using defaults`);
+  debug(`Warning: Could not load mattermost config from ${configPath}, using defaults`);
 }
 
 export default mattermostConfig;
