@@ -106,6 +106,24 @@ Planned Follow-ups
 - Consider minimal shutdown safety guards in production only if needed by real callers.
 - Address SyntheticMessage timestamp flake by adding tolerance in assertions.
 
+### Cross-Platform Abstraction Priority: Move Discord-specific features into message-layer interfaces
+
+Rationale: Features like “channel bonuses” should live at the platform-agnostic message abstraction so all integrations (Slack, Mattermost, Discord, OpenWebUI proxies, future providers) benefit uniformly.
+
+Plan:
+- Define platform-agnostic channel scoring/bonuses in message config and interfaces:
+  - Add to [`src/config/messageConfig.ts`](src/config/messageConfig.ts:1) a schema for CHANNEL_BONUSES and CHANNEL_PRIORITIES supporting aliases and per-context weights.
+  - Extend [`src/message/interfaces/IMessengerService.ts`](src/message/interfaces/IMessengerService.ts:1) with optional capabilities discovery (supportsChannelPrioritization: boolean) and a uniform “scoreChannel(channelId, metadata?)” API.
+  - Extend [`src/message/interfaces/IMessage.ts`](src/message/interfaces/IMessage.ts:1) with a provider-agnostic “getChannelId()”, “getGuildOrWorkspaceId()” and “getMentions()” that already exists but ensure consistent types across providers.
+- Centralize routing logic:
+  - Introduce [`src/message/routing/ChannelRouter.ts`](src/message/routing/ChannelRouter.ts:1) to compute channel scores from config and metadata, independent of provider.
+  - Deprecate provider-specific bonus logic in Discord; use ChannelRouter everywhere (Discord, Slack, others).
+- Config migration and compatibility:
+  - Add a migration layer in [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1) to map legacy DISCORD_CHANNEL_BONUSES to message-level CHANNEL_BONUSES if present.
+  - Document precedence: message-level config > legacy provider-specific fields.
+- Tests:
+  - Add cross-provider tests in [`tests/message/routing/ChannelRouter.test.ts`](tests/message/routing/ChannelRouter.test.ts:1) verifying identical behavior across mocked Slack/Discord providers.
+  - Contract tests to ensure providers correctly surface channelId/workspace identifiers to enable scoring.
 ## Targeted TODOs From 10-File Code Review (Batch 1)
 
 1) [`src/config/discordConfig.ts`](src/config/discordConfig.ts:1)
