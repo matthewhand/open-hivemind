@@ -1,5 +1,79 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:messageConfig');
+
+// Custom formats for channel routing maps
+convict.addFormat({
+  name: 'channel-bonuses',
+  validate: (val: unknown) => {
+    if (val == null) return; // allow undefined/null
+    if (typeof val === 'string') return; // CSV accepted, validate on coerce
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      for (const v of Object.values(val as Record<string, unknown>)) {
+        const n = Number(v);
+        if (Number.isNaN(n) || n < 0.0 || n > 2.0) {
+          throw new Error('CHANNEL_BONUSES values must be numbers in range [0.0, 2.0]');
+        }
+      }
+      return;
+    }
+    throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'object' && !Array.isArray(val)) return val as Record<string, number>;
+    if (typeof val === 'string') {
+      const out: Record<string, number> = {};
+      const parts = val.split(',').map(s => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        const [k, vs] = p.split(':').map(s => s.trim());
+        if (!k || vs == null) continue;
+        const n = Number(vs);
+        if (!Number.isNaN(n) && n >= 0.0 && n <= 2.0) {
+          out[k] = n;
+        }
+      }
+      return out;
+    }
+    return {};
+  }
+});
+
+convict.addFormat({
+  name: 'channel-priorities',
+  validate: (val: unknown) => {
+    if (val == null) return;
+    if (typeof val === 'string') return; // CSV accepted, validate on coerce
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      for (const v of Object.values(val as Record<string, unknown>)) {
+        const n = Number(v);
+        if (!Number.isInteger(n)) {
+          throw new Error('CHANNEL_PRIORITIES values must be integers (lower is higher priority)');
+        }
+      }
+      return;
+    }
+    throw new Error('CHANNEL_PRIORITIES must be JSON object map or CSV string "chan:priority,..."');
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'object' && !Array.isArray(val)) return val as Record<string, number>;
+    if (typeof val === 'string') {
+      const out: Record<string, number> = {};
+      const parts = val.split(',').map(s => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        const [k, vs] = p.split(':').map(s => s.trim());
+        if (!k || vs == null) continue;
+        const n = Number(vs);
+        if (Number.isInteger(n)) out[k] = n;
+      }
+      return out;
+    }
+    return {};
+  }
+});
 
 const messageConfig = convict({
   MESSAGE_PROVIDER: {
@@ -145,6 +219,20 @@ const messageConfig = convict({
     format: String,
     default: 'MadgwickAI',
     env: 'MESSAGE_USERNAME_OVERRIDE'
+  },
+
+  // New: channel routing
+  CHANNEL_BONUSES: {
+    doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
+    format: 'channel-bonuses',
+    default: {},
+    env: 'CHANNEL_BONUSES'
+  },
+  CHANNEL_PRIORITIES: {
+    doc: 'Channel priorities map (CSV "id:int,..." or JSON object). Integer, lower means higher priority. Default 0 when missing.',
+    format: 'channel-priorities',
+    default: {},
+    env: 'CHANNEL_PRIORITIES'
   }
 });
 
@@ -157,9 +245,11 @@ const configPath = path.join(configDir, 'providers/message.json');
 try {
   messageConfig.loadFile(configPath);
   messageConfig.validate({ allowed: 'warn' });
-} catch (error) {
-  console.warn(`Warning: Could not load message config from ${configPath}, using defaults`);
-  console.error('Error loading config:', error);
+  debug('messageConfig loaded and validated from %s', configPath);
+} catch (error: any) {
+  // Use debug-style logging to avoid noisy console.* during tests
+  debug(`Warning: Could not load message config from ${configPath}, using defaults`);
+  debug('Error loading config: %s', error?.message || String(error));
 }
 
 export default messageConfig;
