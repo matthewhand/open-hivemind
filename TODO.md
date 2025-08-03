@@ -228,6 +228,58 @@ Plan:
 - Add sanity checks to warn on too-broad DEBUG enabling in production builds.
 - Unit test matrix to ensure expected namespaces are included/excluded based on flags.
 
+### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation 2)
+
+1) [`src/config/README.md`](src/config/README.md:1)
+- Add a precedence table (env > config file > defaults) with concrete examples and conflict resolution notes.
+- Document all debug namespaces and show how to enable selectively via [`src/config/debugEnvVars.ts`](src/config/debugEnvVars.ts:1).
+- Include migration notes for legacy fields to new message-level config (CHANNEL_BONUSES/PRIORITIES).
+
+2) [`src/config/configurationManager.js`](src/config/configurationManager.js:1)
+- Deprecate CommonJS shim; re-export from TypeScript source with type-checked builds.
+- Add runtime guards for missing config files with actionable error messages and links to README.
+- Unit tests ensuring parity with [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1).
+
+3) [`src/config/debugEnvVars.ts`](src/config/debugEnvVars.ts:1)
+- Provide helper enableDebugFor(featureGroup: string) mapping to known namespaces.
+- Warn if DEBUG matches a catch-all (e.g., *) in production; add safe defaults in tests.
+- Tests for namespace grouping and conflict handling.
+
+4) [`src/config/default.json`](src/config/default.json:1)
+- Validate schema with a JSON Schema file checked in; CI step to verify.
+- Add comments/docfile listing each key and its type/default; ensure sensitive defaults are not present.
+- Provide minimal sample configs for providers in config/providers/*.example.json.
+
+5) [`src/config/discordConfig.ts`](src/config/discordConfig.ts:1)
+- Add coercion/validation for potential legacy DISCORD_CHANNEL_BONUSES into message-level bonuses (deprecation warning).
+- Emit debug logs for loaded tokens/bot names with redaction; add stricter type guards.
+- Tests for env vs file precedence and deprecation mapping.
+
+6) [`src/config/environment.ts`](src/config/environment.ts:1)
+- Centralize safeEnv accessor with type narrowing and defaulting; avoid direct process.env reads elsewhere.
+- Add allowlist of env variables used; warn on unexpected keys in CI.
+- Tests covering missing vars, defaults, and overrides.
+
+7) [`src/config/flowiseConfig.README.md`](src/config/flowiseConfig.README.md:1)
+- Document REST vs SDK modes with config flags and examples.
+- Clarify timeouts/retry behavior and recommended values for CI vs prod.
+- Add security note on redacting secrets in logs.
+
+8) [`src/config/flowiseConfig.ts`](src/config/flowiseConfig.ts:1)
+- Add convict formats for URLs, timeouts, and retries; include backoff strategy selection.
+- Redact secrets on debug print; validate mutually exclusive REST/SDK settings.
+- Unit tests for invalid/missing values and edge cases.
+
+9) [`src/config/llmConfig.README.md`](src/config/llmConfig.README.md:1)
+- Expand examples for chat vs completion providers, including hybrid setups.
+- Document model selection precedence and provider capability checks.
+- Provide troubleshooting guide for common misconfigurations.
+
+10) [`src/config/llmConfig.ts`](src/config/llmConfig.ts:1)
+- Add schema for provider capability flags (supportsChatCompletion/supportsCompletion).
+- Validate default model by provider; warn on unknown models with suggestion list.
+- Tests for capability-driven routing and failure modes.
+
 ### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation)
 
 A) [`src/commands/slash/config.js`](src/commands/slash/config.js:1)
