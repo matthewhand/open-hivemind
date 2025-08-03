@@ -127,10 +127,12 @@ export default class DiscordMessage implements IMessage {
     this.content = text;
     if (this.message.editable) {
       this.message.edit(text).catch((error) => {
-        console.error(`Failed to edit message ${this.message.id}:`, error);
+        // use debug to avoid noisy console during tests
+        debug(`Failed to edit message ${this.message.id}: ${error?.message ?? error}`);
       });
     } else {
-      console.warn(`Message ${this.message.id} is not editable.`);
+      // downgrade to debug to silence console.warn in tests
+      debug(`Message ${this.message.id} is not editable.`);
     }
   }
 
@@ -185,18 +187,31 @@ export default class DiscordMessage implements IMessage {
   getUserMentions(): string[] {
     debug('Getting user mentions from message: ' + this.message.id);
     try {
-      const mentions = this.message.mentions?.users?.map(user => user.id) || [];
-      if (!mentions) {
-        return [];
+      const users = (this.message as any)?.mentions?.users;
+
+      if (!users) return [];
+
+      // discord.js Collection: has .map(fn) where fn receives (value, key, collection)
+      if (users instanceof Collection) {
+        return (users as Collection<string, any>)
+          .map((user: any) => (user?.id ?? user))
+          .filter((id: any): id is string => typeof id === 'string');
       }
 
-      // Handle both real Collection and mock objects
-      if (typeof mentions.map === 'function') {
-        return mentions.map((user: any) => user.id);
+      // Plain array of users or IDs
+      if (Array.isArray(users)) {
+        return (users as any[])
+          .map((u) => (typeof u === 'string' ? u : u?.id))
+          .filter((id: any): id is string => typeof id === 'string');
       }
-      if (typeof mentions === 'object' && !Array.isArray(mentions)) {
-        return Object.values(mentions).map((user: any) => user.id);
+
+      // Some tests may mock mentions.users as a plain object map
+      if (typeof users === 'object') {
+        return Object.values(users as Record<string, any>)
+          .map((u: any) => (typeof u === 'string' ? u : u?.id))
+          .filter((id: any): id is string => typeof id === 'string');
       }
+
       return [];
     } catch (error) {
       debug('Error getting user mentions:', error);
@@ -212,23 +227,37 @@ export default class DiscordMessage implements IMessage {
   getChannelUsers(): string[] {
     debug('Fetching users from channel: ' + this.channelId);
     try {
-      const channel = this.message.channel as TextChannel;
-      if (!channel || !channel.members) {
-        return [];
-      }
+      const channel: any = this.message.channel as any;
+      if (!channel) return [];
 
       const members = channel.members;
+      if (!members) return [];
 
+      // discord.js Collection-like: members.map(fn)
       if (members instanceof Collection) {
-        return members.map((member: any) => member.user?.id).filter(Boolean);
-      } else if (Array.isArray(members)) {
-        return (members as Array<{user?: {id: string}}>)
-          .map((member) => member.user?.id)
-          .filter((id): id is string => id !== undefined);
-      } else if (typeof members === 'object' && members !== null) {
-        return Object.values(members)
-          .map((member: any) => member.user?.id)
-          .filter(Boolean);
+        return (members as Collection<string, any>)
+          .map((m: any) => m?.user?.id ?? (typeof m === 'string' ? m : undefined))
+          .filter((id: any): id is string => typeof id === 'string');
+      }
+
+      // Some mocks provide a Collection-like plain object with a map() function returning array
+      if (typeof members?.map === 'function' && !(members instanceof Array)) {
+        const mapped = members.map((m: any) => m?.user?.id ?? (typeof m === 'string' ? m : undefined));
+        return (Array.isArray(mapped) ? mapped : []).filter((id: any): id is string => typeof id === 'string');
+      }
+
+      // Array of members
+      if (Array.isArray(members)) {
+        return (members as any[])
+          .map((m) => (typeof m === 'string' ? m : m?.user?.id))
+          .filter((id: any): id is string => typeof id === 'string');
+      }
+
+      // Plain object map
+      if (typeof members === 'object') {
+        return Object.values(members as Record<string, any>)
+          .map((m: any) => (typeof m === 'string' ? m : m?.user?.id))
+          .filter((id: any): id is string => typeof id === 'string');
       }
 
       return [];
@@ -308,7 +337,8 @@ export default class DiscordMessage implements IMessage {
         const referencedMsg = await this.message.channel.messages.fetch(this.message.reference.messageId);
         return new DiscordMessage(referencedMsg);
       } catch (error: any) {
-        console.error(`Failed to fetch referenced message: ${error.message}`);
+        // use debug instead of console.error to reduce test noise
+        debug(`Failed to fetch referenced message: ${error?.message ?? error}`);
         return null;
       }
     }
