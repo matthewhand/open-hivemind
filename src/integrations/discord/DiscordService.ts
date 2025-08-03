@@ -203,7 +203,7 @@ export const Discord = {
       const loginPromises = this.bots.map((bot) => {
         return new Promise<void>(async (resolve) => {
           bot.client.once('ready', () => {
-            console.log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
+            log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
             bot.botUserId = bot.client.user?.id || '';
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
@@ -256,7 +256,7 @@ export const Discord = {
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
       try {
-        console.log(`Sending to channel ${channelId} as ${senderName}`);
+        log(`Sending to channel ${channelId} as ${senderName}`);
         const channel = await botInfo.client.channels.fetch(channelId);
         if (!channel || !channel.isTextBased()) {
           throw new Error(`Channel ${channelId} is not text-based or was not found`);
@@ -270,14 +270,14 @@ export const Discord = {
           }
           message = await thread.send(text);
         } else {
-          console.log(`Attempting send to channel ${channelId}: *${senderName}*: ${text}`);
+          log(`Attempting send to channel ${channelId}: *${senderName}*: ${text}`);
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
         }
 
-        console.log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);
+        log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);
         return message.id;
       } catch (error: any) {
-        console.log(`Error sending to ${channelId}${threadId ? `/${threadId}` : ''}: ${error.message}`);
+        log(`Error sending to ${channelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
         return '';
       }
     }
@@ -303,7 +303,7 @@ export const Discord = {
         // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
         return arr.slice(0, limit);
       } catch (error: any) {
-        console.log(`Failed to fetch messages from ${channelId}: ${error.message}`);
+        log(`Failed to fetch messages from ${channelId}: ${error?.message ?? error}`);
         return [];
       }
     }
