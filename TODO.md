@@ -157,3 +157,55 @@ Planned Follow-ups
 - Add idempotency keys to avoid double-processing the same event.
 - Propagate tracing context from entrypoint through LLM/provider calls.
 - Implement backpressure handling when downstream providers are saturated.
+
+## Targeted TODOs From 10-File Code Review (Batch 2)
+
+1) [`src/common/errors/errorMessages.ts`](src/common/errors/errorMessages.ts:1)
+- Ensure error codes map is exhaustive and typed (e.g., string literal types) to prevent typos and missing keys.
+- Add i18n-ready structure or simple placeholder to allow future localization of user-facing error messages.
+- Create tests verifying that all exported error codes have non-empty, properly formatted messages.
+
+2) [`src/common/errors/getRandomErrorMessage.ts`](src/common/errors/getRandomErrorMessage.ts:1)
+- Seedable randomness for deterministic test behavior; allow dependency-injected RNG.
+- Add minimum variety guard to avoid repeating same message N times in a row.
+- Extend tests to cover edge cases: empty pool, single-item pool, and long-run distribution sanity.
+
+3) [`src/common/errors/handleError.ts`](src/common/errors/handleError.ts:1)
+- Normalize error taxonomy (Operational vs Programmer) and map to log levels and telemetry tags.
+- Add redaction pass via [`src/common/redactSensitiveInfo.ts`](src/common/redactSensitiveInfo.ts:1) before logging/returning messages.
+- Provide safe user-facing summaries separate from developer detail; unit tests for both paths.
+
+4) [`src/common/getEmoji.ts`](src/common/getEmoji.ts:1)
+- Validate emoji existence and add fallback behavior to avoid sending undefined characters.
+- Support platform-specific substitutions (Slack vs Discord) with a compatibility map.
+- Add tests to ensure consistent emoji output across supported platforms.
+
+5) [`src/common/getRandomDelay.ts`](src/common/getRandomDelay.ts:1)
+- Switch to jitter strategies (full, equal, decorrelated) selectable via param for backoff scenarios.
+- Clamp min/max and validate inputs; add monotonicity tests for backoff sequences.
+- Provide deterministic mode for tests via injected RNG.
+
+6) [`src/common/logger.ts`](src/common/logger.ts:1)
+- Implement adapter pattern supporting debug, console, and optional JSON-structured logging.
+- Add child logger with context (requestId, channelId); ensure redaction is applied centrally.
+- Include lightweight benchmark to measure overhead with/without JSON mode.
+
+7) [`src/common/redactSensitiveInfo.ts`](src/common/redactSensitiveInfo.ts:1)
+- Expand redaction patterns (API keys, bearer tokens, emails, webhook secrets) and add unit tests.
+- Provide partial redaction strategy (last 4 chars visible) to aid debugging without leaking secrets.
+- Add safe stringifier that truncates long arrays/objects and redacts recursively.
+
+8) [`src/config/BotConfigurationManager.ts`](src/config/BotConfigurationManager.ts:1)
+- Document precedence rules (env > file > defaults) and add validation errors with actionable hints.
+- Add schema versioning and migration hooks for future config evolutions.
+- Expose a dry-run validation CLI entry to validate config files in CI pre-merge.
+
+9) [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1)
+- Add caching with invalidation on environment changes (for tests) to avoid stale reads.
+- Emit debug logs on source of each value (env vs config file) for traceability.
+- Provide typed getters with defaults and narrow types to reduce runtime casts.
+
+10) [`src/config/debugEnvVars.ts`](src/config/debugEnvVars.ts:1)
+- Centralize DEBUG namespace documentation and export a helper to enable groups by feature.
+- Add sanity checks to warn on too-broad DEBUG enabling in production builds.
+- Unit test matrix to ensure expected namespaces are included/excluded based on flags.
