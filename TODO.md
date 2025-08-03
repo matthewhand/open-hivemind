@@ -227,3 +227,55 @@ Plan:
 - Centralize DEBUG namespace documentation and export a helper to enable groups by feature.
 - Add sanity checks to warn on too-broad DEBUG enabling in production builds.
 - Unit test matrix to ensure expected namespaces are included/excluded based on flags.
+
+### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation)
+
+A) [`src/commands/slash/config.js`](src/commands/slash/config.js:1)
+- Convert CommonJS to TypeScript/ESM for consistency; export types for command shape.
+- Add argument validation and error handling; return structured result object instead of string.
+- Unit test: verify execute() behavior and edge cases (no args, invalid args).
+
+B) [`src/common/errors/errorMessages.ts`](src/common/errors/errorMessages.ts:1)
+- Enforce strict key typing via a union of error codes and Record mapping; add a build-time completeness check.
+- Provide developer vs user-facing message variants; ensure no secrets leak in user messages.
+- Tests to assert every key has both variants and placeholders are validated.
+
+C) [`src/common/errors/getRandomErrorMessage.ts`](src/common/errors/getRandomErrorMessage.ts:1)
+- Inject RNG for determinism; add sliding-window repeat-avoidance logic with configurable window size.
+- Handle empty/undefined pools safely and return a sensible default.
+- Property tests (e.g., fast-check) for distribution sanity if feasible.
+
+D) [`src/common/errors/handleError.ts`](src/common/errors/handleError.ts:1)
+- Introduce an ErrorInfo interface; map known error types to telemetry fields.
+- Apply redactSensitiveInfo to both message and metadata; ensure large objects are truncated.
+- Add path that surfaces a correlationId/requestId when available.
+
+E) [`src/common/getEmoji.ts`](src/common/getEmoji.ts:1)
+- Ensure deterministic seeding in tests and allow filtering by category/platform.
+- Provide fallback emoji when list is empty; add bounds checks.
+- Add table-driven tests to validate outputs across categories/platforms.
+
+F) [`src/common/getRandomDelay.ts`](src/common/getRandomDelay.ts:1)
+- Add decorators for equal-jitter and decorrelated jitter; export typed strategy enum.
+- Validate params (non-negative, min <= max); expose clamp helper.
+- Unit tests for monotonicity under backoff sequences and boundary conditions.
+
+G) [`src/common/logger.ts`](src/common/logger.ts:1)
+- Provide a pluggable transport interface (console, debug, JSON); add redaction middleware.
+- Implement child logger with inherited context; pass through to transports.
+- Micro-benchmark (jest) to approximate overhead; assert under threshold in CI.
+
+H) [`src/common/redactSensitiveInfo.ts`](src/common/redactSensitiveInfo.ts:1)
+- Expand regex set (Bearer, API keys, emails, IPs); support partial redaction tails.
+- Add safeStringify with depth/length limits and circular reference handling.
+- Tests for nested structures and mixed content redaction.
+
+I) [`src/config/BotConfigurationManager.ts`](src/config/BotConfigurationManager.ts:1)
+- Emit structured validation errors listing missing/invalid fields with remediation hints.
+- Add schema version detection and migration hooks stub; tests for version mismatch.
+- CLI entry: uv run node scripts/config-validate.ts to validate configs in CI.
+
+J) [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1)
+- Add per-key source-trace logging (env vs file vs default) under debug flag.
+- Introduce typed accessors with default values; deprecate untyped getters.
+- Cache invalidation mechanism for tests (reset method); unit tests covering cache behavior.
