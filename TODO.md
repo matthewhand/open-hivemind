@@ -332,6 +332,58 @@ Plan:
 - Validate signing secret and app-level token presence; clear error messages with remediation.
 - Tests for env vs file precedence and invalid configurations.
 
+### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation 4)
+
+1) [`src/config/webhookConfig.README.md`](src/config/webhookConfig.README.md:1)
+- Document webhook token verification, IP whitelist flow, and failure responses with examples.
+- Provide guidance for rotating webhook secrets and staging vs production settings.
+- Add troubleshooting tips for common proxy/load balancer header issues.
+
+2) [`src/config/webhookConfig.ts`](src/config/webhookConfig.ts:1)
+- Enforce schema for token/whitelist entries; validate CIDR formats and normalize IPs.
+- Add debug logs that redact tokens; include warnings for excessively broad whitelists.
+- Unit tests covering invalid CIDR, empty tokens, and precedence (env vs file).
+
+3) [`src/global.d.ts`](src/global.d.ts:1)
+- Audit and narrow global type augmentations; avoid leaking any-typed globals.
+- Add comments to justify each augmentation and link to usage sites.
+- Introduce a lint rule to prevent adding new globals without justification.
+
+4) [`src/index.ts`](src/index.ts:1)
+- Add top-level bootstrap with structured shutdown (signals) and error boundaries.
+- Initialize debug namespaces from [`src/config/debugEnvVars.ts`](src/config/debugEnvVars.ts:1) early.
+- Smoke test path: minimal startup with config validation dry-run and graceful exit.
+
+5) [`src/integrations/config/BashHandler.ts`](src/integrations/config/BashHandler.ts:1)
+- Validate command templates and escape user inputs; document security considerations.
+- Add timeout/kill switch for long-running scripts; capture stdout/stderr separately.
+- Tests for exit codes, timeouts, and redaction of sensitive content in logs.
+
+6) [`src/integrations/config/PythonHandler.ts`](src/integrations/config/PythonHandler.ts:1)
+- Support virtualenv/uv execution paths and configurable interpreter discovery.
+- Validate script path and args; add timeout and error classification (syntax vs runtime).
+- Tests simulating success, timeout, and syntax errors with redaction in logs.
+
+7) [`src/integrations/discord/DiscordMessage.ts`](src/integrations/discord/DiscordMessage.ts:1)
+- Add unit tests for getGuildOrWorkspaceId() across DM vs guild messages.
+- Validate mention parsing for Collections, arrays, and plain objects with edge shapes.
+- Ensure debug logs remain silent under test unless DEBUG namespace is enabled.
+
+8) [`src/integrations/discord/DiscordService.ts`](src/integrations/discord/DiscordService.ts:1)
+- Add ChannelRouter integration behind a feature flag; compute scores for candidate channels.
+- Implement rate-limit aware retries and circuit breaker around send/fetch paths.
+- Structured error messages including guild/channel context and permission diagnostics.
+
+9) [`src/integrations/discord/commands/collectSlashCommands.ts`](src/integrations/discord/commands/collectSlashCommands.ts:1)
+- Validate command metadata (name, description, permissions) and dedupe collisions.
+- Output a manifest for debugging; add dry-run mode to inspect registration payloads.
+- Tests for invalid/missing fields and conflict resolution behavior.
+
+10) [`src/integrations/discord/commands/registerSlashCommands.ts`](src/integrations/discord/commands/registerSlashCommands.ts:1)
+- Add exponential backoff for registration; handle partial failures with retry lists.
+- Provide per-guild scoping and summaries; redact tokens in logs.
+- Integration test with mocked Discord REST API verifying payload correctness and retries.
+
 ### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation)
 
 A) [`src/commands/slash/config.js`](src/commands/slash/config.js:1)
