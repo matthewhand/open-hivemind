@@ -35,47 +35,59 @@ Namespaces in use:
 Global Jest console suppression (tests):
 - A global Jest setup suppresses console logs by default for cleaner test output. You can override with `ALLOW_CONSOLE=1` to see console output while testing.
 
-## ChannelRouter feature flag and semantics
+## ChannelRouter quick snippet (enable flag and verify delegation)
 
-Routing is controlled by a feature flag and configuration inputs.
+Environment (choose CSV or JSON)
 
-Feature flag:
-- `MESSAGE_CHANNEL_ROUTER_ENABLED` (boolean)
-  - When false: providers behave as before; `scoreChannel` returns 0 and no prioritization is applied.
-  - When true: providers can compute per-channel scores and `ChannelRouter` may be used to pick a channel.
+CSV
+```
+MESSAGE_CHANNEL_ROUTER_ENABLED=true
+CHANNEL_BONUSES="X:2,Y:1"
+CHANNEL_PRIORITIES="X:0,Y:1"
+```
 
-Provider parity (IMessengerService):
-- Optional properties/methods:
-  - `supportsChannelPrioritization?: boolean`
-  - `scoreChannel?(channelId: string, metadata?: Record<string, any>): number`
-- Implementations (Slack, Discord, Mattermost):
-  - `supportsChannelPrioritization = true`
-  - `scoreChannel()`:
-    - Returns 0 if `MESSAGE_CHANNEL_ROUTER_ENABLED` is falsy.
-    - Otherwise delegates to `ChannelRouter.computeScore(channelId, metadata)`.
+JSON
+```
+MESSAGE_CHANNEL_ROUTER_ENABLED=true
+CHANNEL_BONUSES='{"X":2,"Y":1}'
+CHANNEL_PRIORITIES='{"X":0,"Y":1}'
+```
 
-Router configuration:
-- `CHANNEL_BONUSES` and `CHANNEL_PRIORITIES` can be provided as CSV or JSON via messageConfig.
-  - CSV format (bonuses): `channelA:1.5,channelB:2` (allowed: 1.0–2.0)
-  - CSV format (priorities): `channelA:1,channelB:2` (non-negative integers)
-  - JSON format example:
-    ```
-    {
-      "bonuses": { "channelA": 1.5, "channelB": 2.0 },
-      "priorities": { "channelA": 1, "channelB": 3 }
-    }
-    ```
-- `ChannelRouter.computeScore(channelId, metadata?)` formula:
-  - Base default is 1.0.
-  - Score = base * bonus / (1 + priority)
-- `ChannelRouter.pickBestChannel(candidates, metadata?)`:
-  - Picks channel with highest score; tie-breakers: higher bonus, then lexicographic channel id.
+Minimal Jest check for gating
+```ts
+// tests/integrations/channelRouting/scoreChannel.gating.quick.test.ts
+import * as ChannelRouter from '@message/routing/ChannelRouter';
+import * as messageConfig from '@message/interfaces/messageConfig';
 
-Testing and characterization:
-- Unit tests validate parser robustness and scorer behavior (including tie-breakers and invalid values).
-- Characterization tests verify the gating behavior across providers:
-  - Flag off → `scoreChannel` returns 0 without calling `computeScore`.
-  - Flag on → delegates to `computeScore`.
+describe('scoreChannel gating (quick)', () => {
+  const spy = jest.spyOn(ChannelRouter, 'computeScore').mockReturnValue(42);
+
+  afterEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+  });
+
+  it('flag disabled: returns 0 and does not call computeScore', async () => {
+    jest.spyOn(messageConfig, 'MESSAGE_CHANNEL_ROUTER_ENABLED', 'get').mockReturnValue(false);
+    const { default: DiscordService } = await import('@integrations/discord/DiscordService');
+    const svc = new DiscordService({} as any);
+    const score = svc.scoreChannel?.('channelA');
+    expect(score).toBe(0);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('flag enabled: delegates to ChannelRouter.computeScore', async () => {
+    jest.spyOn(messageConfig, 'MESSAGE_CHANNEL_ROUTER_ENABLED', 'get').mockReturnValue(true);
+    const { default: DiscordService } = await import('@integrations/discord/DiscordService');
+    const svc = new DiscordService({} as any);
+    const score = svc.scoreChannel?.('channelA');
+    expect(score).toBe(42);
+    expect(spy).toHaveBeenCalledWith('channelA', expect.any(Object));
+  });
+});
+```
+
+Reference docs: see docs/channel-routing.md for full configuration, formula, and troubleshooting.
 
 ## DiscordService initialization hardening
 
