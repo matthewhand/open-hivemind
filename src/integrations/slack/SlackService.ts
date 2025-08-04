@@ -19,8 +19,9 @@ import * as path from 'path';
 
 const debug = Debug('app:SlackService:verbose');
 
-// Message IO module extraction
+// Module extractions
 import { SlackMessageIO, ISlackMessageIO } from './modules/ISlackMessageIO';
+import { SlackEventBus, ISlackEventBus } from './modules/ISlackEventBus';
 
 /**
  * SlackService implementation supporting multi-instance configuration
@@ -40,6 +41,7 @@ export class SlackService implements IMessengerService {
   private joinTs: Map<string, number> = new Map();
   private botConfigs: Map<string, any> = new Map();
   private messageIO: ISlackMessageIO;
+  private eventBus: ISlackEventBus;
 
   private constructor() {
     debug('Entering SlackService constructor');
@@ -51,6 +53,9 @@ export class SlackService implements IMessengerService {
       () => Array.from(this.botManagers.keys())[0],
       this.lastSentEventTs
     );
+
+    // Event bus for route registration and handlers
+    this.eventBus = new SlackEventBus();
   }
 
   /**
@@ -193,76 +198,35 @@ export class SlackService implements IMessengerService {
     
     for (const [botName, botManager] of this.botManagers) {
       debug(`Registering routes for bot: ${botName}`);
-      
-      const basePath = `/slack/${botName}`;
-      
-      this.app.post(`${basePath}/action-endpoint`,
-        express.urlencoded({ extended: true }),
-        (req, res, next) => {
-          try {
-            const signatureVerifier = this.signatureVerifiers.get(botName);
-            if (!signatureVerifier) {
-              res.status(500).send('Bot configuration error');
-              return;
-            }
-            signatureVerifier.verify(req, res, next);
-          } catch (error) {
-            debug(`Signature verification failed for ${botName}: ${error}`);
-            res.status(400).send('Invalid request signature');
-          }
-        },
-        (req, res) => {
-          const eventProcessor = this.eventProcessors.get(botName);
-          if (eventProcessor) {
-            eventProcessor.handleActionRequest(req, res);
-          } else {
-            res.status(500).send('Bot not found');
-          }
-        }
+
+      // Use event bus to register routes/handlers
+      const signatureVerifier = this.signatureVerifiers.get(botName)!;
+      const eventProcessor = this.eventProcessors.get(botName)!;
+      const interactiveHandler = this.interactiveHandlers.get(botName)!;
+
+      // Keep original urlencoded middleware where needed
+      this.app.post(
+        `/slack/${botName}/action-endpoint`,
+        express.urlencoded({ extended: true })
+      );
+      this.app.post(
+        `/slack/${botName}/interactive-endpoint`,
+        express.urlencoded({ extended: true })
       );
 
-      this.app.post(`${basePath}/interactive-endpoint`,
-        express.urlencoded({ extended: true }),
-        (req, res, next) => {
-          try {
-            const signatureVerifier = this.signatureVerifiers.get(botName);
-            if (!signatureVerifier) {
-              res.status(500).send('Bot configuration error');
-              return;
-            }
-            signatureVerifier.verify(req, res, next);
-          } catch (error) {
-            debug(`Signature verification failed for ${botName}: ${error}`);
-            res.status(400).send('Invalid request signature');
-          }
-        },
-        (req, res) => {
-          const interactiveHandler = this.interactiveHandlers.get(botName);
-          if (interactiveHandler) {
-            interactiveHandler.handleRequest(req, res);
-          } else {
-            res.status(500).send('Bot not found');
-          }
-        }
-      );
-
-      this.app.post(`${basePath}/help`,
-        express.urlencoded({ extended: true }),
-        (req, res) => {
-          const eventProcessor = this.eventProcessors.get(botName);
-          if (eventProcessor) {
-            eventProcessor.handleHelpRequest(req, res);
-          } else {
-            res.status(500).send('Bot not found');
-          }
-        }
+      this.eventBus.registerBotRoutes(
+        this.app,
+        botName,
+        signatureVerifier,
+        eventProcessor,
+        interactiveHandler
       );
 
       try {
         await botManager.initialize();
         this.joinTs.set(botName, Date.now() / 1000);
         debug(`Bot manager ${botName} initialized successfully, joinTs: ${this.joinTs.get(botName)}`);
-        
+
         const bots = botManager.getAllBots();
         for (const botInfo of bots) {
           debug(`Joining channels for bot: ${botInfo.botUserName || botInfo.botToken.substring(0, 8)}`);
@@ -271,10 +235,10 @@ export class SlackService implements IMessengerService {
             await welcomeHandler.joinConfiguredChannelsForBot(botInfo);
           }
         }
-        
-        const eventProcessor = this.eventProcessors.get(botName);
-        if (eventProcessor) {
-          await eventProcessor.debugEventPermissions();
+
+        const processor = this.eventProcessors.get(botName);
+        if (processor) {
+          await processor.debugEventPermissions();
         }
       } catch (error) {
         debug(`Initialization failed for ${botName}: ${error}`);
