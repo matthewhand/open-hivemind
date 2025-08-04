@@ -435,3 +435,55 @@ J) [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1)
 - Add per-key source-trace logging (env vs file vs default) under debug flag.
 - Introduce typed accessors with default values; deprecate untyped getters.
 - Cache invalidation mechanism for tests (reset method); unit tests covering cache behavior.
+
+## Batch 2 — Continuation 5
+
+1) src/integrations/discord/DiscordService.ts
+- Add integration tests for MESSAGE_CHANNEL_ROUTER_ENABLED=true to verify pickBestChannel() is invoked and selected channel changes
+- Implement graceful handling and debug logs for missing default channel in config, with explicit test cases
+- Add perf benchmarks for bulk sendMessageToChannel calls under routing enabled and disabled
+
+2) src/message/routing/ChannelRouter.ts
+- Expose an option to ignore unknown channels instead of treating them as zero-score; add tests
+- Add memoization for parse-heavy bonus/priority maps to reduce overhead in hot paths
+- Provide a dry-run API returning ranked list with reasons to improve observability
+
+3) src/integrations/slack/SlackEventProcessor.ts
+- Consolidate body parsing logic and add schema validation for payload variants
+- Expand unit tests for edge cases: malformed payload JSON, missing action_id, unknown event type
+- Add debug namespace docs and align error messages with common patterns
+
+4) src/message/helpers/processing/stripBotId.ts
+- Add locale/regional tests and Unicode safety for mentions and punctuation
+- Introduce fast-path early return for empty and botId-absent strings with micro-benchmarks
+- Document regex rationale and potential future tokenizer approach
+
+5) src/config/messageConfig.ts
+- Add per-provider routing flags (DISCORD_MESSAGE_CHANNEL_ROUTER_ENABLED, SLACK_MESSAGE_CHANNEL_ROUTER_ENABLED)
+- Validate CHANNEL_BONUSES and CHANNEL_PRIORITIES against provider-known channelId patterns
+- Add config example snippets to README and tests for precedence env > json
+
+6) src/integrations/slack/providers/SlackMessageProvider.ts
+- Implement optional supportsChannelPrioritization + scoreChannel hooks mirroring Discord pathway
+- Add unit tests verifying delegation to SlackService methods
+- Add debug logs for routing decisions with consistent namespace
+
+7) src/message/management/getMessengerProvider.ts
+- Add tracing for provider selection decision tree with structured debug payload
+- Support wildcard MESSAGE_PROVIDER=all resolving to all available providers reliably
+- Add tests for mixed-case and whitespace-separated provider lists
+
+8) src/common/getRandomDelay.ts
+- Parameterize distributions (uniform, triangular) and add tests
+- Add bounds assertions with helpful messages for invalid inputs in non-prod
+- Provide a deterministic seed option for reproducible tests
+
+9) tests/system/system.test.ts
+- Reduce flakiness with deterministic fixtures and explicit timers
+- Split into targeted suites per integration to improve isolation and runtime
+- Add coverage around negative paths and error propagation
+
+10) Makefile
+- Add make coverage-html target to open ./coverage/lcov-report
+- Provide make test-fast target that filters to changed tests via --findRelatedTests
+- Add CI guard target verifying env consistency (ALLOW_CONSOLE, routing flags, provider selection)
