@@ -12,6 +12,9 @@ import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
 import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 
+// Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
+const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
+
 const log = Debug('app:discordService');
 
 interface Bot {
@@ -63,11 +66,12 @@ export const Discord = {
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
 
+    // Use SafeGatewayIntentBits fallbacks to avoid crashes if discord.js intents are unavailable
     private static readonly intents = [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildVoiceStates,
+      SafeGatewayIntentBits.Guilds ?? (1 << 0),
+      SafeGatewayIntentBits.GuildMessages ?? (1 << 9),
+      SafeGatewayIntentBits.MessageContent ?? (1 << 15),
+      SafeGatewayIntentBits.GuildVoiceStates ?? (1 << 7),
     ];
 
     /**
