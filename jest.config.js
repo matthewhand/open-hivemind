@@ -2,6 +2,14 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: "coverage",
   coverageReporters: ["html", "text", "lcov"],
+  coverageThreshold: {
+    global: {
+      branches: 62,
+      functions: 69,
+      lines: 73,
+      statements: 72,
+    },
+  },
 
   roots: ['<rootDir>/tests'],
   preset: 'ts-jest',
