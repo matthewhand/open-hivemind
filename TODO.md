@@ -487,3 +487,22 @@ J) [`src/config/ConfigurationManager.ts`](src/config/ConfigurationManager.ts:1)
 - Add make coverage-html target to open ./coverage/lcov-report
 - Provide make test-fast target that filters to changed tests via --findRelatedTests
 - Add CI guard target verifying env consistency (ALLOW_CONSOLE, routing flags, provider selection)
+
+## Batch 2 — Continuation 6 (Largest file modularization)
+
+Target: src/integrations/slack/SlackService.ts (602 lines)
+- Modularize SlackService by extracting responsibilities into cohesive modules:
+  - SlackBotManager (per-bot lifecycle, client wrapper)
+  - SlackMessageIO (send/fetch message I/O and pagination)
+  - SlackEventBus (event wiring, listeners, and handlers registration)
+  - SlackRoutingAdapter (optional channel routing hooks: supportsChannelPrioritization, scoreChannel)
+- Introduce interfaces and dependency injection to decouple SlackService from config and providers:
+  - ISlackBotManager, ISlackMessageIO, ISlackEventBus
+  - Accept dependencies via constructor to enable unit testing without global singletons
+- Add characterization tests before refactor:
+  - Snapshot the public API: getInstance(), getDefaultChannel(), sendMessageToChannel(), fetchMessages(), getClientId()
+  - Behavior under MESSAGE_PROVIDER filtering and routing flag off/on
+- Establish migration plan:
+  - Create new modules under src/integrations/slack/modules/
+  - Move code incrementally while preserving public API; export a thin SlackService façade that delegates to modules
+  - Add debug namespaces per module: app:SlackBotManager, app:SlackMessageIO, app:SlackEventBus, app:SlackRoutingAdapter
