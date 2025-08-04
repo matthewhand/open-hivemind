@@ -280,6 +280,58 @@ Plan:
 - Validate default model by provider; warn on unknown models with suggestion list.
 - Tests for capability-driven routing and failure modes.
 
+### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation 3)
+
+1) [`src/config/mattermostConfig.README.md`](src/config/mattermostConfig.README.md:1)
+- Add full example config with comments on tokens, team/channel IDs, and rate limits.
+- Clarify error handling and retry/backoff strategies; reference central logging/redaction.
+- Document migration path to shared message-level routing (ChannelRouter).
+
+2) [`src/config/mattermostConfig.ts`](src/config/mattermostConfig.ts:1)
+- Add convict coercers for URL/timeouts; validate token presence with redaction in debug.
+- Emit debug of effective config (redacted); ensure env > file > default precedence.
+- Unit tests for invalid/missing fields and edge-case coercions.
+
+3) [`src/config/messageConfig.README.md`](src/config/messageConfig.README.md:1)
+- Document CHANNEL_BONUSES and CHANNEL_PRIORITIES formats (CSV and JSON) with examples.
+- Explain scoring formula and tie-breakers implemented in [`src/message/routing/ChannelRouter.ts`](src/message/routing/ChannelRouter.ts:1).
+- Provide migration notes from legacy provider-specific bonuses.
+
+4) [`src/config/messageConfig.ts`](src/config/messageConfig.ts:1)
+- Add alias keys and per-workspace overrides; validate ranges with precise errors.
+- Expand debug logging to include parsed maps and ignored invalid entries.
+- Tests for CSV vs JSON precedence and malformed input recovery.
+
+5) [`src/config/openWebUIConfig.README.md`](src/config/openWebUIConfig.README.md:1)
+- Add authentication modes and security notes for credentials handling.
+- Provide examples for knowledge file uploads and session reuse strategy.
+- Troubleshooting for connectivity/timeouts.
+
+6) [`src/config/openWebUIConfig.ts`](src/config/openWebUIConfig.ts:1)
+- Validate URL formats; add retry/backoff and timeout fields with defaults.
+- Redact credentials in debug; add schema for knowledge file path existence (optional).
+- Tests for invalid URLs, missing credentials, and debug redaction.
+
+7) [`src/config/openaiConfig.README.md`](src/config/openaiConfig.README.md:1)
+- Document supported models and capability differences; guidance on token limits.
+- Explain streaming vs non-streaming configuration flags and caveats.
+- Add security note for API key storage and rotation.
+
+8) [`src/config/openaiConfig.ts`](src/config/openaiConfig.ts:1)
+- Add rate-limit settings and backoff strategy selection; validate API key format (redacted in logs).
+- Provide model validation with suggestions when unknown; add deprecation notices for old fields.
+- Unit tests for env precedence, missing keys, and invalid combinations.
+
+9) [`src/config/rateLimiter.ts`](src/config/rateLimiter.ts:1)
+- Introduce token-bucket/leaky-bucket strategies; expose interface and pluggable storage.
+- Add per-provider scopes and burst controls; export helpers for tests to simulate schedules.
+- Unit/integration tests for fairness and saturation behavior.
+
+10) [`src/config/slackConfig.ts`](src/config/slackConfig.ts:1)
+- Add stricter schema with channel/user ID formats; redact secrets in debug.
+- Validate signing secret and app-level token presence; clear error messages with remediation.
+- Tests for env vs file precedence and invalid configurations.
+
 ### Targeted TODOs From 10-File Code Review (Batch 2 — Continuation)
 
 A) [`src/commands/slash/config.js`](src/commands/slash/config.js:1)
