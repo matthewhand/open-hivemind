@@ -10,7 +10,7 @@ import * as path from 'path';
 // Optional channel routing feature flag and router
 import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
-import { pickBestChannel } from '@message/routing/ChannelRouter';
+import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 
 const log = Debug('app:discordService');
 
@@ -59,6 +59,9 @@ export const Discord = {
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
+
+    // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
+    public supportsChannelPrioritization: boolean = true;
 
     private static readonly intents = [
       GatewayIntentBits.Guilds,
@@ -360,6 +363,22 @@ export const Discord = {
         log(`Bot ${bot.botUserName} shut down`);
       }
       Discord.DiscordService.instance = undefined as any;
+    }
+
+    /**
+     * Channel scoring hook for router parity.
+     * Returns 0 when MESSAGE_CHANNEL_ROUTER_ENABLED is disabled.
+     * Delegates to ChannelRouter.computeScore when enabled.
+     */
+    public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
+      try {
+        const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
+        if (!enabled) return 0;
+        return channelComputeScore(channelId, metadata);
+      } catch (e) {
+        log(`scoreChannel error; returning 0: ${e instanceof Error ? e.message : String(e)}`);
+        return 0;
+      }
     }
 
     public getBotByName(name: string): Bot | undefined {
