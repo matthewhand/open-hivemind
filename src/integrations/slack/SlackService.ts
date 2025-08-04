@@ -17,6 +17,10 @@ import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Routing
+import messageConfig from '@config/messageConfig';
+import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+
 const debug = Debug('app:SlackService:verbose');
 
 // Module extractions
@@ -44,6 +48,9 @@ export class SlackService implements IMessengerService {
   private messageIO: ISlackMessageIO;
   private eventBus: ISlackEventBus;
   private botFacade: ISlackBotFacade;
+
+  // Channel prioritization support is available; actual scoring is feature-flagged
+  public supportsChannelPrioritization: boolean = true;
 
   private constructor() {
     debug('Entering SlackService constructor');
@@ -470,6 +477,24 @@ export class SlackService implements IMessengerService {
     debug('Entering shutdown');
     SlackService.instance = undefined;
     debug('SlackService instance cleared');
+  }
+
+  /**
+   * Channel routing/scoring parity with Discord.
+   * When MESSAGE_CHANNEL_ROUTER_ENABLED is true, delegate to ChannelRouter.computeScore.
+   * Otherwise return neutral 0 to effectively disable prioritization impact.
+   */
+  public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
+    try {
+      const enabled = !!messageConfig.get('MESSAGE_CHANNEL_ROUTER_ENABLED');
+      if (!enabled) {
+        return 0;
+      }
+      return channelComputeScore(channelId, metadata);
+    } catch (e) {
+      debug('scoreChannel error, returning 0', e);
+      return 0;
+    }
   }
 
   public getBotManager(botName?: string): SlackBotManager | undefined {
