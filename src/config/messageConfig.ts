@@ -222,6 +222,12 @@ const messageConfig = convict({
   },
 
   // New: channel routing
+  MESSAGE_CHANNEL_ROUTER_ENABLED: {
+    doc: 'Enable ChannelRouter-based outbound channel selection',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
+  },
   CHANNEL_BONUSES: {
     doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
     format: 'channel-bonuses',

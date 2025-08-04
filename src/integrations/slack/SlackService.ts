@@ -22,6 +22,7 @@ const debug = Debug('app:SlackService:verbose');
 // Module extractions
 import { SlackMessageIO, ISlackMessageIO } from './modules/ISlackMessageIO';
 import { SlackEventBus, ISlackEventBus } from './modules/ISlackEventBus';
+import { SlackBotFacade, ISlackBotFacade } from './modules/ISlackBotFacade';
 
 /**
  * SlackService implementation supporting multi-instance configuration
@@ -42,6 +43,7 @@ export class SlackService implements IMessengerService {
   private botConfigs: Map<string, any> = new Map();
   private messageIO: ISlackMessageIO;
   private eventBus: ISlackEventBus;
+  private botFacade: ISlackBotFacade;
 
   private constructor() {
     debug('Entering SlackService constructor');
@@ -56,6 +58,9 @@ export class SlackService implements IMessengerService {
 
     // Event bus for route registration and handlers
     this.eventBus = new SlackEventBus();
+
+    // Bot lifecycle facade
+    this.botFacade = new SlackBotFacade();
   }
 
   /**
@@ -223,18 +228,14 @@ export class SlackService implements IMessengerService {
       );
 
       try {
-        await botManager.initialize();
+        // Initialize bot via facade
+        await this.botFacade.initialize(botName, botManager);
         this.joinTs.set(botName, Date.now() / 1000);
         debug(`Bot manager ${botName} initialized successfully, joinTs: ${this.joinTs.get(botName)}`);
 
-        const bots = botManager.getAllBots();
-        for (const botInfo of bots) {
-          debug(`Joining channels for bot: ${botInfo.botUserName || botInfo.botToken.substring(0, 8)}`);
-          const welcomeHandler = this.welcomeHandlers.get(botName);
-          if (welcomeHandler) {
-            await welcomeHandler.joinConfiguredChannelsForBot(botInfo);
-          }
-        }
+        // Join configured channels via facade
+        const welcomeHandler = this.welcomeHandlers.get(botName);
+        await this.botFacade.joinConfiguredChannels(botName, botManager, welcomeHandler);
 
         const processor = this.eventProcessors.get(botName);
         if (processor) {

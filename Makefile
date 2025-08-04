@@ -1,5 +1,7 @@
 # Makefile for running tests with uv and Jest
 # Targets:
+#   make            - default help target
+#   make help       - show available targets and variables
 #   make test       - quiet run with coverage summary
 #   make test-watch - watch mode (non-quiet) for local dev
 #   make test-ci    - CI-friendly: quiet with coverage and JUnit (if configured)
@@ -10,10 +12,11 @@ SHELL := /bin/bash
 UV := $(shell command -v uv 2>/dev/null)
 ifeq ($(UV),)
 RUN := npm
-RUN_TEST := npm test
+RUN_TEST := npm test -- --config ./jest.config.js
 else
 RUN := uv run -q
-RUN_TEST := uv run -q npm test --silent
+# Always pass explicit Jest config to avoid conflicts with package.json "jest" key
+RUN_TEST := uv run -q npm test --silent -- --config ./jest.config.js
 endif
 
 # Common Jest args
@@ -24,16 +27,40 @@ WATCH_ARGS := --watch
 # make test ARGS="--testPathPattern=ChannelRouter"
 ARGS ?=
 
-.PHONY: test test-watch test-ci
+.DEFAULT_GOAL := help
+.PHONY: help test test-watch test-ci
+
+help:
+	@echo ""
+	@echo "Open Hivemind - Make targets"
+	@echo "============================"
+	@echo "Usage:"
+	@echo "  make [target] [ARGS='...'] [ALLOW_CONSOLE=1]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  help           Show this help"
+	@echo "  test           Run Jest quietly with coverage summary"
+	@echo "  test-watch     Run Jest in watch mode (developer friendly)"
+	@echo "  test-ci        Run Jest quietly with coverage (CI friendly)"
+	@echo ""
+	@echo "Common variables:"
+	@echo "  ARGS           Extra arguments passed through to Jest (default: empty)"
+	@echo "                 e.g. ARGS='--testPathPattern=ChannelRouter --runInBand'"
+	@echo "  ALLOW_CONSOLE  When set to 1, enables console output during tests"
+	@echo "                 e.g. ALLOW_CONSOLE=1 make test"
+	@echo ""
+	@echo "Runner:"
+	@echo "  Using: $(RUN_TEST)"
+	@echo ""
 
 test:
 	@echo "Running tests (quiet) with coverage via: $(RUN_TEST)"
-	@$(RUN_TEST) -- $(COVERAGE_ARGS) $(ARGS)
+	@$(RUN_TEST) $(COVERAGE_ARGS) $(ARGS)
 
 test-watch:
 	@echo "Running tests in watch mode via: $(RUN_TEST)"
-	@$(RUN_TEST) -- $(WATCH_ARGS) $(ARGS)
+	@$(RUN_TEST) $(WATCH_ARGS) $(ARGS)
 
 test-ci:
 	@echo "Running CI tests (quiet) with coverage via: $(RUN_TEST)"
-	@$(RUN_TEST) -- $(COVERAGE_ARGS) $(ARGS)
+	@$(RUN_TEST) $(COVERAGE_ARGS) $(ARGS)

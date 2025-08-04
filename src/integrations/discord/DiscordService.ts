@@ -7,6 +7,10 @@ import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
+// Optional channel routing feature flag and router
+import messageConfig from '@config/messageConfig';
+// ChannelRouter exports functions, not a class
+import { pickBestChannel } from '@message/routing/ChannelRouter';
 
 const log = Debug('app:discordService');
 
@@ -255,11 +259,39 @@ export const Discord = {
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
+
+      // Feature-flagged channel routing: select best channel among candidates
+      let selectedChannelId = channelId;
       try {
-        log(`Sending to channel ${channelId} as ${senderName}`);
-        const channel = await botInfo.client.channels.fetch(channelId);
+        // Use string key to avoid TypeScript Path typing issues; messageConfig supports runtime keys
+        const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
+        if (enabled) {
+          const defaultChannel = this.getDefaultChannel();
+          const candidates = Array.from(new Set([channelId, defaultChannel].filter(Boolean))) as string[];
+          if (candidates.length > 0) {
+            const picked = pickBestChannel(candidates, {
+              provider: 'discord',
+              botName: botInfo.botUserName,
+            });
+            if (picked) {
+              selectedChannelId = picked;
+              log(`ChannelRouter enabled: candidates=${JSON.stringify(candidates)} selected=${selectedChannelId}`);
+            } else {
+              log(`ChannelRouter returned null; falling back to provided channelId=${channelId}`);
+            }
+          }
+        }
+      } catch (err: any) {
+        // Fail open to original behavior on any config/routing issues
+        log(`ChannelRouter disabled due to error or misconfig: ${err?.message ?? err}`);
+        selectedChannelId = channelId;
+      }
+
+      try {
+        log(`Sending to channel ${selectedChannelId} as ${senderName}`);
+        const channel = await botInfo.client.channels.fetch(selectedChannelId);
         if (!channel || !channel.isTextBased()) {
-          throw new Error(`Channel ${channelId} is not text-based or was not found`);
+          throw new Error(`Channel ${selectedChannelId} is not text-based or was not found`);
         }
 
         let message;
@@ -270,14 +302,14 @@ export const Discord = {
           }
           message = await thread.send(text);
         } else {
-          log(`Attempting send to channel ${channelId}: *${senderName}*: ${text}`);
+          log(`Attempting send to channel ${selectedChannelId}: *${senderName}*: ${text}`);
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
         }
 
-        log(`Sent message ${message.id} to channel ${channelId}${threadId ? `/${threadId}` : ''}`);
+        log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
         return message.id;
       } catch (error: any) {
-        log(`Error sending to ${channelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
+        log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
         return '';
       }
     }

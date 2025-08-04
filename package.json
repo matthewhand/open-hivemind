@@ -117,5 +117,18 @@
     "ts-unused-exports": "^10.1.0",
     "typescript": "^5.6.2",
     "wrangler": "^3.23.0"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/jest.setup.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 65,
+        "functions": 72,
+        "lines": 75,
+        "statements": 75
+      }
+    }
   }
 }
