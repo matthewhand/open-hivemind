@@ -78,6 +78,20 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 - **Proactive Diagnostics:** Every integration point is tested rigorously, from message fetch limits to dynamic response crafting, ensuring reliable performance under diverse conditions.
 - **Continuous Integration Ready:** Designed for seamless deployment in Node.js v18+, Open-Hivemind requires minimal setup and scales effortlessly, whether you deploy a single bot or a multi-agent system.
 
+## Channel Routing
+
+Channel prioritization and selection is supported via a feature-flagged ChannelRouter that can score channels and pick the best candidate based on configuration.
+
+- Feature flag: set MESSAGE_CHANNEL_ROUTER_ENABLED=true to enable routing/scoring behavior. When disabled (default), services return 0 for scoreChannel() and preserve legacy behavior.
+- Configuration inputs:
+  - CHANNEL_BONUSES: per-channel bonus multipliers (CSV or JSON)
+  - CHANNEL_PRIORITIES: per-channel integer priorities (CSV or JSON)
+- Deterministic tie-breakers: higher bonus wins; then lexicographic channel ID.
+- Providers: Discord, Slack, and Mattermost expose supportsChannelPrioritization=true and delegate scoreChannel() to the ChannelRouter when the flag is on.
+
+See the detailed guide with examples:
+- docs/channel-routing.md
+
 ## Future Enhancements
 
 - **Integrated LLM Improvements:** Future updates will enrich response quality and contextual intelligence, pushing the envelope of chatbot capabilities.

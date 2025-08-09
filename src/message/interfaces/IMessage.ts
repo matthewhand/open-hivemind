@@ -25,6 +25,7 @@ export abstract class IMessage {
 
   /**
    * The unique identifier of the channel where this message was sent.
+   * Canonical channel identifier used for routing and prioritization.
    * @type {string}
    */
   public channelId: string = "";
@@ -105,12 +106,6 @@ export abstract class IMessage {
    * Implementations may override this method for custom behavior.
    *
    * @returns {string} The text content of the message
-   *
-   * @example
-   * ```typescript
-   * const message = new DiscordMessage(discordMessage);
-   * console.log(message.getText()); // "Hello, world!"
-   * ```
    */
   getText(): string {
     if (this.role === 'tool') {
@@ -137,6 +132,7 @@ export abstract class IMessage {
 
   /**
    * Gets the channel ID where this message was sent.
+   * Canonical, provider-agnostic channel identifier.
    *
    * @abstract
    * @returns {string} The channel identifier
@@ -160,7 +156,8 @@ export abstract class IMessage {
   abstract getChannelTopic(): string | null;
 
   /**
-   * Gets all user mentions in this message.
+   * Gets all user mentions in this message as a list of provider-agnostic user IDs.
+   * Implementations should normalize to canonical string IDs.
    *
    * @abstract
    * @returns {string[]} Array of user IDs mentioned in the message
@@ -174,6 +171,18 @@ export abstract class IMessage {
    * @returns {string[]} Array of user IDs in the channel
    */
   abstract getChannelUsers(): string[];
+
+  /**
+   * Optional: Returns the guild/workspace identifier if available for the provider.
+   * Default contract is to return null when not applicable.
+   *
+   * Concrete implementations should override to supply a canonical workspace ID where applicable.
+   *
+   * @returns {string | null}
+   */
+  getGuildOrWorkspaceId(): string | null {
+    return null;
+  }
 
   /**
    * Checks if this message is a reply to a bot message.

@@ -1,5 +1,197 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:messageConfig');
+
+// Utility: safe JSON parse with strict error throwing
+function strictParseJSON(input: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    throw new Error('Expected JSON object');
+  } catch (e: any) {
+    // strict: rethrow to surface malformed JSON
+    throw new Error(`Invalid JSON: ${e?.message || String(e)}`);
+  }
+}
+
+// Normalization helpers
+function clampBonus(n: number): number {
+  if (Number.isNaN(n)) return 1.0;
+  if (n < 0) return 0.0;
+  if (n > 2) return 2.0;
+  return n;
+}
+
+function coercePriority(n: number): number {
+  if (Number.isNaN(n)) return 0;
+  const i = Math.trunc(n);
+  return i < 0 ? 0 : i;
+}
+
+function parseCSVMap(input: string): Array<[string, string]> {
+  return input
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(p => {
+      const [k, v] = p.split(':').map(s => s.trim());
+      return [k || '', v ?? ''] as [string, string];
+    });
+}
+
+// Custom formats for channel routing maps (with clamping/coercion and strict JSON)
+convict.addFormat({
+  name: 'channel-bonuses',
+  validate: (val: unknown) => {
+    if (val == null) return; // allow undefined/null
+    if (typeof val === 'string') {
+      // If looks like JSON object, validate JSON strictly here to surface errors early
+      const s = val.trim();
+      if (s.startsWith('{')) {
+        const obj = strictParseJSON(s);
+        for (const v of Object.values(obj)) {
+          const n = Number(v);
+          if (Number.isNaN(n)) {
+            throw new Error('CHANNEL_BONUSES values must be numbers');
+          }
+          if (n < 0.0 || n > 2.0) {
+            // allow out-of-range here; we will clamp on coerce, but still validate number-type
+            continue;
+          }
+        }
+      }
+      return; // CSV accepted, validated on coerce
+    }
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      for (const v of Object.values(val as Record<string, unknown>)) {
+        const n = Number(v);
+        if (Number.isNaN(n)) {
+          throw new Error('CHANNEL_BONUSES values must be numbers');
+        }
+        // Range will be normalized on coerce; accept number type here
+      }
+      return;
+    }
+    throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      const out: Record<string, number> = {};
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+        if (!k) continue;
+        out[k] = clampBonus(Number(v));
+      }
+      return out;
+    }
+    if (typeof val === 'string') {
+      const s = val.trim();
+      let entries: Array<[string, string]> = [];
+      if (s.startsWith('{')) {
+        const obj = strictParseJSON(s);
+        entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
+      } else {
+        entries = parseCSVMap(s);
+      }
+      const out: Record<string, number> = {};
+      for (const [k, vs] of entries) {
+        if (!k) continue;
+        const n = clampBonus(Number(vs));
+        out[k] = n;
+      }
+      return out;
+    }
+    return {};
+  }
+});
+
+convict.addFormat({
+  name: 'channel-priorities',
+  validate: (val: unknown) => {
+    if (val == null) return;
+    if (typeof val === 'string') {
+      const s = val.trim();
+      if (s.startsWith('{')) {
+        const obj = strictParseJSON(s);
+        for (const v of Object.values(obj)) {
+          const n = Number(v);
+          if (Number.isNaN(n)) throw new Error('CHANNEL_PRIORITIES values must be numbers');
+        }
+      }
+      return; // CSV accepted; detailed checks on coerce
+    }
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      for (const v of Object.values(val as Record<string, unknown>)) {
+        const n = Number(v);
+        if (Number.isNaN(n)) {
+          throw new Error('CHANNEL_PRIORITIES values must be numbers');
+        }
+      }
+      return;
+    }
+    throw new Error('CHANNEL_PRIORITIES must be JSON object map or CSV string "chan:priority,..."');
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'object' && !Array.isArray(val)) {
+      const out: Record<string, number> = {};
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+        if (!k) continue;
+        out[k] = coercePriority(Number(v));
+      }
+      return out;
+    }
+    if (typeof val === 'string') {
+      const s = val.trim();
+      let entries: Array<[string, string]> = [];
+      if (s.startsWith('{')) {
+        const obj = strictParseJSON(s);
+        entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
+      } else {
+        entries = parseCSVMap(s);
+      }
+      const out: Record<string, number> = {};
+      for (const [k, vs] of entries) {
+        if (!k) continue;
+        const n = coercePriority(Number(vs));
+        out[k] = n;
+      }
+      return out;
+    }
+    return {};
+  }
+});
+
+// After convict parses env and files, perform a second-pass normalization that can warn
+function normalizeChannelMaps(
+  bonuses: Record<string, number>,
+  priorities: Record<string, number>,
+  knownChannels?: string[]
+): { bonuses: Record<string, number>; priorities: Record<string, number> } {
+  const outB: Record<string, number> = {};
+  const outP: Record<string, number> = {};
+
+  // Apply clamps/coercions defensively again (idempotent)
+  for (const [k, v] of Object.entries(bonuses || {})) {
+    if (!k) continue;
+    outB[k] = clampBonus(Number(v));
+    if (knownChannels && knownChannels.length > 0 && !knownChannels.includes(k)) {
+      debug('Warning: CHANNEL_BONUSES includes unknown channel id "%s"', k);
+    }
+  }
+  for (const [k, v] of Object.entries(priorities || {})) {
+    if (!k) continue;
+    outP[k] = coercePriority(Number(v));
+    if (knownChannels && knownChannels.length > 0 && !knownChannels.includes(k)) {
+      debug('Warning: CHANNEL_PRIORITIES includes unknown channel id "%s"', k);
+    }
+  }
+  return { bonuses: outB, priorities: outP };
+}
 
 const messageConfig = convict({
   MESSAGE_PROVIDER: {
@@ -145,6 +337,26 @@ const messageConfig = convict({
     format: String,
     default: 'MadgwickAI',
     env: 'MESSAGE_USERNAME_OVERRIDE'
+  },
+
+  // Channel routing
+  MESSAGE_CHANNEL_ROUTER_ENABLED: {
+    doc: 'Enable ChannelRouter-based outbound channel selection',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
+  },
+  CHANNEL_BONUSES: {
+    doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
+    format: 'channel-bonuses',
+    default: {},
+    env: 'CHANNEL_BONUSES'
+  },
+  CHANNEL_PRIORITIES: {
+    doc: 'Channel priorities map (CSV "id:int,..." or JSON object). Integer, lower means higher priority. Default 0 when missing.',
+    format: 'channel-priorities',
+    default: {},
+    env: 'CHANNEL_PRIORITIES'
   }
 });
 
@@ -157,9 +369,20 @@ const configPath = path.join(configDir, 'providers/message.json');
 try {
   messageConfig.loadFile(configPath);
   messageConfig.validate({ allowed: 'warn' });
-} catch (error) {
-  console.warn(`Warning: Could not load message config from ${configPath}, using defaults`);
-  console.error('Error loading config:', error);
+  // Second-pass normalization with optional known channel list (none here; providers can supply later)
+  const normalized = normalizeChannelMaps(
+    messageConfig.get('CHANNEL_BONUSES'),
+    messageConfig.get('CHANNEL_PRIORITIES'),
+    undefined
+  );
+  // Overwrite normalized values back into config
+  (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
+  (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
+  debug('messageConfig loaded, validated, and normalized from %s', configPath);
+} catch (error: any) {
+  // Use debug-style logging to avoid noisy console.* during tests
+  debug(`Warning: Could not load message config from ${configPath}, using defaults`);
+  debug('Error loading config: %s', error?.message || String(error));
 }
 
 export default messageConfig;

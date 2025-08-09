@@ -318,6 +318,20 @@ export default class DiscordMessage implements IMessage {
   }
 
   /**
+   * Returns the Discord guild ID (workspace) if available, else null.
+   * Satisfies IMessage.getGuildOrWorkspaceId() for cross-platform routing.
+   */
+  getGuildOrWorkspaceId(): string | null {
+    try {
+      // message.guild may be undefined in DMs or certain mocks
+      const guildId = this.message?.guild?.id ?? null;
+      return guildId;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Gets the underlying Discord.js Message object.
    * 
    * @returns {Message<boolean>} The original Discord.js message

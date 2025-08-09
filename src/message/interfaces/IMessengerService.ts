@@ -117,6 +117,23 @@ export interface IMessengerService {
   shutdown(): Promise<void>;
 
   /**
+   * Indicates whether the service supports channel prioritization/scoring.
+   * If true, the service may provide a custom scoreChannel implementation.
+   */
+  supportsChannelPrioritization?: boolean;
+
+  /**
+   * Optional: compute a score for a given channel on this platform.
+   * Higher scores indicate more preferred channels for routing.
+   * Implementations can delegate to ChannelRouter under the hood.
+   *
+   * @param channelId The channel identifier to score
+   * @param metadata  Optional context used for scoring
+   * @returns number score for the channel
+   */
+  scoreChannel?(channelId: string, metadata?: Record<string, any>): number;
+
+  /**
    * Sets the message handler for processing incoming messages.
    *
    * @param {(message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>} handler -

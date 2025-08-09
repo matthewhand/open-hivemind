@@ -4,6 +4,9 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import MattermostClient from './mattermostClient';
 import { Application } from 'express';
+// Routing (feature-flagged parity)
+import messageConfig from '@config/messageConfig';
+import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 
 /**
  * MattermostService implementation supporting multi-instance configuration
@@ -15,6 +18,9 @@ export class MattermostService implements IMessengerService {
   private channels: Map<string, string> = new Map();
   private botConfigs: Map<string, any> = new Map();
   private app?: Application;
+
+  // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
+  public supportsChannelPrioritization: boolean = true;
 
   private constructor() {
     console.log('Initializing MattermostService with multi-instance support');
@@ -172,6 +178,21 @@ export class MattermostService implements IMessengerService {
   public async shutdown(): Promise<void> {
     console.log('Shutting down MattermostService...');
     MattermostService.instance = undefined;
+  }
+
+  /**
+   * Channel scoring hook: returns 0 when MESSAGE_CHANNEL_ROUTER_ENABLED is disabled,
+   * otherwise delegates to ChannelRouter.computeScore to keep parity with other providers.
+   */
+  public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
+    try {
+      const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
+      if (!enabled) return 0;
+      return channelComputeScore(channelId, metadata);
+    } catch (_e) {
+      // Be conservative: on any error, neutralize impact
+      return 0;
+    }
   }
 
   /**
