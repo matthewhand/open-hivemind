@@ -10,7 +10,7 @@ import { IMessage } from '@message/interfaces/IMessage';
  * - mentions parsed from <@UXXXX> tokens in text
  * - timestamp from data.ts (seconds.fraction) to Date
  */
-export default class SlackMessage implements IMessage {
+export default class SlackMessage extends IMessage {
   public content: string;
   public channelId: string;
   public data: any;
@@ -24,6 +24,7 @@ export default class SlackMessage implements IMessage {
   private timestamp: Date;
 
   constructor(content: string, channelId: string, data: any = {}) {
+    super(data, 'user');
     this.content = content ?? '';
     this.channelId = channelId ?? '';
     this.data = data || {};

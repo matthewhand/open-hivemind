@@ -6,11 +6,15 @@ const ORIGINAL_ENV = { ...process.env };
 const debug = Debug('test:messageConfigValidation');
 
 function reloadMessageConfig() {
-  // Delete from require cache to reload with fresh env
+  // Ensure a clean module registry so env changes are picked up
+  jest.resetModules();
   const modPath = path.resolve('src/config/messageConfig.ts');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const resolved = require.resolve(modPath);
-  delete require.cache[resolved];
+  // Additionally, defensively purge any cached variants that include the module path
+  for (const k of Object.keys(require.cache)) {
+    if (k.includes('src/config/messageConfig')) {
+      delete require.cache[k];
+    }
+  }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require(modPath).default;
 }

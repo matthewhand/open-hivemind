@@ -3,7 +3,7 @@ import { ICommonMessage } from '@src/message/common/commonTypes';
 import { IMessage } from '@src/message/interfaces/IMessage';
 
 // Create a dummy implementation of IMessage for testing purposes.
-class DummyMessage implements IMessage {
+class DummyMessage extends IMessage {
   content: string;
   channelId: string;
   data: any;
@@ -13,6 +13,7 @@ class DummyMessage implements IMessage {
   private authorId: string;
   
   constructor(text: string, channelId: string, authorId: string, messageId: string) {
+    super({}, 'user');
     this.content = text;
     this.channelId = channelId;
     this.data = text;

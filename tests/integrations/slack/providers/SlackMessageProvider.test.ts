@@ -37,13 +37,14 @@ jest.mock('@src/config/slackConfig', () => ({
   },
 }));
 
-class MockMessage implements IMessage {
+class MockMessage extends IMessage {
   public content: string;
   public channelId: string;
   public data: any;
   public role: string;
 
   constructor(content: string) {
+    super({}, 'user');
     this.content = content;
     this.channelId = 'mock-channel';
     this.data = content;
