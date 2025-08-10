@@ -368,21 +368,99 @@ const configPath = path.join(configDir, 'providers/message.json');
 
 try {
   messageConfig.loadFile(configPath);
-  messageConfig.validate({ allowed: 'warn' });
-  // Second-pass normalization with optional known channel list (none here; providers can supply later)
-  const normalized = normalizeChannelMaps(
-    messageConfig.get('CHANNEL_BONUSES'),
-    messageConfig.get('CHANNEL_PRIORITIES'),
-    undefined
-  );
-  // Overwrite normalized values back into config
-  (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
-  (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
-  debug('messageConfig loaded, validated, and normalized from %s', configPath);
 } catch (error: any) {
   // Use debug-style logging to avoid noisy console.* during tests
   debug(`Warning: Could not load message config from ${configPath}, using defaults`);
   debug('Error loading config: %s', error?.message || String(error));
+}
+
+// Apply env overrides with strict parsing and normalization, so malformed JSON throws here
+if (typeof process !== 'undefined' && process.env) {
+  const bEnv = process.env.CHANNEL_BONUSES;
+  const pEnv = process.env.CHANNEL_PRIORITIES;
+  debug('env CHANNEL_BONUSES=%s', bEnv);
+  debug('env CHANNEL_PRIORITIES=%s', pEnv);
+
+  if (typeof bEnv === 'string') {
+    const s = bEnv.trim();
+    let entries: Array<[string, string]> = [];
+    if (s.startsWith('{')) {
+      const obj = strictParseJSON(s); // throws if malformed
+      entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
+    } else {
+      entries = parseCSVMap(s);
+    }
+    const out: Record<string, number> = {};
+    for (const [k, vs] of entries) {
+      if (!k) continue;
+      out[k] = clampBonus(Number(vs));
+    }
+    (messageConfig as any).set('CHANNEL_BONUSES', out);
+  }
+
+  if (typeof pEnv === 'string') {
+    const s = pEnv.trim();
+    let entries: Array<[string, string]> = [];
+    if (s.startsWith('{')) {
+      const obj = strictParseJSON(s); // throws if malformed
+      entries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
+    } else {
+      entries = parseCSVMap(s);
+    }
+    const out: Record<string, number> = {};
+    for (const [k, vs] of entries) {
+      if (!k) continue;
+      out[k] = coercePriority(Number(vs));
+    }
+    (messageConfig as any).set('CHANNEL_PRIORITIES', out);
+  }
+}
+
+// Validate after attempting to load files so malformed env JSON has been handled above
+messageConfig.validate({ allowed: 'warn' });
+
+// Second-pass normalization with optional known channel list (none here; providers can supply later)
+// Temporary debug logging; respects ALLOW_CONSOLE in tests
+// eslint-disable-next-line no-console
+if (process.env.ALLOW_CONSOLE) {
+  // eslint-disable-next-line no-console
+  console.log('pre-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
+  // eslint-disable-next-line no-console
+  console.log('pre-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
+  const propsPre = (messageConfig as any).getProperties?.();
+  // eslint-disable-next-line no-console
+  console.log('pre-normalize props keys=', propsPre ? Object.keys(propsPre) : 'no-props');
+}
+const normalized = normalizeChannelMaps(
+  (messageConfig as any).get('CHANNEL_BONUSES'),
+  (messageConfig as any).get('CHANNEL_PRIORITIES'),
+  undefined
+);
+// Overwrite normalized values back into config
+(messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
+(messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
+// eslint-disable-next-line no-console
+if (process.env.ALLOW_CONSOLE) {
+  // eslint-disable-next-line no-console
+  console.log('post-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
+  // eslint-disable-next-line no-console
+  console.log('post-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
+}
+
+debug('messageConfig loaded, validated, and normalized from %s', configPath);
+
+// Ensure get() never returns undefined for channel maps, and prefer fully-coerced properties
+const _origGet = (messageConfig as any).get?.bind(messageConfig);
+const _getProps = (messageConfig as any).getProperties?.bind(messageConfig);
+if (_origGet) {
+  (messageConfig as any).get = (key: string) => {
+    if (key === 'CHANNEL_BONUSES' || key === 'CHANNEL_PRIORITIES') {
+      const props = _getProps ? _getProps() : undefined;
+      const val = props ? (props as any)[key] : _origGet(key);
+      return val ?? {};
+    }
+    return _origGet(key);
+  };
 }
 
 export default messageConfig;

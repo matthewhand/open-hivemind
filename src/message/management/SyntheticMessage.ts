@@ -17,7 +17,7 @@ import { IMessage } from '@message/interfaces/IMessage';
  * console.log(synthetic.isFromBot()); // true
  * ```
  */
-export class SyntheticMessage implements IMessage {
+export class SyntheticMessage extends IMessage {
   /**
    * The text content of the synthetic message.
    * @type {string}
@@ -139,6 +139,7 @@ export class SyntheticMessage implements IMessage {
    * ```
    */
   constructor(originalMessage: IMessage, syntheticText: string) {
+    super(originalMessage.data, 'system', originalMessage.metadata);
     this.originalChannelId = originalMessage.getChannelId();
     this.content = syntheticText;
     this.data = originalMessage.data;
