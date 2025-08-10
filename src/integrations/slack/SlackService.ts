@@ -475,6 +475,10 @@ export class SlackService implements IMessengerService {
 
   public async shutdown(): Promise<void> {
     debug('Entering shutdown');
+    if (!SlackService.instance) {
+      debug('Shutdown called but instance already undefined; no-op');
+      return;
+    }
     SlackService.instance = undefined;
     debug('SlackService instance cleared');
   }
