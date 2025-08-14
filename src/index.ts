@@ -7,11 +7,11 @@ const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
-const llmConfigModule = require('@config/llmConfig');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+const metricsRouteModule = require('./routes/metrics');
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
@@ -31,6 +31,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
+const metricsRoute = metricsRouteModule.default || metricsRouteModule;
+app.use(metricsRoute);
 
 async function startBot(messengerService: any) {
     try {

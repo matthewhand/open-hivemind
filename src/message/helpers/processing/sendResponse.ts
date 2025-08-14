@@ -1,4 +1,3 @@
-import Debug from "debug";
 /**
  * Sends a response message to a specified channel.
  *

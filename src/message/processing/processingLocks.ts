@@ -1,5 +1,3 @@
-import Debug from "debug";
-
 class ProcessingLocks {
     private locks: Map<string, boolean>;
     constructor() {

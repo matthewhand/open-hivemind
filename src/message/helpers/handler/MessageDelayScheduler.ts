@@ -25,7 +25,7 @@ class MessageDelayScheduler {
     text: string,
     userId: string,
     sendFn: (text: string, threadId?: string) => Promise<string>,
-    useThread: boolean
+    _useThread: boolean
   ): Promise<void> {
     const minDelay = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
     await new Promise(resolve => setTimeout(resolve, minDelay));

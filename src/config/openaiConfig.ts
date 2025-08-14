@@ -110,7 +110,7 @@ try {
   openaiConfig.loadFile(configPath);
   openaiConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded OpenAI config from ${configPath}`);
-} catch (error) {
+} catch {
   // Fallback to defaults if config file is missing or invalid
   debug(`Warning: Could not load openai config from ${configPath}, using defaults`);
 }

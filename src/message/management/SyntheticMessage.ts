@@ -251,7 +251,7 @@ export class SyntheticMessage extends IMessage {
    * @param {string} userId - The user ID to check for
    * @returns {boolean} Always returns false for synthetic messages
    */
-  mentionsUsers(userId: string): boolean {
+  mentionsUsers(_userId: string): boolean {
     return false;
   }
 

@@ -27,7 +27,7 @@ const MattermostMgr = (() => {
  */
 // Ensure CommonJS require compatibility for tests using jest.mock()
 function __require(modulePath: string): any {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  
   return require(modulePath);
 }
 

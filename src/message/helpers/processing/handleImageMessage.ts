@@ -1,5 +1,3 @@
-import Debug from "debug";
-
 import axios from 'axios';
 /**
  * A map that stores the association between prediction IDs and image URLs.

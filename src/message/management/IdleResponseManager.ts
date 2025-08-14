@@ -158,7 +158,7 @@ export class IdleResponseManager {
                 },
                 getDefaultChannel: () => discordService.getDefaultChannel(),
                 shutdown: async () => {},
-                setMessageHandler: (handler: any) => {}
+                setMessageHandler: (_handler: any) => {}
               };
               
               this.serviceActivities.set(botServiceName, {
@@ -279,7 +279,6 @@ export class IdleResponseManager {
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
     // Create a unique timer ID to prevent duplicates
-    const timerId = Date.now() + Math.random();
     activity.timer = setTimeout(async () => {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);
@@ -425,8 +424,8 @@ export class IdleResponseManager {
   }
 
   public clearAllChannels(): void {
-    for (const [serviceName, serviceActivity] of this.serviceActivities) {
-      for (const [channelId, activity] of serviceActivity.channels) {
+    for (const [, serviceActivity] of this.serviceActivities) {
+      for (const [, activity] of serviceActivity.channels) {
         if (activity.timer) {
           clearTimeout(activity.timer);
         }

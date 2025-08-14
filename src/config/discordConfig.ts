@@ -1,5 +1,6 @@
 import convict from 'convict';
 import path from 'path';
+import debug from 'debug';
 
 /**
  * Discord Configuration Module
@@ -23,21 +24,62 @@ import path from 'path';
  * const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
  */
 
+const dbg = debug('app:config:discord');
+
 convict.addFormat({
   name: 'channel-bonuses',
   validate: (val) => {
-    if (typeof val !== 'string' && typeof val !== 'object' && val !== undefined) {
+    if (val === undefined || val === null || val === '') return; // allow empty
+    if (typeof val !== 'string' && typeof val !== 'object') {
       throw new Error('Invalid bonuses: must be a string, object, or undefined.');
     }
+    // Additional validation occurs post-coerce
   },
   coerce: (val) => {
-    if (typeof val === 'object') return val;
-    if (!val) return {};
-    return val.split(',').reduce((acc: Record<string, number>, kvp: string) => {
-      const [channelId, bonus] = kvp.split(':');
-      if (channelId && bonus) acc[channelId] = parseFloat(bonus);
-      return acc;
-    }, {});
+    if (val === undefined || val === null || val === '') return {};
+    let out: Record<string, number> = {};
+    try {
+      if (typeof val === 'object') {
+        out = { ...val } as Record<string, number>;
+      } else if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          // JSON object expected
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            // Support array of {channelId, bonus}
+            parsed.forEach((item) => {
+              if (item && item.channelId && typeof item.bonus !== 'undefined') {
+                out[item.channelId] = Number(item.bonus);
+              }
+            });
+          } else {
+            out = parsed as Record<string, number>;
+          }
+        } else {
+          out = trimmed.split(',').reduce((acc: Record<string, number>, kvp: string) => {
+            const [channelId, bonus] = kvp.split(':');
+            if (channelId && bonus) acc[channelId.trim()] = parseFloat(bonus);
+            return acc;
+          }, {});
+        }
+      }
+    } catch (e) {
+      // On parse error, keep empty and allow validation to fail later if needed
+      dbg(`Failed to parse DISCORD_CHANNEL_BONUSES: ${String(e)}`);
+      out = {};
+    }
+
+    // Normalize/clamp values into [0, 2]
+    const normalized: Record<string, number> = {};
+    Object.entries(out).forEach(([k, v]) => {
+      const num = Number(v);
+      if (!Number.isFinite(num)) return;
+      const clamped = Math.max(0, Math.min(2, num));
+      normalized[k] = clamped;
+    });
+
+    return normalized;
   }
 });
 
@@ -158,7 +200,12 @@ const configPath = path.join(configDir, 'providers/discord.json');
 try {
   discordConfig.loadFile(configPath);
   discordConfig.validate({ allowed: 'strict' });
-} catch (error) {
+  const bonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES') as Record<string, number>;
+  if (bonuses && Object.keys(bonuses).length > 0) {
+    dbg(`Loaded DISCORD_CHANNEL_BONUSES: ${JSON.stringify(bonuses)}`);
+  }
+  dbg('Discord config loaded and validated successfully');
+} catch {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load discord config from ${configPath}, using defaults`);
 }

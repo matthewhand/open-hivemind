@@ -30,7 +30,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     processedMessage = addUserHint(processedMessage, userId, botId);
 
     logger(`Processing message in channel ${message.getChannelId()} from user ${userId}: "${processedMessage}"`);
-    console.log(`Processed message: "${processedMessage}"`);
+    // console.log intentionally omitted to reduce noise in production
 
     // Command processing
     let commandProcessed = false;
@@ -81,7 +81,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       message.getMessageId(),
       reply,
       userId,
-      async (text: string, threadId?: string): Promise<string> => {
+      async (text: string, _threadId?: string): Promise<string> => {
         const rawBotName = botConfig.MESSAGE_USERNAME_OVERRIDE || 'MadgwickAI';
         const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);

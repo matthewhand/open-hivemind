@@ -57,6 +57,37 @@ Notes:
 
 ## Messenger Provider Configuration
 
+### Canonical format: providers array
+Use a providers array for messenger selection and configuration. Legacy formats are still supported but will be phased out.
+
+### Env/config precedence
+- Environment variables override file configuration.
+- When both exist, environment wins and is normalized by ConfigurationManager.
+
+### Reliability features and knobs
+- Slack send queue (rate limiting + concurrency):
+  - SLACK_SEND_QUEUE_ENABLED: 'true' (default) or 'false'
+  - SLACK_SEND_TOKENS_PER_INTERVAL: default 20
+  - SLACK_SEND_INTERVAL_MS: default 1000
+  - SLACK_SEND_MAX_CONCURRENCY: default 2
+  - SLACK_SEND_MAX_QUEUE_SIZE: unset = unbounded
+  - SLACK_SEND_RETRIES: default 3
+  - SLACK_SEND_MIN_DELAY_MS: default 300
+  - SLACK_SEND_MAX_DELAY_MS: default 5000
+- OpenAI retry/backoff and redaction:
+  - OPENAI_RETRIES: default 3
+  - OPENAI_MIN_DELAY_MS: default 300
+  - OPENAI_MAX_DELAY_MS: default 5000
+  - Request/response logging avoids sensitive content via redactSensitiveInfo
+- Discord circuit breakers and caching:
+  - DISCORD_SEND_FAILURE_THRESHOLD: default 5
+  - DISCORD_SEND_RESET_TIMEOUT_MS: default 10000
+  - DISCORD_FETCH_FAILURE_THRESHOLD: default 5
+  - DISCORD_FETCH_RESET_TIMEOUT_MS: default 10000
+- Metrics endpoint (dev only):
+  - METRICS_ROUTE_ENABLED: 'true' to expose GET /metrics returning counters/gauges JSON
+
+
 Two configuration shapes are supported for messenger providers:
 
 A) Legacy instances arrays

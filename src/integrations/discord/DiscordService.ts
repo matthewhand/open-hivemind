@@ -63,6 +63,17 @@ export const Discord = {
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
 
+    // Resilience: circuit breaker and simple channel cache
+    private sendBreaker = new (require('@src/utils/circuitBreaker').CircuitBreaker)(
+      Number(process.env.DISCORD_SEND_FAILURE_THRESHOLD ?? 5),
+      Number(process.env.DISCORD_SEND_RESET_TIMEOUT_MS ?? 10000)
+    );
+    private fetchBreaker = new (require('@src/utils/circuitBreaker').CircuitBreaker)(
+      Number(process.env.DISCORD_FETCH_FAILURE_THRESHOLD ?? 5),
+      Number(process.env.DISCORD_FETCH_RESET_TIMEOUT_MS ?? 10000)
+    );
+    private channelCache: Map<string, any> = new Map();
+
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
 
@@ -296,7 +307,15 @@ export const Discord = {
 
       try {
         log(`Sending to channel ${selectedChannelId} as ${senderName}`);
-        const channel = await botInfo.client.channels.fetch(selectedChannelId);
+        if (!this.sendBreaker.canExecute()) {
+          try { const { incrementCounter } = require('@src/utils/metrics'); incrementCounter('discord.send.breaker.open'); } catch {}
+
+          log(`send breaker open; skipping send to ${selectedChannelId}`);
+          return '';
+        }
+        const cached = this.channelCache.get(selectedChannelId);
+        const channel = cached || await botInfo.client.channels.fetch(selectedChannelId);
+        if (!cached && channel) this.channelCache.set(selectedChannelId, channel);
         if (!channel || !channel.isTextBased()) {
           throw new Error(`Channel ${selectedChannelId} is not text-based or was not found`);
         }
@@ -314,8 +333,10 @@ export const Discord = {
         }
 
         log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
+        this.sendBreaker.onSuccess();
         return message.id;
       } catch (error: any) {
+        this.sendBreaker.onFailure();
         log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
         return '';
       }
@@ -332,7 +353,15 @@ export const Discord = {
     public async fetchMessages(channelId: string): Promise<Message[]> {
       const botInfo = this.bots[0];
       try {
-        const channel = await botInfo.client.channels.fetch(channelId);
+        if (!this.fetchBreaker.canExecute()) {
+          try { const { incrementCounter } = require('@src/utils/metrics'); incrementCounter('discord.fetch.breaker.open'); } catch {}
+
+          log(`fetch breaker open; returning empty history for ${channelId}`);
+          return [];
+        }
+        const cached = this.channelCache.get(channelId);
+        const channel = cached || await botInfo.client.channels.fetch(channelId);
+        if (!cached && channel) this.channelCache.set(channelId, channel);
         if (!channel || !channel.isTextBased()) {
           throw new Error('Channel is not text-based or was not found');
         }
@@ -340,8 +369,10 @@ export const Discord = {
         const messages = await channel.messages.fetch({ limit });
         const arr = Array.from(messages.values());
         // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
+        this.fetchBreaker.onSuccess();
         return arr.slice(0, limit);
       } catch (error: any) {
+        this.fetchBreaker.onFailure();
         log(`Failed to fetch messages from ${channelId}: ${error?.message ?? error}`);
         return [];
       }

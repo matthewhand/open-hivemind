@@ -3,15 +3,10 @@ import { IMessage } from '@message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
-
+import { retry, defaultShouldRetry } from '@src/utils/retry';
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 const debug = Debug('app:openAiProvider');
-
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
-const MAX_RETRIES = 3;
-const RETRY_DELAY_BASE_MS = 1000;
-
-// Utility to delay with exponential backoff
-const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * OpenAI provider implementation that conforms to the ILlmProvider interface.
@@ -122,59 +117,49 @@ export const openAiProvider: ILlmProvider = {
     }
     debug('Final messages prepared:', JSON.stringify(messages));
 
-    // Retry loop
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        debug(`Attempt ${attempt} of ${MAX_RETRIES} with model '${model}' at '${baseURL}'`);
-        const response = await openai.chat.completions.create({
-          model,
-          messages,
-          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
-          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
-          frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
-          presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
-          top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
-          stop: openaiConfig.get('OPENAI_STOP') || null
-        });
+    const retries = Number(process.env.OPENAI_RETRIES ?? 3);
+    const minDelayMs = Number(process.env.OPENAI_MIN_DELAY_MS ?? 300);
+    const maxDelayMs = Number(process.env.OPENAI_MAX_DELAY_MS ?? 5000);
 
-        debug('Raw API response:', JSON.stringify(response));
-        const content = response.choices[0]?.message?.content;
-        if (!content) {
-          debug('No content in response');
-          return 'Sorry, I couldn’t generate a response.';
-        }
-        debug('Generated content:', content);
-        return content;
+    const safeMessagesForLog = messages.map((m) => ({
+      role: m.role,
+      content: typeof m.content === 'string' ? redactSensitiveInfo('content', m.content) : '[complex_content]'
+    }));
+    debug('Prepared request', { model, baseURL, messages: safeMessagesForLog });
 
-      } catch (error: any) {
-        debug(`Attempt ${attempt} failed:`, error);
+    const call = async () => openai.chat.completions.create({
+      model,
+      messages,
+      max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+      temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+      frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
+      presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
+      top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
+      stop: openaiConfig.get('OPENAI_STOP') || null
+    });
 
-        if (error instanceof Error) {
-          const errorMsg = error.message.toLowerCase();
-
-          if (attempt < MAX_RETRIES) {
-            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
-            debug(`Retrying in ${delayMs}ms...`);
-            await delay(delayMs);
-            continue;
-          }
-
-          debug('Max retries reached');
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            return 'Unable to connect to the service, please try again later.';
-          }
-          if (errorMsg.includes('timed out')) {
-            return 'Request took too long, please try again.';
-          }
-          throw new Error(`Chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
-        }
-
-        throw new Error(`Chat completion failed: ${String(error)}`);
+    const response = await retry(call, {
+      retries,
+      minDelayMs,
+      maxDelayMs,
+      jitter: 'full',
+      shouldRetry: (err, attempt) => defaultShouldRetry(err, attempt),
+      onRetry: (err, attempt, delayMs) => {
+        try {
+          const { incrementCounter } = require('@src/utils/metrics');
+          incrementCounter('openai.chat.retry');
+        } catch {}
+        debug('OpenAI chat retry', { attempt, delayMs, status: err?.status || err?.response?.status });
       }
-    }
+    });
 
-    debug('Unexpected exit from retry loop');
-    return 'An unexpected error occurred.';
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      debug('No content in response');
+      return 'Sorry, I couldn’t generate a response.';
+    }
+    debug('Generated content length', { length: content.length });
+    return content;
   },
 
   async generateCompletion(prompt: string): Promise<string> {
@@ -209,57 +194,45 @@ export const openAiProvider: ILlmProvider = {
     const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
     debug('OpenAI client initialized with baseURL:', baseURL);
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        debug(`Attempt ${attempt} of ${MAX_RETRIES} with model '${model}' at '${baseURL}'`);
-        const response = await openai.completions.create({
-          model,
-          prompt,
-          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
-          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
-          frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
-          presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
-          top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
-          stop: openaiConfig.get('OPENAI_STOP') || null
-        });
+    const retries = Number(process.env.OPENAI_RETRIES ?? 3);
+    const minDelayMs = Number(process.env.OPENAI_MIN_DELAY_MS ?? 300);
+    const maxDelayMs = Number(process.env.OPENAI_MAX_DELAY_MS ?? 5000);
 
-        debug('Raw API response:', JSON.stringify(response));
-        const text = response.choices[0]?.text;
-        if (!text) {
-          debug('No text in response');
-          return 'Sorry, I couldn’t generate a response.';
-        }
-        debug('Generated text:', text);
-        return text;
+    const safePrompt = typeof prompt === 'string' ? redactSensitiveInfo('content', prompt) : '';
+    debug('Prepared legacy completion request', { model, baseURL, promptPreview: safePrompt.substring(0, 40) });
 
-      } catch (error: any) {
-        debug(`Attempt ${attempt} failed:`, error);
+    const call = async () => openai.completions.create({
+      model,
+      prompt,
+      max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
+      temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+      frequency_penalty: openaiConfig.get('OPENAI_FREQUENCY_PENALTY') || 0.1,
+      presence_penalty: openaiConfig.get('OPENAI_PRESENCE_PENALTY') || 0.05,
+      top_p: openaiConfig.get('OPENAI_TOP_P') || 0.9,
+      stop: openaiConfig.get('OPENAI_STOP') || null
+    });
 
-        if (error instanceof Error) {
-          const errorMsg = error.message.toLowerCase();
-
-          if (attempt < MAX_RETRIES) {
-            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
-            debug(`Retrying in ${delayMs}ms...`);
-            await delay(delayMs);
-            continue;
-          }
-
-          debug('Max retries reached');
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            return 'Unable to connect to the service, please try again later.';
-          }
-          if (errorMsg.includes('timed out')) {
-            return 'Request took too long, please try again.';
-          }
-          throw new Error(`Non-chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
-        }
-
-        throw new Error(`Non-chat completion failed: ${String(error)}`);
+    const response = await retry(call, {
+      retries,
+      minDelayMs,
+      maxDelayMs,
+      jitter: 'full',
+      shouldRetry: (err, attempt) => defaultShouldRetry(err, attempt),
+      onRetry: (err, attempt, delayMs) => {
+        try {
+          const { incrementCounter } = require('@src/utils/metrics');
+          incrementCounter('openai.legacy.retry');
+        } catch {}
+        debug('OpenAI legacy retry', { attempt, delayMs, status: err?.status || err?.response?.status });
       }
-    }
+    });
 
-    debug('Unexpected exit from retry loop');
-    return 'An unexpected error occurred.';
+    const text = response.choices[0]?.text;
+    if (!text) {
+      debug('No text in response');
+      return 'Sorry, I couldn’t generate a response.';
+    }
+    debug('Generated text length', { length: text.length });
+    return text;
   }
 };

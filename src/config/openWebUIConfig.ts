@@ -44,7 +44,7 @@ const configPath = path.join(configDir, 'providers/openwebui.json');
 try {
   openWebUIConfig.loadFile(configPath);
   openWebUIConfig.validate({ allowed: 'strict' });
-} catch (error) {
+} catch {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load openwebui config from ${configPath}, using defaults`);
 }
