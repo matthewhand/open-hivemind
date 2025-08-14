@@ -25,6 +25,7 @@ export class MattermostService implements IMessengerService {
   private handler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
   private joinTs: Map<string, number> = new Map();
   private selfIds: Map<string, string> = new Map();
+  private selfUsernames: Map<string, string> = new Map();
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
   public supportsChannelPrioritization: boolean = true;
@@ -99,8 +100,9 @@ export class MattermostService implements IMessengerService {
         await client.connect();
         this.joinTs.set(botName, Date.now());
         try {
-          const me = await client.getSelfUserId();
-          if (me) this.selfIds.set(botName, me);
+          const me = await (client as any).getSelfUser?.();
+          if (me?.id) this.selfIds.set(botName, me.id);
+          if (me?.username) this.selfUsernames.set(botName, me.username);
         } catch {}
         log(`Connected to Mattermost server for bot: ${botName}`);
       } catch (error) {
@@ -131,6 +133,25 @@ export class MattermostService implements IMessengerService {
           // Ignore backlog older than join timestamp
           const joinedAt = this.joinTs.get(botName) || 0;
           if (msg.getTimestamp().getTime() < joinedAt) return;
+
+          // Wakeword / mention gating
+          try {
+            const onlyWhenSpoken = Boolean((messageConfig as any).get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
+            if (onlyWhenSpoken) {
+              const text = (msg.getText() || '').toLowerCase();
+              const raw = (messageConfig as any).get('MESSAGE_WAKEWORDS');
+              const wakewords = Array.isArray(raw)
+                ? (raw as any[]).map(v => String(v).toLowerCase())
+                : String(raw || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+              const hasWake = wakewords.some(w => text.startsWith(w));
+              const selfName = (this.selfUsernames.get(botName) || '').toLowerCase();
+              const mentionsSelf = selfName ? text.includes(`@${selfName}`) : false;
+              if (!hasWake && !mentionsSelf) return;
+            }
+          } catch {}
+
+          // Best-effort typing indicator
+          try { await (client as any).sendTyping?.(msg.getChannelId()); } catch {}
 
           const history = await this.fetchMessages(msg.getChannelId(), 10, botName);
           await handler(msg, history, this.botConfigs.get(botName));

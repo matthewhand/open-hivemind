@@ -137,6 +137,16 @@ export default class MattermostClient {
     }
   }
 
+  async getSelfUser(): Promise<{ id: string; username: string }> {
+    try {
+      const res = await this.http.get('/api/v4/users/me');
+      return { id: String(res.data?.id || ''), username: String(res.data?.username || '') };
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || String(e);
+      throw new Error(`Mattermost getSelfUser failed: ${msg}`);
+    }
+  }
+
   async joinChannel(channelId: string): Promise<void> {
     try {
       const me = await this.getSelfUserId();
@@ -183,5 +193,18 @@ export default class MattermostClient {
       this.ws = undefined;
     } catch {}
     this.connected = false;
+  }
+
+  async sendTyping(channelId: string): Promise<void> {
+    try {
+      const typingEnabled = String(process.env.MATTERMOST_TYPING_ENABLED ?? 'false').toLowerCase() === 'true';
+      if (!typingEnabled) return;
+      if (!this.ws || this.ws.readyState !== this.ws.OPEN) return;
+      const payload = JSON.stringify({ action: 'user_typing', data: { channel_id: channelId } });
+      this.ws.send(payload);
+    } catch {
+      // swallow errors; typing is best-effort
+      return;
+    }
   }
 }
