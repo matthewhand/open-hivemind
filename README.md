@@ -103,3 +103,8 @@ See the detailed guide with examples:
 Open-Hivemind continues to evolve. This documentation provides a deep dive into its revolutionary multi-agent architecture and unified messaging fabric—designed to empower developers and end-users alike in managing an interconnected bot ecosystem.
 
 For further technical details, refer to the Development Guide and User Guide sections of this repository.
+
+
+## Advanced Settings
+
+Looking for channel routing, multi-bot, or provider-specific toggles? See docs/advanced-settings.md for optional and power-user configuration that you can safely ignore when getting started.
