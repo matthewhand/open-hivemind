@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import Debug from 'debug';
+import type { ConfigModuleMeta } from './ConfigSpec';
 
 const debug = Debug('app:messageConfig');
 
@@ -457,3 +458,21 @@ if (_origGet) {
 }
 
 export default messageConfig;
+
+// Config metadata for docs and tooling
+export const configMeta: ConfigModuleMeta = {
+  module: 'messageConfig',
+  keys: [
+    { key: 'MESSAGE_ONLY_WHEN_SPOKEN_TO', group: 'message', level: 'basic', doc: 'Reply only on wakeword/mention', env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO', default: true },
+    { key: 'MESSAGE_WAKEWORDS', group: 'message', level: 'basic', doc: 'Comma-separated triggers', env: 'MESSAGE_WAKEWORDS', default: ['!help','!ping'] },
+    { key: 'MESSAGE_CHANNEL_ROUTER_ENABLED', group: 'routing', level: 'advanced', doc: 'Enable ChannelRouter-based selection', env: 'MESSAGE_CHANNEL_ROUTER_ENABLED', default: false },
+    { key: 'CHANNEL_BONUSES', group: 'routing', level: 'advanced', doc: 'Per-channel bonus (CSV/JSON)', env: 'CHANNEL_BONUSES', default: {} },
+    { key: 'CHANNEL_PRIORITIES', group: 'routing', level: 'advanced', doc: 'Per-channel priority (CSV/JSON)', env: 'CHANNEL_PRIORITIES', default: {} },
+    { key: 'MESSAGE_RATE_LIMIT_PER_CHANNEL', group: 'rate', level: 'advanced', doc: 'Messages per minute per channel', env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL', default: 5 },
+    { key: 'MESSAGE_MIN_DELAY', group: 'rate', level: 'advanced', doc: 'Minimum delay (ms)', env: 'MESSAGE_MIN_DELAY', default: 1000 },
+    { key: 'MESSAGE_MAX_DELAY', group: 'rate', level: 'advanced', doc: 'Maximum delay (ms)', env: 'MESSAGE_MAX_DELAY', default: 10000 },
+    { key: 'MESSAGE_MIN_INTERVAL_MS', group: 'rate', level: 'advanced', doc: 'Global minimum interval (ms)', env: 'MESSAGE_MIN_INTERVAL_MS', default: 3000 },
+    { key: 'MESSAGE_INTERROBANG_BONUS', group: 'message', level: 'advanced', doc: 'Punctuation bonus', env: 'MESSAGE_INTERROBANG_BONUS', default: 0.4 },
+    { key: 'MESSAGE_BOT_RESPONSE_MODIFIER', group: 'message', level: 'advanced', doc: 'Bot response modifier', env: 'MESSAGE_BOT_RESPONSE_MODIFIER', default: 0.1 }
+  ]
+};

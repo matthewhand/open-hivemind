@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import debug from 'debug';
+import type { ConfigModuleMeta } from './ConfigSpec';
 
 /**
  * Discord Configuration Module
@@ -211,3 +212,27 @@ try {
 }
 
 export default discordConfig;
+
+export const configMeta: ConfigModuleMeta = {
+  module: 'discordConfig',
+  keys: [
+    { key: 'DISCORD_BOT_TOKEN', group: 'discord', level: 'basic', env: 'DISCORD_BOT_TOKEN', doc: 'Bot token(s)' },
+    { key: 'DISCORD_CHANNEL_ID', group: 'discord', level: 'basic', env: 'DISCORD_CHANNEL_ID', doc: 'Default channel id' },
+    { key: 'DISCORD_DEFAULT_CHANNEL_ID', group: 'discord', level: 'advanced', env: 'DISCORD_DEFAULT_CHANNEL_ID', doc: 'Default outbound channel id' },
+    { key: 'DISCORD_MESSAGE_HISTORY_LIMIT', group: 'discord', level: 'advanced', env: 'DISCORD_MESSAGE_HISTORY_LIMIT', doc: 'History fetch cap', default: 10 },
+    { key: 'DISCORD_CLIENT_ID', group: 'discord', level: 'advanced', env: 'DISCORD_CLIENT_ID' },
+    { key: 'DISCORD_GUILD_ID', group: 'discord', level: 'advanced', env: 'DISCORD_GUILD_ID' },
+    { key: 'DISCORD_AUDIO_FILE_PATH', group: 'discord', level: 'advanced', env: 'DISCORD_AUDIO_FILE_PATH', default: 'audio.wav' },
+    { key: 'DISCORD_WELCOME_MESSAGE', group: 'discord', level: 'advanced', env: 'DISCORD_WELCOME_MESSAGE', default: 'Welcome to the server!' },
+    { key: 'DISCORD_CHANNEL_BONUSES', group: 'discord', level: 'advanced', env: 'DISCORD_CHANNEL_BONUSES', doc: 'Per-channel bonuses' },
+    { key: 'DISCORD_UNSOLICITED_CHANCE_MODIFIER', group: 'discord', level: 'advanced', env: 'DISCORD_UNSOLICITED_CHANCE_MODIFIER', default: 1.0 },
+    { key: 'DISCORD_VOICE_CHANNEL_ID', group: 'discord', level: 'advanced', env: 'DISCORD_VOICE_CHANNEL_ID' },
+    { key: 'DISCORD_MAX_MESSAGE_LENGTH', group: 'discord', level: 'advanced', env: 'DISCORD_MAX_MESSAGE_LENGTH', default: 2000 },
+    { key: 'DISCORD_INTER_PART_DELAY_MS', group: 'discord', level: 'advanced', env: 'DISCORD_INTER_PART_DELAY_MS', default: 1000 },
+    { key: 'DISCORD_TYPING_DELAY_MAX_MS', group: 'discord', level: 'advanced', env: 'DISCORD_TYPING_DELAY_MAX_MS', default: 5000 },
+    { key: 'DISCORD_PRIORITY_CHANNEL', group: 'discord', level: 'advanced', env: 'DISCORD_PRIORITY_CHANNEL' },
+    { key: 'DISCORD_PRIORITY_CHANNEL_BONUS', group: 'discord', level: 'advanced', env: 'DISCORD_PRIORITY_CHANNEL_BONUS', default: 1.1 },
+    { key: 'DISCORD_LOGGING_ENABLED', group: 'discord', level: 'advanced', env: 'DISCORD_LOGGING_ENABLED', default: false },
+    { key: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS', group: 'discord', level: 'advanced', env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS', default: 0 }
+  ]
+};

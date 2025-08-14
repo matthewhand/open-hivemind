@@ -1,5 +1,6 @@
 import convict from 'convict';
 import path from 'path';
+import type { ConfigModuleMeta } from './ConfigSpec';
 
 const openaiConfig = convict({
   OPENAI_API_KEY: {
@@ -116,3 +117,25 @@ try {
 }
 
 export default openaiConfig;
+
+export const configMeta: ConfigModuleMeta = {
+  module: 'openaiConfig',
+  keys: [
+    { key: 'OPENAI_API_KEY', group: 'llm', level: 'basic', doc: 'OpenAI API key', env: 'OPENAI_API_KEY', sensitive: true },
+    { key: 'OPENAI_MODEL', group: 'llm', level: 'advanced', doc: 'Model name', env: 'OPENAI_MODEL', default: 'gpt-3.5-turbo' },
+    { key: 'OPENAI_BASE_URL', group: 'llm', level: 'advanced', doc: 'Base URL', env: 'OPENAI_BASE_URL', default: 'https://api.openai.com/v1' },
+    { key: 'OPENAI_TIMEOUT', group: 'llm', level: 'advanced', doc: 'Request timeout (ms)', env: 'OPENAI_TIMEOUT', default: 10000 },
+    { key: 'OPENAI_TEMPERATURE', group: 'llm', level: 'advanced', doc: 'Sampling temperature', env: 'OPENAI_TEMPERATURE', default: 0.7 },
+    { key: 'OPENAI_MAX_TOKENS', group: 'llm', level: 'advanced', doc: 'Max tokens', env: 'OPENAI_MAX_TOKENS', default: 150 },
+    { key: 'OPENAI_FREQUENCY_PENALTY', group: 'llm', level: 'advanced', env: 'OPENAI_FREQUENCY_PENALTY', default: 0.1 },
+    { key: 'OPENAI_PRESENCE_PENALTY', group: 'llm', level: 'advanced', env: 'OPENAI_PRESENCE_PENALTY', default: 0.05 },
+    { key: 'OPENAI_STOP', group: 'llm', level: 'advanced', env: 'OPENAI_STOP', default: [] },
+    { key: 'OPENAI_TOP_P', group: 'llm', level: 'advanced', env: 'OPENAI_TOP_P', default: 1.0 },
+    { key: 'OPENAI_SYSTEM_PROMPT', group: 'llm', level: 'advanced', env: 'OPENAI_SYSTEM_PROMPT', default: 'Greetings, human...' },
+    { key: 'OPENAI_RESPONSE_MAX_TOKENS', group: 'llm', level: 'advanced', env: 'OPENAI_RESPONSE_MAX_TOKENS', default: 100 },
+    { key: 'OPENAI_MAX_RETRIES', group: 'llm', level: 'advanced', env: 'OPENAI_MAX_RETRIES', default: 3 },
+    { key: 'OPENAI_FINISH_REASON_RETRY', group: 'llm', level: 'advanced', env: 'OPENAI_FINISH_REASON_RETRY', default: 'stop' },
+    { key: 'OPENAI_VOICE', group: 'llm', level: 'advanced', doc: 'Voice for TTS', env: 'OPENAI_VOICE', default: 'nova' },
+    { key: 'OPENAI_ORGANIZATION', group: 'llm', level: 'advanced', env: 'OPENAI_ORGANIZATION' }
+  ]
+};

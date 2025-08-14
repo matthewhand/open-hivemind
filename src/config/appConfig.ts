@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import Debug from 'debug';
+import type { ConfigModuleMeta } from './ConfigSpec';
 
 const debug = Debug('app:appConfig');
 
@@ -37,3 +38,12 @@ try {
 
 export default appConfig;
 
+// Config metadata for docs and tooling
+export const configMeta: ConfigModuleMeta = {
+  module: 'appConfig',
+  keys: [
+    { key: 'HTTP_ENABLED', group: 'app', level: 'basic', doc: 'Enable HTTP server', env: 'HTTP_ENABLED', default: true },
+    { key: 'PORT', group: 'app', level: 'basic', doc: 'Port', env: 'PORT', default: 5005 },
+    { key: 'METRICS_ROUTE_ENABLED', group: 'app', level: 'advanced', doc: 'Expose /metrics', env: 'METRICS_ROUTE_ENABLED', default: false }
+  ]
+};

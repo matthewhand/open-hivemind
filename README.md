@@ -105,6 +105,8 @@ Open-Hivemind continues to evolve. This documentation provides a deep dive into 
 For further technical details, refer to the Development Guide and User Guide sections of this repository.
 
 
-## Advanced Settings
+## Configuration
 
-Looking for channel routing, multi-bot, or provider-specific toggles? See docs/advanced-settings.md for optional and power-user configuration that you can safely ignore when getting started.
+- Quick start variables: see docs/basic-settings.md
+- Power-user guide: see docs/advanced-settings.md
+- Exhaustive reference (generated): see docs/config-reference.md
