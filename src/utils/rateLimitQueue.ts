@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import slackTuning from '@config/slackTuning';
 
 const debug = Debug('app:utils:rateLimitQueue');
 
@@ -82,15 +83,14 @@ export class RateLimitQueue {
 // default factory using environment variables but safe defaults for tests
 export function createDefaultSlackSendQueue(): RateLimitQueue | null {
   try {
-    const enabled = process.env.SLACK_SEND_QUEUE_ENABLED;
-    if (enabled && enabled.toLowerCase() === 'false') return null; // explicit disable
+    const enabled = Boolean(slackTuning.get('SLACK_SEND_QUEUE_ENABLED'));
+    if (!enabled) return null;
 
-    const tokens = Number(process.env.SLACK_SEND_TOKENS_PER_INTERVAL ?? 20);
-    const intervalMs = Number(process.env.SLACK_SEND_INTERVAL_MS ?? 1000);
-    const maxConc = Number(process.env.SLACK_SEND_MAX_CONCURRENCY ?? 2);
-    const maxQueue = process.env.SLACK_SEND_MAX_QUEUE_SIZE !== undefined
-      ? Number(process.env.SLACK_SEND_MAX_QUEUE_SIZE)
-      : undefined;
+    const tokens = Number(slackTuning.get('SLACK_SEND_TOKENS_PER_INTERVAL'));
+    const intervalMs = Number(slackTuning.get('SLACK_SEND_INTERVAL_MS'));
+    const maxConc = Number(slackTuning.get('SLACK_SEND_MAX_CONCURRENCY'));
+    const maxQueueRaw = Number(slackTuning.get('SLACK_SEND_MAX_QUEUE_SIZE'));
+    const maxQueue = maxQueueRaw > 0 ? maxQueueRaw : undefined;
 
     if (tokens <= 0 || intervalMs <= 0) return null; // invalid config disables queue
 

@@ -4,6 +4,7 @@ import SlackMessage from '../SlackMessage';
 import Debug from 'debug';
 import { retry, defaultShouldRetry } from '@src/utils/retry';
 import { createDefaultSlackSendQueue } from '@src/utils/rateLimitQueue';
+import slackTuning from '@config/slackTuning';
 import { SlackBotManager } from '../SlackBotManager';
 
 const debug = Debug('app:SlackMessageIO');
@@ -95,9 +96,9 @@ export class SlackMessageIO implements ISlackMessageIO {
         return result;
       };
 
-      const retries = Number(process.env.SLACK_SEND_RETRIES ?? 3);
-      const minDelayMs = Number(process.env.SLACK_SEND_MIN_DELAY_MS ?? 300);
-      const maxDelayMs = Number(process.env.SLACK_SEND_MAX_DELAY_MS ?? 5000);
+      const retries = Number(slackTuning.get('SLACK_SEND_RETRIES'));
+      const minDelayMs = Number(slackTuning.get('SLACK_SEND_MIN_DELAY_MS'));
+      const maxDelayMs = Number(slackTuning.get('SLACK_SEND_MAX_DELAY_MS'));
 
       const callWithRetry = () => retry(doPost, {
         retries,

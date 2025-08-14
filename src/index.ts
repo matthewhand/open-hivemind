@@ -90,9 +90,10 @@ async function main() {
         }
     }
 
-    const httpEnabled = process.env.HTTP_ENABLED !== 'false';
+    const appConfig = require('@config/appConfig').default || require('@config/appConfig');
+    const httpEnabled = Boolean(appConfig.get('HTTP_ENABLED'));
     if (httpEnabled) {
-        const port = process.env.PORT || 5005;
+        const port = appConfig.get('PORT') || 5005;
         app.listen(port, () => {
             console.log('Server is listening on port ' + port);
         });
