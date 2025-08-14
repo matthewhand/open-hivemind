@@ -1,0 +1,11 @@
+{
+  "group": "openwebui",
+  "keys": {
+    "OPEN_WEBUI_API_URL": { "level": "advanced", "doc": "API URL" },
+    "OPEN_WEBUI_USERNAME": { "level": "advanced" },
+    "OPEN_WEBUI_PASSWORD": { "level": "advanced" },
+    "OPEN_WEBUI_KNOWLEDGE_FILE": { "level": "advanced" },
+    "OPEN_WEBUI_MODEL": { "level": "advanced" }
+  }
+}
+
