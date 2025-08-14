@@ -163,7 +163,13 @@ export class MattermostService implements IMessengerService {
     }
   }
 
-  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+  public async sendMessageToChannel(
+    channelId: string,
+    text: string,
+    senderName?: string,
+    threadId?: string,
+    files?: Array<{ filename: string; content: Buffer | Uint8Array | string; mime?: string }>
+  ): Promise<string> {
     const botName = senderName || Array.from(this.clients.keys())[0];
     const client = this.clients.get(botName);
     
@@ -184,7 +190,16 @@ export class MattermostService implements IMessengerService {
         }
       } catch {}
 
-      const id = await client.createPost(selectedChannelId, text, threadId);
+      let fileIds: string[] | undefined = undefined;
+      if (files && files.length) {
+        try {
+          fileIds = await (client as any).uploadFiles?.(selectedChannelId, files);
+        } catch (e) {
+          log(`File upload failed; proceeding without attachments: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+
+      const id = await client.createPost(selectedChannelId, text, threadId, fileIds);
       
       log(`[${botName}] Sent message to channel ${selectedChannelId}${threadId ? ` (thread ${threadId})` : ''}`);
       return id || Date.now().toString();

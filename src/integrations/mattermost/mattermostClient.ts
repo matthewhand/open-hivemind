@@ -17,6 +17,7 @@ interface MattermostClientOptions {
 interface PostMessageOptions {
   channel: string;
   text: string;
+  file_ids?: string[];
 }
 
 export default class MattermostClient {
@@ -110,6 +111,7 @@ export default class MattermostClient {
       await this.http.post('/api/v4/posts', {
         channel_id: options.channel,
         message: options.text,
+        file_ids: options.file_ids,
       });
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || String(e);
@@ -172,10 +174,11 @@ export default class MattermostClient {
     }
   }
 
-  async createPost(channelId: string, message: string, rootId?: string): Promise<string> {
+  async createPost(channelId: string, message: string, rootId?: string, fileIds?: string[]): Promise<string> {
     try {
       const payload: any = { channel_id: channelId, message };
       if (rootId) payload.root_id = rootId;
+      if (Array.isArray(fileIds) && fileIds.length > 0) payload.file_ids = fileIds;
       const res = await this.http.post('/api/v4/posts', payload);
       return String(res.data?.id || '');
     } catch (e: any) {
@@ -205,6 +208,26 @@ export default class MattermostClient {
     } catch {
       // swallow errors; typing is best-effort
       return;
+    }
+  }
+
+  async uploadFiles(channelId: string, files: Array<{ filename: string; content: Buffer | Uint8Array | string; mime?: string }>): Promise<string[]> {
+    const FormData = require('form-data');
+    const form = new FormData();
+    form.append('channel_id', channelId);
+    for (const file of files) {
+      const opts: any = {};
+      if (file.mime) opts.contentType = file.mime;
+      form.append('files', file.content, { filename: file.filename, ...opts });
+    }
+    const headers = { ...(form.getHeaders ? form.getHeaders() : {}), Authorization: `Bearer ${this.token}` };
+    try {
+      const res = await this.http.post('/api/v4/files', form, { headers });
+      const ids: string[] = (res.data?.file_infos || []).map((fi: any) => String(fi?.id)).filter(Boolean);
+      return ids;
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || String(e);
+      throw new Error(`Mattermost uploadFiles failed: ${msg}`);
     }
   }
 }
