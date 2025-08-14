@@ -15,7 +15,8 @@
     "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand",
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
-    "ncu": "ncu"
+    "ncu": "ncu",
+    "docs:config": "node scripts/generate-config-docs.js"
   },
   "_moduleAliases": {
     "@src": "dist/src",

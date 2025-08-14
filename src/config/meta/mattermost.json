@@ -1,0 +1,11 @@
+{
+  "group": "mattermost",
+  "keys": {
+    "MATTERMOST_SERVER_URL": { "level": "basic", "doc": "Mattermost server endpoint" },
+    "MATTERMOST_TOKEN": { "level": "basic", "doc": "Personal access token" },
+    "MATTERMOST_CHANNEL": { "level": "basic", "doc": "Default channel id" },
+    "MATTERMOST_WS_ENABLED": { "level": "advanced", "doc": "Enable realtime WebSocket" },
+    "MATTERMOST_TYPING_ENABLED": { "level": "advanced", "doc": "Emit typing events over WS" }
+  }
+}
+

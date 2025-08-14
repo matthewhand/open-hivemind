@@ -1,0 +1,17 @@
+{
+  "group": "message",
+  "keys": {
+    "MESSAGE_ONLY_WHEN_SPOKEN_TO": { "level": "basic", "doc": "Reply only on wakeword/mention" },
+    "MESSAGE_WAKEWORDS": { "level": "basic", "doc": "Comma-separated triggers" },
+    "MESSAGE_CHANNEL_ROUTER_ENABLED": { "level": "advanced", "doc": "Enable ChannelRouter-based selection" },
+    "CHANNEL_BONUSES": { "level": "advanced", "doc": "Per-channel bonus (CSV/JSON)" },
+    "CHANNEL_PRIORITIES": { "level": "advanced", "doc": "Per-channel priority (CSV/JSON)" },
+    "MESSAGE_RATE_LIMIT_PER_CHANNEL": { "level": "advanced", "doc": "Messages per minute per channel" },
+    "MESSAGE_MIN_DELAY": { "level": "advanced", "doc": "Minimum delay between messages (ms)" },
+    "MESSAGE_MAX_DELAY": { "level": "advanced", "doc": "Maximum delay between messages (ms)" },
+    "MESSAGE_MIN_INTERVAL_MS": { "level": "advanced", "doc": "Global minimum interval (ms)" },
+    "MESSAGE_INTERROBANG_BONUS": { "level": "advanced" },
+    "MESSAGE_BOT_RESPONSE_MODIFIER": { "level": "advanced" }
+  }
+}
+

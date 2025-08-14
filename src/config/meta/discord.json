@@ -1,0 +1,13 @@
+{
+  "group": "discord",
+  "keys": {
+    "DISCORD_BOT_TOKEN": { "level": "basic", "doc": "Bot token" },
+    "DISCORD_CHANNEL_ID": { "level": "basic", "doc": "Default channel id" },
+    "DISCORD_MESSAGE_HISTORY_LIMIT": { "level": "advanced", "doc": "History fetch cap" },
+    "DISCORD_SEND_FAILURE_THRESHOLD": { "level": "advanced", "doc": "Circuit breaker threshold (send)" },
+    "DISCORD_SEND_RESET_TIMEOUT_MS": { "level": "advanced", "doc": "Breaker reset timeout (send)" },
+    "DISCORD_FETCH_FAILURE_THRESHOLD": { "level": "advanced", "doc": "Breaker threshold (fetch)" },
+    "DISCORD_FETCH_RESET_TIMEOUT_MS": { "level": "advanced", "doc": "Breaker reset timeout (fetch)" }
+  }
+}
+

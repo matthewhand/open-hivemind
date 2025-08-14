@@ -1,0 +1,12 @@
+{
+  "group": "llm",
+  "keys": {
+    "OPENAI_API_KEY": { "level": "basic", "doc": "API key" },
+    "OPENAI_MODEL": { "level": "advanced", "doc": "Model name" },
+    "OPENAI_BASE_URL": { "level": "advanced", "doc": "Custom base URL" },
+    "OPENAI_RETRIES": { "level": "advanced", "doc": "Retry attempts" },
+    "OPENAI_MIN_DELAY_MS": { "level": "advanced", "doc": "Retry backoff min delay" },
+    "OPENAI_MAX_DELAY_MS": { "level": "advanced", "doc": "Retry backoff max delay" }
+  }
+}
+
