@@ -25,6 +25,8 @@ export default class MattermostClient {
   private emitter: EventEmitter;
   private connected: boolean = false;
   private http: AxiosInstance;
+  private ws: any;
+  private wsPing?: NodeJS.Timeout;
 
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl;
@@ -40,6 +42,57 @@ export default class MattermostClient {
     // Simulate connection lifecycle for tests / local dev
     this.connected = true;
     debug(`Connected (simulated) to Mattermost at ${this.serverUrl}`);
+    // Try to establish a real websocket if ws is available at runtime
+    try {
+      // Lazy-require ws to avoid hard dependency in tests
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const WS = require('ws');
+      const url = (this.serverUrl?.replace(/\/$/, '') || '') + '/api/v4/websocket';
+      const headers: Record<string, string> = {};
+      if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+      this.ws = new WS(url, undefined, { headers });
+
+      this.ws.on('open', () => {
+        debug('mattermost websocket open');
+        // Keepalive ping to reduce idle disconnects
+        this.wsPing = setInterval(() => {
+          try { this.ws?.ping?.(); } catch {}
+        }, 25000);
+      });
+
+      this.ws.on('message', (data: any) => {
+        try {
+          const text = typeof data === 'string' ? data : data?.toString?.() ?? '';
+          const evt = JSON.parse(text);
+          const type = evt?.event;
+          const eData = evt?.data || {};
+          const postStr = eData.post;
+          let post: any = undefined;
+          if (typeof postStr === 'string') {
+            try { post = JSON.parse(postStr); } catch { post = undefined; }
+          }
+          if (!post) return;
+          if (type === 'posted') this.emitter.emit('posted', post);
+          else if (type === 'post_edited') this.emitter.emit('post_edited', post);
+          else if (type === 'post_deleted') this.emitter.emit('post_deleted', post);
+        } catch (e) {
+          debug('ws message parse error', e);
+        }
+      });
+
+      this.ws.on('error', (err: any) => {
+        debug('mattermost websocket error', err?.message || err);
+      });
+
+      this.ws.on('close', () => {
+        debug('mattermost websocket closed');
+        if (this.wsPing) { clearInterval(this.wsPing); this.wsPing = undefined; }
+        this.ws = undefined;
+      });
+    } catch (_e) {
+      // ws module not present or cannot connect; continue in simulated mode
+      debug('ws module unavailable or connection failed; continuing without realtime');
+    }
     return;
   }
 
@@ -114,5 +167,16 @@ export default class MattermostClient {
       const msg = e?.response?.data?.message || e?.message || String(e);
       throw new Error(`Mattermost createPost failed: ${msg}`);
     }
+  }
+
+  async disconnect(): Promise<void> {
+    try {
+      if (this.wsPing) { clearInterval(this.wsPing); this.wsPing = undefined; }
+      if (this.ws && this.ws.readyState === this.ws.OPEN) {
+        this.ws.close();
+      }
+      this.ws = undefined;
+    } catch {}
+    this.connected = false;
   }
 }

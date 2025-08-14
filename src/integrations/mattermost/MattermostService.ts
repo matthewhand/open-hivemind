@@ -230,6 +230,9 @@ export class MattermostService implements IMessengerService {
 
   public async shutdown(): Promise<void> {
     log('Shutting down MattermostService...');
+    for (const [, client] of this.clients) {
+      try { await (client as any).disconnect?.(); } catch {}
+    }
     MattermostService.instance = undefined;
   }
 
