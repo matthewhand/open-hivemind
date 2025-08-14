@@ -10,19 +10,25 @@ const appConfig = convict({
     doc: 'Enable HTTP server',
     format: Boolean,
     default: true,
-    env: 'HTTP_ENABLED'
+    env: 'HTTP_ENABLED',
+    level: 'basic',
+    group: 'app'
   },
   PORT: {
     doc: 'HTTP port',
     format: 'port',
     default: 5005,
-    env: 'PORT'
+    env: 'PORT',
+    level: 'basic',
+    group: 'app'
   },
   METRICS_ROUTE_ENABLED: {
     doc: 'Enable /metrics endpoint',
     format: Boolean,
     default: false,
-    env: 'METRICS_ROUTE_ENABLED'
+    env: 'METRICS_ROUTE_ENABLED',
+    level: 'advanced',
+    group: 'app'
   }
 });
 

@@ -6,31 +6,41 @@ const webhookConfig = convict({
     doc: 'Whether to enable the webhook service',
     format: Boolean,
     default: false,
-    env: 'WEBHOOK_ENABLED'
+    env: 'WEBHOOK_ENABLED',
+    level: 'advanced',
+    group: 'webhook'
   },
   WEBHOOK_URL: {
     doc: 'Webhook URL for sending messages',
     format: String,
     default: '',
-    env: 'WEBHOOK_URL'
+    env: 'WEBHOOK_URL',
+    level: 'advanced',
+    group: 'webhook'
   },
   WEBHOOK_TOKEN: {
     doc: 'Token used to verify incoming webhook requests',
     format: String,
     default: '',
-    env: 'WEBHOOK_TOKEN'
+    env: 'WEBHOOK_TOKEN',
+    level: 'advanced',
+    group: 'webhook'
   },
   WEBHOOK_IP_WHITELIST: {
     doc: 'Comma-separated list of IPs allowed to send webhook requests',
     format: String,
     default: '',
-    env: 'WEBHOOK_IP_WHITELIST'
+    env: 'WEBHOOK_IP_WHITELIST',
+    level: 'advanced',
+    group: 'webhook'
   },
   WEBHOOK_PORT: {
     doc: 'The port to run the webhook on',
     format: 'port',
     default: 80,
-    env: 'WEBHOOK_PORT'
+    env: 'WEBHOOK_PORT',
+    level: 'advanced',
+    group: 'webhook'
   }
 });
 

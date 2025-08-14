@@ -6,25 +6,41 @@ const mattermostConfig = convict({
     doc: 'Mattermost server endpoint',
     format: String,
     default: '',
-    env: 'MATTERMOST_SERVER_URL'
+    env: 'MATTERMOST_SERVER_URL',
+    level: 'basic',
+    group: 'mattermost'
   },
   MATTERMOST_TOKEN: {
     doc: 'Mattermost authentication token',
     format: String,
     default: '',
-    env: 'MATTERMOST_TOKEN'
+    env: 'MATTERMOST_TOKEN',
+    level: 'basic',
+    group: 'mattermost'
   },
   MATTERMOST_CHANNEL: {
     doc: 'Default Mattermost channel for messages',
     format: String,
     default: '',
-    env: 'MATTERMOST_CHANNEL'
+    env: 'MATTERMOST_CHANNEL',
+    level: 'basic',
+    group: 'mattermost'
   },
   MATTERMOST_WS_ENABLED: {
     doc: 'Enable Mattermost WebSocket for realtime events',
     format: Boolean,
     default: true,
-    env: 'MATTERMOST_WS_ENABLED'
+    env: 'MATTERMOST_WS_ENABLED',
+    level: 'advanced',
+    group: 'mattermost'
+  },
+  MATTERMOST_TYPING_ENABLED: {
+    doc: 'Emit typing indicators over WS',
+    format: Boolean,
+    default: false,
+    env: 'MATTERMOST_TYPING_ENABLED',
+    level: 'advanced',
+    group: 'mattermost'
   }
 });
 

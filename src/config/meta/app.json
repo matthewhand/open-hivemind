@@ -1,9 +1,0 @@
-{
-  "group": "app",
-  "keys": {
-    "HTTP_ENABLED": { "level": "basic", "doc": "Enable HTTP server" },
-    "PORT": { "level": "basic", "doc": "Port" },
-    "METRICS_ROUTE_ENABLED": { "level": "advanced", "doc": "Expose /metrics" }
-  }
-}
-

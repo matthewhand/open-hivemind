@@ -1,40 +1,42 @@
 const fs = require('fs');
 const path = require('path');
 
-const metaDir = path.join(__dirname, '..', 'src', 'config', 'meta');
 const outPath = path.join(__dirname, '..', 'docs', 'config-reference.md');
 
-// Try to enable TS requires for module-level meta
+// Try to enable TS requires for config modules
 try {
   require('ts-node').register({ transpileOnly: true });
 } catch {
   // ts-node not available; will rely on JSON metas
 }
 
-function loadJsonMetas() {
-  if (!fs.existsSync(metaDir)) return [];
-  const files = fs.readdirSync(metaDir).filter(f => f.endsWith('.json'));
-  return files.map(f => ({ name: f.replace(/\.json$/, ''), data: JSON.parse(fs.readFileSync(path.join(metaDir, f), 'utf-8')) }));
-}
-
 function loadModuleMetas() {
   const modules = [
-    { path: '../src/config/messageConfig.ts', exportName: 'configMeta' },
-    { path: '../src/config/appConfig.ts', exportName: 'configMeta' },
+    { path: '../src/config/messageConfig.ts', name: 'message' },
+    { path: '../src/config/appConfig.ts', name: 'app' },
+    { path: '../src/config/openaiConfig.ts', name: 'openai' },
+    { path: '../src/config/discordConfig.ts', name: 'discord' },
+    { path: '../src/config/mattermostConfig.ts', name: 'mattermost' },
+    { path: '../src/config/webhookConfig.ts', name: 'webhook' },
+    { path: '../src/config/flowiseConfig.ts', name: 'flowise' },
+    { path: '../src/config/openWebUIConfig.ts', name: 'openwebui' },
+    { path: '../src/config/slackConfig.ts', name: 'slack' },
+    { path: '../src/config/slackTuning.ts', name: 'slack' },
   ];
   const out = [];
   for (const m of modules) {
     try {
       const mod = require(m.path);
-      const meta = mod[m.exportName];
-      if (meta && meta.keys) {
-        const group = meta.module || 'unknown';
-        const keys = {};
-        for (const k of meta.keys) {
-          keys[k.key] = { level: k.level, doc: k.doc };
-        }
-        out.push({ name: group, data: { group, keys } });
+      const cfg = mod.default || mod;
+      if (!cfg || !cfg.getSchema) continue;
+      const schema = cfg.getSchema().properties || {};
+      const group = m.name;
+      const keys = [];
+      for (const [key, props] of Object.entries(schema)) {
+        const p = props || {};
+        keys.push({ key, level: p.level || 'advanced', doc: p.doc || '', env: p.env, default: p.default, group: p.group || group });
       }
+      out.push({ name: group, data: { group, keys } });
     } catch (e) {
       // ignore if module not loadable
     }
@@ -97,7 +99,7 @@ function render(index) {
 }
 
 function main() {
-  const metas = [...loadModuleMetas(), ...loadJsonMetas()];
+  const metas = [...loadModuleMetas()];
   const index = buildIndex(metas);
   const md = render(index);
   fs.writeFileSync(outPath, md);

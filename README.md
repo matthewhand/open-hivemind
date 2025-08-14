@@ -107,6 +107,7 @@ For further technical details, refer to the Development Guide and User Guide sec
 
 ## Configuration
 
-- Quick start variables: see docs/basic-settings.md
-- Power-user guide: see docs/advanced-settings.md
-- Exhaustive reference (generated): see docs/config-reference.md
+- Quick start variables: see `docs/basic-settings.md`
+- Power-user guide: see `docs/advanced-settings.md`
+- Exhaustive reference (generated): see `docs/config-reference.md`
+- How it works: see `docs/config-system.md` (Convict schemas are the single source of truth; keys are tagged as basic/advanced for docs and UX)

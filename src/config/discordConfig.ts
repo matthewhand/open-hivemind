@@ -89,19 +89,25 @@ const discordConfig = convict({
     doc: 'Comma-separated Discord bot tokens',
     format: String,
     default: '',
-    env: 'DISCORD_BOT_TOKEN'
+    env: 'DISCORD_BOT_TOKEN',
+    level: 'basic',
+    group: 'discord'
   },
   DISCORD_CLIENT_ID: {
     doc: 'Discord client ID',
     format: String,
     default: '',
-    env: 'DISCORD_CLIENT_ID'
+    env: 'DISCORD_CLIENT_ID',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_GUILD_ID: {
     doc: 'Discord guild ID',
     format: String,
     default: '',
-    env: 'DISCORD_GUILD_ID'
+    env: 'DISCORD_GUILD_ID',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_AUDIO_FILE_PATH: {
     doc: 'Path to audio files for Discord commands',
@@ -119,25 +125,33 @@ const discordConfig = convict({
     doc: 'Number of messages to keep in history',
     format: 'int',
     default: 10,
-    env: 'DISCORD_MESSAGE_HISTORY_LIMIT'
+    env: 'DISCORD_MESSAGE_HISTORY_LIMIT',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_CHANNEL_ID: {
     doc: 'Default channel ID',
     format: String,
     default: '',
-    env: 'DISCORD_CHANNEL_ID'
+    env: 'DISCORD_CHANNEL_ID',
+    level: 'basic',
+    group: 'discord'
   },
   DISCORD_DEFAULT_CHANNEL_ID: {
     doc: 'Default channel ID for outgoing messages',
     format: String,
     default: '',
-    env: 'DISCORD_DEFAULT_CHANNEL_ID'
+    env: 'DISCORD_DEFAULT_CHANNEL_ID',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_CHANNEL_BONUSES: {
     doc: 'Channel-specific bonuses (e.g., "channelId:bonus")',
     format: 'channel-bonuses',
     default: {},
-    env: 'DISCORD_CHANNEL_BONUSES'
+    env: 'DISCORD_CHANNEL_BONUSES',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_UNSOLICITED_CHANCE_MODIFIER: {
     doc: 'Global unsolicited chance modifier',
@@ -149,25 +163,33 @@ const discordConfig = convict({
     doc: 'Voice channel ID for interactions',
     format: String,
     default: '',
-    env: 'DISCORD_VOICE_CHANNEL_ID'
+    env: 'DISCORD_VOICE_CHANNEL_ID',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_MAX_MESSAGE_LENGTH: {
     doc: 'Max message length',
     format: 'int',
     default: 2000,
-    env: 'DISCORD_MAX_MESSAGE_LENGTH'
+    env: 'DISCORD_MAX_MESSAGE_LENGTH',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_INTER_PART_DELAY_MS: {
     doc: 'Delay between multipart messages (ms)',
     format: 'int',
     default: 1000,
-    env: 'DISCORD_INTER_PART_DELAY_MS'
+    env: 'DISCORD_INTER_PART_DELAY_MS',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_TYPING_DELAY_MAX_MS: {
     doc: 'Max typing delay (ms)',
     format: 'int',
     default: 5000,
-    env: 'DISCORD_TYPING_DELAY_MAX_MS'
+    env: 'DISCORD_TYPING_DELAY_MAX_MS',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_PRIORITY_CHANNEL: {
     doc: 'Priority channel ID',
@@ -179,19 +201,25 @@ const discordConfig = convict({
     doc: 'Bonus chance for priority channel',
     format: Number,
     default: 1.1,
-    env: 'DISCORD_PRIORITY_CHANNEL_BONUS'
+    env: 'DISCORD_PRIORITY_CHANNEL_BONUS',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_LOGGING_ENABLED: {
     doc: 'Enable logging to files',
     format: Boolean,
     default: false,
-    env: 'DISCORD_LOGGING_ENABLED'
+    env: 'DISCORD_LOGGING_ENABLED',
+    level: 'advanced',
+    group: 'discord'
   },
   DISCORD_MESSAGE_PROCESSING_DELAY_MS: {
     doc: 'Delay for processing messages (ms)',
     format: 'int',
     default: 0,
-    env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS'
+    env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS',
+    level: 'advanced',
+    group: 'discord'
   }
 });
 

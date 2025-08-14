@@ -217,19 +217,25 @@ const messageConfig = convict({
     doc: 'Rate limit per channel (messages per minute)',
     format: 'int',
     default: 5,
-    env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL'
+    env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_MIN_DELAY: {
     doc: 'Minimum delay between messages (ms)',
     format: 'int',
     default: 1000,
-    env: 'MESSAGE_MIN_DELAY'
+    env: 'MESSAGE_MIN_DELAY',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_MAX_DELAY: {
     doc: 'Maximum delay between messages (ms)',
     format: 'int',
     default: 10000,
-    env: 'MESSAGE_MAX_DELAY'
+    env: 'MESSAGE_MAX_DELAY',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
@@ -241,13 +247,17 @@ const messageConfig = convict({
     doc: 'Wakewords to trigger bot responses',
     format: Array,
     default: ['!help', '!ping'],
-    env: 'MESSAGE_WAKEWORDS'
+    env: 'MESSAGE_WAKEWORDS',
+    level: 'basic',
+    group: 'message'
   },
   MESSAGE_ONLY_WHEN_SPOKEN_TO: {
     doc: 'Only respond when spoken to directly',
     format: Boolean,
     default: true,
-    env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO'
+    env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO',
+    level: 'basic',
+    group: 'message'
   },
   MESSAGE_INTERACTIVE_FOLLOWUPS: {
     doc: 'Allow interactive follow-up questions',
@@ -345,19 +355,25 @@ const messageConfig = convict({
     doc: 'Enable ChannelRouter-based outbound channel selection',
     format: Boolean,
     default: false,
-    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
+    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED',
+    level: 'advanced',
+    group: 'routing'
   },
   CHANNEL_BONUSES: {
     doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
     format: 'channel-bonuses',
     default: {},
-    env: 'CHANNEL_BONUSES'
+    env: 'CHANNEL_BONUSES',
+    level: 'advanced',
+    group: 'routing'
   },
   CHANNEL_PRIORITIES: {
     doc: 'Channel priorities map (CSV "id:int,..." or JSON object). Integer, lower means higher priority. Default 0 when missing.',
     format: 'channel-priorities',
     default: {},
-    env: 'CHANNEL_PRIORITIES'
+    env: 'CHANNEL_PRIORITIES',
+    level: 'advanced',
+    group: 'routing'
   }
 });
 

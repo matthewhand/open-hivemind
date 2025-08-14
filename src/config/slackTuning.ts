@@ -9,49 +9,65 @@ const slackTuning = convict({
     doc: 'Enable Slack send queue (rate limiting)',
     format: Boolean,
     default: true,
-    env: 'SLACK_SEND_QUEUE_ENABLED'
+    env: 'SLACK_SEND_QUEUE_ENABLED',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_TOKENS_PER_INTERVAL: {
     doc: 'Tokens per interval for Slack queue',
     format: 'int',
     default: 20,
-    env: 'SLACK_SEND_TOKENS_PER_INTERVAL'
+    env: 'SLACK_SEND_TOKENS_PER_INTERVAL',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_INTERVAL_MS: {
     doc: 'Interval window (ms) for Slack queue',
     format: 'int',
     default: 1000,
-    env: 'SLACK_SEND_INTERVAL_MS'
+    env: 'SLACK_SEND_INTERVAL_MS',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_MAX_CONCURRENCY: {
     doc: 'Max parallel sends',
     format: 'int',
     default: 2,
-    env: 'SLACK_SEND_MAX_CONCURRENCY'
+    env: 'SLACK_SEND_MAX_CONCURRENCY',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_MAX_QUEUE_SIZE: {
     doc: 'Max queued tasks before rejecting (unset = unlimited)',
     format: 'int',
     default: 0,
-    env: 'SLACK_SEND_MAX_QUEUE_SIZE'
+    env: 'SLACK_SEND_MAX_QUEUE_SIZE',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_RETRIES: {
     doc: 'Send retries',
     format: 'int',
     default: 3,
-    env: 'SLACK_SEND_RETRIES'
+    env: 'SLACK_SEND_RETRIES',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_MIN_DELAY_MS: {
     doc: 'Min delay for send retry backoff',
     format: 'int',
     default: 300,
-    env: 'SLACK_SEND_MIN_DELAY_MS'
+    env: 'SLACK_SEND_MIN_DELAY_MS',
+    level: 'advanced',
+    group: 'slack'
   },
   SLACK_SEND_MAX_DELAY_MS: {
     doc: 'Max delay for send retry backoff',
     format: 'int',
     default: 5000,
-    env: 'SLACK_SEND_MAX_DELAY_MS'
+    env: 'SLACK_SEND_MAX_DELAY_MS',
+    level: 'advanced',
+    group: 'slack'
   }
 });
 
@@ -66,4 +82,3 @@ try {
 }
 
 export default slackTuning;
-
