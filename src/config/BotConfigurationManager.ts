@@ -353,6 +353,32 @@ export class BotConfigurationManager {
         apiUrl: botConfig.get('OPENWEBUI_API_URL'),
       };
     }
+
+    // Add Slack configuration if tokens are provided
+    const slackBotToken = botConfig.get('SLACK_BOT_TOKEN');
+    const slackSigningSecret = botConfig.get('SLACK_SIGNING_SECRET');
+    if (slackBotToken || slackSigningSecret) {
+      config.slack = {
+        botToken: slackBotToken,
+        signingSecret: slackSigningSecret,
+        appToken: botConfig.get('SLACK_APP_TOKEN'),
+        joinChannels: botConfig.get('SLACK_JOIN_CHANNELS'),
+        defaultChannelId: botConfig.get('SLACK_DEFAULT_CHANNEL_ID'),
+        mode: botConfig.get('SLACK_MODE'),
+      };
+    }
+
+    // Add Mattermost configuration if values are provided
+    const mmServer = botConfig.get('MATTERMOST_SERVER_URL');
+    const mmToken = botConfig.get('MATTERMOST_TOKEN');
+    const mmChannel = botConfig.get('MATTERMOST_CHANNEL');
+    if (mmServer || mmToken || mmChannel) {
+      config.mattermost = {
+        serverUrl: mmServer,
+        token: mmToken,
+        channel: mmChannel,
+      };
+    }
     
     return config;
   }
