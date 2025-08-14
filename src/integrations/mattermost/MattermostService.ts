@@ -1,6 +1,6 @@
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+// LLM providers are invoked by higher-level handlers; not needed here
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import MattermostClient from './mattermostClient';
 import MattermostMessage from './MattermostMessage';
@@ -24,6 +24,7 @@ export class MattermostService implements IMessengerService {
   private app?: Application;
   private handler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
   private joinTs: Map<string, number> = new Map();
+  private selfIds: Map<string, string> = new Map();
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
   public supportsChannelPrioritization: boolean = true;
@@ -97,6 +98,10 @@ export class MattermostService implements IMessengerService {
       try {
         await client.connect();
         this.joinTs.set(botName, Date.now());
+        try {
+          const me = await client.getSelfUserId();
+          if (me) this.selfIds.set(botName, me);
+        } catch {}
         log(`Connected to Mattermost server for bot: ${botName}`);
       } catch (error) {
         log(`Failed to connect to Mattermost for bot ${botName}: ${error instanceof Error ? error.message : String(error)}`);
@@ -120,6 +125,8 @@ export class MattermostService implements IMessengerService {
           // Ignore posts from bots/self
           const msg = new MattermostMessage(post);
           if (msg.isFromBot()) return;
+          const selfId = this.selfIds.get(botName);
+          if (selfId && post?.user_id === selfId) return;
 
           // Ignore backlog older than join timestamp
           const joinedAt = this.joinTs.get(botName) || 0;

@@ -44,8 +44,13 @@ export default class MattermostClient {
     debug(`Connected (simulated) to Mattermost at ${this.serverUrl}`);
     // Try to establish a real websocket if ws is available at runtime
     try {
+      // Gate by env flag to allow disable
+      const wsEnabled = String(process.env.MATTERMOST_WS_ENABLED ?? 'true').toLowerCase() !== 'false';
+      if (!wsEnabled) {
+        debug('MATTERMOST_WS_ENABLED=false; skipping websocket');
+        return;
+      }
       // Lazy-require ws to avoid hard dependency in tests
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const WS = require('ws');
       const url = (this.serverUrl?.replace(/\/$/, '') || '') + '/api/v4/websocket';
       const headers: Record<string, string> = {};

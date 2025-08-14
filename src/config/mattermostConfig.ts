@@ -19,6 +19,12 @@ const mattermostConfig = convict({
     format: String,
     default: '',
     env: 'MATTERMOST_CHANNEL'
+  },
+  MATTERMOST_WS_ENABLED: {
+    doc: 'Enable Mattermost WebSocket for realtime events',
+    format: Boolean,
+    default: true,
+    env: 'MATTERMOST_WS_ENABLED'
   }
 });
 
