@@ -144,6 +144,29 @@ export class SlackService implements IMessengerService {
   }
 
   /**
+   * Public: Add a bot at runtime (demo flow). Initializes instance and registers routes/handlers.
+   */
+  public async addBot(botConfig: any): Promise<void> {
+    const botName = botConfig.name;
+    this.initializeBotInstance(botConfig);
+    if (!this.app) {
+      throw new Error('Express app not configured');
+    }
+    // Register routes and start bot
+    const signatureVerifier = this.signatureVerifiers.get(botName)!;
+    const eventProcessor = this.eventProcessors.get(botName)!;
+    const interactiveHandler = this.interactiveHandlers.get(botName)!;
+    this.eventBus.registerBotRoutes(this.app, botName, signatureVerifier, eventProcessor, interactiveHandler);
+
+    const botManager = this.botManagers.get(botName)!;
+    const welcomeHandler = this.welcomeHandlers.get(botName);
+    await this.botFacade.initialize(botName, botManager);
+    this.joinTs.set(botName, Date.now() / 1000);
+    await this.botFacade.joinConfiguredChannels(botName, botManager, welcomeHandler);
+    await this.eventProcessors.get(botName)?.debugEventPermissions();
+  }
+
+  /**
    * Initialize legacy configuration for backward compatibility
    */
   private initializeLegacyConfiguration(): void {

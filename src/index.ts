@@ -12,6 +12,8 @@ const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+import adminRouter from '@src/admin/adminRoutes';
+import path from 'path';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
@@ -31,6 +33,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
+// Admin UI (demo)
+app.use('/api/admin', adminRouter);
+app.use('/admin', (req: Request, res: Response) => {
+    const adminPath = path.join(__dirname, '../public/admin/index.html');
+    res.sendFile(adminPath);
+});
 
 async function startBot(messengerService: any) {
     try {

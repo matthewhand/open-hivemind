@@ -36,10 +36,30 @@ export class SlackSignatureVerifier {
       res.status(400).send('Bad Request');
       return;
     }
-    const requestBody = JSON.stringify(req.body);
-    const baseString = `v0:${timestamp}:${requestBody}`;
-    const mySignature = `v0=${crypto.createHmac('sha256', this.signingSecret).update(baseString).digest('hex')}`;
-    // For production, compare mySignature with slackSignature.
+
+    // Enforce timestamp skew (5 minutes)
+    const now = Math.floor(Date.now() / 1000);
+    const tsNum = Number(timestamp);
+    if (!Number.isFinite(tsNum) || Math.abs(now - tsNum) > 60 * 5) {
+      res.status(400).send('Bad Request: stale timestamp');
+      return;
+    }
+
+    // Prefer a preserved raw body string if provided by upstream middleware
+    const bodyStr = (req as any).rawBody && typeof (req as any).rawBody === 'string'
+      ? (req as any).rawBody
+      : (typeof req.body === 'string' ? (req.body as string) : JSON.stringify(req.body));
+
+    const baseString = `v0:${timestamp}:${bodyStr}`;
+    const mySigHex = crypto.createHmac('sha256', this.signingSecret).update(baseString).digest('hex');
+    const expected = Buffer.from(`v0=${mySigHex}`, 'utf8');
+    const provided = Buffer.from(String(slackSignature), 'utf8');
+
+    if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
+      res.status(403).send('Forbidden: Invalid signature');
+      return;
+    }
+
     next();
   }
 }

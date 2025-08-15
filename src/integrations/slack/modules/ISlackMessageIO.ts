@@ -30,9 +30,47 @@ export interface ISlackMessageIO {
  * Default implementation that uses SlackBotManager to access bots/webClient.
  */
 export class SlackMessageIO implements ISlackMessageIO {
+  private sendTails: Map<string, Promise<any>> = new Map();
+
   constructor(private readonly getBotManager: (botName?: string) => SlackBotManager | undefined,
               private readonly getDefaultBotName: () => string,
               private readonly lastSentEventTs: Map<string, string>) {}
+
+  private async withQueue<T>(botName: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.sendTails.get(botName) || Promise.resolve();
+    let resolveOut: (v: T) => void, rejectOut: (e: any) => void;
+    const out = new Promise<T>((resolve, reject) => { resolveOut = resolve; rejectOut = reject; });
+    const next = prev
+      .then(() => fn())
+      .then((v) => { resolveOut!(v); return v; }, (e) => { rejectOut!(e); })
+      .catch(() => undefined);
+    this.sendTails.set(botName, next as unknown as Promise<any>);
+    return out;
+  }
+
+  private async sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
+  private async sendWithRetry(botInfo: any, options: any, maxRetries = 3): Promise<any> {
+    let attempt = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        attempt += 1;
+        return await botInfo.webClient.chat.postMessage(options);
+      } catch (err: any) {
+        const status = err?.status || err?.code || err?.data?.error;
+        const retryAfter = Number(err?.data?.retry_after || err?.headers?.['retry-after'] || 0);
+        const retryable = (status === 429 || status === 'ratelimited' || status === 500 || status === 502 || status === 503 || status === 504);
+        if (attempt >= maxRetries || !retryable) {
+          throw err;
+        }
+        const base = retryAfter > 0 ? retryAfter * 1000 : 300;
+        const backoff = base * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
+        debug(`postMessage retry attempt ${attempt}/${maxRetries} in ${backoff}ms`);
+        await this.sleep(backoff);
+      }
+    }
+  }
 
   public async sendMessageToChannel(
     channelId: string,
@@ -84,7 +122,7 @@ export class SlackMessageIO implements ISlackMessageIO {
       if (blocks?.length) options.blocks = blocks;
 
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
-      const result = await botInfo.webClient.chat.postMessage(options);
+      const result = await this.withQueue(targetBot, () => this.sendWithRetry(botInfo, options));
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
 
       return result.ts || '';

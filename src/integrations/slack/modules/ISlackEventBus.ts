@@ -27,8 +27,22 @@ export class SlackEventBus implements ISlackEventBus {
     debug('registerBotRoutes()', { botName });
     const basePath = `/slack/${botName}`;
 
+    // Capture raw body for signature verification (Slack requires exact raw payload)
+    const urlencodedWithRaw = (express as any).urlencoded({
+      extended: true,
+      verify: (req: any, _res: Response, buf: Buffer) => {
+        req.rawBody = buf.toString('utf8');
+      }
+    });
+    const jsonWithRaw = (express as any).json({
+      verify: (req: any, _res: Response, buf: Buffer) => {
+        req.rawBody = buf.toString('utf8');
+      }
+    });
+
     app.post(
       `${basePath}/action-endpoint`,
+      urlencodedWithRaw,
       (req: Request, res: Response, next: NextFunction) => {
         try {
           if (!signatureVerifier) {
@@ -52,6 +66,7 @@ export class SlackEventBus implements ISlackEventBus {
 
     app.post(
       `${basePath}/interactive-endpoint`,
+      urlencodedWithRaw,
       (req: Request, res: Response, next: NextFunction) => {
         try {
           if (!signatureVerifier) {

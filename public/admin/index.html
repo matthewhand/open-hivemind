@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Open-Hivemind Admin</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; }
+      fieldset { margin-bottom: 1.5rem; }
+      label { display:block; margin: 0.25rem 0; }
+      input, select, textarea { width: 100%; padding: 0.4rem; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .ok { color: green; }
+      .err { color: #b00; }
+    </style>
+  </head>
+  <body>
+    <h1>Open‑Hivemind Admin</h1>
+    <div id="status">Loading status…</div>
+
+    <h2>Add Slack Bot</h2>
+    <form id="slackForm">
+      <fieldset>
+        <legend>Slack Credentials</legend>
+        <label>Bot Name <input name="name" required /></label>
+        <label>Bot Token <input name="botToken" required placeholder="xoxb-…" /></label>
+        <label>Signing Secret <input name="signingSecret" required /></label>
+        <div class="row">
+          <label>App Token (optional) <input name="appToken" /></label>
+          <label>Mode <select name="mode"><option>socket</option><option>rtm</option></select></label>
+        </div>
+        <div class="row">
+          <label>Default Channel ID <input name="defaultChannelId" placeholder="C123…" /></label>
+          <label>Join Channels (comma-separated) <input name="joinChannels" placeholder="general,random" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>LLM (OpenWebUI via Ollama)</legend>
+        <p>For demo, configure your Open WebUI to point at Ollama and ensure the model exists (e.g., gpt-oss:20b).</p>
+        <div class="row">
+          <label>OpenWebUI API URL <input name="apiUrl" value="http://localhost:3000/api/" /></label>
+          <label>Auth Header <input name="authHeader" value="Bearer ollama" /></label>
+        </div>
+        <label>Model <input name="model" value="gpt-oss:20b" /></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Persona</legend>
+        <label>Choose Persona <select id="personaSelect"></select></label>
+        <label>Or Custom System Prompt
+          <textarea id="customPrompt" rows="4" placeholder="Custom system prompt…"></textarea>
+        </label>
+      </fieldset>
+
+      <button type="submit">Add Slack Bot</button>
+      <div id="slackMsg"></div>
+    </form>
+
+    <script>
+      async function loadStatus() {
+        const r = await fetch('/api/admin/status');
+        const j = await r.json();
+        document.getElementById('status').innerHTML = j.ok
+          ? '<span class="ok">OK</span> Bots: ' + (j.bots||[]).join(', ')
+          : '<span class="err">Error</span>';
+      }
+      async function loadPersonas() {
+        const r = await fetch('/api/admin/personas');
+        const j = await r.json();
+        const sel = document.getElementById('personaSelect');
+        sel.innerHTML = '';
+        (j.personas||[]).forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.key;
+          opt.textContent = p.name;
+          opt.dataset.prompt = p.systemPrompt || '';
+          sel.appendChild(opt);
+        });
+      }
+
+      document.getElementById('personaSelect').addEventListener('change', (e) => {
+        const opt = e.target.options[e.target.selectedIndex];
+        const prompt = opt?.dataset?.prompt || '';
+        document.getElementById('customPrompt').value = prompt;
+      });
+
+      document.getElementById('slackForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const body = {
+          name: f.name.value,
+          botToken: f.botToken.value,
+          signingSecret: f.signingSecret.value,
+          appToken: f.appToken.value,
+          defaultChannelId: f.defaultChannelId.value,
+          joinChannels: f.joinChannels.value,
+          mode: f.mode.value,
+          llm: {
+            provider: 'openwebui',
+            apiUrl: f.apiUrl.value,
+            authHeader: f.authHeader.value,
+            model: f.model.value,
+            systemPrompt: document.getElementById('customPrompt').value
+          }
+        };
+        const r = await fetch('/api/admin/slack-bots', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        const j = await r.json();
+        const m = document.getElementById('slackMsg');
+        if (j.ok) { m.innerHTML = '<span class="ok">Added. If not visible, refresh status.</span>'; loadStatus(); }
+        else { m.innerHTML = '<span class="err">' + (j.error||'Failed') + '</span>'; }
+      });
+
+      loadStatus();
+      loadPersonas();
+    </script>
+  </body>
+  </html>
+
