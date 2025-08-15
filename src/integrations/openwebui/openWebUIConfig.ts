@@ -21,6 +21,18 @@ const openWebUIConfig = convict({
     env: 'OPEN_WEBUI_AUTH_HEADER',
     sensitive: true,
   },
+  breakerFailureThreshold: {
+    doc: 'Circuit breaker failure threshold before opening',
+    format: 'int',
+    default: 5,
+    env: 'OPEN_WEBUI_BREAKER_FAILURE_THRESHOLD',
+  },
+  breakerResetTimeoutMs: {
+    doc: 'Circuit breaker reset timeout (ms)',
+    format: 'int',
+    default: 10000,
+    env: 'OPEN_WEBUI_BREAKER_RESET_TIMEOUT_MS',
+  },
   username: {
     doc: 'Username for authentication with Open WebUI',
     format: String,

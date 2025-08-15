@@ -1,6 +1,7 @@
 import { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import axios from 'axios';
+import { CircuitBreaker } from '@src/utils/circuitBreaker';
 import openWebUIConfig from './openWebUIConfig';
 import Debug from 'debug';
 
@@ -25,6 +26,10 @@ const openWebUIClient = axios.create({
 });
 
 const model = openWebUIConfig.get('model');
+const breaker = new CircuitBreaker(
+  Number(openWebUIConfig.get('breakerFailureThreshold')) || 5,
+  Number(openWebUIConfig.get('breakerResetTimeoutMs')) || 10000
+);
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -71,6 +76,22 @@ async function withRetry<T>(fn: () => Promise<T>, opName: string): Promise<T> {
   }
 }
 
+async function execWithBreaker<T>(opName: string, fn: () => Promise<T>): Promise<T> {
+  if (!breaker.canExecute()) {
+    const err = new Error('OpenWebUI circuit breaker is open');
+    debug(`${opName} blocked by circuit breaker`);
+    throw err;
+  }
+  try {
+    const result = await fn();
+    breaker.onSuccess();
+    return result;
+  } catch (e) {
+    breaker.onFailure();
+    throw e;
+  }
+}
+
 /**
  * Provides chat and non-chat completion functionality for OpenWebUI.
  */
@@ -90,9 +111,11 @@ export const openWebUIProvider: ILlmProvider = {
     ];
 
     try {
-      const response = await withRetry(
-        () => openWebUIClient.post('/chat/completions', { model, messages }),
-        'openwebui.chat_completions'
+      const response = await execWithBreaker('openwebui.chat_completions', () =>
+        withRetry(
+          () => openWebUIClient.post('/chat/completions', { model, messages }),
+          'openwebui.chat_completions'
+        )
       );
       return (response as any).data.choices[0].message.content;
     } catch (error) {
@@ -105,9 +128,11 @@ export const openWebUIProvider: ILlmProvider = {
     debug('Generating non-chat completion with OpenWebUI');
 
     try {
-      const response = await withRetry(
-        () => openWebUIClient.post('/completions', { model, prompt, max_tokens: 100 }),
-        'openwebui.completions'
+      const response = await execWithBreaker('openwebui.completions', () =>
+        withRetry(
+          () => openWebUIClient.post('/completions', { model, prompt, max_tokens: 100 }),
+          'openwebui.completions'
+        )
       );
       return (response as any).data.choices[0].text;
     } catch (error) {
