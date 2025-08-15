@@ -7,11 +7,16 @@ import Debug from 'debug';
 const debug = Debug('app:openWebUIProvider');
 
 // Create axios instance with API URL and headers
+const authHeader = openWebUIConfig.get('authHeader');
+if (authHeader) {
+  debug('Using configured Authorization header for OpenWebUI (redacted)');
+}
 const openWebUIClient = axios.create({
   baseURL: openWebUIConfig.get('apiUrl'),
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ollama',  // Adjust as needed
+    'Authorization': authHeader || 'Bearer ollama',
   },
 });
 

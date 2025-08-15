@@ -14,6 +14,13 @@ const openWebUIConfig = convict({
     default: 'http://host.docker.internal:3000/api/',
     env: 'OPEN_WEBUI_API_URL',
   },
+  authHeader: {
+    doc: 'Authorization header value to use when calling Open WebUI (e.g., "Bearer <token>")',
+    format: String,
+    default: 'Bearer ollama',
+    env: 'OPEN_WEBUI_AUTH_HEADER',
+    sensitive: true,
+  },
   username: {
     doc: 'Username for authentication with Open WebUI',
     format: String,
@@ -45,7 +52,12 @@ const openWebUIConfig = convict({
  * Validates the configuration on initialization. Throws an error if any setting is invalid.
  */
 openWebUIConfig.validate({ allowed: 'strict' });
-debug('OpenWebUIConfig initialized with values:', openWebUIConfig.getProperties());
+const props = openWebUIConfig.getProperties();
+// Redact sensitive header before logging
+if (props && typeof props === 'object') {
+  (props as any).authHeader = '********';
+}
+debug('OpenWebUIConfig initialized with values:', props);
 
 /**
  * Exports the validated configuration instance.
