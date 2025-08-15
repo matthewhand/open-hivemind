@@ -54,37 +54,45 @@ export class IdleResponseManager {
 
   private loadConfiguration(): void {
     try {
-      // Check environment variables first for overrides
+      // Read environment variables directly for overrides
       const envMinDelay = process.env.IDLE_RESPONSE_MIN_DELAY;
       const envMaxDelay = process.env.IDLE_RESPONSE_MAX_DELAY;
       const envEnabled = process.env.IDLE_RESPONSE_ENABLED;
-      
+
+      // Read optional config object for defaults/fallbacks
       const messageConfig = require('@config/messageConfig');
-      const config = messageConfig.get('IDLE_RESPONSE') || {};
-      
-      this.enabled = envEnabled !== undefined ? envEnabled === 'true' : (config.enabled ?? true);
-      
-      // Use environment variables with fallback to config, then defaults
+      const config = (messageConfig && typeof messageConfig.get === 'function')
+        ? messageConfig.get('IDLE_RESPONSE') || {}
+        : {};
+
+      // Enabled: env overrides config; accept 'true'/'false' (case-insensitive)
+      if (typeof envEnabled === 'string') {
+        this.enabled = envEnabled.toLowerCase() === 'true' ? true : envEnabled.toLowerCase() === 'false' ? false : (config.enabled ?? true);
+      } else {
+        this.enabled = config.enabled ?? true;
+      }
+
+      // Helper to parse ints from env strings
       const parseEnvInt = (value: string | undefined, fallback: number): number => {
-        if (!value) return fallback;
+        if (typeof value !== 'string' || value.trim() === '') return fallback;
         const parsed = parseInt(value, 10);
-        return isNaN(parsed) ? fallback : parsed;
+        return Number.isNaN(parsed) ? fallback : parsed;
       };
-      
+
       this.minDelay = parseEnvInt(envMinDelay, config.minDelay ?? 60000);
       this.maxDelay = parseEnvInt(envMaxDelay, config.maxDelay ?? 3600000);
-      
+
       // Ensure minDelay is not greater than maxDelay
       if (this.minDelay > this.maxDelay) {
         this.minDelay = this.maxDelay;
       }
-      
+
       if (config.prompts && Array.isArray(config.prompts)) {
         this.idlePrompts = config.prompts;
       }
-      
+
       log(`Idle response configured: enabled=${this.enabled}, minDelay=${this.minDelay}ms, maxDelay=${this.maxDelay}ms`);
-      
+
       // Log if environment variables are being used
       if (envMinDelay || envMaxDelay || envEnabled) {
         log(`Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`);
@@ -158,7 +166,7 @@ export class IdleResponseManager {
                 },
                 getDefaultChannel: () => discordService.getDefaultChannel(),
                 shutdown: async () => {},
-                setMessageHandler: (handler: any) => {}
+                setMessageHandler: (_handler: any) => {}
               };
               
               this.serviceActivities.set(botServiceName, {
@@ -279,7 +287,6 @@ export class IdleResponseManager {
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
     // Create a unique timer ID to prevent duplicates
-    const timerId = Date.now() + Math.random();
     activity.timer = setTimeout(async () => {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);
@@ -425,8 +432,8 @@ export class IdleResponseManager {
   }
 
   public clearAllChannels(): void {
-    for (const [serviceName, serviceActivity] of this.serviceActivities) {
-      for (const [channelId, activity] of serviceActivity.channels) {
+    for (const [, serviceActivity] of this.serviceActivities) {
+      for (const [, activity] of serviceActivity.channels) {
         if (activity.timer) {
           clearTimeout(activity.timer);
         }

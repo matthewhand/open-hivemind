@@ -20,7 +20,8 @@ export function shouldReplyToMessage(
   botId: string,
   platform: 'discord' | 'generic'
 ): boolean {
-  if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
+  const forceReply = Boolean((messageConfig as any).get('FORCE_REPLY'));
+  if (forceReply) {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
     return true;
   }

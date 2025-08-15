@@ -43,7 +43,7 @@ export class ConfigurationManager {
     private constructor() {
         schema.validate({ allowed: 'strict' });
         const currentEnv = schema.get('NODE_ENV');
-        debug('ConfigurationManager initialized in development environment');
+        debug(`ConfigurationManager initialized in ${currentEnv} environment`);
     }
 
     /**

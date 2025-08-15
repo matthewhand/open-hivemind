@@ -103,3 +103,11 @@ See the detailed guide with examples:
 Open-Hivemind continues to evolve. This documentation provides a deep dive into its revolutionary multi-agent architecture and unified messaging fabric—designed to empower developers and end-users alike in managing an interconnected bot ecosystem.
 
 For further technical details, refer to the Development Guide and User Guide sections of this repository.
+
+
+## Configuration
+
+- Quick start variables: see `docs/basic-settings.md`
+- Power-user guide: see `docs/advanced-settings.md`
+- Exhaustive reference (generated): see `docs/config-reference.md`
+- How it works: see `docs/config-system.md` (Convict schemas are the single source of truth; keys are tagged as basic/advanced for docs and UX)

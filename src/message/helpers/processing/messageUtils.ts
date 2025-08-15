@@ -1,3 +1,3 @@
 module.exports = {
-  shouldReplyToMessage: (message: any) => true, // Stub: always reply
+  shouldReplyToMessage: (_message: any) => true, // Stub: always reply
 };

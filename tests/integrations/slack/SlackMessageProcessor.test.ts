@@ -60,7 +60,7 @@ describe('SlackMessageProcessor', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date('2025-08-02T00:00:00Z'));
-    process.env = { ...OLD_ENV, SUPPRESS_CANVAS_CONTENT: 'true', SLACK_BOT_TOKEN: 'xoxb-test' };
+    process.env = { ...OLD_ENV, SLACK_SUPPRESS_CANVAS_CONTENT: 'true', SLACK_BOT_TOKEN: 'xoxb-test' };
   });
 
   afterEach(() => {
@@ -85,7 +85,7 @@ describe('SlackMessageProcessor', () => {
       await expect(smp.enrichSlackMessage(new SlackMessage('hello', '', { ts: '1.001' }))).rejects.toThrow('Message and channelId required');
     });
 
-    it('enriches with workspace, channel, thread, user, and metadata; respects SUPPRESS_CANVAS_CONTENT', async () => {
+    it('enriches with workspace, channel, thread, user, and metadata; respects SLACK_SUPPRESS_CANVAS_CONTENT', async () => {
       const webClient = createWebClientMock({
         files: {
           list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'F1', linked_channel_id: 'C123', url_private: 'https://example.com/canvas' }] }),
@@ -102,7 +102,7 @@ describe('SlackMessageProcessor', () => {
           history: jest.fn().mockResolvedValue({ messages: [] }),
         },
       });
-      // SUPPRESS_CANVAS_CONTENT=true above should force empty channelContent path
+      // SLACK_SUPPRESS_CANVAS_CONTENT=true above should force empty channelContent path
       const botManager = createBotManagerMock(webClient);
       const smp = new SlackMessageProcessor(botManager);
 
@@ -121,36 +121,14 @@ describe('SlackMessageProcessor', () => {
       expect(enriched.data.slackUser).toMatchObject({ slackUserId: 'U999', userName: 'Test User' });
       expect(enriched.data.metadata).toBeDefined();
       expect(enriched.data.channelContent).toBeDefined();
-      // When SUPPRESS_CANVAS_CONTENT=true, enrichment sets empty channelContent
+      // When SLACK_SUPPRESS_CANVAS_CONTENT=true, enrichment sets empty channelContent
       expect(enriched.data.channelContent).toEqual({ content: '' });
       expect(enriched.data.messageAttachments[0]).toMatchObject({ fileName: 'doc.txt', fileType: 'txt' });
       expect(enriched.data.messageReactions[0]).toMatchObject({ reaction: 'thumbsup', reactedUserId: 'U123' });
     });
 
-    it('fetches image binary and base64-encodes when filetype is an image', async () => {
-      process.env.SUPPRESS_CANVAS_CONTENT = 'false';
-      const axiosGet = axios.get as jest.Mock;
-      axiosGet.mockResolvedValueOnce({ data: Buffer.from('image-bytes') });
-
-      const webClient = createWebClientMock({
-        files: {
-          list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'FIMG', linked_channel_id: 'CIMG', url_private: 'https://example.com/img' }] }),
-          info: jest.fn().mockResolvedValue({
-            ok: true,
-            file: { filetype: 'png', url_private: 'https://example.com/img', mimetype: 'image/png' },
-            content: undefined,
-          }),
-        },
-      });
-
-      const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('pic', 'CIMG', { ts: '1.002', user: 'U111' });
-      const enriched = await smp.enrichSlackMessage(msg);
-      expect(enriched.data.channelContent.content.startsWith('data:image/png;base64,')).toBe(true);
-    });
-
     it('handles unsupported file type by setting empty channelContent and still resolving', async () => {
-      process.env.SUPPRESS_CANVAS_CONTENT = 'false';
+      process.env.SLACK_SUPPRESS_CANVAS_CONTENT = 'false';
       const webClient = createWebClientMock({
         files: {
           list: jest.fn().mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123' }] }),

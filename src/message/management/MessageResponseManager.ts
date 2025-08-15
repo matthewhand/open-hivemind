@@ -1,4 +1,3 @@
-import Debug from "debug";
 class MessageResponseManager {
     private static instance: MessageResponseManager;
 

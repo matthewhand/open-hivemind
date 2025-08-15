@@ -34,7 +34,7 @@ const openWebUI: ILlmProvider = {
       return result.text || '';
     }
   },
-  generateCompletion: async (prompt: string) => {
+  generateCompletion: async (_prompt: string) => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
   },
 };

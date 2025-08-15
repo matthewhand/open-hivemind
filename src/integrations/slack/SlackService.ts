@@ -275,7 +275,7 @@ export class SlackService implements IMessengerService {
       const messageProcessor = this.messageProcessors.get(botName);
       if (!messageProcessor) continue;
 
-      botManager.setMessageHandler(async (message, history, botConfig) => {
+      botManager.setMessageHandler(async (message, _history, _botConfig) => {
         debug(`[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`);
         
         const messageTs = parseFloat(message.data.ts || '0');
@@ -475,6 +475,10 @@ export class SlackService implements IMessengerService {
 
   public async shutdown(): Promise<void> {
     debug('Entering shutdown');
+    if (!SlackService.instance) {
+      debug('Shutdown called but instance already undefined; no-op');
+      return;
+    }
     SlackService.instance = undefined;
     debug('SlackService instance cleared');
   }

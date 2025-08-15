@@ -7,11 +7,11 @@ const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
-const llmConfigModule = require('@config/llmConfig');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+const metricsRouteModule = require('./routes/metrics');
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
@@ -31,6 +31,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
+const metricsRoute = metricsRouteModule.default || metricsRouteModule;
+app.use(metricsRoute);
 
 async function startBot(messengerService: any) {
     try {
@@ -88,9 +90,10 @@ async function main() {
         }
     }
 
-    const httpEnabled = process.env.HTTP_ENABLED !== 'false';
+    const appConfig = require('@config/appConfig').default || require('@config/appConfig');
+    const httpEnabled = Boolean(appConfig.get('HTTP_ENABLED'));
     if (httpEnabled) {
-        const port = process.env.PORT || 5005;
+        const port = appConfig.get('PORT') || 5005;
         app.listen(port, () => {
             console.log('Server is listening on port ' + port);
         });

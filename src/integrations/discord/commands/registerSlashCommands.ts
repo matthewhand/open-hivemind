@@ -11,7 +11,7 @@ const debug = Debug('app:registerSlashCommands');
  * @param {object[]} commands - The commands to be registered.
  */
 export async function registerSlashCommands(token: string, guildId: string, commands: object[]): Promise<void> {
-    const clientId = process.env.CLIENT_ID;
+    const clientId = (require('@config/discordConfig').default.get('DISCORD_CLIENT_ID') as string);
     if (!clientId) {
         debug('Client ID is not defined. Cannot register slash commands.');
         return;

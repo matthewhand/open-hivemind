@@ -2,6 +2,9 @@ import { KnownBlock } from '@slack/web-api';
 import { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from '../SlackMessage';
 import Debug from 'debug';
+import { retry, defaultShouldRetry } from '@src/utils/retry';
+import { createDefaultSlackSendQueue } from '@src/utils/rateLimitQueue';
+import slackTuning from '@config/slackTuning';
 import { SlackBotManager } from '../SlackBotManager';
 
 const debug = Debug('app:SlackMessageIO');
@@ -30,6 +33,8 @@ export interface ISlackMessageIO {
  * Default implementation that uses SlackBotManager to access bots/webClient.
  */
 export class SlackMessageIO implements ISlackMessageIO {
+  private sendQueue = createDefaultSlackSendQueue();
+
   constructor(private readonly getBotManager: (botName?: string) => SlackBotManager | undefined,
               private readonly getDefaultBotName: () => string,
               private readonly lastSentEventTs: Map<string, string>) {}
@@ -84,10 +89,46 @@ export class SlackMessageIO implements ISlackMessageIO {
       if (blocks?.length) options.blocks = blocks;
 
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
-      const result = await botInfo.webClient.chat.postMessage(options);
-      debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
 
-      return result.ts || '';
+      const doPost = async () => {
+        const result = await botInfo.webClient.chat.postMessage(options);
+        debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
+        return result;
+      };
+
+      const retries = Number(slackTuning.get('SLACK_SEND_RETRIES'));
+      const minDelayMs = Number(slackTuning.get('SLACK_SEND_MIN_DELAY_MS'));
+      const maxDelayMs = Number(slackTuning.get('SLACK_SEND_MAX_DELAY_MS'));
+
+      const callWithRetry = () => retry(doPost, {
+        retries,
+        minDelayMs,
+        maxDelayMs,
+        jitter: 'full',
+        shouldRetry: (err, attempt) => {
+          const retryable = defaultShouldRetry(err, attempt);
+          if (!retryable) debug('not retryable error', { err: err?.message || String(err) });
+          return retryable;
+        },
+        onRetry: (err, attempt, delayMs) => {
+          const retryAfter = err?.data?.retry_after || err?.response?.headers?.['retry-after'];
+          debug('retrying Slack send', { attempt, delayMs, retryAfter });
+        }
+      });
+
+      const exec = async () => {
+        const { ts } = await callWithRetry();
+        return ts || '';
+      };
+
+      if (this.sendQueue) {
+        try {
+          const { setGauge } = require('@src/utils/metrics');
+          setGauge('slack.send.queue_depth', (this as any).sendQueue['queue']?.length ?? 0);
+        } catch {}
+        return await this.sendQueue.enqueue(exec);
+      }
+      return await exec();
     } catch (error) {
       debug(`Failed to send message: ${error}`);
       throw new Error(`Message send failed: ${error}`);

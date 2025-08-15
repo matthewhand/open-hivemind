@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import Debug from 'debug';
+import type { ConfigModuleMeta } from './ConfigSpec';
 
 const debug = Debug('app:messageConfig');
 
@@ -77,6 +78,38 @@ convict.addFormat({
       return;
     }
     throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
+  },
+  IDLE_RESPONSE_ENABLED: {
+    doc: 'Enable idle response feature',
+    format: Boolean,
+    default: false,
+    env: 'IDLE_RESPONSE_ENABLED',
+    level: 'advanced',
+    group: 'message'
+  },
+  IDLE_RESPONSE_MIN_DELAY: {
+    doc: 'Idle response minimum delay (ms)',
+    format: 'int',
+    default: 600000,
+    env: 'IDLE_RESPONSE_MIN_DELAY',
+    level: 'advanced',
+    group: 'message'
+  },
+  IDLE_RESPONSE_MAX_DELAY: {
+    doc: 'Idle response maximum delay (ms)',
+    format: 'int',
+    default: 900000,
+    env: 'IDLE_RESPONSE_MAX_DELAY',
+    level: 'advanced',
+    group: 'message'
+  },
+  FORCE_REPLY: {
+    doc: 'Force bot to reply to every message (for testing)',
+    format: Boolean,
+    default: false,
+    env: 'FORCE_REPLY',
+    level: 'advanced',
+    group: 'message'
   },
   coerce: (val: unknown) => {
     if (val == null) return {};
@@ -216,19 +249,41 @@ const messageConfig = convict({
     doc: 'Rate limit per channel (messages per minute)',
     format: 'int',
     default: 5,
-    env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL'
+    env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL',
+    level: 'advanced',
+    group: 'rate'
+  },
+  LLM_MESSAGE_LIMIT_PER_HOUR: {
+    doc: 'Max LLM messages per hour',
+    format: 'int',
+    default: 60,
+    env: 'LLM_MESSAGE_LIMIT_PER_HOUR',
+    level: 'advanced',
+    group: 'rate'
+  },
+  LLM_MESSAGE_LIMIT_PER_DAY: {
+    doc: 'Max LLM messages per day',
+    format: 'int',
+    default: 1000,
+    env: 'LLM_MESSAGE_LIMIT_PER_DAY',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_MIN_DELAY: {
     doc: 'Minimum delay between messages (ms)',
     format: 'int',
     default: 1000,
-    env: 'MESSAGE_MIN_DELAY'
+    env: 'MESSAGE_MIN_DELAY',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_MAX_DELAY: {
     doc: 'Maximum delay between messages (ms)',
     format: 'int',
     default: 10000,
-    env: 'MESSAGE_MAX_DELAY'
+    env: 'MESSAGE_MAX_DELAY',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
@@ -240,13 +295,17 @@ const messageConfig = convict({
     doc: 'Wakewords to trigger bot responses',
     format: Array,
     default: ['!help', '!ping'],
-    env: 'MESSAGE_WAKEWORDS'
+    env: 'MESSAGE_WAKEWORDS',
+    level: 'basic',
+    group: 'message'
   },
   MESSAGE_ONLY_WHEN_SPOKEN_TO: {
     doc: 'Only respond when spoken to directly',
     format: Boolean,
     default: true,
-    env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO'
+    env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO',
+    level: 'basic',
+    group: 'message'
   },
   MESSAGE_INTERACTIVE_FOLLOWUPS: {
     doc: 'Allow interactive follow-up questions',
@@ -324,7 +383,9 @@ const messageConfig = convict({
     doc: 'Minimum interval between messages (ms)',
     format: 'int',
     default: 3000,
-    env: 'MESSAGE_MIN_INTERVAL_MS'
+    env: 'MESSAGE_MIN_INTERVAL_MS',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_STRIP_BOT_ID: {
     doc: 'Strip bot ID from messages',
@@ -344,19 +405,25 @@ const messageConfig = convict({
     doc: 'Enable ChannelRouter-based outbound channel selection',
     format: Boolean,
     default: false,
-    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
+    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED',
+    level: 'advanced',
+    group: 'routing'
   },
   CHANNEL_BONUSES: {
     doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
     format: 'channel-bonuses',
     default: {},
-    env: 'CHANNEL_BONUSES'
+    env: 'CHANNEL_BONUSES',
+    level: 'advanced',
+    group: 'routing'
   },
   CHANNEL_PRIORITIES: {
     doc: 'Channel priorities map (CSV "id:int,..." or JSON object). Integer, lower means higher priority. Default 0 when missing.',
     format: 'channel-priorities',
     default: {},
-    env: 'CHANNEL_PRIORITIES'
+    env: 'CHANNEL_PRIORITIES',
+    level: 'advanced',
+    group: 'routing'
   }
 });
 
@@ -421,14 +488,10 @@ messageConfig.validate({ allowed: 'warn' });
 
 // Second-pass normalization with optional known channel list (none here; providers can supply later)
 // Temporary debug logging; respects ALLOW_CONSOLE in tests
-// eslint-disable-next-line no-console
 if (process.env.ALLOW_CONSOLE) {
-  // eslint-disable-next-line no-console
   console.log('pre-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  // eslint-disable-next-line no-console
   console.log('pre-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
   const propsPre = (messageConfig as any).getProperties?.();
-  // eslint-disable-next-line no-console
   console.log('pre-normalize props keys=', propsPre ? Object.keys(propsPre) : 'no-props');
 }
 const normalized = normalizeChannelMaps(
@@ -439,11 +502,8 @@ const normalized = normalizeChannelMaps(
 // Overwrite normalized values back into config
 (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
 (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
-// eslint-disable-next-line no-console
 if (process.env.ALLOW_CONSOLE) {
-  // eslint-disable-next-line no-console
   console.log('post-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  // eslint-disable-next-line no-console
   console.log('post-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
 }
 
@@ -464,3 +524,21 @@ if (_origGet) {
 }
 
 export default messageConfig;
+
+// Config metadata for docs and tooling
+export const configMeta: ConfigModuleMeta = {
+  module: 'messageConfig',
+  keys: [
+    { key: 'MESSAGE_ONLY_WHEN_SPOKEN_TO', group: 'message', level: 'basic', doc: 'Reply only on wakeword/mention', env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO', default: true },
+    { key: 'MESSAGE_WAKEWORDS', group: 'message', level: 'basic', doc: 'Comma-separated triggers', env: 'MESSAGE_WAKEWORDS', default: ['!help','!ping'] },
+    { key: 'MESSAGE_CHANNEL_ROUTER_ENABLED', group: 'routing', level: 'advanced', doc: 'Enable ChannelRouter-based selection', env: 'MESSAGE_CHANNEL_ROUTER_ENABLED', default: false },
+    { key: 'CHANNEL_BONUSES', group: 'routing', level: 'advanced', doc: 'Per-channel bonus (CSV/JSON)', env: 'CHANNEL_BONUSES', default: {} },
+    { key: 'CHANNEL_PRIORITIES', group: 'routing', level: 'advanced', doc: 'Per-channel priority (CSV/JSON)', env: 'CHANNEL_PRIORITIES', default: {} },
+    { key: 'MESSAGE_RATE_LIMIT_PER_CHANNEL', group: 'rate', level: 'advanced', doc: 'Messages per minute per channel', env: 'MESSAGE_RATE_LIMIT_PER_CHANNEL', default: 5 },
+    { key: 'MESSAGE_MIN_DELAY', group: 'rate', level: 'advanced', doc: 'Minimum delay (ms)', env: 'MESSAGE_MIN_DELAY', default: 1000 },
+    { key: 'MESSAGE_MAX_DELAY', group: 'rate', level: 'advanced', doc: 'Maximum delay (ms)', env: 'MESSAGE_MAX_DELAY', default: 10000 },
+    { key: 'MESSAGE_MIN_INTERVAL_MS', group: 'rate', level: 'advanced', doc: 'Global minimum interval (ms)', env: 'MESSAGE_MIN_INTERVAL_MS', default: 3000 },
+    { key: 'MESSAGE_INTERROBANG_BONUS', group: 'message', level: 'advanced', doc: 'Punctuation bonus', env: 'MESSAGE_INTERROBANG_BONUS', default: 0.4 },
+    { key: 'MESSAGE_BOT_RESPONSE_MODIFIER', group: 'message', level: 'advanced', doc: 'Bot response modifier', env: 'MESSAGE_BOT_RESPONSE_MODIFIER', default: 0.1 }
+  ]
+};

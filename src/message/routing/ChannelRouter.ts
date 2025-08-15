@@ -93,10 +93,10 @@ export function getPriorityForChannel(channelId: ChannelId): number {
  * Compute score using the confirmed formula:
  * score = base(1.0) * bonus(channelId) / (1 + priority(channelId))
  */
-export function computeScore(channelId: ChannelId, _metadata?: ChannelRouterMetadata): number {
+export function computeScore(channelId: ChannelId): number {
   const bonus = getBonusForChannel(channelId);
   const priority = getPriorityForChannel(channelId);
-  const score = (1.0 * bonus) / (1 + priority);
+  const score = (1.0 * bonus) / (1 + priority); // metadata reserved for future use
   debug('computeScore', { channelId, bonus, priority, score });
   return score;
 }
@@ -105,13 +105,13 @@ export function computeScore(channelId: ChannelId, _metadata?: ChannelRouterMeta
  * Picks the best channel from candidates.
  * Tie-breakers: highest bonus, then lexicographic channelId.
  */
-export function pickBestChannel(candidates: ChannelId[], metadata?: ChannelRouterMetadata): ChannelId | null {
+export function pickBestChannel(candidates: ChannelId[], _metadata?: ChannelRouterMetadata): ChannelId | null {
   if (!candidates || candidates.length === 0) return null;
 
   let best: { id: ChannelId; score: number; bonus: number } | null = null;
 
   for (const id of candidates) {
-    const score = computeScore(id, metadata);
+    const score = computeScore(id);
     const bonus = getBonusForChannel(id);
     if (!best) {
       best = { id, score, bonus };

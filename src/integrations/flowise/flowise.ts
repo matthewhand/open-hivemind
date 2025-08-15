@@ -16,7 +16,8 @@ export class FlowiseCommand {
         const { endpointId } = args;
 
         // Guard: Check if the API base URL is defined in the environment variables
-        const apiUrl = process.env.FLOWISE_BASE_URL;
+        const flowiseCfg = require('@config/flowiseConfig').default;
+        const apiUrl = (flowiseCfg.get('FLOWISE_API_ENDPOINT') as string);
         if (!apiUrl) {
             const errorMessage = 'Flowise API base URL is not defined in the environment variables.';
             debug(errorMessage);
@@ -25,7 +26,7 @@ export class FlowiseCommand {
         debug('Flowise API base URL: ' + apiUrl);
 
         // Guard: Ensure API key is provided
-        const apiKey = process.env.FLOWISE_API_KEY;
+        const apiKey = (flowiseCfg.get('FLOWISE_API_KEY') as string);
         if (!apiKey) {
             const errorMessage = 'Flowise API key is missing.';
             debug(errorMessage);

@@ -1,6 +1,4 @@
 import { IMessengerService } from '@src/message/interfaces/IMessengerService';
-import { IMessage } from '@src/message/interfaces/IMessage';
-
 /**
  * Sends a report to a specified report channel using IMessengerService.
  * This will be used for features like summarization or other reporting needs.

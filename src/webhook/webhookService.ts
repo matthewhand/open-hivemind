@@ -12,7 +12,6 @@
  */
 
 import express from 'express';
-import webhookConfig from '@config/webhookConfig';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
@@ -26,7 +25,7 @@ export const webhookService = {
    * @param {IMessengerService} messageService - The platform-agnostic message service
    * @param {string} channelId - The ID of the channel to send messages
    */
-  start: (app: express.Application | null, messageService: IMessengerService, channelId: string) => {
+  start: (app: express.Application | null, messageService: IMessengerService, _channelId: string) => {
     if (!app) {
       app = express(); // Create a new app if none is passed
       app.use(express.json()); // Middleware to parse JSON request bodies

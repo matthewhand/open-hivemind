@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
-import axios from 'axios';
 import slackConfig from '@src/config/slackConfig';
 import { SlackService } from './SlackService';
 import SlackMessage from './SlackMessage';
-import { IMessage } from '@message/interfaces/IMessage';
 import { KnownBlock } from '@slack/web-api';
 
 const debug = Debug('app:SlackEventProcessor');

@@ -1,7 +1,7 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { Collection, GuildMember, Message, TextChannel, User } from 'discord.js';
+import { Collection, Message, TextChannel } from 'discord.js';
 
 const debug = Debug('app:DiscordMessage');
 

@@ -1,0 +1,110 @@
+const fs = require('fs');
+const path = require('path');
+
+const outPath = path.join(__dirname, '..', 'docs', 'config-reference.md');
+
+// Try to enable TS requires for config modules
+try {
+  require('ts-node').register({ transpileOnly: true });
+} catch {
+  // ts-node not available; will rely on JSON metas
+}
+
+function loadModuleMetas() {
+  const modules = [
+    { path: '../src/config/messageConfig.ts', name: 'message' },
+    { path: '../src/config/appConfig.ts', name: 'app' },
+    { path: '../src/config/openaiConfig.ts', name: 'openai' },
+    { path: '../src/config/discordConfig.ts', name: 'discord' },
+    { path: '../src/config/mattermostConfig.ts', name: 'mattermost' },
+    { path: '../src/config/webhookConfig.ts', name: 'webhook' },
+    { path: '../src/config/flowiseConfig.ts', name: 'flowise' },
+    { path: '../src/config/openWebUIConfig.ts', name: 'openwebui' },
+    { path: '../src/config/slackConfig.ts', name: 'slack' },
+    { path: '../src/config/slackTuning.ts', name: 'slack' },
+  ];
+  const out = [];
+  for (const m of modules) {
+    try {
+      const mod = require(m.path);
+      const cfg = mod.default || mod;
+      if (!cfg || !cfg.getSchema) continue;
+      const schema = cfg.getSchema().properties || {};
+      const group = m.name;
+      const keys = [];
+      for (const [key, props] of Object.entries(schema)) {
+        const p = props || {};
+        keys.push({ key, level: p.level || 'advanced', doc: p.doc || '', env: p.env, default: p.default, group: p.group || group, sensitive: Boolean(p.sensitive) });
+      }
+      out.push({ name: group, data: { group, keys } });
+    } catch (e) {
+      // ignore if module not loadable
+    }
+  }
+  return out;
+}
+
+function buildIndex(metas) {
+  const out = { basic: {}, advanced: {} };
+  for (const m of metas) {
+    const group = m.data.group || m.name;
+    const keys = m.data.keys || {};
+    // keys is either map (from JSON meta) or array (from module meta conversion)
+    if (Array.isArray(keys)) {
+      for (const item of keys) {
+        const level = item.level || 'advanced';
+        if (!out[level][group]) out[level][group] = [];
+        out[level][group].push({ key: item.key, doc: item.doc, env: item.env, def: item.default });
+      }
+    } else {
+      for (const [k, v] of Object.entries(keys)) {
+        const level = (v && v.level) || 'advanced';
+        const doc = (v && v.doc) || '';
+        if (!out[level][group]) out[level][group] = [];
+        out[level][group].push({ key: k, doc });
+      }
+    }
+  }
+  // sort groups/keys
+  for (const lvl of Object.keys(out)) {
+    const groups = out[lvl];
+    for (const g of Object.keys(groups)) {
+      groups[g].sort((a,b) => a.key.localeCompare(b.key));
+    }
+  }
+  return out;
+}
+
+function render(index) {
+  let md = '# Config Reference (Generated)\n\n';
+  function section(levelTitle, levelKey) {
+    md += `## ${levelTitle}\n\n`;
+    const groups = index[levelKey];
+    const groupNames = Object.keys(groups).sort();
+    for (const g of groupNames) {
+      md += `### ${g}\n`;
+      for (const item of groups[g]) {
+        const tail = [];
+        if (item.doc) tail.push(item.doc);
+        if (item.env) tail.push(`env=${item.env}`);
+        if (typeof item.def !== 'undefined') tail.push(`default=${JSON.stringify(item.def)}`);
+        if (item.sensitive) tail.push('[sensitive]');
+        md += `- ${item.key}${tail.length ? ` — ${tail.join(' | ')}` : ''}\n`;
+      }
+      md += '\n';
+    }
+  }
+  section('Basic', 'basic');
+  section('Advanced', 'advanced');
+  return md;
+}
+
+function main() {
+  const metas = [...loadModuleMetas()];
+  const index = buildIndex(metas);
+  const md = render(index);
+  fs.writeFileSync(outPath, md);
+  console.log('Wrote', outPath);
+}
+
+if (require.main === module) main();

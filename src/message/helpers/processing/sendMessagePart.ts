@@ -16,7 +16,7 @@ export async function sendMessagePart(
   originalMessageId: string
 ): Promise<void> {
   try {
-    const sentMessage = await channel.send(content);
+    await channel.send(content);
     debug('Message part sent: ' + content + ' as reply to ' + originalMessageId);
   } catch (error: any) {
     debug('Error sending message part: ' + (error instanceof Error ? error.message : String(error)));

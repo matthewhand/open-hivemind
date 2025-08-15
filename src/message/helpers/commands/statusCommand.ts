@@ -1,6 +1,4 @@
-import { IMessage } from '@src/message/interfaces/IMessage';
-
-export async function handleStatusCommand(args: string): Promise<string> {
+export async function handleStatusCommand(): Promise<string> {
     // Implement logic to retrieve system status or relevant information
     return 'System is operational. All services are running smoothly.';
 }
