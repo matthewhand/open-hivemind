@@ -13,6 +13,7 @@
 
 import express from 'express';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
+import { configureEventWebhookRoutes } from '@webhook/routes/eventWebhookRoutes';
 import Debug from 'debug';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 
@@ -34,6 +35,7 @@ export const webhookService = {
     // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
     configureWebhookRoutes(app, messageService);
+    configureEventWebhookRoutes(app, messageService);
 
     log('Webhook service initialized. Ready to accept webhook requests.');
   }
