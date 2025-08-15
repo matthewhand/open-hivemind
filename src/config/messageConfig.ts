@@ -79,6 +79,38 @@ convict.addFormat({
     }
     throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
   },
+  IDLE_RESPONSE_ENABLED: {
+    doc: 'Enable idle response feature',
+    format: Boolean,
+    default: false,
+    env: 'IDLE_RESPONSE_ENABLED',
+    level: 'advanced',
+    group: 'message'
+  },
+  IDLE_RESPONSE_MIN_DELAY: {
+    doc: 'Idle response minimum delay (ms)',
+    format: 'int',
+    default: 600000,
+    env: 'IDLE_RESPONSE_MIN_DELAY',
+    level: 'advanced',
+    group: 'message'
+  },
+  IDLE_RESPONSE_MAX_DELAY: {
+    doc: 'Idle response maximum delay (ms)',
+    format: 'int',
+    default: 900000,
+    env: 'IDLE_RESPONSE_MAX_DELAY',
+    level: 'advanced',
+    group: 'message'
+  },
+  FORCE_REPLY: {
+    doc: 'Force bot to reply to every message (for testing)',
+    format: Boolean,
+    default: false,
+    env: 'FORCE_REPLY',
+    level: 'advanced',
+    group: 'message'
+  },
   coerce: (val: unknown) => {
     if (val == null) return {};
     if (typeof val === 'object' && !Array.isArray(val)) {
@@ -221,6 +253,22 @@ const messageConfig = convict({
     level: 'advanced',
     group: 'rate'
   },
+  LLM_MESSAGE_LIMIT_PER_HOUR: {
+    doc: 'Max LLM messages per hour',
+    format: 'int',
+    default: 60,
+    env: 'LLM_MESSAGE_LIMIT_PER_HOUR',
+    level: 'advanced',
+    group: 'rate'
+  },
+  LLM_MESSAGE_LIMIT_PER_DAY: {
+    doc: 'Max LLM messages per day',
+    format: 'int',
+    default: 1000,
+    env: 'LLM_MESSAGE_LIMIT_PER_DAY',
+    level: 'advanced',
+    group: 'rate'
+  },
   MESSAGE_MIN_DELAY: {
     doc: 'Minimum delay between messages (ms)',
     format: 'int',
@@ -335,7 +383,9 @@ const messageConfig = convict({
     doc: 'Minimum interval between messages (ms)',
     format: 'int',
     default: 3000,
-    env: 'MESSAGE_MIN_INTERVAL_MS'
+    env: 'MESSAGE_MIN_INTERVAL_MS',
+    level: 'advanced',
+    group: 'rate'
   },
   MESSAGE_STRIP_BOT_ID: {
     doc: 'Strip bot ID from messages',

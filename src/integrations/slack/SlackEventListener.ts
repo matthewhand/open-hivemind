@@ -22,7 +22,9 @@ export class SlackEventListener {
   public async handleEvent(event: any) {
     try {
       if (event && event.type === 'message' && !event.bot_id) {
-        const metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
+        const slackConfig = require('@config/slackConfig').default;
+        const includeMeta = Boolean(slackConfig.get('INCLUDE_SLACK_METADATA'));
+        const metadata = includeMeta ? extractSlackMetadata(event) : {};
         const llmProvider = getLlmProvider();
         if (!llmProvider.length) throw new Error('No LLM providers available');
         const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);

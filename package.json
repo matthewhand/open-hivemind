@@ -1,6 +1,6 @@
 {
   "name": "open-hivemind",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A messenger bot to communicate with LLMs",
   "type": "commonjs",
   "scripts": {
@@ -16,7 +16,8 @@
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "ncu": "ncu",
-    "docs:config": "node scripts/generate-config-docs.js"
+    "docs:config": "node scripts/generate-config-docs.js",
+    "docs:check": "node scripts/check-config-docs.js"
   },
   "_moduleAliases": {
     "@src": "dist/src",

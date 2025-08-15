@@ -11,17 +11,19 @@ export const predictionImageMap = new Map<string, string>();
  */
 export async function createPrediction(imageUrl: string): Promise<any> {
     try {
+        const replicateCfg = require('@config/replicateConfig').default;
+        const webhook = process.env.REPLICATE_WEBHOOK_URL; // tests expect env to control sync vs webhook
         const postData: Record<string, any> = {
-            version: process.env.REPLICATE_MODEL_VERSION || 'default-model-version',
+            version: (replicateCfg.get('REPLICATE_MODEL_VERSION') as string) || 'default-model-version',
             input: {
                 image: imageUrl,
-                prompt: process.env.REPLICATE_DEFAULT_PROMPT || 'Please describe this image'
+                prompt: (replicateCfg.get('REPLICATE_DEFAULT_PROMPT') as string) || 'Please describe this image'
             }
         };
-        if (!process.env.REPLICATE_WEBHOOK_URL) {
+        if (!webhook) {
             postData.sync = true;  // Wait synchronously for the prediction
         } else {
-            postData.webhook = process.env.REPLICATE_WEBHOOK_URL;
+            postData.webhook = webhook;
             postData.webhook_events_filter = ['start', 'completed'];
         }
         const response = await axios.post(
@@ -30,7 +32,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Token ' + process.env.REPLICATE_API_TOKEN
+                    'Authorization': 'Token ' + (replicateCfg.get('REPLICATE_API_TOKEN') as string)
                 }
             }
         );
@@ -48,7 +50,8 @@ export async function createPrediction(imageUrl: string): Promise<any> {
  */
 export async function handleImageMessage(message: any): Promise<boolean> {
     try {
-        if (message.channel.id !== process.env.DISCORD_CHAT_CHANNEL_ID) {
+        const chatChannel = process.env.DISCORD_CHAT_CHANNEL_ID as string;
+        if (chatChannel && message.channel.id !== chatChannel) {
             console.debug('Ignoring message in channel ' + message.channel.id);
             return false;
         }
@@ -57,7 +60,8 @@ export async function handleImageMessage(message: any): Promise<boolean> {
             const imageUrl = attachments.first().url;
             console.debug('Image URL: ' + imageUrl);
             const prediction = await createPrediction(imageUrl);
-            if (!process.env.REPLICATE_WEBHOOK_URL) {
+            const webhook = process.env.REPLICATE_WEBHOOK_URL;
+            if (!webhook) {
                 // Handle synchronous prediction result
                 message.reply('Prediction result: ' + JSON.stringify(prediction));
             } else {

@@ -29,6 +29,15 @@ const appConfig = convict({
     env: 'METRICS_ROUTE_ENABLED',
     level: 'advanced',
     group: 'app'
+  },
+  API_AUTH_TOKEN: {
+    doc: 'API auth token for outgoing requests (e.g., Open-Swarm)',
+    format: String,
+    default: '',
+    env: 'API_AUTH_TOKEN',
+    sensitive: true,
+    level: 'advanced',
+    group: 'app'
   }
 });
 

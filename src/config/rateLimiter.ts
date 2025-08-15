@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import messageConfig from '@config/messageConfig';
 
 const debug = Debug('app:rateLimiter');
 
@@ -46,8 +47,9 @@ class RateLimiter {
    * @returns True if a message can be sent, false otherwise.
    */
   canSendMessage(): boolean {
-    const canSend = this.messagesLastHour.length < parseInt(process.env.LLM_MESSAGE_LIMIT_PER_HOUR || '60') 
-                      && this.messagesLastDay.length < parseInt(process.env.LLM_MESSAGE_LIMIT_PER_DAY || '1000');
+    const perHour = Number(process.env.LLM_MESSAGE_LIMIT_PER_HOUR ?? (messageConfig as any).get('LLM_MESSAGE_LIMIT_PER_HOUR') ?? 60);
+    const perDay = Number(process.env.LLM_MESSAGE_LIMIT_PER_DAY ?? (messageConfig as any).get('LLM_MESSAGE_LIMIT_PER_DAY') ?? 1000);
+    const canSend = this.messagesLastHour.length < perHour && this.messagesLastDay.length < perDay;
     debug('canSendMessage result: ' + canSend);
     return canSend;
   }

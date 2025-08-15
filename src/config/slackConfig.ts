@@ -103,6 +103,30 @@ const slackConfig = convict({
     level: 'advanced',
     group: 'slack'
   },
+  INCLUDE_SLACK_METADATA: {
+    doc: 'Include Slack metadata in events',
+    format: Boolean,
+    default: false,
+    env: 'INCLUDE_SLACK_METADATA',
+    level: 'advanced',
+    group: 'slack'
+  },
+  SLACK_INCLUDE_HISTORY: {
+    doc: 'Include channel history in processing',
+    format: Boolean,
+    default: false,
+    env: 'SLACK_INCLUDE_HISTORY',
+    level: 'advanced',
+    group: 'slack'
+  },
+  SLACK_SUPPRESS_CANVAS_CONTENT: {
+    doc: 'Suppress canvas content in Slack processing',
+    format: Boolean,
+    default: false,
+    env: 'SLACK_SUPPRESS_CANVAS_CONTENT',
+    level: 'advanced',
+    group: 'slack'
+  },
   WELCOME_RESOURCE_URL: {
     doc: 'URL for welcome resources linked in user join message',
     format: String,

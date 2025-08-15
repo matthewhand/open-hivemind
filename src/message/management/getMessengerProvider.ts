@@ -40,7 +40,8 @@ export function getMessengerProvider() {
 
   // Derive MESSAGE_PROVIDER filter similar to src/index.ts bootstrap
   // Supports string or array-like values via environment (primary) or config fallback
-  const rawProviders = process.env.MESSAGE_PROVIDER || messengersConfig.MESSAGE_PROVIDER;
+  const messageConfig = require('@config/messageConfig').default || {};
+  const rawProviders = (messageConfig.get && messageConfig.get('MESSAGE_PROVIDER')) || messengersConfig.MESSAGE_PROVIDER;
   const providerFilter: string[] = typeof rawProviders === 'string'
     ? rawProviders.split(',').map((v: string) => v.trim().toLowerCase()).filter(Boolean)
     : Array.isArray(rawProviders)

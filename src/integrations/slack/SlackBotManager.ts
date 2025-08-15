@@ -23,7 +23,7 @@ export class SlackBotManager {
   private slackBots: SlackBotInfo[] = [];
   private mode: 'socket' | 'rtm';
   private messageHandler: ((message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>) | null = null;
-  private includeHistory: boolean = process.env.SLACK_INCLUDE_HISTORY === 'true';
+  private includeHistory: boolean = Boolean(require('@config/slackConfig').default.get('SLACK_INCLUDE_HISTORY'));
   private processedEvents: Set<string> = new Set();
   private lastEventTsByChannel: Map<string, string> = new Map();
 

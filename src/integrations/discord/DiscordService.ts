@@ -65,12 +65,12 @@ export const Discord = {
 
     // Resilience: circuit breaker and simple channel cache
     private sendBreaker = new (require('@src/utils/circuitBreaker').CircuitBreaker)(
-      Number(process.env.DISCORD_SEND_FAILURE_THRESHOLD ?? 5),
-      Number(process.env.DISCORD_SEND_RESET_TIMEOUT_MS ?? 10000)
+      Number((discordConfig as any).get('DISCORD_SEND_FAILURE_THRESHOLD')),
+      Number((discordConfig as any).get('DISCORD_SEND_RESET_TIMEOUT_MS'))
     );
     private fetchBreaker = new (require('@src/utils/circuitBreaker').CircuitBreaker)(
-      Number(process.env.DISCORD_FETCH_FAILURE_THRESHOLD ?? 5),
-      Number(process.env.DISCORD_FETCH_RESET_TIMEOUT_MS ?? 10000)
+      Number((discordConfig as any).get('DISCORD_FETCH_FAILURE_THRESHOLD')),
+      Number((discordConfig as any).get('DISCORD_FETCH_RESET_TIMEOUT_MS'))
     );
     private channelCache: Map<string, any> = new Map();
 

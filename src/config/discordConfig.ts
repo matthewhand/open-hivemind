@@ -205,6 +205,46 @@ const discordConfig = convict({
     level: 'advanced',
     group: 'discord'
   },
+  DISCORD_SEND_FAILURE_THRESHOLD: {
+    doc: 'Circuit breaker threshold for send failures',
+    format: 'int',
+    default: 5,
+    env: 'DISCORD_SEND_FAILURE_THRESHOLD',
+    level: 'advanced',
+    group: 'discord'
+  },
+  DISCORD_SEND_RESET_TIMEOUT_MS: {
+    doc: 'Breaker reset timeout for send (ms)',
+    format: 'int',
+    default: 10000,
+    env: 'DISCORD_SEND_RESET_TIMEOUT_MS',
+    level: 'advanced',
+    group: 'discord'
+  },
+  DISCORD_FETCH_FAILURE_THRESHOLD: {
+    doc: 'Circuit breaker threshold for fetch failures',
+    format: 'int',
+    default: 5,
+    env: 'DISCORD_FETCH_FAILURE_THRESHOLD',
+    level: 'advanced',
+    group: 'discord'
+  },
+  DISCORD_FETCH_RESET_TIMEOUT_MS: {
+    doc: 'Breaker reset timeout for fetch (ms)',
+    format: 'int',
+    default: 10000,
+    env: 'DISCORD_FETCH_RESET_TIMEOUT_MS',
+    level: 'advanced',
+    group: 'discord'
+  },
+  DISCORD_CHAT_CHANNEL_ID: {
+    doc: 'Channel ID to filter image messages (advanced use)',
+    format: String,
+    default: '',
+    env: 'DISCORD_CHAT_CHANNEL_ID',
+    level: 'advanced',
+    group: 'discord'
+  },
   DISCORD_LOGGING_ENABLED: {
     doc: 'Enable logging to files',
     format: Boolean,

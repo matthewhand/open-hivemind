@@ -70,7 +70,7 @@ export const openAiProvider: ILlmProvider = {
     debug('Metadata:', JSON.stringify(metadata || {}));
 
     // Load configuration
-    const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    const apiKey = openaiConfig.get('OPENAI_API_KEY');
     let baseURL = openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
@@ -117,9 +117,9 @@ export const openAiProvider: ILlmProvider = {
     }
     debug('Final messages prepared:', JSON.stringify(messages));
 
-    const retries = Number(process.env.OPENAI_RETRIES ?? 3);
-    const minDelayMs = Number(process.env.OPENAI_MIN_DELAY_MS ?? 300);
-    const maxDelayMs = Number(process.env.OPENAI_MAX_DELAY_MS ?? 5000);
+    const retries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') ?? 3);
+    const minDelayMs = 300;
+    const maxDelayMs = 5000;
 
     const safeMessagesForLog = messages.map((m) => ({
       role: m.role,
@@ -166,7 +166,7 @@ export const openAiProvider: ILlmProvider = {
     debug('Starting non-chat completion generation');
     debug('Prompt:', prompt);
 
-    const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    const apiKey = openaiConfig.get('OPENAI_API_KEY');
     let baseURL = openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
@@ -194,9 +194,9 @@ export const openAiProvider: ILlmProvider = {
     const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
     debug('OpenAI client initialized with baseURL:', baseURL);
 
-    const retries = Number(process.env.OPENAI_RETRIES ?? 3);
-    const minDelayMs = Number(process.env.OPENAI_MIN_DELAY_MS ?? 300);
-    const maxDelayMs = Number(process.env.OPENAI_MAX_DELAY_MS ?? 5000);
+    const retries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') ?? 3);
+    const minDelayMs = 300;
+    const maxDelayMs = 5000;
 
     const safePrompt = typeof prompt === 'string' ? redactSensitiveInfo('content', prompt) : '';
     debug('Prepared legacy completion request', { model, baseURL, promptPreview: safePrompt.substring(0, 40) });

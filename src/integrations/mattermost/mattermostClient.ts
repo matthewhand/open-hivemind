@@ -46,7 +46,8 @@ export default class MattermostClient {
     // Try to establish a real websocket if ws is available at runtime
     try {
       // Gate by env flag to allow disable
-      const wsEnabled = String(process.env.MATTERMOST_WS_ENABLED ?? 'true').toLowerCase() !== 'false';
+      const mattermostConfig = require('@config/mattermostConfig').default;
+      const wsEnabled = Boolean(mattermostConfig.get('MATTERMOST_WS_ENABLED'));
       if (!wsEnabled) {
         debug('MATTERMOST_WS_ENABLED=false; skipping websocket');
         return;
@@ -200,7 +201,8 @@ export default class MattermostClient {
 
   async sendTyping(channelId: string): Promise<void> {
     try {
-      const typingEnabled = String(process.env.MATTERMOST_TYPING_ENABLED ?? 'false').toLowerCase() === 'true';
+      const mattermostConfig = require('@config/mattermostConfig').default;
+      const typingEnabled = Boolean(mattermostConfig.get('MATTERMOST_TYPING_ENABLED'));
       if (!typingEnabled) return;
       if (!this.ws || this.ws.readyState !== this.ws.OPEN) return;
       const payload = JSON.stringify({ action: 'user_typing', data: { channel_id: channelId } });

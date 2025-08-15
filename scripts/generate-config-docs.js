@@ -34,7 +34,7 @@ function loadModuleMetas() {
       const keys = [];
       for (const [key, props] of Object.entries(schema)) {
         const p = props || {};
-        keys.push({ key, level: p.level || 'advanced', doc: p.doc || '', env: p.env, default: p.default, group: p.group || group });
+        keys.push({ key, level: p.level || 'advanced', doc: p.doc || '', env: p.env, default: p.default, group: p.group || group, sensitive: Boolean(p.sensitive) });
       }
       out.push({ name: group, data: { group, keys } });
     } catch (e) {
@@ -88,6 +88,7 @@ function render(index) {
         if (item.doc) tail.push(item.doc);
         if (item.env) tail.push(`env=${item.env}`);
         if (typeof item.def !== 'undefined') tail.push(`default=${JSON.stringify(item.def)}`);
+        if (item.sensitive) tail.push('[sensitive]');
         md += `- ${item.key}${tail.length ? ` — ${tail.join(' | ')}` : ''}\n`;
       }
       md += '\n';

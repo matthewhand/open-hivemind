@@ -46,7 +46,9 @@ export class SlackMessageProcessor {
     }
     debug(`User ID from message: ${userId}`);
     const threadTs = message.data.thread_ts;
-    const suppressCanvasContent = process.env.SUPPRESS_CANVAS_CONTENT === 'true';
+    const slackConfig = require('@config/slackConfig').default;
+    const suppressCanvasContent = (process.env.SLACK_SUPPRESS_CANVAS_CONTENT ?? '').toLowerCase() === 'true'
+      || Boolean(slackConfig.get('SLACK_SUPPRESS_CANVAS_CONTENT'));
 
     try {
       const authInfo = await botInfo.webClient.auth.test();
@@ -123,7 +125,7 @@ export class SlackMessageProcessor {
                   if (!contentInfo.content && contentInfo.file?.url_private) {
                     try {
                       const contentResponse = await axios.get(contentInfo.file.url_private, {
-                        headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` }
+                        headers: { 'Authorization': `Bearer ${slackConfig.get('SLACK_BOT_TOKEN')}` }
                       });
                       channelContent.content = contentResponse.data || 'No content available';
                       debug(`Fetched content from url_private: ${channelContent.content.substring(0, 50)}...`);
@@ -134,7 +136,7 @@ export class SlackMessageProcessor {
                   }
                 } else if (contentInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfo.file.filetype || '')) {
                   const fileResponse = await axios.get(contentInfo.file.url_private!, {
-                    headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                    headers: { 'Authorization': `Bearer ${slackConfig.get('SLACK_BOT_TOKEN')}` },
                     responseType: 'arraybuffer'
                   });
                   const base64Content = Buffer.from(fileResponse.data).toString('base64');

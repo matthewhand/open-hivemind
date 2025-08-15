@@ -35,7 +35,7 @@ export class SlackInteractiveHandler {
       // Immediately acknowledge the interactive action.
       res.status(200).send();
 
-      const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID;
+      const defaultChannel = (require('@config/slackConfig').default.get('SLACK_DEFAULT_CHANNEL_ID') as string);
       if (!defaultChannel) {
         debug('[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send block action response.');
         return;
@@ -75,7 +75,7 @@ export class SlackInteractiveHandler {
           const submittedValues = payload.view.state.values;
           const userInput = submittedValues?.user_input_block?.user_input?.value || '';
           debug(`[Slack] (Async) User submitted: ${userInput}`);
-          const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID;
+          const defaultChannel = (require('@config/slackConfig').default.get('SLACK_DEFAULT_CHANNEL_ID') as string);
           if (!defaultChannel) {
             debug('[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send view submission response.');
             return;
