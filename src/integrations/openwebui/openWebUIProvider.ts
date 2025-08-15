@@ -6,6 +6,10 @@ import Debug from 'debug';
 
 const debug = Debug('app:openWebUIProvider');
 
+// Retry/backoff settings
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 250;
+
 // Create axios instance with API URL and headers
 const authHeader = openWebUIConfig.get('authHeader');
 if (authHeader) {
@@ -22,6 +26,51 @@ const openWebUIClient = axios.create({
 
 const model = openWebUIConfig.get('model');
 
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function classifyError(err: unknown): { retryable: boolean; reason: string; status?: number } {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status;
+    // Retry on rate limit (429) and transient 5xx
+    if (status === 429 || (status && status >= 500)) {
+      return { retryable: true, reason: `HTTP ${status}`, status };
+    }
+    // Retry on certain network errors
+    const code = (err as any).code as string | undefined;
+    if (code && ['ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN', 'ENOTFOUND', 'ECONNABORTED'].includes(code)) {
+      return { retryable: true, reason: code };
+    }
+    return { retryable: false, reason: `HTTP ${status ?? 'unknown'}`, status };
+  }
+  return { retryable: false, reason: 'non-axios-error' };
+}
+
+async function withRetry<T>(fn: () => Promise<T>, opName: string): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      attempt += 1;
+      return await fn();
+    } catch (err) {
+      const cls = classifyError(err);
+      const canRetry = attempt < MAX_RETRIES && cls.retryable;
+      debug(`${opName} failed (attempt ${attempt}/${MAX_RETRIES})`, {
+        reason: cls.reason,
+        status: cls.status,
+        retrying: canRetry,
+      });
+      if (!canRetry) {
+        throw err instanceof Error ? err : new Error(String(err));
+      }
+      const jitter = Math.floor(Math.random() * 100);
+      const backoff = BASE_DELAY_MS * Math.pow(2, attempt - 1) + jitter;
+      await sleep(backoff);
+    }
+  }
+}
+
 /**
  * Provides chat and non-chat completion functionality for OpenWebUI.
  */
@@ -33,20 +82,19 @@ export const openWebUIProvider: ILlmProvider = {
     userMessage: string,
     historyMessages: IMessage[] = []
   ): Promise<string> {
-    debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
+    debug('Generating chat completion with OpenWebUI');
 
     const messages = [
-      ...historyMessages.map(msg => ({ role: 'user', content: msg.getText() })),
+      ...historyMessages.map(msg => ({ role: msg.role || 'user', content: msg.getText() })),
       { role: 'user', content: userMessage },
     ];
 
     try {
-      const response = await openWebUIClient.post('/chat/completions', {
-        model,
-        messages,
-      });
-
-      return response.data.choices[0].message.content;
+      const response = await withRetry(
+        () => openWebUIClient.post('/chat/completions', { model, messages }),
+        'openwebui.chat_completions'
+      );
+      return (response as any).data.choices[0].message.content;
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
       throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
@@ -54,16 +102,14 @@ export const openWebUIProvider: ILlmProvider = {
   },
 
   async generateCompletion(prompt: string): Promise<string> {
-    debug('Generating non-chat completion with OpenWebUI:', { prompt });
+    debug('Generating non-chat completion with OpenWebUI');
 
     try {
-      const response = await openWebUIClient.post('/completions', {
-        model,
-        prompt,
-        max_tokens: 100,
-      });
-
-      return response.data.choices[0].text;
+      const response = await withRetry(
+        () => openWebUIClient.post('/completions', { model, prompt, max_tokens: 100 }),
+        'openwebui.completions'
+      );
+      return (response as any).data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', formatError(error));
       throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
