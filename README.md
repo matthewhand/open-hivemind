@@ -111,3 +111,52 @@ For further technical details, refer to the Development Guide and User Guide sec
 - Power-user guide: see `docs/advanced-settings.md`
 - Exhaustive reference (generated): see `docs/config-reference.md`
 - How it works: see `docs/config-system.md` (Convict schemas are the single source of truth; keys are tagged as basic/advanced for docs and UX)
+
+## Webhooks
+
+A generic, event-driven inbound webhook is available to trigger actions from external systems.
+
+- Endpoint: `POST /webhooks/events`
+- Security: `x-webhook-token` header and optional IP whitelist (see `webhookConfig`).
+- Event envelope:
+  - `version?`: number
+  - `id`: string (used for idempotency)
+  - `type`: string (e.g., `message.post`, `health.ping`)
+  - `source?`: string
+  - `timestamp?`: ISO string
+  - `data`: object (event-specific payload)
+- Supported types:
+  - `message.post`: `{ data: { text: string, channelId?: string } }` → posts to `channelId` or default; `channelId` may also be provided via query `?channelId=`.
+  - `health.ping`: `{ data: { challenge?: string } }` → responds `{ ok: true }` and echoes `{ challenge }` if provided.
+  - `job.status`: generic async job updates; currently acknowledged (no-op).
+
+Example:
+
+```
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-webhook-token: <secret>" \
+  -d '{
+    "version": 1,
+    "id": "evt_001",
+    "type": "message.post",
+    "timestamp": "2025-08-15T10:00:00Z",
+    "data": { "text": "Hello from webhook!", "channelId": "general" }
+  }' \
+  http://localhost:<port>/webhooks/events
+```
+
+Notes:
+- The legacy `POST /webhook` route remains for backward compatibility.
+- Sensitive fields are redacted in debug logs.
+
+## OpenWebUI Integration
+
+The OpenWebUI provider supports configurable authentication and resilient request handling:
+
+- `OPEN_WEBUI_AUTH_HEADER`: Authorization header value (e.g., `Bearer <token>`). Redacted in logs.
+- Retries: Exponential backoff + jitter for transient errors (429/5xx/network).
+- Timeout: Axios request timeout (default 15s).
+- Circuit breaker: Configurable thresholds via:
+  - `OPEN_WEBUI_BREAKER_FAILURE_THRESHOLD` (default 5)
+  - `OPEN_WEBUI_BREAKER_RESET_TIMEOUT_MS` (default 10000)
