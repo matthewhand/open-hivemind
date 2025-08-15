@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import request from 'supertest';
+import { runRoute } from '../helpers/expressRunner';
 import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
 import * as security from '@webhook/security/webhookSecurity';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
@@ -37,8 +37,8 @@ describe('webhookRoutes', () => {
       output: ['Answer', 'is', '42'],
     };
 
-    const res = await request(app).post('/webhook').send(body);
-    expect(res.status).toBe(200);
+    const { res } = await runRoute(app, 'post', '/webhook', { body });
+    expect(res.statusCode).toBe(200);
 
     // The route sends a single announcement with constructed message
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
@@ -55,8 +55,8 @@ describe('webhookRoutes', () => {
       output: [],
     };
 
-    const res = await request(app).post('/webhook').send(body);
-    expect(res.status).toBe(200);
+    const { res } = await runRoute(app, 'post', '/webhook', { body });
+    expect(res.statusCode).toBe(200);
 
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [, message] = messageService.sendPublicAnnouncement.mock.calls[0];
@@ -65,11 +65,11 @@ describe('webhookRoutes', () => {
   });
 
   it('returns 400 when predictionId or status is missing', async () => {
-    const res1 = await request(app).post('/webhook').send({ status: 'succeeded', output: [] });
-    expect(res1.status).toBe(400);
+    const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: { status: 'succeeded', output: [] } });
+    expect(res1.statusCode).toBe(400);
 
-    const res2 = await request(app).post('/webhook').send({ id: 'pred-x', output: [] });
-    expect(res2.status).toBe(400);
+    const { res: res2 } = await runRoute(app, 'post', '/webhook', { body: { id: 'pred-x', output: [] } });
+    expect(res2.statusCode).toBe(400);
 
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
@@ -77,13 +77,13 @@ describe('webhookRoutes', () => {
   it('responds 200 even if sending message throws (logged internally)', async () => {
     messageService.sendPublicAnnouncement.mockRejectedValueOnce(new Error('send failed'));
 
-    const res = await request(app).post('/webhook').send({
+    const { res } = await runRoute(app, 'post', '/webhook', { body: {
       id: 'pred-err',
       status: 'succeeded',
       output: ['Hello'],
-    });
+    }});
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
   });
 
@@ -93,13 +93,13 @@ describe('webhookRoutes', () => {
       res.status(403).send('Forbidden: Invalid token');
     });
 
-    const res = await request(app).post('/webhook').send({
+    const { res } = await runRoute(app, 'post', '/webhook', { body: {
       id: 'pred-3',
       status: 'succeeded',
       output: [],
-    });
+    }});
 
-    expect(res.status).toBe(403);
+    expect(res.statusCode).toBe(403);
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
 
@@ -109,13 +109,13 @@ describe('webhookRoutes', () => {
       res.status(403).send('Forbidden: Unauthorized IP address');
     });
 
-    const res = await request(app).post('/webhook').send({
+    const { res } = await runRoute(app, 'post', '/webhook', { body: {
       id: 'pred-4',
       status: 'succeeded',
       output: [],
-    });
+    }});
 
-    expect(res.status).toBe(403);
+    expect(res.statusCode).toBe(403);
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
 });
