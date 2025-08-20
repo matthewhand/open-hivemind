@@ -1,6 +1,5 @@
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import MattermostClient from './mattermostClient';
 import { Application } from 'express';
@@ -102,11 +101,11 @@ export class MattermostService implements IMessengerService {
     this.app = app;
   }
 
-  public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
+  public setMessageHandler(): void {
     console.log('Setting message handler for Mattermost bots');
   }
 
-  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+  public async sendMessageToChannel(channelId: string, text: string, senderName?: string): Promise<string> {
     const botName = senderName || Array.from(this.clients.keys())[0];
     const client = this.clients.get(botName);
     
@@ -184,12 +183,12 @@ export class MattermostService implements IMessengerService {
    * Channel scoring hook: returns 0 when MESSAGE_CHANNEL_ROUTER_ENABLED is disabled,
    * otherwise delegates to ChannelRouter.computeScore to keep parity with other providers.
    */
-  public scoreChannel(channelId: string, metadata?: Record<string, any>): number {
+  public scoreChannel(channelId: string): number {
     try {
       const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
       if (!enabled) return 0;
-      return channelComputeScore(channelId, metadata);
-    } catch (_e) {
+      return channelComputeScore(channelId);
+    } catch {
       // Be conservative: on any error, neutralize impact
       return 0;
     }

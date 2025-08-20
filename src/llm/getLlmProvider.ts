@@ -34,7 +34,7 @@ const openWebUI: ILlmProvider = {
       return result.text || '';
     }
   },
-  generateCompletion: async (prompt: string) => {
+  generateCompletion: async () => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
   },
 };
@@ -87,22 +87,42 @@ export function getLlmProvider(): ILlmProvider[] {
 
   providers.forEach((provider) => {
     try {
+      let providerInstance: ILlmProvider;
+      
       switch (provider.toLowerCase()) {
         case 'openai':
-          llmProviders.push(openAiProvider);
+          providerInstance = openAiProvider;
           debug('Initialized OpenAI provider');
           break;
         case 'flowise':
-          llmProviders.push(flowiseProvider);
+          providerInstance = flowiseProvider;
           debug('Initialized Flowise provider');
           break;
         case 'openwebui':
-          llmProviders.push(openWebUI);
+          providerInstance = openWebUI;
           debug('Initialized OpenWebUI provider');
           break;
         default:
           debug(`Unknown LLM provider: ${provider}, skipping`);
+          return;
       }
+      
+      // Compatibility checks (safely handle missing methods)
+      const chatSupport = typeof providerInstance.supportsChatCompletion === 'function' 
+        ? providerInstance.supportsChatCompletion() : false;
+      const completionSupport = typeof providerInstance.supportsCompletion === 'function'
+        ? providerInstance.supportsCompletion() : false;
+      
+      if (!chatSupport && !completionSupport) {
+        debug(`Warning: Provider ${provider} supports neither chat nor completion`);
+      } else if (!chatSupport) {
+        debug(`Info: Provider ${provider} supports completion only (no chat)`);
+      } else if (!completionSupport) {
+        debug(`Info: Provider ${provider} supports chat only (no completion)`);
+      }
+      
+      llmProviders.push(providerInstance);
+      
     } catch (error) {
       debug(`Failed to initialize provider ${provider}: ${error}`);
     }
@@ -112,5 +132,6 @@ export function getLlmProvider(): ILlmProvider[] {
     throw new Error('No valid LLM providers initialized');
   }
 
+  debug(`Successfully initialized ${llmProviders.length} LLM providers`);
   return llmProviders;
 }

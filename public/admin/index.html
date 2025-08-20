@@ -16,6 +16,16 @@
   <body>
     <h1>Open‑Hivemind Admin</h1>
     <div id="status">Loading status…</div>
+    <div class="row">
+      <div>
+        <h3>Slack Bots</h3>
+        <ul id="slackList"></ul>
+      </div>
+      <div>
+        <h3>Discord Bots</h3>
+        <ul id="discordList"></ul>
+      </div>
+    </div>
 
     <h2>Add Slack Bot</h2>
     <form id="slackForm">
@@ -56,13 +66,48 @@
       <div id="slackMsg"></div>
     </form>
 
+    <h2>Add Discord Bot</h2>
+    <form id="discordForm">
+      <fieldset>
+        <legend>Discord Credentials</legend>
+        <label>Bot Name (optional) <input name="name" /></label>
+        <label>Bot Token <input name="token" required placeholder="discord bot token" /></label>
+      </fieldset>
+      <fieldset>
+        <legend>LLM (optional, per-bot override)</legend>
+        <div class="row">
+          <label>Provider <select name="llm_provider"><option value="">(inherit)</option><option value="openwebui">OpenWebUI</option></select></label>
+          <label>Model <input name="llm_model" placeholder="gpt-oss:20b" /></label>
+        </div>
+        <div class="row">
+          <label>OpenWebUI API URL <input name="llm_apiUrl" placeholder="http://localhost:3000/api/" /></label>
+          <label>Auth Header <input name="llm_authHeader" placeholder="Bearer ollama" /></label>
+        </div>
+        <label>System Prompt (persona override)
+          <textarea name="llm_systemPrompt" rows="3" placeholder="Custom system prompt…"></textarea>
+        </label>
+      </fieldset>
+      <button type="submit">Add Discord Bot</button>
+      <div id="discordMsg"></div>
+    </form>
+
+    <h2>Reload Bots</h2>
+    <button id="reloadBtn">Reload from config</button>
+    <div id="reloadMsg"></div>
+
     <script>
       async function loadStatus() {
         const r = await fetch('/api/admin/status');
         const j = await r.json();
         document.getElementById('status').innerHTML = j.ok
-          ? '<span class="ok">OK</span> Bots: ' + (j.bots||[]).join(', ')
+          ? '<span class="ok">OK</span>'
           : '<span class="err">Error</span>';
+        const slackList = document.getElementById('slackList');
+        const discordList = document.getElementById('discordList');
+        slackList.innerHTML = '';
+        discordList.innerHTML = '';
+        (j.slackBots||[]).forEach(n => { const li=document.createElement('li'); li.textContent=n; slackList.appendChild(li); });
+        (j.discordBots||[]).forEach(n => { const li=document.createElement('li'); li.textContent=n; discordList.appendChild(li); });
       }
       async function loadPersonas() {
         const r = await fetch('/api/admin/personas');
@@ -110,11 +155,26 @@
         const m = document.getElementById('slackMsg');
         if (j.ok) { m.innerHTML = '<span class="ok">Added. If not visible, refresh status.</span>'; loadStatus(); }
         else { m.innerHTML = '<span class="err">' + (j.error||'Failed') + '</span>'; }
-      });
+      
 
-      loadStatus();
-      loadPersonas();
+      document.getElementById('discordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const body = { name: f.name.value, token: f.token.value, llm: {
+          provider: f.llm_provider.value,
+          apiUrl: f.llm_apiUrl.value,
+          authHeader: f.llm_authHeader.value,
+          model: f.llm_model.value,
+          systemPrompt: f.llm_systemPrompt.value
+        }};
+        const r = await fetch('/api/admin/discord-bots', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        const j = await r.json();
+        const m = document.getElementById('discordMsg');
+        if (j.ok) { m.innerHTML = '<span class="ok">Saved. Restart app to initialize Discord bot.</span>'; loadStatus(); }
+        else { m.innerHTML = '<span class="err">' + (j.error||'Failed') + '</span>'; }
+      });
     </script>
   </body>
   </html>
-

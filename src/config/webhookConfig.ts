@@ -40,7 +40,7 @@ const configPath = path.join(configDir, 'providers/webhook.json');
 try {
   webhookConfig.loadFile(configPath);
   webhookConfig.validate({ allowed: 'strict' });
-} catch (error) {
+} catch {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load webhook config from ${configPath}, using defaults`);
 }

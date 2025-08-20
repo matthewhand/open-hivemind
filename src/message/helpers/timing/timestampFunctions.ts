@@ -1,4 +1,3 @@
-import Debug from "debug";
 /**
  * Retrieves the last typing timestamp for a specified channel.
  * @param {Map<string, number>} typingTimestamps - Map to store typing timestamps.

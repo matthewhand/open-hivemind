@@ -52,7 +52,7 @@ export class SlackMessageIO implements ISlackMessageIO {
 
   private async sendWithRetry(botInfo: any, options: any, maxRetries = 3): Promise<any> {
     let attempt = 0;
-    // eslint-disable-next-line no-constant-condition
+     
     while (true) {
       try {
         attempt += 1;

@@ -1,4 +1,4 @@
-import { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
 import { SlackSignatureVerifier } from '../SlackSignatureVerifier';
 import { SlackEventProcessor } from '../SlackEventProcessor';

@@ -29,13 +29,46 @@ convict.addFormat({
     if (typeof val !== 'string' && typeof val !== 'object' && val !== undefined) {
       throw new Error('Invalid bonuses: must be a string, object, or undefined.');
     }
+    // Validate numeric range for object values
+    if (typeof val === 'object' && val !== null) {
+      for (const [channelId, bonus] of Object.entries(val)) {
+        const numBonus = Number(bonus);
+        if (isNaN(numBonus) || numBonus < 0.0 || numBonus > 2.0) {
+          throw new Error(`Invalid bonus for channel ${channelId}: must be between 0.0 and 2.0`);
+        }
+      }
+    }
   },
   coerce: (val) => {
     if (typeof val === 'object') return val;
     if (!val) return {};
+    
+    // Auto-detect JSON format
+    if (typeof val === 'string' && val.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(val);
+        const result: Record<string, number> = {};
+        for (const [channelId, bonus] of Object.entries(parsed)) {
+          const numBonus = Number(bonus);
+          if (!isNaN(numBonus)) {
+            result[channelId] = Math.max(0.0, Math.min(2.0, numBonus)); // Clamp to valid range
+          }
+        }
+        return result;
+      } catch {
+        throw new Error('Invalid JSON format for channel bonuses');
+      }
+    }
+    
+    // Parse CSV format
     return val.split(',').reduce((acc: Record<string, number>, kvp: string) => {
       const [channelId, bonus] = kvp.split(':');
-      if (channelId && bonus) acc[channelId] = parseFloat(bonus);
+      if (channelId && bonus) {
+        const numBonus = parseFloat(bonus);
+        if (!isNaN(numBonus)) {
+          acc[channelId] = Math.max(0.0, Math.min(2.0, numBonus)); // Clamp to valid range
+        }
+      }
       return acc;
     }, {});
   }
@@ -91,7 +124,7 @@ const discordConfig = convict({
     env: 'DISCORD_DEFAULT_CHANNEL_ID'
   },
   DISCORD_CHANNEL_BONUSES: {
-    doc: 'Channel-specific bonuses (e.g., "channelId:bonus")',
+    doc: 'Channel-specific bonuses. Supports CSV ("ch1:1.5,ch2:0.8") or JSON ({"ch1":1.5,"ch2":0.8}). Range: 0.0-2.0',
     format: 'channel-bonuses',
     default: {},
     env: 'DISCORD_CHANNEL_BONUSES'
@@ -152,15 +185,19 @@ const discordConfig = convict({
   }
 });
 
+import Debug from 'debug';
+const debug = Debug('app:discordConfig');
+
 const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
 const configPath = path.join(configDir, 'providers/discord.json');
 
 try {
   discordConfig.loadFile(configPath);
   discordConfig.validate({ allowed: 'strict' });
-} catch (error) {
+  debug(`Successfully loaded Discord config from ${configPath}`);
+} catch {
   // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load discord config from ${configPath}, using defaults`);
+  debug(`Warning: Could not load discord config from ${configPath}, using defaults`);
 }
 
 export default discordConfig;

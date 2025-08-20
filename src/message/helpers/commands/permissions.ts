@@ -1,5 +1,3 @@
-import Debug from "debug";
-
 /**
  * Checks if a user is allowed based on their user ID.
  * 

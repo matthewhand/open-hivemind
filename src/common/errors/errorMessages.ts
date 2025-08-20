@@ -1,4 +1,3 @@
-import Debug from "debug";
 const errorMessages: string[] = [
     "Oops, my circuits got tangled in digital spaghetti! 🍝🤖",
     "Whoa, I tripped over a virtual shoelace! 🤖👟",

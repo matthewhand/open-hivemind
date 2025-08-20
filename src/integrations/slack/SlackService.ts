@@ -349,11 +349,37 @@ export class SlackService implements IMessengerService {
             return 'Sorry, I\'m having trouble processing your request right now.';
           }
           
-          const llmResponse = await llmProviders[0].generateChatCompletion(
-            userMessage, 
-            formattedHistory, 
-            metadataWithMessages
-          );
+          let llmResponse: string;
+          try {
+            const cfg = this.botConfigs.get(botName) as any;
+            const llm = cfg?.llm;
+            if (llm && (llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
+              const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');
+              llmResponse = await generateChatCompletionDirect(
+                {
+                  apiUrl: llm.apiUrl,
+                  authHeader: llm.authHeader,
+                  model: llm.model,
+                },
+                userMessage,
+                formattedHistory,
+                (llm.systemPrompt || metadataWithMessages?.systemPrompt || '')
+              );
+            } else {
+              llmResponse = await llmProviders[0].generateChatCompletion(
+                userMessage,
+                formattedHistory,
+                metadataWithMessages
+              );
+            }
+          } catch (e) {
+            debug(`[${botName}] LLM call failed, falling back: ${e}`);
+            llmResponse = await llmProviders[0].generateChatCompletion(
+              userMessage,
+              formattedHistory,
+              metadataWithMessages
+            );
+          }
           debug(`[${botName}] LLM Response:`, llmResponse);
           
           const { text: fallbackText, blocks } = await messageProcessor.processResponse(llmResponse);
@@ -548,6 +574,40 @@ export class SlackService implements IMessengerService {
    */
   public getBotConfig(botName: string): any {
     return this.botConfigs.get(botName);
+  }
+
+  /**
+   * Remove a Slack bot at runtime and update maps. Best-effort stop of socket/RTM clients.
+   */
+  public async removeBot(botName: string): Promise<boolean> {
+    const mgr = this.botManagers.get(botName);
+    if (!mgr) return false;
+    try {
+      const bots = (mgr as any).getAllBots?.() || [];
+      for (const b of bots) {
+        try { await b.socketClient?.disconnect?.(); } catch {}
+        try { await b.rtmClient?.disconnect?.(); } catch {}
+      }
+    } catch {}
+    this.botManagers.delete(botName);
+    this.signatureVerifiers.delete(botName);
+    this.interactiveHandlers.delete(botName);
+    this.interactiveActions.delete(botName);
+    this.eventProcessors.delete(botName);
+    this.messageProcessors.delete(botName);
+    this.welcomeHandlers.delete(botName);
+    this.botConfigs.delete(botName);
+    this.joinTs.delete(botName);
+    this.lastSentEventTs.delete(botName);
+    return true;
+  }
+
+  /** Send a quick test message using a named bot. */
+  public async sendTestMessage(botName: string, channelId: string, text: string): Promise<string> {
+    if (!channelId) throw new Error('channelId required');
+    const cfg = this.getBotConfig(botName);
+    const name = botName || Array.from(this.botManagers.keys())[0];
+    return this.sendMessageToChannel(channelId, text, name);
   }
 }
 

@@ -42,12 +42,15 @@ export async function generateChatCompletion(
     };
 
     const url = apiUrl + '/chat/completions';
-    const payload = {
+    const payload: any = {
       prompt: userMessage,
       knowledgeFileId,
       history: historyMessages.map(msg => msg.getText()), // Convert to plain text
       metadata: metadata || {}, // Include metadata in payload
     };
+    if (metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.trim() !== '') {
+      payload.systemPrompt = metadata.systemPrompt;
+    }
     const response = await axios.post(url, payload, { headers });
 
     debug('Inference result:', response.data);

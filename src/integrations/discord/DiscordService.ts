@@ -62,6 +62,7 @@ export const Discord = {
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
+    private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
@@ -232,6 +233,7 @@ export const Discord = {
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
       if (this.handlerSet) return;
       this.handlerSet = true;
+      this.currentHandler = handler;
 
       this.bots.forEach((bot) => {
         bot.client.on('messageCreate', async (message) => {
@@ -248,6 +250,55 @@ export const Discord = {
             return;
           }
         });
+      });
+    }
+
+    /**
+     * Add a Discord bot instance at runtime (admin-hot-add) using minimal legacy config shape.
+     */
+    public async addBot(botConfig: any): Promise<void> {
+      const token = botConfig?.discord?.token || botConfig?.token;
+      const name = botConfig?.name || `Bot${this.bots.length + 1}`;
+      if (!token) {
+        throw new Error('Discord addBot requires a token');
+      }
+
+      const client = new Client({ intents: Discord.DiscordService.intents });
+      const newBot: Bot = {
+        client,
+        botUserId: '',
+        botUserName: name,
+        config: {
+          name,
+          token,
+          discord: { token },
+          llmProvider: 'flowise',
+          llm: botConfig?.llm || undefined
+        }
+      };
+      this.bots.push(newBot);
+
+      if (this.currentHandler) {
+        client.on('messageCreate', async (message) => {
+          try {
+            if (!message || !message.author || message.author.bot) return;
+            if (!message.channelId) return;
+            const wrappedMessage = new DiscordMessage(message);
+            const history = await this.getMessagesFromChannel(message.channelId);
+            await this.currentHandler!(wrappedMessage, history, newBot.config);
+          } catch {
+            return;
+          }
+        });
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        client.once('ready', () => {
+          log(`Discord ${name} logged in as ${client.user?.tag}`);
+          newBot.botUserId = client.user?.id || '';
+          resolve();
+        });
+        client.login(token).catch(reject);
       });
     }
 

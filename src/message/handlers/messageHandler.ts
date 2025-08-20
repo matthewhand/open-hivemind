@@ -4,6 +4,7 @@ import { processCommand } from '../helpers/handler/processCommand';
 import { stripBotId } from '../helpers/processing/stripBotId';
 import { addUserHintFn as addUserHint } from '../helpers/processing/addUserHint';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage';
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
@@ -65,14 +66,31 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // LLM processing
     const startTime = Date.now();
-    const metadata = { ...message.metadata, channelId: message.getChannelId() };
+    const metadata = { ...message.metadata, channelId: message.getChannelId() } as any;
     const payload = {
       text: processedMessage,
       history: historyMessages.map((m) => ({ role: m.role, content: m.getText() })),
       metadata: metadata,
     };
     logger(`Sending to LLM: ${JSON.stringify(payload)}`);
-    const llmResponse = await llmProvider.generateChatCompletion(processedMessage, historyMessages, metadata);
+    let llmResponse: string;
+    try {
+      const llm = botConfig?.llm;
+      if (llm && String(llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
+        const sys = llm.systemPrompt || metadata.systemPrompt || '';
+        llmResponse = await generateChatCompletionDirect(
+          { apiUrl: llm.apiUrl, authHeader: llm.authHeader, model: llm.model },
+          processedMessage,
+          historyMessages,
+          sys
+        );
+      } else {
+        llmResponse = await llmProvider.generateChatCompletion(processedMessage, historyMessages, metadata);
+      }
+    } catch (e) {
+      logger('Per-bot LLM override failed, falling back:', e instanceof Error ? e.message : String(e));
+      llmResponse = await llmProvider.generateChatCompletion(processedMessage, historyMessages, metadata);
+    }
     logger(`LLM response: ${llmResponse}`);
 
     const reply = llmResponse || 'No response'; // Assume string response

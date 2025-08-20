@@ -7,7 +7,6 @@ const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
-const llmConfigModule = require('@config/llmConfig');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
@@ -22,7 +21,6 @@ const app = express();
 debug("Messenger services are being initialized...");
 
 const healthRoute = healthRouteModule.default || healthRouteModule;
-// const llmConfig = llmConfigModule.default || llmConfigModule;
 const messageConfig = messageConfigModule.default || messageConfigModule;
 const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 

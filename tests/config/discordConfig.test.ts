@@ -58,6 +58,27 @@ describe('discordConfig', () => {
       const config = require('../../src/config/discordConfig').default;
       expect(config.get('DISCORD_CHANNEL_BONUSES')).toEqual({});
     });
+
+    it('should parse JSON format', () => {
+      process.env.DISCORD_CHANNEL_BONUSES = '{"ch1":1.5,"ch2":0.8}';
+      jest.resetModules();
+      const config = require('../../src/config/discordConfig').default;
+      expect(config.get('DISCORD_CHANNEL_BONUSES')).toEqual({
+        ch1: 1.5,
+        ch2: 0.8
+      });
+    });
+
+    it('should clamp values to valid range', () => {
+      process.env.DISCORD_CHANNEL_BONUSES = 'ch1:-1.0,ch2:5.0,ch3:1.5';
+      jest.resetModules();
+      const config = require('../../src/config/discordConfig').default;
+      expect(config.get('DISCORD_CHANNEL_BONUSES')).toEqual({
+        ch1: 0.0, // Clamped from -1.0
+        ch2: 2.0, // Clamped from 5.0
+        ch3: 1.5  // Valid value
+      });
+    });
   });
 
   describe('environment variables', () => {

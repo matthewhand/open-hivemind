@@ -12,7 +12,6 @@ import openaiConfig from '@config/openaiConfig';
 import llmConfig from '@config/llmConfig';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
-import { getEmoji } from '@common/getEmoji';
 
 const debug = Debug('app:OpenAiService');
 

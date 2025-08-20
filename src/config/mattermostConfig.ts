@@ -32,7 +32,7 @@ try {
   mattermostConfig.loadFile(configPath);
   mattermostConfig.validate({allowed: 'strict'});
   debug(`Successfully loaded Mattermost config from ${configPath}`);
-} catch (error) {
+} catch {
   // Fallback to defaults if config file is missing or invalid
   debug(`Warning: Could not load mattermost config from ${configPath}, using defaults`);
 }

@@ -1,10 +1,9 @@
-import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnection } from '@discordjs/voice';
-import { Client, GuildMember, VoiceBasedChannel, VoiceChannel, GatewayIntentBits } from 'discord.js';
+import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
+import { Client, GuildMember, VoiceChannel } from 'discord.js';
 import { DiscordGatewayAdapterCreator } from '@discordjs/voice'; // Fix: Added missing import for DiscordGatewayAdapterCreator
 import discordConfig from '@config/discordConfig';
 import path from 'path';
 import Debug from 'debug';
-import fs from 'fs'; // Fix: Ensure 'fs' import is included
 
 const debug = Debug('app:playAudioResponse');
 

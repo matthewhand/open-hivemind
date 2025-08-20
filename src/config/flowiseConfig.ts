@@ -40,7 +40,7 @@ const configPath = path.join(configDir, 'providers/flowise.json');
 try {
   flowiseConfig.loadFile(configPath);
   flowiseConfig.validate({ allowed: 'strict' });
-} catch (error) {
+} catch {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
 }

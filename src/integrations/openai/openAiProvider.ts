@@ -96,7 +96,7 @@ export const openAiProvider: ILlmProvider = {
     // Validate baseURL
     try {
       new URL(baseURL);
-    } catch (e) {
+    } catch {
       debug(`Invalid baseURL '${baseURL}', falling back to '${DEFAULT_BASE_URL}'`);
       baseURL = DEFAULT_BASE_URL;
     }
@@ -201,7 +201,7 @@ export const openAiProvider: ILlmProvider = {
 
     try {
       new URL(baseURL);
-    } catch (e) {
+    } catch {
       debug(`Invalid baseURL '${baseURL}', falling back to '${DEFAULT_BASE_URL}'`);
       baseURL = DEFAULT_BASE_URL;
     }
