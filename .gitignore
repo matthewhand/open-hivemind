@@ -137,3 +137,5 @@ build_output.log
 build.log
 discord_message.log
 *.log
+# Logs directory
+logs/
