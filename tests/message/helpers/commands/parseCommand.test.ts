@@ -11,7 +11,7 @@ describe('parseCommand', () => {
         expect(result).toEqual({
             commandName: 'start',
             action: '',
-            args: ''
+            args: []
         });
     });
 
@@ -20,7 +20,7 @@ describe('parseCommand', () => {
         expect(result).toEqual({
             commandName: 'start',
             action: 'now',
-            args: ''
+            args: []
         });
     });
 
@@ -29,7 +29,7 @@ describe('parseCommand', () => {
         expect(result).toEqual({
             commandName: 'start',
             action: 'now',
-            args: 'quickly'
+            args: ['quickly']
         });
     });
 

@@ -7,6 +7,9 @@ import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from './voice/voiceCommandHandler';
+import { VoiceChannelManager } from './voice/voiceChannelManager';
+import { AudioRecorder } from './voice/audioRecorder';
+import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
 // Optional channel routing feature flag and router
@@ -65,6 +68,7 @@ export const Discord = {
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
     private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
+    private voiceManager?: VoiceChannelManager;
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
@@ -230,6 +234,9 @@ export const Discord = {
       });
   
       await Promise.all(loginPromises);
+      
+      // Initialize voice manager after bots are ready
+      this.voiceManager = new VoiceChannelManager(this.bots[0].client);
     }
 
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
@@ -443,19 +450,19 @@ export const Discord = {
     }
 
     public async joinVoiceChannel(channelId: string): Promise<void> {
-      const connection = await connectToVoiceChannel(this.bots[0].client, channelId);
-      const handler = new VoiceCommandHandler(connection);
-      handler.startListening();
-      log(`Joined voice channel ${channelId} and started listening`);
+      if (!this.voiceManager) throw new Error('Voice manager not initialized');
+      await this.voiceManager.joinChannel(channelId, true);
+      log(`Joined voice channel ${channelId} with full voice capabilities`);
     }
 
-    public async leaveVoiceChannel(guildId: string): Promise<void> {
-      const bot = this.bots[0];
-      const guild = bot.client.guilds.cache.get(guildId);
-      if (guild?.members?.me?.voice?.channel) {
-        guild.members.me.voice.disconnect();
-        log(`Left voice channel in guild ${guildId}`);
-      }
+    public async leaveVoiceChannel(channelId: string): Promise<void> {
+      if (!this.voiceManager) throw new Error('Voice manager not initialized');
+      this.voiceManager.leaveChannel(channelId);
+      log(`Left voice channel ${channelId}`);
+    }
+
+    public getVoiceChannels(): string[] {
+      return this.voiceManager?.getActiveChannels() || [];
     }
   }
 };

@@ -15,7 +15,7 @@ describe('commandRouter', () => {
 
         const result = await routeCommand('!status');
 
-        expect(handleStatusCommand).toHaveBeenCalledWith('');
+        expect(handleStatusCommand).toHaveBeenCalledWith([]);
         expect(result).toBe('System is operational. All services are running smoothly.');
     });
 
@@ -24,7 +24,7 @@ describe('commandRouter', () => {
 
         const result = await routeCommand('!status extra arguments');
 
-        expect(handleStatusCommand).toHaveBeenCalledWith('extra arguments');
+        expect(handleStatusCommand).toHaveBeenCalledWith(['extra', 'arguments']);
         expect(result).toBe('System is operational. All services are running smoothly.');
     });
 
