@@ -1,0 +1,85 @@
+import { VoiceCommandHandler } from '@src/integrations/discord/voice/voiceCommandHandler';
+import { VoiceConnection } from '@discordjs/voice';
+
+jest.mock('@src/integrations/discord/voice/speechToText');
+jest.mock('@src/integrations/discord/media/convertOpusToWav');
+jest.mock('@src/llm/getLlmProvider');
+jest.mock('openai');
+jest.mock('fs');
+
+describe('VoiceCommandHandler', () => {
+  let handler: VoiceCommandHandler;
+  let mockConnection: jest.Mocked<VoiceConnection>;
+
+  beforeEach(() => {
+    mockConnection = {} as jest.Mocked<VoiceConnection>;
+    handler = new VoiceCommandHandler(mockConnection);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should start listening', () => {
+    handler.startListening();
+    expect(handler['isListening']).toBe(true);
+  });
+
+  it('should stop listening', () => {
+    handler.startListening();
+    handler.stopListening();
+    expect(handler['isListening']).toBe(false);
+  });
+
+  it('should process voice input when listening', async () => {
+    const { transcribeAudio } = require('@src/integrations/discord/voice/speechToText');
+    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
+    const { getLlmProvider } = require('@src/llm/getLlmProvider');
+
+    transcribeAudio.mockResolvedValue('Hello bot');
+    convertOpusToWav.mockResolvedValue('/temp/audio.wav');
+    getLlmProvider.mockReturnValue([{
+      generateChatCompletion: jest.fn().mockResolvedValue('Hello human')
+    }]);
+
+    const fs = require('fs');
+    fs.existsSync = jest.fn().mockReturnValue(false);
+    fs.mkdirSync = jest.fn();
+    fs.unlinkSync = jest.fn();
+
+    handler.startListening();
+    const opusBuffer = Buffer.from('opus data');
+    
+    await handler.processVoiceInput(opusBuffer);
+    
+    expect(convertOpusToWav).toHaveBeenCalledWith(opusBuffer, './temp');
+    expect(transcribeAudio).toHaveBeenCalledWith('/temp/audio.wav');
+  });
+
+  it('should ignore input when not listening', async () => {
+    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
+    
+    const opusBuffer = Buffer.from('opus data');
+    await handler.processVoiceInput(opusBuffer);
+    
+    expect(convertOpusToWav).not.toHaveBeenCalled();
+  });
+
+  it('should handle empty transcription', async () => {
+    const { transcribeAudio } = require('@src/integrations/discord/voice/speechToText');
+    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
+
+    transcribeAudio.mockResolvedValue('   ');
+    convertOpusToWav.mockResolvedValue('/temp/audio.wav');
+
+    const fs = require('fs');
+    fs.existsSync = jest.fn().mockReturnValue(false);
+    fs.mkdirSync = jest.fn();
+    fs.unlinkSync = jest.fn();
+
+    handler.startListening();
+    await handler.processVoiceInput(Buffer.from('opus'));
+    
+    expect(fs.unlinkSync).toHaveBeenCalledWith('/temp/audio.wav');
+  });
+});

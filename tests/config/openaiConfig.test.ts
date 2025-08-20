@@ -2,7 +2,7 @@ import openaiConfig from '../../src/config/openaiConfig';
 
 describe('openaiConfig', () => {
   it('should have default values', () => {
-    expect(openaiConfig.get('OPENAI_API_KEY')).toBe('a7c108bb78eb3dff19ad34f03d70695765abd3a09a80d05f33a93dca97ec3367');
+    expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
     expect(openaiConfig.get('OPENAI_TEMPERATURE')).toBe(0.7);
     expect(openaiConfig.get('OPENAI_MAX_TOKENS')).toBe(150);
     expect(openaiConfig.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.1);

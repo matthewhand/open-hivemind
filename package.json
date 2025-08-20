@@ -12,7 +12,7 @@
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",
     "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand",
-    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand",
+    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/jest --coverage --runInBand",
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "ncu": "ncu"
