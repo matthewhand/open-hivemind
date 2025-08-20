@@ -246,15 +246,17 @@ export class OpenAiService {
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
-        messages: chatParams,
-        max_tokens: maxTokens,
-        temperature,
-        stream: false
+      const response = await this.retryWithBackoff(async () => {
+        return await this.openai.chat.completions.create({
+          model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+          messages: chatParams,
+          max_tokens: maxTokens,
+          temperature,
+          stream: false
+        });
       });
 
-      debug('[DEBUG] OpenAI API response received:', response);
+      debug('[DEBUG] OpenAI API response received:', redactSensitiveInfo('response', JSON.stringify(response)));
 
       const choice = response.choices && response.choices[0];
       debug('[DEBUG] Raw first choice:', JSON.stringify(choice));
@@ -325,6 +327,42 @@ export class OpenAiService {
       debug('[DEBUG] Error listing models:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Retry with exponential backoff and jitter for rate limits and transient errors
+   */
+  private async retryWithBackoff<T>(operation: () => Promise<T>): Promise<T> {
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        const errorType = this.classifyError(error);
+        
+        if (errorType === 'fatal' || attempt === this.maxRetries) {
+          throw error;
+        }
+        
+        if (errorType === 'retryable') {
+          const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
+          debug(`[DEBUG] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('Max retries exceeded');
+  }
+
+  /**
+   * Classify errors as rate-limit, transient, or fatal
+   */
+  private classifyError(error: any): 'rate-limit' | 'transient' | 'fatal' {
+    if (error?.status === 429) return 'rate-limit';
+    if (error?.status >= 500 && error?.status < 600) return 'transient';
+    if (error?.code === 'ECONNRESET' || error?.code === 'ETIMEDOUT') return 'transient';
+    return 'fatal';
   }
 
   /**
