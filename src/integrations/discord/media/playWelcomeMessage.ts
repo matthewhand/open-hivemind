@@ -49,7 +49,7 @@ export async function playWelcomeMessage(connection: VoiceConnection): Promise<v
     }
 
     const welcomeMessage = discordConfig.get('DISCORD_WELCOME_MESSAGE') as string || 'Welcome to the server!';
-    const model = openaiConfig.get('OPENAI_MODEL') as string || 'text-davinci-003';
+    const model = 'tts-1';
     let voice: AllowedVoice = 'fable';
 
     // Use OPENAI_VOICE if it exists and is valid

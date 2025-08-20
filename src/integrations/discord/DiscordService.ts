@@ -5,6 +5,8 @@ import DiscordMessage from './DiscordMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
+import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 import * as fs from 'fs';
 import * as path from 'path';
 // Optional channel routing feature flag and router
@@ -438,6 +440,22 @@ export const Discord = {
 
     public getBotByName(name: string): Bot | undefined {
       return this.bots.find((bot) => bot.botUserName === name);
+    }
+
+    public async joinVoiceChannel(channelId: string): Promise<void> {
+      const connection = await connectToVoiceChannel(this.bots[0].client, channelId);
+      const handler = new VoiceCommandHandler(connection);
+      handler.startListening();
+      log(`Joined voice channel ${channelId} and started listening`);
+    }
+
+    public async leaveVoiceChannel(guildId: string): Promise<void> {
+      const bot = this.bots[0];
+      const guild = bot.client.guilds.cache.get(guildId);
+      if (guild?.members?.me?.voice?.channel) {
+        guild.members.me.voice.disconnect();
+        log(`Left voice channel in guild ${guildId}`);
+      }
     }
   }
 };
