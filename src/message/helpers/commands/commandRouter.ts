@@ -14,11 +14,15 @@ export async function routeCommand(commandContent: string): Promise<string | nul
         return null;
     }
 
-    switch (parsed.commandName) {
-        case 'status':
-            return await handleStatusCommand(parsed.args);
-        // Add additional command handlers here as needed
-        default:
-            return `Unrecognized command: ${parsed.commandName}`;
+    try {
+        switch (parsed.commandName) {
+            case 'status':
+                return await handleStatusCommand(parsed.args);
+            // Add additional command handlers here as needed
+            default:
+                return `Unrecognized command: ${parsed.commandName}`;
+        }
+    } catch (error: any) {
+        return `Error: ${error.message}`;
     }
 }
