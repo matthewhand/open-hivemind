@@ -132,3 +132,8 @@ dist
 .pnp.*
 .vscode/settings.json
 build_errors.log
+# Build logs
+build_output.log
+build.log
+discord_message.log
+*.log

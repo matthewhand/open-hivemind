@@ -67,14 +67,32 @@ describe('webhookRoutes', () => {
   it('returns 400 when predictionId or status is missing', async () => {
     const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: { status: 'succeeded', output: [] } });
     expect(res1.statusCode).toBe(400);
+    expect(res1.body).toMatchObject({ error: 'Invalid request body' });
 
     const { res: res2 } = await runRoute(app, 'post', '/webhook', { body: { id: 'pred-x', output: [] } });
     expect(res2.statusCode).toBe(400);
+    expect(res2.body).toMatchObject({ error: 'Invalid request body' });
 
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
 
-  it('responds 200 even if sending message throws (logged internally)', async () => {
+  it('returns 400 for invalid request body formats', async () => {
+    // Non-object body
+    const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: 'invalid' });
+    expect(res1.statusCode).toBe(400);
+    expect(res1.body.details).toContain('Request body must be a valid JSON object');
+
+    // Invalid output type
+    const { res: res2 } = await runRoute(app, 'post', '/webhook', { 
+      body: { id: 'test', status: 'succeeded', output: 'not-array' } 
+    });
+    expect(res2.statusCode).toBe(400);
+    expect(res2.body.details).toContain('Invalid "output" field (must be array if present)');
+
+    expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when message service fails', async () => {
     messageService.sendPublicAnnouncement.mockRejectedValueOnce(new Error('send failed'));
 
     const { res } = await runRoute(app, 'post', '/webhook', { body: {
@@ -83,9 +101,12 @@ describe('webhookRoutes', () => {
       output: ['Hello'],
     }});
 
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toMatchObject({ error: 'Failed to process webhook' });
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
   });
+
+
 
   it('returns 403 when verifyWebhookToken blocks', async () => {
     const { verifyWebhookToken } = jest.requireMock('@webhook/security/webhookSecurity') as typeof security;
