@@ -6,7 +6,13 @@ import { IMessengerService } from '@message/interfaces/IMessengerService';
 
 // Mock dependencies
 jest.mock('@message/handlers/messageHandler');
-jest.mock('@message/management/getMessengerProvider');
+jest.mock('@message/management/getMessengerProvider', () => ({
+  getMessengerProvider: jest.fn(() => [{
+    getName: () => 'integration-messenger',
+    sendMessageToChannel: jest.fn().mockResolvedValue('sent-message-id'),
+    getMessagesFromChannel: jest.fn()
+  }])
+}));
 jest.mock('@config/messageConfig', () => ({
   get: jest.fn((key: string) => {
     if (key === 'IDLE_RESPONSE') {

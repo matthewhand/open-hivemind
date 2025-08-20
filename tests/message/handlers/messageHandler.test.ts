@@ -56,7 +56,12 @@ jest.mock('@message/helpers/handler/MessageDelayScheduler', () => ({
 }));
 jest.mock('@message/helpers/handler/sendFollowUpRequest');
 jest.mock('@config/messageConfig');
-jest.mock('@message/management/getMessengerProvider');
+jest.mock('@message/management/getMessengerProvider', () => ({
+  getMessengerProvider: jest.fn(() => [{
+    getClientId: jest.fn().mockReturnValue('bot123'),
+    sendMessageToChannel: jest.fn().mockResolvedValue('ts-12345')
+  }])
+}));
 
 // 2. Provide a default implementation for the mocks that are called at module-level.
 // This runs before the messageHandler module is imported and its top-level code executes.
@@ -65,7 +70,6 @@ const mockLlmProvider = {
   validateConfig: jest.fn().mockReturnValue(true)
 };
 const mockMessengerProvider = { getClientId: jest.fn(), sendMessageToChannel: jest.fn() };
-(getMessengerProvider as jest.Mock).mockReturnValue([mockMessengerProvider]);
 
 // Default scheduler mock that DOES NOT auto-send; tests can control behavior explicitly
 const mockScheduleMessage = jest.fn().mockImplementation((_channelId, _messageId, _text, _userId, _sendFn) => {
