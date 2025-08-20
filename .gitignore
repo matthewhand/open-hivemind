@@ -139,3 +139,5 @@ discord_message.log
 *.log
 # Logs directory
 logs/
+# Coverage reports
+coverage/
