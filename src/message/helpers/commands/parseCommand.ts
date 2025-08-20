@@ -5,7 +5,7 @@ const debug = Debug('app:parseCommand');
 export interface ParsedCommand {
   commandName: string;
   action: string;
-  args: string;
+  args: string[];
 }
 
 /**
@@ -30,8 +30,9 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
   const matches = commandContent.match(commandRegex);
   
   if (matches) {
-    const [, commandName, action = '', args = ''] = matches.map(match => match?.trim() || '');
-    debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args);
+    const [, commandName, action = '', argsString = ''] = matches.map(match => match?.trim() || '');
+    const args = argsString ? argsString.split(/\s+/) : [];
+    debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args.join(' '));
     return { commandName: commandName.toLowerCase(), action, args };
   } else {
     debug('Command content did not match expected pattern.');

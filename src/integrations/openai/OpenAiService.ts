@@ -343,7 +343,7 @@ export class OpenAiService {
           throw error;
         }
         
-        if (errorType === 'retryable') {
+        if (errorType === 'rate-limit' || errorType === 'transient') {
           const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
           debug(`[DEBUG] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));

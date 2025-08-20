@@ -29,7 +29,8 @@ export async function processCommand(
 
     // Handle command messages
     const command = text.slice(1).split(' ')[0];  // Extract command after the "!"
-    const args = text.slice(1 + command.length).trim(); // Extract arguments after the command
+    const argsString = text.slice(1 + command.length).trim(); // Extract arguments after the command
+    const args = argsString ? argsString.split(/\s+/) : [];
     debug('[processCommand] Command extracted: ' + command);
 
     if (command.toLowerCase() === 'status') {
