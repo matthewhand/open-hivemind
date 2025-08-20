@@ -37,12 +37,9 @@ module.exports = {
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
 
-  'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/__mocks__/discord.js.ts',
+  'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/tests/__mocks__/discord.js.ts',
   },
-  setupFiles: [
-    '<rootDir>/jest-setup.js'
-  ],
-  setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   verbose: true,
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
   transformIgnorePatterns: ["/node_modules/(?!chai|other-esm-dependency)"],
