@@ -7,6 +7,13 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+# Configuration files with sensitive data
+config/user/
+.env.real
+*.config.json
+*credentials*
+*secrets*
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 

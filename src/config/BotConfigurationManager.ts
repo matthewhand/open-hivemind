@@ -18,7 +18,7 @@ const botSchema = {
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
-    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n'],
+    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER'
   },
@@ -174,6 +174,28 @@ const botSchema = {
     format: String,
     default: 'http://localhost:3000/api/',
     env: 'BOTS_{name}_OPENWEBUI_API_URL'
+  },
+  
+  // OpenSwarm configuration
+  OPENSWARM_BASE_URL: {
+    doc: 'OpenSwarm API base URL',
+    format: String,
+    default: 'http://localhost:8000/v1',
+    env: 'BOTS_{name}_OPENSWARM_BASE_URL'
+  },
+  
+  OPENSWARM_API_KEY: {
+    doc: 'OpenSwarm API key',
+    format: String,
+    default: 'dummy-key',
+    env: 'BOTS_{name}_OPENSWARM_API_KEY'
+  },
+  
+  OPENSWARM_TEAM: {
+    doc: 'OpenSwarm team name (used as model)',
+    format: String,
+    default: 'default-team',
+    env: 'BOTS_{name}_OPENSWARM_TEAM'
   }
 };
 
@@ -213,6 +235,11 @@ export interface BotConfig {
   openwebui?: {
     apiKey: string;
     apiUrl?: string;
+  };
+  openswarm?: {
+    baseUrl?: string;
+    apiKey?: string;
+    team?: string;
   };
 }
 
@@ -354,6 +381,16 @@ export class BotConfigurationManager {
       };
     }
     
+    // Add OpenSwarm configuration
+    const openswarmBaseUrl = botConfig.get('OPENSWARM_BASE_URL');
+    if (config.llmProvider === 'openswarm' || openswarmBaseUrl !== 'http://localhost:8001/v1') {
+      config.openswarm = {
+        baseUrl: openswarmBaseUrl,
+        apiKey: botConfig.get('OPENSWARM_API_KEY'),
+        team: botConfig.get('OPENSWARM_TEAM'),
+      };
+    }
+    
     return config;
   }
 
@@ -396,6 +433,7 @@ export class BotConfigurationManager {
     if (process.env.OPENAI_API_KEY) return 'openai';
     if (process.env.FLOWISE_API_KEY) return 'flowise';
     if (process.env.OPENWEBUI_API_KEY) return 'openwebui';
+    if (process.env.OPENSWARM_BASE_URL) return 'openswarm';
     return 'flowise'; // Default fallback
   }
 

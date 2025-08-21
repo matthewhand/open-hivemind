@@ -1,8 +1,8 @@
 import { FlowiseProvider } from '@src/integrations/flowise/flowiseProvider';
 
-const REAL_FLOWISE_URL = process.env.REAL_FLOWISE_URL;
-const REAL_FLOWISE_API_KEY = process.env.REAL_FLOWISE_API_KEY;
-const REAL_FLOWISE_CHATFLOW_ID = process.env.REAL_FLOWISE_CHATFLOW_ID;
+const REAL_FLOWISE_URL = process.env.REAL_FLOWISE_URL || process.env.FLOWISE_API_ENDPOINT;
+const REAL_FLOWISE_API_KEY = process.env.REAL_FLOWISE_API_KEY || process.env.FLOWISE_API_KEY;
+const REAL_FLOWISE_CHATFLOW_ID = process.env.REAL_FLOWISE_CHATFLOW_ID || process.env.FLOWISE_CONVERSATION_CHATFLOW_ID;
 
 jest.unmock('axios');
 

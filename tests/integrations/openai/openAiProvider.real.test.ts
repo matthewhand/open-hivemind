@@ -1,6 +1,6 @@
 import { OpenAiProvider } from '@src/integrations/openai/openAiProvider';
 
-const REAL_OPENAI_API_KEY = process.env.REAL_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 jest.unmock('openai');
 
@@ -8,20 +8,19 @@ describe('OpenAI Real Integration', () => {
   let provider: OpenAiProvider;
 
   beforeAll(() => {
-    if (!REAL_OPENAI_API_KEY) {
-      console.log('Skipping real OpenAI tests - set REAL_OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      console.log('Skipping real OpenAI tests - OPENAI_API_KEY not found');
     }
   });
 
   beforeEach(() => {
-    if (REAL_OPENAI_API_KEY) {
-      process.env.OPENAI_API_KEY = REAL_OPENAI_API_KEY;
+    if (OPENAI_API_KEY) {
       provider = new OpenAiProvider();
     }
   });
 
   it('should generate real completion', async () => {
-    if (!REAL_OPENAI_API_KEY) return;
+    if (!OPENAI_API_KEY) return;
 
     const response = await provider.generateChatCompletion(
       'Say "Hello World" in exactly 2 words',
@@ -35,7 +34,7 @@ describe('OpenAI Real Integration', () => {
   }, 30000);
 
   it('should handle real rate limiting', async () => {
-    if (!REAL_OPENAI_API_KEY) return;
+    if (!OPENAI_API_KEY) return;
 
     const promises = Array(5).fill(0).map(() => 
       provider.generateChatCompletion('Test', [], { model: 'gpt-3.5-turbo', max_tokens: 5 })
@@ -48,7 +47,7 @@ describe('OpenAI Real Integration', () => {
   }, 60000);
 
   it('should handle conversation history', async () => {
-    if (!REAL_OPENAI_API_KEY) return;
+    if (!OPENAI_API_KEY) return;
 
     const history = [
       { role: 'user', content: 'My name is Alice' },

@@ -41,3 +41,10 @@ Agents inherit personality from:
 - **Mattermost**: Experimental REST integration
 
 For implementation details, see the technical documentation in [PACKAGE.md](PACKAGE.md).
+
+## Development Roadmap
+See [TODO.md](TODO.md) for upcoming features including:
+- React WebUI configuration system
+- Real-time agent monitoring
+- Dynamic configuration management
+- Enterprise multi-environment support
