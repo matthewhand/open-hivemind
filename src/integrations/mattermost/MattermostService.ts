@@ -114,16 +114,16 @@ export class MattermostService implements IMessengerService {
     }
 
     try {
-      await client.postMessage({
+      const post = await client.postMessage({
         channel: channelId,
         text: text
       });
       
       console.log(`[${botName}] Sent message to channel ${channelId}`);
-      return Date.now().toString();
+      return post.id;
     } catch (error) {
       console.error(`[${botName}] Failed to send message:`, error);
-      throw error;
+      return '';
     }
   }
 
@@ -140,8 +140,24 @@ export class MattermostService implements IMessengerService {
       return [];
     }
 
-    console.log(`[${targetBot}] Fetching ${limit} messages from channel ${channelId}`);
-    return [];
+    try {
+      const posts = await client.getChannelPosts(channelId, 0, limit);
+      const messages: IMessage[] = [];
+      
+      for (const post of posts.slice(0, limit)) {
+        const user = await client.getUser(post.user_id);
+        const username = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : 'Unknown';
+        
+        const { MattermostMessage } = await import('./MattermostMessage');
+        const mattermostMsg = new MattermostMessage(post, username);
+        messages.push(mattermostMsg.toIMessage());
+      }
+      
+      return messages.reverse(); // Most recent first
+    } catch (error) {
+      console.error(`[${targetBot}] Failed to fetch messages:`, error);
+      return [];
+    }
   }
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
