@@ -468,3 +468,5 @@ export const Discord = {
 };
 
 type DiscordService = InstanceType<typeof Discord.DiscordService>;
+export { DiscordService } from './DiscordService';
+export const DiscordService = Discord.DiscordService;
