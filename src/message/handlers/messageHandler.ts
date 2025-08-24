@@ -16,11 +16,75 @@ const llmProvider = getLlmProvider()[0]; // Returns ILlmProvider
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 
+// Message idempotency tracking
+class MessageIdempotencyManager {
+  private processedMessages: Map<string, number> = new Map();
+  private readonly TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_ENTRIES = 10000;
+
+  private generateIdempotencyKey(message: IMessage): string {
+    const messageId = message.getMessageId();
+    const channelId = message.getChannelId();
+    const timestamp = message.getTimestamp?.() || Date.now();
+    const text = message.getText();
+    
+    // Create composite key from message properties
+    return `${channelId}:${messageId}:${timestamp}:${text.substring(0, 50)}`;
+  }
+
+  public isMessageProcessed(message: IMessage): boolean {
+    const key = this.generateIdempotencyKey(message);
+    const now = Date.now();
+    
+    // Clean up expired entries
+    this.cleanup(now);
+    
+    if (this.processedMessages.has(key)) {
+      logger(`Duplicate message detected: ${key}`);
+      return true;
+    }
+    
+    // Mark message as processed
+    this.processedMessages.set(key, now);
+    logger(`Message marked as processed: ${key}`);
+    return false;
+  }
+
+  private cleanup(now: number): void {
+    // Remove expired entries
+    for (const [key, timestamp] of this.processedMessages.entries()) {
+      if (now - timestamp > this.TTL_MS) {
+        this.processedMessages.delete(key);
+      }
+    }
+    
+    // Limit map size to prevent memory leaks
+    if (this.processedMessages.size > this.MAX_ENTRIES) {
+      const entries = Array.from(this.processedMessages.entries());
+      entries.sort((a, b) => a[1] - b[1]); // Sort by timestamp
+      const toDelete = entries.slice(0, Math.floor(this.MAX_ENTRIES * 0.2)); // Remove oldest 20%
+      
+      for (const [key] of toDelete) {
+        this.processedMessages.delete(key);
+      }
+      logger(`Cleaned up ${toDelete.length} old idempotency entries`);
+    }
+  }
+}
+
+const idempotencyManager = new MessageIdempotencyManager();
+
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string> {
   try {
     const text = message.getText();
     if (!text) {
       logger('Empty message content, skipping processing.');
+      return '';
+    }
+
+    // Check for duplicate message processing
+    if (idempotencyManager.isMessageProcessed(message)) {
+      logger('Skipping duplicate message processing');
       return '';
     }
 
