@@ -14,6 +14,25 @@ import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import { getEmoji } from '@common/getEmoji';
 
+/**
+ * Error classification for retry logic
+ */
+interface ErrorClassification {
+  isRetryable: boolean;
+  isRateLimit: boolean;
+  isTransient: boolean;
+}
+
+/**
+ * Retry configuration
+ */
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+  jitterFactor: number;
+}
+
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object
@@ -34,6 +53,7 @@ export class OpenAiService {
   private readonly finishReasonRetry: string;
   private readonly maxRetries: number;
   private readonly requestTimeout: number;
+  private readonly retryConfig: RetryConfig;
 
   /**
    * Private constructor to initialize the OpenAI client and configuration.
@@ -71,6 +91,15 @@ export class OpenAiService {
 
     this.maxRetries = Number(openaiConfig.get('OPENAI_MAX_RETRIES') || 3);
     debug(`[DEBUG] Max retries set to: ${this.maxRetries}`);
+
+    // Initialize retry configuration
+    this.retryConfig = {
+      maxRetries: this.maxRetries,
+      baseDelay: 1000, // 1 second base delay
+      maxDelay: 30000, // 30 seconds max delay
+      jitterFactor: 0.1 // 10% jitter
+    };
+    debug(`[DEBUG] Retry config initialized:`, this.retryConfig);
 
     debug('[DEBUG] OpenAiService constructor complete');
   }
@@ -247,13 +276,15 @@ export class OpenAiService {
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
-        messages: chatParams,
-        max_tokens: maxTokens,
-        temperature,
-        stream: false
-      });
+      const response = await this.executeWithRetry(async () => {
+        return await this.openai.chat.completions.create({
+          model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+          messages: chatParams,
+          max_tokens: maxTokens,
+          temperature,
+          stream: false
+        });
+      }, 'generateChatCompletion');
 
       debug('[DEBUG] OpenAI API response received:', response);
 
@@ -294,8 +325,22 @@ export class OpenAiService {
         context_variables: { active_agent_name: activeAgentName }
       };
     } catch (error: any) {
-      debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: error.message });
-      throw new Error(`Failed to generate chat completion: ${error.message}`);
+      const classification = this.classifyError(error);
+      debug('[DEBUG] Error generating chat completion:', { 
+        message: redactSensitiveInfo('user_message', message), 
+        historyCount: historyMessages.length, 
+        error: error.message,
+        classification
+      });
+      
+      // Provide more specific error messages based on error type
+      if (classification.isRateLimit) {
+        throw new Error(`Rate limit exceeded. Please try again later. Original error: ${error.message}`);
+      } else if (classification.isTransient) {
+        throw new Error(`Temporary service error. Please try again. Original error: ${error.message}`);
+      } else {
+        throw new Error(`Failed to generate chat completion: ${error.message}`);
+      }
     }
   }
 
@@ -319,13 +364,134 @@ export class OpenAiService {
   public async listModels(): Promise<any> {
     debug('[DEBUG] listModels called');
     try {
-      const models = await listModels(this.openai);
+      const models = await this.executeWithRetry(async () => {
+        return await listModels(this.openai);
+      }, 'listModels');
       debug('[DEBUG] Models retrieved:', models);
       return models;
     } catch (error: any) {
-      debug('[DEBUG] Error listing models:', error.message);
-      throw error;
+      const classification = this.classifyError(error);
+      debug('[DEBUG] Error listing models:', {
+        error: error.message,
+        classification
+      });
+      
+      // Provide more specific error messages based on error type
+      if (classification.isRateLimit) {
+        throw new Error(`Rate limit exceeded while listing models. Please try again later. Original error: ${error.message}`);
+      } else if (classification.isTransient) {
+        throw new Error(`Temporary service error while listing models. Please try again. Original error: ${error.message}`);
+      } else {
+        throw error;
+      }
     }
+  }
+
+  /**
+   * Classifies errors for retry logic
+   */
+  private classifyError(error: any): ErrorClassification {
+    const status = error?.status || error?.response?.status;
+    const code = error?.code;
+    
+    // Rate limit errors (429)
+    if (status === 429) {
+      return {
+        isRetryable: true,
+        isRateLimit: true,
+        isTransient: true
+      };
+    }
+    
+    // Server errors (5xx)
+    if (status >= 500 && status < 600) {
+      return {
+        isRetryable: true,
+        isRateLimit: false,
+        isTransient: true
+      };
+    }
+    
+    // Network/timeout errors
+    if (code === 'ECONNRESET' || code === 'ETIMEDOUT' || code === 'ENOTFOUND') {
+      return {
+        isRetryable: true,
+        isRateLimit: false,
+        isTransient: true
+      };
+    }
+    
+    // Client errors (4xx except 429) are not retryable
+    if (status >= 400 && status < 500) {
+      return {
+        isRetryable: false,
+        isRateLimit: false,
+        isTransient: false
+      };
+    }
+    
+    // Unknown errors - be conservative and don't retry
+    return {
+      isRetryable: false,
+      isRateLimit: false,
+      isTransient: false
+    };
+  }
+
+  /**
+   * Calculates delay with exponential backoff and jitter
+   */
+  private calculateDelay(attempt: number): number {
+    const exponentialDelay = this.retryConfig.baseDelay * Math.pow(2, attempt);
+    const jitter = exponentialDelay * this.retryConfig.jitterFactor * Math.random();
+    const delayWithJitter = exponentialDelay + jitter;
+    
+    return Math.min(delayWithJitter, this.retryConfig.maxDelay);
+  }
+
+  /**
+   * Sleeps for the specified number of milliseconds
+   */
+  private async sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Executes a function with exponential backoff retry logic
+   */
+  private async executeWithRetry<T>(operation: () => Promise<T>, operationName: string): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        if (attempt > 0) {
+          debug(`[DEBUG] ${operationName} succeeded on attempt ${attempt + 1}`);
+        }
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        const classification = this.classifyError(error);
+        
+        debug(`[DEBUG] ${operationName} failed on attempt ${attempt + 1}:`, {
+          error: error.message,
+          status: error?.status || error?.response?.status,
+          classification
+        });
+        
+        // If this is the last attempt or error is not retryable, throw
+        if (attempt === this.retryConfig.maxRetries || !classification.isRetryable) {
+          break;
+        }
+        
+        // Calculate delay and wait before retry
+        const delay = this.calculateDelay(attempt);
+        debug(`[DEBUG] Retrying ${operationName} in ${delay}ms (attempt ${attempt + 2}/${this.retryConfig.maxRetries + 1})`);
+        await this.sleep(delay);
+      }
+    }
+    
+    throw lastError;
   }
 
   /**

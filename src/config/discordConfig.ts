@@ -1,5 +1,8 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:discordConfig');
 
 /**
  * Discord Configuration Module
@@ -31,11 +34,26 @@ convict.addFormat({
     }
   },
   coerce: (val) => {
-    if (typeof val === 'object') return val;
+    if (typeof val === 'object') {
+      // Validate numeric range for object values
+      for (const [channelId, bonus] of Object.entries(val)) {
+        const numericBonus = Number(bonus);
+        if (isNaN(numericBonus) || numericBonus < 0.0 || numericBonus > 2.0) {
+          throw new Error(`Invalid bonus value for channel ${channelId}: ${bonus}. Must be a number between 0.0 and 2.0.`);
+        }
+      }
+      return val;
+    }
     if (!val) return {};
     return val.split(',').reduce((acc: Record<string, number>, kvp: string) => {
       const [channelId, bonus] = kvp.split(':');
-      if (channelId && bonus) acc[channelId] = parseFloat(bonus);
+      if (channelId && bonus) {
+        const numericBonus = parseFloat(bonus);
+        if (isNaN(numericBonus) || numericBonus < 0.0 || numericBonus > 2.0) {
+          throw new Error(`Invalid bonus value for channel ${channelId}: ${bonus}. Must be a number between 0.0 and 2.0.`);
+        }
+        acc[channelId] = numericBonus;
+      }
       return acc;
     }, {});
   }
@@ -91,7 +109,7 @@ const discordConfig = convict({
     env: 'DISCORD_DEFAULT_CHANNEL_ID'
   },
   DISCORD_CHANNEL_BONUSES: {
-    doc: 'Channel-specific bonuses (e.g., "channelId:bonus")',
+    doc: 'Channel-specific bonuses (e.g., "channelId:bonus"). Supports comma-separated string format ("123456:1.5,789012:0.8") or JSON object format. Bonus values must be between 0.0 and 2.0.',
     format: 'channel-bonuses',
     default: {},
     env: 'DISCORD_CHANNEL_BONUSES'
@@ -158,9 +176,12 @@ const configPath = path.join(configDir, 'providers/discord.json');
 try {
   discordConfig.loadFile(configPath);
   discordConfig.validate({ allowed: 'strict' });
+  debug('Discord configuration loaded and validated successfully');
+  debug('Channel bonuses:', discordConfig.get('DISCORD_CHANNEL_BONUSES'));
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
   console.warn(`Warning: Could not load discord config from ${configPath}, using defaults`);
+  debug('Using default discord configuration due to error:', error);
 }
 
 export default discordConfig;
