@@ -13,23 +13,17 @@ const redactDebug = debug('app:redactSensitiveInfo');
  * // Returns 'publicValue'
  * redactSensitiveInfo('username', 'admin')
  */
-export function redactSensitiveInfo(value: any, key: string): string {
+export function redactSensitiveInfo(key: string, value: any): string {
   const sensitivePatterns = ['password', 'apikey', 'api_key', 'auth_token', 'secret', 'token', 'key'];
   try {
-    if (typeof value !== 'string') {
-      return String(value);
-    }
-    if (!value || value.trim() === '') {
-      return value;
-    }
-    
     const lowerKey = key.toLowerCase();
     const isSensitive = sensitivePatterns.some(pattern => lowerKey.includes(pattern));
     
     if (isSensitive) {
       return '********';
     }
-    return value;
+    
+    return String(value);
   } catch (error: unknown) {
     redactDebug(`Error processing value: ${(error as Error).message}`);
     return '********';

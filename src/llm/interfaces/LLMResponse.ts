@@ -107,4 +107,5 @@ class LLMResponse {
     }
 }
 
+export { LLMResponse };
 export default LLMResponse;

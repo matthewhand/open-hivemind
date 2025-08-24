@@ -20,7 +20,8 @@ const debug = Debug('app:DiscordMessage');
  * console.log(discordMessage.getAuthorName()); // "username#1234"
  * ```
  */
-export default class DiscordMessage implements IMessage {
+export class DiscordMessage implements IMessage {
+  static DiscordMessage = DiscordMessage;
   /**
    * The text content of the Discord message.
    * @type {string}
@@ -359,3 +360,5 @@ export default class DiscordMessage implements IMessage {
     return null;
   }
 }
+
+export default DiscordMessage;

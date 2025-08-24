@@ -279,7 +279,7 @@ export class BotConfigurationManager {
     }
 
     // Validate configuration
-    this.validateConfiguration();
+    this.validateConfigurationInternal();
   }
 
   /**
@@ -440,7 +440,7 @@ export class BotConfigurationManager {
   /**
    * Check for configuration conflicts and issue warnings
    */
-  private validateConfiguration(): void {
+  private validateConfigurationInternal(): void {
     const hasBotsConfig = !!process.env.BOTS;
     const hasLegacyConfig = !!process.env.DISCORD_BOT_TOKEN;
     
@@ -497,6 +497,55 @@ export class BotConfigurationManager {
    */
   public reload(): void {
     this.loadConfiguration();
+  }
+
+  /**
+   * Validate configuration
+   */
+  public validateConfiguration(config: any): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!config.name) {
+      errors.push('Bot name is required');
+    }
+    
+    if (!config.discord && !config.slack && !config.mattermost) {
+      errors.push('At least one platform configuration is required');
+    }
+    
+    if (config.discord && !config.discord.botToken) {
+      errors.push('Discord bot token is required');
+    }
+    
+    if (config.slack && !config.slack.botToken) {
+      errors.push('Slack bot token is required');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Merge configurations
+   */
+  public mergeConfigurations(base: any, override: any): any {
+    return { ...base, ...override };
+  }
+
+  /**
+   * Sanitize configuration
+   */
+  public sanitizeConfiguration(config: any): any {
+    const sanitized = { ...config };
+    if (sanitized.discord?.botToken) {
+      sanitized.discord.botToken = 'secret-***';
+    }
+    if (sanitized.slack?.botToken) {
+      sanitized.slack.botToken = 'secret-***';
+    }
+    return sanitized;
   }
 }
 

@@ -54,6 +54,30 @@ const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(r
  * );
  * ```
  */
+export class OpenAiProvider implements ILlmProvider {
+  supportsChatCompletion(): boolean {
+    debug('Checking chat completion support: true');
+    return true;
+  }
+  
+  supportsCompletion(): boolean {
+    debug('Checking non-chat completion support: true');
+    return true;
+  }
+
+  async generateChatCompletion(
+    userMessage: string,
+    historyMessages: IMessage[],
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    return openAiProvider.generateChatCompletion(userMessage, historyMessages, metadata);
+  }
+
+  async generateCompletion(prompt: string): Promise<string> {
+    return openAiProvider.generateCompletion(prompt);
+  }
+}
+
 export const openAiProvider: ILlmProvider = {
   supportsChatCompletion: (): boolean => {
     debug('Checking chat completion support: true');
