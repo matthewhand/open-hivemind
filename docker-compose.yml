@@ -1,21 +1,45 @@
+version: '3.8'
+
 services:
-  agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
+  hivemind:
+    build: .
     ports:
-      - "3020:3020"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
     env_file:
       - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
-      - ./config:/config
-    logging:
-      driver: json-file
-      options:
-        max-size: "100k"
-        max-file: "3"
-        mode: non-blocking
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - hivemind
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+
+volumes:
+  grafana-storage:
