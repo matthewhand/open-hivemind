@@ -17,6 +17,84 @@ const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
 
 const log = Debug('app:discordService');
 
+// Circuit breaker states
+enum CircuitState {
+  CLOSED = 'CLOSED',
+  OPEN = 'OPEN',
+  HALF_OPEN = 'HALF_OPEN'
+}
+
+// Circuit breaker for Discord API calls
+class CircuitBreaker {
+  private state: CircuitState = CircuitState.CLOSED;
+  private failureCount: number = 0;
+  private lastFailureTime: number = 0;
+  private successCount: number = 0;
+  
+  constructor(
+    private readonly failureThreshold: number = 5,
+    private readonly recoveryTimeoutMs: number = 60000, // 1 minute
+    private readonly halfOpenMaxCalls: number = 3
+  ) {}
+
+  async execute<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.state === CircuitState.OPEN) {
+      if (Date.now() - this.lastFailureTime < this.recoveryTimeoutMs) {
+        throw new Error('Circuit breaker is OPEN - Discord service temporarily unavailable');
+      }
+      this.state = CircuitState.HALF_OPEN;
+      this.successCount = 0;
+      log('Circuit breaker transitioning to HALF_OPEN state');
+    }
+
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error: any) {
+      this.onFailure();
+      throw error;
+    }
+  }
+
+  private onSuccess(): void {
+    this.failureCount = 0;
+    
+    if (this.state === CircuitState.HALF_OPEN) {
+      this.successCount++;
+      if (this.successCount >= this.halfOpenMaxCalls) {
+        this.state = CircuitState.CLOSED;
+        log('Circuit breaker transitioned to CLOSED state after successful recovery');
+      }
+    }
+  }
+
+  private onFailure(): void {
+    this.failureCount++;
+    this.lastFailureTime = Date.now();
+    
+    if (this.state === CircuitState.HALF_OPEN) {
+      this.state = CircuitState.OPEN;
+      log('Circuit breaker transitioned back to OPEN state due to failure during recovery');
+    } else if (this.failureCount >= this.failureThreshold) {
+      this.state = CircuitState.OPEN;
+      log(`Circuit breaker OPENED after ${this.failureCount} failures`);
+    }
+  }
+
+  getState(): CircuitState {
+    return this.state;
+  }
+
+  getStats(): { state: CircuitState; failureCount: number; lastFailureTime: number } {
+    return {
+      state: this.state,
+      failureCount: this.failureCount,
+      lastFailureTime: this.lastFailureTime
+    };
+  }
+}
+
 interface Bot {
   client: Client;
   botUserId: string;
@@ -62,6 +140,7 @@ export const Discord = {
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
+    private circuitBreaker: CircuitBreaker;
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
@@ -89,6 +168,13 @@ export const Discord = {
      */
     public constructor() {
       this.bots = [];
+      
+      // Initialize circuit breaker
+      this.circuitBreaker = new CircuitBreaker(
+        5,     // failure threshold
+        60000, // recovery timeout (1 minute)
+        3      // half-open max calls
+      );
       
       // Skip new configuration system in test mode to maintain legacy test compatibility
       if (process.env.NODE_ENV === 'test') {
@@ -296,27 +382,33 @@ export const Discord = {
 
       try {
         log(`Sending to channel ${selectedChannelId} as ${senderName}`);
-        const channel = await botInfo.client.channels.fetch(selectedChannelId);
-        if (!channel || !channel.isTextBased()) {
-          throw new Error(`Channel ${selectedChannelId} is not text-based or was not found`);
-        }
-
-        let message;
-        if (threadId) {
-          const thread = await botInfo.client.channels.fetch(threadId);
-          if (!thread || !thread.isThread()) {
-            throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
+        
+        const messageId = await this.circuitBreaker.execute(async () => {
+          const channel = await botInfo.client.channels.fetch(selectedChannelId);
+          if (!channel || !channel.isTextBased()) {
+            throw new Error(`Channel ${selectedChannelId} is not text-based or was not found`);
           }
-          message = await thread.send(text);
-        } else {
-          log(`Attempting send to channel ${selectedChannelId}: *${senderName}*: ${text}`);
-          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
-        }
 
-        log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
-        return message.id;
+          let message;
+          if (threadId) {
+            const thread = await botInfo.client.channels.fetch(threadId);
+            if (!thread || !thread.isThread()) {
+              throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
+            }
+            message = await thread.send(text);
+          } else {
+            log(`Attempting send to channel ${selectedChannelId}: *${senderName}*: ${text}`);
+            message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
+          }
+
+          log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
+          return message.id;
+        });
+        
+        return messageId;
       } catch (error: any) {
-        log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
+        const stats = this.circuitBreaker.getStats();
+        log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error} (Circuit: ${stats.state}, Failures: ${stats.failureCount})`);
         return '';
       }
     }
@@ -332,17 +424,22 @@ export const Discord = {
     public async fetchMessages(channelId: string): Promise<Message[]> {
       const botInfo = this.bots[0];
       try {
-        const channel = await botInfo.client.channels.fetch(channelId);
-        if (!channel || !channel.isTextBased()) {
-          throw new Error('Channel is not text-based or was not found');
-        }
-        const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
-        const messages = await channel.messages.fetch({ limit });
-        const arr = Array.from(messages.values());
-        // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
-        return arr.slice(0, limit);
+        const messages = await this.circuitBreaker.execute(async () => {
+          const channel = await botInfo.client.channels.fetch(channelId);
+          if (!channel || !channel.isTextBased()) {
+            throw new Error('Channel is not text-based or was not found');
+          }
+          const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
+          const fetchedMessages = await channel.messages.fetch({ limit });
+          const arr = Array.from(fetchedMessages.values());
+          // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
+          return arr.slice(0, limit);
+        });
+        
+        return messages;
       } catch (error: any) {
-        log(`Failed to fetch messages from ${channelId}: ${error?.message ?? error}`);
+        const stats = this.circuitBreaker.getStats();
+        log(`Failed to fetch messages from ${channelId}: ${error?.message ?? error} (Circuit: ${stats.state}, Failures: ${stats.failureCount})`);
         return [];
       }
     }
