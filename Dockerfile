@@ -46,8 +46,8 @@
     COPY --from=build /app/src/scripts /scripts
     
     # Copy and set permissions for the entrypoint script
-    COPY entrypoint-restart.sh /app/entrypoint-restart.sh
-    RUN chmod +x /app/entrypoint-restart.sh
+COPY scripts/entrypoint-restart.sh /app/entrypoint-restart.sh
+RUN chmod +x /app/entrypoint-restart.sh
     
     # Copy the config directory for runtime
     COPY --from=build /app/config /app/config
