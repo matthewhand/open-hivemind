@@ -13,7 +13,13 @@ const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import adminRouter from '@src/admin/adminRoutes';
 import swarmRouter from '@src/admin/swarmRoutes';
+import dashboardRouter from '@src/webui/routes/dashboard';
+import configRouter from '@src/webui/routes/config';
+import botsRouter from '@src/webui/routes/bots';
+import validationRouter from '@src/webui/routes/validation';
+import WebSocketService from '@src/webui/services/WebSocketService';
 import path from 'path';
+import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
@@ -32,12 +38,31 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
+
 // Admin UI (demo)
 app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
 app.use('/admin', (req: Request, res: Response) => {
     const adminPath = path.join(__dirname, '../public/admin/index.html');
     res.sendFile(adminPath);
+});
+
+// WebUI Dashboard routes
+app.use('/dashboard', dashboardRouter);
+app.use('/webui', configRouter);
+app.use('/webui', botsRouter);
+app.use('/webui', validationRouter);
+
+// Serve React dashboard
+app.use('/react-dashboard', (req: Request, res: Response) => {
+    const dashboardPath = path.join(__dirname, 'webui/views/react-dashboard.html');
+    res.sendFile(dashboardPath);
+});
+
+// Serve Real-time dashboard
+app.use('/realtime-dashboard', (req: Request, res: Response) => {
+    const dashboardPath = path.join(__dirname, 'webui/views/realtime-dashboard.html');
+    res.sendFile(dashboardPath);
 });
 
 async function startBot(messengerService: any) {
@@ -99,8 +124,15 @@ async function main() {
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
         const port = process.env.PORT || 5005;
-        app.listen(port, () => {
+        const server = createServer(app);
+        
+        // Initialize WebSocket service
+        const wsService = WebSocketService.getInstance();
+        wsService.initialize(server);
+        
+        server.listen(port, () => {
             console.log('Server is listening on port ' + port);
+            console.log('WebSocket service available at /webui/socket.io');
         });
     } else {
         console.log('HTTP server is disabled (HTTP_ENABLED=false).');
