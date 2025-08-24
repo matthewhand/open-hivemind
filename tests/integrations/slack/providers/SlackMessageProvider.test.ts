@@ -29,7 +29,7 @@ jest.mock('@src/config/slackConfig', () => ({
         SLACK_DEFAULT_CHANNEL_ID: 'C08BC0X4DFD',
         SLACK_MODE: 'socket',
         SLACK_BOT_JOIN_CHANNEL_MESSAGE: '# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I\'m here to assist. [Get Started](action:start_{channel})',
-        SLACK_USER_JOIN_CHANNEL_MESSAGE: '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: General support...\n- *Resources*: [Learn More](https://example.com/resources)\n\n## Actions\n- [Tell me more about the learning objectives](action:tell_more_learning_objectives_{channel})\n- [Help (Load Webpage)](action:help_webpage_{channel})\n- [Contact Support](action:contact_support_{channel})',
+        SLACK_USER_JOIN_CHANNEL_MESSAGE: '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere\'s some quick info:\n- *Purpose*: General support...\n- *Resources*: [Learn More](https://university.example.com/resources)\n\n## Actions\n- [Tell me more about the learning objectives](action:tell_more_learning_objectives_{channel})\n- [Help (Load Webpage)](action:help_webpage_{channel})\n- [Contact Support](action:contact_support_{channel})',
         SLACK_BUTTON_MAPPINGS: '{"tell_more_learning_objectives_C08BC0X4DFD": "Tell me more about the learning objectives", "help_webpage_C08BC0X4DFD": "Help (Load Webpage)", "contact_support_C08BC0X4DFD": "Contact Support", "start_C08BC0X4DFD": "Get Started"}',
       };
       return config[key as keyof typeof config] || '';

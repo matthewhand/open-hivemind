@@ -1,6 +1,6 @@
 import { Application } from 'express';
 import express from 'express';
-import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import { SlackBotManager } from './SlackBotManager';
@@ -16,12 +16,14 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
+import Debug from 'debug';
 
 // Routing
 import messageConfig from '@config/messageConfig';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 
-const debug = Debug('app:SlackService:verbose');
+const logger = Logger.create('app:SlackService');
+const debug = Debug('app:SlackService');
 
 // Module extractions
 import { SlackMessageIO, ISlackMessageIO } from './modules/ISlackMessageIO';

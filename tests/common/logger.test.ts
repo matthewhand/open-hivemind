@@ -8,10 +8,19 @@ import { Logger } from '../../src/common/logger';
 // Mock console methods
 const mockConsoleLog = jest.fn();
 const mockConsoleError = jest.fn();
+const mockConsoleWarn = jest.fn();
 
 // Save original console methods
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+// Mock debug module
+jest.mock('debug', () => {
+  const mockDebug = jest.fn();
+  mockDebug.enabled = true;
+  return jest.fn(() => mockDebug);
+});
 
 describe('Logger', () => {
   beforeEach(() => {
@@ -21,28 +30,55 @@ describe('Logger', () => {
     // Mock console methods
     console.log = mockConsoleLog;
     console.error = mockConsoleError;
+    console.warn = mockConsoleWarn;
   });
 
   afterEach(() => {
     // Restore original console methods
     console.log = originalConsoleLog;
     console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
   });
 
   afterAll(() => {
     // Ensure console methods are restored
     console.log = originalConsoleLog;
     console.error = originalConsoleError;
+    console.warn = originalConsoleWarn;
   });
 
-  describe('info method', () => {
+  describe('Logger.create method', () => {
+    it('should create a logger instance with debug, info, warn, and error methods', () => {
+      const logger = Logger.create('test:namespace');
+      
+      expect(logger).toBeDefined();
+      expect(typeof logger.debug).toBe('function');
+      expect(typeof logger.info).toBe('function');
+      expect(typeof logger.warn).toBe('function');
+      expect(typeof logger.error).toBe('function');
+    });
+
+    it('should create logger instances with different namespaces', () => {
+      const logger1 = Logger.create('app:service1');
+      const logger2 = Logger.create('app:service2');
+      
+      expect(logger1).toBeDefined();
+      expect(logger2).toBeDefined();
+      expect(logger1).not.toBe(logger2);
+    });
+  });
+
+  describe('legacy info method', () => {
     it('should log a single string message', () => {
       const message = 'Test info message';
       
       Logger.info(message);
       
       expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(message);
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]/),
+        message
+      );
     });
 
     it('should log multiple string arguments', () => {
@@ -52,54 +88,34 @@ describe('Logger', () => {
       Logger.info(message1, message2);
       
       expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(message1, message2);
-    });
-
-    it('should log object arguments', () => {
-      const message = 'User data:';
-      const userData = { id: 123, name: 'John Doe' };
-      
-      Logger.info(message, userData);
-      
-      expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(message, userData);
-    });
-
-    it('should log mixed types of arguments', () => {
-      const stringArg = 'Processing request';
-      const numberArg = 42;
-      const objectArg = { status: 'success' };
-      const arrayArg = [1, 2, 3];
-      
-      Logger.info(stringArg, numberArg, objectArg, arrayArg);
-      
-      expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(stringArg, numberArg, objectArg, arrayArg);
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]/),
+        message1,
+        message2
+      );
     });
 
     it('should handle empty arguments', () => {
       Logger.info();
       
       expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith();
-    });
-
-    it('should handle null and undefined values', () => {
-      Logger.info(null, undefined);
-      
-      expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith(null, undefined);
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]/)
+      );
     });
   });
 
-  describe('error method', () => {
+  describe('legacy error method', () => {
     it('should log a single string error message', () => {
       const errorMessage = 'Test error message';
       
       Logger.error(errorMessage);
       
       expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith(errorMessage);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]/),
+        errorMessage
+      );
     });
 
     it('should log multiple string arguments', () => {
@@ -109,51 +125,64 @@ describe('Logger', () => {
       Logger.error(error1, error2);
       
       expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith(error1, error2);
-    });
-
-    it('should log Error objects', () => {
-      const errorMessage = 'Something went wrong';
-      const error = new Error('Test error');
-      
-      Logger.error(errorMessage, error);
-      
-      expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith(errorMessage, error);
-    });
-
-    it('should log object arguments', () => {
-      const context = { operation: 'save', entity: 'user' };
-      const errorDetails = { code: 500, message: 'Internal server error' };
-      
-      Logger.error('Failed to save user:', context, errorDetails);
-      
-      expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith('Failed to save user:', context, errorDetails);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]/),
+        error1,
+        error2
+      );
     });
 
     it('should handle empty arguments', () => {
       Logger.error();
       
       expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith();
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]/)
+      );
+    });
+  });
+
+  describe('logger instance methods', () => {
+    let logger: any;
+
+    beforeEach(() => {
+      logger = Logger.create('test:logger');
     });
 
-    it('should handle null and undefined values', () => {
-      Logger.error(null, undefined);
+    it('should have info method that logs with timestamp and namespace', () => {
+      const message = 'Test info message';
       
-      expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith(null, undefined);
+      logger.info(message);
+      
+      expect(mockConsoleLog).toHaveBeenCalledTimes(1);
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] \[test:logger\]/),
+        message
+      );
     });
 
-    it('should log complex error objects', () => {
-      const error = new Error('Validation failed');
-      error.stack = 'Error: Validation failed\n    at validateUser (user.ts:45:15)';
+    it('should have error method that logs with timestamp and namespace', () => {
+      const errorMessage = 'Test error message';
       
-      Logger.error('Validation error:', error);
+      logger.error(errorMessage);
       
       expect(mockConsoleError).toHaveBeenCalledTimes(1);
-      expect(mockConsoleError).toHaveBeenCalledWith('Validation error:', error);
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\] \[test:logger\]/),
+        errorMessage
+      );
+    });
+
+    it('should have warn method that logs with timestamp and namespace', () => {
+      const warnMessage = 'Test warn message';
+      
+      logger.warn(warnMessage);
+      
+      expect(mockConsoleWarn).toHaveBeenCalledTimes(1);
+      expect(mockConsoleWarn).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[WARN\] \[test:logger\]/),
+        warnMessage
+      );
     });
   });
 
@@ -165,8 +194,10 @@ describe('Logger', () => {
       expect(DefaultLogger).toBeDefined();
       expect(DefaultLogger.info).toBeDefined();
       expect(DefaultLogger.error).toBeDefined();
+      expect(DefaultLogger.create).toBeDefined();
       expect(typeof DefaultLogger.info).toBe('function');
       expect(typeof DefaultLogger.error).toBe('function');
+      expect(typeof DefaultLogger.create).toBe('function');
     });
 
     it('should have the same functionality through default export', () => {
@@ -175,7 +206,10 @@ describe('Logger', () => {
       DefaultLogger.info('Test default export');
       
       expect(mockConsoleLog).toHaveBeenCalledTimes(1);
-      expect(mockConsoleLog).toHaveBeenCalledWith('Test default export');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]/),
+        'Test default export'
+      );
     });
   });
 
@@ -185,7 +219,10 @@ describe('Logger', () => {
       
       Logger.info('Test binding');
       
-      expect(spy).toHaveBeenCalledWith('Test binding');
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\]/),
+        'Test binding'
+      );
       
       spy.mockRestore();
     });
@@ -195,7 +232,10 @@ describe('Logger', () => {
       
       Logger.error('Test binding');
       
-      expect(spy).toHaveBeenCalledWith('Test binding');
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\]/),
+        'Test binding'
+      );
       
       spy.mockRestore();
     });

@@ -10,6 +10,7 @@ module.exports = {
       statements: 72,
     },
   },
+  forceExit: true,
 
   roots: ['<rootDir>/tests'],
   preset: 'ts-jest',

@@ -1,4 +1,7 @@
-import Debug from "debug";
+import { Logger } from '@common/logger';
+
+const logger = Logger.create('app:MessageResponseManager');
+
 class MessageResponseManager {
     private static instance: MessageResponseManager;
 

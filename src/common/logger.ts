@@ -1,53 +1,118 @@
+import Debug from 'debug';
+
 /**
- * A simple logging utility that provides standardized logging methods for the application.
+ * A standardized logging utility that provides consistent logging methods across the application.
  *
  * @module Logger
  * @description This module provides a centralized logging interface with methods for
- * different log levels. Currently supports info and error logging, with plans to extend
- * to include debug, warn, and other log levels in the future.
+ * different log levels including debug, info, warn, and error. Uses the 'debug' library
+ * for debug logging with namespace support and console methods for other levels.
  *
  * @example
  * ```typescript
  * import { Logger } from './common/logger';
  *
- * // Log informational messages
- * Logger.info('Application started successfully');
- * Logger.info('User action:', { userId: 123, action: 'login' });
+ * // Create a namespaced logger
+ * const logger = Logger.create('app:MyService');
  *
- * // Log error messages
- * Logger.error('Failed to process request:', error);
+ * // Log messages at different levels
+ * logger.debug('Debug information:', { data: 'value' });
+ * logger.info('Application started successfully');
+ * logger.warn('Warning message');
+ * logger.error('Failed to process request:', error);
  * ```
+ */
+
+/**
+ * Interface for a standardized logger instance
+ */
+export interface ILogger {
+  debug: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+}
+
+/**
+ * Creates a namespaced logger instance with standardized methods
+ *
+ * @param namespace - The debug namespace (e.g., 'app:SlackService')
+ * @returns A logger instance with debug, info, warn, and error methods
+ */
+function createLogger(namespace: string): ILogger {
+  const debugLogger = Debug(namespace);
+  
+  return {
+    /**
+     * Logs debug messages using the debug library with namespace support
+     * Only outputs when DEBUG environment variable includes the namespace
+     */
+    debug: (...args: any[]) => {
+      debugLogger(...args);
+    },
+
+    /**
+     * Logs informational messages to the console with timestamp
+     */
+    info: (...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] [INFO] [${namespace}]`, ...args);
+    },
+
+    /**
+     * Logs warning messages to the console with timestamp
+     */
+    warn: (...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      console.warn(`[${timestamp}] [WARN] [${namespace}]`, ...args);
+    },
+
+    /**
+     * Logs error messages to the console with timestamp
+     */
+    error: (...args: any[]) => {
+      const timestamp = new Date().toISOString();
+      console.error(`[${timestamp}] [ERROR] [${namespace}]`, ...args);
+    }
+  };
+}
+
+/**
+ * Main Logger utility with factory method and legacy compatibility
  */
 export const Logger = {
   /**
-   * Logs informational messages to the console.
+   * Creates a namespaced logger instance
    *
-   * @method info
-   * @param {...any[]} args - The messages or objects to log. Can be strings, objects, or any combination.
-   * @returns {void}
+   * @param namespace - The debug namespace (e.g., 'app:SlackService')
+   * @returns A logger instance with standardized methods
    *
    * @example
    * ```typescript
-   * Logger.info('Server listening on port 3000');
-   * Logger.info('Processing request:', { method: 'GET', url: '/api/users' });
+   * const logger = Logger.create('app:MyService');
+   * logger.debug('Debug message');
+   * logger.info('Info message');
    * ```
    */
-  info: (...args: any[]) => console.log(...args),
+  create: createLogger,
 
   /**
-   * Logs error messages to the console.
-   *
-   * @method error
-   * @param {...any[]} args - The error messages, error objects, or any combination to log.
-   * @returns {void}
-   *
-   * @example
-   * ```typescript
-   * Logger.error('Database connection failed:', error);
-   * Logger.error('Invalid user input:', { field: 'email', value: 'invalid-email' });
-   * ```
+   * Legacy info method for backward compatibility
+   * @deprecated Use Logger.create(namespace).info() instead
    */
-  error: (...args: any[]) => console.error(...args)
+  info: (...args: any[]) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [INFO]`, ...args);
+  },
+
+  /**
+   * Legacy error method for backward compatibility
+   * @deprecated Use Logger.create(namespace).error() instead
+   */
+  error: (...args: any[]) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [ERROR]`, ...args);
+  }
 };
 
 /**

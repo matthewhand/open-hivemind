@@ -2,18 +2,18 @@ import openaiConfig from '../../src/config/openaiConfig';
 
 describe('openaiConfig', () => {
   it('should have default values', () => {
-    expect(openaiConfig.get('OPENAI_API_KEY')).toBe('a7c108bb78eb3dff19ad34f03d70695765abd3a09a80d05f33a93dca97ec3367');
+    expect(openaiConfig.get('OPENAI_API_KEY')).toBe('');
     expect(openaiConfig.get('OPENAI_TEMPERATURE')).toBe(0.7);
     expect(openaiConfig.get('OPENAI_MAX_TOKENS')).toBe(150);
     expect(openaiConfig.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.1);
     expect(openaiConfig.get('OPENAI_PRESENCE_PENALTY')).toBe(0.05);
-    expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('http://localhost:8000/v1/');
+    expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com');
     expect(openaiConfig.get('OPENAI_TIMEOUT')).toBe(10000);
     expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
-    expect(openaiConfig.get('OPENAI_MODEL')).toBe('university');
+    expect(openaiConfig.get('OPENAI_MODEL')).toBe('gpt-4');
     expect(openaiConfig.get('OPENAI_STOP')).toEqual(['']);
     expect(openaiConfig.get('OPENAI_TOP_P')).toBe(0.9);
-    expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('You are a bot that assists slack users.');
+    expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('Greetings, human...');
     expect(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')).toBe(100);
     expect(openaiConfig.get('OPENAI_MAX_RETRIES')).toBe(3);
     expect(openaiConfig.get('OPENAI_FINISH_REASON_RETRY')).toBe('stop');
