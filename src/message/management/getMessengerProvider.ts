@@ -5,13 +5,6 @@ const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
 const DiscordMgr = require('@integrations/discord/DiscordService');
 const SlackMgr = require('@integrations/slack/SlackService');
-const MattermostMgr = (() => {
-  try {
-    return require('@integrations/mattermost/MattermostService');
-  } catch (_e) {
-    return null;
-  }
-})();
 
 /**
  * Get Messenger Providers
@@ -61,7 +54,7 @@ export function getMessengerProvider() {
 
   const hasDiscord = hasType('discord');
   const hasSlack = hasType('slack');
-  const hasMattermost = hasType('mattermost');
+  // Mattermost support has been removed from main
 
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (wantProvider('discord') && hasDiscord) {
@@ -112,27 +105,7 @@ export function getMessengerProvider() {
     }
   }
 
-  // Mattermost (singleton)
-  if (MattermostMgr && wantProvider('mattermost') && hasMattermost) {
-    try {
-      const svc = MattermostMgr.MattermostService?.getInstance
-        ? MattermostMgr.MattermostService.getInstance()
-        : MattermostMgr.default?.getInstance
-        ? MattermostMgr.default.getInstance()
-        : MattermostMgr.getInstance
-        ? MattermostMgr.getInstance()
-        : null;
-      if (svc) {
-        messengerServices.push(svc);
-        gmpDebug(`Initialized Mattermost provider`);
-      } else {
-        gmpDebug(`Mattermost provider module present but no getInstance found; skipping`);
-      }
-    } catch (e: any) {
-      const errMsg = (e && typeof e === 'object' && 'message' in e) ? (e as Error).message : String(e);
-      gmpDebug(`Failed to initialize Mattermost provider: ${errMsg}`);
-    }
-  }
+  // Mattermost support removed
 
   // If filter is set but nothing matched, do not silently default; log and keep empty to surface config issues
   if (providerFilter.length > 0 && messengerServices.length === 0) {

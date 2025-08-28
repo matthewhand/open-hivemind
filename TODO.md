@@ -106,6 +106,22 @@ Planned Follow-ups
 - Consider minimal shutdown safety guards in production only if needed by real callers.
 - Address SyntheticMessage timestamp flake by adding tolerance in assertions.
 
+## Archived Integrations (branch: archive/mattermost)
+
+These integrations are preserved on branch `archive/mattermost` and removed from `main` to keep the core lean. Finish work here before reintroducing.
+
+- Mattermost: finalize REST integration
+  - Validate multi-bot config and error handling
+  - Add end-to-end posting and history fetch tests
+  - Channel router parity and scoring verification
+  - Deployment/docs: env examples and troubleshooting
+
+- Webhook: complete platform-agnostic webhook service
+  - Harden token + IP whitelist checks; CIDR support
+  - Request schema validation and error responses
+  - Route registration lifecycle with messenger services
+  - Config loader consistency and docs (env + config JSON)
+
 ## Targeted TODOs From 10-File Code Review (Batch 1)
 
 1) [`src/config/discordConfig.ts`](src/config/discordConfig.ts:1)

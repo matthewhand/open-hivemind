@@ -31,7 +31,6 @@ module.exports = {
     '^@llm/(.*)$': '<rootDir>/src/llm/$1',
     '^@message/(.*)$': '<rootDir>/src/message/$1',
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
-    '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',

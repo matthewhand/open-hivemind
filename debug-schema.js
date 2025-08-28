@@ -5,7 +5,7 @@ const botSchema = {
   // Message provider configuration
   MESSAGE_PROVIDER: {
     doc: 'Message provider type (discord, slack, etc.)',
-    format: ['discord', 'slack', 'mattermost', 'webhook'],
+    format: ['discord', 'slack', 'webhook'],
     default: 'discord',
     env: 'BOTS_{name}_MESSAGE_PROVIDER'
   },
@@ -97,27 +97,7 @@ const botSchema = {
     env: 'BOTS_{name}_SLACK_MODE'
   },
 
-  // Mattermost-specific configuration
-  MATTERMOST_SERVER_URL: {
-    doc: 'Mattermost server endpoint',
-    format: String,
-    default: '',
-    env: 'BOTS_{name}_MATTERMOST_SERVER_URL'
-  },
-  
-  MATTERMOST_TOKEN: {
-    doc: 'Mattermost authentication token',
-    format: String,
-    default: '',
-    env: 'BOTS_{name}_MATTERMOST_TOKEN'
-  },
-  
-  MATTERMOST_CHANNEL: {
-    doc: 'Default Mattermost channel for messages',
-    format: String,
-    default: '',
-    env: 'BOTS_{name}_MATTERMOST_CHANNEL'
-  },
+  // Mattermost-specific configuration removed from main
   
   // OpenAI configuration
   OPENAI_API_KEY: {

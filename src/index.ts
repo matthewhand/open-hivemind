@@ -9,9 +9,7 @@ const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const llmConfigModule = require('@config/llmConfig');
 const messageConfigModule = require('@config/messageConfig');
-const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
-const webhookServiceModule = require('@webhook/webhookService');
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
@@ -22,7 +20,6 @@ debug("Messenger services are being initialized...");
 const healthRoute = healthRouteModule.default || healthRouteModule;
 // const llmConfig = llmConfigModule.default || llmConfigModule;
 const messageConfig = messageConfigModule.default || messageConfigModule;
-const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -98,18 +95,7 @@ async function main() {
         console.log('HTTP server is disabled (HTTP_ENABLED=false).');
     }
 
-    const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
-    if (isWebhookEnabled) {
-        console.log('Webhook service is enabled, registering routes...');
-        for (const messengerService of messengerServices) {
-            const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
-            if (channelId) {
-                await webhookServiceModule.webhookService.start(app, messengerService, channelId);
-            }
-        }
-    } else {
-        console.log('Webhook service is disabled.');
-    }
+    // Webhook service removed from main branch; preserved on archive/mattermost
 }
 
 main().catch((error) => {

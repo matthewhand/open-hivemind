@@ -1,7 +1,0 @@
-{
-  "WEBHOOK_ENABLED": false,
-  "WEBHOOK_URL": "",
-  "WEBHOOK_TOKEN": "",
-  "WEBHOOK_IP_WHITELIST": "",
-  "WEBHOOK_PORT": 80
-}
