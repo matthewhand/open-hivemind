@@ -46,7 +46,7 @@ try {
   openWebUIConfig.validate({ allowed: 'strict' });
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load openwebui config from ${configPath}, using defaults`);
+  debug(`Warning: Could not load openwebui config from ${configPath}, using defaults`);
 }
 debug('OpenWebUIConfig initialized:', openWebUIConfig.getProperties());
 

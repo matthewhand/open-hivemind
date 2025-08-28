@@ -420,16 +420,12 @@ if (typeof process !== 'undefined' && process.env) {
 messageConfig.validate({ allowed: 'warn' });
 
 // Second-pass normalization with optional known channel list (none here; providers can supply later)
-// Temporary debug logging; respects ALLOW_CONSOLE in tests
-// eslint-disable-next-line no-console
+// Temporary debug logging; use debug namespace instead of console
 if (process.env.ALLOW_CONSOLE) {
-  // eslint-disable-next-line no-console
-  console.log('pre-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  // eslint-disable-next-line no-console
-  console.log('pre-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
+  debug('pre-normalize get(CHANNEL_BONUSES)= %o', (messageConfig as any).get('CHANNEL_BONUSES'));
+  debug('pre-normalize get(CHANNEL_PRIORITIES)= %o', (messageConfig as any).get('CHANNEL_PRIORITIES'));
   const propsPre = (messageConfig as any).getProperties?.();
-  // eslint-disable-next-line no-console
-  console.log('pre-normalize props keys=', propsPre ? Object.keys(propsPre) : 'no-props');
+  debug('pre-normalize props keys= %o', propsPre ? Object.keys(propsPre) : 'no-props');
 }
 const normalized = normalizeChannelMaps(
   (messageConfig as any).get('CHANNEL_BONUSES'),
@@ -439,12 +435,9 @@ const normalized = normalizeChannelMaps(
 // Overwrite normalized values back into config
 (messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
 (messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
-// eslint-disable-next-line no-console
 if (process.env.ALLOW_CONSOLE) {
-  // eslint-disable-next-line no-console
-  console.log('post-normalize get(CHANNEL_BONUSES)=', (messageConfig as any).get('CHANNEL_BONUSES'));
-  // eslint-disable-next-line no-console
-  console.log('post-normalize get(CHANNEL_PRIORITIES)=', (messageConfig as any).get('CHANNEL_PRIORITIES'));
+  debug('post-normalize get(CHANNEL_BONUSES)= %o', (messageConfig as any).get('CHANNEL_BONUSES'));
+  debug('post-normalize get(CHANNEL_PRIORITIES)= %o', (messageConfig as any).get('CHANNEL_PRIORITIES'));
 }
 
 debug('messageConfig loaded, validated, and normalized from %s', configPath);

@@ -13,7 +13,14 @@ module.exports = [
     },
     rules: {
       '@typescript-eslint/no-unused-vars': ['warn'],
-      'no-console': ['warn', { allow: [] }],
+      'no-console': ['error', { allow: [] }],
     },
+  }
+  ,
+  {
+    files: ["src/common/logger.ts"],
+    rules: {
+      'no-console': 'off'
+    }
   }
 ];

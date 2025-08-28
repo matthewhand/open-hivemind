@@ -1,9 +1,12 @@
+import Debug from 'debug';
+const debug = Debug('app:BashHandler');
+
 export default class BashHandler {
     constructor() {
-        console.log('BashHandler initialized');
+        debug('BashHandler initialized');
     }
 
     handleCommand(command: string) {
-        console.log(`Handling command with Bash: ${command}`);
+        debug('Handling command with Bash: %s', command);
     }
 }

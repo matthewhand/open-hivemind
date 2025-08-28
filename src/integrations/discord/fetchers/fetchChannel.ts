@@ -16,8 +16,10 @@ export async function fetchChannel(client: Client, channelId: string): Promise<T
       return channel;
     }
     return null;
-  } catch (error) {
-    console.error('Error fetching channel:', error);
+  } catch (error: any) {
+    debug('Error fetching channel: %s', error?.message || String(error));
     return null;
   }
 }
+import Debug from 'debug';
+const debug = Debug('app:discord:fetchChannel');

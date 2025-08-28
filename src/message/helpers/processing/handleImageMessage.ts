@@ -1,4 +1,5 @@
 import Debug from "debug";
+const debug = Debug('app:handleImageMessage');
 
 import axios from 'axios';
 /**
@@ -38,7 +39,8 @@ export async function createPrediction(imageUrl: string): Promise<any> {
         );
         return response.data;
     } catch (error: any) {
-        console.error('Failed to create prediction:', error.response ? error.response.data : error.message);
+        const detail = error?.response?.data ? JSON.stringify(error.response.data) : (error?.message || String(error));
+        debug('Failed to create prediction: %s', detail);
         throw new Error('Failed to create prediction');
     }
 }
@@ -51,13 +53,13 @@ export async function createPrediction(imageUrl: string): Promise<any> {
 export async function handleImageMessage(message: any): Promise<boolean> {
     try {
         if (message.channel.id !== process.env.DISCORD_CHAT_CHANNEL_ID) {
-            console.debug('Ignoring message in channel ' + message.channel.id);
+            debug('Ignoring message in channel %s', message.channel.id);
             return false;
         }
         const attachments = message.attachments;
         if (attachments.size > 0) {
             const imageUrl = attachments.first().url;
-            console.debug('Image URL: ' + imageUrl);
+            debug('Image URL: %s', imageUrl);
             const prediction = await createPrediction(imageUrl);
             if (!process.env.REPLICATE_WEBHOOK_URL) {
                 // Handle synchronous prediction result
@@ -65,16 +67,16 @@ export async function handleImageMessage(message: any): Promise<boolean> {
             } else {
                 // Handle asynchronous prediction (via webhook)
                 const predictionId = prediction.id;
-                console.log('Prediction ID: ' + predictionId);
+                debug('Prediction ID: %s', predictionId);
                 predictionImageMap.set(predictionId, imageUrl);
             }
             return true;
         } else {
-            console.debug('No attachments found');
+            debug('No attachments found');
             return false;
         }
     } catch (error: any) {
-        console.error('Error in handleImageMessage: ' + error.message);
+        debug('Error in handleImageMessage: %s', error?.message || String(error));
         return false;
     }
 }

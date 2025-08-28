@@ -384,7 +384,7 @@ export class BotConfigurationManager {
     
     if (hasBotsConfig && hasLegacyConfig) {
       const warning = 'WARNING: Both BOTS and DISCORD_BOT_TOKEN environment variables are set. Using BOTS configuration.';
-      console.warn(warning);
+      debug(warning);
       this.warnings.push(warning);
     }
     

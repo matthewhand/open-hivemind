@@ -1,4 +1,5 @@
 import Debug from "debug";
+const debug = Debug('app:processingLocks');
 
 class ProcessingLocks {
     private locks: Map<string, boolean>;
@@ -13,7 +14,7 @@ class ProcessingLocks {
      */
     isLocked(channelId: string): boolean {
         const locked = this.locks.has(channelId);
-        console.debug('isLocked: Channel ' + channelId + ' locked status: ' + locked);
+        debug('isLocked: Channel %s locked status: %s', channelId, locked);
         return locked;
     }
     /**
@@ -23,7 +24,7 @@ class ProcessingLocks {
      */
     lock(channelId: string): void {
         this.locks.set(channelId, true);
-        console.debug('lock: Channel ' + channelId + ' is now locked.');
+        debug('lock: Channel %s is now locked.', channelId);
     }
     /**
      * Unlocks the specified channel.
@@ -32,7 +33,7 @@ class ProcessingLocks {
      */
     unlock(channelId: string): void {
         this.locks.delete(channelId);
-        console.debug('unlock: Channel ' + channelId + ' is now unlocked.');
+        debug('unlock: Channel %s is now unlocked.', channelId);
     }
 }
 const processingLocks = new ProcessingLocks();

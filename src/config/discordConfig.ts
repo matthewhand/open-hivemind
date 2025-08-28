@@ -180,8 +180,8 @@ try {
   debug('Channel bonuses:', discordConfig.get('DISCORD_CHANNEL_BONUSES'));
 } catch (error) {
   // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load discord config from ${configPath}, using defaults`);
-  debug('Using default discord configuration due to error:', error);
+  debug(`Warning: Could not load discord config from ${configPath}, using defaults`);
+  debug('Using default discord configuration due to error: %s', (error as any)?.message || String(error));
 }
 
 export default discordConfig;

@@ -33,19 +33,19 @@ export function sendTyping(channel: any, stopCondition: () => boolean): NodeJS.T
         debug('Invalid channel object provided.');
         return null as any;
     }
-console.debug('Typing loop started for channel: ' + channel.id);
+    debug('Typing loop started for channel: %s', channel.id);
     const typingInterval = setInterval(() => {
         if (stopCondition()) {
             clearInterval(typingInterval);
             debug('Typing indicator stopped.');
             return;
         }
-console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+        debug('Sending typing indicator to channel: %s (ID: %s)', channel.name, channel.id);
         channel.sendTyping();
         debug('Typing indicator sent.');
     }, 15000);
 
-console.debug('Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')');
+    debug('Sending typing indicator to channel: %s (ID: %s)', channel.name, channel.id);
     channel.sendTyping();
     debug('sendTyping: Interval started');
     return typingInterval;

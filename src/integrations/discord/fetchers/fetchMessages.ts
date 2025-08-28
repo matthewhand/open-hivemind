@@ -14,8 +14,10 @@ export async function fetchMessages(channel: TextChannel): Promise<IMessage[]> {
   try {
     const messages = await channel.messages.fetch({ limit: 50 });
     return messages.map(msg => new DiscordMessage(msg));
-  } catch (error) {
-    console.error('Error fetching messages:', error);
+  } catch (error: any) {
+    debug('Error fetching messages: %s', error?.message || String(error));
     return [];
   }
 }
+import Debug from 'debug';
+const debug = Debug('app:discord:fetchMessages');

@@ -1,9 +1,12 @@
+import Debug from 'debug';
+const debug = Debug('app:PythonHandler');
+
 export default class PythonHandler {
     constructor() {
-        console.log('PythonHandler initialized');
+        debug('PythonHandler initialized');
     }
 
     handleCommand(command: string) {
-        console.log(`Handling command with Python: ${command}`);
+        debug('Handling command with Python: %s', command);
     }
 }

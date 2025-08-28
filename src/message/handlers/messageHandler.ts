@@ -94,7 +94,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     processedMessage = addUserHint(processedMessage, userId, botId);
 
     logger(`Processing message in channel ${message.getChannelId()} from user ${userId}: "${processedMessage}"`);
-    console.log(`Processed message: "${processedMessage}"`);
 
     // Command processing
     let commandProcessed = false;

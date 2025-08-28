@@ -273,7 +273,7 @@ export class OpenAiService {
       }
     ];
 
-    console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
+    debug('[DEBUG] Chat parameters: %s', JSON.stringify(chatParams, null, 2));
 
     try {
       const response = await this.executeWithRetry(async () => {

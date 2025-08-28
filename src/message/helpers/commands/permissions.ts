@@ -1,4 +1,5 @@
 import Debug from "debug";
+const debug = Debug('app:permissions');
 
 /**
  * Checks if a user is allowed based on their user ID.
@@ -9,15 +10,15 @@ import Debug from "debug";
  */
 export function isUserAllowed(userId: string, allowedUsers: string[]): boolean {
     if (!userId) {
-        console.warn('[isUserAllowed] Invalid userId provided.');
+        debug('[isUserAllowed] Invalid userId provided.');
         return false;
     }
     if (!allowedUsers || allowedUsers.length === 0) {
-        console.warn('[isUserAllowed] No allowed users specified.');
+        debug('[isUserAllowed] No allowed users specified.');
         return false;
     }
     const isAllowed = allowedUsers.includes(userId);
-    console.debug('[isUserAllowed] User ' + userId + ' is ' + (isAllowed ? 'allowed' : 'not allowed') + '.');
+    debug('[isUserAllowed] User %s is %s.', userId, isAllowed ? 'allowed' : 'not allowed');
     return isAllowed;
 }
 /**
@@ -29,14 +30,14 @@ export function isUserAllowed(userId: string, allowedUsers: string[]): boolean {
  */
 export function isRoleAllowed(userRoles: string[], allowedRoles: string[]): boolean {
     if (!userRoles || userRoles.length === 0) {
-        console.warn('[isRoleAllowed] No user roles provided.');
+        debug('[isRoleAllowed] No user roles provided.');
         return false;
     }
     if (!allowedRoles || allowedRoles.length === 0) {
-        console.warn('[isRoleAllowed] No allowed roles specified.');
+        debug('[isRoleAllowed] No allowed roles specified.');
         return false;
     }
     const hasAllowedRole = userRoles.some(role => allowedRoles.includes(role));
-    console.debug('[isRoleAllowed] User has ' + (hasAllowedRole ? 'an allowed role.' : 'no allowed roles.'));
+    debug('[isRoleAllowed] User has %s', hasAllowedRole ? 'an allowed role.' : 'no allowed roles.');
     return hasAllowedRole;
 }

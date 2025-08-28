@@ -1,4 +1,5 @@
 import Debug from "debug";
+const debug = Debug('app:sendResponse');
 /**
  * Sends a response message to a specified channel.
  *
@@ -16,7 +17,7 @@ export async function sendResponse(client: any, channelId: string, message: stri
             throw new Error('Unable to find channel or send message');
         }
     } catch (error: any) {
-        console.error('[sendResponse] Error sending response:', error);
+        debug('[sendResponse] Error sending response: %s', error?.message || String(error));
         throw error;
     }
 }
