@@ -104,8 +104,8 @@ FLOWISE_API_KEY=your-flowise-key
 ### Message Providers
 - `discord` - Discord bot
 - `slack` - Slack bot
-- `mattermost` - Mattermost bot
-- `webhook` - Webhook integration
+ - `mattermost` - (archived on `archive/mattermost`)
+ - `webhook` - (archived on `archive/mattermost`)
 
 ### LLM Providers
 - `openai` - OpenAI GPT models
@@ -213,7 +213,7 @@ Replace `{name}` with your bot name (case-insensitive):
 - `BOTS_{name}_NAME` - Bot display name
 
 #### Message Provider
-- `BOTS_{name}_MESSAGE_PROVIDER` - discord, slack, mattermost, webhook
+- `BOTS_{name}_MESSAGE_PROVIDER` - discord, slack
 
 #### LLM Provider
 - `BOTS_{name}_LLM_PROVIDER` - openai, flowise, openwebui, perplexity, replicate, n8n

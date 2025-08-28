@@ -1,6 +1,6 @@
 # Channel Routing Guide
 
-This guide explains how to configure and use the ChannelRouter feature for prioritizing channels across providers (Discord, Slack, Mattermost). It includes examples for CSV/JSON configuration, enabling the feature flag, scoring behavior, tie-breakers, debug logging, and troubleshooting.
+This guide explains how to configure and use the ChannelRouter feature for prioritizing channels across providers (Discord, Slack). Mattermost is archived on branch `archive/mattermost`.
 
 Prerequisites
 - MESSAGE_CHANNEL_ROUTER_ENABLED=false by default. When disabled, all providers’ scoreChannel() return 0 to preserve legacy behavior.
@@ -87,7 +87,7 @@ End-to-End Usage
    CHANNEL_PRIORITIES="A:0,B:1"
 
 3) Ensure your provider supports prioritization:
-   - SlackService, DiscordService, MattermostService include:
+- SlackService and DiscordService include:
      supportsChannelPrioritization = true
      scoreChannel() gated by MESSAGE_CHANNEL_ROUTER_ENABLED
 
@@ -96,7 +96,7 @@ End-to-End Usage
 Provider Integration Notes
 - Slack: Wired to ChannelRouter behind MESSAGE_CHANNEL_ROUTER_ENABLED; supportsChannelPrioritization=true; scoreChannel delegates to ChannelRouter when enabled.
 - Discord: Same gating semantics; includes runtime hardening for GatewayIntentBits via SafeGatewayIntentBits fallback to avoid issues in partial-mock environments.
-- Mattermost: Same gating semantics.
+ 
 
 Testing Guidance
 - Unit tests cover parsing, scoring formula, and tie-breakers in tests/message/routing/ChannelRouter.test.ts

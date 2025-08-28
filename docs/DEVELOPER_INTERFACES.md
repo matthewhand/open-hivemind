@@ -210,3 +210,6 @@ When adding new platforms:
 | ILlmProvider | LLM integration | `src/llm/interfaces/ILlmProvider.ts` |
 | ICommonMessage | Cross-platform message | `src/message/common/commonTypes.ts` |
 | SyntheticMessage | System messages | `src/message/management/SyntheticMessage.ts` |
+# Developer Interfaces
+
+> Important: As of this revision, Mattermost and Webhook integrations are archived on branch `archive/mattermost`. The `main` branch focuses on Discord and Slack. References to Mattermost/Webhook in this document describe the archived implementation and roadmap.

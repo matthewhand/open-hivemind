@@ -1,6 +1,6 @@
 # Multi-Instance Setup Guide
 
-This guide explains how to configure multiple bot instances for Discord, Slack, and Mattermost using the unified BotConfigurationManager system.
+This guide explains how to configure multiple bot instances for Discord and Slack using the unified BotConfigurationManager system. Mattermost is archived on branch `archive/mattermost`.
 
 ## Overview
 
@@ -95,7 +95,7 @@ SLACK_DEFAULT_CHANNEL_ID=C1234567890
 SLACK_MODE=socket
 ```
 
-## Mattermost Multi-Instance Configuration
+## Mattermost Multi-Instance Configuration (archived)
 
 ### Environment Variables
 

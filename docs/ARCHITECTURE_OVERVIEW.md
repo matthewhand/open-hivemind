@@ -1,5 +1,7 @@
 # Architecture Overview for Chatbot Instances
 
+> Note: Mattermost and Webhook integrations are archived on branch `archive/mattermost`. The `main` branch currently supports Discord and Slack.
+
 ## System Architecture
 
 This document provides a high-level overview of the chatbot system architecture for quick understanding by new instances.

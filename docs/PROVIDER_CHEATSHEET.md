@@ -16,7 +16,7 @@
 |----------|---------------|---------------|-----------|--------|
 | **Discord** | `DiscordService` | `DISCORD_BOT_TOKEN` | ✅ | Comma-separated tokens |
 | **Slack** | `SlackService` | Slack tokens | ✅ | OAuth setup required |
-| **Mattermost** | `MattermostService` | Mattermost config | ✅ | Webhook-based |
+| **Mattermost** | `MattermostService` | (archived on `archive/mattermost`) | ⚠️ | Webhook-based |
 
 ## Environment Variable Quick Setup
 

@@ -13,6 +13,8 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 - **Real-Time Connectivity:** Ensures no lag and no fuss as messages flow between platforms, creating a dynamic, integrated environment.
 - **Platform-Agnostic Presence:** The same intelligent agents operate consistently whether on Slack’s sleek channels or Discord’s vibrant servers, eliminating the need for multiple separate bots.
 
+> Note: Mattermost and generic Webhook integrations are archived on branch `archive/mattermost` to keep `main` lean. See TODO.md for tasks to complete them before potential reintroduction.
+
 ### Future-Proof Expansion
 - **Modular Integration:** Easily extend functionality to new platforms such as Telegram, WhatsApp, and beyond with plug-and-play modules—no rewiring required.
 - **Scalable Architecture:** Designed to evolve, Open-Hivemind readily incorporates future technologies and platforms, ensuring long-term viability.
@@ -87,7 +89,7 @@ Channel prioritization and selection is supported via a feature-flagged ChannelR
   - CHANNEL_BONUSES: per-channel bonus multipliers (CSV or JSON)
   - CHANNEL_PRIORITIES: per-channel integer priorities (CSV or JSON)
 - Deterministic tie-breakers: higher bonus wins; then lexicographic channel ID.
-- Providers: Discord, Slack, and Mattermost expose supportsChannelPrioritization=true and delegate scoreChannel() to the ChannelRouter when the flag is on.
+- Providers: Discord and Slack expose supportsChannelPrioritization=true and delegate scoreChannel() to the ChannelRouter when the flag is on.
 
 See the detailed guide with examples:
 - docs/channel-routing.md
