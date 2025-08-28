@@ -12,6 +12,16 @@ This guide helps you migrate from legacy single-bot configurations to the new mu
 - ✅ Backward compatibility with legacy configs
 - ✅ Better organization and scalability
 
+## Notes
+
+### MESSAGE_PROVIDER fail-fast behavior
+
+If `MESSAGE_PROVIDER` is explicitly set (via env or config) but no matching providers are configured/available, startup now fails with a clear error. Previously, the app could silently fall back to Slack.
+
+Remediation:
+- Ensure `config/providers/messengers.json` (or env) includes the requested providers; or
+- Unset `MESSAGE_PROVIDER` to allow auto-detection.
+
 ## Quick Migration Tool
 
 ### Automated Migration Script
