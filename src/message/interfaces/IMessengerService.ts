@@ -22,6 +22,8 @@ import { IMessage } from './IMessage';
  * ```
  */
 export interface IMessengerService {
+  /** Provider identifier (e.g., 'slack', 'discord'). */
+  providerName?: string;
   /**
    * Initializes the messaging service.
    *

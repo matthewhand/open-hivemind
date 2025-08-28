@@ -137,6 +137,7 @@ export const Discord = {
    * ```
    */
   DiscordService: class implements IMessengerService {
+    public readonly providerName: string = 'discord';
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;

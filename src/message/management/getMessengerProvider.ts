@@ -64,13 +64,9 @@ export function getMessengerProvider() {
           ? DiscordMgr.DiscordService.getInstance()
           : undefined;
       if (svc) {
-        // Ensure provider identity is exposed for tests
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'discord';
-        }
         messengerServices.push(svc);
         gmpDebug(`Initialized Discord provider`);
-        gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(`Discord svc typeof=${typeof svc} keys=${Object.keys(svc)}`);
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Discord provider: ${e?.message || String(e)}`);
@@ -92,13 +88,9 @@ export function getMessengerProvider() {
         svc = SlackMgr.getInstance();
       }
       if (svc) {
-        // Ensure provider identity is exposed for tests
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'slack';
-        }
         messengerServices.push(svc);
         gmpDebug(`Initialized Slack provider`);
-        gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`);
+        gmpDebug(`Slack svc typeof=${typeof svc} keys=${Object.keys(svc)}`);
       }
     } catch (e: any) {
       gmpDebug(`Failed to initialize Slack provider: ${e?.message || String(e)}`);
@@ -107,9 +99,10 @@ export function getMessengerProvider() {
 
   // Mattermost support removed
 
-  // If filter is set but nothing matched, do not silently default; log and keep empty to surface config issues
+  // If filter is set but nothing matched, fail fast instead of silently continuing
   if (providerFilter.length > 0 && messengerServices.length === 0) {
-    gmpDebug(`MESSAGE_PROVIDER filter set (${providerFilter.join(', ')}), but no configured instances found in messengers.json`);
+    const msg = `MESSAGE_PROVIDER set (${providerFilter.join(', ')}), but no matching providers are configured in messengers.json`;
+    throw new Error(msg);
   }
 
   if (messengerServices.length === 0) {
@@ -128,23 +121,15 @@ export function getMessengerProvider() {
           svc = SlackMgr.getInstance();
         }
         if (svc) {
-          if (typeof (svc as any).provider === 'undefined') {
-            (svc as any).provider = 'slack';
-          }
           messengerServices.push(svc);
         }
       } catch (_e) {
-        // As a last resort in tests, return a recognizable Slack sentinel
-        messengerServices.push({
-          provider: 'slack',
-          sendMessageToChannel: () => {},
-          getClientId: () => 'SLACK_CLIENT_ID',
-        });
+        // No sentinel provider; surface the lack of providers upstream
       }
     }
   }
 
-  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p:any)=>p?.provider).join(',')}`);
+  gmpDebug(`Returning ${messengerServices.length} provider(s)`);
   return messengerServices;
 }
 

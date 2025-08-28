@@ -35,6 +35,7 @@ import { SlackBotFacade, ISlackBotFacade } from './modules/ISlackBotFacade';
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
 export class SlackService implements IMessengerService {
+  public readonly providerName: string = 'slack';
   private static instance: SlackService | undefined;
   private botManagers: Map<string, SlackBotManager> = new Map();
   private signatureVerifiers: Map<string, SlackSignatureVerifier> = new Map();
