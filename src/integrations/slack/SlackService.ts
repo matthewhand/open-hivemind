@@ -206,9 +206,9 @@ export class SlackService implements IMessengerService {
         debug('Error: No Slack configuration found');
         throw new Error('Slack configuration incomplete');
       }
-    } catch (error) {
-      debug(`Legacy configuration loading failed: ${error}`);
-      throw new Error(`Failed to load legacy Slack configuration: ${error}`);
+    } catch (error: any) {
+      debug(`Legacy configuration loading failed: ${error.message || error}`);
+      throw new Error(`Failed to load legacy Slack configuration: ${error.message || error}`);
     }
   }
 

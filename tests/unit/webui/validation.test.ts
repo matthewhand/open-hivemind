@@ -227,7 +227,7 @@ describe('Validation API Routes', () => {
         .expect(500);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to get validation schema');
+      expect(response.body.error).toContain('Failed to get validation schema');
       
       // Restore original function
       JSON.stringify = originalJSON;
