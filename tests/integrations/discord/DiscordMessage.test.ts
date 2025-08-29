@@ -33,6 +33,8 @@ describe('DiscordMessage', () => {
         content: 'Updated message',
       }),
       createdAt: new Date(),
+      mentions: { users: new Map() },
+      attachments: new Map(),
     };
 
     discordMessage = new DiscordMessage(mockMessage as any);
@@ -44,6 +46,13 @@ describe('DiscordMessage', () => {
     expect(discordMessage.getText()).toBe('Test message');
   });
 
+  it('should get all basic properties', () => {
+    expect(discordMessage.getChannelId()).toBe('1234567890');
+    expect(discordMessage.getUserId()).toBe('111111');
+    expect(discordMessage.getUserName()).toBe('TestUser');
+    expect(discordMessage.getTimestamp()).toBeInstanceOf(Date);
+  });
+
   it('should set text correctly', async () => {
     await discordMessage.setText('Updated message');
     expect(discordMessage.content).toBe('Updated message');
@@ -52,5 +61,36 @@ describe('DiscordMessage', () => {
 
   it('should identify if message is from a bot', () => {
     expect(discordMessage.isFromBot()).toBe(false);
+    
+    mockUser.bot = true;
+    const botMessage = new DiscordMessage(mockMessage as any);
+    expect(botMessage.isFromBot()).toBe(true);
+  });
+
+  it('should handle mentions correctly', () => {
+    const mentionedUser = { id: '222222', username: 'MentionedUser' };
+    mockMessage.mentions.users.set('222222', mentionedUser);
+    
+    const messageWithMentions = new DiscordMessage(mockMessage as any);
+    expect(messageWithMentions.getMentions()).toContain('222222');
+  });
+
+  it('should handle attachments', () => {
+    const attachment = { id: '333333', url: 'https://example.com/image.png' };
+    mockMessage.attachments.set('333333', attachment);
+    
+    const messageWithAttachments = new DiscordMessage(mockMessage as any);
+    expect(messageWithAttachments.hasAttachments()).toBe(true);
+  });
+
+  it('should handle empty content', () => {
+    mockMessage.content = '';
+    const emptyMessage = new DiscordMessage(mockMessage as any);
+    expect(emptyMessage.getText()).toBe('');
+  });
+
+  it('should handle edit failures gracefully', async () => {
+    mockMessage.edit.mockRejectedValue(new Error('Edit failed'));
+    await expect(discordMessage.setText('Failed update')).rejects.toThrow('Edit failed');
   });
 });
