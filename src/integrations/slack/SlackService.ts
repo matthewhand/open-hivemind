@@ -102,7 +102,7 @@ export class SlackService implements IMessengerService {
 
     const instance = {
       token: botConfig.slack.botToken,
-      signingSecret: botConfig.slack.signingSecret,
+      signingSecret: botConfig.slack.signingSecret || '',
       name: botName,
       appToken: botConfig.slack.appToken,
       defaultChannel: botConfig.slack.defaultChannelId,
