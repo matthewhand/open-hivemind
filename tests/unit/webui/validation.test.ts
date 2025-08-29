@@ -27,7 +27,7 @@ describe.skip('Validation API Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe.skip('GET /webui/api/validation', () => {
+  describe('GET /webui/api/validation', () => {
     it('should return validation results for current configuration', async () => {
       const mockBots = [
         {
@@ -121,7 +121,7 @@ describe.skip('Validation API Routes', () => {
     });
   });
 
-  describe.skip('POST /webui/api/validation/test', () => {
+  describe('POST /webui/api/validation/test', () => {
     it('should validate test configuration successfully', async () => {
       const testConfig = {
         bots: [
@@ -196,7 +196,7 @@ describe.skip('Validation API Routes', () => {
     });
   });
 
-  describe.skip('GET /webui/api/validation/schema', () => {
+  describe('GET /webui/api/validation/schema', () => {
     it('should return validation schema', async () => {
       const response = await request(app)
         .get('/webui/api/validation/schema')
@@ -234,7 +234,7 @@ describe.skip('Validation API Routes', () => {
     });
   });
 
-  describe.skip('Validation Logic', () => {
+  describe('Validation Logic', () => {
     it('should generate appropriate recommendations for single provider', async () => {
       const mockBots = [
         {

@@ -10,7 +10,7 @@ import { io as Client } from 'socket.io-client';
 jest.mock('@config/BotConfigurationManager');
 const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
 
-describe.skip('WebSocketService', () => {
+describe('WebSocketService', () => {
   let httpServer: HttpServer;
   let wsService: WebSocketService;
   let clientSocket: any;
