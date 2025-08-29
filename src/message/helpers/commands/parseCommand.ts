@@ -18,16 +18,17 @@ export interface ParsedCommand {
  * @returns The parsed command object or null if the message is not a command.
  */
 export function parseCommand(commandContent: string): ParsedCommand | null {
-  if (!commandContent || !commandContent.startsWith('!')) {
+  const trimmedContent = commandContent.trim();
+  if (!trimmedContent || !trimmedContent.startsWith('!')) {
     debug('Not a command message.');
     return null;
   }
   
-  debug('Attempting to parse command content: ' + commandContent);
+  debug('Attempting to parse command content: ' + trimmedContent);
   
   // Define regex for command parsing: !commandName:action args
   const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
-  const matches = commandContent.trim().match(commandRegex);
+  const matches = trimmedContent.match(commandRegex);
   
   if (matches) {
     const [, commandName, action = '', argsString = ''] = matches;
