@@ -6,6 +6,11 @@ describe('parseCommand', () => {
         expect(result).toBeNull();
     });
 
+    it('should return null for non-command text', () => {
+        const result = parseCommand('Hello World');
+        expect(result).toBeNull();
+    });
+
     it('should parse command name correctly', () => {
         const result = parseCommand('!start');
         expect(result).toEqual({
@@ -33,9 +38,22 @@ describe('parseCommand', () => {
         });
     });
 
-    // Removed the failing test case to simplify the test suite
-    // it('should return null for invalid command format', () => {
-    //     const result = parseCommand('Hello World');
-    //     expect(result).toBeNull();
-    // });
+    it('should handle multiple arguments', () => {
+        const result = parseCommand('!deploy:prod server1 server2 --force');
+        expect(result).toEqual({
+            commandName: 'deploy',
+            action: 'prod',
+            args: ['server1', 'server2', '--force']
+        });
+    });
+
+    it('should handle commands without exclamation mark', () => {
+        const result = parseCommand('help');
+        expect(result).toBeNull();
+    });
+
+    it('should handle whitespace', () => {
+        const result = parseCommand('  !status  ');
+        expect(result?.commandName).toBe('status');
+    });
 });

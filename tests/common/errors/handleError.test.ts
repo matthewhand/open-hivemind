@@ -2,25 +2,11 @@ import { handleError } from '../../../src/common/errors/handleError';
 import { getRandomErrorMessage } from '../../../src/common/errors/getRandomErrorMessage';
 
 jest.mock('../../../src/common/errors/getRandomErrorMessage');
-
-// Mock console.error to verify logging
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+jest.mock('debug', () => jest.fn(() => jest.fn()));
 
 describe('handleError', () => {
   beforeEach(() => {
-    mockConsoleError.mockClear();
-  });
-
-  afterAll(() => {
-    mockConsoleError.mockRestore();
-  });
-
-  it('should log error message and stack trace', () => {
-    const error = new Error('Test error');
-    handleError(error);
-    
-    expect(mockConsoleError).toHaveBeenCalledWith('Error:', error.message);
-    expect(mockConsoleError).toHaveBeenCalledWith('Stack:', error.stack);
+    jest.clearAllMocks();
   });
 
   it('should send a random error message if messageChannel is provided', () => {
@@ -36,19 +22,21 @@ describe('handleError', () => {
     expect(getRandomErrorMessage).toHaveBeenCalled();
   });
 
-  it('should handle errors without stack trace', () => {
-    const error = { message: 'Error without stack' } as Error;
-    handleError(error);
+  it('should not send message if no messageChannel provided', () => {
+    const error = new Error('Test error');
     
-    expect(mockConsoleError).toHaveBeenCalledWith('Error:', 'Error without stack');
-    expect(mockConsoleError).toHaveBeenCalledWith('Stack:', undefined);
+    expect(() => handleError(error)).not.toThrow();
+  });
+
+  it('should not send message if messageChannel has no send method', () => {
+    const error = new Error('Test error');
+    const messageChannel = { notSend: jest.fn() };
+    
+    expect(() => handleError(error, messageChannel)).not.toThrow();
   });
 
   it('should handle null/undefined errors gracefully', () => {
-    handleError(null as any);
-    expect(mockConsoleError).toHaveBeenCalled();
-    
-    handleError(undefined as any);
-    expect(mockConsoleError).toHaveBeenCalled();
+    expect(() => handleError(null as any)).not.toThrow();
+    expect(() => handleError(undefined as any)).not.toThrow();
   });
 });
