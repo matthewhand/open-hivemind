@@ -86,9 +86,42 @@ describe('SlackMessageProvider', () => {
     jest.clearAllMocks();
   });
 
-  it.skip('should fetch messages from SlackService', async () => {
+  it('should fetch messages from SlackService', async () => {
     const messages = await provider.getMessages('test-channel');
     expect(messages).toHaveLength(1);
     expect(messages[0].getText()).toBe('test');
+  });
+
+  it('should handle empty channel ID', async () => {
+    const messages = await provider.getMessages('');
+    expect(Array.isArray(messages)).toBe(true);
+  });
+
+  it('should handle SlackService errors gracefully', async () => {
+    jest.spyOn(SlackService.prototype, 'fetchMessages').mockRejectedValue(new Error('API Error'));
+    
+    const messages = await provider.getMessages('test-channel');
+    expect(Array.isArray(messages)).toBe(true);
+  });
+
+  it('should return empty array when no messages found', async () => {
+    jest.spyOn(SlackService.prototype, 'fetchMessages').mockResolvedValue([]);
+    
+    const messages = await provider.getMessages('empty-channel');
+    expect(messages).toHaveLength(0);
+  });
+
+  it('should handle multiple messages', async () => {
+    const mockMessages = [
+      new MockMessage('message 1'),
+      new MockMessage('message 2'),
+      new MockMessage('message 3')
+    ];
+    jest.spyOn(SlackService.prototype, 'fetchMessages').mockResolvedValue(mockMessages);
+    
+    const messages = await provider.getMessages('multi-channel');
+    expect(messages).toHaveLength(3);
+    expect(messages[0].getText()).toBe('message 1');
+    expect(messages[2].getText()).toBe('message 3');
   });
 });
