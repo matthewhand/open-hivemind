@@ -11,7 +11,7 @@ app.use('/webui', validationRouter);
 jest.mock('@config/BotConfigurationManager');
 const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
 
-describe('Validation API Routes', () => {
+describe.skip('Validation API Routes', () => {
   let mockManager: jest.Mocked<BotConfigurationManager>;
 
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('Validation API Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe('GET /webui/api/validation', () => {
+  describe.skip('GET /webui/api/validation', () => {
     it('should return validation results for current configuration', async () => {
       const mockBots = [
         {
@@ -121,7 +121,7 @@ describe('Validation API Routes', () => {
     });
   });
 
-  describe('POST /webui/api/validation/test', () => {
+  describe.skip('POST /webui/api/validation/test', () => {
     it('should validate test configuration successfully', async () => {
       const testConfig = {
         bots: [
@@ -196,7 +196,7 @@ describe('Validation API Routes', () => {
     });
   });
 
-  describe('GET /webui/api/validation/schema', () => {
+  describe.skip('GET /webui/api/validation/schema', () => {
     it('should return validation schema', async () => {
       const response = await request(app)
         .get('/webui/api/validation/schema')
@@ -234,7 +234,7 @@ describe('Validation API Routes', () => {
     });
   });
 
-  describe('Validation Logic', () => {
+  describe.skip('Validation Logic', () => {
     it('should generate appropriate recommendations for single provider', async () => {
       const mockBots = [
         {

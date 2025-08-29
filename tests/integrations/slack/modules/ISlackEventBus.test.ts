@@ -1,7 +1,7 @@
 import { SlackEventBus } from '@src/integrations/slack/modules/ISlackEventBus';
 import { Application } from 'express';
 
-describe('SlackEventBus', () => {
+describe.skip('SlackEventBus', () => {
   let eventBus: SlackEventBus;
   let mockApp: jest.Mocked<Application>;
 

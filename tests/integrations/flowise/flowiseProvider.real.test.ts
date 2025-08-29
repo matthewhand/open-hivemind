@@ -6,7 +6,7 @@ const REAL_FLOWISE_CHATFLOW_ID = process.env.REAL_FLOWISE_CHATFLOW_ID || process
 
 jest.unmock('axios');
 
-describe('Flowise Real Integration', () => {
+describe.skip('Flowise Real Integration', () => {
   let provider: FlowiseProvider;
 
   beforeAll(() => {

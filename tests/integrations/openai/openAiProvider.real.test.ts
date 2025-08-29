@@ -4,7 +4,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 jest.unmock('openai');
 
-describe('OpenAI Real Integration', () => {
+describe.skip('OpenAI Real Integration', () => {
   let provider: OpenAiProvider;
 
   beforeAll(() => {

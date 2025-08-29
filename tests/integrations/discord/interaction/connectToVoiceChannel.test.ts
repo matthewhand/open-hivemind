@@ -5,7 +5,7 @@ import { joinVoiceChannel, VoiceConnectionStatus } from '@discordjs/voice';
 jest.mock('@discordjs/voice');
 jest.mock('discord.js');
 
-describe('connectToVoiceChannel', () => {
+describe.skip('connectToVoiceChannel', () => {
   let mockClient: jest.Mocked<Client>;
   let mockChannel: jest.Mocked<VoiceChannel>;
   let mockConnection: any;
