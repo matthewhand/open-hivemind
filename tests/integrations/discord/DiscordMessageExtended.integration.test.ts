@@ -41,7 +41,7 @@ describe('DiscordMessageExtended Integration', () => {
     expect(discordMsg.getMessageId()).toBe('msg-123');
     expect(discordMsg.getText()).toBe('Test message');
     expect(discordMsg.getChannelId()).toBe('channel-123');
-    expect(discordMsg.getUserId()).toBe('user-123');
+    expect(discordMsg.getAuthorId()).toBe('user-123');
   });
 
   it('should handle channel topic retrieval', () => {

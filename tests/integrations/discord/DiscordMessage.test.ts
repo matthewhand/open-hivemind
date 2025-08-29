@@ -69,7 +69,7 @@ describe('DiscordMessage', () => {
 
   it('should handle mentions correctly', () => {
     const mentionedUser = { id: '222222', username: 'MentionedUser' };
-    mockMessage.mentions.users.set('222222', mentionedUser);
+    mockMessage.mentions.users = new Map([['222222', mentionedUser]]);
     
     const messageWithMentions = new DiscordMessage(mockMessage as any);
     expect(messageWithMentions.getUserMentions()).toContain('222222');

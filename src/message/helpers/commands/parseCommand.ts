@@ -27,11 +27,11 @@ export function parseCommand(commandContent: string): ParsedCommand | null {
   
   // Define regex for command parsing: !commandName:action args
   const commandRegex = /^!(\w+)(?::(\w+))?\s*(.*)/;
-  const matches = commandContent.match(commandRegex);
+  const matches = commandContent.trim().match(commandRegex);
   
   if (matches) {
-    const [, commandName, action = '', argsString = ''] = matches.map(match => match?.trim() || '');
-    const args = argsString ? argsString.split(/\s+/) : [];
+    const [, commandName, action = '', argsString = ''] = matches;
+    const args = argsString.trim() ? argsString.trim().split(/\s+/) : [];
     debug('Parsed command - Name: ' + commandName + '  Action: ' + action + ', Args: ' + args.join(' '));
     return { commandName: commandName.toLowerCase(), action, args };
   } else {
