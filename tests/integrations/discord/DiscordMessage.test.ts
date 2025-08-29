@@ -48,8 +48,8 @@ describe('DiscordMessage', () => {
 
   it('should get all basic properties', () => {
     expect(discordMessage.getChannelId()).toBe('1234567890');
-    expect(discordMessage.getUserId()).toBe('111111');
-    expect(discordMessage.getUserName()).toBe('TestUser');
+    expect(discordMessage.getAuthorId()).toBe('111111');
+    expect(discordMessage.getAuthorName()).toBe('TestUser');
     expect(discordMessage.getTimestamp()).toBeInstanceOf(Date);
   });
 
@@ -72,7 +72,7 @@ describe('DiscordMessage', () => {
     mockMessage.mentions.users.set('222222', mentionedUser);
     
     const messageWithMentions = new DiscordMessage(mockMessage as any);
-    expect(messageWithMentions.getMentions()).toContain('222222');
+    expect(messageWithMentions.getUserMentions()).toContain('222222');
   });
 
   it('should handle attachments', () => {
@@ -86,7 +86,7 @@ describe('DiscordMessage', () => {
   it('should handle empty content', () => {
     mockMessage.content = '';
     const emptyMessage = new DiscordMessage(mockMessage as any);
-    expect(emptyMessage.getText()).toBe('');
+    expect(emptyMessage.getText()).toBe('[No content]');
   });
 
   it('should handle edit failures gracefully', async () => {

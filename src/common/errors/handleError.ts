@@ -10,6 +10,10 @@ const debug = Debug('app:handleError');
  * @param messageChannel - The message channel to send the error message to.
  */
 export function handleError(error: Error, messageChannel: any = null): void {
+  if (!error) {
+    debug('handleError called with a null or undefined error object.');
+    return;
+  }
   debug(`Error Message: ${error.message}`);
   debug(`Error Stack Trace: ${error.stack}`);
 

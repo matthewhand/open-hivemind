@@ -1,26 +1,85 @@
-// Ensure mocks are declared before importing test utilities
-jest.mock('@integrations/discord/DiscordMessage', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({
-    // mock implementation
-  }))
-}));
 import DiscordMessage from '@integrations/discord/DiscordMessage';
-import { Message, TextChannel, Collection, GuildMember, User } from 'discord.js';
-// Avoid importing testUtils which triggers conditionalMock using non-inline factories
-// import { isSystemTest, isUnitTest, setupTestEnvironment } from '../../testUtils';
-// Skip mock creation entirely in system test mode
-/**
- * Minimal environment setup for this integration-lite test
- * Avoids relying on testUtils conditionalMock to prevent inline factory violations.
- */
-const isUnitTest = () => true;
-if (isUnitTest()) {
-  // If any discord.js behavior needs mocking in future, do it inline here with jest.mock factory
-}
 
-describe('DiscordMessageExtended', () => {
-  it('should have at least one test', () => {
-    expect(true).toBeTruthy();
+describe('DiscordMessageExtended Integration', () => {
+  const createMockMessage = (overrides = {}) => ({
+    id: 'msg-123',
+    content: 'Test message',
+    channelId: 'channel-123',
+    createdAt: new Date(),
+    author: {
+      id: 'user-123',
+      username: 'TestUser',
+      bot: false
+    },
+    channel: {
+      id: 'channel-123',
+      topic: 'Test topic',
+      members: new Map([
+        ['user-1', { user: { id: 'user-1' } }],
+        ['user-2', { user: { id: 'user-2' } }]
+      ]),
+      messages: {
+        fetch: jest.fn().mockResolvedValue({
+          id: 'ref-msg',
+          content: 'Referenced message'
+        })
+      }
+    },
+    mentions: {
+      users: new Map([['user-456', { id: 'user-456' }]])
+    },
+    reference: { messageId: 'ref-msg' },
+    editable: true,
+    edit: jest.fn().mockResolvedValue({ content: 'Updated' }),
+    ...overrides
+  });
+
+  it('should create DiscordMessage with extended properties', () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    expect(discordMsg.getMessageId()).toBe('msg-123');
+    expect(discordMsg.getText()).toBe('Test message');
+    expect(discordMsg.getChannelId()).toBe('channel-123');
+    expect(discordMsg.getUserId()).toBe('user-123');
+  });
+
+  it('should handle channel topic retrieval', () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    expect(discordMsg.getChannelTopic()).toBe('Test topic');
+  });
+
+  it('should handle user mentions', () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    expect(discordMsg.getUserMentions()).toContain('user-456');
+  });
+
+  it('should handle channel users', () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    const channelUsers = discordMsg.getChannelUsers();
+    expect(channelUsers).toContain('user-1');
+    expect(channelUsers).toContain('user-2');
+  });
+
+  it('should handle referenced messages', async () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    const referencedMsg = await discordMsg.getReferencedMessage();
+    expect(referencedMsg).toBeInstanceOf(DiscordMessage);
+  });
+
+  it('should handle message editing', async () => {
+    const mockMsg = createMockMessage();
+    const discordMsg = new DiscordMessage(mockMsg as any);
+    
+    await discordMsg.setText('New content');
+    expect(mockMsg.edit).toHaveBeenCalledWith('New content');
   });
 });

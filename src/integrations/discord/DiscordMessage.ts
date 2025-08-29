@@ -123,17 +123,21 @@ export class DiscordMessage implements IMessage {
    * 
    * @param {string} text - The new text content
    */
-  public setText(text: string): void {
+  public setText(text: string): Promise<void> {
     debug('Setting message text: ' + text);
     this.content = text;
     if (this.message.editable) {
-      this.message.edit(text).catch((error) => {
+      return this.message.edit(text).then(() => {
         // use debug to avoid noisy console during tests
+        debug(`Message ${this.message.id} edited successfully.`);
+      }).catch((error) => {
         debug(`Failed to edit message ${this.message.id}: ${error?.message ?? error}`);
+        throw error;
       });
     } else {
       // downgrade to debug to silence console.warn in tests
       debug(`Message ${this.message.id} is not editable.`);
+      return Promise.resolve();
     }
   }
 
@@ -358,6 +362,14 @@ export class DiscordMessage implements IMessage {
       }
     }
     return null;
+  }
+
+  /**
+   * Checks if the message has attachments.
+   * @returns {boolean} True if the message has attachments, false otherwise.
+   */
+  hasAttachments(): boolean {
+    return this.message.attachments.size > 0;
   }
 }
 
