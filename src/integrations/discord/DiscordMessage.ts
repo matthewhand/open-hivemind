@@ -196,6 +196,12 @@ export class DiscordMessage implements IMessage {
 
       if (!users) return [];
 
+      if (users instanceof Map || users instanceof Collection) {
+        return Array.from(users.values())
+          .map((user: any) => (user?.id ?? user))
+          .filter((id: any): id is string => typeof id === 'string');
+      }
+
       // discord.js Collection: has .map(fn) where fn receives (value, key, collection)
       if (users instanceof Collection) {
         return (users as Collection<string, any>)
@@ -237,6 +243,12 @@ export class DiscordMessage implements IMessage {
 
       const members = channel.members;
       if (!members) return [];
+
+      if (members instanceof Map || members instanceof Collection) {
+        return Array.from(members.values())
+          .map((m: any) => m?.user?.id ?? (typeof m === 'string' ? m : undefined))
+          .filter((id: any): id is string => typeof id === 'string');
+      }
 
       // discord.js Collection-like: members.map(fn)
       if (members instanceof Collection) {

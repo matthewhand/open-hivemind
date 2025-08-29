@@ -21,7 +21,12 @@ describe('DiscordMessageExtended Integration', () => {
       messages: {
         fetch: jest.fn().mockResolvedValue({
           id: 'ref-msg',
-          content: 'Referenced message'
+          content: 'Referenced message',
+          author: { id: 'user-ref', username: 'RefUser', bot: false, discriminator: '0000' },
+          channelId: 'channel-123',
+          createdAt: new Date(),
+          mentions: { users: new Map() },
+          attachments: new Map(),
         })
       }
     },
@@ -73,6 +78,9 @@ describe('DiscordMessageExtended Integration', () => {
     
     const referencedMsg = await discordMsg.getReferencedMessage();
     expect(referencedMsg).toBeInstanceOf(DiscordMessage);
+    if (referencedMsg) {
+      expect(referencedMsg.getMessageId()).toBe('ref-msg');
+    }
   });
 
   it('should handle message editing', async () => {

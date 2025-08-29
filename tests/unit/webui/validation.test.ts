@@ -11,7 +11,7 @@ app.use('/webui', validationRouter);
 jest.mock('@config/BotConfigurationManager');
 const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
 
-describe.skip('Validation API Routes', () => {
+describe('Validation API Routes', () => {
   let mockManager: jest.Mocked<BotConfigurationManager>;
 
   beforeEach(() => {

@@ -47,7 +47,7 @@ describe('WebSocketService', () => {
     httpServer.close(done);
   });
 
-  describe.skip('Connection Management', () => {
+  describe('Connection Management', () => {
     it('should handle client connections', (done) => {
       expect(clientSocket.connected).toBe(true);
       done();
@@ -61,7 +61,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('Bot Status Updates', () => {
+  describe('Bot Status Updates', () => {
     it('should send bot status on request', (done) => {
       const mockBots = [
         {
@@ -112,7 +112,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('System Metrics Updates', () => {
+  describe('System Metrics Updates', () => {
     it('should send system metrics on request', (done) => {
       clientSocket.on('system_metrics_update', (data: any) => {
         expect(data).toHaveProperty('uptime');
@@ -137,7 +137,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('Configuration Validation', () => {
+  describe('Configuration Validation', () => {
     it('should send configuration validation on request', (done) => {
       const mockBots = [
         {
@@ -221,7 +221,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('Configuration Change Broadcasting', () => {
+  describe('Configuration Change Broadcasting', () => {
     it('should broadcast configuration changes', (done) => {
       clientSocket.on('config_changed', (data: any) => {
         expect(data).toHaveProperty('timestamp');
@@ -253,7 +253,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('Error Handling', () => {
+  describe('Error Handling', () => {
     it('should handle configuration validation errors', (done) => {
       mockManager.getAllBots.mockImplementation(() => {
         throw new Error('Validation error');
@@ -286,7 +286,7 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe.skip('Service Lifecycle', () => {
+  describe('Service Lifecycle', () => {
     it('should initialize and shutdown properly', () => {
       expect(wsService).toBeDefined();
       expect(() => wsService.shutdown()).not.toThrow();
