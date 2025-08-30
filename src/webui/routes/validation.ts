@@ -23,9 +23,17 @@ router.get('/api/validation', (req, res) => {
     };
 
     res.json(validation);
-  } catch (error) {
-    console.error('Validation API error:', error);
-    res.status(500).json({ error: 'Failed to validate configuration' });
+  } catch (error: any) {
+    console.error('Validation API error:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      error: 'Configuration validation failed',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

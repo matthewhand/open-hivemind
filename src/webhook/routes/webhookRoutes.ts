@@ -1,8 +1,9 @@
 import Debug from 'debug';
 import express, { Request, Response } from 'express';
+import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
-import { getLlm } from '@src/llm/getLlm';
-import { getBotManager } from '@src/integrations/getBotManager';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
+// import { getBotManager } from '@src/integrations/getBotManager';
 
 // Import after jest.doMock of config to allow per-test overrides
 import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
@@ -12,24 +13,60 @@ const debug = Debug('app:webhookRoutes');
 // Webhook request body schema validation
 function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   if (!body || typeof body !== 'object') {
     errors.push('Request body must be a valid JSON object');
     return { valid: false, errors };
   }
-  
+
+  // Validate prediction ID
   if (!body.id || typeof body.id !== 'string') {
-    errors.push('Missing or invalid "id" field (must be string)');
+    errors.push('Missing or invalid "id" field (must be non-empty string)');
+  } else if (body.id.length === 0 || body.id.length > 100) {
+    errors.push('"id" field must be between 1 and 100 characters');
   }
-  
+
+  // Validate status
   if (!body.status || typeof body.status !== 'string') {
     errors.push('Missing or invalid "status" field (must be string)');
+  } else {
+    const validStatuses = ['starting', 'processing', 'succeeded', 'failed', 'canceled'];
+    if (!validStatuses.includes(body.status.toLowerCase())) {
+      errors.push(`Invalid status "${body.status}". Must be one of: ${validStatuses.join(', ')}`);
+    }
   }
-  
-  if (body.output && !Array.isArray(body.output)) {
-    errors.push('Invalid "output" field (must be array if present)');
+
+  // Validate output array if present
+  if (body.output !== undefined) {
+    if (!Array.isArray(body.output)) {
+      errors.push('Invalid "output" field (must be array if present)');
+    } else if (body.output.length > 10) {
+      errors.push('"output" array cannot contain more than 10 items');
+    }
   }
-  
+
+  // Validate URLs if present
+  if (body.urls && !Array.isArray(body.urls)) {
+    errors.push('Invalid "urls" field (must be array if present)');
+  }
+
+  // Security: Check for potentially malicious content
+  const maliciousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /on\w+\s*=/i,
+    /<iframe/i,
+    /<object/i
+  ];
+
+  const checkString = JSON.stringify(body);
+  for (const pattern of maliciousPatterns) {
+    if (pattern.test(checkString)) {
+      errors.push('Request contains potentially malicious content');
+      break;
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 

@@ -70,6 +70,16 @@ export const Discord = {
     private voiceManager: any;
     private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
 
+    // Performance optimizations
+    private configCache: Map<string, any> = new Map();
+    private lastConfigCheck: number = 0;
+    private readonly CONFIG_CACHE_TTL = 30000; // 30 seconds
+
+    // Security: Rate limiting
+    private messageRateLimit: Map<string, number[]> = new Map();
+    private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
+    private readonly RATE_LIMIT_MAX = 30; // 30 messages per minute per channel
+
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
 
@@ -322,8 +332,42 @@ export const Discord = {
      * @throws Error if no bots are available
      */
     public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+      // Input validation for security
+      if (!channelId || typeof channelId !== 'string') {
+        throw new Error('Invalid channel ID provided');
+      }
+
+      if (!text || typeof text !== 'string') {
+        throw new Error('Invalid message text provided');
+      }
+
+      // Security: Limit message length to prevent abuse
+      if (text.length > 2000) {
+        throw new Error('Message text exceeds maximum length of 2000 characters');
+      }
+
+      // Security: Basic content filtering (can be enhanced)
+      const suspiciousPatterns = [
+        /<script/i,
+        /javascript:/i,
+        /on\w+\s*=/i,
+        /<iframe/i,
+        /<object/i
+      ];
+
+      for (const pattern of suspiciousPatterns) {
+        if (pattern.test(text)) {
+          throw new Error('Message contains potentially malicious content');
+        }
+      }
+
       if (this.bots.length === 0) {
         throw new Error('No Discord bot instances available');
+      }
+
+      // Rate limiting check
+      if (!this.checkRateLimit(channelId)) {
+        throw new Error('Rate limit exceeded. Please wait before sending more messages.');
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
@@ -419,7 +463,21 @@ export const Discord = {
     }
 
     public getDefaultChannel(): string {
-      return (discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
+      const cacheKey = 'DISCORD_DEFAULT_CHANNEL_ID';
+      const now = Date.now();
+
+      // Check cache first
+      if (this.configCache.has(cacheKey) &&
+          (now - this.lastConfigCheck) < this.CONFIG_CACHE_TTL) {
+        return this.configCache.get(cacheKey);
+      }
+
+      // Update cache
+      const channelId = (discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID') as string | undefined) || '';
+      this.configCache.set(cacheKey, channelId);
+      this.lastConfigCheck = now;
+
+      return channelId;
     }
 
     public async shutdown(): Promise<void> {
@@ -448,6 +506,35 @@ export const Discord = {
 
     public getBotByName(name: string): Bot | undefined {
       return this.bots.find((bot) => bot.botUserName === name);
+    }
+
+    /**
+     * Check if the channel is within rate limits
+     * @param channelId The channel ID to check
+     * @returns true if within limits, false if rate limited
+     */
+    private checkRateLimit(channelId: string): boolean {
+      const now = Date.now();
+      const channelKey = `channel_${channelId}`;
+
+      if (!this.messageRateLimit.has(channelKey)) {
+        this.messageRateLimit.set(channelKey, []);
+      }
+
+      const timestamps = this.messageRateLimit.get(channelKey)!;
+
+      // Remove timestamps outside the window
+      const validTimestamps = timestamps.filter(ts => (now - ts) < this.RATE_LIMIT_WINDOW);
+      this.messageRateLimit.set(channelKey, validTimestamps);
+
+      // Check if under limit
+      if (validTimestamps.length >= this.RATE_LIMIT_MAX) {
+        return false;
+      }
+
+      // Add current timestamp
+      validTimestamps.push(now);
+      return true;
     }
 
     public async joinVoiceChannel(channelId: string): Promise<void> {

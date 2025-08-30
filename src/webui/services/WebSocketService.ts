@@ -22,7 +22,9 @@ export class WebSocketService {
 
   public initialize(server: HttpServer): void {
     try {
+      debug('Initializing WebSocket service...');
       if (!server) {
+        debug('ERROR: HTTP server is required for WebSocket initialization');
         throw new Error('HTTP server is required for WebSocket initialization');
       }
 
@@ -36,9 +38,13 @@ export class WebSocketService {
 
       this.setupEventHandlers();
       this.startMetricsCollection();
-      debug('WebSocket service initialized successfully');
+      debug('WebSocket service initialized successfully with CORS enabled');
     } catch (error: any) {
-      debug('Failed to initialize WebSocket service:', error);
+      debug('CRITICAL: Failed to initialize WebSocket service:', {
+        error: error.message,
+        stack: error.stack,
+        serverProvided: !!server
+      });
       throw new Error(`WebSocket service initialization failed: ${error.message}`);
     }
   }
