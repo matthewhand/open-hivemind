@@ -24,6 +24,6 @@ describe('TelegramService', () => {
   });
 
   test('should not support channel prioritization', () => {
-    expect(service.supportsChannelPrioritization()).toBe(false);
+    expect(service.supportsChannelPrioritization).toBe(false);
   });
 });
