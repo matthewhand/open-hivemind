@@ -4,17 +4,19 @@
 
 ## Overview
 
-Open-Hivemind is not just a bot framework—it is a revolutionary open-source ecosystem that fuses the chaos of multiple messaging platforms into a singular, harmonious AI‐driven symphony. Imagine a digital hivemind—a borg‐like collective of bots—where every agent is a neuron in a vast, unified brain. Built with TypeScript, it transcends traditional bot limitations by offering a modular, extensible architecture that is as easy to deploy as it is to customize. Whether operating as a single bot or a sprawling swarm, Open-Hivemind leverages cutting‐edge LLMs like OpenAI, Flowise, OpenWebUI, or the multi‐agent juggernaut Open‐Swarm to deliver intelligent, context‐aware conversational experiences in real time.
+Open-Hivemind is a comprehensive, production-ready multi-platform bot framework that orchestrates AI-powered conversations across Discord, Slack, and Mattermost. Built with TypeScript, it features a modular architecture supporting both single-bot and multi-agent swarm deployments. The framework integrates with leading LLM providers (OpenAI, Flowise, OpenWebUI, OpenSwarm) and includes a WebUI dashboard for configuration management. With 100+ test files ensuring reliability, it offers enterprise-grade features including real-time monitoring, hot configuration reload, and container-ready deployment.
 
 ## Features
 
 ### Multi-Platform Mastery & Simultaneous Connectivity
-- **Unified Messaging Fabric:** Seamlessly bridges Discord and Slack, synchronizing every message, channel, and platform into one cohesive operational consciousness.
+- **Unified Messaging Fabric:** Seamlessly bridges Discord, Slack, and Mattermost, synchronizing every message, channel, and platform into one cohesive operational consciousness.
 - **Real-Time Connectivity:** Ensures no lag and no fuss as messages flow between platforms, creating a dynamic, integrated environment.
-- **Platform-Agnostic Presence:** The same intelligent agents operate consistently whether on Slack’s sleek channels or Discord’s vibrant servers, eliminating the need for multiple separate bots.
+- **Platform-Agnostic Presence:** The same intelligent agents operate consistently across all supported platforms, eliminating the need for multiple separate bots.
+- **WebUI Dashboard:** Complete web-based configuration and monitoring system with real-time status updates and bot management.
 
 ### Future-Proof Expansion
 - **Modular Integration:** Easily extend functionality to new platforms such as Telegram, WhatsApp, and beyond with plug-and-play modules—no rewiring required.
+- **Current Platforms:** Discord, Slack, Mattermost fully implemented with Telegram structure ready.
 - **Scalable Architecture:** Designed to evolve, Open-Hivemind readily incorporates future technologies and platforms, ensuring long-term viability.
 
 ## Discord Integration
@@ -47,7 +49,7 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 
 ## Message Handling
 
-- **Cross-Platform Listening:** With persistent event monitoring on Discord and Slack, Open-Hivemind captures every significant message, filtering, parsing, and processing them with acute accuracy.
+- **Cross-Platform Listening:** With persistent event monitoring on Discord, Slack, and Mattermost, Open-Hivemind captures every significant message, filtering, parsing, and processing them with acute accuracy.
 - **Wakeword & Mention Detection:** Configurable triggers ensure that the hivemind activates only when necessary. Wakewords such as `!help` or `!ping` prompt immediate, contextually relevant responses.
 - **Contextual Memory:** Leverages history retrieval to accumulate up to 10 recent messages per channel, stitching together a rich tapestry of contextual dialogue that informs intelligent response generation.
 - **Command Parsing Efficiency:** Developed with extensibility in mind, the command processing routines adapt to new instructions with ease, offering seamless integration of additional features over time.
@@ -63,6 +65,7 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 ### Platform-Specific Tuning
 - **Slack Customization:** Leverages `SLACK_JOIN_CHANNELS` to dictate ingress points into channels, ensuring that the hivemind infiltrates precisely where needed.
 - **Discord Integration:** Configures `DISCORD_CHANNEL_ID` and related settings to pin the hivemind to specific hubs, balancing flexibility with precision.
+- **Mattermost Support:** REST API integration with team and channel management, bearer token authentication, and multi-team support.
 
 ## Robust & Reliable Operation
 
@@ -74,9 +77,32 @@ Open-Hivemind is not just a bot framework—it is a revolutionary open-source ec
 ## Testing & Deployment
 
 ### Test Suite Titan
-- **Extensive Coverage:** Powered by 33 Jest test suites, Open-Hivemind validates multi-agent synchronization, message scheduling, event mirroring, and the entire operational lifecycle.
+- **Extensive Coverage:** Powered by 100+ Jest test files, Open-Hivemind validates multi-agent synchronization, message scheduling, event mirroring, and the entire operational lifecycle.
+- **Real Integration Tests:** Includes live API testing with `npm run test:real` for Discord and Slack integration verification.
 - **Proactive Diagnostics:** Every integration point is tested rigorously, from message fetch limits to dynamic response crafting, ensuring reliable performance under diverse conditions.
 - **Continuous Integration Ready:** Designed for seamless deployment in Node.js v18+, Open-Hivemind requires minimal setup and scales effortlessly, whether you deploy a single bot or a multi-agent system.
+
+## WebUI Dashboard
+
+Open-Hivemind includes a comprehensive web-based configuration and monitoring system for managing bots and viewing real-time status.
+
+### Configuration Management
+- **Real-Time Configuration Viewer:** Hierarchical display of all configuration sources (environment variables, config files, defaults)
+- **Configuration Validation:** Live validation with error detection and recommendations
+- **Bot Instance Manager:** Add, remove, and configure bot instances through the web interface
+- **Hot Reload Support:** Apply configuration changes without restarting the system
+
+### Monitoring & Analytics
+- **Live Status Dashboard:** Real-time bot status, connection health, and system metrics
+- **WebSocket Updates:** Instant updates for configuration changes and system events
+- **API Endpoints:** RESTful APIs for `/api/config`, `/api/bots`, `/api/status`, and `/api/validation`
+- **Prometheus Metrics:** Export system metrics in Prometheus format for monitoring
+
+### User Interface Features
+- **Responsive Design:** Works on desktop and mobile devices
+- **Source Indicators:** Visual indicators showing configuration source (🔧 env, 📁 file, ⚙️ default)
+- **Sensitive Data Masking:** Automatic masking of tokens and API keys
+- **Interactive Validation:** Real-time feedback on configuration changes
 
 ## Channel Routing
 
@@ -92,10 +118,33 @@ Channel prioritization and selection is supported via a feature-flagged ChannelR
 See the detailed guide with examples:
 - docs/channel-routing.md
 
+## Production Deployment
+
+Open-Hivemind is designed for production deployment with enterprise-grade features and container support.
+
+### Container & Orchestration
+- **Docker Support:** Complete containerization with multi-stage builds and optimized images
+- **Kubernetes Manifests:** Ready for K8s deployment with health checks and rolling updates
+- **Docker Compose:** Local development and production orchestration
+
+### Enterprise Features
+- **Hot Configuration Reload:** Apply configuration changes without service interruption
+- **Graceful Shutdown:** Proper cleanup of connections and resources
+- **Health Monitoring:** Comprehensive health endpoints and metrics export
+- **Multi-Environment Support:** Development, staging, and production configurations
+
+### Security & Compliance
+- **Credential Management:** Secure token storage with environment isolation
+- **Audit Logging:** Configuration change tracking and access logging
+- **Rate Limiting:** Built-in protection against API abuse
+- **Webhook Security:** Signature verification and IP-based access control
+
 ## Future Enhancements
 
-- **Integrated LLM Improvements:** Future updates will enrich response quality and contextual intelligence, pushing the envelope of chatbot capabilities.
-- **Expanded Platform Support:** Roadmap plans include integration with additional messaging platforms such as Telegram and WhatsApp, ensuring a comprehensive, unified messaging ecosystem.
+- **React WebUI Frontend:** Complete React application for the WebUI dashboard
+- **Database Integration:** Persistent storage for messages, configurations, and analytics
+- **Advanced Monitoring:** Enhanced metrics, alerting, and performance optimization
+- **Expanded Platform Support:** Telegram and WhatsApp integration
 - **Community-Driven Module Development:** Open-Hivemind encourages the development of community plugins and custom modules to continuously evolve the framework.
 
 ---
@@ -107,3 +156,5 @@ For further technical details, refer to the Development Guide and User Guide sec
 ## Package Specification
 
 For a comprehensive breakdown of all working features, test coverage, and technical capabilities, see [PACKAGE.md](PACKAGE.md).
+
+**Current Status:** Production-ready with 100+ test files, 4 LLM providers, 3 messaging platforms, WebUI backend, and enterprise deployment features.
