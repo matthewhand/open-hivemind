@@ -10,13 +10,14 @@ router.get('/api/validation', (req, res) => {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
     const warnings = manager.getWarnings();
-    
+    const botValidation = validateBots(bots);
+
     const validation = {
-      isValid: warnings.length === 0,
+      isValid: warnings.length === 0 && botValidation.every(b => b.valid),
       warnings,
       errors: [],
       recommendations: generateRecommendations(bots),
-      botValidation: validateBots(bots),
+      botValidation,
       environmentValidation: validateEnvironment(),
       timestamp: new Date().toISOString()
     };

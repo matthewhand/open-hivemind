@@ -36,6 +36,7 @@ describe('WebSocketService', () => {
         path: '/webui/socket.io'
       });
       clientSocket.on('connect', done);
+    clientSocket.on('connect_error', () => {});
     });
   });
 
@@ -270,9 +271,9 @@ describe('WebSocketService', () => {
     it('should handle system metrics errors gracefully', (done) => {
       // Mock process.memoryUsage to throw an error
       const originalMemoryUsage = process.memoryUsage;
-      process.memoryUsage = jest.fn().mockImplementation(() => {
+      process.memoryUsage = jest.fn(() => {
         throw new Error('Memory error');
-      });
+      }) as any;
 
       clientSocket.on('error', (error: any) => {
         expect(error).toHaveProperty('message', 'Failed to get system metrics');
