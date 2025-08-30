@@ -15,8 +15,18 @@ export class SlackMessageProvider implements IMessageProvider {
     return await this.slackService.sendMessageToChannel(channelId, message, senderName);
   }
 
-  async getMessages(channelId: string) {
-    return await this.slackService.fetchMessages(channelId);
+  public async getMessages(channelId: string, limit: number = 10): Promise<IMessage[]> {
+    if (!channelId) {
+      return [];
+    }
+    try {
+      return await this.slackService.fetchMessages(channelId, limit);
+    } catch (error) {
+      // Assuming error is of type Error
+      const err = error as Error;
+      console.error(`Failed to fetch messages for channel ${channelId}: ${err.message}`);
+      return [];
+    }
   }
 
   async sendMessageToChannel(channelId: string, message: string, active_agent_name?: string): Promise<string> {

@@ -101,7 +101,7 @@ describe('SlackMessageProvider', () => {
     jest.spyOn(SlackService.prototype, 'fetchMessages').mockRejectedValue(new Error('API Error'));
     
     const messages = await provider.getMessages('test-channel');
-    expect(Array.isArray(messages)).toBe(true);
+    expect(messages).toEqual([]);
   });
 
   it('should return empty array when no messages found', async () => {

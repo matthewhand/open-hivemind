@@ -202,13 +202,12 @@ export class SlackService implements IMessengerService {
           };
           this.initializeBotInstance(legacyConfig);
         });
-      } else {
-        debug('Error: No Slack configuration found');
-        throw new Error('Slack configuration incomplete');
       }
+      // Do not throw an error if no legacy config is found, as this might be intentional.
+      // The service will just have no bots.
     } catch (error: any) {
       debug(`Legacy configuration loading failed: ${error.message || error}`);
-      throw new Error(`Failed to load legacy Slack configuration: ${error.message || error}`);
+      // Do not re-throw, allow service to initialize without legacy bots if file is malformed.
     }
   }
 
