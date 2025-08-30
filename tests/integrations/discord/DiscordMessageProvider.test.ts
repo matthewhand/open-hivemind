@@ -16,8 +16,13 @@ jest.isolateModules(() => {
             ['123', {
               id: '123',
               content: 'test message',
-              author: { id: 'test-author' },
+              author: { id: 'test-author', bot: false },
               channelId: 'test-channel',
+              mentions: { users: new Map(), roles: new Map(), channels: new Map() },
+              attachments: new Map(),
+              stickers: new Map(),
+              embeds: [],
+              reactions: { cache: new Map() },
             }],
           ])),
         },
@@ -34,20 +39,6 @@ jest.isolateModules(() => {
     },
   }));
 
-  jest.mock('@config/BotConfigurationManager', () => ({
-    getInstance: jest.fn().mockReturnValue({
-      getAllBots: jest.fn().mockReturnValue([
-        {
-          name: 'TestBot',
-          messageProvider: 'discord',
-          discord: {
-            token: 'test-token',
-          },
-        },
-      ]),
-    }),
-  }));
-
   const { DiscordMessageProvider } = require('@integrations/discord/providers/DiscordMessageProvider');
 
   describe('DiscordMessageProvider', () => {
@@ -56,13 +47,27 @@ jest.isolateModules(() => {
 
     beforeEach(async () => {
       jest.clearAllMocks();
+      jest.resetModules();
 
-      delete process.env.DISCORD_USERNAME_OVERRIDE;
-      delete process.env.DISCORD_BOT_TOKEN;
-      process.env.DISCORD_BOT_TOKEN = 'token1';
+      jest.mock('@config/BotConfigurationManager', () => ({
+        BotConfigurationManager: {
+          getInstance: jest.fn().mockReturnValue({
+            getDiscordBotConfigs: jest.fn().mockReturnValue([
+              {
+                name: 'TestBot',
+                messageProvider: 'discord',
+                discord: {
+                  token: 'test-token',
+                },
+              },
+            ]),
+            getSlackBotConfigs: jest.fn().mockReturnValue([]),
+            getMattermostBotConfigs: jest.fn().mockReturnValue([]),
+          }),
+        },
+      }));
 
       const { DiscordService } = require('@integrations/discord/DiscordService');
-      (DiscordService as any).instance = undefined;
       service = DiscordService.getInstance();
       await service.initialize();
       provider = new DiscordMessageProvider();

@@ -33,47 +33,35 @@ jest.isolateModules(() => {
     },
   }));
 
-  jest.mock('@config/BotConfigurationManager', () => ({
-    getInstance: jest.fn().mockReturnValue({
-      getAllBots: jest.fn().mockReturnValue([
-        {
-          name: 'TestBot',
-          messageProvider: 'discord',
-          discord: {
-            token: 'token1',
-          },
-        },
-      ]),
-    }),
-  }));
-
   describe('DiscordService', () => {
     let service: any;
+    let DiscordService: any;
 
     beforeEach(async () => {
       jest.clearAllMocks();
+      jest.resetModules();
 
-      delete process.env.DISCORD_USERNAME_OVERRIDE;
-      delete process.env.DISCORD_BOT_TOKEN;
+      // Mock BotConfigurationManager before it's imported by DiscordService
+      jest.mock('@config/BotConfigurationManager', () => ({
+        BotConfigurationManager: {
+          getInstance: jest.fn().mockReturnValue({
+            getDiscordBotConfigs: jest.fn().mockReturnValue([
+              {
+                name: 'TestBot1',
+                messageProvider: 'discord',
+                discord: { token: 'test_token_1' },
+                llmProvider: 'flowise',
+              },
+            ]),
+            getSlackBotConfigs: jest.fn().mockReturnValue([]),
+            getMattermostBotConfigs: jest.fn().mockReturnValue([]),
+            getWarnings: jest.fn().mockReturnValue([]),
+            isLegacyMode: jest.fn().mockReturnValue(false),
+          }),
+        },
+      }));
 
-      const BotConfigurationManager = require('@config/BotConfigurationManager');
-      const mockGetInstance = BotConfigurationManager.getInstance;
-      mockGetInstance.mockReturnValue({
-        getAllBots: jest.fn().mockReturnValue([
-          {
-            name: 'TestBot',
-            messageProvider: 'discord',
-            discord: {
-              token: 'token1',
-            },
-          },
-        ]),
-        getWarnings: jest.fn().mockReturnValue([]),
-        isLegacyMode: jest.fn().mockReturnValue(false),
-      });
-
-      const { DiscordService } = require('@integrations/discord/DiscordService');
-      (DiscordService as any).instance = undefined;
+      DiscordService = require('@integrations/discord/DiscordService').DiscordService;
       service = DiscordService.getInstance();
     });
 
@@ -84,13 +72,16 @@ jest.isolateModules(() => {
     it('initializes correctly', async () => {
       await service.initialize();
       expect(service.getAllBots()).toHaveLength(1);
-      expect(service.getAllBots()[0].client.login).toHaveBeenCalledWith('token1');
+      const bot = service.getAllBots()[0];
+      expect(bot.botUserName).toBe('TestBot1');
+      expect(bot.client.login).toHaveBeenCalledWith('test_token_1');
     });
 
     it('shuts down correctly', async () => {
       await service.initialize();
       await service.shutdown();
-      expect(mockClient.destroy).toHaveBeenCalled();
+      const bot = service.getAllBots()[0];
+      expect(bot.client.destroy).toHaveBeenCalled();
     });
   });
 });

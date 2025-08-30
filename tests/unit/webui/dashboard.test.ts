@@ -6,6 +6,8 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 // Mock BotConfigurationManager
 jest.mock('@config/BotConfigurationManager');
 const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
+const mockGetInstance = jest.fn();
+mockBotConfigurationManager.getInstance = mockGetInstance;
 
 const app = express();
 app.use('/dashboard', dashboardRouter);
@@ -15,10 +17,12 @@ describe('Dashboard Routes', () => {
 
   beforeEach(() => {
     mockManager = {
-      getAllBots: jest.fn()
+      getAllBots: jest.fn(),
+      getWarnings: jest.fn(),
+      isLegacyMode: jest.fn()
     } as any;
-    
-    mockBotConfigurationManager.getInstance.mockReturnValue(mockManager);
+
+    mockGetInstance.mockReturnValue(mockManager);
   });
 
   afterEach(() => {

@@ -221,12 +221,16 @@ export class WebSocketService {
       clearInterval(this.metricsInterval);
       this.metricsInterval = null;
     }
-    
+
     if (this.io) {
-      this.io.close();
+      try {
+        this.io.close();
+      } catch (error) {
+        debug('Error closing WebSocket server:', error);
+      }
       this.io = null;
     }
-    
+
     debug('WebSocket service shut down');
   }
 }

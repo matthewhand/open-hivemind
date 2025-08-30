@@ -19,24 +19,24 @@ describe('WebSocketService', () => {
   beforeEach((done) => {
     const app = express();
     httpServer = createServer(app);
-    
+
     mockManager = {
       getAllBots: jest.fn(),
       getWarnings: jest.fn()
     } as any;
-    
+
     mockBotConfigurationManager.getInstance.mockReturnValue(mockManager);
-    
-    wsService = WebSocketService.getInstance();
-    wsService.initialize(httpServer);
-    
+
     httpServer.listen(() => {
       const port = (httpServer.address() as any)?.port;
+      wsService = WebSocketService.getInstance();
+      wsService.initialize(httpServer);
+
       clientSocket = Client(`http://localhost:${port}`, {
         path: '/webui/socket.io'
       });
       clientSocket.on('connect', done);
-    clientSocket.on('connect_error', () => {});
+      clientSocket.on('connect_error', () => {});
     });
   });
 
