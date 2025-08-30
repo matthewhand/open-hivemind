@@ -6,10 +6,10 @@ import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
-import { VoiceCommandHandler } from './voice/voiceCommandHandler';
-import { VoiceChannelManager } from './voice/voiceChannelManager';
-import { AudioRecorder } from './voice/audioRecorder';
-import { VoiceActivityDetection } from './voice/voiceActivityDetection';
+// import { VoiceCommandHandler } from './voice/voiceCommandHandler';
+// import { VoiceChannelManager } from './voice/voiceChannelManager';
+// import { AudioRecorder } from './voice/audioRecorder';
+// import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
 // Optional channel routing feature flag and router
@@ -68,7 +68,7 @@ export const Discord = {
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
     private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
-    private voiceManager?: VoiceChannelManager;
+    private voiceManager?: any;
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
@@ -236,6 +236,7 @@ export const Discord = {
       await Promise.all(loginPromises);
       
       // Initialize voice manager after bots are ready
+      const { VoiceChannelManager } = require('./voice/voiceChannelManager');
       this.voiceManager = new VoiceChannelManager(this.bots[0].client);
     }
 
@@ -450,7 +451,10 @@ export const Discord = {
     }
 
     public async joinVoiceChannel(channelId: string): Promise<void> {
-      if (!this.voiceManager) throw new Error('Voice manager not initialized');
+      if (!this.voiceManager) {
+        const { VoiceChannelManager } = require('./voice/voiceChannelManager');
+        this.voiceManager = new VoiceChannelManager(this.getClient());
+      }
       await this.voiceManager.joinChannel(channelId, true);
       log(`Joined voice channel ${channelId} with full voice capabilities`);
     }
@@ -467,8 +471,8 @@ export const Discord = {
   }
 };
 
-type DiscordService = InstanceType<typeof Discord.DiscordService>;
-export { DiscordService } from './DiscordService';
+export const DiscordService = Discord.DiscordService;
+export type DiscordService = InstanceType<typeof Discord.DiscordService>;
 // This line is removed to break a circular dependency.
 // The service is already exported as the default export of this module.
 // // These lines are removed to break a circular dependency.
