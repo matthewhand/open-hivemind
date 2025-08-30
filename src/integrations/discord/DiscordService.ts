@@ -471,4 +471,7 @@ type DiscordService = InstanceType<typeof Discord.DiscordService>;
 export { DiscordService } from './DiscordService';
 // This line is removed to break a circular dependency.
 // The service is already exported as the default export of this module.
+// // These lines are removed to break a circular dependency.
+// The service is already exported as the default export of this module.
+// export { DiscordService } from './DiscordService';
 // export const DiscordService = Discord.DiscordService;
