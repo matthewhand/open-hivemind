@@ -23,22 +23,20 @@ export class SlackMessageProcessor {
   private botManager: SlackBotManager;
 
   constructor(botManager: SlackBotManager) {
-    if (!botManager) {
-      debug('Error: SlackBotManager instance required');
-      throw new Error('SlackBotManager instance required');
-    }
     this.botManager = botManager;
-    debug('SlackMessageProcessor initialized');
   }
 
-  public async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
-    debug('Entering enrichSlackMessage', { text: message.getText(), channelId: message.getChannelId() });
+  async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
     if (!message || !message.getChannelId()) {
       debug('Error: Invalid message or missing channelId');
       throw new Error('Message and channelId required');
     }
 
     const botInfo = this.botManager.getAllBots()[0];
+    if (!botInfo) {
+      debug('Error: Bot information not found');
+      throw new Error('Bot information not found');
+    }
     const channelId = message.getChannelId();
     let userId = message.getAuthorId();
     if ((userId === 'unknown' || !userId) && message.data.user) {

@@ -75,7 +75,7 @@ describe('DiscordMessage - branches and edge cases', () => {
     const editReject = jest.fn().mockRejectedValue(new Error('edit failed'));
     const editable2 = baseMessage({ editable: true, edit: editReject });
     const dmErr = new DiscordMessage(editable2 as any);
-    dmErr.setText('new text C');
+    await expect(dmErr.setText('new text C')).rejects.toThrow('edit failed');
     expect(editReject).toHaveBeenCalledWith('new text C');
   });
 

@@ -1,8 +1,11 @@
 import Debug from 'debug';
 import express, { Request, Response } from 'express';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
+import { getLlm } from '@src/llm/getLlm';
+import { getBotManager } from '@src/integrations/getBotManager';
+
+// Import after jest.doMock of config to allow per-test overrides
 import { verifyWebhookToken, verifyIpWhitelist } from '@webhook/security/webhookSecurity';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
 
 const debug = Debug('app:webhookRoutes');
 

@@ -67,8 +67,8 @@ export const Discord = {
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
+    private voiceManager: any;
     private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
-    private voiceManager?: any;
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;

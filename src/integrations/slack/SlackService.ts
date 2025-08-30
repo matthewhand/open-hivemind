@@ -214,8 +214,13 @@ export class SlackService implements IMessengerService {
   public static getInstance(): SlackService {
     debug('Entering getInstance');
     if (!SlackService.instance) {
-      debug('Creating new SlackService instance');
-      SlackService.instance = new SlackService();
+      try {
+        debug('Creating new SlackService instance');
+        SlackService.instance = new SlackService();
+      } catch (error: any) {
+        debug('Failed to create SlackService instance:', error);
+        throw new Error(`Failed to create SlackService instance: ${error.message}`);
+      }
     }
     debug('Returning SlackService instance');
     return SlackService.instance;
@@ -608,6 +613,7 @@ export class SlackService implements IMessengerService {
     const name = botName || Array.from(this.botManagers.keys())[0];
     return this.sendMessageToChannel(channelId, text, name);
   }
+
 }
 
 export default SlackService;

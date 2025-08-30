@@ -21,19 +21,32 @@ export class WebSocketService {
   }
 
   public initialize(server: HttpServer): void {
-    this.io = new SocketIOServer(server, {
-      cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-      },
-      path: '/webui/socket.io'
-    });
+    try {
+      if (!server) {
+        throw new Error('HTTP server is required for WebSocket initialization');
+      }
 
-    this.setupEventHandlers();
-    this.startMetricsCollection();
-    debug('WebSocket service initialized');
+      this.io = new SocketIOServer(server, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"]
+        },
+        path: '/webui/socket.io'
+      });
+
+      this.setupEventHandlers();
+      this.startMetricsCollection();
+      debug('WebSocket service initialized successfully');
+    } catch (error: any) {
+      debug('Failed to initialize WebSocket service:', error);
+      throw new Error(`WebSocket service initialization failed: ${error.message}`);
+    }
   }
 
+  /**
+   * Sets up WebSocket event handlers for client connections
+   * Handles connection, disconnection, and various client requests
+   */
   private setupEventHandlers(): void {
     if (!this.io) return;
 
@@ -64,6 +77,10 @@ export class WebSocketService {
     });
   }
 
+  /**
+   * Starts periodic metrics collection and broadcasting
+   * Sends bot status and system metrics updates every 5 seconds to connected clients
+   */
   private startMetricsCollection(): void {
     // Send updates every 5 seconds to connected clients
     this.metricsInterval = setInterval(() => {
