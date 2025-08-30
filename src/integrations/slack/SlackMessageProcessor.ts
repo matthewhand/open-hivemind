@@ -23,6 +23,9 @@ export class SlackMessageProcessor {
   private botManager: SlackBotManager;
 
   constructor(botManager: SlackBotManager) {
+    if (!botManager) {
+      throw new Error('SlackBotManager instance required');
+    }
     this.botManager = botManager;
   }
 

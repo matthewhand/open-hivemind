@@ -136,7 +136,7 @@ describe('llmConfig', () => {
 
   describe('error handling', () => {
     it('should handle missing configuration gracefully', () => {
-      expect(() => llmConfig.get('NON_EXISTENT_KEY')).not.toThrow();
+      expect(() => llmConfig.get('NON_EXISTENT_KEY' as any)).toThrow("cannot find configuration param 'NON_EXISTENT_KEY'");
     });
 
     it('should handle empty environment variables', () => {

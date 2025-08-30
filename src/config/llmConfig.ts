@@ -11,7 +11,16 @@ const llmConfig = convict({
     doc: 'Whether to allow parallel execution of requests',
     format: Boolean,
     default: false,
-    env: 'LLM_PARALLEL_EXECUTION'
+    env: 'LLM_PARALLEL_EXECUTION',
+    coerce: (val: any) => {
+      if (typeof val === 'boolean') return val;
+      if (typeof val === 'string') {
+        const lower = val.toLowerCase();
+        if (lower === 'true' || lower === '1') return true;
+        if (lower === 'false' || lower === '0') return false;
+      }
+      return false;
+    }
   }
 });
 
