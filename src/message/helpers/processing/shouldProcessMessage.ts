@@ -1,4 +1,5 @@
 import messageConfig from '@config/messageConfig';
+import { IMessage } from '@message/interfaces/IMessage';
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.

@@ -184,7 +184,7 @@ describe('openaiConfig', () => {
     });
 
     it('should handle missing configuration keys gracefully', () => {
-      expect(() => openaiConfig.get('NON_EXISTENT_KEY')).not.toThrow();
+      expect(() => openaiConfig.get('NON_EXISTENT_KEY')).toThrow();
     });
 
     it('should maintain consistency across multiple calls', () => {

@@ -32,9 +32,7 @@ export class TelegramService implements IMessengerService {
     return this.connected;
   }
 
-  supportsChannelPrioritization(): boolean {
-    return false;
-  }
+  supportsChannelPrioritization = false;
 
   scoreChannel(): number {
     return 0;

@@ -18,6 +18,11 @@ export interface ParsedCommand {
  * @returns The parsed command object or null if the message is not a command.
  */
 export function parseCommand(commandContent: string): ParsedCommand | null {
+  if (!commandContent) {
+    debug('Command content is null or undefined.');
+    return null;
+  }
+  
   const trimmedContent = commandContent.trim();
   if (!trimmedContent || !trimmedContent.startsWith('!')) {
     debug('Not a command message.');

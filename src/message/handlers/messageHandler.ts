@@ -12,19 +12,33 @@ import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 const logger = Debug('app:messageHandler');
-const messageProvider = getMessengerProvider()[0]; // Use first provider
-const llmProvider = getLlmProvider()[0]; // Returns ILlmProvider
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 
-export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string> {
+export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string | null> {
   try {
     const text = message.getText();
     if (!text) {
       logger('Empty message content, skipping processing.');
-      return '';
+      return null;
     }
 
+    // Get providers safely
+    const messageProviders = getMessengerProvider();
+    const llmProviders = getLlmProvider();
+    
+    if (messageProviders.length === 0) {
+      logger('No message provider available');
+      return 'Error: No message provider available';
+    }
+    
+    if (llmProviders.length === 0) {
+      logger('No LLM provider available');
+      return 'Error: No LLM provider available';
+    }
+    
+    const messageProvider = messageProviders[0];
+    const llmProvider = llmProviders[0];
     const botId = botConfig.BOT_ID || messageProvider.getClientId();
     const userId = message.getAuthorId();
     let processedMessage = stripBotId(text, botId);
@@ -49,7 +63,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         await messageProvider.sendMessageToChannel(message.getChannelId(), result, botName);
         commandProcessed = true;
       });
-      if (commandProcessed) return '';
+      if (commandProcessed) return null;
     }
 
     // Reply eligibility
@@ -61,7 +75,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     
     if (!shouldReplyToMessage(message, botId, providerType)) {
       logger('Message not eligible for reply');
-      return '';
+      return null;
     }
 
     // LLM processing
@@ -124,6 +138,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     return reply;
   } catch (error: unknown) {
     logger('Error handling message:', error instanceof Error ? error.stack : String(error));
-    return '';
+    return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
   }
 }

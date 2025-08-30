@@ -6,7 +6,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     const expectedToken: string = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
     if (!expectedToken) {
-        throw new Error('WEBHOOK_TOKEN is not defined in config');
+        throw new Error('WEBHOOK_TOKEN is not configured');
     }
 
     if (!providedToken || providedToken !== expectedToken) {

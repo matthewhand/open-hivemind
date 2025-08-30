@@ -69,16 +69,12 @@ export const Discord = {
     private handlerSet: boolean = false;
     private voiceManager: any;
     private currentHandler?: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>;
-
-    // Performance optimizations
-    private configCache: Map<string, any> = new Map();
-    private lastConfigCheck: number = 0;
-    private readonly CONFIG_CACHE_TTL = 30000; // 30 seconds
-
-    // Security: Rate limiting
-    private messageRateLimit: Map<string, number[]> = new Map();
+    private configCache = new Map<string, any>();
+    private lastConfigCheck = 0;
+    private readonly CONFIG_CACHE_TTL = 60000; // 1 minute
+    private messageRateLimit = new Map<string, number[]>();
     private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
-    private readonly RATE_LIMIT_MAX = 30; // 30 messages per minute per channel
+    private readonly RATE_LIMIT_MAX = 10; // 10 messages per minute
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;

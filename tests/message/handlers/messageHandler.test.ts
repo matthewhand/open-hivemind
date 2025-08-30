@@ -1,5 +1,4 @@
 import { handleMessage } from '@message/handlers/messageHandler';
-import { handleMessage } from '@message/handlers/messageHandler';
 import { IMessage } from '@message/interfaces/IMessage';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { stripBotId } from '@message/helpers/processing/stripBotId';
@@ -9,12 +8,14 @@ import messageConfig from '@config/messageConfig';
 
 // Mock dependencies
 jest.mock('@llm/getLlmProvider');
+jest.mock('@message/management/getMessengerProvider');
 jest.mock('@message/helpers/processing/stripBotId');
 jest.mock('@message/helpers/processing/addUserHint');
 jest.mock('@message/helpers/processing/shouldReplyToMessage');
 jest.mock('@config/messageConfig');
 
 const mockGetLlmProvider = getLlmProvider as jest.MockedFunction<typeof getLlmProvider>;
+const mockGetMessengerProvider = require('@message/management/getMessengerProvider').getMessengerProvider as jest.MockedFunction<any>;
 const mockStripBotId = stripBotId as jest.MockedFunction<typeof stripBotId>;
 const mockAddUserHint = addUserHintFn as jest.MockedFunction<typeof addUserHintFn>;
 const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shouldReplyToMessage>;
@@ -41,6 +42,8 @@ class MockMessage implements IMessage {
   getChannelUsers(): string[] { return ['user1', 'user2']; }
   mentionsUsers(userId: string): boolean { return false; }
   getAuthorName(): string { return 'Test User'; }
+  getGuildOrWorkspaceId(): string | null { return 'test-guild'; }
+  isReplyToBot(): boolean { return false; }
   
   // Required IMessage properties
   data: any = {};
@@ -61,12 +64,18 @@ describe('messageHandler', () => {
       generateChatCompletion: jest.fn().mockResolvedValue('AI response')
     };
     
+    const mockMessengerProvider = {
+      sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
+      getClientId: jest.fn().mockReturnValue('bot-123')
+    };
+    
     mockBotConfig = {
-      botId: 'bot-123',
-      integration: 'discord'
+      BOT_ID: 'bot-123',
+      MESSAGE_PROVIDER: 'discord'
     };
     
     mockGetLlmProvider.mockReturnValue([mockLlmProvider]);
+    mockGetMessengerProvider.mockReturnValue([mockMessengerProvider]);
     mockStripBotId.mockImplementation((text) => text);
     mockAddUserHint.mockImplementation((text) => text);
     mockShouldReply.mockReturnValue(true);

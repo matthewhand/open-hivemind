@@ -159,6 +159,12 @@ describe('webhookService', () => {
   });
 
   describe('service lifecycle', () => {
+    beforeEach(() => {
+      // Restore normal mock behavior
+      mockConfigureWebhookRoutes.mockImplementation(() => {});
+      mockExpress.mockReturnValue(mockApp);
+    });
+
     it('should be callable multiple times', () => {
       webhookService.start(null, messageService, 'channel-1');
       webhookService.start(null, messageService, 'channel-2');
@@ -191,6 +197,12 @@ describe('webhookService', () => {
   });
 
   describe('integration scenarios', () => {
+    beforeEach(() => {
+      // Restore normal mock behavior
+      mockConfigureWebhookRoutes.mockImplementation(() => {});
+      mockExpress.mockReturnValue(mockApp);
+    });
+
     it('should work with pre-configured Express app', () => {
       const app = express();
       app.use(express.json());
