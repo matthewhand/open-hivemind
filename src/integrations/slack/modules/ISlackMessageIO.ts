@@ -3,6 +3,7 @@ import { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from '../SlackMessage';
 import Debug from 'debug';
 import { SlackBotManager } from '../SlackBotManager';
+import WebSocketService from '@src/webui/services/WebSocketService';
 
 const debug = Debug('app:SlackMessageIO');
 
@@ -108,6 +109,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     }
 
     try {
+      const t0 = Date.now();
       const options: any = {
         channel: channelId,
         text: text || 'No content provided',
@@ -124,10 +126,34 @@ export class SlackMessageIO implements ISlackMessageIO {
       debug(`Final text to post: ${options.text.substring(0, 50) + (options.text.length > 50 ? '...' : '')}`);
       const result = await this.withQueue(targetBot, () => this.sendWithRetry(botInfo, options));
       debug(`Sent message to #${channelId}${threadId ? ` thread ${threadId}` : ''}, ts=${result.ts}`);
-
+      // Emit WebSocket monitoring event (outgoing)
+      try {
+        const ws = WebSocketService.getInstance();
+        ws.recordMessageFlow({
+          botName: botInfo.botUserName,
+          provider: 'slack',
+          channelId,
+          userId: '',
+          messageType: 'outgoing',
+          contentLength: (text || '').length,
+          processingTime: Date.now() - t0,
+          status: 'success'
+        });
+      } catch {}
       return result.ts || '';
     } catch (error) {
       debug(`Failed to send message: ${error}`);
+      // Emit alert on failure
+      try {
+        const ws = WebSocketService.getInstance();
+        ws.recordAlert({
+          level: 'error',
+          title: 'Slack sendMessage failed',
+          message: String(error),
+          botName: botName || this.getDefaultBotName(),
+          metadata: { channelId }
+        });
+      } catch {}
       throw new Error(`Message send failed: ${error}`);
     }
   }

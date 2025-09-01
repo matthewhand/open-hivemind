@@ -16,6 +16,7 @@ import * as path from 'path';
 import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
 import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import WebSocketService from '@src/webui/services/WebSocketService';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -252,6 +253,19 @@ export const Discord = {
             if (!message || !message.author || message.author.bot) return;
             if (!message.channelId) return;
 
+            // Emit incoming message flow event
+            try {
+              WebSocketService.getInstance().recordMessageFlow({
+                botName: bot.botUserName,
+                provider: 'discord',
+                channelId: message.channelId,
+                userId: message.author.id,
+                messageType: 'incoming',
+                contentLength: (message.content || '').length,
+                status: 'success'
+              });
+            } catch {}
+
             const wrappedMessage = new DiscordMessage(message);
             const history = await this.getMessagesFromChannel(message.channelId);
             await handler(wrappedMessage, history, bot.config);
@@ -409,9 +423,30 @@ export const Discord = {
         }
 
         log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);
+        // Emit outgoing message flow event
+        try {
+          WebSocketService.getInstance().recordMessageFlow({
+            botName: botInfo.botUserName,
+            provider: 'discord',
+            channelId: selectedChannelId,
+            userId: '',
+            messageType: 'outgoing',
+            contentLength: (text || '').length,
+            status: 'success'
+          });
+        } catch {}
         return message.id;
       } catch (error: any) {
         log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
+        try {
+          WebSocketService.getInstance().recordAlert({
+            level: 'error',
+            title: 'Discord sendMessage failed',
+            message: String(error?.message ?? error),
+            botName: botInfo.botUserName,
+            metadata: { channelId: selectedChannelId }
+          });
+        } catch {}
         return '';
       }
     }

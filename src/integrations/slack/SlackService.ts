@@ -334,6 +334,19 @@ export class SlackService implements IMessengerService {
       if (!messageProcessor) continue;
 
       botManager.setMessageHandler(async (message, _history, _botConfig) => {
+        // Emit WebSocket monitoring event for incoming message
+        try {
+          const ws = require('@src/webui/services/WebSocketService').default as typeof import('@src/webui/services/WebSocketService').default;
+          ws.getInstance().recordMessageFlow({
+            botName,
+            provider: 'slack',
+            channelId: message.getChannelId?.() || '',
+            userId: message.getAuthorId?.() || '',
+            messageType: 'incoming',
+            contentLength: (message.getText?.() || '').length,
+            status: 'success'
+          });
+        } catch {}
         debug(`[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`);
         
         const messageTs = parseFloat(message.data.ts || '0');
