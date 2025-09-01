@@ -17,7 +17,7 @@ export function getRandomDelay(min: number, max: number): number {
         debug('Invalid min or max values provided for delay.');
         return 0;
     }
-    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    const delay = (Math.random() * (max - min)) + min;
     debug('Generated random delay: ' + delay + ' ms');
     return delay;
 }

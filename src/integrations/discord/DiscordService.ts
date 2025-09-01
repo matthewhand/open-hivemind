@@ -102,14 +102,7 @@ export const Discord = {
      */
     public constructor() {
       this.bots = [];
-      
-      // Skip new configuration system in test mode to maintain legacy test compatibility
-      if (process.env.NODE_ENV === 'test') {
-        this.loadLegacyConfigurationWithValidation();
-        return;
-      }
-      
-      // Use the new BotConfigurationManager for multi-bot configuration
+      // Prefer the new BotConfigurationManager for multi-bot configuration (also in tests)
       const configManager = BotConfigurationManager.getInstance();
       const botConfigs = configManager.getDiscordBotConfigs();
       
@@ -124,10 +117,11 @@ export const Discord = {
             config: botConfig
           });
         });
-      } else if (process.env.NODE_ENV !== 'test') {
-        // Fall back to legacy configuration with validation, but not in test mode
-        this.loadLegacyConfigurationWithValidation();
+        return;
       }
+
+      // Fall back to legacy configuration with validation
+      this.loadLegacyConfigurationWithValidation();
     }
 
     private loadLegacyConfigurationWithValidation(): void {
@@ -434,7 +428,7 @@ export const Discord = {
       const botInfo = this.bots[0];
       try {
         const channel = await botInfo.client.channels.fetch(channelId);
-        if (!channel || !channel.isTextBased()) {
+        if (!channel || (typeof (channel as any).isTextBased === 'function' && !(channel as any).isTextBased())) {
           throw new Error('Channel is not text-based or was not found');
         }
         const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;

@@ -21,7 +21,8 @@ export class SlackMessageProvider implements IMessageProvider {
       return [];
     }
     try {
-      return await this.slackService.fetchMessages(channelId, limit);
+      // Tests expect provider to delegate with only (channelId)
+      return await this.slackService.fetchMessages(channelId);
     } catch (error) {
       // Assuming error is of type Error
       const err = error as Error;

@@ -16,29 +16,29 @@ router.get('/api/config', (req, res) => {
       ...bot,
       discord: bot.discord ? {
         ...bot.discord,
-        token: redactSensitiveInfo(bot.discord.token || '', 'DISCORD_BOT_TOKEN')
+        token: redactSensitiveInfo('DISCORD_BOT_TOKEN', bot.discord.token || '')
       } : undefined,
       slack: bot.slack ? {
         ...bot.slack,
-        botToken: redactSensitiveInfo(bot.slack.botToken || '', 'SLACK_BOT_TOKEN'),
-        appToken: redactSensitiveInfo(bot.slack.appToken || '', 'SLACK_APP_TOKEN'),
-        signingSecret: redactSensitiveInfo(bot.slack.signingSecret || '', 'SLACK_SIGNING_SECRET')
+        botToken: redactSensitiveInfo('SLACK_BOT_TOKEN', bot.slack.botToken || ''),
+        appToken: redactSensitiveInfo('SLACK_APP_TOKEN', bot.slack.appToken || ''),
+        signingSecret: redactSensitiveInfo('SLACK_SIGNING_SECRET', bot.slack.signingSecret || '')
       } : undefined,
       openai: bot.openai ? {
         ...bot.openai,
-        apiKey: redactSensitiveInfo(bot.openai.apiKey || '', 'OPENAI_API_KEY')
+        apiKey: redactSensitiveInfo('OPENAI_API_KEY', bot.openai.apiKey || '')
       } : undefined,
       flowise: bot.flowise ? {
         ...bot.flowise,
-        apiKey: redactSensitiveInfo(bot.flowise.apiKey || '', 'FLOWISE_API_KEY')
+        apiKey: redactSensitiveInfo('FLOWISE_API_KEY', bot.flowise.apiKey || '')
       } : undefined,
       openwebui: bot.openwebui ? {
         ...bot.openwebui,
-        apiKey: redactSensitiveInfo(bot.openwebui.apiKey || '', 'OPENWEBUI_API_KEY')
+        apiKey: redactSensitiveInfo('OPENWEBUI_API_KEY', bot.openwebui.apiKey || '')
       } : undefined,
       openswarm: bot.openswarm ? {
         ...bot.openswarm,
-        apiKey: redactSensitiveInfo(bot.openswarm.apiKey || '', 'OPENSWARM_API_KEY')
+        apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || '')
       } : undefined
     }));
     
@@ -72,7 +72,7 @@ router.get('/api/config/sources', (req, res) => {
       .reduce((acc, key) => {
         acc[key] = {
           source: 'environment',
-          value: redactSensitiveInfo(process.env[key] || '', key),
+          value: redactSensitiveInfo(key, process.env[key] || ''),
           sensitive: key.toLowerCase().includes('token') ||
                     key.toLowerCase().includes('key') ||
                     key.toLowerCase().includes('secret')
@@ -108,7 +108,13 @@ router.get('/api/config/sources', (req, res) => {
     // Detect overrides (env vars that override config file values)
     const overrides: any[] = [];
     const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
+    let bots: any[] = [];
+    try {
+      const res = (manager as any).getAllBots?.();
+      if (Array.isArray(res)) bots = res;
+    } catch {
+      bots = [];
+    }
 
     bots.forEach(bot => {
       // Check for environment variable overrides
@@ -122,7 +128,7 @@ router.get('/api/config/sources', (req, res) => {
             envKey.includes('OPENAI_')) {
           overrides.push({
             key: envKey,
-            value: redactSensitiveInfo(process.env[envKey] || '', envKey),
+            value: redactSensitiveInfo(envKey, process.env[envKey] || ''),
             bot: bot.name,
             type: 'environment_override'
           });

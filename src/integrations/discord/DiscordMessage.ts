@@ -81,7 +81,8 @@ export class DiscordMessage implements IMessage {
     this.data = message.content;
     this.role = ''; // Customize based on application needs
 
-    const author = `${message.author.username}#${message.author.discriminator} (${message.author.id})`;
+    const a: any = (message as any).author || {};
+    const author = `${a.username ?? 'unknown'}#${a.discriminator ?? '0000'} (${a.id ?? 'unknown'})`;
     debug(`DiscordMessage: [ID: ${message.id}] by ${author}`); // Shortened log with author info
   }
 

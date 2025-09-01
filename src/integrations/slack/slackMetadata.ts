@@ -15,11 +15,16 @@ export function extractSlackMetadata(event: any): Record<string, any> {
     };
   }
   
+  const ts = event.ts ?? event.event_ts ?? event.message_ts ?? event.message?.ts;
+  const user = event.user ?? event.message?.user ?? event.bot_id;
+  const thread = event.thread_ts ?? event.message?.thread_ts;
+  const team = event.team ?? event.message?.team;
+
   return {
-    slackUser: event.user,
+    slackUser: user,
     slackChannel: event.channel,
-    slackTimestamp: event.ts,
-    slackThread: event.thread_ts || undefined,
-    slackTeam: event.team || undefined,
+    slackTimestamp: ts,
+    slackThread: thread || undefined,
+    slackTeam: team || undefined,
   };
 }

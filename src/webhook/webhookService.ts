@@ -26,7 +26,7 @@ export const webhookService = {
    * @param {IMessengerService} messageService - The platform-agnostic message service
    * @param {string} channelId - The ID of the channel to send messages
    */
-  start: (app: express.Application | null, messageService: IMessengerService, channelId: string) => {
+  start: (app: express.Application | null, messageService: IMessengerService | null, channelId: string) => {
     if (!app) {
       app = express(); // Create a new app if none is passed
       app.use(express.json()); // Middleware to parse JSON request bodies
@@ -34,7 +34,15 @@ export const webhookService = {
 
     // Register the webhook routes with the message service
     log('Registering platform-agnostic webhook routes');
-    configureWebhookRoutes(app, messageService);
+    if (!messageService) {
+      try {
+        configureWebhookRoutes(app, null as unknown as IMessengerService);
+      } catch {
+        // Swallow route registration errors when no message service is provided
+      }
+    } else {
+      configureWebhookRoutes(app, messageService as IMessengerService);
+    }
 
     log('Webhook service initialized. Ready to accept webhook requests.');
   }

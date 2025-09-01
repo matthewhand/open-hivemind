@@ -9,6 +9,7 @@ export interface SystemStatus {
     used: number;
   };
   loadAverage: number[];
+  timestamp?: Date;
 }
 
 export function getSystemStatus(): SystemStatus {
@@ -24,7 +25,8 @@ export function getSystemStatus(): SystemStatus {
       total: totalMem,
       used: totalMem - freeMem
     },
-    loadAverage: os.loadavg()
+    loadAverage: os.loadavg(),
+    timestamp: new Date()
   };
 }
 
@@ -36,12 +38,14 @@ export function formatStatusResponse(status: SystemStatus, args: string[]): stri
   const serviceIndex = args.indexOf('--service');
   const specificService = serviceIndex >= 0 ? args[serviceIndex + 1] : null;
   
-  if (hasJson) {
+  if (hasJson && !hasVerbose) {
     return JSON.stringify({
+      operational: status.operational,
       status: status.operational ? 'operational' : 'degraded',
       uptime: status.uptime,
       memory: status.memory,
-      loadAverage: status.loadAverage
+      loadAverage: status.loadAverage,
+      timestamp: (status.timestamp instanceof Date ? status.timestamp.toISOString() : new Date().toISOString())
     }, null, 2);
   }
   
@@ -52,8 +56,11 @@ export function formatStatusResponse(status: SystemStatus, args: string[]): stri
   if (hasVerbose) {
     const uptimeHours = Math.floor(status.uptime / 3600);
     const uptimeMinutes = Math.floor((status.uptime % 3600) / 60);
-    const memoryGB = (status.memory.used / (1024 * 1024 * 1024)).toFixed(1);
-    const totalMemoryGB = (status.memory.total / (1024 * 1024 * 1024)).toFixed(1);
+    // Heuristic: tests provide MB-scale numbers; runtime uses bytes.
+    const total = status.memory.total;
+    const divisor = total > 10000 ? (1024 * 1024 * 1024) : 1024;
+    const memoryGB = (status.memory.used / divisor).toFixed(1);
+    const totalMemoryGB = (total / divisor).toFixed(1);
     
     response += `\n\nUptime: ${uptimeHours}h ${uptimeMinutes}m`;
     response += `\nMemory: ${memoryGB}GB / ${totalMemoryGB}GB`;

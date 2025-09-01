@@ -587,9 +587,17 @@ export class WebSocketService {
 
     if (this.io) {
       try {
-        this.io.close();
+        // Proactively disconnect sockets without touching the underlying HTTP server
+        try {
+          this.io.sockets.sockets.forEach((socket) => {
+            try { socket.disconnect(true); } catch (_) { /* ignore */ }
+          });
+        } catch (_) { /* ignore */ }
+        // Remove listeners to avoid emitting errors on the shared HTTP server
+        this.io.removeAllListeners();
+        // Avoid calling close() to prevent 'Server is not running' errors in certain environments
       } catch (error) {
-        debug('Error closing WebSocket server:', error);
+        debug('Error during WebSocket shutdown:', error);
       }
       this.io = null;
     }

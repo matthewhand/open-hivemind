@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import webhookConfig from '@config/webhookConfig';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
-    const providedToken: string = req.headers['x-webhook-token'] ? String(req.headers['x-webhook-token']) : '';
+    // Handle case-insensitive header names; Express normally lowercases, but unit tests pass raw objects
+    const headerKey = Object.keys(req.headers || {}).find(k => k.toLowerCase() === 'x-webhook-token');
+    const providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
     const expectedToken: string = String(webhookConfig.get('WEBHOOK_TOKEN'));
 
     if (!expectedToken) {
@@ -18,7 +20,9 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
 };
 
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
-    const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST') ? webhookConfig.get('WEBHOOK_IP_WHITELIST').split(',') : [];
+    const whitelistedIps: string[] = webhookConfig.get('WEBHOOK_IP_WHITELIST')
+        ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST')).split(',').map(s => s.trim()).filter(Boolean)
+        : [];
     const requestIp: string = req.ip ?? '';
 
     if (whitelistedIps.length === 0) {
