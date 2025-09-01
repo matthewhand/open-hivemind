@@ -14,6 +14,7 @@ import SlackMessage from './SlackMessage';
 import { KnownBlock } from '@slack/web-api';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import slackConfig from '@config/slackConfig';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -170,7 +171,7 @@ export class SlackService implements IMessengerService {
    * Initialize legacy configuration for backward compatibility
    */
   private initializeLegacyConfiguration(): void {
-    let instances: Array<{token: string; signingSecret: string; name: string}> = [];
+    let instances: Array<{token: string; signingSecret: string; name: string; appToken?: string; defaultChannelId?: string; joinChannels?: string;}> = [];
     let mode: 'socket' | 'rtm' = 'socket';
     
     // Legacy configuration loading (similar to original implementation)
@@ -194,9 +195,9 @@ export class SlackService implements IMessengerService {
             slack: {
               botToken: instance.token,
               signingSecret: instance.signingSecret,
-              appToken: '',
-              defaultChannelId: '',
-              joinChannels: '',
+              appToken: instance.appToken,
+              defaultChannelId: instance.defaultChannelId,
+              joinChannels: instance.joinChannels,
               mode
             }
           };
@@ -302,7 +303,7 @@ export class SlackService implements IMessengerService {
       const messageProcessor = this.messageProcessors.get(botName);
       if (!messageProcessor) continue;
 
-      botManager.setMessageHandler(async (message, history, botConfig) => {
+      botManager.setMessageHandler(async (message, _history, _botConfig) => {
         debug(`[${botName}] Received message: text="${message.getText()}", event_ts=${message.data.event_ts}, thread_ts=${message.data.thread_ts}, channel=${message.getChannelId()}`);
         
         const messageTs = parseFloat(message.data.ts || '0');
@@ -518,7 +519,7 @@ export class SlackService implements IMessengerService {
     const config = this.botConfigs.get(firstBot);
     
     if (config) {
-      const defaultChannel = config.defaultChannel || '';
+      const defaultChannel = config.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
       debug(`Returning defaultChannel: ${defaultChannel}`);
       return defaultChannel;
     }
@@ -553,8 +554,12 @@ export class SlackService implements IMessengerService {
   public getBotManager(botName?: string): SlackBotManager | undefined {
     debug('Entering getBotManager', { botName });
     if (botName) {
-      return this.botManagers.get(botName);
+      const manager = this.botManagers.get(botName);
+      if (manager) {
+        return manager;
+      }
     }
+    // If no botName is provided, or if the named bot is not found, return the first available manager.
     return Array.from(this.botManagers.values())[0];
   }
 
@@ -609,7 +614,6 @@ export class SlackService implements IMessengerService {
   /** Send a quick test message using a named bot. */
   public async sendTestMessage(botName: string, channelId: string, text: string): Promise<string> {
     if (!channelId) throw new Error('channelId required');
-    const cfg = this.getBotConfig(botName);
     const name = botName || Array.from(this.botManagers.keys())[0];
     return this.sendMessageToChannel(channelId, text, name);
   }

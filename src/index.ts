@@ -17,6 +17,11 @@ import dashboardRouter from '@src/webui/routes/dashboard';
 import configRouter from '@src/webui/routes/config';
 import botsRouter from '@src/webui/routes/bots';
 import validationRouter from '@src/webui/routes/validation';
+import hotReloadRouter from '@src/webui/routes/hotReload';
+import ciRouter from '@src/webui/routes/ci';
+import enterpriseRouter from '@src/webui/routes/enterprise';
+import secureConfigRouter from '@src/webui/routes/secureConfig';
+import authRouter from '@src/webui/routes/auth';
 import WebSocketService from '@src/webui/services/WebSocketService';
 import path from 'path';
 import { createServer } from 'http';
@@ -52,6 +57,11 @@ app.use('/dashboard', dashboardRouter);
 app.use('/webui', configRouter);
 app.use('/webui', botsRouter);
 app.use('/webui', validationRouter);
+app.use('/webui', hotReloadRouter);
+app.use('/webui', ciRouter);
+app.use('/webui', enterpriseRouter);
+app.use('/webui', secureConfigRouter);
+app.use('/webui', authRouter);
 
 // Serve React dashboard
 app.use('/react-dashboard', (req: Request, res: Response) => {

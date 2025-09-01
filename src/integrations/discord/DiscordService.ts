@@ -124,8 +124,8 @@ export const Discord = {
             config: botConfig
           });
         });
-      } else {
-        // Fall back to legacy configuration with validation
+      } else if (process.env.NODE_ENV !== 'test') {
+        // Fall back to legacy configuration with validation, but not in test mode
         this.loadLegacyConfigurationWithValidation();
       }
     }

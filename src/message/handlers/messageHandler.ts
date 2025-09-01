@@ -67,7 +67,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     }
 
     // Reply eligibility
-    const providerType = botConfig.MESSAGE_PROVIDER === 'discord' ? 'discord' : 'generic';
+    const providerType = botConfig.integration || botConfig.MESSAGE_PROVIDER;
     
     // Record interaction for idle response tracking
     const serviceName = botConfig.MESSAGE_PROVIDER || 'generic';
@@ -80,7 +80,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
     // LLM processing
     const startTime = Date.now();
-    const metadata = { ...message.metadata, channelId: message.getChannelId() } as any;
+    const metadata = { ...message.metadata, channelId: message.getChannelId(), botId: botId } as any;
     const payload = {
       text: processedMessage,
       history: historyMessages.map((m) => ({ role: m.role, content: m.getText() })),
@@ -113,7 +113,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       message.getMessageId(),
       reply,
       userId,
-      async (text: string, threadId?: string): Promise<string> => {
+      async (text: string): Promise<string> => {
         const rawBotName = botConfig.MESSAGE_USERNAME_OVERRIDE || 'MadgwickAI';
         const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);

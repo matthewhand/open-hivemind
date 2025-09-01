@@ -5,19 +5,168 @@ import Debug from 'debug';
 
 const debug = Debug('app:WebSocketService');
 
+export interface MessageFlowEvent {
+  id: string;
+  timestamp: string;
+  botName: string;
+  provider: string;
+  channelId: string;
+  userId: string;
+  messageType: 'incoming' | 'outgoing';
+  contentLength: number;
+  processingTime?: number;
+  status: 'success' | 'error' | 'timeout';
+  errorMessage?: string;
+}
+
+export interface PerformanceMetric {
+  timestamp: string;
+  responseTime: number;
+  memoryUsage: number;
+  cpuUsage: number;
+  activeConnections: number;
+  messageRate: number;
+  errorRate: number;
+}
+
+export interface AlertEvent {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warning' | 'error' | 'critical';
+  title: string;
+  message: string;
+  botName?: string;
+  channelId?: string;
+  metadata?: Record<string, any>;
+}
+
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
   private metricsInterval: NodeJS.Timeout | null = null;
   private connectedClients = 0;
 
-  private constructor() {}
+  // Real-time monitoring data
+  private messageFlow: MessageFlowEvent[] = [];
+  private performanceMetrics: PerformanceMetric[] = [];
+  private alerts: AlertEvent[] = [];
+  private messageRateHistory: number[] = [];
+  private errorRateHistory: number[] = [];
+
+  private constructor() {
+    this.initializeMonitoringData();
+  }
+
+  private initializeMonitoringData(): void {
+    // Initialize with empty arrays and default metrics
+    this.messageFlow = [];
+    this.performanceMetrics = [];
+    this.alerts = [];
+    this.messageRateHistory = new Array(60).fill(0); // 60 data points for 5-minute history
+    this.errorRateHistory = new Array(60).fill(0);
+  }
 
   public static getInstance(): WebSocketService {
     if (!WebSocketService.instance) {
       WebSocketService.instance = new WebSocketService();
     }
     return WebSocketService.instance;
+  }
+
+  // Public methods for external components to report events
+  public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
+    const messageEvent: MessageFlowEvent = {
+      ...event,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString()
+    };
+
+    this.messageFlow.push(messageEvent);
+
+    // Keep only last 1000 messages
+    if (this.messageFlow.length > 1000) {
+      this.messageFlow = this.messageFlow.slice(-1000);
+    }
+
+    // Update message rate
+    this.updateMessageRate();
+
+    // Broadcast to connected clients
+    if (this.io && this.connectedClients > 0) {
+      this.io.emit('message_flow_update', messageEvent);
+    }
+  }
+
+  public recordAlert(alert: Omit<AlertEvent, 'id' | 'timestamp'>): void {
+    const alertEvent: AlertEvent = {
+      ...alert,
+      id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString()
+    };
+
+    this.alerts.push(alertEvent);
+
+    // Keep only last 500 alerts
+    if (this.alerts.length > 500) {
+      this.alerts = this.alerts.slice(-500);
+    }
+
+    // Update error rate if this is an error
+    if (alert.level === 'error' || alert.level === 'critical') {
+      this.updateErrorRate();
+    }
+
+    // Broadcast to connected clients
+    if (this.io && this.connectedClients > 0) {
+      this.io.emit('alert_update', alertEvent);
+    }
+  }
+
+  public getMessageFlow(limit = 100): MessageFlowEvent[] {
+    return this.messageFlow.slice(-limit);
+  }
+
+  public getAlerts(limit = 50): AlertEvent[] {
+    return this.alerts.slice(-limit);
+  }
+
+  public getPerformanceMetrics(limit = 60): PerformanceMetric[] {
+    return this.performanceMetrics.slice(-limit);
+  }
+
+  public getMessageRateHistory(): number[] {
+    return [...this.messageRateHistory];
+  }
+
+  public getErrorRateHistory(): number[] {
+    return [...this.errorRateHistory];
+  }
+
+  private updateMessageRate(): void {
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - 60000);
+
+    const recentMessages = this.messageFlow.filter(event =>
+      new Date(event.timestamp) > oneMinuteAgo
+    );
+
+    const currentRate = recentMessages.length;
+    this.messageRateHistory.push(currentRate);
+    this.messageRateHistory.shift(); // Remove oldest
+  }
+
+  private updateErrorRate(): void {
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - 60000);
+
+    const recentErrors = this.alerts.filter(alert =>
+      (alert.level === 'error' || alert.level === 'critical') &&
+      new Date(alert.timestamp) > oneMinuteAgo
+    );
+
+    const currentRate = recentErrors.length;
+    this.errorRateHistory.push(currentRate);
+    this.errorRateHistory.shift(); // Remove oldest
   }
 
   public initialize(server: HttpServer): void {
@@ -76,6 +225,22 @@ export class WebSocketService {
         this.sendConfigValidation(socket);
       });
 
+      socket.on('request_message_flow', () => {
+        this.sendMessageFlow(socket);
+      });
+
+      socket.on('request_alerts', () => {
+        this.sendAlerts(socket);
+      });
+
+      socket.on('request_performance_metrics', () => {
+        this.sendPerformanceMetrics(socket);
+      });
+
+      socket.on('request_monitoring_dashboard', () => {
+        this.sendMonitoringDashboard(socket);
+      });
+
       socket.on('disconnect', () => {
         this.connectedClients--;
         debug(`Client disconnected. Total clients: ${this.connectedClients}`);
@@ -93,8 +258,46 @@ export class WebSocketService {
       if (this.connectedClients > 0) {
         this.broadcastBotStatus();
         this.broadcastSystemMetrics();
+        this.broadcastMonitoringData();
       }
     }, 5000);
+  }
+
+  private broadcastMonitoringData(): void {
+    if (!this.io) return;
+
+    // Broadcast message flow updates
+    if (this.messageFlow.length > 0) {
+      this.io.emit('message_flow_broadcast', {
+        latest: this.messageFlow.slice(-5), // Last 5 messages
+        total: this.messageFlow.length,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Broadcast alert updates
+    if (this.alerts.length > 0) {
+      const recentAlerts = this.alerts.filter(alert =>
+        new Date(alert.timestamp) > new Date(Date.now() - 30000) // Last 30 seconds
+      );
+      if (recentAlerts.length > 0) {
+        this.io.emit('alerts_broadcast', {
+          alerts: recentAlerts,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Broadcast performance metrics
+    this.io.emit('performance_metrics_broadcast', {
+      current: {
+        memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+        errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
+        activeConnections: this.connectedClients
+      },
+      timestamp: new Date().toISOString()
+    });
   }
 
   private sendBotStatus(socket: any): void {
@@ -237,6 +440,103 @@ export class WebSocketService {
       this.sendBotStatus(socket);
       this.sendConfigValidation(socket);
     });
+  }
+
+  private sendMessageFlow(socket: any): void {
+    try {
+      const messageFlow = this.getMessageFlow(50); // Last 50 messages
+      socket.emit('message_flow_update', {
+        messages: messageFlow,
+        total: this.messageFlow.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      debug('Error sending message flow:', error);
+      socket.emit('error', { message: 'Failed to get message flow' });
+    }
+  }
+
+  private sendAlerts(socket: any): void {
+    try {
+      const alerts = this.getAlerts(20); // Last 20 alerts
+      socket.emit('alerts_update', {
+        alerts,
+        total: this.alerts.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      debug('Error sending alerts:', error);
+      socket.emit('error', { message: 'Failed to get alerts' });
+    }
+  }
+
+  private sendPerformanceMetrics(socket: any): void {
+    try {
+      const metrics = this.getPerformanceMetrics(30); // Last 30 data points
+      const currentMetric: PerformanceMetric = {
+        timestamp: new Date().toISOString(),
+        responseTime: 0, // TODO: Implement response time tracking
+        memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        cpuUsage: 0, // TODO: Implement CPU usage tracking
+        activeConnections: this.connectedClients,
+        messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+        errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0
+      };
+
+      this.performanceMetrics.push(currentMetric);
+      if (this.performanceMetrics.length > 100) {
+        this.performanceMetrics = this.performanceMetrics.slice(-100);
+      }
+
+      socket.emit('performance_metrics_update', {
+        metrics: [...metrics, currentMetric],
+        current: currentMetric,
+        history: {
+          messageRate: this.getMessageRateHistory(),
+          errorRate: this.getErrorRateHistory()
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      debug('Error sending performance metrics:', error);
+      socket.emit('error', { message: 'Failed to get performance metrics' });
+    }
+  }
+
+  private sendMonitoringDashboard(socket: any): void {
+    try {
+      const dashboard = {
+        summary: {
+          totalBots: 0, // TODO: Get from BotConfigurationManager
+          activeBots: 0,
+          totalMessages: this.messageFlow.length,
+          totalAlerts: this.alerts.length,
+          uptime: process.uptime(),
+          connectedClients: this.connectedClients
+        },
+        recentActivity: {
+          messages: this.getMessageFlow(10),
+          alerts: this.getAlerts(5)
+        },
+        performance: {
+          current: {
+            memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+            errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0
+          },
+          history: {
+            messageRate: this.getMessageRateHistory(),
+            errorRate: this.getErrorRateHistory()
+          }
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      socket.emit('monitoring_dashboard_update', dashboard);
+    } catch (error) {
+      debug('Error sending monitoring dashboard:', error);
+      socket.emit('error', { message: 'Failed to get monitoring dashboard' });
+    }
   }
 
   public shutdown(): void {

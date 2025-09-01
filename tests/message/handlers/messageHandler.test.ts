@@ -22,13 +22,21 @@ const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shoul
 const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
 
 class MockMessage implements IMessage {
+  public data: any = {};
+  public role: string = 'user';
+  public content: string;
+  public tool_calls?: any[];
+  public metadata?: any;
+
   constructor(
-    private text: string,
-    private channelId: string = 'test-channel',
-    private authorId: string = 'test-user',
-    private messageId: string = 'test-message-id',
-    private isBot: boolean = false
-  ) {}
+    public text: string,
+    public channelId: string = 'test-channel',
+    public authorId: string = 'test-user',
+    public messageId: string = 'test-message-id',
+    public isBot: boolean = false
+  ) {
+    this.content = text;
+  }
 
   getText(): string { return this.text; }
   getChannelId(): string { return this.channelId; }
@@ -44,13 +52,6 @@ class MockMessage implements IMessage {
   getAuthorName(): string { return 'Test User'; }
   getGuildOrWorkspaceId(): string | null { return 'test-guild'; }
   isReplyToBot(): boolean { return false; }
-  
-  // Required IMessage properties
-  data: any = {};
-  role: string = 'user';
-  content: string = this.text;
-  tool_calls?: any[];
-  metadata?: any;
 }
 
 describe('messageHandler', () => {
@@ -79,7 +80,23 @@ describe('messageHandler', () => {
     mockStripBotId.mockImplementation((text) => text);
     mockAddUserHint.mockImplementation((text) => text);
     mockShouldReply.mockReturnValue(true);
-    mockMessageConfig.get.mockReturnValue(false);
+    mockMessageConfig.get.mockImplementation((key: any) => {
+      const config: { [key: string]: any } = {
+        MESSAGE_IGNORE_BOTS: true,
+        MESSAGE_ADD_USER_HINT: false,
+        MESSAGE_STRIP_BOT_ID: true,
+        MESSAGE_PREFIX_ALL_MESSAGES: '',
+        MESSAGE_PREFIX_ALL_REPLIES: '',
+        MESSAGE_MIN_INTERVAL_MS: 1000,
+        MESSAGE_MAX_TOKENS_COMPLETION: 2048,
+        MESSAGE_MAX_TOKENS_CHAT: 4096,
+        botId: 'bot-123',
+      };
+      if (typeof key === 'string') {
+        return config[key];
+      }
+      return undefined;
+    });
   });
 
   describe('basic message handling', () => {
@@ -95,7 +112,7 @@ describe('messageHandler', () => {
         historyMessages,
         expect.objectContaining({
           channelId: 'test-channel',
-          botId: 'bot-123'
+          botId: 'bot-123',
         })
       );
     });
@@ -194,7 +211,7 @@ describe('messageHandler', () => {
 
   describe('configuration handling', () => {
     it('should respect message configuration settings', async () => {
-      mockMessageConfig.get.mockImplementation((key: string) => {
+      mockMessageConfig.get.mockImplementation((key: any) => {
         if (key === 'MESSAGE_STRIP_BOT_ID') return true;
         if (key === 'MESSAGE_ADD_USER_HINT') return true;
         return false;
@@ -222,8 +239,7 @@ describe('messageHandler', () => {
       
       const response = await handleMessage(message, [], mockBotConfig);
       
-      // Should either process empty message or return appropriate response
-      expect(typeof response).toBe('string');
+      expect(response).toBeNull();
     });
 
     it('should handle very long messages', async () => {
