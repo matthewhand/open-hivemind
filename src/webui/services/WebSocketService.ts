@@ -56,6 +56,9 @@ export class WebSocketService {
   // internal sampling state
   private lastCpuUsage = process.cpuUsage();
   private lastHrTime = process.hrtime.bigint();
+  // per-bot stats
+  private botMessageCounts: Map<string, number> = new Map();
+  private botErrors: Map<string, string[]> = new Map();
 
   private constructor() {
     this.initializeMonitoringData();
@@ -87,6 +90,10 @@ export class WebSocketService {
 
     this.messageFlow.push(messageEvent);
 
+    // Per-bot message count
+    const key = event.botName || 'unknown';
+    this.botMessageCounts.set(key, (this.botMessageCounts.get(key) || 0) + 1);
+
     // Keep only last 1000 messages
     if (this.messageFlow.length > 1000) {
       this.messageFlow = this.messageFlow.slice(-1000);
@@ -109,6 +116,13 @@ export class WebSocketService {
     };
 
     this.alerts.push(alertEvent);
+
+    // Per-bot error tracking (cap at 20 per bot)
+    const key = alertEvent.botName || 'unknown';
+    const list = this.botErrors.get(key) || [];
+    list.push(`${alertEvent.level}: ${alertEvent.title}`);
+    if (list.length > 20) list.shift();
+    this.botErrors.set(key, list);
 
     // Keep only last 500 alerts
     if (this.alerts.length > 500) {
@@ -144,6 +158,21 @@ export class WebSocketService {
 
   public getErrorRateHistory(): number[] {
     return [...this.errorRateHistory];
+  }
+
+  public getBotStats(botName: string): { messageCount: number; errors: string[] } {
+    return {
+      messageCount: this.botMessageCounts.get(botName) || 0,
+      errors: [...(this.botErrors.get(botName) || [])]
+    };
+  }
+
+  public getAllBotStats(): Record<string, { messageCount: number; errors: string[] }> {
+    const out: Record<string, { messageCount: number; errors: string[] }> = {};
+    for (const [name, count] of this.botMessageCounts.entries()) {
+      out[name] = { messageCount: count, errors: [...(this.botErrors.get(name) || [])] };
+    }
+    return out;
   }
 
   private updateMessageRate(): void {

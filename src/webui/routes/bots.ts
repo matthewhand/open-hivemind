@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import WebSocketService from '@src/webui/services/WebSocketService';
 
 const router = Router();
 
@@ -8,14 +9,15 @@ router.get('/api/bots', (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
+    const ws = WebSocketService.getInstance();
     
     const botsWithStatus = bots.map(bot => ({
       ...bot,
       status: {
         active: true,
         lastSeen: new Date().toISOString(),
-        messageCount: 0,
-        errors: []
+        messageCount: ws.getBotStats(bot.name).messageCount,
+        errors: ws.getBotStats(bot.name).errors
       },
       capabilities: {
         messageProvider: bot.messageProvider,
