@@ -18,7 +18,6 @@ import {
   Chip,
   Grid,
   Paper,
-  Divider,
 } from '@mui/material';
 import {
   NavigateNext as NextIcon,
@@ -44,9 +43,28 @@ interface WizardData {
   botName: string;
   messageProvider: string;
   llmProvider: string;
+  // Discord settings
   discordToken?: string;
+  discordClientId?: string;
+  discordGuildId?: string;
+  discordChannelId?: string;
+  discordVoiceChannelId?: string;
+  discordMaxMessageLength?: number;
+  // Slack settings
   slackToken?: string;
+  slackAppToken?: string;
+  slackSigningSecret?: string;
+  slackJoinChannels?: string;
+  slackDefaultChannelId?: string;
+  slackMode?: string;
+  // Mattermost settings
+  mattermostServerUrl?: string;
+  mattermostToken?: string;
+  mattermostChannel?: string;
+  // LLM settings
   openaiKey?: string;
+  flowiseApiKey?: string;
+  openwebuiApiKey?: string;
   environment: string;
   autoDeploy: boolean;
   notifications: boolean;
@@ -310,37 +328,186 @@ const ConfigurationWizard: React.FC = () => {
         return (
           <Box sx={{ mt: 3 }}>
             <Typography variant="h6" gutterBottom>
-              API Credentials
+              Platform Configuration
             </Typography>
-            <Alert severity="warning" sx={{ mb: 3 }}>
-              Credentials are encrypted and stored securely. They will not be visible in the UI.
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Configure platform-specific settings and credentials. Sensitive data is encrypted.
             </Alert>
             <Grid container spacing={3}>
               {wizardData.messageProvider === 'discord' && (
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Discord Bot Token"
-                    type="password"
-                    value={wizardData.discordToken || ''}
-                    onChange={(e) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))}
-                    helperText="Get this from Discord Developer Portal"
-                    required
-                  />
-                </Grid>
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                      Discord Settings
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Discord Bot Token"
+                      type="password"
+                      value={wizardData.discordToken || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))}
+                      helperText="Required: Bot token from Discord Developer Portal"
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Discord Client ID"
+                      value={wizardData.discordClientId || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordClientId: e.target.value }))}
+                      helperText="Optional: Application ID from Discord Developer Portal"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Guild ID"
+                      value={wizardData.discordGuildId || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordGuildId: e.target.value }))}
+                      helperText="Optional: Server ID where bot will operate"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Default Channel ID"
+                      value={wizardData.discordChannelId || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordChannelId: e.target.value }))}
+                      helperText="Optional: Default text channel ID"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Voice Channel ID"
+                      value={wizardData.discordVoiceChannelId || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordVoiceChannelId: e.target.value }))}
+                      helperText="Optional: Voice channel for audio features"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Max Message Length"
+                      type="number"
+                      value={wizardData.discordMaxMessageLength || 2000}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, discordMaxMessageLength: parseInt(e.target.value) }))}
+                      helperText="Maximum characters per message (default: 2000)"
+                    />
+                  </Grid>
+                </>
               )}
               {wizardData.messageProvider === 'slack' && (
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Slack Bot Token"
-                    type="password"
-                    value={wizardData.slackToken || ''}
-                    onChange={(e) => setWizardData(prev => ({ ...prev, slackToken: e.target.value }))}
-                    helperText="Get this from Slack App settings"
-                    required
-                  />
-                </Grid>
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                      Slack Settings
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Slack Bot Token"
+                      type="password"
+                      value={wizardData.slackToken || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, slackToken: e.target.value }))}
+                      helperText="Required: Bot token from Slack App settings"
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Slack App Token"
+                      type="password"
+                      value={wizardData.slackAppToken || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, slackAppToken: e.target.value }))}
+                      helperText="Optional: App-level token for Socket Mode"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Slack Signing Secret"
+                      type="password"
+                      value={wizardData.slackSigningSecret || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, slackSigningSecret: e.target.value }))}
+                      helperText="Required for webhook verification"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Default Channel ID"
+                      value={wizardData.slackDefaultChannelId || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, slackDefaultChannelId: e.target.value }))}
+                      helperText="Optional: Default channel ID (e.g., C08BC0X4DFD)"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Channels to Join"
+                      value={wizardData.slackJoinChannels || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, slackJoinChannels: e.target.value }))}
+                      helperText="Optional: Comma-separated channel IDs bot should join"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Slack Mode</InputLabel>
+                      <Select
+                        value={wizardData.slackMode || 'socket'}
+                        onChange={(e) => setWizardData(prev => ({ ...prev, slackMode: e.target.value }))}
+                      >
+                        <MenuItem value="socket">Socket Mode</MenuItem>
+                        <MenuItem value="webhook">Webhook Mode</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </>
+              )}
+              {wizardData.messageProvider === 'mattermost' && (
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                      Mattermost Settings
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Mattermost Server URL"
+                      value={wizardData.mattermostServerUrl || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, mattermostServerUrl: e.target.value }))}
+                      helperText="Required: Your Mattermost server URL (e.g., https://mattermost.example.com)"
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Mattermost Token"
+                      type="password"
+                      value={wizardData.mattermostToken || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, mattermostToken: e.target.value }))}
+                      helperText="Required: Personal access token from Mattermost"
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Default Channel"
+                      value={wizardData.mattermostChannel || ''}
+                      onChange={(e) => setWizardData(prev => ({ ...prev, mattermostChannel: e.target.value }))}
+                      helperText="Optional: Default channel name"
+                    />
+                  </Grid>
+                </>
               )}
               {wizardData.llmProvider === 'openai' && (
                 <Grid item xs={12}>
@@ -350,7 +517,33 @@ const ConfigurationWizard: React.FC = () => {
                     type="password"
                     value={wizardData.openaiKey || ''}
                     onChange={(e) => setWizardData(prev => ({ ...prev, openaiKey: e.target.value }))}
-                    helperText="Get this from OpenAI API settings"
+                    helperText="Required: Get this from OpenAI API settings"
+                    required
+                  />
+                </Grid>
+              )}
+              {wizardData.llmProvider === 'flowise' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Flowise API Key"
+                    type="password"
+                    value={wizardData.flowiseApiKey || ''}
+                    onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))}
+                    helperText="Required: API key for Flowise integration"
+                    required
+                  />
+                </Grid>
+              )}
+              {wizardData.llmProvider === 'openwebui' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="OpenWebUI API Key"
+                    type="password"
+                    value={wizardData.openwebuiApiKey || ''}
+                    onChange={(e) => setWizardData(prev => ({ ...prev, openwebuiApiKey: e.target.value }))}
+                    helperText="Required: API key for OpenWebUI integration"
                     required
                   />
                 </Grid>
