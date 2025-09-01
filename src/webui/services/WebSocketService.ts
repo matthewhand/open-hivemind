@@ -1,6 +1,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import os from 'os';
 import Debug from 'debug';
 
 const debug = Debug('app:WebSocketService');
@@ -52,6 +53,9 @@ export class WebSocketService {
   private alerts: AlertEvent[] = [];
   private messageRateHistory: number[] = [];
   private errorRateHistory: number[] = [];
+  // internal sampling state
+  private lastCpuUsage = process.cpuUsage();
+  private lastHrTime = process.hrtime.bigint();
 
   private constructor() {
     this.initializeMonitoringData();
@@ -305,18 +309,26 @@ export class WebSocketService {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
       
-      const status = bots.map(bot => ({
-        name: bot.name,
-        provider: bot.messageProvider,
-        llmProvider: bot.llmProvider,
-        status: 'active', // TODO: Implement real status checking
-        lastSeen: new Date().toISOString(),
-        capabilities: {
-          voiceSupport: !!bot.discord?.voiceChannelId,
-          multiChannel: bot.messageProvider === 'slack' && !!bot.slack?.joinChannels,
-          hasSecrets: !!(bot.discord?.token || bot.slack?.botToken || bot.openai?.apiKey)
-        }
-      }));
+      const status = bots.map(bot => {
+        const hasProviderSecret = !!(
+          bot.discord?.token ||
+          bot.slack?.botToken ||
+          bot.mattermost?.token
+        );
+        const botStatus = hasProviderSecret ? 'active' : 'inactive';
+        return {
+          name: bot.name,
+          provider: bot.messageProvider,
+          llmProvider: bot.llmProvider,
+          status: botStatus,
+          lastSeen: new Date().toISOString(),
+          capabilities: {
+            voiceSupport: !!bot.discord?.voiceChannelId,
+            multiChannel: bot.messageProvider === 'slack' && !!bot.slack?.joinChannels,
+            hasSecrets: !!(bot.discord?.token || bot.slack?.botToken || bot.openai?.apiKey)
+          }
+        };
+      });
 
       socket.emit('bot_status_update', {
         bots: status,
@@ -473,11 +485,35 @@ export class WebSocketService {
   private sendPerformanceMetrics(socket: any): void {
     try {
       const metrics = this.getPerformanceMetrics(30); // Last 30 data points
+
+      // Compute CPU usage percentage since last sample
+      const nowHr = process.hrtime.bigint();
+      const elapsedNs = Number(nowHr - this.lastHrTime);
+      const elapsedMs = elapsedNs / 1_000_000;
+      const currentCpu = process.cpuUsage(this.lastCpuUsage);
+      const totalCpuMicros = currentCpu.user + currentCpu.system;
+      const cpuCores = Math.max(1, os.cpus()?.length || 1);
+      // percent of a single core, normalized by core count
+      const cpuPercent = elapsedMs > 0
+        ? Math.min(100, Math.max(0, (totalCpuMicros / (elapsedMs * 1000)) * (100 / cpuCores)))
+        : 0;
+      this.lastCpuUsage = process.cpuUsage();
+      this.lastHrTime = nowHr;
+
+      // Approximate response time as average processingTime of last 10 message events (if present)
+      const recentWithTimes = this.messageFlow
+        .slice(-20)
+        .map(m => m.processingTime)
+        .filter((t): t is number => typeof t === 'number' && isFinite(t));
+      const avgResponse = recentWithTimes.length
+        ? Math.round(recentWithTimes.reduce((a, b) => a + b, 0) / recentWithTimes.length)
+        : 0;
+
       const currentMetric: PerformanceMetric = {
         timestamp: new Date().toISOString(),
-        responseTime: 0, // TODO: Implement response time tracking
+        responseTime: avgResponse,
         memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        cpuUsage: 0, // TODO: Implement CPU usage tracking
+        cpuUsage: Math.round(cpuPercent),
         activeConnections: this.connectedClients,
         messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
         errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0
@@ -505,10 +541,14 @@ export class WebSocketService {
 
   private sendMonitoringDashboard(socket: any): void {
     try {
+      const manager = BotConfigurationManager.getInstance();
+      const bots = manager.getAllBots();
+      const totalBots = bots.length;
+      const activeBots = totalBots; // without runtime signals, assume all configured are active
       const dashboard = {
         summary: {
-          totalBots: 0, // TODO: Get from BotConfigurationManager
-          activeBots: 0,
+          totalBots,
+          activeBots,
           totalMessages: this.messageFlow.length,
           totalAlerts: this.alerts.length,
           uptime: process.uptime(),
