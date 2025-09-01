@@ -93,6 +93,9 @@ const Dashboard: React.FC = () => {
           const botStatusData = status?.bots[index];
           const botStatus = botStatusData?.status || 'unknown';
           const healthDetails = botStatusData?.healthDetails;
+          const connected = (botStatusData as any)?.connected ?? undefined;
+          const messageCount = (botStatusData as any)?.messageCount ?? undefined;
+          const errorCount = (botStatusData as any)?.errorCount ?? undefined;
 
           return (
             <Box key={bot.name} sx={{ minWidth: 300, flex: '1 1 auto' }}>
@@ -129,6 +132,29 @@ const Dashboard: React.FC = () => {
                       color={getStatusColor(botStatus)}
                       size="small"
                     />
+                  </Box>
+
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    {typeof connected === 'boolean' && (
+                      <Chip
+                        label={connected ? 'Connected' : 'Disconnected'}
+                        color={connected ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    )}
+                    {typeof messageCount === 'number' && (
+                      <Chip
+                        label={`Messages: ${messageCount}`}
+                        size="small"
+                      />
+                    )}
+                    {typeof errorCount === 'number' && errorCount > 0 && (
+                      <Chip
+                        label={`Errors: ${errorCount}`}
+                        color="error"
+                        size="small"
+                      />
+                    )}
                   </Box>
 
                   {healthDetails && Object.keys(healthDetails).length > 0 && (

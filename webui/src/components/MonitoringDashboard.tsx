@@ -33,6 +33,7 @@ const MonitoringDashboard: React.FC = () => {
     messageFlow,
     alerts,
     performanceMetrics,
+    botStats,
     connect,
     disconnect
   } = useWebSocket();
@@ -287,6 +288,36 @@ const MonitoringDashboard: React.FC = () => {
                       primary="No alerts"
                       secondary="System alerts will appear here"
                     />
+                  </ListItem>
+                )}
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Bot Stats */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Bot Message & Error Counters
+              </Typography>
+              <List dense sx={{ maxHeight: 300, overflow: 'auto' }}>
+                {botStats.length > 0 ? botStats.map((s) => (
+                  <ListItem key={s.name} divider>
+                    <ListItemText
+                      primary={
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="body2">{s.name}</Typography>
+                          <Chip label={`Messages: ${s.messageCount}`} size="small" />
+                          <Chip label={`Errors: ${s.errorCount}`} color={s.errorCount > 0 ? 'error' : 'default'} size="small" />
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                )) : (
+                  <ListItem>
+                    <ListItemText primary="No bot stats yet" secondary="Counters will update as messages flow" />
                   </ListItem>
                 )}
               </List>

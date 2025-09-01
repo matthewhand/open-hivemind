@@ -26,6 +26,9 @@ export interface StatusResponse {
     llmProvider: string;
     status: string;
     healthDetails?: any;
+    connected?: boolean;
+    messageCount?: number;
+    errorCount?: number;
   }>;
   uptime: number;
 }

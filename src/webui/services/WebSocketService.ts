@@ -331,6 +331,20 @@ export class WebSocketService {
       },
       timestamp: new Date().toISOString()
     });
+
+    // Broadcast compact per-bot stats (message counts and error counts)
+    try {
+      const statsObj = this.getAllBotStats();
+      const stats = Object.entries(statsObj).map(([name, s]) => ({
+        name,
+        messageCount: s.messageCount,
+        errorCount: s.errors.length
+      }));
+      this.io.emit('bot_stats_broadcast', {
+        stats,
+        timestamp: new Date().toISOString()
+      });
+    } catch {}
   }
 
   private sendBotStatus(socket: any): void {

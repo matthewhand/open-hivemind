@@ -6,12 +6,15 @@ import type {
   AlertEvent
 } from '../../../src/webui/services/WebSocketService';
 
+type BotStat = { name: string; messageCount: number; errorCount: number };
+
 interface WebSocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   messageFlow: MessageFlowEvent[];
   alerts: AlertEvent[];
   performanceMetrics: PerformanceMetric[];
+  botStats: BotStat[];
   connect: () => void;
   disconnect: () => void;
 }
@@ -26,6 +29,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
+  const [botStats, setBotStats] = useState<BotStat[]>([]);
 
   const connect = () => {
     if (socket?.connected) return;
@@ -76,6 +80,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       setPerformanceMetrics(prev => [...prev, data.current].slice(-60));
     });
 
+    // Bot stats
+    newSocket.on('bot_stats_broadcast', (data) => {
+      setBotStats(data.stats || []);
+    });
+
     // Bot status updates
     newSocket.on('bot_status_update', (data) => {
       console.log('Bot status update:', data);
@@ -114,6 +123,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     messageFlow,
     alerts,
     performanceMetrics,
+    botStats,
     connect,
     disconnect,
   };
