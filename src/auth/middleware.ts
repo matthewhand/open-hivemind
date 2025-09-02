@@ -130,6 +130,10 @@ export class AuthMiddleware {
    * Attaches user to request if token is present, but doesn't fail if missing
    */
   public optionalAuth = (req: AuthMiddlewareRequest, res: Response, next: NextFunction): void => {
+    // Initialize user as undefined
+    req.user = undefined;
+    req.permissions = undefined;
+    
     try {
       const authHeader = (req.headers as any).authorization;
 

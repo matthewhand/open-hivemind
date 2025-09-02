@@ -127,7 +127,7 @@ router.post('/:botId/clone', authenticate, requireAdmin, async (req: AuthMiddlew
  * PUT /webui/api/bots/:botId
  * Update an existing bot instance (admin only)
  */
-router.put('/:botId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { botId } = req.params;
     const updates = req.body;
@@ -152,7 +152,7 @@ router.put('/:botId', authenticate, requireAdmin, async (req: AuthenticatedReque
  * DELETE /webui/api/bots/:botId
  * Delete a bot instance (admin only)
  */
-router.delete('/:botId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { botId } = req.params;
 
@@ -182,7 +182,7 @@ router.delete('/:botId', authenticate, requireAdmin, async (req: AuthenticatedRe
  * POST /webui/api/bots/:botId/start
  * Start a bot instance (admin only)
  */
-router.post('/:botId/start', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:botId/start', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { botId } = req.params;
 
@@ -212,7 +212,7 @@ router.post('/:botId/start', authenticate, requireAdmin, async (req: Authenticat
  * POST /webui/api/bots/:botId/stop
  * Stop a bot instance (admin only)
  */
-router.post('/:botId/stop', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:botId/stop', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { botId } = req.params;
 
@@ -242,7 +242,7 @@ router.post('/:botId/stop', authenticate, requireAdmin, async (req: Authenticate
  * GET /webui/api/bots/templates
  * Get bot configuration templates
  */
-router.get('/templates', authenticate, (req: AuthenticatedRequest, res: Response) => {
+router.get('/templates', authenticate, (req: AuthMiddlewareRequest, res: Response) => {
   const templates = {
     discord: {
       name: 'Discord Bot',

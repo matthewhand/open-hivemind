@@ -62,6 +62,14 @@ export class SecureConfigManager {
    * Store a configuration securely
    */
   public async storeConfig(config: Omit<SecureConfig, 'updatedAt' | 'checksum'>): Promise<void> {
+    // Validate configuration
+    if (!config.id || config.id.trim() === '') {
+      throw new Error('Configuration ID is required');
+    }
+    if (!config.name || config.name.trim() === '') {
+      throw new Error('Configuration name is required');
+    }
+    
     try {
       debug(`Storing configuration ${config.id}`);
       const secureConfig: SecureConfig = {
@@ -70,8 +78,9 @@ export class SecureConfigManager {
         checksum: ''
       };
 
-      // Calculate checksum before encryption
-      secureConfig.checksum = this.calculateChecksum(secureConfig);
+      // Calculate checksum before encryption (exclude checksum field itself)
+      const { checksum, ...configForChecksum } = secureConfig;
+      secureConfig.checksum = this.calculateChecksum(configForChecksum);
       debug(`Checksum calculated: ${secureConfig.checksum}`);
 
       // Encrypt and store
@@ -335,7 +344,9 @@ export class SecureConfigManager {
    * Verify checksum for data integrity
    */
   private verifyChecksum(data: any): boolean {
+    if (!data.checksum) return false;
     const { checksum, ...dataWithoutChecksum } = data;
-    return checksum === this.calculateChecksum(dataWithoutChecksum);
+    const calculatedChecksum = this.calculateChecksum(dataWithoutChecksum);
+    return checksum === calculatedChecksum;
   }
 }

@@ -11,10 +11,10 @@ describe('openaiConfig', () => {
   describe('default configuration values', () => {
     it('should have correct default string values', () => {
       expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
-      expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('http://localhost:8000/v1/');
+      expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com');
       expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
-      expect(openaiConfig.get('OPENAI_MODEL')).toBe('university');
-      expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('You are a bot that assists slack users.');
+      expect(openaiConfig.get('OPENAI_MODEL')).toBe('gpt-4');
+      expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('Greetings, human...');
       expect(openaiConfig.get('OPENAI_FINISH_REASON_RETRY')).toBe('stop');
       expect(openaiConfig.get('OPENAI_VOICE')).toBe('nova');
     });

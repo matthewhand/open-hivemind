@@ -201,8 +201,21 @@ describe('Authentication Middleware', () => {
   });
 
   describe('requireAdmin middleware', () => {
-    it('should be equivalent to requireRole("admin")', () => {
-      expect(requireAdmin).toBe(requireRole('admin'));
+    it('should function as admin role requirement', async () => {
+      // Set up admin user
+      const loginResult = await authManager.login({
+        username: 'admin',
+        password: 'admin123!'
+      });
+
+      mockReq.headers.authorization = `Bearer ${loginResult.accessToken}`;
+      await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
+      mockNext.mockClear();
+
+      // Test requireAdmin middleware
+      requireAdmin(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 

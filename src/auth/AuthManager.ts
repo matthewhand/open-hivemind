@@ -41,8 +41,8 @@ export class AuthManager {
     this.jwtSecret = this.generateSecureSecret('jwt_access');
     this.jwtRefreshSecret = this.generateSecureSecret('jwt_refresh');
 
-    // Create default admin user if no users exist
-    this.initializeDefaultAdmin();
+    // Create default admin user synchronously
+    this.initializeDefaultAdminSync();
 
     debug('AuthManager initialized with secure JWT secrets');
   }
@@ -75,9 +75,10 @@ export class AuthManager {
   }
 
   /**
-   * Initialize default admin user
+   * Initialize default admin user synchronously
    */
-  private async initializeDefaultAdmin(): Promise<void> {
+  private initializeDefaultAdminSync(): void {
+    // Use bcrypt.hashSync for synchronous initialization
     const defaultAdmin: User = {
       id: 'admin',
       username: 'admin',
@@ -86,7 +87,7 @@ export class AuthManager {
       isActive: true,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      passwordHash: await this.hashPassword('admin123!') // Default password
+      passwordHash: bcrypt.hashSync('admin123!', this.bcryptRounds)
     };
 
     this.users.set('admin', defaultAdmin);
@@ -111,8 +112,20 @@ export class AuthManager {
    * Register a new user
    */
   public async register(data: RegisterData): Promise<User> {
-    // Check if user already exists
-    if (this.users.has(data.username) || Array.from(this.users.values()).some(u => u.email === data.email)) {
+    // Validate password strength
+    if (!data.password || data.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    
+    // Check if user already exists by username
+    const existingUserByUsername = Array.from(this.users.values()).find(u => u.username === data.username);
+    if (existingUserByUsername) {
+      throw new Error('User already exists');
+    }
+    
+    // Check if user already exists by email
+    const existingUserByEmail = Array.from(this.users.values()).find(u => u.email === data.email);
+    if (existingUserByEmail) {
       throw new Error('User already exists');
     }
 
