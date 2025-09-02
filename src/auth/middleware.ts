@@ -16,7 +16,7 @@ export class AuthMiddleware {
    * JWT Authentication middleware
    * Verifies JWT token and attaches user to request
    */
-  public authenticate = (req: AuthMiddlewareRequest, res: Response, next: NextFunction): void => {
+  public authenticate = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = (req.headers as any).authorization;
 
@@ -129,7 +129,7 @@ export class AuthMiddleware {
    * Optional authentication middleware
    * Attaches user to request if token is present, but doesn't fail if missing
    */
-  public optionalAuth = (req: AuthMiddlewareRequest, res: Response, next: NextFunction): void => {
+  public optionalAuth = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
     // Initialize user as undefined
     req.user = undefined;
     req.permissions = undefined;
@@ -157,12 +157,29 @@ export class AuthMiddleware {
   };
 }
 
-// Export singleton instance
-export const authMiddleware = new AuthMiddleware();
+// Create middleware functions that get fresh AuthManager instance
+export const authenticate = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+  const authManager = AuthManager.getInstance();
+  const middleware = new AuthMiddleware();
+  return middleware.authenticate(req, res, next);
+};
 
-// Export individual middleware functions for convenience
-export const authenticate = authMiddleware.authenticate;
-export const requireRole = authMiddleware.requireRole;
-export const requirePermission = authMiddleware.requirePermission;
-export const requireAdmin = authMiddleware.requireAdmin;
-export const optionalAuth = authMiddleware.optionalAuth;
+export const requireRole = (requiredRole: UserRole) => {
+  const middleware = new AuthMiddleware();
+  return middleware.requireRole(requiredRole);
+};
+
+export const requirePermission = (permission: string) => {
+  const middleware = new AuthMiddleware();
+  return middleware.requirePermission(permission);
+};
+
+export const requireAdmin = (() => {
+  const middleware = new AuthMiddleware();
+  return middleware.requireAdmin;
+})();
+
+export const optionalAuth = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+  const middleware = new AuthMiddleware();
+  return middleware.optionalAuth(req, res, next);
+};
