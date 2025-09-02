@@ -1,300 +1,301 @@
-import { Router } from 'express';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import WebSocketService from '@src/webui/services/WebSocketService';
+import { Router, Request, Response } from 'express';
+import { BotManager, CreateBotRequest } from '../../managers/BotManager';
+import { authenticate, requireAdmin } from '../../auth/middleware';
+import { AuthMiddlewareRequest } from '../../auth/types';
+import Debug from 'debug';
 
+const debug = Debug('app:BotsRoutes');
 const router = Router();
+const botManager = BotManager.getInstance();
 
-function isProviderConnected(bot: any): boolean {
+/**
+ * GET /webui/api/bots
+ * Get all bot instances
+ */
+router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    if (bot.messageProvider === 'slack') {
-      const svc = require('@integrations/slack/SlackService').default as any;
-      const instance = svc?.getInstance?.();
-      const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
-      const bots = mgr?.getAllBots?.() || [];
-      return Array.isArray(bots) && bots.length > 0;
-    }
-    if (bot.messageProvider === 'discord') {
-      const svc = require('@integrations/discord/DiscordService') as any;
-      const instance = svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
-      const bots = instance?.getAllBots?.() || [];
-      return Array.isArray(bots) && bots.length > 0;
-    }
-    return true;
-  } catch {
-    return true; // safe fallback to keep tests green
-  }
-}
+    const bots = await botManager.getAllBots();
 
-// Get all bots with detailed status
-router.get('/api/bots', (req, res) => {
-  try {
-    const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
-    const ws = WebSocketService.getInstance();
-    
-    const botsWithStatus = bots.map(bot => ({
-      ...bot,
-      status: {
-        active: true,
-        lastSeen: new Date().toISOString(),
-        messageCount: ws.getBotStats(bot.name).messageCount,
-        errors: ws.getBotStats(bot.name).errors
-      },
-      capabilities: {
-        messageProvider: bot.messageProvider,
-        llmProvider: bot.llmProvider,
-        voiceSupport: !!bot.discord?.voiceChannelId,
-        multiChannel: bot.messageProvider === 'slack' && !!bot.slack?.joinChannels
-      },
-      connected: isProviderConnected(bot)
-    }));
-    
     res.json({
-      bots: botsWithStatus,
-      total: bots.length,
-      active: botsWithStatus.filter(b => b.status?.active).length,
-      providers: {
-        message: [...new Set(bots.map(b => b.messageProvider))],
-        llm: [...new Set(bots.map(b => b.llmProvider))]
-      }
+      success: true,
+      data: { bots },
+      total: bots.length
     });
-  } catch (error) {
-    console.error('Bots API error:', error);
-    res.status(500).json({ error: 'Failed to get bots' });
-  }
-});
-
-// Get specific bot details
-router.get('/api/bots/:name', (req, res) => {
-  try {
-    const manager = BotConfigurationManager.getInstance();
-    const bot = manager.getBot(req.params.name);
-    
-    if (!bot) {
-      return res.status(404).json({ error: 'Bot not found' });
-    }
-    
-    res.json({
-      ...bot,
-      status: {
-        active: isProviderConnected(bot),
-        lastSeen: new Date().toISOString(),
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        connections: {
-          message: isProviderConnected(bot) ? 'connected' : 'disconnected',
-          llm: bot.llmProvider ? 'connected' : 'unknown'
-        }
-      }
+  } catch (error: any) {
+    debug('Error getting bots:', error);
+    res.status(500).json({
+      error: 'Failed to get bots',
+      message: error.message || 'An error occurred while retrieving bots'
     });
-  } catch (error) {
-    console.error('Bot details API error:', error);
-    res.status(500).json({ error: 'Failed to get bot details' });
   }
 });
 
-// Get bot health metrics
-router.get('/api/bots/:name/health', (req, res) => {
+/**
+ * GET /webui/api/bots/:botId
+ * Get a specific bot instance
+ */
+router.get('/:botId', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    const manager = BotConfigurationManager.getInstance();
-    const bot = manager.getBot(req.params.name);
-    
+    const { botId } = req.params;
+    const bot = await botManager.getBot(botId);
+
     if (!bot) {
-      return res.status(404).json({ error: 'Bot not found' });
-    }
-    
-    // TODO: Implement real health checks
-    const health = {
-      status: 'healthy',
-      checks: {
-        messageProvider: { status: 'pass', latency: Math.random() * 100 },
-        llmProvider: { status: 'pass', latency: Math.random() * 500 },
-        memory: { 
-          status: process.memoryUsage().heapUsed < 100 * 1024 * 1024 ? 'pass' : 'warn',
-          usage: process.memoryUsage()
-        }
-      },
-      timestamp: new Date().toISOString()
-    };
-    
-    res.json(health);
-  } catch (error) {
-    console.error('Bot health API error:', error);
-    res.status(500).json({ error: 'Failed to get bot health' });
-  }
-});
-
-// Create a new bot
-router.post('/api/bots', (req, res) => {
-  try {
-    const { name, messageProvider, llmProvider, config } = req.body;
-
-    if (!name || !messageProvider || !llmProvider) {
-      return res.status(400).json({
-        error: 'Missing required fields: name, messageProvider, llmProvider'
+      return res.status(404).json({
+        error: 'Bot not found',
+        message: `Bot with ID ${botId} not found`
       });
     }
 
-    // Get current BOTS environment variable
-    const currentBots = process.env.BOTS || '';
-    const botNames = currentBots ? currentBots.split(',').map(n => n.trim()) : [];
-
-    // Check if bot name already exists
-    if (botNames.includes(name)) {
-      return res.status(409).json({ error: 'Bot with this name already exists' });
-    }
-
-    // Add new bot name to the list
-    botNames.push(name);
-
-    // Update BOTS environment variable
-    const newBotsEnv = botNames.join(',');
-    process.env.BOTS = newBotsEnv;
-
-    // Set bot-specific environment variables
-    const envPrefix = `BOTS_${name.toUpperCase()}`;
-    process.env[`${envPrefix}_MESSAGE_PROVIDER`] = messageProvider;
-    process.env[`${envPrefix}_LLM_PROVIDER`] = llmProvider;
-
-    // Set provider-specific configuration
-    if (messageProvider === 'discord' && config?.discord) {
-      if (config.discord.token) {
-        process.env[`${envPrefix}_DISCORD_BOT_TOKEN`] = config.discord.token;
-      }
-      if (config.discord.clientId) {
-        process.env[`${envPrefix}_DISCORD_CLIENT_ID`] = config.discord.clientId;
-      }
-      if (config.discord.guildId) {
-        process.env[`${envPrefix}_DISCORD_GUILD_ID`] = config.discord.guildId;
-      }
-      if (config.discord.channelId) {
-        process.env[`${envPrefix}_DISCORD_CHANNEL_ID`] = config.discord.channelId;
-      }
-    }
-
-    if (llmProvider === 'openai' && config?.openai?.apiKey) {
-      process.env[`${envPrefix}_OPENAI_API_KEY`] = config.openai.apiKey;
-    }
-
-    if (llmProvider === 'flowise' && config?.flowise?.apiKey) {
-      process.env[`${envPrefix}_FLOWISE_API_KEY`] = config.flowise.apiKey;
-    }
-
-    // Reload configuration
-    const manager = BotConfigurationManager.getInstance();
-    manager.reload();
-
     res.json({
       success: true,
-      message: `Bot '${name}' created successfully`,
-      bot: { name, messageProvider, llmProvider, ...config }
+      data: { bot }
     });
-  } catch (error) {
-    console.error('Create bot error:', error);
-    res.status(500).json({ error: 'Failed to create bot' });
+  } catch (error: any) {
+    debug('Error getting bot:', error);
+    res.status(500).json({
+      error: 'Failed to get bot',
+      message: error.message || 'An error occurred while retrieving bot'
+    });
   }
 });
 
-// Clone an existing bot
-router.post('/api/bots/:name/clone', (req, res) => {
+/**
+ * POST /webui/api/bots
+ * Create a new bot instance (admin only)
+ */
+router.post('/', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    const { name } = req.params;
+    const createRequest: CreateBotRequest = req.body;
+
+    // Validate required fields
+    if (!createRequest.name || !createRequest.messageProvider || !createRequest.llmProvider) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, messageProvider, and llmProvider are required'
+      });
+    }
+
+    const bot = await botManager.createBot(createRequest);
+
+    res.status(201).json({
+      success: true,
+      data: { bot },
+      message: 'Bot created successfully'
+    });
+  } catch (error: any) {
+    debug('Error creating bot:', error);
+    res.status(400).json({
+      error: 'Failed to create bot',
+      message: error.message || 'An error occurred while creating bot'
+    });
+  }
+});
+
+/**
+ * POST /webui/api/bots/:botId/clone
+ * Clone an existing bot instance (admin only)
+ */
+router.post('/:botId/clone', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+  try {
+    const { botId } = req.params;
     const { newName } = req.body;
 
-    if (!newName) {
-      return res.status(400).json({ error: 'New bot name is required' });
+    if (!newName || newName.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'New bot name is required'
+      });
     }
 
-    const manager = BotConfigurationManager.getInstance();
-    const sourceBot = manager.getBot(name);
+    const clonedBot = await botManager.cloneBot(botId, newName);
 
-    if (!sourceBot) {
-      return res.status(404).json({ error: 'Source bot not found' });
-    }
-
-    // Get current BOTS environment variable
-    const currentBots = process.env.BOTS || '';
-    const botNames = currentBots ? currentBots.split(',').map(n => n.trim()) : [];
-
-    // Check if new bot name already exists
-    if (botNames.includes(newName)) {
-      return res.status(409).json({ error: 'Bot with this name already exists' });
-    }
-
-    // Add new bot name to the list
-    botNames.push(newName);
-
-    // Update BOTS environment variable
-    const newBotsEnv = botNames.join(',');
-    process.env.BOTS = newBotsEnv;
-
-    // Clone configuration
-    const envPrefix = `BOTS_${newName.toUpperCase()}`;
-    const sourcePrefix = `BOTS_${name.toUpperCase()}`;
-
-    // Copy all environment variables from source bot
-    Object.keys(process.env).forEach(key => {
-      if (key.startsWith(sourcePrefix)) {
-        const newKey = key.replace(sourcePrefix, envPrefix);
-        process.env[newKey] = process.env[key];
-      }
-    });
-
-    // Reload configuration
-    manager.reload();
-
-    res.json({
+    res.status(201).json({
       success: true,
-      message: `Bot '${name}' cloned as '${newName}' successfully`,
-      bot: { ...sourceBot, name: newName }
+      data: { bot: clonedBot },
+      message: 'Bot cloned successfully'
     });
-  } catch (error) {
-    console.error('Clone bot error:', error);
-    res.status(500).json({ error: 'Failed to clone bot' });
+  } catch (error: any) {
+    debug('Error cloning bot:', error);
+    res.status(400).json({
+      error: 'Failed to clone bot',
+      message: error.message || 'An error occurred while cloning bot'
+    });
   }
 });
 
-// Delete a bot
-router.delete('/api/bots/:name', (req, res) => {
+/**
+ * PUT /webui/api/bots/:botId
+ * Update an existing bot instance (admin only)
+ */
+router.put('/:botId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name } = req.params;
+    const { botId } = req.params;
+    const updates = req.body;
 
-    // Get current BOTS environment variable
-    const currentBots = process.env.BOTS || '';
-    const botNames = currentBots ? currentBots.split(',').map(n => n.trim()) : [];
-
-    // Check if bot exists
-    if (!botNames.includes(name)) {
-      return res.status(404).json({ error: 'Bot not found' });
-    }
-
-    // Remove bot from the list
-    const updatedBotNames = botNames.filter(n => n !== name);
-
-    // Update BOTS environment variable
-    const newBotsEnv = updatedBotNames.join(',');
-    process.env.BOTS = newBotsEnv;
-
-    // Remove bot-specific environment variables
-    const envPrefix = `BOTS_${name.toUpperCase()}`;
-    Object.keys(process.env).forEach(key => {
-      if (key.startsWith(envPrefix)) {
-        delete process.env[key];
-      }
-    });
-
-    // Reload configuration
-    const manager = BotConfigurationManager.getInstance();
-    manager.reload();
+    const updatedBot = await botManager.updateBot(botId, updates);
 
     res.json({
       success: true,
-      message: `Bot '${name}' deleted successfully`
+      data: { bot: updatedBot },
+      message: 'Bot updated successfully'
     });
-  } catch (error) {
-    console.error('Delete bot error:', error);
-    res.status(500).json({ error: 'Failed to delete bot' });
+  } catch (error: any) {
+    debug('Error updating bot:', error);
+    res.status(400).json({
+      error: 'Failed to update bot',
+      message: error.message || 'An error occurred while updating bot'
+    });
   }
+});
+
+/**
+ * DELETE /webui/api/bots/:botId
+ * Delete a bot instance (admin only)
+ */
+router.delete('/:botId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { botId } = req.params;
+
+    const deleted = await botManager.deleteBot(botId);
+
+    if (!deleted) {
+      return res.status(404).json({
+        error: 'Bot not found',
+        message: `Bot with ID ${botId} not found`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot deleted successfully'
+    });
+  } catch (error: any) {
+    debug('Error deleting bot:', error);
+    res.status(500).json({
+      error: 'Failed to delete bot',
+      message: error.message || 'An error occurred while deleting bot'
+    });
+  }
+});
+
+/**
+ * POST /webui/api/bots/:botId/start
+ * Start a bot instance (admin only)
+ */
+router.post('/:botId/start', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { botId } = req.params;
+
+    const started = await botManager.startBot(botId);
+
+    if (!started) {
+      return res.status(404).json({
+        error: 'Bot not found',
+        message: `Bot with ID ${botId} not found`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot started successfully'
+    });
+  } catch (error: any) {
+    debug('Error starting bot:', error);
+    res.status(500).json({
+      error: 'Failed to start bot',
+      message: error.message || 'An error occurred while starting bot'
+    });
+  }
+});
+
+/**
+ * POST /webui/api/bots/:botId/stop
+ * Stop a bot instance (admin only)
+ */
+router.post('/:botId/stop', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { botId } = req.params;
+
+    const stopped = await botManager.stopBot(botId);
+
+    if (!stopped) {
+      return res.status(404).json({
+        error: 'Bot not found',
+        message: `Bot with ID ${botId} not found`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot stopped successfully'
+    });
+  } catch (error: any) {
+    debug('Error stopping bot:', error);
+    res.status(500).json({
+      error: 'Failed to stop bot',
+      message: error.message || 'An error occurred while stopping bot'
+    });
+  }
+});
+
+/**
+ * GET /webui/api/bots/templates
+ * Get bot configuration templates
+ */
+router.get('/templates', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  const templates = {
+    discord: {
+      name: 'Discord Bot',
+      messageProvider: 'discord',
+      llmProvider: 'openai',
+      config: {
+        discord: {
+          token: 'YOUR_DISCORD_BOT_TOKEN',
+          voiceChannelId: 'OPTIONAL_VOICE_CHANNEL_ID'
+        },
+        openai: {
+          apiKey: 'YOUR_OPENAI_API_KEY',
+          model: 'gpt-3.5-turbo'
+        }
+      }
+    },
+    slack: {
+      name: 'Slack Bot',
+      messageProvider: 'slack',
+      llmProvider: 'flowise',
+      config: {
+        slack: {
+          botToken: 'YOUR_SLACK_BOT_TOKEN',
+          signingSecret: 'YOUR_SLACK_SIGNING_SECRET',
+          appToken: 'OPTIONAL_SLACK_APP_TOKEN'
+        },
+        flowise: {
+          apiKey: 'YOUR_FLOWISE_API_KEY',
+          endpoint: 'YOUR_FLOWISE_ENDPOINT'
+        }
+      }
+    },
+    mattermost: {
+      name: 'Mattermost Bot',
+      messageProvider: 'mattermost',
+      llmProvider: 'openwebui',
+      config: {
+        mattermost: {
+          serverUrl: 'YOUR_MATTERMOST_SERVER_URL',
+          token: 'YOUR_MATTERMOST_TOKEN'
+        },
+        openwebui: {
+          apiKey: 'YOUR_OPENWEBUI_API_KEY',
+          endpoint: 'YOUR_OPENWEBUI_ENDPOINT'
+        }
+      }
+    }
+  };
+
+  res.json({
+    success: true,
+    data: { templates }
+  });
 });
 
 export default router;

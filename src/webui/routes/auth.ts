@@ -1,241 +1,376 @@
 import { Router, Request, Response } from 'express';
-import { AuthManager, LoginCredentials, UserRole } from '@auth/AuthManager';
+import { AuthManager } from '../../auth/AuthManager';
+import { authenticate, requireAdmin } from '../../auth/middleware';
+import { LoginCredentials, RegisterData } from '../../auth/types';
+import Debug from 'debug';
 
+interface AuthenticatedRequest extends Request {
+  user?: any;
+  permissions?: string[];
+}
+
+const debug = Debug('app:AuthRoutes');
 const router = Router();
+const authManager = AuthManager.getInstance();
 
-// Login endpoint
-router.post('/api/auth/login', async (req: Request, res: Response) => {
+/**
+ * POST /webui/api/auth/login
+ * User login endpoint
+ */
+router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { username, password }: LoginCredentials = req.body;
+    const credentials: LoginCredentials = req.body;
 
-    if (!username || !password) {
+    if (!credentials.username || !credentials.password) {
       return res.status(400).json({
-        error: 'Username and password are required'
+        error: 'Validation error',
+        message: 'Username and password are required'
       });
     }
 
-    const authManager = AuthManager.getInstance();
-    const tokens = await authManager.authenticate({ username, password });
-
-    if (!tokens) {
-      return res.status(401).json({
-        error: 'Invalid username or password'
-      });
-    }
+    const authResult = await authManager.login(credentials);
 
     res.json({
       success: true,
-      message: 'Login successful',
-      ...tokens
+      data: authResult,
+      message: 'Login successful'
     });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+  } catch (error: any) {
+    debug('Login error:', error.message);
+    res.status(401).json({
+      error: 'Authentication failed',
+      message: error.message || 'Invalid credentials'
+    });
   }
 });
 
-// Refresh token endpoint
-router.post('/api/auth/refresh', async (req: Request, res: Response) => {
+/**
+ * POST /webui/api/auth/register
+ * User registration endpoint (admin only)
+ */
+router.post('/register', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const registerData: RegisterData = req.body;
+
+    if (!registerData.username || !registerData.email || !registerData.password) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Username, email, and password are required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registerData.email)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Invalid email format'
+      });
+    }
+
+    // Validate password strength
+    if (registerData.password.length < 8) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Password must be at least 8 characters long'
+      });
+    }
+
+    const user = await authManager.register(registerData);
+
+    res.status(201).json({
+      success: true,
+      data: { user },
+      message: 'User registered successfully'
+    });
+  } catch (error: any) {
+    debug('Registration error:', error.message);
+    res.status(400).json({
+      error: 'Registration failed',
+      message: error.message || 'Failed to register user'
+    });
+  }
+});
+
+/**
+ * POST /webui/api/auth/refresh
+ * Refresh access token
+ */
+router.post('/refresh', async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
       return res.status(400).json({
-        error: 'Refresh token is required'
+        error: 'Validation error',
+        message: 'Refresh token is required'
       });
     }
 
-    const authManager = AuthManager.getInstance();
-    const tokens = authManager.refreshToken(refreshToken);
+    const authResult = await authManager.refreshToken(refreshToken);
 
-    if (!tokens) {
-      return res.status(401).json({
-        error: 'Invalid refresh token'
-      });
+    res.json({
+      success: true,
+      data: authResult,
+      message: 'Token refreshed successfully'
+    });
+  } catch (error: any) {
+    debug('Token refresh error:', error.message);
+    res.status(401).json({
+      error: 'Token refresh failed',
+      message: error.message || 'Invalid refresh token'
+    });
+  }
+});
+
+/**
+ * POST /webui/api/auth/logout
+ * User logout endpoint
+ */
+router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      await authManager.logout(refreshToken);
     }
 
     res.json({
       success: true,
-      message: 'Token refreshed successfully',
-      ...tokens
+      message: 'Logout successful'
     });
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    res.status(500).json({ error: 'Token refresh failed' });
+  } catch (error: any) {
+    debug('Logout error:', error.message);
+    res.status(500).json({
+      error: 'Logout failed',
+      message: 'An error occurred during logout'
+    });
   }
 });
 
-// Logout endpoint (client-side token removal)
-router.post('/api/auth/logout', (req: Request, res: Response) => {
+/**
+ * GET /webui/api/auth/me
+ * Get current user profile
+ */
+router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response) => {
   res.json({
     success: true,
-    message: 'Logout successful'
+    data: { user: req.user }
   });
 });
 
-// Verify token endpoint
-router.post('/api/auth/verify', (req: Request, res: Response) => {
+/**
+ * PUT /webui/api/auth/password
+ * Change user password
+ */
+router.put('/password', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { token } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
-    if (!token) {
-      return res.status(400).json({
-        error: 'Token is required'
-      });
-    }
-
-    const authManager = AuthManager.getInstance();
-    const payload = authManager.verifyToken(token);
-
-    if (!payload) {
+    if (!req.user) {
       return res.status(401).json({
-        error: 'Invalid token'
+        error: 'Authentication required',
+        message: 'User not authenticated'
       });
     }
 
-    const user = authManager.getUserById(payload.userId);
-    if (!user) {
-      return res.status(401).json({
-        error: 'User not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions
-      }
-    });
-  } catch (error) {
-    console.error('Token verification error:', error);
-    res.status(500).json({ error: 'Token verification failed' });
-  }
-});
-
-// Get current user profile
-router.get('/api/auth/profile', (req: Request, res: Response) => {
-  try {
-    // This would typically get user from JWT middleware
-    // For now, return a placeholder
-    res.json({
-      success: true,
-      user: {
-        id: 'placeholder',
-        username: 'current-user',
-        email: 'user@example.com',
-        role: UserRole.USER,
-        permissions: ['read:config', 'manage:bots']
-      }
-    });
-  } catch (error) {
-    console.error('Profile error:', error);
-    res.status(500).json({ error: 'Failed to get profile' });
-  }
-});
-
-// Create user (admin only)
-router.post('/api/auth/users', async (req: Request, res: Response) => {
-  try {
-    const { username, email, password, role } = req.body;
-
-    if (!username || !email || !password || !role) {
+    if (!currentPassword || !newPassword) {
       return res.status(400).json({
-        error: 'All fields are required'
+        error: 'Validation error',
+        message: 'Current password and new password are required'
       });
     }
 
-    // Validate role
-    if (!Object.values(UserRole).includes(role)) {
+    // Verify current password
+    const isValidCurrentPassword = await authManager.verifyPassword(
+      currentPassword,
+      req.user.passwordHash || ''
+    );
+
+    if (!isValidCurrentPassword) {
       return res.status(400).json({
-        error: 'Invalid role'
+        error: 'Validation error',
+        message: 'Current password is incorrect'
       });
     }
 
-    const authManager = AuthManager.getInstance();
-    const user = await authManager.createUser({
-      username,
-      email,
-      password,
-      role
-    });
+    // Validate new password
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'New password must be at least 8 characters long'
+      });
+    }
 
-    res.json({
-      success: true,
-      message: 'User created successfully',
-      user
-    });
-  } catch (error) {
-    console.error('Create user error:', error);
+    const success = await authManager.changePassword(req.user.id, newPassword);
+
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } else {
+      res.status(500).json({
+        error: 'Password change failed',
+        message: 'Failed to update password'
+      });
+    }
+  } catch (error: any) {
+    debug('Password change error:', error.message);
     res.status(500).json({
-      error: error instanceof Error ? error.message : 'Failed to create user'
+      error: 'Password change failed',
+      message: 'An error occurred while changing password'
     });
   }
 });
 
-// Get all users (admin only)
-router.get('/api/auth/users', (req: Request, res: Response) => {
+/**
+ * GET /webui/api/auth/users
+ * Get all users (admin only)
+ */
+router.get('/users', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
   try {
-    const authManager = AuthManager.getInstance();
     const users = authManager.getAllUsers();
 
     res.json({
       success: true,
-      users
+      data: { users },
+      total: users.length
     });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: 'Failed to get users' });
+  } catch (error: any) {
+    debug('Get users error:', error.message);
+    res.status(500).json({
+      error: 'Failed to get users',
+      message: 'An error occurred while retrieving users'
+    });
   }
 });
 
-// Update user (admin only)
-router.put('/api/auth/users/:userId', async (req: Request, res: Response) => {
+/**
+ * GET /webui/api/auth/users/:userId
+ * Get specific user (admin only)
+ */
+router.get('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
-    const updates = req.body;
-
-    const authManager = AuthManager.getInstance();
-    const user = authManager.updateUser(userId, updates);
+    const user = authManager.getUser(userId);
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({
+        error: 'User not found',
+        message: `User with ID ${userId} not found`
+      });
     }
 
     res.json({
       success: true,
-      message: 'User updated successfully',
-      user
+      data: { user }
     });
-  } catch (error) {
-    console.error('Update user error:', error);
-    res.status(500).json({ error: 'Failed to update user' });
+  } catch (error: any) {
+    debug('Get user error:', error.message);
+    res.status(500).json({
+      error: 'Failed to get user',
+      message: 'An error occurred while retrieving user'
+    });
   }
 });
 
-// Delete user (admin only)
-router.delete('/api/auth/users/:userId', (req: Request, res: Response) => {
+/**
+ * PUT /webui/api/auth/users/:userId
+ * Update user (admin only)
+ */
+router.put('/users/:userId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    // Don't allow password updates through this endpoint
+    delete updates.password;
+    delete updates.passwordHash;
+
+    const updatedUser = authManager.updateUser(userId, updates);
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: `User with ID ${userId} not found`
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { user: updatedUser },
+      message: 'User updated successfully'
+    });
+  } catch (error: any) {
+    debug('Update user error:', error.message);
+    res.status(500).json({
+      error: 'Failed to update user',
+      message: 'An error occurred while updating user'
+    });
+  }
+});
+
+/**
+ * DELETE /webui/api/auth/users/:userId
+ * Delete user (admin only)
+ */
+router.delete('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
 
-    const authManager = AuthManager.getInstance();
+    // Prevent deleting self
+    if (req.user && req.user.id === userId) {
+      return res.status(400).json({
+        error: 'Invalid operation',
+        message: 'Cannot delete your own account'
+      });
+    }
+
     const deleted = authManager.deleteUser(userId);
 
     if (!deleted) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({
+        error: 'User not found',
+        message: `User with ID ${userId} not found`
+      });
     }
 
     res.json({
       success: true,
       message: 'User deleted successfully'
     });
-  } catch (error) {
-    console.error('Delete user error:', error);
-    res.status(500).json({ error: 'Failed to delete user' });
+  } catch (error: any) {
+    debug('Delete user error:', error.message);
+    res.status(500).json({
+      error: 'Failed to delete user',
+      message: 'An error occurred while deleting user'
+    });
   }
+});
+
+/**
+ * GET /webui/api/auth/permissions
+ * Get current user permissions
+ */
+router.get('/permissions', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      message: 'User not authenticated'
+    });
+  }
+
+  const permissions = authManager.getUserPermissions(req.user.role);
+
+  res.json({
+    success: true,
+    data: {
+      role: req.user.role,
+      permissions,
+      user: req.user
+    }
+  });
 });
 
 export default router;
