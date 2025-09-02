@@ -11,7 +11,7 @@ describe('openaiConfig', () => {
   describe('default configuration values', () => {
     it('should have correct default string values', () => {
       expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
-      expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com');
+      expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com/v1');
       expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
       expect(openaiConfig.get('OPENAI_MODEL')).toBe('gpt-4');
       expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('Greetings, human...');
@@ -25,13 +25,13 @@ describe('openaiConfig', () => {
       expect(openaiConfig.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.1);
       expect(openaiConfig.get('OPENAI_PRESENCE_PENALTY')).toBe(0.05);
       expect(openaiConfig.get('OPENAI_TIMEOUT')).toBe(10000);
-      expect(openaiConfig.get('OPENAI_TOP_P')).toBe(0.9);
+      expect(openaiConfig.get('OPENAI_TOP_P')).toBe(1.0);
       expect(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS')).toBe(100);
       expect(openaiConfig.get('OPENAI_MAX_RETRIES')).toBe(3);
     });
 
     it('should have correct default array values', () => {
-      expect(openaiConfig.get('OPENAI_STOP')).toEqual(['']);
+      expect(openaiConfig.get('OPENAI_STOP')).toEqual([]);
       expect(Array.isArray(openaiConfig.get('OPENAI_STOP'))).toBe(true);
     });
 
