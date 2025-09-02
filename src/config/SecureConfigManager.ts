@@ -1,6 +1,6 @@
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import Debug from 'debug';
 
 const debug = Debug('app:SecureConfigManager');
@@ -8,21 +8,44 @@ const debug = Debug('app:SecureConfigManager');
 export interface SecureConfig {
   id: string;
   name: string;
+  type: 'bot' | 'user' | 'system';
   data: Record<string, any>;
   createdAt: string;
   updatedAt: string;
-  encrypted: boolean;
+  checksum: string;
 }
 
+export interface BackupMetadata {
+  id: string;
+  timestamp: string;
+  configs: string[];
+  checksum: string;
+  version: string;
+}
+
+/**
+ * Secure Configuration Manager
+ *
+ * Provides encrypted storage for sensitive user configurations
+ * Features:
+ * - AES-256 encryption for data at rest
+ * - Automatic backup and restore
+ * - Data integrity verification
+ * - Secure key management
+ */
 export class SecureConfigManager {
   private static instance: SecureConfigManager;
-  private configDir: string;
-  private encryptionKey: string;
+  private readonly configDir: string;
+  private readonly backupDir: string;
+  private readonly encryptionKey: Buffer;
+  private readonly algorithm = 'aes-256-gcm';
 
-  private constructor() {
-    // Create user config directory (gitignored)
+  constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
-    this.ensureConfigDirectory();
+    this.backupDir = path.join(this.configDir, 'backups');
+
+    // Ensure directories exist first
+    this.ensureDirectories();
 
     // Generate or load encryption key
     this.encryptionKey = this.getOrCreateEncryptionKey();
@@ -35,192 +58,284 @@ export class SecureConfigManager {
     return SecureConfigManager.instance;
   }
 
-  private ensureConfigDirectory(): void {
-    if (!fs.existsSync(this.configDir)) {
-      fs.mkdirSync(this.configDir, { recursive: true });
-      debug(`Created secure config directory: ${this.configDir}`);
+  /**
+   * Store a configuration securely
+   */
+  public async storeConfig(config: Omit<SecureConfig, 'updatedAt' | 'checksum'>): Promise<void> {
+    try {
+      debug(`Storing configuration ${config.id}`);
+      const secureConfig: SecureConfig = {
+        ...config,
+        updatedAt: new Date().toISOString(),
+        checksum: ''
+      };
+
+      // Calculate checksum before encryption
+      secureConfig.checksum = this.calculateChecksum(secureConfig);
+      debug(`Checksum calculated: ${secureConfig.checksum}`);
+
+      // Encrypt and store
+      const encryptedData = this.encrypt(JSON.stringify(secureConfig));
+      const filePath = path.join(this.configDir, `${config.id}.enc`);
+      debug(`File path: ${filePath}`);
+
+      await fs.promises.writeFile(filePath, encryptedData, 'utf8');
+      debug(`Configuration ${config.id} stored securely`);
+
+      // Verify file was created
+      const fileExists = fs.existsSync(filePath);
+      debug(`File exists after write: ${fileExists}`);
+    } catch (error) {
+      debug(`Failed to store configuration ${config.id}:`, error);
+      throw new Error(`Failed to store configuration: ${error}`);
     }
   }
 
-  private getOrCreateEncryptionKey(): string {
-    const keyFile = path.join(this.configDir, '.encryption_key');
+  /**
+   * Retrieve a configuration securely
+   */
+  public async getConfig(id: string): Promise<SecureConfig | null> {
+    try {
+      const filePath = path.join(this.configDir, `${id}.enc`);
 
-    if (fs.existsSync(keyFile)) {
-      return fs.readFileSync(keyFile, 'utf-8').trim();
-    } else {
-      // Generate a new encryption key
-      const key = crypto.randomBytes(32).toString('hex');
-      fs.writeFileSync(keyFile, key, { mode: 0o600 });
-      debug('Generated new encryption key');
-      return key;
+      if (!fs.existsSync(filePath)) {
+        return null;
+      }
+
+      const encryptedData = await fs.promises.readFile(filePath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      const config: SecureConfig = JSON.parse(decryptedData);
+
+      // Verify integrity
+      if (!this.verifyChecksum(config)) {
+        throw new Error('Configuration integrity check failed');
+      }
+
+      return config;
+    } catch (error) {
+      debug(`Failed to retrieve configuration ${id}:`, error);
+      return null;
     }
   }
 
+  /**
+   * List all stored configurations
+   */
+  public async listConfigs(): Promise<string[]> {
+    try {
+      const files = await fs.promises.readdir(this.configDir);
+      return files
+        .filter(file => file.endsWith('.enc'))
+        .map(file => file.replace('.enc', ''));
+    } catch (error) {
+      debug('Failed to list configurations:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a configuration
+   */
+  public async deleteConfig(id: string): Promise<boolean> {
+    try {
+      const filePath = path.join(this.configDir, `${id}.enc`);
+      await fs.promises.unlink(filePath);
+      debug(`Configuration ${id} deleted`);
+      return true;
+    } catch (error) {
+      debug(`Failed to delete configuration ${id}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Create a backup of all configurations
+   */
+  public async createBackup(): Promise<string> {
+    try {
+      const configs = await this.listConfigs();
+      const backupId = `backup_${Date.now()}`;
+      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+
+      const backupData: BackupMetadata = {
+        id: backupId,
+        timestamp: new Date().toISOString(),
+        configs: configs,
+        checksum: '',
+        version: '1.0'
+      };
+
+      // Collect all configuration data
+      const configData: Record<string, SecureConfig> = {};
+      for (const configId of configs) {
+        const config = await this.getConfig(configId);
+        if (config) {
+          configData[configId] = config;
+        }
+      }
+
+      // Calculate backup checksum
+      const backupContent = { metadata: backupData, data: configData };
+      backupData.checksum = this.calculateChecksum(backupContent);
+
+      // Encrypt and store backup
+      const encryptedBackup = this.encrypt(JSON.stringify(backupContent));
+      await fs.promises.writeFile(backupPath, encryptedBackup, 'utf8');
+
+      debug(`Backup ${backupId} created with ${configs.length} configurations`);
+      return backupId;
+    } catch (error) {
+      debug('Failed to create backup:', error);
+      throw new Error(`Backup creation failed: ${error}`);
+    }
+  }
+
+  /**
+   * Restore from a backup
+   */
+  public async restoreBackup(backupId: string): Promise<void> {
+    try {
+      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+
+      if (!fs.existsSync(backupPath)) {
+        throw new Error(`Backup ${backupId} not found`);
+      }
+
+      const encryptedBackup = await fs.promises.readFile(backupPath, 'utf8');
+      const decryptedBackup = this.decrypt(encryptedBackup);
+      const backupData = JSON.parse(decryptedBackup);
+
+      // Verify backup integrity
+      if (!this.verifyChecksum(backupData)) {
+        throw new Error('Backup integrity check failed');
+      }
+
+      // Restore configurations
+      for (const [configId, config] of Object.entries(backupData.data)) {
+        await this.storeConfig(config as SecureConfig);
+      }
+
+      debug(`Backup ${backupId} restored successfully`);
+    } catch (error) {
+      debug(`Failed to restore backup ${backupId}:`, error);
+      throw new Error(`Backup restoration failed: ${error}`);
+    }
+  }
+
+  /**
+   * List available backups
+   */
+  public async listBackups(): Promise<BackupMetadata[]> {
+    try {
+      const files = await fs.promises.readdir(this.backupDir);
+      const backups: BackupMetadata[] = [];
+
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          try {
+            const filePath = path.join(this.backupDir, file);
+            const encryptedData = await fs.promises.readFile(filePath, 'utf8');
+            const decryptedData = this.decrypt(encryptedData);
+            const backupData = JSON.parse(decryptedData);
+
+            if (this.verifyChecksum(backupData)) {
+              backups.push(backupData.metadata);
+            }
+          } catch (error) {
+            debug(`Failed to read backup ${file}:`, error);
+          }
+        }
+      }
+
+      return backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    } catch (error) {
+      debug('Failed to list backups:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Encrypt data using AES-256-GCM
+   */
   private encrypt(data: string): string {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(this.encryptionKey, 'hex'), iv);
+    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
+
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
+
+    const authTag = cipher.getAuthTag();
+
+    // Combine IV, auth tag, and encrypted data
+    return JSON.stringify({
+      iv: iv.toString('hex'),
+      authTag: authTag.toString('hex'),
+      data: encrypted
+    });
   }
 
+  /**
+   * Decrypt data using AES-256-GCM
+   */
   private decrypt(encryptedData: string): string {
-    const [ivHex, encrypted] = encryptedData.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(this.encryptionKey, 'hex'), iv);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    const { iv, authTag, data } = JSON.parse(encryptedData);
+
+    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, Buffer.from(iv, 'hex'));
+    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+
+    let decrypted = decipher.update(data, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
+
     return decrypted;
   }
 
-  public saveConfig(name: string, data: Record<string, any>, encryptSensitive = true): SecureConfig {
-    const id = crypto.randomBytes(8).toString('hex');
-    const now = new Date().toISOString();
-
-    let processedData = { ...data };
-
-    // Encrypt sensitive fields if requested
-    if (encryptSensitive) {
-      processedData = this.encryptSensitiveFields(data);
-    }
-
-    const config: SecureConfig = {
-      id,
-      name,
-      data: processedData,
-      createdAt: now,
-      updatedAt: now,
-      encrypted: encryptSensitive
-    };
-
-    const filePath = path.join(this.configDir, `${name}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(config, null, 2), { mode: 0o600 });
-
-    debug(`Saved secure config: ${name}`);
-    return config;
-  }
-
-  public loadConfig(name: string): SecureConfig | null {
-    const filePath = path.join(this.configDir, `${name}.json`);
-
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
+  /**
+   * Get or create encryption key
+   */
+  private getOrCreateEncryptionKey(): Buffer {
+    const keyPath = path.join(this.configDir, '.encryption_key');
 
     try {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-
-      // Decrypt sensitive fields if needed
-      if (data.encrypted) {
-        data.data = this.decryptSensitiveFields(data.data);
+      if (fs.existsSync(keyPath)) {
+        return Buffer.from(fs.readFileSync(keyPath, 'utf8'), 'hex');
       }
-
-      debug(`Loaded secure config: ${name}`);
-      return data;
     } catch (error) {
-      debug(`Failed to load config ${name}:`, error);
-      return null;
-    }
-  }
-
-  public listConfigs(): SecureConfig[] {
-    const files = fs.readdirSync(this.configDir)
-      .filter(file => file.endsWith('.json') && !file.startsWith('.'))
-      .map(file => file.replace('.json', ''));
-
-    return files.map(name => {
-      const config = this.loadConfig(name);
-      return config ? {
-        ...config,
-        data: {} // Don't include actual data in list
-      } : null;
-    }).filter(Boolean) as SecureConfig[];
-  }
-
-  public deleteConfig(name: string): boolean {
-    const filePath = path.join(this.configDir, `${name}.json`);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      debug(`Deleted secure config: ${name}`);
-      return true;
+      debug('Failed to read existing encryption key:', error);
     }
 
-    return false;
+    // Generate new key
+    const key = crypto.randomBytes(32);
+    fs.writeFileSync(keyPath, key.toString('hex'), { mode: 0o600 });
+    debug('New encryption key generated and stored');
+    return key;
   }
 
-  public backupConfigs(): string {
-    const backupDir = path.join(this.configDir, 'backups');
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
-    }
-
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFile = path.join(backupDir, `backup-${timestamp}.json`);
-
-    const allConfigs = this.listConfigs().map(config => this.loadConfig(config.name)).filter(Boolean);
-    fs.writeFileSync(backupFile, JSON.stringify(allConfigs, null, 2));
-
-    debug(`Created backup: ${backupFile}`);
-    return backupFile;
-  }
-
-  public restoreFromBackup(backupFile: string): boolean {
-    if (!fs.existsSync(backupFile)) {
-      return false;
-    }
-
-    try {
-      const backupData = JSON.parse(fs.readFileSync(backupFile, 'utf-8'));
-
-      for (const config of backupData) {
-        this.saveConfig(config.name, config.data, config.encrypted);
+  /**
+   * Ensure required directories exist
+   */
+  private ensureDirectories(): void {
+    [this.configDir, this.backupDir].forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+        debug(`Created directory: ${dir}`);
       }
-
-      debug(`Restored from backup: ${backupFile}`);
-      return true;
-    } catch (error) {
-      debug(`Failed to restore backup:`, error);
-      return false;
-    }
+    });
   }
 
-  private encryptSensitiveFields(data: Record<string, any>): Record<string, any> {
-    const sensitiveKeys = ['token', 'key', 'secret', 'password', 'apiKey'];
-    const result = { ...data };
-
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof value === 'string' &&
-          sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
-        result[key] = this.encrypt(value);
-      } else if (typeof value === 'object' && value !== null) {
-        result[key] = this.encryptSensitiveFields(value);
-      }
-    }
-
-    return result;
+  /**
+   * Calculate checksum for data integrity
+   */
+  private calculateChecksum(data: any): string {
+    const hash = crypto.createHash('sha256');
+    hash.update(JSON.stringify(data, Object.keys(data).sort()));
+    return hash.digest('hex');
   }
 
-  private decryptSensitiveFields(data: Record<string, any>): Record<string, any> {
-    const result = { ...data };
-
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof value === 'string' && value.includes(':')) {
-        try {
-          result[key] = this.decrypt(value);
-        } catch {
-          // If decryption fails, keep original value
-          result[key] = value;
-        }
-      } else if (typeof value === 'object' && value !== null) {
-        result[key] = this.decryptSensitiveFields(value);
-      }
-    }
-
-    return result;
-  }
-
-  public getConfigDirectory(): string {
-    return this.configDir;
+  /**
+   * Verify checksum for data integrity
+   */
+  private verifyChecksum(data: any): boolean {
+    const { checksum, ...dataWithoutChecksum } = data;
+    return checksum === this.calculateChecksum(dataWithoutChecksum);
   }
 }
