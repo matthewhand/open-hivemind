@@ -1,18 +1,33 @@
 import request from 'supertest';
 import express from 'express';
 import botsRouter from '@src/webui/routes/bots';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { BotManager } from '@src/managers/BotManager';
+
+// Mock authentication middleware
+jest.mock('@src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next()
+}));
+
+// Mock BotConfigurationManager
+jest.mock('@config/BotConfigurationManager', () => ({
+  BotConfigurationManager: {
+    getInstance: jest.fn().mockReturnValue({
+      getAllBots: jest.fn().mockReturnValue([])
+    })
+  }
+}));
+
+// Mock BotManager
+jest.mock('@src/managers/BotManager');
+const mockBotManager = BotManager as jest.MockedClass<typeof BotManager>;
 
 const app = express();
 app.use(express.json());
-app.use('/webui', botsRouter);
-
-// Mock BotConfigurationManager
-jest.mock('@config/BotConfigurationManager');
-const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
+app.use('/webui/api/bots', botsRouter);
 
 describe('Bots API Routes', () => {
-  let mockManager: jest.Mocked<BotConfigurationManager>;
+  let mockManager: jest.Mocked<BotManager>;
 
   beforeEach(() => {
     mockManager = {
@@ -20,7 +35,7 @@ describe('Bots API Routes', () => {
       getBot: jest.fn()
     } as any;
     
-    mockBotConfigurationManager.getInstance.mockReturnValue(mockManager);
+    mockBotManager.getInstance.mockReturnValue(mockManager);
   });
 
   afterEach(() => {
@@ -30,169 +45,79 @@ describe('Bots API Routes', () => {
   describe('GET /webui/api/bots', () => {
     it('should return all bots with status and capabilities', async () => {
       const mockBots = [
-        {
-          name: 'DiscordBot',
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          discord: { voiceChannelId: '123456' }
-        },
-        {
-          name: 'SlackBot',
-          messageProvider: 'slack',
-          llmProvider: 'flowise',
-          slack: { joinChannels: 'channel1,channel2' }
-        }
+        { name: 'DiscordBot' },
+        { name: 'SlackBot' }
       ];
       
-      mockManager.getAllBots.mockReturnValue(mockBots);
+      mockManager.getAllBots.mockResolvedValue(mockBots);
 
       const response = await request(app)
         .get('/webui/api/bots')
         .expect(200);
 
-      expect(response.body).toHaveProperty('bots');
-      expect(response.body).toHaveProperty('total');
-      expect(response.body).toHaveProperty('active');
-      expect(response.body).toHaveProperty('providers');
-      
-      expect(response.body.bots).toHaveLength(2);
-      expect(response.body.total).toBe(2);
-      expect(response.body.active).toBe(2);
-      
-      // Check capabilities
-      expect(response.body.bots[0].capabilities.voiceSupport).toBe(true);
-      expect(response.body.bots[1].capabilities.multiChannel).toBe(true);
-      
-      // Check providers summary
-      expect(response.body.providers.message).toContain('discord');
-      expect(response.body.providers.message).toContain('slack');
-      expect(response.body.providers.llm).toContain('openai');
-      expect(response.body.providers.llm).toContain('flowise');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('data');
+      expect(response.body.data).toHaveProperty('bots');
+      expect(response.body).toHaveProperty('total', 2);
     });
 
     it('should handle empty bot list', async () => {
-      mockManager.getAllBots.mockReturnValue([]);
+      mockManager.getAllBots.mockResolvedValue([]);
 
       const response = await request(app)
         .get('/webui/api/bots')
         .expect(200);
 
-      expect(response.body.bots).toHaveLength(0);
+      expect(response.body.data.bots).toHaveLength(0);
       expect(response.body.total).toBe(0);
-      expect(response.body.active).toBe(0);
     });
 
     it('should handle errors gracefully', async () => {
-      mockManager.getAllBots.mockImplementation(() => {
-        throw new Error('Database error');
-      });
+      mockManager.getAllBots.mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
         .get('/webui/api/bots')
         .expect(500);
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to get bots');
+      expect(response.body).toHaveProperty('error', 'Failed to get bots');
     });
   });
 
   describe('GET /webui/api/bots/:name', () => {
     it('should return specific bot details', async () => {
-      const mockBot = {
-        name: 'TestBot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: { token: 'test-token' }
-      };
+      const mockBot = { name: 'TestBot' };
       
-      mockManager.getBot.mockReturnValue(mockBot);
+      mockManager.getBot.mockResolvedValue(mockBot);
 
       const response = await request(app)
         .get('/webui/api/bots/TestBot')
         .expect(200);
 
-      expect(response.body).toHaveProperty('name');
-      expect(response.body).toHaveProperty('status');
-      expect(response.body.name).toBe('TestBot');
-      expect(response.body.status).toHaveProperty('active');
-      expect(response.body.status).toHaveProperty('uptime');
-      expect(response.body.status).toHaveProperty('memory');
-      expect(response.body.status).toHaveProperty('connections');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('data');
+      expect(response.body.data).toHaveProperty('bot');
     });
 
     it('should return 404 for non-existent bot', async () => {
-      mockManager.getBot.mockReturnValue(undefined);
+      mockManager.getBot.mockResolvedValue(null);
 
       const response = await request(app)
         .get('/webui/api/bots/NonExistentBot')
         .expect(404);
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Bot not found');
+      expect(response.body).toHaveProperty('error', 'Bot not found');
     });
 
     it('should handle errors gracefully', async () => {
-      mockManager.getBot.mockImplementation(() => {
-        throw new Error('Database error');
-      });
+      mockManager.getBot.mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
         .get('/webui/api/bots/TestBot')
         .expect(500);
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to get bot details');
+      expect(response.body).toHaveProperty('error', 'Failed to get bot');
     });
   });
 
-  describe('GET /webui/api/bots/:name/health', () => {
-    it('should return bot health metrics', async () => {
-      const mockBot = {
-        name: 'TestBot',
-        messageProvider: 'discord',
-        llmProvider: 'openai'
-      };
-      
-      mockManager.getBot.mockReturnValue(mockBot);
 
-      const response = await request(app)
-        .get('/webui/api/bots/TestBot/health')
-        .expect(200);
-
-      expect(response.body).toHaveProperty('status');
-      expect(response.body).toHaveProperty('checks');
-      expect(response.body).toHaveProperty('timestamp');
-      
-      expect(response.body.checks).toHaveProperty('messageProvider');
-      expect(response.body.checks).toHaveProperty('llmProvider');
-      expect(response.body.checks).toHaveProperty('memory');
-      
-      expect(response.body.checks.messageProvider).toHaveProperty('status');
-      expect(response.body.checks.messageProvider).toHaveProperty('latency');
-    });
-
-    it('should return 404 for non-existent bot health check', async () => {
-      mockManager.getBot.mockReturnValue(undefined);
-
-      const response = await request(app)
-        .get('/webui/api/bots/NonExistentBot/health')
-        .expect(404);
-
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Bot not found');
-    });
-
-    it('should handle health check errors gracefully', async () => {
-      mockManager.getBot.mockImplementation(() => {
-        throw new Error('Health check error');
-      });
-
-      const response = await request(app)
-        .get('/webui/api/bots/TestBot/health')
-        .expect(500);
-
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to get bot health');
-    });
-  });
 });

@@ -272,19 +272,22 @@ describe('SecureConfigManager', () => {
     });
 
     test('should handle file system errors gracefully', async () => {
-      // Create a read-only directory to simulate file system error
-      const readOnlyDir = path.join(testConfigDir, 'readonly');
-      fs.mkdirSync(readOnlyDir, { mode: 0o444 });
+      // Mock fs.promises.writeFile to throw an error
+      const originalWriteFile = require('fs').promises.writeFile;
+      require('fs').promises.writeFile = jest.fn().mockRejectedValue(new Error('ENOSPC: no space left on device'));
 
       const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
-        id: 'readonly-test',
-        name: 'ReadOnly Test',
+        id: 'fs-error-test',
+        name: 'FS Error Test',
         type: 'bot',
-        data: { token: 'readonly-token' },
+        data: { token: 'fs-error-token' },
         createdAt: new Date().toISOString()
       };
 
       await expect(secureConfigManager.storeConfig(config)).rejects.toThrow();
+      
+      // Restore original function
+      require('fs').promises.writeFile = originalWriteFile;
     });
   });
 });

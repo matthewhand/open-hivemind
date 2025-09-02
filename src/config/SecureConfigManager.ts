@@ -184,8 +184,7 @@ export class SecureConfigManager {
       }
 
       // Calculate backup checksum
-      const backupContent = { metadata: backupData, data: configData };
-      backupData.checksum = this.calculateChecksum(backupContent);
+      backupData.checksum = this.calculateChecksum({ metadata: backupData, data: configData });
 
       // Encrypt and store backup
       const encryptedBackup = this.encrypt(JSON.stringify(backupContent));
@@ -215,12 +214,15 @@ export class SecureConfigManager {
       const backupData = JSON.parse(decryptedBackup);
 
       // Verify backup integrity
-      if (!this.verifyChecksum(backupData)) {
+      const backupContent = JSON.parse(decryptedBackup);
+      if (!this.verifyChecksum(backupContent)) {
         throw new Error('Backup integrity check failed');
       }
+      
+      const { metadata, data } = backupContent;
 
       // Restore configurations
-      for (const [configId, config] of Object.entries(backupData.data)) {
+      for (const [configId, config] of Object.entries(data)) {
         await this.storeConfig(config as SecureConfig);
       }
 
