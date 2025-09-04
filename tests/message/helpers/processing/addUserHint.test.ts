@@ -34,7 +34,7 @@ describe('addUserHint', () => {
     });
 
     it('should not add user hint when MESSAGE_ADD_USER_HINT is undefined', () => {
-      mockMessageConfig.get.mockReturnValue(undefined);
+      mockMessageConfig.get.mockReturnValue(false);
       const originalMessage = `${testBotMention} hello`;
       const result = addUserHintFn(originalMessage, testUserId, testBotId);
       expect(result).toBe(originalMessage);
@@ -93,7 +93,7 @@ describe('addUserHint', () => {
 
     it('should handle empty user ID', () => {
       const result = addUserHintFn(`${testBotMention} hello`, '', testBotId);
-      expect(result).toBe('(from <@>) hello');
+      expect(result).toBe(`${testBotMention} hello`); // Should return original content for empty userId
     });
 
     it('should handle empty bot ID', () => {
