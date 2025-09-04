@@ -1,5 +1,3 @@
-import openaiConfig from '../../src/config/openaiConfig';
-
 describe('openaiConfig', () => {
   const OLD_ENV = process.env;
 
@@ -8,8 +6,15 @@ describe('openaiConfig', () => {
     jest.resetModules();
   });
 
+  beforeEach(() => {
+    // Clear OPENAI_BASE_URL to test defaults
+    delete process.env.OPENAI_BASE_URL;
+    jest.resetModules();
+  });
+
   describe('default configuration values', () => {
     it('should have correct default string values', () => {
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
       expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com/v1');
       expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
