@@ -183,11 +183,16 @@ export class SecureConfigManager {
         }
       }
 
+      // Create full backup structure
+      const fullBackupData = { metadata: backupData, data: configData };
+
       // Calculate backup checksum
-      backupData.checksum = this.calculateChecksum({ metadata: backupData, data: configData });
+      backupData.checksum = this.calculateChecksum(fullBackupData);
+
+      // Update full backup with checksum
+      fullBackupData.metadata = backupData;
 
       // Encrypt and store backup
-      const fullBackupData = { metadata: backupData, data: configData };
       const encryptedBackup = this.encrypt(JSON.stringify(fullBackupData));
       await fs.promises.writeFile(backupPath, encryptedBackup, 'utf8');
 
