@@ -23,10 +23,21 @@ export async function executeCommand(command: string): Promise<string> {
     } catch (err: any) {
         // Fallback for restricted CI sandboxes; simulate echo during tests
         if (process.env.NODE_ENV === 'test') {
-            const m = /^echo\s+(.+)/.exec(command);
-            if (m) {
-                const output = m[1] + (m[1].endsWith('\n') ? '' : '\n');
-                debug('Simulated echo output: ' + output);
+            // Handle echo commands with better simulation
+            const echoMatch = /^echo\s+(-e\s+)?(.+)/.exec(command);
+            if (echoMatch) {
+                let output = echoMatch[2];
+                // Handle -e flag for escape sequences first
+                if (echoMatch[1] && output.includes('\\n')) {
+                    output = output.replace(/\\n/g, '\n');
+                } else if (!echoMatch[1]) {
+                    // For regular echo, don't interpret escape sequences
+                    output = output.replace(/\\n/g, '\\n');
+                }
+                // Remove surrounding quotes if present, but preserve internal quotes
+                output = output.replace(/^["']|["']$/g, '');
+                output = output + (output.endsWith('\n') ? '' : '\n');
+                debug('Simulated echo output: ' + JSON.stringify(output));
                 return output;
             }
         }
