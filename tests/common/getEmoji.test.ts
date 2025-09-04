@@ -18,8 +18,11 @@ describe('getEmoji', () => {
 
         test('should return emojis with proper Unicode format', () => {
             const emoji = getEmoji();
-            // Check if it's a valid emoji (contains emoji characters)
-            expect(emoji).toMatch(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u);
+            // Check if it's a valid emoji by ensuring it's not empty and contains emoji-like characters
+            expect(emoji).toBeDefined();
+            expect(emoji.length).toBeGreaterThan(0);
+            // More inclusive check for emoji characters
+            expect(emoji).toMatch(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u);
         });
     });
 
