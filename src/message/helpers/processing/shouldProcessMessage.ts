@@ -6,8 +6,14 @@ import { IMessage } from '@message/interfaces/IMessage';
  * If the configuration key MESSAGE_MIN_INTERVAL_MS is not set, defaults to 1000.
  */
 export function getMinIntervalMs(): number {
-  const value = messageConfig.get('MESSAGE_MIN_INTERVAL_MS');
-  return typeof value === 'number' ? value : Number(value) || 1000;
+  try {
+    const value = messageConfig.get('MESSAGE_MIN_INTERVAL_MS');
+    const numValue = typeof value === 'number' ? value : Number(value) || 1000;
+    return isNaN(numValue) ? 1000 : numValue;
+  } catch (error) {
+    // If config access fails, return default
+    return 1000;
+  }
 }
 
 /**
@@ -17,15 +23,34 @@ export function getMinIntervalMs(): number {
  * @returns `true` if the message should be processed, `false` otherwise.
  */
 export function shouldProcessMessage(message: IMessage): boolean {
-  const text = message.getText();
-  if (!text || text.trim().length === 0) {
+  try {
+    // Handle null/undefined messages
+    if (!message) {
+      return false;
+    }
+
+    const text = message.getText();
+    if (!text || text.trim().length === 0) {
+      return false;
+    }
+
+    let ignoreBots;
+    try {
+      ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS');
+    } catch (configError) {
+      // If config access fails, default to ignoring bots
+      ignoreBots = true;
+    }
+
+    // Default to ignoring bots if config is undefined or truthy (matches default.json setting)
+    const shouldIgnoreBots = ignoreBots === undefined || Boolean(ignoreBots);
+    if (shouldIgnoreBots && message.isFromBot()) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    // If message methods throw, don't process the message
     return false;
   }
-
-  const ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS');
-  if (ignoreBots && message.isFromBot()) {
-    return false;
-  }
-
-  return true;
 }
