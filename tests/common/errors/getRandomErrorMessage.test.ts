@@ -87,9 +87,10 @@ describe('getRandomErrorMessage', () => {
                 messages.add(getRandomErrorMessage());
             }
 
-            messages.forEach(message => {
+            messages.forEach((message: unknown) => {
+                const msg = message as string;
                 // Check for emoji presence (basic Unicode emoji ranges)
-                const hasEmoji = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(message);
+                const hasEmoji = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]/u.test(msg);
                 expect(hasEmoji).toBe(true);
             });
         });
@@ -103,9 +104,10 @@ describe('getRandomErrorMessage', () => {
             }
 
             let robotThemeCount = 0;
-            messages.forEach(message => {
-                const hasRobotTheme = robotKeywords.some(keyword => 
-                    message.toLowerCase().includes(keyword)
+            messages.forEach((message: unknown) => {
+                const msg = message as string;
+                const hasRobotTheme = robotKeywords.some(keyword =>
+                    msg.toLowerCase().includes(keyword)
                 );
                 if (hasRobotTheme) robotThemeCount++;
             });
@@ -123,9 +125,10 @@ describe('getRandomErrorMessage', () => {
             }
 
             let friendlyToneCount = 0;
-            messages.forEach(message => {
-                const hasFriendlyTone = friendlyWords.some(word => 
-                    message.toLowerCase().includes(word)
+            messages.forEach((message: unknown) => {
+                const msg = message as string;
+                const hasFriendlyTone = friendlyWords.some(word =>
+                    msg.toLowerCase().includes(word)
                 );
                 if (hasFriendlyTone) friendlyToneCount++;
             });
