@@ -1,6 +1,7 @@
 # Open-Hivemind
 
 ![Project Logo](path/to/logo.png)
+![CI](https://github.com/{username}/{repo}/workflows/CI/badge.svg)
 
 ## Overview
 
