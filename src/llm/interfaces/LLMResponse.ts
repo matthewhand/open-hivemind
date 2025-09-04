@@ -71,7 +71,8 @@ class LLMResponse {
      * @returns {Array} The choices array.
      */
     getChoices(): { index: number, message: { role: string, content: string }, finish_reason: string }[] {
-        return this.choices;
+        // Return a deep copy to prevent external modification
+        return JSON.parse(JSON.stringify(this.choices));
     }
 
     /**
@@ -79,7 +80,8 @@ class LLMResponse {
      * @returns {Object} The usage statistics.
      */
     getUsage(): { prompt_tokens: number, completion_tokens: number, total_tokens: number } {
-        return this.usage;
+        // Return a copy to prevent external modification
+        return { ...this.usage };
     }
 
     /**
