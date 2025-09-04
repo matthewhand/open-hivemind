@@ -1,4 +1,4 @@
-import { TimingManager } from '../../src/managers/TimingManager';
+const TimingManager = require('../../src/managers/TimingManager');
 
 // Use fake timers for controlled testing
 jest.useFakeTimers();
@@ -8,7 +8,7 @@ jest.useFakeTimers();
  * with adaptive delays based on incoming messages and processing times.
  */
 describe('TimingManager', () => {
-    let timingManager: TimingManager;
+    let timingManager;
     const mockSendFunction = jest.fn();
 
     beforeEach(() => {
@@ -106,8 +106,8 @@ describe('TimingManager', () => {
         });
 
         it('should handle null/undefined channel IDs gracefully', () => {
-            expect(() => timingManager.logIncomingMessage(null as any)).not.toThrow();
-            expect(() => timingManager.logIncomingMessage(undefined as any)).not.toThrow();
+            expect(() => timingManager.logIncomingMessage(null)).not.toThrow();
+            expect(() => timingManager.logIncomingMessage(undefined)).not.toThrow();
         });
 
         it('should handle empty string channel IDs', () => {
@@ -253,7 +253,7 @@ describe('TimingManager', () => {
         it('should handle null/undefined message content', () => {
             const channelId = 'channel6';
             
-            expect(() => timingManager.scheduleMessage(channelId, null as any, 500, mockSendFunction))
+            expect(() => timingManager.scheduleMessage(channelId, null, 500, mockSendFunction))
                 .not.toThrow();
             
             jest.advanceTimersByTime(timingManager.maxDelay + 1000);
