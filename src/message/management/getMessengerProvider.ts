@@ -33,8 +33,15 @@ function __require(modulePath: string): any {
 
 export function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
-  const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
-  const messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
+
+  let messengersConfig: any = {};
+  try {
+    const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
+    messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
+  } catch (error) {
+    // If file doesn't exist or JSON is invalid, use empty config
+    messengersConfig = {};
+  }
 
   const messengerServices: any[] = [];
 
