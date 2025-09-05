@@ -36,6 +36,7 @@ export class MattermostMessage extends IMessage {
     this.username = username;
     this.content = post.message;
     this.channelId = post.channel_id;
+    this.platform = 'mattermost';
   }
 
   public getMessageId(): string {

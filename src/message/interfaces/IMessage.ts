@@ -45,6 +45,13 @@ export abstract class IMessage {
   public role: string;
 
   /**
+   * The platform this message originated from.
+   * Common values: "discord", "slack", "telegram", "mattermost"
+   * @type {string}
+   */
+  public platform: string = "";
+
+  /**
    * Optional metadata associated with the message.
    * Can include custom properties like message type, priority, etc.
    * @type {any}

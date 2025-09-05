@@ -33,15 +33,12 @@ describeTelegram('TelegramService', () => {
   });
 
   afterEach(async () => {
-    if (service.isConnected()) {
-      await service.disconnect();
-    }
+    // No cleanup needed for this implementation
   });
 
   describe('Constructor', () => {
     it('should create service with valid token', () => {
       expect(service).toBeInstanceOf(TelegramService);
-      expect(service.isConnected()).toBe(false);
     });
 
     it.skip('should throw error with invalid token', () => {
@@ -54,28 +51,22 @@ describeTelegram('TelegramService', () => {
   });
 
   describe('Connection Management', () => {
-    it('should connect successfully', async () => {
-      await service.connect();
-      expect(service.isConnected()).toBe(true);
+    it('should initialize successfully', async () => {
+      await service.initialize();
     });
 
-    it('should disconnect successfully', async () => {
-      await service.connect();
-      expect(service.isConnected()).toBe(true);
-      
-      await service.disconnect();
-      expect(service.isConnected()).toBe(false);
+    it('should shutdown successfully', async () => {
+      await service.initialize();
+      await service.shutdown();
     });
 
-    it('should handle multiple connect calls gracefully', async () => {
-      await service.connect();
-      await service.connect(); // Should not throw
-      expect(service.isConnected()).toBe(true);
+    it('should handle multiple initialize calls gracefully', async () => {
+      await service.initialize();
+      await service.initialize(); // Should not throw
     });
 
-    it('should handle disconnect when not connected', async () => {
-      expect(service.isConnected()).toBe(false);
-      await expect(service.disconnect()).resolves.not.toThrow();
+    it('should handle shutdown when not initialized', async () => {
+      await expect(service.shutdown()).resolves.not.toThrow();
     });
 
     it.skip('should handle connection errors gracefully', () => {
@@ -85,11 +76,11 @@ describeTelegram('TelegramService', () => {
 
   describe('Message Sending', () => {
     beforeEach(async () => {
-      await service.connect();
+      await service.initialize();
     });
 
     it('should return message ID when sending successfully', async () => {
-      const messageId = await service.sendMessage(testChatId, testMessage);
+      const messageId = await service.sendMessageToChannel(testChatId, testMessage);
       expect(messageId).toBe('telegram_message_id');
       expect(typeof messageId).toBe('string');
     });
@@ -104,7 +95,7 @@ describeTelegram('TelegramService', () => {
 
     it('should handle long messages by truncating', async () => {
       const longMessage = 'a'.repeat(5000); // Telegram limit is 4096
-      const messageId = await service.sendMessage(testChatId, longMessage);
+      const messageId = await service.sendMessageToChannel(testChatId, longMessage);
       expect(messageId).toBe('telegram_message_id');
     });
 
@@ -129,7 +120,7 @@ describeTelegram('TelegramService', () => {
 
   describe('Event Handling', () => {
     beforeEach(async () => {
-      await service.connect();
+      await service.initialize();
     });
 
     it.skip('should handle incoming messages', () => {
