@@ -467,7 +467,7 @@ export const Discord = {
           throw new Error('Channel is not text-based or was not found');
         }
         const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
-        const messages = await channel.messages.fetch({ limit });
+        const messages = await (channel as TextChannel).messages.fetch({ limit });
         const arr = Array.from(messages.values());
         // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
         return arr.slice(0, limit);

@@ -113,7 +113,7 @@ export class SlackMessageIO implements ISlackMessageIO {
       const options: any = {
         channel: channelId,
         text: text || 'No content provided',
-        username: botInfo.botUserName,
+        username: botInfo.botUserName || 'SlackBot',
         icon_emoji: ':robot_face:',
         unfurl_links: true,
         unfurl_media: true,
@@ -130,7 +130,7 @@ export class SlackMessageIO implements ISlackMessageIO {
       try {
         const ws = WebSocketService.getInstance();
         ws.recordMessageFlow({
-          botName: botInfo.botUserName,
+          botName: botInfo.botUserName || 'SlackBot',
           provider: 'slack',
           channelId,
           userId: '',

@@ -9,32 +9,44 @@ export class TelegramService implements IMessengerService {
     this.botToken = botToken;
   }
 
-  async connect(): Promise<void> {
+  async initialize(): Promise<void> {
     // TODO: Implement Telegram Bot API connection
     this.connected = true;
   }
 
-  async disconnect(): Promise<void> {
+  async shutdown(): Promise<void> {
     this.connected = false;
   }
 
-  async sendMessage(chatId: string, content: string): Promise<string> {
+  async sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string): Promise<string> {
     // TODO: Implement Telegram message sending
     return 'telegram_message_id';
   }
 
-  async fetchMessages(chatId: string, limit?: number): Promise<IMessage[]> {
+  async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
     // TODO: Implement Telegram message fetching
     return [];
   }
 
-  isConnected(): boolean {
-    return this.connected;
+  async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
+    // TODO: Implement Telegram announcement sending
+  }
+
+  getClientId(): string {
+    return 'telegram-bot';
+  }
+
+  getDefaultChannel(): string {
+    return 'telegram-channel';
+  }
+
+  setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
+    // TODO: Implement message handler setup
   }
 
   supportsChannelPrioritization = false;
 
-  scoreChannel(): number {
+  scoreChannel(channelId: string, metadata?: Record<string, any>): number {
     return 0;
   }
 }

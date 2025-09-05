@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthManager, JWTPayload } from '@auth/AuthManager';
+import { AuthManager } from '../../auth/AuthManager';
 
 // Extend Express Request interface to include user
 declare global {
   namespace Express {
     interface Request {
-      user?: JWTPayload;
+      user?: any;
     }
   }
 }
@@ -19,7 +19,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   const authManager = AuthManager.getInstance();
-  const payload = authManager.verifyToken(token);
+  const payload = authManager.verifyAccessToken(token);
 
   if (!payload) {
     return res.status(403).json({ error: 'Invalid or expired token' });
@@ -36,17 +36,17 @@ export const requirePermission = (permission: string) => {
     }
 
     const authManager = AuthManager.getInstance();
-    const user = authManager.getUserById(req.user.userId);
+    const user = authManager.getUser(req.user.userId);
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    if (!authManager.hasPermission(user, permission)) {
+    if (!authManager.hasPermission(user.role, permission)) {
       return res.status(403).json({
         error: 'Insufficient permissions',
         required: permission,
-        userPermissions: user.permissions
+        userRole: user.role
       });
     }
 
@@ -78,7 +78,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
 
   if (token) {
     const authManager = AuthManager.getInstance();
-    const payload = authManager.verifyToken(token);
+    const payload = authManager.verifyAccessToken(token);
     if (payload) {
       req.user = payload;
     }

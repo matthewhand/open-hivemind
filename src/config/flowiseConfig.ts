@@ -56,16 +56,17 @@ if (process.env.NODE_ENV !== 'test') {
   }
 }
 
+// Override the get method to handle undefined keys gracefully
 const originalGet = flowiseConfig.get.bind(flowiseConfig);
-flowiseConfig.get = (key: any) => {
+flowiseConfig.get = ((key: any) => {
   if (!key || typeof key !== 'string') {
     return undefined;
   }
   try {
-    return originalGet(key);
+    return originalGet(key as any);
   } catch (error) {
     return undefined;
   }
-};
+}) as any;
 
 export default flowiseConfig;

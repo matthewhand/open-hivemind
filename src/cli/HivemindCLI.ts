@@ -15,7 +15,7 @@ program
   .description('Show bot status')
   .action(() => {
     const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBotConfigs();
+    const bots = manager.getAllBots();
     console.log(`Active bots: ${bots.length}`);
     bots.forEach(bot => {
       console.log(`- ${bot.name}: ${bot.messageProvider} -> ${bot.llmProvider}`);

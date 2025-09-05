@@ -18,65 +18,68 @@ export interface MattermostPost {
   metadata: any;
 }
 
-export class MattermostMessage {
+export class MattermostMessage extends IMessage {
   private post: MattermostPost;
   private username: string;
 
   constructor(post: MattermostPost, username: string = 'Unknown') {
+    super(post, 'user', {
+      edited: post.edit_at > 0,
+      editedAt: post.edit_at > 0 ? new Date(post.edit_at) : undefined,
+      isPinned: post.is_pinned,
+      type: post.type,
+      replyCount: post.reply_count,
+      hashtags: post.hashtags ? post.hashtags.split(' ') : [],
+      props: post.props
+    });
     this.post = post;
     this.username = username;
+    this.content = post.message;
+    this.channelId = post.channel_id;
   }
 
-  public toIMessage(): IMessage {
-    return {
-      id: this.post.id,
-      content: this.post.message,
-      channelId: this.post.channel_id,
-      userId: this.post.user_id,
-      userName: this.username,
-      timestamp: new Date(this.post.create_at),
-      platform: 'mattermost',
-      metadata: {
-        edited: this.post.edit_at > 0,
-        editedAt: this.post.edit_at > 0 ? new Date(this.post.edit_at) : undefined,
-        isPinned: this.post.is_pinned,
-        type: this.post.type,
-        replyCount: this.post.reply_count,
-        hashtags: this.post.hashtags ? this.post.hashtags.split(' ') : [],
-        props: this.post.props
-      }
-    };
-  }
-
-  public getId(): string {
+  public getMessageId(): string {
     return this.post.id;
   }
 
-  public getContent(): string {
-    return this.post.message;
+  public getTimestamp(): Date {
+    return new Date(this.post.create_at);
+  }
+
+  public setText(text: string): void {
+    this.content = text;
   }
 
   public getChannelId(): string {
     return this.post.channel_id;
   }
 
-  public getUserId(): string {
+  public getAuthorId(): string {
     return this.post.user_id;
   }
 
-  public getUsername(): string {
+  public getChannelTopic(): string | null {
+    return null;
+  }
+
+  public getUserMentions(): string[] {
+    return [];
+  }
+
+  public getChannelUsers(): string[] {
+    return [];
+  }
+
+  public mentionsUsers(userId: string): boolean {
+    return false;
+  }
+
+  public isFromBot(): boolean {
+    return false;
+  }
+
+  public getAuthorName(): string {
     return this.username;
   }
 
-  public isEdited(): boolean {
-    return this.post.edit_at > 0;
-  }
-
-  public isPinned(): boolean {
-    return this.post.is_pinned;
-  }
-
-  public getReplyCount(): number {
-    return this.post.reply_count;
-  }
 }

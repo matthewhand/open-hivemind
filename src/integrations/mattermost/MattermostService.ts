@@ -150,7 +150,7 @@ export class MattermostService implements IMessengerService {
         
         const { MattermostMessage } = await import('./MattermostMessage');
         const mattermostMsg = new MattermostMessage(post, username);
-        messages.push(mattermostMsg.toIMessage());
+        messages.push(mattermostMsg);
       }
       
       return messages.reverse(); // Most recent first

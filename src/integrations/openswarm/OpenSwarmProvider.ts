@@ -11,21 +11,28 @@ export class OpenSwarmProvider implements ILlmProvider {
     this.apiKey = process.env.OPENSWARM_API_KEY || 'dummy-key';
   }
 
+  supportsChatCompletion(): boolean {
+    return true;
+  }
+
+  supportsCompletion(): boolean {
+    return true;
+  }
+
   async generateChatCompletion(
-    message: string,
-    conversationHistory: any[],
-    options: any = {}
+    userMessage: string,
+    historyMessages: any[],
+    metadata?: Record<string, any>
   ): Promise<string> {
     try {
-      const teamName = options.team || options.model || 'default-team';
-      
+      const teamName = metadata?.team || metadata?.model || 'default-team';
+
       const response = await axios.post(`${this.baseUrl}/chat/completions`, {
         model: teamName,
         messages: [
-          ...conversationHistory,
-          { role: 'user', content: message }
-        ],
-        ...options
+          ...historyMessages,
+          { role: 'user', content: userMessage }
+        ]
       }, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -40,8 +47,8 @@ export class OpenSwarmProvider implements ILlmProvider {
     }
   }
 
-  async generateCompletion(prompt: string, options: any = {}): Promise<LLMResponse> {
-    const content = await this.generateChatCompletion(prompt, [], options);
-    return new LLMResponse(content, { provider: 'openswarm', team: options.team });
+  async generateCompletion(prompt: string): Promise<string> {
+    const content = await this.generateChatCompletion(prompt, [], {});
+    return content;
   }
 }
