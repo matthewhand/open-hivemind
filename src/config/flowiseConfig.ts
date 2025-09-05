@@ -46,7 +46,7 @@ const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../con
 const configPath = path.join(configDir, 'providers/flowise.json');
 
 // Skip loading config file in test environment to allow environment variables to take precedence
-if (process.env.NODE_ENV !== 'test' && !process.env.JEST_WORKER_ID) {
+if (process.env.NODE_ENV !== 'test') {
   try {
     flowiseConfig.loadFile(configPath);
     flowiseConfig.validate({ allowed: 'strict' });

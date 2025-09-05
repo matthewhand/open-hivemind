@@ -229,10 +229,11 @@ describe('TimingManager', () => {
 
         it('should handle scheduling with different send functions', () => {
             const mockSendFunction2 = jest.fn();
-            const channelId = 'channel4';
-            
-            timingManager.scheduleMessage(channelId, 'Message 1', 500, mockSendFunction);
-            timingManager.scheduleMessage(channelId, 'Message 2', 500, mockSendFunction2);
+            const channelId1 = 'channel4';
+            const channelId2 = 'channel5';
+
+            timingManager.scheduleMessage(channelId1, 'Message 1', 500, mockSendFunction);
+            timingManager.scheduleMessage(channelId2, 'Message 2', 500, mockSendFunction2);
 
             jest.advanceTimersByTime(timingManager.maxDelay + 1000);
 
