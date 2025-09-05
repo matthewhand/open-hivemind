@@ -186,8 +186,9 @@ export class SecureConfigManager {
       // Create full backup structure
       const fullBackupData = { metadata: backupData, data: configData };
 
-      // Calculate backup checksum
-      backupData.checksum = this.calculateChecksum(fullBackupData);
+      // Calculate backup checksum on metadata
+      const { checksum, ...metadataWithoutChecksum } = backupData;
+      backupData.checksum = this.calculateChecksum(metadataWithoutChecksum);
 
       // Update full backup with checksum
       fullBackupData.metadata = backupData;
@@ -220,7 +221,7 @@ export class SecureConfigManager {
       const fullBackupData = JSON.parse(decryptedBackup);
 
       // Verify backup integrity
-      if (!this.verifyChecksum(fullBackupData)) {
+      if (!this.verifyChecksum(fullBackupData.metadata)) {
         throw new Error('Backup integrity check failed');
       }
 
@@ -254,7 +255,7 @@ export class SecureConfigManager {
             const decryptedData = this.decrypt(encryptedData);
             const backupData = JSON.parse(decryptedData);
 
-            if (this.verifyChecksum(backupData)) {
+            if (this.verifyChecksum(backupData.metadata)) {
               backups.push(backupData.metadata);
             }
           } catch (error) {

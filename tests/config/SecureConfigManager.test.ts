@@ -247,11 +247,11 @@ describe('SecureConfigManager', () => {
 
       await secureConfigManager.storeConfig(config);
 
-      // Manually tamper with the file
+      // Manually tamper with the file by corrupting the authTag
       const filePath = path.join(testConfigDir, 'integrity-test.enc');
-      let fileContent = fs.readFileSync(filePath, 'utf8');
-      fileContent = fileContent.replace('Integrity Test', 'Tampered Name');
-      fs.writeFileSync(filePath, fileContent, 'utf8');
+      let encryptedData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      encryptedData.authTag = 'corrupted' + encryptedData.authTag.substring(9);
+      fs.writeFileSync(filePath, JSON.stringify(encryptedData), 'utf8');
 
       // Attempt to retrieve should return null due to integrity check failure
       const result = await secureConfigManager.getConfig('integrity-test');

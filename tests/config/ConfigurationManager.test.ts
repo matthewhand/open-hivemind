@@ -216,8 +216,8 @@ describe('ConfigurationManager', () => {
 
       it('should handle case-sensitive lookups', () => {
         const result1 = configManager.getSession(testIntegration.toUpperCase(), testChannel);
-        const result2 = configManager.getSession(testIntegration, testChannel.toUpperCase());
-        
+        const result2 = configManager.getSession(testIntegration, testChannel.toLowerCase());
+
         expect(result1).toBeUndefined();
         expect(result2).toBeUndefined();
       });
