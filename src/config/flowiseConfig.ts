@@ -31,7 +31,8 @@ const flowiseConfig = convict({
     format: (val: any) => {
       if (typeof val === 'boolean') return val;
       if (typeof val === 'string') {
-        if (val === '' || val === 'false' || val === 'FALSE' || val === '0' || val === 'no' || val === 'NO') return false;
+        const trimmed = val.trim();
+        if (trimmed === '' || trimmed === 'false' || trimmed === 'FALSE' || trimmed === '0' || trimmed === 'no' || trimmed === 'NO') return false;
         return true;
       }
       return Boolean(val);

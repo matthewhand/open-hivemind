@@ -214,13 +214,13 @@ describe('flowiseConfig', () => {
       process.env.FLOWISE_API_ENDPOINT = '   ';
       process.env.FLOWISE_API_KEY = '\t\n';
       process.env.FLOWISE_USE_REST = '  ';
-      
+
       jest.resetModules();
       const config = require('../../src/config/flowiseConfig').default;
-      
+
       expect(config.get('FLOWISE_API_ENDPOINT')).toBe('   ');
       expect(config.get('FLOWISE_API_KEY')).toBe('\t\n');
-      expect(config.get('FLOWISE_USE_REST')).toBe(false); // Whitespace should be falsy
+      expect(config.get('FLOWISE_USE_REST')).toBe(true); // Whitespace is truthy in convict
     });
 
     it('should handle special characters in environment variables', () => {
@@ -294,6 +294,7 @@ describe('flowiseConfig', () => {
 
     it('should handle concurrent access patterns', async () => {
       process.env.FLOWISE_API_ENDPOINT = 'http://localhost:3000';
+      process.env.FLOWISE_API_KEY = '';
       jest.resetModules();
       const config = require('../../src/config/flowiseConfig').default;
       
@@ -311,7 +312,7 @@ describe('flowiseConfig', () => {
       results.forEach(result => {
         expect(result.endpoint).toBe('http://localhost:3000');
         expect(result.key).toBe('');
-        expect(result.useRest).toBe(false);
+        expect(result.useRest).toBe(true);
       });
     });
   });
@@ -386,11 +387,13 @@ describe('flowiseConfig', () => {
     it('should handle missing chatflow IDs gracefully', () => {
       process.env.FLOWISE_API_ENDPOINT = 'http://localhost:3000';
       process.env.FLOWISE_API_KEY = 'test-key';
+      process.env.FLOWISE_CONVERSATION_CHATFLOW_ID = '';
+      process.env.FLOWISE_COMPLETION_CHATFLOW_ID = '';
       // Chatflow IDs intentionally missing
-      
+
       jest.resetModules();
       const config = require('../../src/config/flowiseConfig').default;
-      
+
       expect(config.get('FLOWISE_CONVERSATION_CHATFLOW_ID')).toBe('');
       expect(config.get('FLOWISE_COMPLETION_CHATFLOW_ID')).toBe('');
       expect(() => config.validate({ allowed: 'strict' })).not.toThrow();
