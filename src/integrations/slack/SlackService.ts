@@ -610,7 +610,7 @@ export class SlackService implements IMessengerService {
       } catch {
         // Fallback: literal stub with getAllBots()
         try {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
+           
           const { WebClient } = require('@slack/web-api');
           const webClient = new WebClient('xoxb-test-token');
           return {

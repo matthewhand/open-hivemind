@@ -10,18 +10,54 @@ import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
+import { InputSanitizer } from '@src/utils/InputSanitizer';
 
 const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 
+/**
+ * Main message handler for processing incoming messages from various platforms
+ *
+ * This function orchestrates the entire message processing pipeline including:
+ * - Message validation and preprocessing
+ * - Bot ID stripping and user hint addition
+ * - Command processing vs LLM response generation
+ * - Provider selection and response generation
+ * - Error handling and logging
+ *
+ * @param message - The incoming message object containing content and metadata
+ * @param historyMessages - Array of previous messages for context (default: empty array)
+ * @param botConfig - Bot configuration object containing settings and credentials
+ * @returns Promise<string | null> - The bot's response or null if no response needed
+ *
+ * @throws Will not throw but returns error messages as strings for graceful handling
+ *
+ * @example
+ * ```typescript
+ * const response = await handleMessage(message, history, botConfig);
+ * if (response) {
+ *   await sendMessage(response);
+ * }
+ * ```
+ */
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string | null> {
-  try {
-    const text = message.getText();
-    if (!text) {
-      logger('Empty message content, skipping processing.');
-      return null;
-    }
+  return await PerformanceMonitor.measureAsync(async () => {
+    try {
+      const text = message.getText();
+      if (!text) {
+        logger('Empty message content, skipping processing.');
+        return null;
+      }
+
+      // Sanitize input
+      const sanitizedText = InputSanitizer.sanitizeMessage(text);
+      const validation = InputSanitizer.validateMessage(sanitizedText);
+      if (!validation.isValid) {
+        logger(`Invalid message: ${validation.reason}`);
+        return null;
+      }
 
     // Get providers safely
     const messageProviders = getMessengerProvider();
@@ -132,12 +168,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       false
     );
 
-    const endTime = Date.now();
-    const processingTime = endTime - startTime;
-    logger(`Message processed in ${processingTime}ms`);
-    return reply;
-  } catch (error: unknown) {
-    logger('Error handling message:', error instanceof Error ? error.stack : String(error));
-    return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
-  }
+      const endTime = Date.now();
+      const processingTime = endTime - startTime;
+      logger(`Message processed in ${processingTime}ms`);
+      return reply;
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, 'messageHandler.handleMessage');
+      return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }, 'handleMessage', 5000); // 5 second threshold for warnings
 }

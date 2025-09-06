@@ -20,7 +20,12 @@ describe('SecureConfigManager', () => {
 
     // Reset the singleton instance to ensure clean state
     (SecureConfigManager as any).instance = null;
-    console.log('Singleton reset');
+    // Also clear any cached encryption keys
+    const keyPath = path.join(testConfigDir, '.encryption_key');
+    if (fs.existsSync(keyPath)) {
+      fs.unlinkSync(keyPath);
+    }
+    console.log('Singleton reset and encryption key cleared');
 
     try {
       secureConfigManager = SecureConfigManager.getInstance();
