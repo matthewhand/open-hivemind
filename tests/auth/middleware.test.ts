@@ -3,15 +3,22 @@ import { AuthManager } from '../../src/auth/AuthManager';
 import { authenticate, requireRole, requirePermission, requireAdmin, optionalAuth } from '../../src/auth/middleware';
 import { AuthMiddlewareRequest } from '../../src/auth/types';
 
-// Skip tests on ARM64 Linux due to bcrypt native binary compatibility issues
-const isARM64Linux = process.platform === 'linux' && process.arch === 'arm64';
-const describeARM64 = isARM64Linux ? describe.skip : describe;
-
-describeARM64('Authentication Middleware', () => {
+describe('Authentication Middleware', () => {
   let mockReq: any;
   let mockRes: any;
-  let mockNext: jest.Mock;
+  let mockNext: any;
   let authManager: AuthManager;
+
+  beforeEach(() => {
+    // Mock bcrypt to avoid native binary issues on ARM64 Linux
+    jest.mock('bcrypt', () => ({
+      hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),
+      compare: jest.fn().mockResolvedValue(true),
+      genSalt: jest.fn().mockResolvedValue('$2b$10$salt'),
+    }));
+
+    authManager = AuthManager.getInstance();
+  });
 
   beforeEach(() => {
     // Reset singleton instance
