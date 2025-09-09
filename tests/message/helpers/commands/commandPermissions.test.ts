@@ -15,27 +15,16 @@ describe('Command Permissions', () => {
   });
 
   describe('isAuthorizedUser', () => {
-    it('should allow authorized users', () => {
-      const authorizedUsers = ['user1', 'user2', 'admin'];
-      expect(isAuthorizedUser('user1', authorizedUsers)).toBe(true);
-      expect(isAuthorizedUser('admin', authorizedUsers)).toBe(true);
-    });
-
-    it('should deny unauthorized users', () => {
-      const authorizedUsers = ['user1', 'user2'];
-      expect(isAuthorizedUser('hacker', authorizedUsers)).toBe(false);
-      expect(isAuthorizedUser('', authorizedUsers)).toBe(false);
-    });
-
-    it('should handle empty authorized users list', () => {
-      expect(isAuthorizedUser('user1', [])).toBe(false);
-      expect(isAuthorizedUser('admin', [])).toBe(false);
-    });
-
-    it('should handle case sensitivity', () => {
-      const authorizedUsers = ['User1', 'ADMIN'];
-      expect(isAuthorizedUser('user1', authorizedUsers)).toBe(false);
-      expect(isAuthorizedUser('User1', authorizedUsers)).toBe(true);
+    it.each([
+      ['authorized user', 'user1', ['user1', 'user2', 'admin'], true],
+      ['authorized admin', 'admin', ['user1', 'user2', 'admin'], true],
+      ['unauthorized user', 'hacker', ['user1', 'user2'], false],
+      ['empty user', '', ['user1', 'user2'], false],
+      ['empty list', 'user1', [], false],
+      ['case sensitivity mismatch', 'user1', ['User1', 'ADMIN'], false],
+      ['case sensitivity match', 'User1', ['User1', 'ADMIN'], true]
+    ])('should handle %s', (desc, userId, authorizedUsers, expected) => {
+      expect(isAuthorizedUser(userId, authorizedUsers)).toBe(expected);
     });
   });
 
@@ -106,11 +95,13 @@ describe('Command Permissions', () => {
       expect(checkCommandPermissions(botMessage, 'test', config)).toBe(false);
     });
 
-    it('should handle missing configuration', () => {
+    it.each([
+      ['missing configuration', {}],
+      ['null configuration', null]
+    ])('should handle %s', (desc, config) => {
       const message = createMockMessage('user1');
-      
-      expect(checkCommandPermissions(message, 'test', {})).toBe(false);
-      expect(checkCommandPermissions(message, 'test', null as any)).toBe(false);
+
+      expect(checkCommandPermissions(message, 'test', config as any)).toBe(false);
     });
   });
 });

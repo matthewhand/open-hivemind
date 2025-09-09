@@ -25,6 +25,7 @@ class MockMessage implements IMessage {
   public data: any = {};
   public role: string = 'user';
   public content: string;
+  public platform: string = 'test';
   public tool_calls?: any[];
   public metadata?: any;
 
@@ -100,12 +101,13 @@ describe('messageHandler', () => {
   });
 
   describe('basic message handling', () => {
-    it('should process a simple message', async () => {
+    it('should handle basic message processing', async () => {
+      // Test simple message
       const message = new MockMessage('Hello AI');
       const historyMessages: IMessage[] = [];
-      
+
       const response = await handleMessage(message, historyMessages, mockBotConfig);
-      
+
       expect(response).toBe('AI response');
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         'Hello AI',
@@ -115,148 +117,143 @@ describe('messageHandler', () => {
           botId: 'bot-123',
         })
       );
-    });
 
-    it('should handle messages with history', async () => {
-      const message = new MockMessage('Follow up question');
-      const historyMessages = [
+      // Test with history
+      const message2 = new MockMessage('Follow up question');
+      const historyMessages2 = [
         new MockMessage('Previous message 1'),
         new MockMessage('Previous message 2')
       ];
-      
-      await handleMessage(message, historyMessages, mockBotConfig);
-      
+
+      await handleMessage(message2, historyMessages2, mockBotConfig);
+
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         'Follow up question',
-        historyMessages,
+        historyMessages2,
         expect.any(Object)
       );
-    });
 
-    it('should process bot ID stripping when enabled', async () => {
-      mockStripBotId.mockReturnValue('Stripped message');
-      const message = new MockMessage('<@bot-123> Hello');
-      
-      await handleMessage(message, [], mockBotConfig);
-      
+      // Test bot ID stripping
+      mockStripBotId.mockImplementation((text) => text.includes('<@bot-123>') ? 'Stripped message' : text);
+      const message3 = new MockMessage('<@bot-123> Hello');
+
+      await handleMessage(message3, [], mockBotConfig);
+
       expect(mockStripBotId).toHaveBeenCalledWith('<@bot-123> Hello', 'bot-123');
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         'Stripped message',
         [],
         expect.any(Object)
       );
-    });
 
-    it('should add user hints when enabled', async () => {
+      // Test user hints
       mockAddUserHint.mockReturnValue('(from test-user) Hello');
-      const message = new MockMessage('Hello');
-      
-      await handleMessage(message, [], mockBotConfig);
-      
-      expect(mockAddUserHint).toHaveBeenCalledWith('Hello', 'test-user', 'bot-123');
+      const message4 = new MockMessage('Hello');
+
+      await handleMessage(message4, [], mockBotConfig);
+
+      expect(mockAddUserHint).toHaveBeenLastCalledWith('Hello', 'test-user', 'bot-123');
     });
   });
 
   describe('reply decision logic', () => {
-    it('should not process message when shouldReplyToMessage returns false', async () => {
+    it('should handle reply decision logic', async () => {
+      // Test not processing when shouldReply returns false
       mockShouldReply.mockReturnValue(false);
       const message = new MockMessage('Hello');
-      
+
       const response = await handleMessage(message, [], mockBotConfig);
-      
+
       expect(response).toBeNull();
       expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
-    });
 
-    it('should check reply conditions with correct parameters', async () => {
-      const message = new MockMessage('Hello');
-      
-      await handleMessage(message, [], mockBotConfig);
-      
-      expect(mockShouldReply).toHaveBeenCalledWith(message, 'bot-123', 'discord');
+      // Test checking reply conditions
+      mockShouldReply.mockReturnValue(true);
+      const message2 = new MockMessage('Hello');
+
+      await handleMessage(message2, [], mockBotConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'discord');
     });
   });
 
   describe('error handling', () => {
-    it('should handle LLM provider errors gracefully', async () => {
+    it('should handle errors gracefully', async () => {
+      // Test LLM provider errors
       mockLlmProvider.generateChatCompletion.mockRejectedValue(new Error('LLM Error'));
       const message = new MockMessage('Hello');
-      
+
       const response = await handleMessage(message, [], mockBotConfig);
-      
+
       expect(response).toMatch(/error/i);
-    });
 
-    it('should handle missing LLM provider', async () => {
+      // Test missing LLM provider
       mockGetLlmProvider.mockReturnValue([]);
-      const message = new MockMessage('Hello');
-      
-      const response = await handleMessage(message, [], mockBotConfig);
-      
-      expect(response).toMatch(/no.*provider/i);
-    });
+      const message2 = new MockMessage('Hello');
 
-    it('should handle processing errors in helper functions', async () => {
+      const response2 = await handleMessage(message2, [], mockBotConfig);
+
+      expect(response2).toMatch(/no.*provider/i);
+
+      // Test processing errors in helper functions
       mockStripBotId.mockImplementation(() => {
         throw new Error('Strip error');
       });
-      const message = new MockMessage('Hello');
-      
-      // Should not crash, should handle error gracefully
-      const response = await handleMessage(message, [], mockBotConfig);
-      
-      expect(typeof response).toBe('string');
+      const message3 = new MockMessage('Hello');
+
+      const response3 = await handleMessage(message3, [], mockBotConfig);
+
+      expect(typeof response3).toBe('string');
     });
   });
 
   describe('configuration handling', () => {
-    it('should respect message configuration settings', async () => {
+    it('should handle configuration correctly', async () => {
+      // Test respecting message configuration
       mockMessageConfig.get.mockImplementation((key: any) => {
         if (key === 'MESSAGE_STRIP_BOT_ID') return true;
         if (key === 'MESSAGE_ADD_USER_HINT') return true;
         return false;
       });
-      
+
       const message = new MockMessage('Hello');
       await handleMessage(message, [], mockBotConfig);
-      
-      expect(mockMessageConfig.get).toHaveBeenCalled();
-    });
 
-    it('should handle different integration types', async () => {
+      expect(mockMessageConfig.get).toHaveBeenCalled();
+
+      // Test different integration types
       const slackConfig = { ...mockBotConfig, integration: 'slack' };
-      const message = new MockMessage('Hello');
-      
-      await handleMessage(message, [], slackConfig);
-      
-      expect(mockShouldReply).toHaveBeenCalledWith(message, 'bot-123', 'slack');
+      const message2 = new MockMessage('Hello');
+
+      await handleMessage(message2, [], slackConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'slack');
     });
   });
 
   describe('message content processing', () => {
-    it('should handle empty messages', async () => {
+    it('should handle different message content', async () => {
+      // Test empty messages
       const message = new MockMessage('');
-      
+
       const response = await handleMessage(message, [], mockBotConfig);
-      
+
       expect(response).toBeNull();
-    });
 
-    it('should handle very long messages', async () => {
+      // Test very long messages
       const longMessage = 'x'.repeat(10000);
-      const message = new MockMessage(longMessage);
-      
-      await handleMessage(message, [], mockBotConfig);
-      
-      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
-    });
+      const message2 = new MockMessage(longMessage);
 
-    it('should handle special characters and unicode', async () => {
+      await handleMessage(message2, [], mockBotConfig);
+
+      expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
+
+      // Test special characters
       const specialMessage = '🚀 Hello! @user #channel $special &chars';
-      const message = new MockMessage(specialMessage);
-      
-      await handleMessage(message, [], mockBotConfig);
-      
+      const message3 = new MockMessage(specialMessage);
+
+      await handleMessage(message3, [], mockBotConfig);
+
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         specialMessage,
         [],

@@ -55,7 +55,7 @@ describe('Authentication Middleware', () => {
 
       mockReq.headers.authorization = `Bearer ${loginResult.accessToken}`;
 
-      await authenticate(mockReq as Request, mockRes as Response, mockNext);
+      await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockReq.user).toBeDefined();
@@ -63,40 +63,42 @@ describe('Authentication Middleware', () => {
       expect(mockReq.permissions).toBeDefined();
     });
 
-    it('should return 401 for missing authorization header', async () => {
-      await authenticate(mockReq as Request, mockRes as Response, mockNext);
+    const authErrorCases = [
+      {
+        desc: 'should return 401 for missing authorization header',
+        setup: () => {},
+        expectedStatus: 401,
+        expectedJson: {
+          error: 'Authentication required',
+          message: 'Bearer token required in Authorization header'
+        }
+      },
+      {
+        desc: 'should return 401 for invalid token format',
+        setup: () => { mockReq.headers.authorization = 'InvalidFormat'; },
+        expectedStatus: 401,
+        expectedJson: {
+          error: 'Authentication required',
+          message: 'Bearer token required in Authorization header'
+        }
+      },
+      {
+        desc: 'should return 401 for invalid JWT token',
+        setup: () => { mockReq.headers.authorization = 'Bearer invalid-token'; },
+        expectedStatus: 401,
+        expectedJson: {
+          error: 'Authentication failed',
+          message: 'Invalid or expired token'
+        }
+      }
+    ];
 
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Authentication required',
-        message: 'Bearer token required in Authorization header'
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should return 401 for invalid token format', async () => {
-      mockReq.headers.authorization = 'InvalidFormat';
-
-      await authenticate(mockReq as Request, mockRes as Response, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Authentication required',
-        message: 'Bearer token required in Authorization header'
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should return 401 for invalid JWT token', async () => {
-      mockReq.headers.authorization = 'Bearer invalid-token';
-
+    it.each(authErrorCases)('$desc', async ({ setup, expectedStatus, expectedJson }) => {
+      setup();
       await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Authentication failed',
-        message: 'Invalid or expired token'
-      });
+      expect(mockRes.status).toHaveBeenCalledWith(expectedStatus);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedJson);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -128,30 +130,36 @@ describe('Authentication Middleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it('should return 403 for user with insufficient role', () => {
-      const middleware = requireRole('admin');
+    const roleErrorCases = [
+      {
+        desc: 'should return 403 for user with insufficient role',
+        setup: () => {},
+        middleware: () => requireRole('admin'),
+        expectedStatus: 403,
+        expectedJson: {
+          error: 'Insufficient permissions',
+          message: 'Required role: admin, your role: user'
+        }
+      },
+      {
+        desc: 'should return 401 for unauthenticated request',
+        setup: () => { mockReq.user = null; },
+        middleware: () => requireRole('user'),
+        expectedStatus: 401,
+        expectedJson: {
+          error: 'Authentication required',
+          message: 'User not authenticated'
+        }
+      }
+    ];
 
-      middleware(mockReq, mockRes, mockNext);
+    it.each(roleErrorCases)('$desc', ({ setup, middleware, expectedStatus, expectedJson }) => {
+      setup();
+      const mw = middleware();
+      mw(mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(403);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Insufficient permissions',
-        message: 'Required role: admin, your role: user'
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should return 401 for unauthenticated request', () => {
-      const middleware = requireRole('user');
-      mockReq.user = null;
-
-      middleware(mockReq, mockRes, mockNext);
-
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Authentication required',
-        message: 'User not authenticated'
-      });
+      expect(mockRes.status).toHaveBeenCalledWith(expectedStatus);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedJson);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -246,7 +254,7 @@ describe('Authentication Middleware', () => {
 
       mockReq.headers.authorization = `Bearer ${loginResult.accessToken}`;
 
-      await optionalAuth(mockReq as Request, mockRes as Response, mockNext);
+      await optionalAuth(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalled();
       expect(mockReq.user).toBeDefined();

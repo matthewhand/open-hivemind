@@ -102,38 +102,50 @@ describe('AuthManager', () => {
       await authManager.register(registerData);
     });
 
-    it('should authenticate user with correct credentials', async () => {
-      const loginData = {
-        username: 'testuser',
-        password: 'password123'
-      };
+    const authenticationCases = [
+      {
+        desc: 'should authenticate user with correct credentials',
+        data: {
+          username: 'testuser',
+          password: 'password123'
+        },
+        isSuccess: true,
+        assertions: (result: any) => {
+          expect(result).toHaveProperty('accessToken');
+          expect(result).toHaveProperty('refreshToken');
+          expect(result).toHaveProperty('user');
+          expect(result).toHaveProperty('expiresIn');
+          expect(result.user.username).toBe('testuser');
+          expect(result.expiresIn).toBe(3600);
+        }
+      },
+      {
+        desc: 'should reject authentication with wrong password',
+        data: {
+          username: 'testuser',
+          password: 'wrongpassword'
+        },
+        isSuccess: false,
+        expectedError: 'Invalid credentials'
+      },
+      {
+        desc: 'should reject authentication with non-existent user',
+        data: {
+          username: 'nonexistent',
+          password: 'password123'
+        },
+        isSuccess: false,
+        expectedError: 'Invalid credentials'
+      }
+    ];
 
-      const result = await authManager.login(loginData);
-
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(result).toHaveProperty('user');
-      expect(result).toHaveProperty('expiresIn');
-      expect(result.user.username).toBe('testuser');
-      expect(result.expiresIn).toBe(3600); // 1 hour
-    });
-
-    it('should reject authentication with wrong password', async () => {
-      const loginData = {
-        username: 'testuser',
-        password: 'wrongpassword'
-      };
-
-      await expect(authManager.login(loginData)).rejects.toThrow('Invalid credentials');
-    });
-
-    it('should reject authentication with non-existent user', async () => {
-      const loginData = {
-        username: 'nonexistent',
-        password: 'password123'
-      };
-
-      await expect(authManager.login(loginData)).rejects.toThrow('Invalid credentials');
+    it.each(authenticationCases)('$desc', async ({ data, isSuccess, assertions, expectedError }) => {
+      if (isSuccess && assertions) {
+        const result = await authManager.login(data);
+        assertions(result);
+      } else if (!isSuccess) {
+        await expect(authManager.login(data)).rejects.toThrow(expectedError);
+      }
     });
   });
 

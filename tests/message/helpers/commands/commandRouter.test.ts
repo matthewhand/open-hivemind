@@ -13,93 +13,87 @@ describe('commandRouter', () => {
         jest.clearAllMocks();
     });
 
-    it('should route !status command to handleStatusCommand', async () => {
+    it('should route commands correctly', async () => {
+        // Route !status command
         (handleStatusCommand as jest.Mock).mockResolvedValue('System is operational. All services are running smoothly.');
 
-        const result = await routeCommand('!status');
+        let result = await routeCommand('!status');
 
         expect(handleStatusCommand).toHaveBeenCalledWith([]);
         expect(result).toBe('System is operational. All services are running smoothly.');
-    });
 
-    it('should handle !status command with arguments gracefully', async () => {
-        (handleStatusCommand as jest.Mock).mockResolvedValue('System is operational. All services are running smoothly.');
-
-        const result = await routeCommand('!status extra arguments');
+        // Handle !status with arguments
+        result = await routeCommand('!status extra arguments');
 
         expect(handleStatusCommand).toHaveBeenCalledWith(['extra', 'arguments']);
         expect(result).toBe('System is operational. All services are running smoothly.');
-    });
 
-    it('should return unrecognized command message for unknown commands', async () => {
-        const result = await routeCommand('!unknown');
+        // Return unrecognized for unknown commands
+        jest.clearAllMocks();
+        result = await routeCommand('!unknown');
 
         expect(handleStatusCommand).not.toHaveBeenCalled();
         expect(result).toBe('Unrecognized command: unknown');
-    });
 
-    it('should return null for empty command content', async () => {
-        const result = await routeCommand('');
+        // Return null for empty content
+        result = await routeCommand('');
 
         expect(handleStatusCommand).not.toHaveBeenCalled();
         expect(result).toBeNull();
-    });
 
-    it('should return null for non-command messages', async () => {
-        const result = await routeCommand('Hello there!');
+        // Return null for non-command messages
+        result = await routeCommand('Hello there!');
 
         expect(handleStatusCommand).not.toHaveBeenCalled();
         expect(result).toBeNull();
     });
 
     describe('negative tests', () => {
-        it('should handle permission errors gracefully', async () => {
+        it('should handle negative cases', async () => {
+            // Handle permission errors
             (handleStatusCommand as jest.Mock).mockRejectedValue(new Error('Permission denied'));
 
-            const result = await routeCommand('!status');
+            let result = await routeCommand('!status');
 
             expect(result).toBe('Error: Permission denied');
-        });
 
-        it('should handle malformed commands', async () => {
+            // Handle malformed commands
             const malformedCommands = ['!', '!!status', '!status:', '!status::action'];
-            
+
             for (const cmd of malformedCommands) {
-                const result = await routeCommand(cmd);
+                result = await routeCommand(cmd);
                 expect(result === null || typeof result === 'string').toBe(true);
             }
-        });
 
-        it('should handle very long command names', async () => {
+            // Handle very long command names
             const longCommand = '!' + 'a'.repeat(1000);
-            const result = await routeCommand(longCommand);
-            
-            expect(result).toContain('Unrecognized command');
-        });
+            result = await routeCommand(longCommand);
 
-        it('should handle special characters in commands', async () => {
+            expect(result).toContain('Unrecognized command');
+
+            // Handle special characters
             const specialCommands = ['!status@#$', '!status\n\t', '!status<script>'];
-            
+
             for (const cmd of specialCommands) {
-                const result = await routeCommand(cmd);
+                result = await routeCommand(cmd);
                 expect(typeof result).toBe('string');
             }
         });
     });
 
     describe('complex command handling', () => {
-        it('should handle commands with multiple arguments', async () => {
+        it('should handle complex commands', async () => {
+            // Handle commands with multiple arguments
             (handleStatusCommand as jest.Mock).mockResolvedValue('OK');
-            
-            const result = await routeCommand('!status verbose json');
-            
+
+            let result = await routeCommand('!status verbose json');
+
             expect(handleStatusCommand).toHaveBeenCalledWith(['verbose', 'json']);
             expect(result).toBe('OK');
-        });
 
-        it('should handle commands with actions', async () => {
-            const result = await routeCommand('!deploy:start production --force');
-            
+            // Handle commands with actions
+            result = await routeCommand('!deploy:start production --force');
+
             expect(result).toBe('Unrecognized command: deploy');
         });
     });
@@ -109,21 +103,19 @@ describe('commandRouter', () => {
             jest.clearAllMocks();
         });
 
-        it('should track successful command execution', async () => {
+        it('should handle telemetry validation', async () => {
+            // Track successful command execution
             (handleStatusCommand as jest.Mock).mockResolvedValue('Success');
-            
-            await routeCommand('!status');
-            
-            // Note: Actual telemetry integration would be implemented in commandRouter
-            expect(true).toBe(true); // Placeholder for telemetry assertions
-        });
 
-        it('should track failed command execution', async () => {
-            (handleStatusCommand as jest.Mock).mockRejectedValue(new Error('Failed'));
-            
             await routeCommand('!status');
-            
-            // Note: Actual telemetry integration would be implemented in commandRouter
+
+            expect(true).toBe(true); // Placeholder for telemetry assertions
+
+            // Track failed command execution
+            (handleStatusCommand as jest.Mock).mockRejectedValue(new Error('Failed'));
+
+            await routeCommand('!status');
+
             expect(true).toBe(true); // Placeholder for telemetry assertions
         });
     });

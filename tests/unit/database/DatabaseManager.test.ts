@@ -16,44 +16,40 @@ describe('DatabaseManager', () => {
   });
 
   describe('Connection Management', () => {
-    it('should connect to database successfully', async () => {
+    it('should handle connection management', async () => {
+      // Connect successfully
       await manager.connect();
       expect(manager.isConnected()).toBe(true);
-    });
 
-    it('should disconnect from database successfully', async () => {
-      await manager.connect();
-      expect(manager.isConnected()).toBe(true);
-      
+      // Disconnect successfully
       await manager.disconnect();
       expect(manager.isConnected()).toBe(false);
-    });
 
-    it('should handle multiple connect calls gracefully', async () => {
+      // Handle multiple connect calls
       await manager.connect();
-      await manager.connect(); // Second call should not throw
+      await manager.connect(); // Should not throw
       expect(manager.isConnected()).toBe(true);
-    });
 
-    it('should handle disconnect when not connected', async () => {
+      // Handle disconnect when not connected
+      await manager.disconnect();
       expect(manager.isConnected()).toBe(false);
       await expect(manager.disconnect()).resolves.not.toThrow();
     });
   });
 
   describe('Singleton Pattern', () => {
-    it('should return the same instance', () => {
+    it('should implement singleton pattern', async () => {
+      // Return same instance
       const instance1 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
       const instance2 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
       expect(instance1).toBe(instance2);
-    });
 
-    it('should maintain state across getInstance calls', async () => {
-      const instance1 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      await instance1.connect();
-      
-      const instance2 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      expect(instance2.isConnected()).toBe(true);
+      // Maintain state
+      const instance3 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+      await instance3.connect();
+
+      const instance4 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+      expect(instance4.isConnected()).toBe(true);
     });
   });
 
@@ -62,18 +58,17 @@ describe('DatabaseManager', () => {
       await manager.connect();
     });
 
-    it('should return empty message history initially', async () => {
+    it('should handle message history', async () => {
+      // Return empty initially
       const history = await manager.getMessageHistory('test-channel');
       expect(history).toEqual([]);
       expect(Array.isArray(history)).toBe(true);
-    });
 
-    it('should handle invalid channel IDs gracefully', async () => {
-      const history = await manager.getMessageHistory('');
-      expect(history).toEqual([]);
-    });
+      // Handle invalid channel IDs
+      const history2 = await manager.getMessageHistory('');
+      expect(history2).toEqual([]);
 
-    it('should handle null/undefined channel IDs', async () => {
+      // Handle null/undefined
       await expect(manager.getMessageHistory(null as any)).resolves.toEqual([]);
       await expect(manager.getMessageHistory(undefined as any)).resolves.toEqual([]);
     });
@@ -84,24 +79,22 @@ describe('DatabaseManager', () => {
       await manager.connect();
     });
 
-    it('should store and retrieve message history', async () => {
-      // This test assumes the DatabaseManager has methods to store messages
-      // If not implemented, this documents the expected behavior
+    it('should handle message storage and retrieval', async () => {
       const channelId = 'test-channel-store';
-      
-      // Try to get initial empty history
+
+      // Get initial empty history
       const initialHistory = await manager.getMessageHistory(channelId);
       expect(initialHistory).toEqual([]);
-      
+
       // If store method exists, test it
-      if (typeof manager.storeMessage === 'function') {
-        await manager.storeMessage(channelId, {
+      if (typeof (manager as any).storeMessage === 'function') {
+        await (manager as any).storeMessage(channelId, {
           id: 'msg1',
           content: 'Hello',
           author: 'user1',
           timestamp: new Date()
         });
-        
+
         const updatedHistory = await manager.getMessageHistory(channelId);
         expect(updatedHistory.length).toBe(1);
         expect(updatedHistory[0]).toMatchObject({
@@ -109,26 +102,21 @@ describe('DatabaseManager', () => {
           author: 'user1'
         });
       }
-    });
 
-    it('should handle message history pagination', async () => {
-      const channelId = 'test-channel-pagination';
-      
-      // Test with limit parameter if supported
+      // Handle pagination
       if (manager.getMessageHistory.length > 1) {
         const limitedHistory = await manager.getMessageHistory(channelId, 10);
         expect(Array.isArray(limitedHistory)).toBe(true);
         expect(limitedHistory.length).toBeLessThanOrEqual(10);
       }
-    });
 
-    it('should handle concurrent message operations', async () => {
+      // Handle concurrent operations
       const channelIds = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5'];
-      
-      const promises = channelIds.map(channelId => 
+
+      const promises = channelIds.map(channelId =>
         manager.getMessageHistory(channelId)
       );
-      
+
       const results = await Promise.all(promises);
       expect(results).toHaveLength(5);
       results.forEach(result => {
@@ -142,20 +130,18 @@ describe('DatabaseManager', () => {
       await manager.connect();
     });
 
-    it('should handle database schema initialization', async () => {
+    it('should handle database schema and migration', async () => {
       // Test that the database is properly initialized
       expect(manager.isConnected()).toBe(true);
-      
-      // If there are schema methods, test them
-      if (typeof manager.initializeSchema === 'function') {
-        await expect(manager.initializeSchema()).resolves.not.toThrow();
-      }
-    });
 
-    it('should handle database migrations gracefully', async () => {
+      // If there are schema methods, test them
+      if (typeof (manager as any).initializeSchema === 'function') {
+        await expect((manager as any).initializeSchema()).resolves.not.toThrow();
+      }
+
       // Test migration functionality if available
-      if (typeof manager.migrate === 'function') {
-        await expect(manager.migrate()).resolves.not.toThrow();
+      if (typeof (manager as any).migrate === 'function') {
+        await expect((manager as any).migrate()).resolves.not.toThrow();
       }
     });
   });
@@ -165,35 +151,32 @@ describe('DatabaseManager', () => {
       await manager.connect();
     });
 
-    it('should handle large message histories efficiently', async () => {
+    it('should handle performance and scalability', async () => {
+      // Handle large histories
       const channelId = 'large-history-channel';
       const startTime = Date.now();
-      
+
       const history = await manager.getMessageHistory(channelId);
       const endTime = Date.now();
-      
-      expect(Array.isArray(history)).toBe(true);
-      // Should complete within reasonable time (1 second)
-      expect(endTime - startTime).toBeLessThan(1000);
-    });
 
-    it('should handle multiple concurrent connections', async () => {
-      const managers = Array.from({ length: 5 }, () => 
+      expect(Array.isArray(history)).toBe(true);
+      expect(endTime - startTime).toBeLessThan(1000);
+
+      // Handle multiple concurrent connections
+      const managers = Array.from({ length: 5 }, () =>
         DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' })
       );
-      
-      // All should be the same instance (singleton)
+
       managers.forEach(mgr => {
         expect(mgr).toBe(manager);
       });
-    });
 
-    it('should handle rapid successive queries', async () => {
-      const channelId = 'rapid-queries-channel';
-      const queries = Array.from({ length: 50 }, () => 
-        manager.getMessageHistory(channelId)
+      // Handle rapid successive queries
+      const channelId2 = 'rapid-queries-channel';
+      const queries = Array.from({ length: 50 }, () =>
+        manager.getMessageHistory(channelId2)
       );
-      
+
       const results = await Promise.all(queries);
       expect(results).toHaveLength(50);
       results.forEach(result => {
@@ -203,95 +186,76 @@ describe('DatabaseManager', () => {
   });
 
   describe('Error Handling and Edge Cases', () => {
-    it('should handle getting history without connection gracefully', async () => {
+    it('should handle errors and edge cases', async () => {
+      // Handle getting history without connection
       expect(manager.isConnected()).toBe(false);
-      // The actual behavior may vary - it might return empty array or throw
       const result = await manager.getMessageHistory('test-channel');
       expect(Array.isArray(result)).toBe(true);
-    });
 
-    it('should handle invalid database configuration gracefully', () => {
-      // The actual implementation may not throw for invalid config
+      // Handle invalid database configuration
       expect(() => {
         const invalidManager = DatabaseManager.getInstance({ type: 'invalid' as any, path: '' });
         expect(invalidManager).toBeDefined();
       }).not.toThrow();
-    });
 
-    it('should handle database connection failures', async () => {
-      const failingManager = DatabaseManager.getInstance({ 
-        type: 'sqlite', 
-        path: '/invalid/path/database.db' 
+      // Handle database connection failures
+      const failingManager = DatabaseManager.getInstance({
+        type: 'sqlite',
+        path: '/invalid/path/database.db'
       });
-      
-      // The current implementation may not throw for invalid paths
-      // This documents the current behavior
-      await failingManager.connect();
-      // The connection state depends on the actual implementation
-      expect(typeof failingManager.isConnected()).toBe('boolean');
-    });
 
-    it('should handle database corruption scenarios', async () => {
+      await failingManager.connect();
+      expect(typeof failingManager.isConnected()).toBe('boolean');
+
+      // Handle database corruption
       await manager.connect();
-      
-      // Simulate database corruption by trying to query with malformed data
+
       const corruptChannelIds = [
         null,
         undefined,
         '',
-        'a'.repeat(10000), // Very long channel ID
-        '../../etc/passwd', // Path traversal attempt
-        '<script>alert("xss")</script>', // XSS attempt
-        'DROP TABLE messages;', // SQL injection attempt
+        'a'.repeat(10000),
+        '../../etc/passwd',
+        '<script>alert("xss")</script>',
+        'DROP TABLE messages;',
       ];
-      
-      for (const channelId of corruptChannelIds) {
-        const result = await manager.getMessageHistory(channelId as any);
-        expect(Array.isArray(result)).toBe(true);
-      }
-    });
 
-    it('should handle memory pressure gracefully', async () => {
-      await manager.connect();
-      
-      // Test with many simultaneous operations
-      const heavyOperations = Array.from({ length: 100 }, (_, i) => 
+      for (const channelId of corruptChannelIds) {
+        const result2 = await manager.getMessageHistory(channelId as any);
+        expect(Array.isArray(result2)).toBe(true);
+      }
+
+      // Handle memory pressure
+      const heavyOperations = Array.from({ length: 100 }, (_, i) =>
         manager.getMessageHistory(`stress-test-${i}`)
       );
-      
+
       const results = await Promise.all(heavyOperations);
       expect(results).toHaveLength(100);
       results.forEach(result => {
         expect(Array.isArray(result)).toBe(true);
       });
-    });
 
-    it('should handle disconnection during operations', async () => {
-      await manager.connect();
+      // Handle disconnection during operations
       expect(manager.isConnected()).toBe(true);
-      
-      // Start an operation and disconnect during it
+
       const operationPromise = manager.getMessageHistory('test-channel');
       await manager.disconnect();
-      
-      // Operation should still complete or fail gracefully
-      await expect(operationPromise).resolves.toBeDefined();
-    });
 
-    it('should handle reconnection scenarios', async () => {
-      // Test connect -> disconnect -> connect cycle
+      await expect(operationPromise).resolves.toBeDefined();
+
+      // Handle reconnection
       await manager.connect();
       expect(manager.isConnected()).toBe(true);
-      
+
       await manager.disconnect();
       expect(manager.isConnected()).toBe(false);
-      
+
       await manager.connect();
       expect(manager.isConnected()).toBe(true);
-      
-      // Should still work after reconnection
-      const result = await manager.getMessageHistory('reconnect-test');
-      expect(Array.isArray(result)).toBe(true);
+
+      const result3 = await manager.getMessageHistory('reconnect-test');
+      expect(Array.isArray(result3)).toBe(true);
     });
   });
 
@@ -300,7 +264,8 @@ describe('DatabaseManager', () => {
       await manager.connect();
     });
 
-    it('should validate channel ID format', async () => {
+    it('should handle data integrity and validation', async () => {
+      // Validate channel ID format
       const validChannelIds = [
         'channel-123',
         'general',
@@ -308,70 +273,65 @@ describe('DatabaseManager', () => {
         'project.beta',
         '1234567890'
       ];
-      
+
       for (const channelId of validChannelIds) {
         const result = await manager.getMessageHistory(channelId);
         expect(Array.isArray(result)).toBe(true);
       }
-    });
 
-    it('should handle special characters in channel IDs', async () => {
+      // Handle special characters
       const specialChannelIds = [
         'channel-with-émojis-🚀',
         'канал-на-русском',
         'チャンネル-日本語',
         'قناة-عربية'
       ];
-      
+
       for (const channelId of specialChannelIds) {
         const result = await manager.getMessageHistory(channelId);
         expect(Array.isArray(result)).toBe(true);
       }
-    });
 
-    it('should maintain data consistency across operations', async () => {
+      // Maintain data consistency
       const channelId = 'consistency-test';
-      
-      // Multiple reads should return consistent results
+
       const result1 = await manager.getMessageHistory(channelId);
       const result2 = await manager.getMessageHistory(channelId);
-      
+
       expect(result1).toEqual(result2);
     });
   });
 
   describe('Configuration and Environment', () => {
-    it('should handle different database types', () => {
+    it('should handle configuration and environment', () => {
+      // Handle different database types
       const configs = [
         { type: 'sqlite', path: ':memory:' },
         { type: 'sqlite', path: './test.db' },
       ];
-      
+
       configs.forEach(config => {
         expect(() => {
           const mgr = DatabaseManager.getInstance(config as any);
           expect(mgr).toBeDefined();
         }).not.toThrow();
       });
-    });
 
-    it('should handle missing configuration gracefully', () => {
+      // Handle missing configuration
       expect(() => {
         const mgr = DatabaseManager.getInstance(null as any);
         expect(mgr).toBeDefined();
       }).not.toThrow();
-      
+
       expect(() => {
         const mgr = DatabaseManager.getInstance(undefined as any);
         expect(mgr).toBeDefined();
       }).not.toThrow();
-    });
 
-    it('should handle environment-specific configurations', () => {
+      // Handle environment-specific configurations
       const originalEnv = process.env.NODE_ENV;
-      
+
       try {
-        // Test different environments
         ['development', 'production', 'test'].forEach(env => {
           process.env.NODE_ENV = env;
           const mgr = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });

@@ -117,16 +117,11 @@ jest.mock('discord.js', () => {
       expect(bots[0]).toHaveProperty('config');
     });
 
-    it('returns client via getClient', async () => {
+    it('returns client correctly', async () => {
       await service.initialize();
       const client = service.getClient();
       expect(client).toBeDefined();
       expect(client.login).toBeDefined();
-    });
-
-    it('returns first client when no index specified', async () => {
-      await service.initialize();
-      const client = service.getClient();
       expect(client).toBe(service.getAllBots()[0].client);
     });
 
@@ -159,12 +154,15 @@ jest.mock('discord.js', () => {
       expect(client1).not.toBe(client2);
     });
 
-    it('handles empty token validation during initialization', async () => {
+    it.each([
+      ['empty', { token: '' }],
+      ['missing', {}]
+    ])('handles %s token validation during initialization', async (type, discordConfig) => {
       mockGetDiscordBotConfigs.mockReturnValue([
         {
           name: 'TestBot1',
           messageProvider: 'discord',
-          discord: { token: '' },
+          discord: discordConfig,
           llmProvider: 'flowise',
         },
       ]);
@@ -176,31 +174,14 @@ jest.mock('discord.js', () => {
       await expect(service.initialize()).rejects.toThrow('One or more bot tokens are empty');
     });
 
-    it('handles missing token validation during initialization', async () => {
-      mockGetDiscordBotConfigs.mockReturnValue([
-        {
-          name: 'TestBot1',
-          messageProvider: 'discord',
-          discord: {},
-          llmProvider: 'flowise',
-        },
-      ]);
-
-      jest.resetModules();
-      DiscordService = require('@integrations/discord/DiscordService').DiscordService;
-      service = DiscordService.getInstance();
-
-      await expect(service.initialize()).rejects.toThrow('One or more bot tokens are empty');
-    });
-
-    it('sets message handler correctly', async () => {
+    it('sets and handles message handler correctly', async () => {
       await service.initialize();
-      const mockHandler = jest.fn().mockResolvedValue('response');
+      const mockHandlerError = jest.fn().mockRejectedValue(new Error('Handler error'));
 
-      service.setMessageHandler(mockHandler);
+      service.setMessageHandler(mockHandlerError);
 
       // Verify that the message handler is stored
-      expect((service as any).currentHandler).toBe(mockHandler);
+      expect((service as any).currentHandler).toBe(mockHandlerError);
 
       // Verify that event listeners are set up for all bots
       const bot = service.getAllBots()[0];
@@ -208,15 +189,21 @@ jest.mock('discord.js', () => {
       const messageCreateCall = onCalls.find((call: any) => call[0] === 'messageCreate');
       expect(messageCreateCall).toBeDefined();
       expect(typeof messageCreateCall[1]).toBe('function');
-    });
 
-    it('ignores bot messages in message handler', async () => {
-      await service.initialize();
-      const mockHandler = jest.fn().mockResolvedValue('response');
+      const messageCreateHandler = messageCreateCall[1];
 
-      service.setMessageHandler(mockHandler);
+      // Test handles errors gracefully
+      const mockMessage = {
+        author: { bot: false, id: 'user123' },
+        channelId: 'channel123',
+        content: 'test message',
+        guild: { id: 'guild123' },
+        channel: { type: 0 },
+      };
 
-      // Simulate bot message
+      await expect(messageCreateHandler(mockMessage)).resolves.not.toThrow();
+
+      // Test ignores bot messages
       const mockBotMessage = {
         author: { bot: true, id: 'bot123' },
         channelId: 'channel123',
@@ -225,68 +212,24 @@ jest.mock('discord.js', () => {
         channel: { type: 0 },
       };
 
-      const bot = service.getAllBots()[0];
-      const messageCreateHandler = bot.client.on.mock.calls.find((call: any) => call[0] === 'messageCreate')[1];
       await messageCreateHandler(mockBotMessage);
+      expect(mockHandlerError).not.toHaveBeenCalled();
 
-      expect(mockHandler).not.toHaveBeenCalled();
-    });
-
-    it('ignores messages without channelId', async () => {
-      await service.initialize();
-      const mockHandler = jest.fn().mockResolvedValue('response');
-
-      service.setMessageHandler(mockHandler);
-
-      // Simulate message without channelId
-      const mockMessage = {
+      // Test ignores messages without channelId
+      const mockMessageNoChannel = {
         author: { bot: false, id: 'user123' },
         content: 'test message',
         guild: { id: 'guild123' },
         channel: { type: 0 },
       };
 
-      const bot = service.getAllBots()[0];
-      const messageCreateHandler = bot.client.on.mock.calls.find((call: any) => call[0] === 'messageCreate')[1];
-      await messageCreateHandler(mockMessage);
+      await messageCreateHandler(mockMessageNoChannel);
+      expect(mockHandlerError).not.toHaveBeenCalled();
 
-      expect(mockHandler).not.toHaveBeenCalled();
-    });
-
-    it('handles message handler errors gracefully', async () => {
-      await service.initialize();
-      const mockHandler = jest.fn().mockRejectedValue(new Error('Handler error'));
-
-      service.setMessageHandler(mockHandler);
-
-      const mockMessage = {
-        author: { bot: false, id: 'user123' },
-        channelId: 'channel123',
-        content: 'test message',
-        guild: { id: 'guild123' },
-        channel: { type: 0 },
-      };
-
-      const bot = service.getAllBots()[0];
-      const messageCreateHandler = bot.client.on.mock.calls.find((call: any) => call[0] === 'messageCreate')[1];
-
-      // Should not throw
-      await expect(messageCreateHandler(mockMessage)).resolves.not.toThrow();
-    });
-
-    it('only sets message handler once', async () => {
-      await service.initialize();
-      const mockHandler1 = jest.fn().mockResolvedValue('response1');
-      const mockHandler2 = jest.fn().mockResolvedValue('response2');
-
-      service.setMessageHandler(mockHandler1);
-      service.setMessageHandler(mockHandler2); // Should be ignored
-
-      // Verify that only the first handler is stored
-      expect((service as any).currentHandler).toBe(mockHandler1);
-      expect((service as any).currentHandler).not.toBe(mockHandler2);
-
-      // Verify that handlerSet flag prevents second handler
+      // Test only sets once
+      const mockHandler2 = jest.fn();
+      service.setMessageHandler(mockHandler2);
+      expect((service as any).currentHandler).toBe(mockHandlerError);
       expect((service as any).handlerSet).toBe(true);
     });
 
@@ -330,7 +273,7 @@ jest.mock('discord.js', () => {
       delete process.env.DISCORD_BOT_TOKEN;
     });
 
-    it('adds bot at runtime', async () => {
+    it('adds bot successfully', async () => {
       await service.initialize();
 
       const initialBotCount = service.getAllBots().length;
@@ -345,37 +288,27 @@ jest.mock('discord.js', () => {
       const newBot = service.getAllBots()[service.getAllBots().length - 1];
       expect(newBot.botUserName).toBe('NewBot');
       expect(newBot.config.token).toBe('new_token');
-    });
 
-    it('throws error when adding bot without token', async () => {
-      await service.initialize();
-
-      await expect(service.addBot({
-        name: 'NewBot',
-        discord: {}
-      })).rejects.toThrow('Discord addBot requires a token');
-    });
-
-    it('throws error when adding bot with empty token', async () => {
-      await service.initialize();
-
-      await expect(service.addBot({
-        name: 'NewBot',
-        discord: { token: '' }
-      })).rejects.toThrow('Discord addBot requires a token');
-    });
-
-    it('uses default name when adding bot without name', async () => {
-      await service.initialize();
-
-      const initialBotCount = service.getAllBots().length;
-
+      // Test default name
       await service.addBot({
-        discord: { token: 'new_token' },
+        discord: { token: 'another_token' },
         llmProvider: 'openai'
       });
 
-      const newBot = service.getAllBots()[service.getAllBots().length - 1];
-      expect(newBot.botUserName).toBe(`Bot${initialBotCount + 1}`);
+      expect(service.getAllBots()).toHaveLength(initialBotCount + 2);
+      const defaultBot = service.getAllBots()[service.getAllBots().length - 1];
+      expect(defaultBot.botUserName).toBe(`Bot${initialBotCount + 2}`);
+    });
+
+    it.each([
+      ['without token', {}],
+      ['with empty token', { token: '' }]
+    ])('throws error when adding bot %s', async (desc, discord) => {
+      await service.initialize();
+
+      await expect(service.addBot({
+        name: 'NewBot',
+        discord
+      })).rejects.toThrow('Discord addBot requires a token');
     });
   });
