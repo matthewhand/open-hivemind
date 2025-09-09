@@ -1,13 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { LoginCredentials, RegisterData } from '../../auth/types';
+import { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
-
-interface AuthenticatedRequest extends Request {
-  user?: any;
-  permissions?: string[];
-}
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -48,7 +43,8 @@ router.post('/login', async (req: Request, res: Response) => {
  * POST /webui/api/auth/register
  * User registration endpoint (admin only)
  */
-router.post('/register', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/register', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const registerData: RegisterData = req.body;
 
@@ -127,7 +123,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * POST /webui/api/auth/logout
  * User logout endpoint
  */
-router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/logout', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { refreshToken } = req.body;
 
@@ -152,10 +149,11 @@ router.post('/logout', authenticate, async (req: AuthenticatedRequest, res: Resp
  * GET /webui/api/auth/me
  * Get current user profile
  */
-router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response) => {
+router.get('/me', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   res.json({
     success: true,
-    data: { user: req.user }
+    data: { user: authReq.user }
   });
 });
 
@@ -163,7 +161,8 @@ router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response) => {
  * PUT /webui/api/auth/password
  * Change user password
  */
-router.put('/password', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/password', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -228,7 +227,8 @@ router.put('/password', authenticate, async (req: AuthenticatedRequest, res: Res
  * GET /webui/api/auth/users
  * Get all users (admin only)
  */
-router.get('/users', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
+router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const users = authManager.getAllUsers();
 
@@ -250,7 +250,8 @@ router.get('/users', authenticate, requireAdmin, (req: AuthenticatedRequest, res
  * GET /webui/api/auth/users/:userId
  * Get specific user (admin only)
  */
-router.get('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
+router.get('/users/:userId', authenticate, requireAdmin, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
     const user = authManager.getUser(userId);
@@ -279,7 +280,8 @@ router.get('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedRequ
  * PUT /webui/api/auth/users/:userId
  * Update user (admin only)
  */
-router.put('/users/:userId', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/users/:userId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
     const updates = req.body;
@@ -315,12 +317,13 @@ router.put('/users/:userId', authenticate, requireAdmin, async (req: Authenticat
  * DELETE /webui/api/auth/users/:userId
  * Delete user (admin only)
  */
-router.delete('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
+router.delete('/users/:userId', authenticate, requireAdmin, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
 
     // Prevent deleting self
-    if (req.user && req.user.id === userId) {
+    if (authReq.user && authReq.user.id === userId) {
       return res.status(400).json({
         error: 'Invalid operation',
         message: 'Cannot delete your own account'
@@ -353,22 +356,23 @@ router.delete('/users/:userId', authenticate, requireAdmin, (req: AuthenticatedR
  * GET /webui/api/auth/permissions
  * Get current user permissions
  */
-router.get('/permissions', authenticate, (req: AuthenticatedRequest, res: Response) => {
-  if (!req.user) {
+router.get('/permissions', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
     return res.status(401).json({
       error: 'Authentication required',
       message: 'User not authenticated'
     });
   }
 
-  const permissions = authManager.getUserPermissions(req.user.role);
+  const permissions = authManager.getUserPermissions(authReq.user.role);
 
   res.json({
     success: true,
     data: {
-      role: req.user.role,
+      role: authReq.user.role,
       permissions,
-      user: req.user
+      user: authReq.user
     }
   });
 });

@@ -48,6 +48,12 @@ export class DiscordMessage implements IMessage {
   public role: string;
 
   /**
+   * The platform this message originated from.
+   * @type {string}
+   */
+  public platform: string;
+
+  /**
    * The underlying Discord.js Message object.
    * @private
    * @type {Message<boolean>}
@@ -80,6 +86,7 @@ export class DiscordMessage implements IMessage {
     this.channelId = message.channelId;
     this.data = message.content;
     this.role = ''; // Customize based on application needs
+    this.platform = 'discord';
 
     const a: any = (message as any).author || {};
     const author = `${a.username ?? 'unknown'}#${a.discriminator ?? '0000'} (${a.id ?? 'unknown'})`;

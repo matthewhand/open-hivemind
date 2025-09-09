@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder } from '@discordjs/builders';
 import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from '../voice/voiceCommandHandler';
 

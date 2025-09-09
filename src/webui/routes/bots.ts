@@ -12,7 +12,8 @@ const botManager = BotManager.getInstance();
  * GET /webui/api/bots
  * Get all bot instances
  */
-router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const bots = await botManager.getAllBots();
 
@@ -34,7 +35,8 @@ router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) 
  * GET /webui/api/bots/:botId
  * Get a specific bot instance
  */
-router.get('/:botId', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/:botId', authenticate, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const bot = await botManager.getBot(botId);
@@ -63,7 +65,8 @@ router.get('/:botId', authenticate, async (req: AuthMiddlewareRequest, res: Resp
  * POST /webui/api/bots
  * Create a new bot instance (admin only)
  */
-router.post('/', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const createRequest: CreateBotRequest = req.body;
 
@@ -95,7 +98,8 @@ router.post('/', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, 
  * POST /webui/api/bots/:botId/clone
  * Clone an existing bot instance (admin only)
  */
-router.post('/:botId/clone', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const { newName } = req.body;
@@ -127,7 +131,8 @@ router.post('/:botId/clone', authenticate, requireAdmin, async (req: AuthMiddlew
  * PUT /webui/api/bots/:botId
  * Update an existing bot instance (admin only)
  */
-router.put('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.put('/:botId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const updates = req.body;
@@ -152,7 +157,8 @@ router.put('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareRequ
  * DELETE /webui/api/bots/:botId
  * Delete a bot instance (admin only)
  */
-router.delete('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.delete('/:botId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -182,7 +188,8 @@ router.delete('/:botId', authenticate, requireAdmin, async (req: AuthMiddlewareR
  * POST /webui/api/bots/:botId/start
  * Start a bot instance (admin only)
  */
-router.post('/:botId/start', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -212,7 +219,8 @@ router.post('/:botId/start', authenticate, requireAdmin, async (req: AuthMiddlew
  * POST /webui/api/bots/:botId/stop
  * Stop a bot instance (admin only)
  */
-router.post('/:botId/stop', authenticate, requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -242,7 +250,8 @@ router.post('/:botId/stop', authenticate, requireAdmin, async (req: AuthMiddlewa
  * GET /webui/api/bots/templates
  * Get bot configuration templates
  */
-router.get('/templates', authenticate, (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/templates', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
   const templates = {
     discord: {
       name: 'Discord Bot',

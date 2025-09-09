@@ -16,7 +16,7 @@ export class AuthMiddleware {
    * JWT Authentication middleware
    * Verifies JWT token and attaches user to request
    */
-  public authenticate = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+  public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = (req.headers as any).authorization;
 
@@ -42,8 +42,8 @@ export class AuthMiddleware {
       }
 
       // Attach user and permissions to request
-      req.user = user;
-      req.permissions = payload.permissions;
+      (req as AuthMiddlewareRequest).user = user;
+      (req as AuthMiddlewareRequest).permissions = payload.permissions;
 
       debug(`Authenticated user: ${user.username} (${user.role})`);
       next();
@@ -61,8 +61,9 @@ export class AuthMiddleware {
    * Checks if user has required role
    */
   public requireRole = (requiredRole: UserRole) => {
-    return (req: AuthMiddlewareRequest, res: Response, next: NextFunction): void => {
-      if (!req.user) {
+    return (req: Request, res: Response, next: NextFunction): void => {
+      const authReq = req as AuthMiddlewareRequest;
+      if (!authReq.user) {
         res.status(401).json({
           error: 'Authentication required',
           message: 'User not authenticated'
@@ -76,7 +77,7 @@ export class AuthMiddleware {
         admin: 3
       };
 
-      const userRoleLevel = roleHierarchy[req.user.role];
+      const userRoleLevel = roleHierarchy[authReq.user.role];
       const requiredRoleLevel = roleHierarchy[requiredRole];
 
       if (userRoleLevel < requiredRoleLevel) {
@@ -87,7 +88,7 @@ export class AuthMiddleware {
         return;
       }
 
-      debug(`Role check passed: ${req.user.username} has ${req.user.role} >= ${requiredRole}`);
+      debug(`Role check passed: ${authReq.user.username} has ${authReq.user.role} >= ${requiredRole}`);
       next();
     };
   };
@@ -97,8 +98,9 @@ export class AuthMiddleware {
    * Checks if user has specific permission
    */
   public requirePermission = (permission: string) => {
-    return (req: AuthMiddlewareRequest, res: Response, next: NextFunction): void => {
-      if (!req.user) {
+    return (req: Request, res: Response, next: NextFunction): void => {
+      const authReq = req as AuthMiddlewareRequest;
+      if (!authReq.user) {
         res.status(401).json({
           error: 'Authentication required',
           message: 'User not authenticated'
@@ -106,7 +108,7 @@ export class AuthMiddleware {
         return;
       }
 
-      if (!req.permissions || !req.permissions.includes(permission)) {
+      if (!authReq.permissions || !authReq.permissions.includes(permission)) {
         res.status(403).json({
           error: 'Insufficient permissions',
           message: `Required permission: ${permission}`
@@ -114,7 +116,7 @@ export class AuthMiddleware {
         return;
       }
 
-      debug(`Permission check passed: ${req.user.username} has ${permission}`);
+      debug(`Permission check passed: ${authReq.user.username} has ${permission}`);
       next();
     };
   };
@@ -129,10 +131,11 @@ export class AuthMiddleware {
    * Optional authentication middleware
    * Attaches user to request if token is present, but doesn't fail if missing
    */
-  public optionalAuth = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+  public optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const authReq = req as AuthMiddlewareRequest;
     // Initialize user as undefined
-    req.user = undefined;
-    req.permissions = undefined;
+    authReq.user = undefined;
+    authReq.permissions = undefined;
     
     try {
       const authHeader = (req.headers as any).authorization;
@@ -143,10 +146,10 @@ export class AuthMiddleware {
         const user = this.authManager.getUser(payload.userId);
 
         if (user) {
-          req.user = user;
-          req.permissions = payload.permissions;
-          debug(`Optional auth: authenticated user ${user.username}`);
-        }
+           authReq.user = user;
+           authReq.permissions = payload.permissions;
+           debug(`Optional auth: authenticated user ${user.username}`);
+         }
       }
     } catch (error) {
       // Silently ignore auth errors for optional auth
@@ -158,7 +161,7 @@ export class AuthMiddleware {
 }
 
 // Create middleware functions that get fresh AuthManager instance
-export const authenticate = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const authManager = AuthManager.getInstance();
   const middleware = new AuthMiddleware();
   return middleware.authenticate(req, res, next);
@@ -179,7 +182,7 @@ export const requireAdmin = (() => {
   return middleware.requireAdmin;
 })();
 
-export const optionalAuth = async (req: AuthMiddlewareRequest, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const middleware = new AuthMiddleware();
   return middleware.optionalAuth(req, res, next);
 };

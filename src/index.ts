@@ -135,12 +135,17 @@ async function main() {
     if (httpEnabled) {
         const port = process.env.PORT || 5005;
         const server = createServer(app);
-        
+
         // Initialize WebSocket service
         const wsService = WebSocketService.getInstance();
         wsService.initialize(server);
-        
-        server.listen(port, () => {
+
+        server.on('error', (err) => {
+            console.error('[DEBUG] Server error:', err);
+        });
+
+        console.log(`[DEBUG] Attempting to bind server to port ${port} on host 0.0.0.0`);
+        server.listen({port: port, host: '0.0.0.0'}, () => {
             console.log('Server is listening on port ' + port);
             console.log('WebSocket service available at /webui/socket.io');
         });

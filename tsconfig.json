@@ -19,8 +19,11 @@
     "testUtils": ["./tests/testUtils"]
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
+  ],
+  "exclude": [
+    "tests/**/*",
+    "node_modules"
   ],
   "files": [
     "src/types/express.d.ts",

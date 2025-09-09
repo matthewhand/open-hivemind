@@ -211,10 +211,6 @@ export class WebSocketService {
       }
 
       this.io = new SocketIOServer(server, {
-        cors: {
-          origin: "*",
-          methods: ["GET", "POST"]
-        },
         path: '/webui/socket.io'
       });
 
