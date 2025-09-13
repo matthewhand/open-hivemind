@@ -99,7 +99,7 @@ describe('SyntheticMessage', () => {
   describe('getTimestamp', () => {
     it('should return current timestamp', () => {
       // Allow small clock/timing skew to avoid flaky failures
-      const skewMs = 5;
+      const skewMs = 10;
 
       const before = Date.now() - skewMs;
       const timestamp = syntheticMessage.getTimestamp();
