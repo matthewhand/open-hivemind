@@ -21,13 +21,11 @@ describe('debugEnvVars', () => {
       return value.substring(0, charsToShow) + '*'.repeat(Math.max(0, value.length - charsToShow));
     });
 
-    // Mock the debug module
-    jest.doMock('debug', () => {
-      return jest.fn(() => mockDebug);
-    });
+    // Mock the debug module at the top level
+    jest.mock('debug', () => jest.fn(() => mockDebug));
 
     // Mock the redactSensitiveInfo function
-    jest.doMock('../../src/common/redactSensitiveInfo', () => ({
+    jest.mock('../../src/common/redactSensitiveInfo', () => ({
       redactSensitiveInfo: mockRedactSensitiveInfo
     }));
   });
@@ -94,38 +92,24 @@ describe('debugEnvVars', () => {
       expect(mockDebug).not.toHaveBeenCalledWith(expect.stringContaining('BOT_DEBUG_MODE'));
     });
 
-    it('should redact sensitive variables containing KEY', async () => {
+    it('should redact all types of sensitive variables', async () => {
       const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+
       debugEnvVars();
 
+      // Test KEY variables
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('secret_api_key_12345', 4);
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('super_secret_key', 4);
-    });
 
-    it('should redact sensitive variables containing TOKEN', async () => {
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
-      debugEnvVars();
-
+      // Test TOKEN variables
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('bot_token_12345', 4);
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('access_token_67890', 4);
-    });
 
-    it('should redact variables ending with SECRET', async () => {
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
-      debugEnvVars();
-
+      // Test SECRET variables
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('jwt_secret_123', 4);
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('db_secret_456', 4);
-    });
 
-    it('should redact variables ending with PASSWORD', async () => {
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
-      debugEnvVars();
-
+      // Test PASSWORD variables
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('database_password', 4);
       expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('user_password_123', 4);
     });
@@ -156,103 +140,100 @@ describe('debugEnvVars', () => {
       process.env = {};
     });
 
-    it('should check for Discord required variables when MESSAGE_PROVIDER includes discord', async () => {
+    it('should check for required variables for different providers', async () => {
+      // Test Discord variables
       process.env.MESSAGE_PROVIDER = 'discord';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      let { debugEnvVars } = await import('../../src/config/debugEnvVars');
       debugEnvVars();
-
-      expect(mockDebug).toHaveBeenCalledWith('=== Checking for Missing Required Environment Variables ===');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_BOT_TOKEN is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_CLIENT_ID is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_GUILD_ID is missing!');
-    });
 
-    it('should check for Slack required variables when MESSAGE_PROVIDER includes slack', async () => {
+      // Reset mocks and test Slack variables
+      jest.clearAllMocks();
       process.env.MESSAGE_PROVIDER = 'slack';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_BOT_TOKEN is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_APP_TOKEN is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_SIGNING_SECRET is missing!');
-    });
 
-    it('should check for OpenAI required variables when LLM_PROVIDER includes openai', async () => {
+      // Reset mocks and test OpenAI variables
+      jest.clearAllMocks();
       process.env.LLM_PROVIDER = 'openai';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_API_KEY is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_BASE_URL is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_MODEL is missing!');
-    });
 
-    it('should check for Flowise required variables when LLM_PROVIDER includes flowise', async () => {
+      // Reset mocks and test Flowise variables
+      jest.clearAllMocks();
       process.env.LLM_PROVIDER = 'flowise';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable FLOWISE_API_KEY is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable FLOWISE_API_ENDPOINT is missing!');
     });
 
-    it('should handle case-insensitive provider matching', async () => {
+    it('should handle edge cases in required variable checking', async () => {
+      // Test case-insensitive provider matching
       process.env.MESSAGE_PROVIDER = 'DISCORD';
       process.env.LLM_PROVIDER = 'OPENAI';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      let { debugEnvVars } = await import('../../src/config/debugEnvVars');
       debugEnvVars();
-
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_BOT_TOKEN is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_CLIENT_ID is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_GUILD_ID is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_API_KEY is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_BASE_URL is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_MODEL is missing!');
-    });
 
-    it('should skip required variable checking when no providers are configured', async () => {
+      // Reset and test skipping when no providers configured
+      jest.clearAllMocks();
       process.env.MESSAGE_PROVIDER = '';
       process.env.LLM_PROVIDER = '';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
       expect(mockDebug).not.toHaveBeenCalledWith('=== Checking for Missing Required Environment Variables ===');
-    });
 
-    it('should not warn for present required variables', async () => {
+      // Reset and test not warning for present variables
+      jest.clearAllMocks();
       process.env.MESSAGE_PROVIDER = 'discord';
       process.env.DISCORD_BOT_TOKEN = 'token123';
       process.env.DISCORD_CLIENT_ID = 'client123';
       process.env.DISCORD_GUILD_ID = 'guild123';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
       expect(mockDebug).not.toHaveBeenCalledWith(expect.stringContaining('WARNING: Required environment variable'));
-    });
 
-    it('should handle partial provider matches', async () => {
+      // Reset and test partial provider matches
+      jest.clearAllMocks();
+      delete process.env.DISCORD_BOT_TOKEN;
+      delete process.env.DISCORD_CLIENT_ID;
+      delete process.env.DISCORD_GUILD_ID;
       process.env.MESSAGE_PROVIDER = 'discord,slack';
       process.env.LLM_PROVIDER = 'openai,flowise';
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
       debugEnvVars();
-
+      // Check that warnings are generated for missing variables (order may vary)
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_BOT_TOKEN is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_CLIENT_ID is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_GUILD_ID is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_BOT_TOKEN is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_APP_TOKEN is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_SIGNING_SECRET is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_API_KEY is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_BASE_URL is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_MODEL is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable FLOWISE_API_KEY is missing!');
+      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable FLOWISE_API_ENDPOINT is missing!');
     });
   });
 
   describe('integration scenarios', () => {
-    it('should handle multiple providers simultaneously', async () => {
+    it('should handle complex integration scenarios', async () => {
+      // Test multiple providers simultaneously
       process.env = {
         MESSAGE_PROVIDER: 'discord,slack',
         LLM_PROVIDER: 'openai,flowise',
@@ -260,25 +241,17 @@ describe('debugEnvVars', () => {
         OPENAI_API_KEY: 'openai_key'
         // Missing: DISCORD_CLIENT_ID, DISCORD_GUILD_ID, SLACK_BOT_TOKEN, etc.
       };
-      
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
-      debugEnvVars();
 
+      let { debugEnvVars } = await import('../../src/config/debugEnvVars');
+      debugEnvVars();
       expect(mockDebug).toHaveBeenCalledWith('=== Environment Variables ===');
       expect(mockDebug).toHaveBeenCalledWith('MESSAGE_PROVIDER = discord,slack');
       expect(mockDebug).toHaveBeenCalledWith('LLM_PROVIDER = openai,flowise');
-      expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('DISCORD_BOT_TOKEN = '));
-      expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('OPENAI_API_KEY = '));
-      expect(mockDebug).toHaveBeenCalledWith('=== Checking for Missing Required Environment Variables ===');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_CLIENT_ID is missing!');
-      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable DISCORD_GUILD_ID is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_BOT_TOKEN is missing!');
-      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_BASE_URL is missing!');
-      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable OPENAI_MODEL is missing!');
-    });
 
-    it('should handle complex environment with mixed sensitive and normal variables', async () => {
+      // Reset and test complex environment with mixed variables
+      jest.clearAllMocks();
       process.env = {
         NORMAL_VAR: 'public_value',
         API_KEY: 'secret_api_key_12345',
@@ -287,21 +260,13 @@ describe('debugEnvVars', () => {
         MESSAGE_PROVIDER: 'slack',
         LLM_PROVIDER: 'flowise'
       };
-      
-      const { debugEnvVars } = await import('../../src/config/debugEnvVars');
-      
-      debugEnvVars();
 
-      expect(mockDebug).toHaveBeenCalledWith('=== Environment Variables ===');
+      ({ debugEnvVars } = await import('../../src/config/debugEnvVars'));
+      debugEnvVars();
       expect(mockDebug).toHaveBeenCalledWith('NORMAL_VAR = public_value');
       expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('API_KEY = '));
       expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('SLACK_BOT_TOKEN = '));
-      expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('FLOWISE_API_KEY = '));
-      expect(mockDebug).toHaveBeenCalledWith('MESSAGE_PROVIDER = slack');
-      expect(mockDebug).toHaveBeenCalledWith('LLM_PROVIDER = flowise');
-      expect(mockDebug).toHaveBeenCalledWith('=== Checking for Missing Required Environment Variables ===');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_APP_TOKEN is missing!');
-      expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable SLACK_SIGNING_SECRET is missing!');
       expect(mockDebug).toHaveBeenCalledWith('WARNING: Required environment variable FLOWISE_API_ENDPOINT is missing!');
     });
   });

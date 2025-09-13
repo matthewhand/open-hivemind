@@ -26,5 +26,8 @@
   "OPENAI_STOP": ["\n", ".", "?", "!"],
   "OPENAI_TOP_P": 0.9,
   "OPENAI_SYSTEM_PROMPT": "Greetings, human...",
-  "OPENAI_RESPONSE_MAX_TOKENS": 100
+  "OPENAI_RESPONSE_MAX_TOKENS": 100,
+  "admin": {
+    "ipWhitelist": ["127.0.0.1", "::1", "localhost"]
+  }
 }

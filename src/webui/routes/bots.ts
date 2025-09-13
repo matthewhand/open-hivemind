@@ -3,10 +3,14 @@ import { BotManager, CreateBotRequest } from '../../managers/BotManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
+import { auditMiddleware, AuditedRequest, logBotAction } from '../middleware/audit';
 
 const debug = Debug('app:BotsRoutes');
 const router = Router();
 const botManager = BotManager.getInstance();
+
+// Apply audit middleware after authentication
+router.use(authenticate, auditMiddleware);
 
 /**
  * GET /webui/api/bots
@@ -65,13 +69,14 @@ router.get('/:botId', authenticate, async (req: Request, res: Response) => {
  * POST /webui/api/bots
  * Create a new bot instance (admin only)
  */
-router.post('/', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const createRequest: CreateBotRequest = req.body;
 
     // Validate required fields
     if (!createRequest.name || !createRequest.messageProvider || !createRequest.llmProvider) {
+      logBotAction(req, 'CREATE', createRequest.name || 'unknown', 'failure', 'Missing required fields: name, messageProvider, llmProvider');
       return res.status(400).json({
         error: 'Validation error',
         message: 'Name, messageProvider, and llmProvider are required'
@@ -80,6 +85,10 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
 
     const bot = await botManager.createBot(createRequest);
 
+    logBotAction(req, 'CREATE', bot.name, 'success', `Created bot with message provider ${bot.messageProvider} and LLM provider ${bot.llmProvider}`, {
+      newValue: bot
+    });
+
     res.status(201).json({
       success: true,
       data: { bot },
@@ -87,6 +96,7 @@ router.post('/', authenticate, requireAdmin, async (req: Request, res: Response)
     });
   } catch (error: any) {
     debug('Error creating bot:', error);
+    logBotAction(req, 'CREATE', req.body?.name || 'unknown', 'failure', `Failed to create bot: ${error.message}`);
     res.status(400).json({
       error: 'Failed to create bot',
       message: error.message || 'An error occurred while creating bot'
@@ -131,13 +141,21 @@ router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, re
  * PUT /webui/api/bots/:botId
  * Update an existing bot instance (admin only)
  */
-router.put('/:botId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const updates = req.body;
 
+    // Get the bot before update for audit logging
+    const existingBot = await botManager.getBot(botId);
+
     const updatedBot = await botManager.updateBot(botId, updates);
+
+    logBotAction(req, 'UPDATE', botId, 'success', `Updated bot configuration`, {
+      oldValue: existingBot,
+      newValue: updatedBot
+    });
 
     res.json({
       success: true,
@@ -146,6 +164,7 @@ router.put('/:botId', authenticate, requireAdmin, async (req: Request, res: Resp
     });
   } catch (error: any) {
     debug('Error updating bot:', error);
+    logBotAction(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot: ${error.message}`);
     res.status(400).json({
       error: 'Failed to update bot',
       message: error.message || 'An error occurred while updating bot'
@@ -157,19 +176,27 @@ router.put('/:botId', authenticate, requireAdmin, async (req: Request, res: Resp
  * DELETE /webui/api/bots/:botId
  * Delete a bot instance (admin only)
  */
-router.delete('/:botId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
+    // Get the bot before deletion for audit logging
+    const botToDelete = await botManager.getBot(botId);
+
     const deleted = await botManager.deleteBot(botId);
 
     if (!deleted) {
+      logBotAction(req, 'DELETE', botId, 'failure', 'Bot not found');
       return res.status(404).json({
         error: 'Bot not found',
         message: `Bot with ID ${botId} not found`
       });
     }
+
+    logBotAction(req, 'DELETE', botId, 'success', `Deleted bot ${botToDelete?.name || botId}`, {
+      oldValue: botToDelete
+    });
 
     res.json({
       success: true,
@@ -177,6 +204,7 @@ router.delete('/:botId', authenticate, requireAdmin, async (req: Request, res: R
     });
   } catch (error: any) {
     debug('Error deleting bot:', error);
+    logBotAction(req, 'DELETE', req.params.botId, 'failure', `Failed to delete bot: ${error.message}`);
     res.status(500).json({
       error: 'Failed to delete bot',
       message: error.message || 'An error occurred while deleting bot'

@@ -132,21 +132,22 @@ describe('SlackService', () => {
     expect(mockBotManager.initialize).toHaveBeenCalled();
   });
 
-  it('sends message to channel', async () => {
+  it('handles messaging operations', async () => {
+    // Test sending message to channel
     await service.sendMessageToChannel('channel1', 'Hello', 'Madgwick AI');
     expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
       channel: 'channel1',
       text: 'Hello',
       username: 'Madgwick AI',
     }));
-  });
 
-  it('fetches messages from channel', async () => {
+    // Reset mocks and test fetching messages
+    jest.clearAllMocks();
     await service.fetchMessages('channel1');
     expect(mockBotManager.getBotByName().webClient.conversations.history).toHaveBeenCalledWith({ channel: 'channel1', limit: 10 });
-  });
 
-  it('sends public announcement', async () => {
+    // Reset mocks and test sending public announcement
+    jest.clearAllMocks();
     await service.sendPublicAnnouncement('channel1', 'Announce');
     expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
       channel: 'channel1',
@@ -155,7 +156,8 @@ describe('SlackService', () => {
     }));
   });
 
-  it('joins channel', async () => {
+  it('handles channel and service operations', async () => {
+    // Test joining channel
     await service.joinChannel('channel1');
     expect(mockBotManager.getBotByName().webClient.conversations.join).toHaveBeenCalledWith({ channel: 'channel1' });
     expect(mockBotManager.getBotByName().webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
@@ -163,9 +165,9 @@ describe('SlackService', () => {
       text: expect.stringContaining('Welcome'),
       username: 'Madgwick AI',
     }));
-  });
 
-  it('sends welcome message', async () => {
+    // Reset mocks and test sending welcome message
+    jest.clearAllMocks();
     const welcomeHandler = service.getWelcomeHandler('LegacyBot1');
     await welcomeHandler.sendBotWelcomeMessage('channel1');
     expect(mockBotManager.getBotByName('LegacyBot1').webClient.chat.postMessage).toHaveBeenCalledWith(expect.objectContaining({
@@ -173,17 +175,14 @@ describe('SlackService', () => {
       text: expect.stringContaining('Welcome'),
       username: 'Madgwick AI',
     }));
-  });
 
-  it('gets client ID', () => {
+    // Test getting client ID
     expect(service.getClientId()).toBe('bot1');
-  });
 
-  it('gets default channel', () => {
+    // Test getting default channel
     expect(service.getDefaultChannel()).toBe('C123');
-  });
 
-  it('shuts down', async () => {
+    // Test shutdown
     await service.shutdown();
     expect((require('@integrations/slack/SlackService').SlackService as any).instance).toBeUndefined();
   });

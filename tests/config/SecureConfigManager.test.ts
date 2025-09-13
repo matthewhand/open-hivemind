@@ -10,20 +10,33 @@ describe('SecureConfigManager', () => {
   beforeEach(() => {
     console.log('=== BeforeEach starting ===');
     // Clear any existing test files
-    if (fs.existsSync(testConfigDir)) {
-      fs.rmSync(testConfigDir, { recursive: true, force: true });
+    try {
+      if (fs.existsSync(testConfigDir)) {
+        fs.rmSync(testConfigDir, { recursive: true, force: true });
+      }
+    } catch (error) {
+      console.log('Warning: Could not clean up test directory, continuing anyway:', error.message);
+      // Continue with test even if cleanup fails
     }
 
     // Ensure config directory exists before creating instance
-    fs.mkdirSync(testConfigDir, { recursive: true });
-    console.log('Directories created');
+    try {
+      fs.mkdirSync(testConfigDir, { recursive: true });
+      console.log('Directories created');
+    } catch (error) {
+      console.log('Warning: Could not create test directory:', error.message);
+    }
 
     // Reset the singleton instance to ensure clean state
     (SecureConfigManager as any).instance = null;
     // Also clear any cached encryption keys
-    const keyPath = path.join(testConfigDir, '.encryption_key');
-    if (fs.existsSync(keyPath)) {
-      fs.unlinkSync(keyPath);
+    try {
+      const keyPath = path.join(testConfigDir, '.encryption_key');
+      if (fs.existsSync(keyPath)) {
+        fs.unlinkSync(keyPath);
+      }
+    } catch (error) {
+      console.log('Warning: Could not clear encryption key:', error.message);
     }
     console.log('Singleton reset and encryption key cleared');
 

@@ -53,6 +53,13 @@ export async function executeCommand(command: string): Promise<string> {
  */
 export async function readFile(filePath: string): Promise<string> {
     debug('Reading file: ' + filePath);
+    if (!filePath || filePath === '') {
+        throw new Error('Invalid file path');
+    }
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+        throw new Error('Path is a directory, not a file');
+    }
     const readFile = util.promisify(fs.readFile);
     const content = await readFile(filePath, 'utf8');
     debug('File content: ' + content);

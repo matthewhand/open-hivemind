@@ -13,7 +13,8 @@ describe('speechToText', () => {
     jest.clearAllMocks();
   });
 
-  it('should transcribe audio successfully', async () => {
+  it('should handle transcription and error scenarios', async () => {
+    // Test successful transcription
     const mockTranscription = { text: 'Hello world' };
     const mockCreateReadStream = jest.fn();
     mockFs.createReadStream = mockCreateReadStream;
@@ -28,31 +29,25 @@ describe('speechToText', () => {
     mockOpenAI.mockImplementation(() => mockInstance as any);
 
     const result = await transcribeAudio('/path/to/audio.wav');
-
     expect(result).toBe('Hello world');
-  });
 
-  it('should handle transcription errors', async () => {
-    const mockCreateReadStream = jest.fn();
-    mockFs.createReadStream = mockCreateReadStream;
-
-    const mockInstance = {
+    // Test transcription errors
+    const errorInstance = {
       audio: {
         transcriptions: {
           create: jest.fn().mockRejectedValue(new Error('API Error'))
         }
       }
     };
-    mockOpenAI.mockImplementation(() => mockInstance as any);
+    mockOpenAI.mockImplementation(() => errorInstance as any);
 
     await expect(transcribeAudio('/path/to/audio.wav')).rejects.toThrow('API Error');
-  });
 
-  it('should handle file not found', async () => {
-    const mockCreateReadStream = jest.fn().mockImplementation(() => {
+    // Test file not found
+    const fileErrorReadStream = jest.fn().mockImplementation(() => {
       throw new Error('ENOENT: no such file or directory');
     });
-    mockFs.createReadStream = mockCreateReadStream;
+    mockFs.createReadStream = fileErrorReadStream;
 
     await expect(transcribeAudio('/nonexistent.wav')).rejects.toThrow('ENOENT');
   });

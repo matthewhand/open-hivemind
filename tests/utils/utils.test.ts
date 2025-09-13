@@ -35,8 +35,9 @@ describe('executeCommand', () => {
             expect(output.trim()).toBe('hello world');
         });
 
-        it.skip('should handle multiline output', () => {
-            // Echo simulation doesn't perfectly handle -e flag with escape sequences
+        it('should handle multiline output', async () => {
+            const output = await executeCommand('printf "line1\\nline2"');
+            expect(output.trim()).toBe('line1\nline2');
         });
     });
 
@@ -87,8 +88,9 @@ describe('executeCommand', () => {
     });
 
     describe('Output formatting', () => {
-        it.skip('should preserve whitespace in output', () => {
-            // Echo simulation doesn't perfectly preserve whitespace in quotes
+        it('should preserve whitespace in output', async () => {
+            const output = await executeCommand('echo "  spaced  "');
+            expect(output).toBe('  spaced  \n');
         });
 
         it('should handle special characters in output', async () => {
@@ -110,6 +112,8 @@ describe('readFile', () => {
         mockReadFile.mockReset();
         mockFs.existsSync.mockReset();
         mockFs.statSync.mockReset();
+        // Default statSync to return file stats
+        mockFs.statSync.mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
     });
 
     describe('Basic functionality', () => {
@@ -153,16 +157,18 @@ describe('readFile', () => {
             await expect(readFile('restricted.txt')).rejects.toThrow();
         });
 
-        it.skip('should handle null/undefined file paths', () => {
-            // Implementation doesn't validate input parameters
+        it('should handle null/undefined file paths', async () => {
+            await expect(readFile(null as any)).rejects.toThrow();
+            await expect(readFile(undefined as any)).rejects.toThrow();
         });
 
-        it.skip('should handle empty file paths', () => {
-            // Implementation doesn't validate input parameters
+        it('should handle empty file paths', async () => {
+            await expect(readFile('')).rejects.toThrow();
         });
 
-        it.skip('should handle directory paths instead of files', () => {
-            // Implementation doesn't validate file vs directory
+        it('should handle directory paths instead of files', async () => {
+            mockFs.statSync.mockReturnValue({ isFile: () => false, isDirectory: () => true } as any);
+            await expect(readFile('directory')).rejects.toThrow();
         });
     });
 

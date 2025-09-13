@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
 
 const router = Router();
+
+// Apply audit middleware to all config routes
+router.use(auditMiddleware);
 
 // Get all configuration with sensitive data redacted
 router.get('/api/config', (req, res) => {
@@ -148,18 +152,21 @@ router.get('/api/config/sources', (req, res) => {
 });
 
 // Reload configuration
-router.post('/api/config/reload', (req, res) => {
+router.post('/api/config/reload', (req: AuditedRequest, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     manager.reload();
-    
-    res.json({ 
-      success: true, 
+
+    logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
+
+    res.json({
+      success: true,
       message: 'Configuration reloaded successfully',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Config reload error:', error);
+    logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${error instanceof Error ? error.message : String(error)}`);
     res.status(500).json({ error: 'Failed to reload configuration' });
   }
 });

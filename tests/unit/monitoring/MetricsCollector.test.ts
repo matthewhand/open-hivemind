@@ -154,7 +154,15 @@ describe('MetricsCollector', () => {
       const metrics1 = collector.getMetrics();
       const metrics2 = collector.getMetrics();
       expect(metrics1).not.toBe(metrics2);
-      expect(metrics1).toEqual(metrics2);
+
+      // Compare all fields except uptime (which changes between calls)
+      expect(metrics1.messagesProcessed).toBe(metrics2.messagesProcessed);
+      expect(metrics1.activeConnections).toBe(metrics2.activeConnections);
+      expect(metrics1.errors).toBe(metrics2.errors);
+      expect(metrics1.responseTime).toEqual(metrics2.responseTime);
+
+      // Uptime should be similar but not exactly equal due to timing
+      expect(Math.abs(metrics1.uptime - metrics2.uptime)).toBeLessThan(100); // Within 100ms
     });
   });
 

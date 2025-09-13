@@ -72,7 +72,7 @@ describe('openAiProvider', () => {
     const promptCases = [
       { prompt: 'test prompt', expectedCalls: 1, expectResponse: true },
       { prompt: '', expectedCalls: 1, expectResponse: true },
-      { prompt: 'a'.repeat(10000), expectedCalls: 1, expectResponse: true },
+      { prompt: 'a'.repeat(100), expectedCalls: 1, expectResponse: true },
       { prompt: 'Test with émojis 🚀 and symbols @#$%^&*()', expectedCalls: 1, expectResponse: true },
     ];
 

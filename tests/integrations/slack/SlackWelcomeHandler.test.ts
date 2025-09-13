@@ -263,78 +263,42 @@ describe('SlackWelcomeHandler', () => {
   });
 
   describe('handleButtonClick', () => {
-    it('should handle learn_objectives action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'learn_objectives_C1234567890');
+    it('should handle valid predefined actions', async () => {
+      const actions = [
+        { actionId: 'learn_objectives_C1234567890', expectedText: 'learning objectives' },
+        { actionId: 'how_to_C1234567890', expectedText: 'how I work' },
+        { actionId: 'contact_support_C1234567890', expectedText: 'Need support' },
+        { actionId: 'report_issue_C1234567890', expectedText: 'report it directly' },
+        { actionId: 'learn_more_test', expectedText: 'Learn more about' }
+      ];
 
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('learning objectives')
-        })
-      );
+      for (const { actionId, expectedText } of actions) {
+        mockWebClient.chat.postMessage.mockClear();
+        await (handler as any).handleButtonClick('C1234567890', 'U1234567890', actionId);
+
+        expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            channel: 'C1234567890',
+            text: expect.stringContaining(expectedText)
+          })
+        );
+      }
     });
 
-    it('should handle how_to action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'how_to_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('how I work')
-        })
-      );
-    });
-
-    it('should handle contact_support action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'contact_support_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('Need support')
-        })
-      );
-    });
-
-    it('should handle report_issue action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'report_issue_C1234567890');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('report it directly')
-        })
-      );
-    });
-
-    it('should handle learn_more action', async () => {
-      await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'learn_more_test');
-
-      expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          channel: 'C1234567890',
-          text: expect.stringContaining('Learn more about')
-        })
-      );
-    });
-
-    it('should handle custom button mappings', async () => {
-      // Ensure no environment variable overrides the config
+    it('should handle custom and unknown actions', async () => {
+      // Test custom action
       delete process.env.SLACK_BUTTON_MAPPINGS;
-      
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'custom_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: 'C1234567890',
           text: 'Custom response'
         })
       );
-    });
 
-    it('should handle unknown action', async () => {
+      // Test unknown action
+      mockWebClient.chat.postMessage.mockClear();
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'unknown_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           channel: 'C1234567890',
@@ -343,19 +307,13 @@ describe('SlackWelcomeHandler', () => {
       );
     });
 
-    it('should throw error when channel is not provided', async () => {
+    it('should handle errors and edge cases', async () => {
+      // Test missing parameters
       await expect((handler as any).handleButtonClick('', 'U1234567890', 'action')).rejects.toThrow('Channel, userId, and actionId required');
-    });
-
-    it('should throw error when userId is not provided', async () => {
       await expect((handler as any).handleButtonClick('C1234567890', '', 'action')).rejects.toThrow('Channel, userId, and actionId required');
-    });
-
-    it('should throw error when actionId is not provided', async () => {
       await expect((handler as any).handleButtonClick('C1234567890', 'U1234567890', '')).rejects.toThrow('Channel, userId, and actionId required');
-    });
 
-    it('should handle invalid JSON in button mappings', async () => {
+      // Test invalid JSON in button mappings
       (slackConfig.get as jest.Mock).mockImplementation((key: string) => {
         if (key === 'SLACK_BUTTON_MAPPINGS') {
           return 'invalid json';
@@ -364,7 +322,6 @@ describe('SlackWelcomeHandler', () => {
       });
 
       await (handler as any).handleButtonClick('C1234567890', 'U1234567890', 'test_action');
-
       expect(mockWebClient.chat.postMessage).toHaveBeenCalled();
     });
   });

@@ -5,6 +5,7 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Test Coverage](https://img.shields.io/badge/coverage-74.29%25-green.svg)](https://github.com/matthewhand/open-hivemind)
+[![Tests Passing](https://img.shields.io/badge/tests-1337%20passing-brightgreen)](https://github.com/matthewhand/open-hivemind/actions)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
 ## Table of Contents
@@ -510,7 +511,7 @@ For further technical details, refer to the Development Guide and User Guide sec
 - **Branches:** 62.50%
 - **Functions:** 72.16%
 - **Lines:** 74.89%
-- **Total Tests:** 1,412 passing tests
+- **Total Tests:** 1,337 passing tests
 - **Test Suites:** 109 passed
 - **Critical Components:** 97.82% coverage (ErrorHandler)
 - **Security Components:** 87.76% coverage (SecureConfigManager)
@@ -538,4 +539,4 @@ For further technical details, refer to the Development Guide and User Guide sec
 
 For a comprehensive breakdown of all working features, test coverage, and technical capabilities, see [PACKAGE.md](PACKAGE.md).
 
-**Current Status:** Enterprise-grade with 1,400+ test files, 4 LLM providers, 3 messaging platforms, WebUI backend, performance monitoring, and production deployment features.
+**Current Status:** Enterprise-grade with 1,337 passing tests, 4 LLM providers, 3 messaging platforms, WebUI backend, performance monitoring, and production deployment features.

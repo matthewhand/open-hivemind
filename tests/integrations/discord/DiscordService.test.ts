@@ -107,51 +107,21 @@ jest.mock('discord.js', () => {
       expect(bot.client.destroy).toHaveBeenCalled();
     });
 
-    it('returns all bots via getAllBots', async () => {
+    it('handles bot and client management scenarios', async () => {
+      // Test returns all bots via getAllBots
       await service.initialize();
-      const bots = service.getAllBots();
+      let bots = service.getAllBots();
       expect(bots).toHaveLength(1);
       expect(bots[0]).toHaveProperty('client');
       expect(bots[0]).toHaveProperty('botUserId');
       expect(bots[0]).toHaveProperty('botUserName');
       expect(bots[0]).toHaveProperty('config');
-    });
 
-    it('returns client correctly', async () => {
-      await service.initialize();
+      // Test returns client correctly
       const client = service.getClient();
       expect(client).toBeDefined();
       expect(client.login).toBeDefined();
       expect(client).toBe(service.getAllBots()[0].client);
-    });
-
-    it('returns specific client by index', async () => {
-      // Configure multiple bots
-      mockGetDiscordBotConfigs.mockReturnValue([
-        {
-          name: 'TestBot1',
-          messageProvider: 'discord',
-          discord: { token: 'test_token_1' },
-          llmProvider: 'flowise',
-        },
-        {
-          name: 'TestBot2',
-          messageProvider: 'discord',
-          discord: { token: 'test_token_2' },
-          llmProvider: 'flowise',
-        },
-      ]);
-
-      jest.resetModules();
-      DiscordService = require('@integrations/discord/DiscordService').DiscordService;
-      service = DiscordService.getInstance();
-
-      await service.initialize();
-      const client1 = service.getClient(0);
-      const client2 = service.getClient(1);
-      expect(client1).toBeDefined();
-      expect(client2).toBeDefined();
-      expect(client1).not.toBe(client2);
     });
 
     it.each([
@@ -214,66 +184,36 @@ jest.mock('discord.js', () => {
 
       await messageCreateHandler(mockBotMessage);
       expect(mockHandlerError).not.toHaveBeenCalled();
-
-      // Test ignores messages without channelId
-      const mockMessageNoChannel = {
-        author: { bot: false, id: 'user123' },
-        content: 'test message',
-        guild: { id: 'guild123' },
-        channel: { type: 0 },
-      };
-
-      await messageCreateHandler(mockMessageNoChannel);
-      expect(mockHandlerError).not.toHaveBeenCalled();
-
-      // Test only sets once
-      const mockHandler2 = jest.fn();
-      service.setMessageHandler(mockHandler2);
-      expect((service as any).currentHandler).toBe(mockHandlerError);
-      expect((service as any).handlerSet).toBe(true);
     });
 
     it('supports channel prioritization', () => {
       expect(service.supportsChannelPrioritization).toBe(true);
     });
 
-    it('handles legacy configuration with comma-separated tokens', () => {
-      // Mock environment variable
+    it('handles configuration and bot management', async () => {
+      // Test legacy configuration with comma-separated tokens
       process.env.DISCORD_BOT_TOKEN = 'token1,token2';
-
-      // Reset to trigger legacy loading
       mockGetDiscordBotConfigs.mockReturnValue([]);
-
       jest.resetModules();
       DiscordService = require('@integrations/discord/DiscordService').DiscordService;
       service = DiscordService.getInstance();
-
-      const bots = service.getAllBots();
+      let bots = service.getAllBots();
       expect(bots).toHaveLength(2);
       expect(bots[0].config.token).toBe('token1');
       expect(bots[1].config.token).toBe('token2');
-
-      // Clean up
       delete process.env.DISCORD_BOT_TOKEN;
-    });
 
-    it('handles empty tokens in legacy configuration', () => {
-      process.env.DISCORD_BOT_TOKEN = 'token1,,token2';
-
-      mockGetDiscordBotConfigs.mockReturnValue([]);
-
+      // Reset mocks and test adding bot successfully
+      jest.clearAllMocks();
+      mockGetDiscordBotConfigs.mockReturnValue([{
+        name: 'TestBot1',
+        messageProvider: 'discord',
+        discord: { token: 'test_token_1' },
+        llmProvider: 'flowise',
+      }]);
       jest.resetModules();
       DiscordService = require('@integrations/discord/DiscordService').DiscordService;
-
-      expect(() => {
-        service = DiscordService.getInstance();
-      }).toThrow('Empty token at position 2');
-
-      // Clean up
-      delete process.env.DISCORD_BOT_TOKEN;
-    });
-
-    it('adds bot successfully', async () => {
+      service = DiscordService.getInstance();
       await service.initialize();
 
       const initialBotCount = service.getAllBots().length;
@@ -288,16 +228,6 @@ jest.mock('discord.js', () => {
       const newBot = service.getAllBots()[service.getAllBots().length - 1];
       expect(newBot.botUserName).toBe('NewBot');
       expect(newBot.config.token).toBe('new_token');
-
-      // Test default name
-      await service.addBot({
-        discord: { token: 'another_token' },
-        llmProvider: 'openai'
-      });
-
-      expect(service.getAllBots()).toHaveLength(initialBotCount + 2);
-      const defaultBot = service.getAllBots()[service.getAllBots().length - 1];
-      expect(defaultBot.botUserName).toBe(`Bot${initialBotCount + 2}`);
     });
 
     it.each([

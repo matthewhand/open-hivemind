@@ -48,17 +48,17 @@ describe('MattermostService', () => {
     expect(mockClient.connect).toHaveBeenCalled();
   });
 
-  it('should send message to channel', async () => {
-    const result = await service.sendMessageToChannel('general', 'Hello world');
-    
+  it('handles messaging and connection operations', async () => {
+    // Test sending message to channel
+    let result = await service.sendMessageToChannel('general', 'Hello world');
     expect(mockClient.postMessage).toHaveBeenCalledWith({
       channel: 'general',
       text: 'Hello world'
     });
     expect(result).toBe('post123');
-  });
 
-  it('should fetch messages from channel', async () => {
+    // Reset mocks and test fetching messages
+    jest.clearAllMocks();
     const mockPosts = [{
       id: 'post1',
       message: 'Test message',
@@ -76,7 +76,6 @@ describe('MattermostService', () => {
       reply_count: 0,
       metadata: {}
     }];
-
     mockClient.getChannelPosts.mockResolvedValue(mockPosts);
     mockClient.getUser.mockResolvedValue({
       id: 'user123',
@@ -85,59 +84,52 @@ describe('MattermostService', () => {
       first_name: 'Test',
       last_name: 'User'
     });
-
     const messages = await service.fetchMessages('channel123', 10);
-    
     expect(messages).toHaveLength(1);
     expect(messages[0].content).toBe('Test message');
     expect(messages[0].platform).toBe('mattermost');
-  });
 
-  it('should handle connection errors', async () => {
+    // Reset mocks and test connection errors
+    jest.clearAllMocks();
     mockClient.connect.mockRejectedValue(new Error('Connection failed'));
-    
     await expect(service.initialize()).rejects.toThrow('Connection failed');
-  });
 
-  it('should send public announcements', async () => {
+    // Reset mocks and test sending public announcements
+    jest.clearAllMocks();
+    mockClient.connect.mockResolvedValue(undefined);
+    await service.initialize(); // Re-initialize
     await service.sendPublicAnnouncement('general', 'Important announcement');
-    
     expect(mockClient.postMessage).toHaveBeenCalledWith({
       channel: 'general',
       text: 'Important announcement'
     });
   });
 
-  it('should return client ID', () => {
-    const clientId = service.getClientId();
+  it('handles service configuration and management', async () => {
+    // Test returning client ID
+    let clientId = service.getClientId();
     expect(clientId).toBe('test-bot');
-  });
 
-  it('should return default channel', () => {
+    // Test returning default channel
     const channel = service.getDefaultChannel();
     expect(channel).toBe('general');
-  });
 
-  it('should support channel prioritization', () => {
+    // Test channel prioritization support
     expect(service.supportsChannelPrioritization).toBe(true);
-  });
 
-  it('should score channels', () => {
+    // Test channel scoring
     const score = service.scoreChannel('general');
     expect(typeof score).toBe('number');
-  });
 
-  it('should get bot names', () => {
+    // Test getting bot names
     const names = service.getBotNames();
     expect(names).toContain('test-bot');
-  });
 
-  it('should get bot config', () => {
+    // Test getting bot config
     const config = service.getBotConfig('test-bot');
     expect(config.name).toBe('test-bot');
-  });
 
-  it('should shutdown gracefully', async () => {
+    // Test graceful shutdown
     await service.shutdown();
     expect((MattermostService as any).instance).toBeUndefined();
   });

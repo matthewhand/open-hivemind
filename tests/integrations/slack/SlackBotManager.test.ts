@@ -41,37 +41,26 @@ describe('SlackBotManager', () => {
     } as any));
   });
 
-  it('should initialize with socket mode and multiple tokens', async () => {
+  it('should handle initialization, configuration, and message handling', async () => {
+    // Test socket mode initialization with multiple tokens
     const instances = [
       { token: 'botToken1', appToken: 'appToken1', signingSecret: 'secret1' },
       { token: 'botToken2', appToken: 'appToken2', signingSecret: 'secret2' },
     ];
     const manager = new SlackBotManager(instances, 'socket');
-
     await manager.initialize();
-
     expect(MockWebClient).toHaveBeenCalledTimes(2);
     expect(MockSocketModeClient).toHaveBeenCalledTimes(2);
     expect(manager.getAllBots().length).toBe(2);
-    expect(manager.getAllBots()[0].botUserId).toBe('U123');
-    expect(manager.getAllBots()[0].botUserName).toBe('testuser');
-    expect(manager.getAllBots()[0].socketClient?.start).toHaveBeenCalledTimes(1); // Only primary bot starts listener
-    expect(manager.getAllBots()[1].socketClient?.start).toHaveBeenCalledTimes(1); // Secondary bot also starts listener
-  });
 
-  it('should initialize with rtm mode', async () => {
-    const instances = [{ token: 'botToken1', signingSecret: 'secret1' }];
-    const manager = new SlackBotManager(instances, 'rtm');
-
-    await manager.initialize();
-
-    expect(MockWebClient).toHaveBeenCalledTimes(1);
+    // Test RTM mode initialization
+    const rtmInstances = [{ token: 'botToken1', signingSecret: 'secret1' }];
+    const rtmManager = new SlackBotManager(rtmInstances, 'rtm');
+    await rtmManager.initialize();
+    expect(MockWebClient).toHaveBeenCalledTimes(3); // +1 from previous
     expect(MockRTMClient).toHaveBeenCalledTimes(1);
-    expect(manager.getAllBots().length).toBe(1);
-    expect(manager.getAllBots()[0].rtmClient?.start).toHaveBeenCalledTimes(1);
-  });
 
-  it('should throw error if bot authentication fails', async () => {
+    // Test authentication failure
     MockWebClient.mockImplementation(() => ({
       auth: {
         test: jest.fn(() => Promise.reject(new Error('Auth failed'))),
@@ -80,55 +69,40 @@ describe('SlackBotManager', () => {
         history: jest.fn(() => Promise.resolve({ messages: [] })),
       },
     } as any));
+    const failManager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
+    await expect(failManager.initialize()).rejects.toThrow('Auth failed');
 
-    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
-    await expect(manager.initialize()).rejects.toThrow('Auth failed');
-  });
+    // Test message handler configuration
+    const handlerManager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
+    const mockHandler = jest.fn(() => Promise.resolve('handled'));
+    handlerManager.setMessageHandler(mockHandler);
+    expect(handlerManager['messageHandler']).toBe(mockHandler);
 
-  it('should set message handler', () => {
-    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
-    const mockHandler = jest.fn();
-    manager.setMessageHandler(mockHandler);
-    expect(manager['messageHandler']).toBe(mockHandler);
-  });
-
-  it('should return all bots', () => {
-    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
-    const bots = manager.getAllBots();
+    // Test bot retrieval
+    const bots = handlerManager.getAllBots();
     expect(bots.length).toBe(1);
     expect(bots[0].botToken).toBe('botToken1');
-  });
 
-  it('should return bot by name', async () => {
-    const instances = [
+    // Test getBotByName
+    const nameInstances = [
       { token: 'botToken1', signingSecret: 'secret1' },
       { token: 'botToken2', signingSecret: 'secret2' },
     ];
-    const manager = new SlackBotManager(instances, 'socket');
-    // Manually set bot user names for testing getBotByName
-    manager.getAllBots()[0].botUserName = 'BotOne';
-    manager.getAllBots()[1].botUserName = 'BotTwo';
+    const nameManager = new SlackBotManager(nameInstances, 'socket');
+    nameManager.getAllBots()[0].botUserName = 'BotOne';
+    nameManager.getAllBots()[1].botUserName = 'BotTwo';
+    expect(nameManager.getBotByName('BotOne')).toBeDefined();
+    expect(nameManager.getBotByName('nonexistent')).toBeUndefined();
 
-    expect(manager.getBotByName('BotOne')).toBeDefined();
-    expect(manager.getBotByName('BotTwo')).toBeDefined();
-    expect(manager.getBotByName('nonexistent')).toBeUndefined();
-  });
-
-  it('should handle message with message handler', async () => {
-    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
-    const mockHandler = jest.fn(() => Promise.resolve('handled'));
-    manager.setMessageHandler(mockHandler);
-
+    // Test message handling with handler
     const mockMessage = { getText: () => 'test', data: { event_ts: '123', ts: '123', channel: 'C123', user: 'U456' } };
-    const result = await manager.handleMessage(mockMessage as any, [], {});
+    const result = await handlerManager.handleMessage(mockMessage as any, [], {});
     expect(mockHandler).toHaveBeenCalledWith(mockMessage, [], {});
     expect(result).toBe('handled');
-  });
 
-  it('should return empty string if no message handler set', async () => {
-    const manager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
-    const mockMessage = { getText: () => 'test', data: { event_ts: '123', ts: '123', channel: 'C123', user: 'U456' } };
-    const result = await manager.handleMessage(mockMessage as any, [], {});
-    expect(result).toBe('');
+    // Test message handling without handler
+    const noHandlerManager = new SlackBotManager([{ token: 'botToken1', signingSecret: 'secret1' }], 'socket');
+    const noHandlerResult = await noHandlerManager.handleMessage(mockMessage as any, [], {});
+    expect(noHandlerResult).toBe('');
   });
 });

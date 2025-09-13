@@ -243,6 +243,86 @@ function getClientIP(req: Request): string {
 }
 
 /**
+ * IP whitelist middleware for admin endpoints
+ */
+export function ipWhitelist(req: Request, res: Response, next: NextFunction): void {
+  const clientIP = getClientIP(req);
+
+  // Get whitelist from environment or config
+  const whitelistEnv = process.env.ADMIN_IP_WHITELIST;
+  let whitelist: string[] = [];
+
+  if (whitelistEnv) {
+    whitelist = whitelistEnv.split(',').map(ip => ip.trim());
+  } else {
+    // Try to load from config files
+    try {
+      const config = require('config');
+      const adminConfig = config.get('admin');
+      if (adminConfig && adminConfig.ipWhitelist && Array.isArray(adminConfig.ipWhitelist)) {
+        whitelist = adminConfig.ipWhitelist;
+      }
+    } catch (configError) {
+      debug('Could not load config for IP whitelist:', configError);
+    }
+
+    // Default to localhost for development if no config found
+    if (whitelist.length === 0) {
+      whitelist = ['127.0.0.1', '::1', 'localhost'];
+    }
+  }
+
+  // Check if IP is in whitelist
+  const isAllowed = whitelist.some(allowedIP => {
+    if (allowedIP === '*' || allowedIP === '0.0.0.0') {
+      return true; // Allow all
+    }
+    if (allowedIP.includes('/')) {
+      // CIDR notation support (basic)
+      return isIPInCIDR(clientIP, allowedIP);
+    }
+    return clientIP === allowedIP || clientIP === `::ffff:${allowedIP}`;
+  });
+
+  if (!isAllowed) {
+    debug('IP access denied:', {
+      ip: clientIP,
+      method: req.method,
+      url: req.url,
+      userAgent: req.get('User-Agent')?.substring(0, 100)
+    });
+
+    res.status(403).json({
+      error: 'Access Denied',
+      message: 'Your IP address is not authorized to access this resource.',
+      ip: clientIP
+    });
+    return;
+  }
+
+  debug('IP access granted:', { ip: clientIP, method: req.method, url: req.url });
+  next();
+}
+
+/**
+ * Basic CIDR check for IP ranges
+ */
+function isIPInCIDR(ip: string, cidr: string): boolean {
+  try {
+    const [network, prefix] = cidr.split('/');
+    const prefixLen = parseInt(prefix);
+
+    // Simple implementation - in production you'd use a proper library
+    if (ip.startsWith(network.split('.').slice(0, Math.floor(prefixLen / 8)).join('.'))) {
+      return true;
+    }
+  } catch (e) {
+    debug('CIDR parsing error:', e);
+  }
+  return false;
+}
+
+/**
  * CORS middleware with security considerations
  */
 export function secureCORS(req: Request, res: Response, next: NextFunction): void {

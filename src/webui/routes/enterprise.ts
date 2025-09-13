@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Debug from 'debug';
+import { AuditLogger } from '../../common/auditLogger';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -228,36 +229,22 @@ router.post('/api/integrations', (req, res) => {
 // Get audit events
 router.get('/api/audit', (req, res) => {
   try {
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 50, offset = 0, user, action } = req.query;
 
-    // In a real implementation, this would fetch audit events from database
-    // For now, return mock data
-    const auditEvents = [
-      {
-        id: 'audit_1',
-        timestamp: '2024-01-15T10:30:00Z',
-        user: 'admin@example.com',
-        action: 'CREATE_BOT',
-        resource: 'bots/myBot',
-        result: 'success',
-        details: 'Created new bot instance',
-        ipAddress: '192.168.1.100'
-      },
-      {
-        id: 'audit_2',
-        timestamp: '2024-01-15T10:25:00Z',
-        user: 'user@example.com',
-        action: 'UPDATE_CONFIG',
-        resource: 'config/production',
-        result: 'success',
-        details: 'Updated LLM provider configuration',
-        ipAddress: '192.168.1.101'
-      }
-    ];
+    const auditLogger = AuditLogger.getInstance();
+
+    let auditEvents;
+    if (user) {
+      auditEvents = auditLogger.getAuditEventsByUser(user as string, Number(limit));
+    } else if (action) {
+      auditEvents = auditLogger.getAuditEventsByAction(action as string, Number(limit));
+    } else {
+      auditEvents = auditLogger.getAuditEvents(Number(limit), Number(offset));
+    }
 
     res.json({
       success: true,
-      auditEvents: auditEvents.slice(Number(offset), Number(offset) + Number(limit)),
+      auditEvents,
       total: auditEvents.length
     });
   } catch (error) {

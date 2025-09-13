@@ -38,8 +38,9 @@ describe('SlackInteractiveHandler', () => {
   });
 
   describe('handleRequest', () => {
-    it('should handle block_actions payload type', async () => {
-      const payload = {
+    it('should handle various request scenarios', async () => {
+      // Test block_actions payload type
+      let payload = {
         type: 'block_actions',
         actions: [{ action_id: 'see_course_info' }],
         user: { id: 'U123' },
@@ -59,10 +60,16 @@ describe('SlackInteractiveHandler', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.send).toHaveBeenCalled();
       expect(mockHandlers.sendCourseInfo).toHaveBeenCalledWith('C123');
-    });
 
-    it('should handle view_submission payload type', async () => {
-      const payload = {
+      // Reset mocks and test view_submission payload type
+      jest.clearAllMocks();
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      } as any;
+
+      payload = {
         type: 'view_submission',
         view: {
           state: {
@@ -81,16 +88,20 @@ describe('SlackInteractiveHandler', () => {
         }
       };
 
-      process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
-
       await handler.handleRequest(mockRequest as Request, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({ response_action: 'clear' });
-    });
 
-    it('should handle unknown payload type', async () => {
-      const payload = {
+      // Reset mocks and test unknown payload type
+      jest.clearAllMocks();
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      } as any;
+
+      payload = {
         type: 'unknown_type'
       };
 
@@ -104,9 +115,15 @@ describe('SlackInteractiveHandler', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.send).toHaveBeenCalled();
-    });
 
-    it('should handle invalid JSON payload', async () => {
+      // Reset mocks and test invalid JSON payload
+      jest.clearAllMocks();
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      } as any;
+
       mockRequest = {
         body: {
           payload: 'invalid json'
@@ -121,8 +138,9 @@ describe('SlackInteractiveHandler', () => {
   });
 
   describe('handleBlockAction', () => {
-    it('should handle see_course_info action', async () => {
-      const payload = {
+    it('should handle block action scenarios', async () => {
+      // Test see_course_info action
+      let payload = {
         actions: [{ action_id: 'see_course_info' }]
       };
 
@@ -133,14 +151,18 @@ describe('SlackInteractiveHandler', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.send).toHaveBeenCalled();
       expect(mockHandlers.sendCourseInfo).toHaveBeenCalledWith('C123');
-    });
 
-    it('should handle unknown action', async () => {
-      const payload = {
+      // Reset mocks and test unknown action
+      jest.clearAllMocks();
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      } as any;
+
+      payload = {
         actions: [{ action_id: 'unknown_action' }]
       };
-
-      process.env.SLACK_DEFAULT_CHANNEL_ID = 'C123';
 
       await (handler as any).handleBlockAction(payload, mockResponse);
 

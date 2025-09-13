@@ -20,18 +20,18 @@ describe('VoiceCommandHandler', () => {
     jest.clearAllMocks();
   });
 
-  it('should start listening', () => {
+  it('should handle listening states and voice processing', async () => {
+    // Test start/stop listening
     handler.startListening();
     expect(handler['isListening']).toBe(true);
-  });
 
-  it('should stop listening', () => {
-    handler.startListening();
     handler.stopListening();
     expect(handler['isListening']).toBe(false);
-  });
 
-  it('should process voice input when listening', async () => {
+    // Reset mocks for voice processing test
+    jest.clearAllMocks();
+
+    // Test voice processing when listening
     const { transcribeAudio } = require('@src/integrations/discord/voice/speechToText');
     const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
     const { getLlmProvider } = require('@src/llm/getLlmProvider');
@@ -49,37 +49,34 @@ describe('VoiceCommandHandler', () => {
 
     handler.startListening();
     const opusBuffer = Buffer.from('opus data');
-    
+
     await handler.processVoiceInput(opusBuffer);
-    
+
     expect(convertOpusToWav).toHaveBeenCalledWith(opusBuffer, './temp');
     expect(transcribeAudio).toHaveBeenCalledWith('/temp/audio.wav');
-  });
 
-  it('should ignore input when not listening', async () => {
-    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
-    
-    const opusBuffer = Buffer.from('opus data');
+    // Reset mocks for next test
+    jest.clearAllMocks();
+
+    // Test ignoring input when not listening
+    handler.stopListening();
     await handler.processVoiceInput(opusBuffer);
-    
     expect(convertOpusToWav).not.toHaveBeenCalled();
-  });
 
-  it('should handle empty transcription', async () => {
-    const { transcribeAudio } = require('@src/integrations/discord/voice/speechToText');
-    const { convertOpusToWav } = require('@src/integrations/discord/media/convertOpusToWav');
+    // Reset mocks for final test
+    jest.clearAllMocks();
 
+    // Test empty transcription handling
     transcribeAudio.mockResolvedValue('   ');
     convertOpusToWav.mockResolvedValue('/temp/audio.wav');
 
-    const fs = require('fs');
     fs.existsSync = jest.fn().mockReturnValue(false);
     fs.mkdirSync = jest.fn();
     fs.unlinkSync = jest.fn();
 
     handler.startListening();
     await handler.processVoiceInput(Buffer.from('opus'));
-    
+
     expect(fs.unlinkSync).toHaveBeenCalledWith('/temp/audio.wav');
   });
 });

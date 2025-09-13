@@ -62,7 +62,12 @@ describe('/config command', () => {
             reload: jest.fn(),
             validate: jest.fn().mockReturnValue({ valid: true, errors: [] })
         };
-        configManager.mockReturnValue(mockConfigManager);
+        // Since the module is mocked, we can directly assign the mock methods
+        configManager.get = mockConfigManager.get;
+        configManager.set = mockConfigManager.set;
+        configManager.getAll = mockConfigManager.getAll;
+        configManager.reload = mockConfigManager.reload;
+        configManager.validate = mockConfigManager.validate;
 
         // Setup permissions mock
         mockPermissions = permissions;
@@ -71,11 +76,24 @@ describe('/config command', () => {
     });
 
     describe('Command execution', () => {
-        it.skip('should execute config view subcommand successfully', () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should execute config view subcommand successfully', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+            mockConfigManager.getAll.mockReturnValue({
+                TEST_KEY: 'test_value'
+            });
+
+            await execute(mockInteraction);
+
+            expect(mockConfigManager.getAll).toHaveBeenCalled();
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Current Configuration'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should execute config set subcommand successfully', async () => {
+        it('should execute config view subcommand successfully', async () => {
             mockInteraction.options.getSubcommand.mockReturnValue('view');
             mockConfigManager.getAll.mockReturnValue({
                 MESSAGE_PROVIDER: 'discord',
@@ -93,7 +111,7 @@ describe('/config command', () => {
             );
         });
 
-        it.skip('should execute config set subcommand successfully', async () => {
+        it('should execute config set subcommand successfully', async () => {
             mockInteraction.options.getSubcommand.mockReturnValue('set');
             mockInteraction.options.getString.mockImplementation((key) => {
                 if (key === 'key') return 'DEBUG';
@@ -112,7 +130,7 @@ describe('/config command', () => {
             );
         });
 
-        it.skip('should execute config get subcommand successfully', async () => {
+        it('should execute config get subcommand successfully', async () => {
             mockInteraction.options.getSubcommand.mockReturnValue('get');
             mockInteraction.options.getString.mockReturnValue('MESSAGE_PROVIDER');
             mockConfigManager.get.mockReturnValue('discord');
@@ -128,27 +146,72 @@ describe('/config command', () => {
             );
         });
 
-        it.skip('should execute config reload subcommand successfully', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should execute config reload subcommand successfully', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('reload');
+
+            await execute(mockInteraction);
+
+            expect(mockConfigManager.reload).toHaveBeenCalled();
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Configuration reloaded'),
+                    ephemeral: true
+                })
+            );
         });
     });
 
     describe('Permission handling', () => {
-        it.skip('should deny access when user lacks permissions', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should deny access when user lacks permissions', async () => {
+            mockPermissions.isUserAllowed.mockReturnValue(false);
+            mockPermissions.isRoleAllowed.mockReturnValue(false);
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('permission'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should allow access with user permissions', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should allow access with user permissions', async () => {
+            mockPermissions.isUserAllowed.mockReturnValue(true);
+            mockPermissions.isRoleAllowed.mockReturnValue(false);
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+            mockConfigManager.getAll.mockReturnValue({});
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Current Configuration'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should allow access with role permissions', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should allow access with role permissions', async () => {
+            mockPermissions.isUserAllowed.mockReturnValue(false);
+            mockPermissions.isRoleAllowed.mockReturnValue(true);
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+            mockConfigManager.getAll.mockReturnValue({});
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Current Configuration'),
+                    ephemeral: true
+                })
+            );
         });
     });
 
     describe('Error handling', () => {
-        it.skip('should handle config manager errors gracefully', async () => {
+        it('should handle config manager errors gracefully', async () => {
             mockInteraction.options.getSubcommand.mockReturnValue('view');
             mockConfigManager.getAll.mockImplementation(() => {
                 throw new Error('Config access failed');
@@ -164,32 +227,107 @@ describe('/config command', () => {
             );
         });
 
-        it.skip('should handle invalid subcommands', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should handle invalid subcommands', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('invalid');
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Invalid subcommand'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should handle missing required parameters', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should handle missing required parameters', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('set');
+            mockInteraction.options.getString.mockReturnValue(null); // missing key
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('required'),
+                    ephemeral: true
+                })
+            );
         });
     });
 
     describe('Configuration validation', () => {
-        it.skip('should validate configuration before setting', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should validate configuration before setting', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('set');
+            mockInteraction.options.getString.mockImplementation((key) => {
+                if (key === 'key') return 'INVALID_KEY';
+                if (key === 'value') return 'invalid_value';
+                return null;
+            });
+            mockConfigManager.validate.mockReturnValue({ valid: false, errors: ['Invalid key'] });
+
+            await execute(mockInteraction);
+
+            expect(mockConfigManager.validate).toHaveBeenCalledWith({ INVALID_KEY: 'invalid_value' });
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Invalid configuration'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should proceed with valid configuration', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should proceed with valid configuration', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('set');
+            mockInteraction.options.getString.mockImplementation((key) => {
+                if (key === 'key') return 'DEBUG';
+                if (key === 'value') return 'true';
+                return null;
+            });
+            mockConfigManager.validate.mockReturnValue({ valid: true, errors: [] });
+
+            await execute(mockInteraction);
+
+            expect(mockConfigManager.set).toHaveBeenCalledWith('DEBUG', 'true');
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Configuration updated'),
+                    ephemeral: true
+                })
+            );
         });
     });
 
     describe('Response formatting', () => {
-        it.skip('should format configuration display properly', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should format configuration display properly', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+            mockConfigManager.getAll.mockReturnValue({
+                MESSAGE_PROVIDER: 'discord',
+                LLM_PROVIDER: 'openai',
+                DEBUG: 'false'
+            });
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('MESSAGE_PROVIDER: discord'),
+                    ephemeral: true
+                })
+            );
         });
 
-        it.skip('should handle empty configuration gracefully', async () => {
-            // Implementation is dummy, functionality not yet implemented
+        it('should handle empty configuration gracefully', async () => {
+            mockInteraction.options.getSubcommand.mockReturnValue('view');
+            mockConfigManager.getAll.mockReturnValue({});
+
+            await execute(mockInteraction);
+
+            expect(mockInteraction.reply).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    content: expect.stringContaining('Current Configuration'),
+                    ephemeral: true
+                })
+            );
         });
     });
 });
