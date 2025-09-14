@@ -44,7 +44,7 @@ describe('webhookRoutes', () => {
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [channel, message] = messageService.sendPublicAnnouncement.mock.calls[0];
     expect(channel).toBe(''); // empty per current implementation
-    expect(message).toContain('Answer is 42');
+    expect(message).toBe('Answer is 42\nImage URL: N/A');
     // Image URL may be undefined if not pre-populated; ensure message contains format when present
   });
 
@@ -60,18 +60,17 @@ describe('webhookRoutes', () => {
 
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
     const [, message] = messageService.sendPublicAnnouncement.mock.calls[0];
-    expect(message).toContain('Prediction ID: pred-2');
-    expect(message).toContain('Status: processing');
+    expect(message).toBe('Prediction ID: pred-2\nStatus: processing');
   });
 
   it('returns 400 when predictionId or status is missing', async () => {
     const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: { status: 'succeeded', output: [] } });
     expect(res1.statusCode).toBe(400);
-    expect(res1.body).toMatchObject({ error: 'Invalid request body' });
+    expect(res1.body.error).toBe('Invalid request body');
 
     const { res: res2 } = await runRoute(app, 'post', '/webhook', { body: { id: 'pred-x', output: [] } });
     expect(res2.statusCode).toBe(400);
-    expect(res2.body).toMatchObject({ error: 'Invalid request body' });
+    expect(res2.body.error).toBe('Invalid request body');
 
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
@@ -80,14 +79,14 @@ describe('webhookRoutes', () => {
     // Non-object body
     const { res: res1 } = await runRoute(app, 'post', '/webhook', { body: 'invalid' });
     expect(res1.statusCode).toBe(400);
-    expect(res1.body.details).toContain('Request body must be a valid JSON object');
+    expect(res1.body.details).toEqual(['Request body must be a valid JSON object']);
 
     // Invalid output type
     const { res: res2 } = await runRoute(app, 'post', '/webhook', { 
       body: { id: 'test', status: 'succeeded', output: 'not-array' } 
     });
     expect(res2.statusCode).toBe(400);
-    expect(res2.body.details).toContain('Invalid "output" field (must be array if present)');
+    expect(res2.body.details).toEqual(['Invalid "output" field (must be array if present)']);
 
     expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
   });
@@ -102,7 +101,7 @@ describe('webhookRoutes', () => {
     }});
 
     expect(res.statusCode).toBe(500);
-    expect(res.body).toMatchObject({ error: 'Failed to process webhook' });
+    expect(res.body.error).toBe('Failed to process webhook');
     expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(1);
   });
 

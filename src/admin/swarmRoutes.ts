@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { SwarmInstaller } from '@src/integrations/openswarm/SwarmInstaller';
 
+export const installer = new SwarmInstaller();
 const swarmRouter = Router();
-const installer = new SwarmInstaller();
 
 // Check system requirements
 swarmRouter.get('/check', async (_req: Request, res: Response) => {
