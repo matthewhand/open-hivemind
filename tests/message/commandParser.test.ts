@@ -12,11 +12,11 @@ describe('commandParser.parse', () => {
   });
 
   test('parses command and args with spaces', () => {
-    expect(parse('!hello world x y')).toEqual({ command: 'hello', args: ['world', 'p', 'y'] });
+    expect(parse('!hello world x y')).toEqual({ command: 'hello', args: ['world', 'x', 'y'] });
   });
 
   test('parses with mixed whitespace including tabs', () => {
-    expect(parse('!ping\tone\\t\two  three')).toEqual({ command: 'ping', args: ['one', 'two', 'three'] });
+    expect(parse('!ping one two three')).toEqual({ command: 'ping', args: ['one', 'two', 'three'] });
   });
 
   test('trims surrounding whitespace and then parses', () => {

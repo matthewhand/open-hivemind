@@ -1,9 +1,11 @@
 function parse(input: string): { command: string; args: string[] } | null {
+  // Trim input first to handle surrounding whitespace
+  const trimmedInput = input.trim();
   // Only process messages that start with the '!' prefix.
-  if (!input.startsWith('!')) {
+  if (!trimmedInput.startsWith('!')) {
     return null;
   }
-  const body: string = input.slice(1).trim();
+  const body: string = trimmedInput.slice(1).trim();
   if (!body) return null;
   // Split the remaining text into command and arguments.
   const parts: string[] = body.split(/\s+/);
