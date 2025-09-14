@@ -284,4 +284,261 @@ describe('Utility Functions Comprehensive Tests', () => {
       expect(!!numberZero).toBe(false); // Number 0 is falsy
     });
   });
+
+  describe('Emoji Generation Consolidated', () => {
+    test('should return a valid emoji from the predefined list', () => {
+      const { getEmoji } = require('../../src/common/getEmoji');
+      const emoji = getEmoji();
+      expect(['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥']).toContain(emoji);
+      expect(typeof emoji).toBe('string');
+      expect(emoji.length).toBeGreaterThan(0);
+    });
+
+    test('should return different emojis on multiple calls', () => {
+      const { getEmoji } = require('../../src/common/getEmoji');
+      const generatedEmojis = new Set();
+      for (let i = 0; i < 20; i++) {
+        generatedEmojis.add(getEmoji());
+      }
+      expect(generatedEmojis.size).toBeGreaterThan(5);
+    });
+
+    test('should handle rapid successive calls', () => {
+      const { getEmoji } = require('../../src/common/getEmoji');
+      const results = [];
+      for (let i = 0; i < 100; i++) {
+        results.push(getEmoji());
+      }
+      results.forEach(emoji => {
+        expect(['😀', '😂', '😅', '🤣', '😊', '😍', '🤔', '😎', '😢', '😡', '👍', '👎', '👌', '🙏', '💪', '🔥']).toContain(emoji);
+        expect(typeof emoji).toBe('string');
+      });
+    });
+  });
+
+  describe('Random Delay Generation Consolidated', () => {
+    test('should return a number within the specified range', () => {
+      const { getRandomDelay } = require('../../src/common/getRandomDelay');
+      const min = 100;
+      const max = 200;
+      const delay = getRandomDelay(min, max);
+      expect(typeof delay).toBe('number');
+      expect(delay).toBeGreaterThanOrEqual(min);
+      expect(delay).toBeLessThanOrEqual(max);
+    });
+
+    test('should handle min and max being equal', () => {
+      const { getRandomDelay } = require('../../src/common/getRandomDelay');
+      const min = 150;
+      const max = 150;
+      const delay = getRandomDelay(min, max);
+      expect(delay).toBe(min);
+    });
+
+    test('should return 0 if min is greater than max', () => {
+      const { getRandomDelay } = require('../../src/common/getRandomDelay');
+      const min = 300;
+      const max = 200;
+      const delay = getRandomDelay(min, max);
+      expect(delay).toBe(0);
+    });
+
+    test('should handle negative values', () => {
+      const { getRandomDelay } = require('../../src/common/getRandomDelay');
+      const delay = getRandomDelay(-100, 200);
+      expect(delay).toBe(0);
+    });
+
+    test('should generate different values on multiple calls', () => {
+      const { getRandomDelay } = require('../../src/common/getRandomDelay');
+      const min = 1;
+      const max = 1000;
+      const results = new Set();
+      
+      for (let i = 0; i < 50; i++) {
+        results.add(getRandomDelay(min, max));
+      }
+      
+      expect(results.size).toBeGreaterThan(10);
+    });
+  });
+
+  describe('Audit Logging Consolidated', () => {
+    let auditLogger: any;
+
+    beforeEach(() => {
+      // Reset singleton instance before each test
+      const { AuditLogger } = require('../../src/common/auditLogger');
+      (AuditLogger as any).instance = null;
+      auditLogger = AuditLogger.getInstance();
+      // Clear any existing events
+      auditLogger.getAuditEvents().forEach(() => {});
+    });
+
+    test('should create audit log with basic event data', () => {
+      auditLogger.log({
+        user: 'test-user',
+        action: 'TEST_ACTION',
+        resource: 'test-resource',
+        result: 'success',
+        details: 'Test audit event'
+      });
+
+      const events = auditLogger.getAuditEvents();
+      // Find our test event by looking for the specific action
+      const testEvent = events.find((event: any) => event.action === 'TEST_ACTION');
+      expect(testEvent).toBeDefined();
+      expect(testEvent.user).toBe('test-user');
+      expect(testEvent.resource).toBe('test-resource');
+      expect(testEvent.result).toBe('success');
+      expect(testEvent.details).toBe('Test audit event');
+      expect(testEvent.timestamp).toBeDefined();
+      expect(testEvent.id).toBeDefined();
+    });
+
+    test('should filter events by user', () => {
+      // Clear existing events first
+      const initialCount = auditLogger.getAuditEvents().length;
+      
+      auditLogger.log({
+        user: 'user1',
+        action: 'ACTION1',
+        resource: 'resource1',
+        result: 'success',
+        details: 'Event 1'
+      });
+      
+      auditLogger.log({
+        user: 'user2',
+        action: 'ACTION2',
+        resource: 'resource2',
+        result: 'success',
+        details: 'Event 2'
+      });
+      
+      const user1Events = auditLogger.getAuditEventsByUser('user1');
+      expect(user1Events.length).toBeGreaterThanOrEqual(1);
+      expect(user1Events[user1Events.length - 1].user).toBe('user1');
+    });
+  });
+
+  describe('Channel Routing Consolidated', () => {
+    test('should parse channel bonuses and priorities correctly', () => {
+      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
+      
+      // Test with actual config values instead of mocking
+      const c1Bonus = getBonusForChannel('C1');
+      const c2Bonus = getBonusForChannel('C2');
+      const c1Priority = getPriorityForChannel('C1');
+      const c2Priority = getPriorityForChannel('C2');
+      
+      // These should return valid numbers (defaults if not configured)
+      expect(typeof c1Bonus).toBe('number');
+      expect(typeof c2Bonus).toBe('number');
+      expect(typeof c1Priority).toBe('number');
+      expect(typeof c2Priority).toBe('number');
+      expect(c1Bonus).toBeGreaterThanOrEqual(0);
+      expect(c2Bonus).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should handle missing channels with defaults', () => {
+      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
+      
+      const unknownBonus = getBonusForChannel('UNKNOWN');
+      const unknownPriority = getPriorityForChannel('UNKNOWN');
+      
+      // Should return default values for unknown channels
+      expect(typeof unknownBonus).toBe('number');
+      expect(typeof unknownPriority).toBe('number');
+      expect(unknownBonus).toBeGreaterThanOrEqual(0);
+      expect(unknownPriority).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('Configuration Loading Consolidated', () => {
+    test('should handle webhook configuration loading', () => {
+      const OLD_ENV = process.env;
+      process.env = {};
+      jest.resetModules();
+      const freshWebhookConfig = require('../../src/config/webhookConfig').default;
+
+      expect(freshWebhookConfig.get('WEBHOOK_ENABLED')).toBe(false);
+      expect(freshWebhookConfig.get('WEBHOOK_URL')).toBe('');
+      expect(freshWebhookConfig.get('WEBHOOK_TOKEN')).toBe('');
+      expect(freshWebhookConfig.get('WEBHOOK_IP_WHITELIST')).toBe('');
+      expect(freshWebhookConfig.get('WEBHOOK_PORT')).toBe(80);
+
+      // Test schema validation
+      expect(() => freshWebhookConfig.validate({ allowed: 'strict' })).not.toThrow();
+
+      // Test environment variable loading
+      process.env.WEBHOOK_ENABLED = 'true';
+      process.env.WEBHOOK_URL = 'http://example.com/webhook';
+      process.env.WEBHOOK_PORT = '3000';
+
+      jest.resetModules();
+      const envConfig = require('../../src/config/webhookConfig').default;
+      expect(envConfig.get('WEBHOOK_ENABLED')).toBe(true);
+      expect(envConfig.get('WEBHOOK_URL')).toBe('http://example.com/webhook');
+      expect(envConfig.get('WEBHOOK_PORT')).toBe(3000);
+
+      process.env = OLD_ENV;
+    });
+
+    test('should handle OpenWebUI configuration loading', () => {
+      const OLD_ENV = process.env;
+      process.env = {};
+      jest.resetModules();
+      const freshOpenWebUIConfig = require('../../src/config/openWebUIConfig').default;
+
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_API_URL')).toBe('http://host.docker.internal:3000/api/');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_USERNAME')).toBe('admin');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_PASSWORD')).toBe('password123');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_KNOWLEDGE_FILE')).toBe('');
+      expect(freshOpenWebUIConfig.get('OPEN_WEBUI_MODEL')).toBe('llama3.2');
+
+      // Test schema validation
+      expect(() => freshOpenWebUIConfig.validate({ allowed: 'strict' })).not.toThrow();
+
+      // Test environment variable loading
+      process.env.OPEN_WEBUI_API_URL = 'http://localhost:3000/api/';
+      process.env.OPEN_WEBUI_USERNAME = 'testuser';
+      process.env.OPEN_WEBUI_MODEL = 'llama3.1';
+
+      jest.resetModules();
+      const envConfig = require('../../src/config/openWebUIConfig').default;
+      expect(envConfig.get('OPEN_WEBUI_API_URL')).toBe('http://localhost:3000/api/');
+      expect(envConfig.get('OPEN_WEBUI_USERNAME')).toBe('testuser');
+      expect(envConfig.get('OPEN_WEBUI_MODEL')).toBe('llama3.1');
+
+      process.env = OLD_ENV;
+    });
+
+    test('should handle Mattermost configuration defaults and validation', () => {
+      const OLD_ENV = process.env;
+      process.env = {};
+      jest.resetModules();
+      const freshMattermostConfig = require('../../src/config/mattermostConfig').default;
+
+      expect(freshMattermostConfig.get('MATTERMOST_SERVER_URL')).toBe('');
+      expect(freshMattermostConfig.get('MATTERMOST_TOKEN')).toBe('');
+      expect(freshMattermostConfig.get('MATTERMOST_CHANNEL')).toBe('');
+
+      // Test schema validation
+      expect(() => freshMattermostConfig.validate({ allowed: 'strict' })).not.toThrow();
+
+      // Test environment variable loading
+      process.env.MATTERMOST_SERVER_URL = 'http://localhost:8065';
+      process.env.MATTERMOST_TOKEN = 'test-token';
+      process.env.MATTERMOST_CHANNEL = 'test-channel';
+
+      jest.resetModules();
+      const envConfig = require('../../src/config/mattermostConfig').default;
+      expect(envConfig.get('MATTERMOST_SERVER_URL')).toBe('http://localhost:8065');
+      expect(envConfig.get('MATTERMOST_TOKEN')).toBe('test-token');
+      expect(envConfig.get('MATTERMOST_CHANNEL')).toBe('test-channel');
+
+      process.env = OLD_ENV;
+    });
+  });
 });
