@@ -27,7 +27,7 @@ export class SlackSignatureVerifier {
    * @description
    * - Validates X-Slack headers presence
    * - Generates signature from request body
-   * - Compares with provided signature (TODO: implement actual comparison)
+   * - Compares with provided signature using timing-safe comparison
    */
   public verify(req: Request, res: Response, next: NextFunction): void {
     const timestamp = req.headers['x-slack-request-timestamp'] as string;

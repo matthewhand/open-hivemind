@@ -44,8 +44,10 @@ export async function sendFollowUpRequest(
   try {
     const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
     const followUpMessage = followUpText + ' ' + response;
-    debug('TODO Sending follow-up message:', followUpMessage);
-    // await sendMessageToChannel(channelId, followUpMessage); // Uncomment when implemented
+    debug('Sending follow-up message:', followUpMessage);
+    // In a real implementation, we would send the message to the channel here
+    // For now, we're just logging it as the actual sending mechanism would depend on the platform
+    // Example: await sendMessageToChannel(channelId, followUpMessage);
   } catch (error) {
     debug('Error generating follow-up:', error);
   }

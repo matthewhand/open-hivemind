@@ -540,5 +540,90 @@ describe('Utility Functions Comprehensive Tests', () => {
 
       process.env = OLD_ENV;
     });
+
+    test('should handle configuration validation with complex data structures', () => {
+      const { AuditLogger } = require('../../src/common/auditLogger');
+      const auditLogger = AuditLogger.getInstance();
+      
+      // Test with complex nested data structures
+      const complexEvent = {
+        user: 'admin-user',
+        action: 'CONFIG_UPDATE',
+        resource: 'bots/complex-bot',
+        result: 'success',
+        details: 'Updated complex configuration',
+        metadata: {
+          timestamp: new Date().toISOString(),
+          changes: {
+            oldConfig: { token: 'old-token', channels: ['general', 'support'] },
+            newConfig: { token: 'new-token', channels: ['general', 'support', 'announcements'] }
+          },
+          validation: {
+            schema: 'v2.0',
+            errors: [],
+            warnings: ['channel_limit_approaching']
+          }
+        }
+      };
+      
+      auditLogger.log(complexEvent);
+      
+      const events = auditLogger.getAuditEvents();
+      const foundEvent = events.find((event: any) => event.action === 'CONFIG_UPDATE');
+      
+      expect(foundEvent).toBeDefined();
+      expect(foundEvent.user).toBe('admin-user');
+      expect(foundEvent.resource).toBe('bots/complex-bot');
+      expect(foundEvent.metadata).toBeDefined();
+      expect(foundEvent.metadata.changes.oldConfig.token).toBe('old-token');
+      expect(foundEvent.metadata.changes.newConfig.channels).toHaveLength(3);
+      expect(foundEvent.metadata.validation.schema).toBe('v2.0');
+      expect(foundEvent.metadata.validation.warnings).toContain('channel_limit_approaching');
+    });
+
+    test('should handle concurrent configuration operations with race conditions', async () => {
+      const { getBonusForChannel, getPriorityForChannel } = require('../../src/message/routing/ChannelRouter');
+      
+      // Test concurrent access without mocking - just verify the functions work under load
+      const concurrentOperations = Array(50).fill(null).map(async (_, index) => {
+        const channelId = `channel-${index % 5}`; // Use fewer channels for more realistic testing
+        
+        // Get configuration values concurrently
+        const bonus = getBonusForChannel(channelId);
+        const priority = getPriorityForChannel(channelId);
+        
+        return { channelId, bonus, priority, timestamp: Date.now() };
+      });
+      
+      const results = await Promise.all(concurrentOperations);
+      
+      // Verify all operations completed successfully
+      expect(results).toHaveLength(50);
+      
+      // Verify data consistency - each channel should have consistent values
+      const channelGroups = results.reduce((acc: any, result) => {
+        if (!acc[result.channelId]) acc[result.channelId] = [];
+        acc[result.channelId].push(result);
+        return acc;
+      }, {});
+      
+      // Each channel should have consistent bonus and priority values
+      Object.values(channelGroups).forEach((channelResults: any) => {
+        const firstResult = channelResults[0];
+        channelResults.forEach((result: any) => {
+          expect(result.bonus).toBe(firstResult.bonus);
+          expect(result.priority).toBe(firstResult.priority);
+          expect(typeof result.bonus).toBe('number');
+          expect(typeof result.priority).toBe('number');
+          expect(result.bonus).toBeGreaterThanOrEqual(0);
+          expect(result.priority).toBeGreaterThanOrEqual(0);
+        });
+      });
+      
+      // Verify operations completed quickly (performance test)
+      const timestamps = results.map(r => r.timestamp);
+      const timeRange = Math.max(...timestamps) - Math.min(...timestamps);
+      expect(timeRange).toBeLessThan(1000); // Should complete within 1 second
+    });
   });
 });

@@ -372,7 +372,34 @@ export class BotManager extends EventEmitter {
       this.customBots.set(botId, updatedBot);
       this.saveCustomBots();
 
-      // TODO: Implement actual bot shutdown logic
+      // Implement actual bot shutdown logic
+      // Stop any active connections or services associated with this bot
+      if (bot.services && Array.isArray(bot.services)) {
+        for (const service of bot.services) {
+          if (service && typeof service.stop === 'function') {
+            try {
+              await service.stop();
+              debug(`Stopped service for bot: ${bot.name} (${botId})`);
+            } catch (serviceError) {
+              debug(`Error stopping service for bot ${bot.name}:`, serviceError);
+            }
+          }
+        }
+      }
+
+      // Close any active connections
+      if (bot.connections && Array.isArray(bot.connections)) {
+        for (const connection of bot.connections) {
+          if (connection && typeof connection.close === 'function') {
+            try {
+              await connection.close();
+              debug(`Closed connection for bot: ${bot.name} (${botId})`);
+            } catch (connectionError) {
+              debug(`Error closing connection for bot ${bot.name}:`, connectionError);
+            }
+          }
+        }
+      }
 
       debug(`Stopped bot: ${bot.name} (${botId})`);
 
