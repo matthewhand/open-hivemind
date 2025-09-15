@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Tenant } from '../../enterprise/MultiTenantProvider';
 
 interface User {
   id: string;
@@ -17,6 +18,8 @@ interface AuthState {
   error: string | null;
   refreshToken: string | null;
   expiresAt: number | null;
+  currentTenant: Tenant | null;
+  availableTenants: Tenant[];
 }
 
 const initialState: AuthState = {
@@ -27,6 +30,8 @@ const initialState: AuthState = {
   error: null,
   refreshToken: localStorage.getItem('refreshToken'),
   expiresAt: localStorage.getItem('expiresAt') ? parseInt(localStorage.getItem('expiresAt')!) : null,
+  currentTenant: null,
+  availableTenants: [],
 };
 
 const authSlice = createSlice({
@@ -72,6 +77,8 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.expiresAt = null;
       state.error = null;
+      state.currentTenant = null;
+      state.availableTenants = [];
       
       // Clear localStorage
       localStorage.removeItem('token');
@@ -98,6 +105,8 @@ const authSlice = createSlice({
       state.token = null;
       state.refreshToken = null;
       state.expiresAt = null;
+      state.currentTenant = null;
+      state.availableTenants = [];
       
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
@@ -110,6 +119,12 @@ const authSlice = createSlice({
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
       }
+    },
+    setCurrentTenant: (state, action: PayloadAction<Tenant | null>) => {
+      state.currentTenant = action.payload;
+    },
+    setAvailableTenants: (state, action: PayloadAction<Tenant[]>) => {
+      state.availableTenants = action.payload;
     },
   },
 });
@@ -124,6 +139,8 @@ export const {
   refreshTokenFailure,
   clearError,
   updateUser,
+  setCurrentTenant,
+  setAvailableTenants,
 } = authSlice.actions;
 
 export default authSlice.reducer;
@@ -145,3 +162,5 @@ export const selectIsTokenExpired = (state: { auth: AuthState }) => {
   if (!state.auth.expiresAt) return true;
   return Date.now() > state.auth.expiresAt;
 };
+export const selectCurrentTenant = (state: { auth: AuthState }) => state.auth.currentTenant;
+export const selectAvailableTenants = (state: { auth: AuthState }) => state.auth.availableTenants;
