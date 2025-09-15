@@ -1,16 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Table,
   TableBody,
   TableCell,
@@ -26,8 +22,7 @@ import {
   FormControl,
   InputLabel,
   Button,
-  Avatar,
-  Divider
+  Avatar
 } from '@mui/material';
 import { 
   History as HistoryIcon,
@@ -35,18 +30,35 @@ import {
   FilterList as FilterIcon,
   Download as DownloadIcon,
   Refresh as RefreshIcon,
-  Visibility as ViewIcon,
-  Person as PersonIcon,
-  Computer as ComputerIcon,
   Warning as WarningIcon,
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
-  Schedule as TimeIcon,
-  LocationOn as LocationIcon
+  Schedule as TimeIcon
 } from '@mui/icons-material';
 import { AnimatedBox } from '../animations/AnimationComponents';
-import { formatDistanceToNow, format } from 'date-fns';
+// Simple date formatting utilities
+const formatDistanceToNow = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return `${days} days ago`;
+  if (hours > 0) return `${hours} hours ago`;
+  if (minutes > 0) return `${minutes} minutes ago`;
+  return 'Just now';
+};
+
+const format = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export interface AuditEvent {
   id: string;
@@ -63,7 +75,7 @@ export interface AuditEvent {
   location?: string;
   severity: 'info' | 'warning' | 'error' | 'critical' | 'debug';
   status: 'success' | 'failure' | 'pending';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   metadata: {
     duration?: number;
     responseSize?: number;
@@ -340,10 +352,11 @@ export const AuditTrailProvider: React.FC<AuditTrailProviderProps> = ({ children
       case 'json':
         downloadFile(JSON.stringify(data, null, 2), 'audit-log.json', 'application/json');
         break;
-      case 'csv':
+      case 'csv': {
         const csv = convertToCSV(data);
         downloadFile(csv, 'audit-log.csv', 'text/csv');
         break;
+      }
       case 'pdf':
         // For demo purposes, we'll just export JSON
         downloadFile(JSON.stringify(data, null, 2), 'audit-log.json', 'application/json');
@@ -498,7 +511,7 @@ export const AuditTrailProvider: React.FC<AuditTrailProviderProps> = ({ children
   };
 
   // Utility functions
-  const generateEventHash = (event: Omit<AuditEvent, 'id' | 'timestamp' | 'hash'>): string => {
+  const generateEventHash = (): string => {
     // Simplified hash generation - in real implementation, use cryptographic hash
     return `hash-${Math.random().toString(36).substr(2, 9)}`;
   };
@@ -847,16 +860,8 @@ export const AuditTrailProvider: React.FC<AuditTrailProviderProps> = ({ children
   );
 };
 
-// Export hook for using audit trail context
-export const useAuditTrail = () => {
-  const context = useContext(AuditTrailContext);
-  if (!context) {
-    throw new Error('useAuditTrail must be used within a AuditTrailProvider');
-  }
-  return context;
-};
-
 // Export types
 export type { AuditEvent, AuditFilter, AuditMetrics, AuditTrailContextType };
+export { AuditTrailContext };
 
 export default AuditTrailProvider;
