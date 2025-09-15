@@ -223,7 +223,7 @@ export class TelegramService implements IMessengerService {
     }
   }
 
-  private convertToTelegramMessage(msg: any): TelegramMessage {
+  private convertToTelegramMessage(msg: any): IMessage {
     const attachments: TelegramAttachment[] = [];
 
     // Handle different types of attachments
@@ -282,32 +282,41 @@ export class TelegramService implements IMessengerService {
       });
     }
 
+    // Create a proper IMessage implementation
     return {
-      messageId: msg.message_id.toString(),
-      chatId: msg.chat.id.toString(),
-      text: msg.text || msg.caption || '[Media]',
-      userId: msg.from.id.toString(),
-      username: msg.from.username,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name,
-      timestamp: new Date(msg.date * 1000),
-      isBot: msg.from.is_bot || false,
-      replyToMessageId: msg.reply_to_message?.message_id?.toString(),
-      attachments: attachments.length > 0 ? attachments : undefined,
+      content: msg.text || msg.caption || '[Media]',
+      channelId: msg.chat.id.toString(),
+      data: msg,
+      role: msg.from.is_bot ? 'assistant' : 'user',
+      platform: 'telegram',
+      metadata: {
+        messageId: msg.message_id.toString(),
+        chatId: msg.chat.id.toString(),
+        text: msg.text || msg.caption || '[Media]',
+        userId: msg.from.id.toString(),
+        username: msg.from.username,
+        firstName: msg.from.first_name,
+        lastName: msg.from.last_name,
+        timestamp: new Date(msg.date * 1000),
+        isBot: msg.from.is_bot || false,
+        replyToMessageId: msg.reply_to_message?.message_id?.toString(),
+        attachments: attachments.length > 0 ? attachments : undefined
+      },
       
-      // IMessage interface properties
       getMessageId: () => msg.message_id.toString(),
       getChannelId: () => msg.chat.id.toString(),
       getText: () => msg.text || msg.caption || '[Media]',
       getAuthorId: () => msg.from.id.toString(),
       getAuthorName: () => msg.from.username || `${msg.from.first_name || ''} ${msg.from.last_name || ''}`.trim(),
       getTimestamp: () => new Date(msg.date * 1000),
+      getChannelTopic: () => null,
+      getUserMentions: () => [],
+      getChannelUsers: () => [],
+      getGuildOrWorkspaceId: () => null,
+      isReplyToBot: () => false,
+      mentionsUsers: (userId: string) => false,
       isFromBot: () => msg.from.is_bot || false,
-      hasAttachments: () => attachments.length > 0,
-      getUserMentions: () => [], // Telegram mentions are handled differently
-      getProvider: () => 'telegram',
       setText: async (newText: string) => {
-        // Telegram doesn't support editing messages from other users
         throw new Error('Cannot edit messages in Telegram');
       }
     };
@@ -384,7 +393,7 @@ export class TelegramService implements IMessengerService {
       getAuthorName: () => msg.authorName,
       getTimestamp: () => msg.timestamp,
       isFromBot: () => msg.metadata?.isBot || false,
-      hasAttachments: () => Boolean(msg.metadata?.attachments?.length),
+      // hasAttachments method is already defined in the interface
       getUserMentions: () => [], // Telegram mentions are handled differently
       getProvider: () => 'telegram',
       setText: async (newText: string) => {

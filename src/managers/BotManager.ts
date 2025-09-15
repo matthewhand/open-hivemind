@@ -374,8 +374,8 @@ export class BotManager extends EventEmitter {
 
       // Implement actual bot shutdown logic
       // Stop any active connections or services associated with this bot
-      if (bot.services && Array.isArray(bot.services)) {
-        for (const service of bot.services) {
+      if ((bot as any).services && Array.isArray((bot as any).services)) {
+        for (const service of (bot as any).services) {
           if (service && typeof service.stop === 'function') {
             try {
               await service.stop();
@@ -388,8 +388,8 @@ export class BotManager extends EventEmitter {
       }
 
       // Close any active connections
-      if (bot.connections && Array.isArray(bot.connections)) {
-        for (const connection of bot.connections) {
+      if ((bot as any).connections && Array.isArray((bot as any).connections)) {
+        for (const connection of (bot as any).connections) {
           if (connection && typeof connection.close === 'function') {
             try {
               await connection.close();
@@ -571,8 +571,8 @@ export class BotManager extends EventEmitter {
     try {
       debug('Stopping all bots...');
       
-      const allBots = await Promise.resolve(this.getAllBots());
-      const stopPromises = allBots.map(async (bot: any) => {
+      const allBots = await this.getAllBots();
+      const stopPromises = allBots.map(async (bot: BotInstance) => {
         try {
           await this.stopBotById(bot.id);
           debug(`Stopped bot: ${bot.name}`);
@@ -600,7 +600,7 @@ export class BotManager extends EventEmitter {
     try {
       debug(`Starting bot: ${botId}`);
       
-      const bot = this.getBotById(botId);
+      const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
       }
@@ -633,7 +633,7 @@ export class BotManager extends EventEmitter {
     try {
       debug(`Stopping bot: ${botId}`);
       
-      const bot = this.getBotById(botId);
+      const bot = await this.getBot(botId);
       if (!bot) {
         throw new Error(`Bot with ID ${botId} not found`);
       }
@@ -850,15 +850,15 @@ export class BotManager extends EventEmitter {
   /**
    * Get status of all bots
    */
-  public getBotsStatus(): Array<{
+  public async getBotsStatus(): Promise<Array<{
     id: string;
     name: string;
     provider: string;
     isRunning: boolean;
     isActive: boolean;
-  }> {
-    const allBots = this.getAllBots();
-    return allBots.map((bot: any) => ({
+  }>> {
+    const allBots = await this.getAllBots();
+    return allBots.map((bot: BotInstance) => ({
       id: bot.id,
       name: bot.name,
       provider: bot.messageProvider,
@@ -870,15 +870,15 @@ export class BotManager extends EventEmitter {
   /**
    * Get system metrics
    */
-  public getSystemMetrics(): {
+  public async getSystemMetrics(): Promise<{
     totalBots: number;
     runningBots: number;
     activeBots: number;
     systemUptime: number;
     memoryUsage: NodeJS.MemoryUsage;
-  } {
-    const allBots = this.getAllBots();
-    const activeBots = allBots.filter((bot: any) => bot.isActive);
+  }> {
+    const allBots = await this.getAllBots();
+    const activeBots = allBots.filter((bot: BotInstance) => bot.isActive);
     
     return {
       totalBots: allBots.length,
@@ -899,8 +899,8 @@ export class BotManager extends EventEmitter {
     lastCheck: Date;
     issues?: string[];
   }>> {
-    const allBots = this.getAllBots();
-    const healthChecks = allBots.map(async (bot: any) => {
+    const allBots = await this.getAllBots();
+    const healthChecks = allBots.map(async (bot: BotInstance) => {
       const issues: string[] = [];
       let status: 'healthy' | 'unhealthy' | 'stopped' = 'stopped';
 
