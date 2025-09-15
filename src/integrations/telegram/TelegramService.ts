@@ -143,17 +143,17 @@ export class TelegramService implements IMessengerService {
     if (this.dbManager.isConnected()) {
       try {
         const messageRecord: MessageRecord = {
-          messageId: telegramMessage.messageId,
-          channelId: telegramMessage.chatId,
-          content: telegramMessage.text,
-          authorId: telegramMessage.userId,
-          authorName: telegramMessage.username || `${telegramMessage.firstName || ''} ${telegramMessage.lastName || ''}`.trim(),
-          timestamp: telegramMessage.timestamp,
+          messageId: telegramMessage.getMessageId(),
+          channelId: telegramMessage.getChannelId(),
+          content: telegramMessage.getText(),
+          authorId: telegramMessage.getAuthorId(),
+          authorName: telegramMessage.getAuthorName(),
+          timestamp: telegramMessage.getTimestamp(),
           provider: 'telegram',
           metadata: {
-            isBot: telegramMessage.isBot,
-            replyToMessageId: telegramMessage.replyToMessageId,
-            attachments: telegramMessage.attachments,
+            isBot: telegramMessage.isFromBot(),
+            replyToMessageId: telegramMessage.data?.reply_to_message?.message_id?.toString(),
+            attachments: telegramMessage.metadata?.attachments,
             chatType: msg.chat.type,
             chatTitle: msg.chat.title
           }
@@ -168,18 +168,18 @@ export class TelegramService implements IMessengerService {
     // Call user-defined message handler
     if (this.messageHandler) {
       try {
-        const historyMessages = await this.getMessagesFromChannel(telegramMessage.chatId);
+        const historyMessages = await this.getMessagesFromChannel(telegramMessage.getChannelId());
         const response = await this.messageHandler(telegramMessage, historyMessages, {});
         
         if (response && response.trim()) {
-          await this.sendMessageToChannel(telegramMessage.chatId, response);
+          await this.sendMessageToChannel(telegramMessage.getChannelId(), response);
         }
       } catch (error) {
         debug('Error in message handler:', error);
       }
     }
 
-    debug(`Received message from ${telegramMessage.username}: ${telegramMessage.text}`);
+    debug(`Received message from ${telegramMessage.getAuthorName()}: ${telegramMessage.getText()}`);
   }
 
   private async handleCallbackQuery(query: any): Promise<void> {
@@ -386,16 +386,26 @@ export class TelegramService implements IMessengerService {
 
   private createIMessageFromRecord(msg: MessageRecord): IMessage {
     return {
+      content: msg.content,
+      channelId: msg.channelId,
+      data: msg,
+      role: msg.metadata?.isBot ? 'assistant' : 'user',
+      platform: 'telegram',
+      metadata: msg.metadata,
+      
       getMessageId: () => msg.messageId,
       getChannelId: () => msg.channelId,
       getText: () => msg.content,
       getAuthorId: () => msg.authorId,
       getAuthorName: () => msg.authorName,
       getTimestamp: () => msg.timestamp,
+      getChannelTopic: () => null,
+      getUserMentions: () => [],
+      getChannelUsers: () => [],
+      getGuildOrWorkspaceId: () => null,
+      isReplyToBot: () => false,
+      mentionsUsers: (userId: string) => false,
       isFromBot: () => msg.metadata?.isBot || false,
-      // hasAttachments method is already defined in the interface
-      getUserMentions: () => [], // Telegram mentions are handled differently
-      getProvider: () => 'telegram',
       setText: async (newText: string) => {
         throw new Error('Cannot edit historical messages');
       }
