@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import { CircularProgress, Box, Typography } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
 
 // Lazy load components for code splitting
@@ -61,10 +61,9 @@ interface ProtectedRouteProps {
   fallback?: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requiredPermission,
-  fallback = <Navigate to="/login" replace />
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredPermission
 }) => {
   const { auth } = useAppSelector(state => state);
   const location = useLocation();
@@ -174,7 +173,7 @@ const routes: RouteConfig[] = [
 ];
 
 const AppRouter: React.FC = () => {
-  const { ui } = useAppSelector(state => state);
+  // App router component - no state needed for routing logic
   
   return (
     <Suspense fallback={<LoadingFallback message="Loading application..." />}>
@@ -216,4 +215,4 @@ const AppRouter: React.FC = () => {
 export default AppRouter;
 
 // Export route configuration for navigation components
-export { routes, LoadingFallback };
+// Note: Exports moved to separate file to avoid Fast Refresh issues

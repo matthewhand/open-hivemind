@@ -6,6 +6,8 @@ import dashboardReducer from './slices/dashboardSlice';
 import configReducer from './slices/configSlice';
 import errorReducer from './slices/errorSlice';
 import uiReducer from './slices/uiSlice';
+import performanceReducer from './slices/performanceSlice';
+import websocketReducer from './slices/websocketSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +17,8 @@ export const store = configureStore({
     config: configReducer,
     error: errorReducer,
     ui: uiReducer,
+    performance: performanceReducer,
+    websocket: websocketReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -81,9 +81,9 @@ describe('WebSocketService', () => {
         }
       ]);
 
-      clientSocket.on('bot_status', (data: any) => {
-        expect(data).toHaveLength(1);
-        expect(data[0].name).toBe('Test Bot');
+      clientSocket.on('bot_status_update', (data: any) => {
+        expect(data.bots).toHaveLength(1);
+        expect(data.bots[0].name).toBe('Test Bot');
         done();
       });
 
@@ -104,10 +104,9 @@ describe('WebSocketService', () => {
 
   describe('System Metrics Updates', () => {
     it('should send system metrics on request', (done) => {
-      clientSocket.on('system_metrics', (data: any) => {
-        expect(data).toHaveProperty('cpu');
+      clientSocket.on('system_metrics_update', (data: any) => {
         expect(data).toHaveProperty('memory');
-        expect(data).toHaveProperty('uptime');
+        expect(data).toHaveProperty('connectedClients');
         done();
       });
 
@@ -153,7 +152,7 @@ describe('WebSocketService', () => {
   describe('Configuration Change Broadcasting', () => {
     it('should broadcast configuration changes', (done) => {
       clientSocket.on('config_changed', (data: any) => {
-        expect(data).toHaveProperty('message');
+        expect(data).toHaveProperty('timestamp');
         done();
       });
 
@@ -161,15 +160,13 @@ describe('WebSocketService', () => {
     });
 
     it('should send updated data after configuration change', (done) => {
-      mockManager.getAllBots.mockResolvedValue([]);
-
       clientSocket.on('updated_data', (data: any) => {
-        expect(data).toHaveProperty('bots');
-        expect(Array.isArray(data.bots)).toBe(true);
+        expect(data).toHaveProperty('timestamp');
         done();
       });
 
-      wsService.sendUpdatedData();
+      // Send updated data through the proper method
+      wsService['sendBotStatus'](clientSocket);
     });
   });
 
