@@ -1,111 +1,132 @@
 import React, { useState } from 'react';
 import {
-  Container,
-  Paper,
+  Box,
+  Card,
+  CardContent,
   TextField,
   Button,
   Typography,
-  Box,
   Alert,
+  Link,
   CircularProgress,
-  Avatar,
-  Grid,
 } from '@mui/material';
-import { LockOutlined } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { auth } = useAppSelector(state => state);
+  
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { login } = useAuth();
+  interface LocationState {
+    from?: {
+      pathname?: string;
+    };
+  }
+  
+  const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
     try {
-      const success = await login(username, password);
-      if (!success) {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock authentication
+      if (formData.username === 'admin' && formData.password === 'admin') {
+        // Mock authentication - set user as authenticated
+        localStorage.setItem('auth_token', 'mock-jwt-token');
+        localStorage.setItem('user_permissions', JSON.stringify(['view_dashboard', 'manage_bots', 'view_performance']));
+        localStorage.setItem('user_role', 'admin');
+        localStorage.setItem('username', formData.username);
+        
+        navigate(from, { replace: true });
+      } else {
         setError('Invalid username or password');
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-            <LockOutlined />
-          </Avatar>
+  if (auth.isAuthenticated) {
+    navigate(from, { replace: true });
+    return null;
+  }
 
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Open-Hivemind Login
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+      }}
+    >
+      <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Open-Hivemind
+          </Typography>
+          
+          <Typography variant="h6" component="h2" gutterBottom align="center">
+            Sign In
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="username"
               label="Username"
               name="username"
-              autoComplete="username"
-              autoFocus
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
-            />
-
-            <TextField
+              type="text"
+              value={formData.username}
+              onChange={handleInputChange}
               margin="normal"
               required
+              autoComplete="username"
+              disabled={isLoading}
+              placeholder="Enter 'admin'"
+            />
+            
+            <TextField
               fullWidth
-              name="password"
               label="Password"
+              name="password"
               type="password"
-              id="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              margin="normal"
+              required
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
+              disabled={isLoading}
+              placeholder="Enter 'admin'"
             />
 
             <Button
@@ -113,33 +134,25 @@ const Login: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
+              disabled={isLoading}
+              size="large"
             >
-              {loading ? (
-                <Box display="flex" alignItems="center">
-                  <CircularProgress size={20} sx={{ mr: 1 }} />
-                  Signing in...
-                </Box>
+              {isLoading ? (
+                <CircularProgress size={24} />
               ) : (
                 'Sign In'
               )}
             </Button>
-          </Box>
 
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Default credentials:
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              <strong>Username:</strong> admin
-            </Typography>
-            <Typography variant="body2">
-              <strong>Password:</strong> admin123!
-            </Typography>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Demo credentials: admin / admin
+              </Typography>
+            </Box>
           </Box>
-        </Paper>
-      </Box>
-    </Container>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 
