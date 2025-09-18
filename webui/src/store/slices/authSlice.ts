@@ -1,6 +1,49 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Tenant } from '../../enterprise/MultiTenantProvider';
 
+const getStorage = () => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch (error) {
+    console.warn('localStorage unavailable:', error);
+  }
+  return undefined;
+};
+
+const storage = getStorage();
+
+const readJSON = <T>(key: string): T | null => {
+  if (!storage) return null;
+  const raw = storage.getItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    console.warn(`Failed to parse stored value for ${key}`, error);
+    return null;
+  }
+};
+
+const persistItem = (key: string, value: string | null) => {
+  if (!storage) return;
+  if (value === null) {
+    storage.removeItem(key);
+    return;
+  }
+  storage.setItem(key, value);
+};
+
+const persistJSON = (key: string, value: unknown | null) => {
+  if (!storage) return;
+  if (value === null) {
+    storage.removeItem(key);
+    return;
+  }
+  storage.setItem(key, JSON.stringify(value));
+};
+
 interface User {
   id: string;
   username: string;
@@ -22,16 +65,23 @@ interface AuthState {
   availableTenants: Tenant[];
 }
 
+const storedToken = storage?.getItem('token') ?? null;
+const storedRefreshToken = storage?.getItem('refreshToken') ?? null;
+const storedExpiresAtValue = storage?.getItem('expiresAt');
+const storedUser = readJSON<User>('auth_user');
+const storedCurrentTenant = readJSON<Tenant>('auth_currentTenant');
+const storedTenants = readJSON<Tenant[]>('auth_tenants') ?? [];
+
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  user: storedUser,
+  token: storedToken,
+  isAuthenticated: Boolean(storedToken && storedUser),
   isLoading: false,
   error: null,
-  refreshToken: localStorage.getItem('refreshToken'),
-  expiresAt: localStorage.getItem('expiresAt') ? parseInt(localStorage.getItem('expiresAt')!) : null,
-  currentTenant: null,
-  availableTenants: [],
+  refreshToken: storedRefreshToken,
+  expiresAt: storedExpiresAtValue ? Number.parseInt(storedExpiresAtValue, 10) : null,
+  currentTenant: storedCurrentTenant ?? null,
+  availableTenants: storedTenants,
 };
 
 const authSlice = createSlice({
@@ -52,9 +102,10 @@ const authSlice = createSlice({
       state.error = null;
       
       // Persist to localStorage
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('refreshToken', action.payload.refreshToken);
-      localStorage.setItem('expiresAt', action.payload.expiresAt.toString());
+      persistItem('token', action.payload.token);
+      persistItem('refreshToken', action.payload.refreshToken);
+      persistItem('expiresAt', action.payload.expiresAt.toString());
+      persistJSON('auth_user', action.payload.user);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false;
@@ -66,9 +117,10 @@ const authSlice = createSlice({
       state.expiresAt = null;
       
       // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('expiresAt');
+      persistItem('token', null);
+      persistItem('refreshToken', null);
+      persistItem('expiresAt', null);
+      persistJSON('auth_user', null);
     },
     logout: (state) => {
       state.user = null;
@@ -81,9 +133,12 @@ const authSlice = createSlice({
       state.availableTenants = [];
       
       // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('expiresAt');
+      persistItem('token', null);
+      persistItem('refreshToken', null);
+      persistItem('expiresAt', null);
+      persistJSON('auth_user', null);
+      persistJSON('auth_currentTenant', null);
+      persistJSON('auth_tenants', null);
     },
     refreshTokenStart: (state) => {
       state.isLoading = true;
@@ -95,9 +150,9 @@ const authSlice = createSlice({
       state.expiresAt = action.payload.expiresAt;
       
       // Update localStorage
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('refreshToken', action.payload.refreshToken);
-      localStorage.setItem('expiresAt', action.payload.expiresAt.toString());
+      persistItem('token', action.payload.token);
+      persistItem('refreshToken', action.payload.refreshToken);
+      persistItem('expiresAt', action.payload.expiresAt.toString());
     },
     refreshTokenFailure: (state) => {
       state.isLoading = false;
@@ -108,9 +163,11 @@ const authSlice = createSlice({
       state.currentTenant = null;
       state.availableTenants = [];
       
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('expiresAt');
+      persistItem('token', null);
+      persistItem('refreshToken', null);
+      persistItem('expiresAt', null);
+      persistJSON('auth_tenants', null);
+      persistJSON('auth_currentTenant', null);
     },
     clearError: (state) => {
       state.error = null;
@@ -118,13 +175,16 @@ const authSlice = createSlice({
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
+        persistJSON('auth_user', state.user);
       }
     },
     setCurrentTenant: (state, action: PayloadAction<Tenant | null>) => {
       state.currentTenant = action.payload;
+      persistJSON('auth_currentTenant', action.payload);
     },
     setAvailableTenants: (state, action: PayloadAction<Tenant[]>) => {
       state.availableTenants = action.payload;
+      persistJSON('auth_tenants', action.payload);
     },
   },
 });

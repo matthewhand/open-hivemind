@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,21 +13,36 @@ import {
   Divider,
 } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { 
-  toggleTheme, 
-  toggleAutoRefresh, 
-  setRefreshInterval, 
-  selectUIState 
+import {
+  selectUI,
+  setAnimationsEnabled,
+  setRefreshInterval,
+  setShowKeyboardShortcuts,
+  setShowTooltips,
+  setTheme,
+  toggleAutoRefresh,
 } from '../store/slices/uiSlice';
-import LoadingSpinner from './LoadingSpinner';
+import type { UIState } from '../store/slices/uiSlice';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
-  const ui = useAppSelector(selectUIState);
+  const ui = useAppSelector(selectUI);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const themeOptions: Array<{ value: UIState['theme']; label: string }> = [
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+    { value: 'high-contrast', label: 'High Contrast' },
+    { value: 'auto', label: 'Auto (System)' },
+  ];
 
-  const handleThemeToggle = () => {
-    dispatch(toggleTheme());
+  const handleThemeToggle = (checked: boolean) => {
+    dispatch(setTheme(checked ? 'dark' : 'light'));
+  };
+
+  const handleThemeSelect = (mode: UIState['theme']) => {
+    dispatch(setTheme(mode));
   };
 
   const handleAutoRefreshToggle = () => {
@@ -41,15 +56,27 @@ const Settings: React.FC = () => {
   const handleSaveSettings = async () => {
     setSaveStatus('saving');
     // Simulate API call
-    setTimeout(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      resetTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     }, 1000);
   };
 
-  if (ui.isLoading) {
-    return <LoadingSpinner message="Loading settings..." />;
-  }
+  useEffect(() => () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+    }
+  }, []);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -73,7 +100,7 @@ const Settings: React.FC = () => {
             control={
               <Switch
                 checked={ui.theme === 'dark'}
-                onChange={handleThemeToggle}
+                onChange={(event) => handleThemeToggle(event.target.checked)}
                 color="primary"
               />
             }
@@ -83,8 +110,20 @@ const Settings: React.FC = () => {
           <Divider sx={{ my: 2 }} />
           
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Theme: {ui.theme}
+            Theme preset
           </Typography>
+          <Select
+            value={ui.theme}
+            onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
+            size="small"
+            sx={{ minWidth: 200 }}
+          >
+            {themeOptions.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
         </CardContent>
       </Card>
 
@@ -97,7 +136,7 @@ const Settings: React.FC = () => {
           <FormControlLabel
             control={
               <Switch
-                checked={ui.isAutoRefresh}
+                checked={ui.autoRefreshEnabled}
                 onChange={handleAutoRefreshToggle}
                 color="primary"
               />
@@ -114,7 +153,7 @@ const Settings: React.FC = () => {
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
               size="small"
               sx={{ minWidth: 120 }}
-              disabled={!ui.isAutoRefresh}
+              disabled={!ui.autoRefreshEnabled}
             >
               <MenuItem value={1000}>1 second</MenuItem>
               <MenuItem value={5000}>5 seconds</MenuItem>
@@ -133,13 +172,36 @@ const Settings: React.FC = () => {
           </Typography>
           
           <FormControlLabel
-            control={<Switch checked={ui.highContrast} color="primary" />}
-            label="High Contrast Mode"
+            control={
+              <Switch
+                checked={!ui.animationsEnabled}
+                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Reduced Motion"
           />
           
           <FormControlLabel
-            control={<Switch checked={ui.reducedMotion} color="primary" />}
-            label="Reduced Motion"
+            control={
+              <Switch
+                checked={ui.showTooltips}
+                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Show Tooltips"
+          />
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ui.showKeyboardShortcuts}
+                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Keyboard Shortcuts Overlay"
           />
         </CardContent>
       </Card>
