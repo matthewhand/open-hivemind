@@ -17,6 +17,8 @@ describe('Authentication Middleware', () => {
       genSalt: jest.fn().mockResolvedValue('$2b$10$salt'),
     }));
 
+    // Reset singleton instance for each test
+    (AuthManager as any).instance = null;
     authManager = AuthManager.getInstance();
   });
 

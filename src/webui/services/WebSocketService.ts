@@ -629,9 +629,9 @@ export class WebSocketService {
         // Proactively disconnect sockets without touching the underlying HTTP server
         try {
           this.io.sockets.sockets.forEach((socket) => {
-            try { socket.disconnect(true); } catch (_) { /* ignore */ }
+            try { socket.disconnect(true); } catch { /* ignore */ }
           });
-        } catch (_) { /* ignore */ }
+        } catch { /* ignore */ }
         // Remove listeners to avoid emitting errors on the shared HTTP server
         this.io.removeAllListeners();
         // Avoid calling close() to prevent 'Server is not running' errors in certain environments

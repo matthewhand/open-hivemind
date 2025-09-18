@@ -49,6 +49,8 @@ describeIf('Admin Routes RBAC', () => {
   let userToken: string;
 
   beforeAll(async () => {
+    // Reset singleton instance for tests
+    (AuthManager as any).instance = null;
     // Get auth manager instance
     const authManager = AuthManager.getInstance();
 
