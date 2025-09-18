@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import Debug from 'debug';
 
 const debug = Debug('app:ciRoutes');

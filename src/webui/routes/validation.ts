@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import WebSocketService from '../services/WebSocketService';
 
 const router = Router();
 

@@ -7,7 +7,6 @@ import { Discord } from '@integrations/discord/DiscordService';
 import { auditMiddleware, AuditedRequest, logAdminAction } from '../webui/middleware/audit';
 import { ipWhitelist } from '../webui/middleware/security';
 import { authenticate, requireAdmin } from '../auth/middleware';
-import { AuthMiddlewareRequest } from '../auth/types';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();

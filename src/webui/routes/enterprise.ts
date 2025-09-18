@@ -103,7 +103,7 @@ router.get('/api/cloud-providers', (req, res) => {
 // Add cloud provider
 router.post('/api/cloud-providers', (req, res) => {
   try {
-    const { name, type, region, credentials } = req.body;
+    const { name, type, region, _credentials } = req.body;
 
     if (!name || !type || !region) {
       return res.status(400).json({
