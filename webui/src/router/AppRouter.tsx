@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box, Typography } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
+import { selectHasPermission, selectIsAuthenticated } from '../store/slices/authSlice';
 
 // Lazy load components for code splitting
 const AdvancedDashboard = lazy(() => 
@@ -65,16 +66,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredPermission
 }) => {
-  const { auth } = useAppSelector(state => state);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const hasRequiredPermission = requiredPermission
+    ? useAppSelector(selectHasPermission(requiredPermission))
+    : true;
   const location = useLocation();
 
   // Check authentication
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check permission if required
-  if (requiredPermission && !auth.permissions.includes(requiredPermission)) {
+  if (!hasRequiredPermission) {
     return (
       <Box sx={{ p: 3 }}>
         <Box 

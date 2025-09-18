@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,27 +19,26 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  CircularProgress,
+  Stack,
 } from '@mui/material';
 import {
   Add as AddIcon,
   ContentCopy as CloneIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
 } from '@mui/icons-material';
-import { apiService } from '../services/api';
-import type { Bot } from '../services/api';
+import {
+  useGetConfigQuery,
+  useCreateBotMutation,
+  useCloneBotMutation,
+  useDeleteBotMutation,
+} from '../store/slices/apiSlice';
 
-interface BotManagerProps {
-  bots: Bot[];
-  onBotChange: () => void;
-}
-
-const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
+const BotManager: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedBotName, setSelectedBotName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -51,6 +50,19 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [newBotName, setNewBotName] = useState('');
 
+  const { data, isLoading, isFetching, refetch } = useGetConfigQuery();
+  const [createBot, { isLoading: isCreating }] = useCreateBotMutation();
+  const [cloneBot, { isLoading: isCloning }] = useCloneBotMutation();
+  const [deleteBot, { isLoading: isDeleting }] = useDeleteBotMutation();
+
+  const bots = useMemo(() => data?.bots ?? [], [data]);
+  const selectedBot = useMemo(
+    () => bots.find(bot => bot.name === selectedBotName) ?? null,
+    [bots, selectedBotName]
+  );
+
+  const mutationInFlight = isCreating || isCloning || isDeleting;
+
   const resetForm = () => {
     setBotName('');
     setMessageProvider('discord');
@@ -60,6 +72,7 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
     setNewBotName('');
     setError(null);
     setSuccess(null);
+    setSelectedBotName(null);
   };
 
   const handleCreateBot = async () => {
@@ -68,35 +81,33 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      const config: any = {};
+      const config: Record<string, unknown> = {};
 
-      if (messageProvider === 'discord') {
-        config.discord = { token: discordToken };
+      if (messageProvider === 'discord' && discordToken.trim()) {
+        config.discord = { token: discordToken.trim() };
       }
 
-      if (llmProvider === 'openai') {
-        config.openai = { apiKey: openaiApiKey };
+      if (llmProvider === 'openai' && openaiApiKey.trim()) {
+        config.openai = { apiKey: openaiApiKey.trim() };
       }
 
-      await apiService.createBot({
-        name: botName,
+      await createBot({
+        name: botName.trim(),
         messageProvider,
         llmProvider,
         config,
-      });
+      }).unwrap();
 
       setSuccess(`Bot '${botName}' created successfully!`);
       setCreateDialogOpen(false);
       resetForm();
-      onBotChange();
+      await refetch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create bot');
-    } finally {
-      setLoading(false);
+      const message = err instanceof Error ? err.message : 'Failed to create bot';
+      setError(message);
     }
   };
 
@@ -106,49 +117,45 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      await apiService.cloneBot(selectedBot.name, newBotName);
+      await cloneBot({ name: selectedBot.name, newName: newBotName.trim() }).unwrap();
       setSuccess(`Bot '${selectedBot.name}' cloned as '${newBotName}' successfully!`);
       setCloneDialogOpen(false);
       resetForm();
-      onBotChange();
+      await refetch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clone bot');
-    } finally {
-      setLoading(false);
+      const message = err instanceof Error ? err.message : 'Failed to clone bot';
+      setError(message);
     }
   };
 
   const handleDeleteBot = async () => {
     if (!selectedBot) return;
 
-    setLoading(true);
     setError(null);
 
     try {
-      await apiService.deleteBot(selectedBot.name);
+      await deleteBot(selectedBot.name).unwrap();
       setSuccess(`Bot '${selectedBot.name}' deleted successfully!`);
       setDeleteDialogOpen(false);
-      setSelectedBot(null);
-      onBotChange();
+      setSelectedBotName(null);
+      await refetch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete bot');
-    } finally {
-      setLoading(false);
+      const message = err instanceof Error ? err.message : 'Failed to delete bot';
+      setError(message);
     }
   };
 
-  const openCloneDialog = (bot: Bot) => {
-    setSelectedBot(bot);
-    setNewBotName(`${bot.name}_copy`);
+  const openCloneDialog = (name: string) => {
+    setSelectedBotName(name);
+    setNewBotName(`${name}_copy`);
     setCloneDialogOpen(true);
   };
 
-  const openDeleteDialog = (bot: Bot) => {
-    setSelectedBot(bot);
+  const openDeleteDialog = (name: string) => {
+    setSelectedBotName(name);
     setDeleteDialogOpen(true);
   };
 
@@ -158,13 +165,16 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
         <Typography variant="h5" component="h2">
           Bot Instance Manager
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          Create Bot
-        </Button>
+        <Box display="flex" alignItems="center" gap={2}>
+          {(isFetching || (isLoading && bots.length > 0)) && <CircularProgress size={20} />}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            Create Bot
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -179,56 +189,71 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
         </Alert>
       )}
 
-      <Box display="flex" flexWrap="wrap" gap={2}>
-        {bots.map((bot) => (
-          <Card key={bot.name} sx={{ minWidth: 300, flex: '1 1 auto' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <Typography variant="h6" component="h3" sx={{ mr: 1 }}>
-                  🤖
-                </Typography>
-                <Typography variant="h6" component="h3">
-                  {bot.name}
-                </Typography>
-              </Box>
+      {isLoading && bots.length === 0 ? (
+        <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ py: 6 }}>
+          <CircularProgress size={32} />
+          <Typography variant="body2" color="text.secondary">
+            Loading bots...
+          </Typography>
+        </Stack>
+      ) : bots.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          No bots configured yet. Use the Create Bot button to get started.
+        </Alert>
+      ) : (
+        <Box display="flex" flexWrap="wrap" gap={2}>
+          {bots.map((bot) => (
+            <Card key={bot.name} sx={{ minWidth: 300, flex: '1 1 auto' }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Typography variant="h6" component="h3" sx={{ mr: 1 }}>
+                    🤖
+                  </Typography>
+                  <Typography variant="h6" component="h3">
+                    {bot.name}
+                  </Typography>
+                </Box>
 
-              <Box mb={2}>
-                <Chip
-                  label={`Message: ${bot.messageProvider}`}
-                  size="small"
-                  sx={{ mr: 1, mb: 1 }}
-                />
-                <Chip
-                  label={`LLM: ${bot.llmProvider}`}
-                  size="small"
-                  sx={{ mr: 1, mb: 1 }}
-                />
-              </Box>
-            </CardContent>
+                <Box mb={2}>
+                  <Chip
+                    label={`Message: ${bot.messageProvider}`}
+                    size="small"
+                    sx={{ mr: 1, mb: 1 }}
+                  />
+                  <Chip
+                    label={`LLM: ${bot.llmProvider}`}
+                    size="small"
+                    sx={{ mr: 1, mb: 1 }}
+                  />
+                </Box>
+              </CardContent>
 
-            <CardActions>
-              <Tooltip title="Clone Bot">
-                <IconButton
-                  size="small"
-                  onClick={() => openCloneDialog(bot)}
-                  color="primary"
-                >
-                  <CloneIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete Bot">
-                <IconButton
-                  size="small"
-                  onClick={() => openDeleteDialog(bot)}
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
-            </CardActions>
-          </Card>
-        ))}
-      </Box>
+              <CardActions>
+                <Tooltip title="Clone Bot">
+                  <IconButton
+                    size="small"
+                    onClick={() => openCloneDialog(bot.name)}
+                    color="primary"
+                    disabled={mutationInFlight}
+                  >
+                    <CloneIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Bot">
+                  <IconButton
+                    size="small"
+                    onClick={() => openDeleteDialog(bot.name)}
+                    color="error"
+                    disabled={mutationInFlight}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </CardActions>
+            </Card>
+          ))}
+        </Box>
+      )}
 
       {/* Create Bot Dialog */}
       <Dialog
@@ -317,9 +342,9 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
           <Button
             onClick={handleCreateBot}
             variant="contained"
-            disabled={loading}
+            disabled={isCreating}
           >
-            {loading ? 'Creating...' : 'Create'}
+            {isCreating ? 'Creating...' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -361,9 +386,9 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
           <Button
             onClick={handleCloneBot}
             variant="contained"
-            disabled={loading}
+            disabled={isCloning}
           >
-            {loading ? 'Cloning...' : 'Clone'}
+            {isCloning ? 'Cloning...' : 'Clone'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -390,9 +415,9 @@ const BotManager: React.FC<BotManagerProps> = ({ bots, onBotChange }) => {
             onClick={handleDeleteBot}
             color="error"
             variant="contained"
-            disabled={loading}
+            disabled={isDeleting}
           >
-            {loading ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-interface UIState {
+export interface UIState {
   theme: 'light' | 'dark' | 'high-contrast' | 'auto';
   sidebarCollapsed: boolean;
   notificationsEnabled: boolean;
@@ -151,23 +151,11 @@ const uiSlice = createSlice({
     },
     
     closeModal: (state, action: PayloadAction<string>) => {
-      const modal = state.modals.find(m => m.id === action.payload);
-      if (modal) {
-        modal.isOpen = false;
-      }
-      // Remove closed modals after a delay
-      setTimeout(() => {
-        state.modals = state.modals.filter(m => m.id !== action.payload);
-      }, 300);
+      state.modals = state.modals.filter(m => m.id !== action.payload);
     },
     
     closeAllModals: (state) => {
-      state.modals.forEach(modal => {
-        modal.isOpen = false;
-      });
-      setTimeout(() => {
-        state.modals = [];
-      }, 300);
+      state.modals = [];
     },
     
     // Toast management
@@ -177,13 +165,6 @@ const uiSlice = createSlice({
         id: Date.now().toString(),
       };
       state.toasts.push(toast);
-      
-      // Auto-remove after duration
-      if (action.payload.duration > 0) {
-        setTimeout(() => {
-          state.toasts = state.toasts.filter(t => t.id !== toast.id);
-        }, action.payload.duration);
-      }
     },
     
     dismissToast: (state, action: PayloadAction<string>) => {
