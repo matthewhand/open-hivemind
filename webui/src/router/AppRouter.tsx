@@ -5,31 +5,12 @@ import { useAppSelector } from '../store/hooks';
 import { selectHasPermission, selectIsAuthenticated } from '../store/slices/authSlice';
 
 // Lazy load components for code splitting
-const AdvancedDashboard = lazy(() => 
-  import('../components/AdvancedDashboard').then(module => ({ 
-    default: module.default 
+const UnifiedDashboard = lazy(() =>
+  import('../components/UnifiedDashboard').then(module => ({
+    default: module.default
   }))
 );
-const BotManager = lazy(() => 
-  import('../components/BotManager').then(module => ({ 
-    default: module.default 
-  }))
-);
-const ConfigManager = lazy(() => 
-  import('../components/ConfigManager').then(module => ({ 
-    default: module.default 
-  }))
-);
-const PerformanceMonitor = lazy(() => 
-  import('../components/PerformanceMonitor').then(module => ({ 
-    default: module.default 
-  }))
-);
-const Settings = lazy(() => 
-  import('../components/Settings').then(module => ({ 
-    default: module.default 
-  }))
-);
+
 const Login = lazy(() => 
   import('../components/Login').then(module => ({ 
     default: module.default 
@@ -111,47 +92,10 @@ interface RouteConfig {
 const routes: RouteConfig[] = [
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
-    title: 'Home',
-    description: 'Redirect to dashboard',
-  },
-  {
-    path: '/dashboard',
-    element: <AdvancedDashboard />,
+    element: <UnifiedDashboard />,
     protected: true,
     title: 'Dashboard',
-    description: 'Main dashboard with real-time metrics',
-  },
-  {
-    path: '/bots',
-    element: <BotManager />,
-    protected: true,
-    requiredPermission: 'manage_bots',
-    title: 'Bot Manager',
-    description: 'Manage Discord bot instances',
-  },
-  {
-    path: '/config',
-    element: <ConfigManager />,
-    protected: true,
-    requiredPermission: 'manage_config',
-    title: 'Configuration',
-    description: 'System configuration management',
-  },
-  {
-    path: '/performance',
-    element: <PerformanceMonitor />,
-    protected: true,
-    requiredPermission: 'view_performance',
-    title: 'Performance Monitor',
-    description: 'Real-time performance metrics',
-  },
-  {
-    path: '/settings',
-    element: <Settings />,
-    protected: true,
-    title: 'Settings',
-    description: 'Application settings and preferences',
+    description: 'Unified dashboard with bot status and system metrics',
   },
   {
     path: '/login',
@@ -161,18 +105,9 @@ const routes: RouteConfig[] = [
   },
   {
     path: '*',
-    element: (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
-          404 - Page Not Found
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          The page you're looking for doesn't exist.
-        </Typography>
-      </Box>
-    ),
-    title: 'Not Found',
-    description: '404 error page',
+    element: <Navigate to="/" replace />,
+    title: 'Redirect',
+    description: 'Redirect to dashboard',
   },
 ];
 
