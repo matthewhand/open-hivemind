@@ -308,25 +308,23 @@ Mix and match based on your needs:
 
 ## WebUI Dashboard
 
-Open-Hivemind includes a comprehensive web-based configuration and monitoring system for managing bots and viewing real-time status.
+Open-Hivemind includes a powerful, intuitive web interface for monitoring and managing your agents. The UI is designed to provide a comprehensive overview of your system at a glance, while also offering detailed configuration options in a secure, dedicated section.
 
-### Configuration Management
-- **Real-Time Configuration Viewer:** Hierarchical display of all configuration sources (environment variables, config files, defaults)
-- **Configuration Validation:** Live validation with error detection and recommendations
-- **Bot Instance Manager:** Add, remove, and configure bot instances through the web interface
-- **Hot Reload Support:** Apply configuration changes without restarting the system
+### The Unified Dashboard (`/`)
 
-### Monitoring & Analytics
-- **Live Status Dashboard:** Real-time bot status, connection health, and system metrics
-- **WebSocket Updates:** Instant updates for configuration changes and system events
-- **API Endpoints:** RESTful APIs for `/api/config`, `/api/bots`, `/api/status`, and `/api/validation`
-- **Prometheus Metrics:** Export system metrics in Prometheus format for monitoring
+The main dashboard, accessible at the root of the application, provides a real-time, unified view of your entire agent ecosystem. It is designed for monitoring and quick actions.
 
-### User Interface Features
-- **Responsive Design:** Works on desktop and mobile devices
-- **Source Indicators:** Visual indicators showing configuration source (🔧 env, 📁 file, ⚙️ default)
-- **Sensitive Data Masking:** Automatic masking of tokens and API keys
-- **Interactive Validation:** Real-time feedback on configuration changes
+- **Agent Control Center:** A central grid displaying all configured agents with their current status (Online, Offline, Error), live metrics (message counts, LLM token usage), and controls to start or stop agents.
+- **System-Wide Analytics:** Interactive graphs showing aggregate message volume, LLM usage, and error rates across all agents.
+- **Global Activity Feed:** A real-time log of important system-wide events.
+
+### The Admin Section (`/admin`)
+
+A secure, dedicated section for all configuration and management tasks. Access to this section requires authentication.
+
+- **Agent Management:** A detailed table for performing full CRUD (Create, Read, Update, Delete) operations on your agents.
+- **Connection Configuration:** An intuitive interface for adding, removing, and configuring connections for each agent, including selecting message and LLM providers from dropdowns.
+- **Global Settings:** A centralized location for managing global application settings, provider API keys, and other administrative tasks.
 
 ## Channel Routing
 
