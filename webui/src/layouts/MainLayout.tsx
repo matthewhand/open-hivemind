@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Drawer, List, ListItem, ListItemText, Toolbar, Typography } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography } from '@mui/material';
+import { Link, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -9,6 +9,12 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const navItems = [
+    { label: 'WebUI', to: '/webui' },
+    { label: 'Admin', to: '/admin' },
+  ];
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Drawer
@@ -26,12 +32,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </Toolbar>
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            <ListItem button component={Link} to="/">
-              <ListItemText primary="Dashboard" />
-            </ListItem>
-            <ListItem button component={Link} to="/admin">
-              <ListItemText primary="Admin" />
-            </ListItem>
+            {navItems.map((item) => (
+              <ListItem key={item.to} disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to={item.to}
+                  selected={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
+                >
+                  <ListItemText primary={item.label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
           </List>
         </Box>
       </Drawer>

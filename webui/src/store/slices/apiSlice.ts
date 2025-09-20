@@ -1,6 +1,15 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../index';
-import type { Bot, ConfigResponse, StatusResponse, ConfigSourcesResponse, SecureConfig } from '../../services/api';
+import type {
+  Bot,
+  ConfigResponse,
+  StatusResponse,
+  ConfigSourcesResponse,
+  SecureConfig,
+  HotReloadRequest,
+  HotReloadResponse,
+  ActivityResponse,
+} from '../../services/api';
 
 // Define proper types for API responses
 interface AnalyticsResponse {
@@ -28,14 +37,15 @@ export const apiSlice = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
     prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).auth.token;
+      const state = getState() as RootState;
+      const token = state.auth?.token;
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
       }
       return headers;
     },
   }),
-  tagTypes: ['Config', 'Status', 'SecureConfig', 'Analytics', 'Performance'],
+  tagTypes: ['Config', 'Status', 'SecureConfig', 'Analytics', 'Performance', 'Activity'],
   endpoints: (builder) => ({
     getConfig: builder.query<ConfigResponse, void>({
       query: () => '/webui/api/config',
@@ -140,7 +150,7 @@ export const apiSlice = createApi({
         body: backupFile,
       }),
     }),
-    
+
     getSecureConfigInfo: builder.query<{
       configDirectory: string;
       totalConfigs: number;
@@ -150,7 +160,16 @@ export const apiSlice = createApi({
       query: () => '/webui/api/secure-configs/info',
       providesTags: ['SecureConfig'],
     }),
-    
+
+    applyHotReloadChange: builder.mutation<HotReloadResponse, HotReloadRequest>({
+      query: (payload) => ({
+        url: '/webui/api/config/hot-reload',
+        method: 'POST',
+        body: payload,
+      }),
+      invalidatesTags: ['Config', 'Status'],
+    }),
+
     // Advanced analytics endpoints
     getAnalytics: builder.query<AnalyticsResponse, { timeRange?: '24h' | '7d' | '30d' | '90d' }>({
       query: (params) => ({
@@ -164,6 +183,26 @@ export const apiSlice = createApi({
       query: () => '/webui/api/performance',
       providesTags: ['Performance'],
       // Polling will be handled by a custom hook
+    }),
+
+    getActivity: builder.query<ActivityResponse, {
+      bot?: string;
+      messageProvider?: string;
+      llmProvider?: string;
+      from?: string;
+      to?: string;
+    } | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value) searchParams.append(key, value);
+          });
+        }
+        const queryString = searchParams.toString();
+        return `/dashboard/api/activity${queryString ? `?${queryString}` : ''}`;
+      },
+      providesTags: ['Activity'],
     }),
   }),
 });
@@ -185,4 +224,6 @@ export const {
   useGetSecureConfigInfoQuery,
   useGetAnalyticsQuery,
   useGetPerformanceMetricsQuery,
+  useApplyHotReloadChangeMutation,
+  useGetActivityQuery,
 } = apiSlice;

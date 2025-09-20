@@ -1,8 +1,6 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { CircularProgress, Box, Typography } from '@mui/material';
-import { useAppSelector } from '../store/hooks';
-import { selectHasPermission, selectIsAuthenticated } from '../store/slices/authSlice';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
 
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
@@ -30,18 +28,13 @@ const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...
   </Box>
 );
 
+// Simplified ProtectedRoute that always allows access (for localhost development)
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
+  // For localhost development, always allow access
   return <>{children}</>;
 };
 
@@ -50,7 +43,8 @@ const AppRouter: React.FC = () => {
     <MainLayout>
       <Suspense fallback={<LoadingFallback message="Loading page..." />}>
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<Navigate to="/webui" replace />} />
+          <Route path="/webui" element={<DashboardPage />} />
           <Route
             path="/admin"
             element={

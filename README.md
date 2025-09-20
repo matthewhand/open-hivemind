@@ -317,6 +317,8 @@ The main dashboard, accessible at the root of the application, provides a real-t
 - **Agent Control Center:** A central grid displaying all configured agents with their current status (Online, Offline, Error), live metrics (message counts, LLM token usage), and controls to start or stop agents.
 - **System-Wide Analytics:** Interactive graphs showing aggregate message volume, LLM usage, and error rates across all agents.
 - **Global Activity Feed:** A real-time log of important system-wide events.
+- **Activity Monitoring:** Filterable activity logs with time-based filtering and agent/provider filtering
+- **Performance Charts:** Visualizations of system performance metrics including response times, memory usage, and CPU utilization
 
 ### The Admin Section (`/admin`)
 
@@ -324,7 +326,12 @@ A secure, dedicated section for all configuration and management tasks. Access t
 
 - **Agent Management:** A detailed table for performing full CRUD (Create, Read, Update, Delete) operations on your agents.
 - **Connection Configuration:** An intuitive interface for adding, removing, and configuring connections for each agent, including selecting message and LLM providers from dropdowns.
+- **Persona Management:** Create and manage different agent personas with custom system instructions.
+- **MCP Server Integration:** Connect to Model Context Protocol servers to discover and use external tools.
+- **Tool Usage Guards:** Configure access controls for MCP tools with owner-based or custom user list permissions.
+- **Environment Variable Monitoring:** View and manage environment variable overrides with automatic redaction of sensitive values.
 - **Global Settings:** A centralized location for managing global application settings, provider API keys, and other administrative tasks.
+- **Activity Analysis:** Detailed filtering and analysis tools for monitoring agent activity with per-provider and per-agent breakdowns
 
 ## Channel Routing
 

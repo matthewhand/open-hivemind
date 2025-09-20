@@ -120,6 +120,57 @@
   - ✅ swarm-api CLI startup
   - ✅ Blueprint system integration
 
+### **🧩 MODEL CONTEXT PROTOCOL (MCP) INTEGRATION** (NEW)
+- ✅ **MCP Server Connection**
+  - ✅ Connect to external MCP servers
+  - ✅ Discover available tools
+  - ✅ Execute tools with proper authentication
+  - ✅ Multi-server support
+  - ✅ Connection management via WebUI
+
+- ✅ **Tool Usage Guards**
+  - ✅ Owner-based access control (forum owner only)
+  - ✅ Custom user list access control
+  - ✅ Enable/disable guards per agent
+  - ✅ Configuration via WebUI
+- ✅ **Env Override Awareness**
+  - ✅ Locked configuration fields indicate source environment variables
+  - ✅ Sensitive values redacted with prefix/suffix hints
+  - ✅ WebUI overrides persisted to `config/user/bot-overrides.json`
+- ✅ **OpenAPI Export**
+  - ✅ `/webui/api/openapi` returns JSON or YAML specs
+  - ✅ Download shortcuts available directly in the WebUI
+
+### **🎭 PERSONA & SYSTEM INSTRUCTION MANAGEMENT** (NEW)
+- ✅ **Persona System**
+  - ✅ Predefined personality templates
+  - ✅ Custom system instructions
+  - ✅ WebUI persona management
+  - ✅ Create, edit, delete personas
+  - ✅ Per-agent persona assignment
+
+### **🌐 API ENDPOINTS**
+- ✅ **Admin Routes** (`/api/admin/`)
+  - ✅ `GET /status` - Bot status overview
+  - ✅ `GET /personas` - Available personas
+  - ✅ `POST /personas` - Create new persona
+  - ✅ `PUT /personas/:key` - Update existing persona
+  - ✅ `DELETE /personas/:key` - Delete persona
+  - ✅ `POST /slack-bots` - Runtime Slack bot creation
+  - ✅ `POST /discord-bots` - Runtime Discord bot creation
+  - ✅ `POST /reload` - Configuration reload
+  - ✅ `GET /llm-providers` - Available LLM providers
+  - ✅ `GET /messenger-providers` - Available messenger providers
+  - ✅ `GET /mcp-servers` - Connected MCP servers
+  - ✅ `POST /mcp-servers/connect` - Connect to MCP server
+  - ✅ `POST /mcp-servers/disconnect` - Disconnect from MCP server
+  - ✅ `GET /mcp-servers/:name/tools` - Get tools from MCP server
+
+- ✅ **Swarm Routes** (`/api/swarm/`) (NEW)
+  - ✅ `GET /check` - Python & installation status
+  - ✅ `POST /install` - Auto-install OpenSwarm
+  - ✅ `POST /start` - Start swarm-api server
+
 ### **⚙️ CONFIGURATION SYSTEM**
 - ✅ **Convict-Based Validation**
   - ✅ Schema enforcement
@@ -141,6 +192,7 @@
   - ✅ LLM configuration (`llmConfig.ts`)
   - ✅ Webhook configuration (`webhookConfig.ts`)
   - ✅ Mattermost configuration (`mattermostConfig.ts`)
+  - ✅ User override store (`config/user/bot-overrides.json` via `UserConfigStore`)
 
 ### **🌐 API ENDPOINTS**
 - ✅ **Admin Routes** (`/api/admin/`)
@@ -240,6 +292,36 @@
   - ✅ Synthetic message handling
   - ✅ Processing locks
 
+### **🖥️ WEBUI DASHBOARD** (NEW)
+- ✅ **Agent Configuration**
+  - ✅ LLM provider selection
+  - ✅ Messenger provider selection
+  - ✅ Persona assignment
+  - ✅ System instruction management
+  - ✅ MCP server configuration
+  - ✅ Tool usage guard configuration
+
+- ✅ **Persona Management**
+  - ✅ Create, edit, delete personas
+  - ✅ System prompt management
+  - ✅ Real-time updates
+
+- ✅ **MCP Server Management**
+  - ✅ Connect to MCP servers
+  - ✅ Disconnect from MCP servers
+  - ✅ View available tools
+  - ✅ Connection status monitoring
+
+- ✅ **Security & Access Control**
+  - ✅ Admin authentication
+  - ✅ Role-based access control
+  - ✅ Audit logging
+
+- ✅ **Real-time Monitoring**
+  - ✅ Agent status overview
+  - ✅ Connection status indicators
+  - ✅ System metrics
+
 ### **🔧 UTILITY SYSTEMS**
 - ✅ **Message Processing**
   - ✅ User hint addition
@@ -291,6 +373,9 @@
 - ✅ **Telegram Integration**: Service structure ready for implementation
 - ✅ **CLI Management**: Command-line tool for bot management
 - ✅ **Test Coverage**: Unit tests for all new components
+- ✅ **Persona Management**: Create, edit, delete personas via WebUI
+- ✅ **MCP Integration**: Connect to external MCP servers and use tools
+- ✅ **Tool Usage Guards**: Control who can use MCP tools with access controls
 
 ### **❌ REMAINING LIMITATIONS**
 - ❌ **Team Coordination**: No cross-bot task distribution

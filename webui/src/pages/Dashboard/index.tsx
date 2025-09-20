@@ -1,13 +1,8 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import Dashboard from '../../components/Dashboard';
 
 const DashboardPage: React.FC = () => {
-  return (
-    <Box>
-      <Typography variant="h4">Unified Dashboard</Typography>
-      <Typography variant="body1">This is the main dashboard page.</Typography>
-    </Box>
-  );
+  return <Dashboard />;
 };
 
 export default DashboardPage;

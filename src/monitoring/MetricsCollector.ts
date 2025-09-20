@@ -4,6 +4,7 @@ export interface Metrics {
   responseTime: number[];
   errors: number;
   uptime: number;
+  llmTokenUsage: number;
 }
 
 export class MetricsCollector {
@@ -13,7 +14,8 @@ export class MetricsCollector {
     activeConnections: 0,
     responseTime: [],
     errors: 0,
-    uptime: Date.now()
+    uptime: Date.now(),
+    llmTokenUsage: 0,
   };
 
   static getInstance(): MetricsCollector {
@@ -42,18 +44,23 @@ export class MetricsCollector {
     this.metrics.activeConnections = count;
   }
 
+  recordLlmTokenUsage(tokens: number): void {
+    this.metrics.llmTokenUsage += tokens;
+  }
+
   getMetrics(): Metrics {
     return {
       ...this.metrics,
-      uptime: Date.now() - this.metrics.uptime
+      uptime: Date.now() - this.metrics.uptime,
     };
   }
 
   getPrometheusFormat(): string {
     const m = this.getMetrics();
-    const avgResponseTime = m.responseTime.length > 0 
-      ? m.responseTime.reduce((a, b) => a + b, 0) / m.responseTime.length 
-      : 0;
+    const avgResponseTime =
+      m.responseTime.length > 0
+        ? m.responseTime.reduce((a, b) => a + b, 0) / m.responseTime.length
+        : 0;
 
     return `# HELP hivemind_messages_total Total messages processed
 # TYPE hivemind_messages_total counter
@@ -73,6 +80,10 @@ hivemind_errors_total ${m.errors}
 
 # HELP hivemind_uptime_seconds Uptime in seconds
 # TYPE hivemind_uptime_seconds gauge
-hivemind_uptime_seconds ${Math.floor(m.uptime / 1000)}`;
+hivemind_uptime_seconds ${Math.floor(m.uptime / 1000)}
+
+# HELP hivemind_llm_token_usage_total Total LLM token usage
+# TYPE hivemind_llm_token_usage_total counter
+hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
   }
 }

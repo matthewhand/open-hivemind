@@ -5,8 +5,34 @@ import { openAiProvider } from '@integrations/openai/openAiProvider';
 import flowiseProvider from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
 import llmConfig from '@config/llmConfig';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 
 const debug = Debug('app:getLlmProvider');
+
+function withTokenCounting(provider: ILlmProvider): ILlmProvider {
+  const metrics = MetricsCollector.getInstance();
+
+  return {
+    supportsChatCompletion: provider.supportsChatCompletion,
+    supportsCompletion: provider.supportsCompletion,
+    generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
+      const response = await provider.generateChatCompletion(userMessage, historyMessages, metadata);
+      // Assuming the response is a string, we can estimate tokens by character count.
+      // This is a rough estimate. For more accurate token counting, a proper tokenizer library should be used.
+      if (response) {
+        metrics.recordLlmTokenUsage(response.length);
+      }
+      return response;
+    },
+    generateCompletion: async (userMessage: string) => {
+      const response = await provider.generateCompletion(userMessage);
+      if (response) {
+        metrics.recordLlmTokenUsage(response.length);
+      }
+      return response;
+    },
+  };
+}
 
 /**
  * OpenWebUI provider adapter that wraps the OpenWebUI inference module
@@ -121,7 +147,7 @@ export function getLlmProvider(): ILlmProvider[] {
         debug(`Info: Provider ${provider} supports chat only (no completion)`);
       }
       
-      llmProviders.push(providerInstance);
+      llmProviders.push(withTokenCounting(providerInstance));
       
     } catch (error) {
       debug(`Failed to initialize provider ${provider}: ${error}`);

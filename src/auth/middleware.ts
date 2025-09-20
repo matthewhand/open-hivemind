@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthManager } from './AuthManager';
-import { AuthMiddlewareRequest, UserRole } from './types';
+import { AuthMiddlewareRequest, UserRole, User } from './types';
 import Debug from 'debug';
 
 const debug = Debug('app:AuthMiddleware');
@@ -15,9 +15,43 @@ export class AuthMiddleware {
   /**
    * JWT Authentication middleware
    * Verifies JWT token and attaches user to request
+   * Bypasses authentication for localhost requests
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Check if request is from localhost - bypass authentication
+      const clientIP = (req as any).ip || (req as any).connection?.remoteAddress ||
+                      (req as any).socket?.remoteAddress ||
+                      '';
+
+      // Check for localhost IPs and common localhost hostnames
+      const isLocalhost = clientIP === '127.0.0.1' ||
+                         clientIP === '::1' ||
+                         clientIP === '::ffff:127.0.0.1' ||
+                         (req as any).hostname === 'localhost' ||
+                         (req as any).hostname === '127.0.0.1' ||
+                         ((req as any).headers?.host && (req as any).headers.host.includes('localhost')) ||
+                         ((req as any).headers?.origin && (req as any).headers.origin.includes('localhost'));
+
+      if (isLocalhost) {
+        debug(`Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`);
+        // Create a default admin user for localhost access
+        const defaultUser: User = {
+          id: 'localhost-admin',
+          username: 'localhost-admin',
+          email: 'admin@localhost',
+          role: 'admin' as const,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        };
+
+        (req as AuthMiddlewareRequest).user = defaultUser;
+        (req as AuthMiddlewareRequest).permissions = this.authManager.getUserPermissions(defaultUser.role);
+        next();
+        return;
+      }
+
       const authHeader = (req.headers as any).authorization;
 
       if (!authHeader || !authHeader.startsWith('Bearer ')) {

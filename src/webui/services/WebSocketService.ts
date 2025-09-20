@@ -3,6 +3,7 @@ import { Server as HttpServer } from 'http';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import os from 'os';
 import Debug from 'debug';
+import ApiMonitorService, { EndpointStatus } from '@src/services/ApiMonitorService';
 
 const debug = Debug('app:WebSocketService');
 
@@ -59,9 +60,13 @@ export class WebSocketService {
   // per-bot stats
   private botMessageCounts: Map<string, number> = new Map();
   private botErrors: Map<string, string[]> = new Map();
+  // API monitoring
+  private apiMonitorService: ApiMonitorService;
 
   private constructor() {
     this.initializeMonitoringData();
+    this.apiMonitorService = ApiMonitorService.getInstance();
+    this.setupApiMonitoring();
   }
 
   private initializeMonitoringData(): void {
@@ -71,6 +76,59 @@ export class WebSocketService {
     this.alerts = [];
     this.messageRateHistory = new Array(60).fill(0); // 60 data points for 5-minute history
     this.errorRateHistory = new Array(60).fill(0);
+  }
+
+  private setupApiMonitoring(): void {
+    // Listen for API monitoring events
+    this.apiMonitorService.on('statusUpdate', (status: EndpointStatus) => {
+      this.handleApiStatusUpdate(status);
+    });
+
+    this.apiMonitorService.on('healthCheckResult', (result) => {
+      this.handleApiHealthCheckResult(result);
+    });
+
+    // Start monitoring all configured endpoints
+    this.apiMonitorService.startAllMonitoring();
+  }
+
+  private handleApiStatusUpdate(status: EndpointStatus): void {
+    debug(`API endpoint status update: ${status.name} - ${status.status}`);
+
+    // Broadcast to connected clients
+    if (this.io && this.connectedClients > 0) {
+      this.io.emit('api_status_update', {
+        endpoint: status,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Create alert for status changes
+    if (status.status === 'error' || status.status === 'offline') {
+      this.recordAlert({
+        level: status.status === 'error' ? 'error' : 'warning',
+        title: `API Endpoint ${status.status.toUpperCase()}`,
+        message: `${status.name} is ${status.status}: ${status.errorMessage || 'No response'}`,
+        metadata: {
+          endpointId: status.id,
+          url: status.url,
+          responseTime: status.responseTime,
+          consecutiveFailures: status.consecutiveFailures
+        }
+      });
+    }
+  }
+
+  private handleApiHealthCheckResult(result: any): void {
+    debug(`API health check result: ${result.endpointId} - ${result.success ? 'success' : 'failed'}`);
+
+    // Broadcast health check results to connected clients
+    if (this.io && this.connectedClients > 0) {
+      this.io.emit('api_health_check_result', {
+        result,
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   public static getInstance(): WebSocketService {
@@ -268,6 +326,14 @@ export class WebSocketService {
 
       socket.on('request_monitoring_dashboard', () => {
         this.sendMonitoringDashboard(socket);
+      });
+
+      socket.on('request_api_status', () => {
+        this.sendApiStatus(socket);
+      });
+
+      socket.on('request_api_endpoints', () => {
+        this.sendApiEndpoints(socket);
       });
 
       socket.on('disconnect', () => {
@@ -615,6 +681,36 @@ export class WebSocketService {
     } catch (error) {
       debug('Error sending monitoring dashboard:', error);
       socket.emit('error', { message: 'Failed to get monitoring dashboard' });
+    }
+  }
+
+  private sendApiStatus(socket: any): void {
+    try {
+      const statuses = this.apiMonitorService.getAllStatuses();
+      const overallHealth = this.apiMonitorService.getOverallHealth();
+
+      socket.emit('api_status_update', {
+        endpoints: statuses,
+        overall: overallHealth,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      debug('Error sending API status:', error);
+      socket.emit('error', { message: 'Failed to get API status' });
+    }
+  }
+
+  private sendApiEndpoints(socket: any): void {
+    try {
+      const endpoints = this.apiMonitorService.getAllEndpoints();
+
+      socket.emit('api_endpoints_update', {
+        endpoints,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      debug('Error sending API endpoints:', error);
+      socket.emit('error', { message: 'Failed to get API endpoints' });
     }
   }
 

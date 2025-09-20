@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
+import QuickActions from './QuickActions';
 
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -18,22 +19,23 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [configData, statusData] = await Promise.all([
-          apiService.getConfig(),
-          apiService.getStatus(),
-        ]);
-        setBots(configData.bots);
-        setStatus(statusData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setError(null);
+      const [configData, statusData] = await Promise.all([
+        apiService.getConfig(),
+        apiService.getStatus(),
+      ]);
+      setBots(configData.bots);
+      setStatus(statusData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -87,6 +89,8 @@ const Dashboard: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Open-Hivemind Dashboard
       </Typography>
+
+      <QuickActions onRefresh={fetchData} />
 
       <Box display="flex" flexWrap="wrap" gap={3}>
         {bots.map((bot, index) => {

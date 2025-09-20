@@ -39,4 +39,21 @@ export class SlackMessageProvider implements IMessageProvider {
     // Delegate to SlackService for the actual bot user ID
     return this.slackService.getClientId();
   }
+
+  async getForumOwner(forumId: string): Promise<string> {
+    // For Slack, the forum owner would be the channel creator
+    // This is a simplified implementation - in a real implementation, 
+    // you would query the Slack API to get the channel creator
+    try {
+      // Placeholder implementation - in a real implementation, you would:
+      // 1. Use the Slack Web API to get channel info
+      // 2. Extract the creator/owner ID from the response
+      // For now, we'll return a placeholder
+      return `owner-${forumId}`;
+    } catch (error) {
+      console.error(`Failed to get forum owner for channel ${forumId}:`, error);
+      // Return a default owner ID in case of error
+      return `default-owner`;
+    }
+  }
 }

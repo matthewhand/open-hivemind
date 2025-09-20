@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
+import UserConfigStore from '@config/UserConfigStore';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.get('/api/config', (req, res) => {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
     const warnings = manager.getWarnings();
+    const userConfigStore = UserConfigStore.getInstance();
     
     // Redact sensitive information
     const sanitizedBots = bots.map(bot => ({
@@ -43,7 +45,8 @@ router.get('/api/config', (req, res) => {
       openswarm: bot.openswarm ? {
         ...bot.openswarm,
         apiKey: redactSensitiveInfo('OPENSWARM_API_KEY', bot.openswarm.apiKey || '')
-      } : undefined
+      } : undefined,
+      metadata: buildFieldMetadata(bot, userConfigStore)
     }));
     
     res.json({
@@ -171,4 +174,83 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
   }
 });
 
+// Clear cache
+router.post('/api/cache/clear', (req: AuditedRequest, res) => {
+  try {
+    // Clear any in-memory caches
+    if ((global as any).configCache) {
+      (global as any).configCache = {};
+    }
+
+    // Force reload configuration to clear any internal caches
+    const manager = BotConfigurationManager.getInstance();
+    manager.reload();
+
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cache clear error:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+// Export configuration
+router.get('/api/config/export', (req, res) => {
+  try {
+    const manager = BotConfigurationManager.getInstance();
+    const bots = manager.getAllBots();
+    const warnings = manager.getWarnings();
+
+    // Create export data with current timestamp
+    const exportData = {
+      exportTimestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || 'unknown',
+      bots: bots,
+      warnings: warnings,
+      legacyMode: manager.isLegacyMode()
+    };
+
+    // Convert to JSON and create blob
+    const jsonContent = JSON.stringify(exportData, null, 2);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
+    res.send(jsonContent);
+  } catch (error) {
+    console.error('Config export error:', error);
+    res.status(500).json({ error: 'Failed to export configuration' });
+  }
+});
+
 export default router;
+
+function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.getInstance>): Record<string, any> {
+  const botName: string = bot?.name || 'unknown';
+  const overrides = store.getBotOverride(botName) || {};
+
+  const describeField = (field: keyof typeof overrides, envKey: string) => {
+    const envVar = `BOTS_${botName.toUpperCase()}_${envKey}`;
+    const hasEnv = process.env[envVar] !== undefined && process.env[envVar] !== '';
+    const hasOverride = overrides[field] !== undefined;
+
+    return {
+      source: hasEnv ? 'env' : hasOverride ? 'user' : 'default',
+      locked: hasEnv,
+      envVar: hasEnv ? envVar : undefined,
+      override: hasOverride,
+    };
+  };
+
+  return {
+    messageProvider: describeField('messageProvider', 'MESSAGE_PROVIDER'),
+    llmProvider: describeField('llmProvider', 'LLM_PROVIDER'),
+    persona: describeField('persona', 'PERSONA'),
+    systemInstruction: describeField('systemInstruction', 'SYSTEM_INSTRUCTION'),
+    mcpServers: describeField('mcpServers', 'MCP_SERVERS'),
+    mcpGuard: describeField('mcpGuard', 'MCP_GUARD'),
+  };
+}

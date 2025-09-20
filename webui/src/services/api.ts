@@ -1,15 +1,44 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+export interface FieldMetadata {
+  source: 'env' | 'user' | 'default';
+  locked: boolean;
+  envVar?: string;
+  override?: boolean;
+}
+
+export interface BotMetadata {
+  messageProvider?: FieldMetadata;
+  llmProvider?: FieldMetadata;
+  persona?: FieldMetadata;
+  systemInstruction?: FieldMetadata;
+  mcpServers?: FieldMetadata;
+  mcpGuard?: FieldMetadata;
+}
+
 export interface Bot {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
   discord?: any;
   slack?: any;
+  mattermost?: any;
   openai?: any;
   flowise?: any;
   openwebui?: any;
   openswarm?: any;
+  perplexity?: any;
+  replicate?: any;
+  n8n?: any;
+  metadata?: BotMetadata;
 }
 
 export interface ConfigResponse {
@@ -46,6 +75,62 @@ export interface SecureConfig {
   createdAt: string;
   updatedAt: string;
   encrypted: boolean;
+}
+
+export interface HotReloadRequest {
+  type: 'create' | 'update' | 'delete';
+  botName?: string;
+  changes: Record<string, unknown>;
+}
+
+export interface HotReloadResponse {
+  success: boolean;
+  message: string;
+  affectedBots: string[];
+  warnings: string[];
+  errors: string[];
+  rollbackId?: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  timestamp: string;
+  botName: string;
+  provider: string;
+  llmProvider: string;
+  channelId: string;
+  userId: string;
+  messageType: 'incoming' | 'outgoing';
+  contentLength: number;
+  processingTime?: number;
+  status: 'success' | 'error' | 'timeout';
+  errorMessage?: string;
+}
+
+export interface ActivityTimelineBucket {
+  timestamp: string;
+  messageProviders: Record<string, number>;
+  llmProviders: Record<string, number>;
+}
+
+export interface ActivityResponse {
+  events: ActivityEvent[];
+  filters: {
+    agents: string[];
+    messageProviders: string[];
+    llmProviders: string[];
+  };
+  timeline: ActivityTimelineBucket[];
+  agentMetrics: Array<{
+    botName: string;
+    messageProvider: string;
+    llmProvider: string;
+    events: number;
+    errors: number;
+    lastActivity: string;
+    totalMessages: number;
+    recentErrors: string[];
+  }>;
 }
 
 class ApiService {
@@ -143,6 +228,188 @@ class ApiService {
     lastModified: string;
   }> {
     return this.request('/webui/api/secure-configs/info');
+  }
+
+  async getActivity(params: {
+    bot?: string;
+    messageProvider?: string;
+    llmProvider?: string;
+    from?: string;
+    to?: string;
+  } = {}): Promise<ActivityResponse> {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) query.append(key, value);
+    });
+    const search = query.toString();
+    const endpoint = `/dashboard/api/activity${search ? `?${search}` : ''}`;
+    return this.request<ActivityResponse>(endpoint);
+  }
+
+  async clearCache(): Promise<{ success: boolean; message: string }> {
+    return this.request('/webui/api/cache/clear', { method: 'POST' });
+  }
+
+  async exportConfig(): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/webui/api/config/export`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
+  // API Monitoring Methods
+  async getApiEndpointsStatus(): Promise<{
+    overall: {
+      status: 'healthy' | 'warning' | 'error';
+      message: string;
+      stats: {
+        total: number;
+        online: number;
+        slow: number;
+        offline: number;
+        error: number;
+      };
+    };
+    endpoints: Array<{
+      id: string;
+      name: string;
+      url: string;
+      status: 'online' | 'offline' | 'slow' | 'error';
+      responseTime: number;
+      lastChecked: string;
+      lastSuccessfulCheck?: string;
+      consecutiveFailures: number;
+      totalChecks: number;
+      successfulChecks: number;
+      averageResponseTime: number;
+      errorMessage?: string;
+      statusCode?: number;
+    }>;
+    timestamp: string;
+  }> {
+    return this.request('/health/api-endpoints');
+  }
+
+  async getApiEndpointStatus(id: string): Promise<{
+    endpoint: {
+      id: string;
+      name: string;
+      url: string;
+      status: 'online' | 'offline' | 'slow' | 'error';
+      responseTime: number;
+      lastChecked: string;
+      lastSuccessfulCheck?: string;
+      consecutiveFailures: number;
+      totalChecks: number;
+      successfulChecks: number;
+      averageResponseTime: number;
+      errorMessage?: string;
+      statusCode?: number;
+    };
+    timestamp: string;
+  }> {
+    return this.request(`/health/api-endpoints/${id}`);
+  }
+
+  async addApiEndpoint(config: {
+    id: string;
+    name: string;
+    url: string;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
+    headers?: Record<string, string>;
+    body?: any;
+    expectedStatusCodes?: number[];
+    timeout?: number;
+    interval?: number;
+    enabled?: boolean;
+    retries?: number;
+    retryDelay?: number;
+  }): Promise<{
+    message: string;
+    endpoint: any;
+    timestamp: string;
+  }> {
+    return this.request('/health/api-endpoints', {
+      method: 'POST',
+      body: JSON.stringify(config)
+    });
+  }
+
+  async updateApiEndpoint(id: string, config: Partial<{
+    name: string;
+    url: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
+    headers: Record<string, string>;
+    body: any;
+    expectedStatusCodes: number[];
+    timeout: number;
+    interval: number;
+    enabled: boolean;
+    retries: number;
+    retryDelay: number;
+  }>): Promise<{
+    message: string;
+    endpoint: any;
+    timestamp: string;
+  }> {
+    return this.request(`/health/api-endpoints/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(config)
+    });
+  }
+
+  async removeApiEndpoint(id: string): Promise<{
+    message: string;
+    removedEndpoint: any;
+    timestamp: string;
+  }> {
+    return this.request(`/health/api-endpoints/${id}`, { method: 'DELETE' });
+  }
+
+  async startApiMonitoring(): Promise<{
+    message: string;
+    timestamp: string;
+  }> {
+    return this.request('/health/api-endpoints/start', { method: 'POST' });
+  }
+
+  async stopApiMonitoring(): Promise<{
+    message: string;
+    timestamp: string;
+  }> {
+    return this.request('/health/api-endpoints/stop', { method: 'POST' });
+  }
+
+  async getSystemHealth(): Promise<{
+    status: string;
+    timestamp: string;
+    uptime: number;
+    memory: {
+      used: number;
+      total: number;
+      usage: number;
+    };
+    cpu: {
+      user: number;
+      system: number;
+    };
+    system: {
+      platform: string;
+      arch: string;
+      release: string;
+      hostname: string;
+      loadAverage: number[];
+    };
+  }> {
+    return this.request('/health/detailed');
   }
 }
 

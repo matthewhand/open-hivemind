@@ -2,6 +2,7 @@ import convict from 'convict';
 import Debug from 'debug';
 import path from 'path';
 import fs from 'fs';
+import UserConfigStore, { BotOverride } from './UserConfigStore';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -21,6 +22,35 @@ const botSchema = {
     format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER'
+  },
+  
+  // Persona configuration
+  PERSONA: {
+    doc: 'Bot persona key',
+    format: String,
+    default: 'default',
+    env: 'BOTS_{name}_PERSONA'
+  },
+  
+  SYSTEM_INSTRUCTION: {
+    doc: 'Bot system instruction/prompt',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_SYSTEM_INSTRUCTION'
+  },
+  
+  MCP_SERVERS: {
+    doc: 'MCP servers configuration (JSON array)',
+    format: Array,
+    default: [],
+    env: 'BOTS_{name}_MCP_SERVERS'
+  },
+  
+  MCP_GUARD: {
+    doc: 'MCP tool usage guard configuration (JSON)',
+    format: Object,
+    default: { enabled: false, type: 'owner' },
+    env: 'BOTS_{name}_MCP_GUARD'
   },
   
   // Discord-specific configuration
@@ -203,6 +233,10 @@ export interface BotConfig {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: any[];
+  mcpGuard?: any;
   discord?: {
     token: string;
     clientId?: string;
@@ -248,6 +282,7 @@ export class BotConfigurationManager {
   private bots: Map<string, BotConfig> = new Map();
   private legacyMode: boolean = false;
   private warnings: string[] = [];
+  private userConfigStore = UserConfigStore.getInstance();
 
   public constructor() {
     this.loadConfiguration();
@@ -339,6 +374,10 @@ export class BotConfigurationManager {
       name: botName,
       messageProvider: botConfig.get('MESSAGE_PROVIDER'),
       llmProvider: botConfig.get('LLM_PROVIDER'),
+      persona: botConfig.get('PERSONA') || 'default',
+      systemInstruction: botConfig.get('SYSTEM_INSTRUCTION'),
+      mcpServers: botConfig.get('MCP_SERVERS') || [],
+      mcpGuard: botConfig.get('MCP_GUARD') || { enabled: false, type: 'owner' }
     };
     
     // Add Discord configuration if token is provided
@@ -391,7 +430,58 @@ export class BotConfigurationManager {
       };
     }
     
+    this.applyUserOverrides(botName, config);
+    
     return config;
+  }
+
+  private getEnvVarName(botName: string, key: string): string {
+    return `BOTS_${botName.toUpperCase()}_${key}`;
+  }
+
+  private hasEnvOverride(botName: string, key: string): boolean {
+    const envVar = this.getEnvVarName(botName, key);
+    const value = process.env[envVar];
+    return value !== undefined && value !== '';
+  }
+
+  private applyUserOverrides(botName: string, config: BotConfig): void {
+    const overrides = this.userConfigStore.getBotOverride(botName);
+    if (!overrides) {
+      return;
+    }
+
+    const assignIfAllowed = <K extends keyof BotOverride>(field: K, envKey: string) => {
+      const overrideValue = overrides[field];
+      if (overrideValue === undefined) {
+        return;
+      }
+      if (this.hasEnvOverride(botName, envKey)) {
+        return;
+      }
+
+      const clonedValue = Array.isArray(overrideValue)
+        ? [...overrideValue]
+        : typeof overrideValue === 'object' && overrideValue !== null
+          ? { ...(overrideValue as Record<string, unknown>) }
+          : overrideValue;
+
+      (config as any)[field] = clonedValue;
+    };
+
+    assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
+    assignIfAllowed('llmProvider', 'LLM_PROVIDER');
+    assignIfAllowed('persona', 'PERSONA');
+    assignIfAllowed('systemInstruction', 'SYSTEM_INSTRUCTION');
+    assignIfAllowed('mcpServers', 'MCP_SERVERS');
+    assignIfAllowed('mcpGuard', 'MCP_GUARD');
+
+    if (!config.mcpGuard) {
+      config.mcpGuard = { enabled: false, type: 'owner' };
+    }
+    if (!config.mcpServers) {
+      config.mcpServers = [];
+    }
   }
 
   /**

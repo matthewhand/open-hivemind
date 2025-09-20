@@ -9,4 +9,9 @@ router.get('/metrics', (req, res) => {
   res.send(collector.getPrometheusFormat());
 });
 
+router.get('/metrics/json', (req, res) => {
+  const collector = MetricsCollector.getInstance();
+  res.json(collector.getMetrics());
+});
+
 export default router;

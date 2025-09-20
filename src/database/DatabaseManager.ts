@@ -49,6 +49,65 @@ export interface BotMetrics {
   provider: string;
 }
 
+export interface BotConfiguration {
+  id?: number;
+  name: string;
+  messageProvider: string;
+  llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string;
+  mcpGuard?: string;
+  discordConfig?: string;
+  slackConfig?: string;
+  mattermostConfig?: string;
+  openaiConfig?: string;
+  flowiseConfig?: string;
+  openwebuiConfig?: string;
+  openswarmConfig?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface BotConfigurationVersion {
+  id?: number;
+  botConfigurationId: number;
+  version: number;
+  name: string;
+  messageProvider: string;
+  llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string;
+  mcpGuard?: string;
+  discordConfig?: string;
+  slackConfig?: string;
+  mattermostConfig?: string;
+  openaiConfig?: string;
+  flowiseConfig?: string;
+  openwebuiConfig?: string;
+  openswarmConfig?: string;
+  isActive: boolean;
+  createdAt: Date;
+  createdBy?: string;
+  changeLog?: string;
+}
+
+export interface BotConfigurationAudit {
+  id?: number;
+  botConfigurationId: number;
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE';
+  oldValues?: string;
+  newValues?: string;
+  performedBy?: string;
+  performedAt: Date;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 export class DatabaseManager {
   private static instance: DatabaseManager;
   private config: DatabaseConfig;
@@ -160,6 +219,76 @@ export class DatabaseManager {
         messageCount INTEGER DEFAULT 0,
         isActive BOOLEAN DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Bot configurations table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS bot_configurations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        messageProvider TEXT NOT NULL,
+        llmProvider TEXT NOT NULL,
+        persona TEXT,
+        systemInstruction TEXT,
+        mcpServers TEXT,
+        mcpGuard TEXT,
+        discordConfig TEXT,
+        slackConfig TEXT,
+        mattermostConfig TEXT,
+        openaiConfig TEXT,
+        flowiseConfig TEXT,
+        openwebuiConfig TEXT,
+        openswarmConfig TEXT,
+        isActive BOOLEAN DEFAULT 1,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        createdBy TEXT,
+        updatedBy TEXT
+      )
+    `);
+
+    // Bot configuration versions table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS bot_configuration_versions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        botConfigurationId INTEGER NOT NULL,
+        version INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        messageProvider TEXT NOT NULL,
+        llmProvider TEXT NOT NULL,
+        persona TEXT,
+        systemInstruction TEXT,
+        mcpServers TEXT,
+        mcpGuard TEXT,
+        discordConfig TEXT,
+        slackConfig TEXT,
+        mattermostConfig TEXT,
+        openaiConfig TEXT,
+        flowiseConfig TEXT,
+        openwebuiConfig TEXT,
+        openswarmConfig TEXT,
+        isActive BOOLEAN DEFAULT 1,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        createdBy TEXT,
+        changeLog TEXT,
+        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Bot configuration audit table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS bot_configuration_audit (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        botConfigurationId INTEGER NOT NULL,
+        action TEXT NOT NULL,
+        oldValues TEXT,
+        newValues TEXT,
+        performedBy TEXT,
+        performedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        ipAddress TEXT,
+        userAgent TEXT,
+        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
       )
     `);
 

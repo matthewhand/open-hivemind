@@ -109,6 +109,39 @@ describeIf('Admin Routes RBAC', () => {
     });
   });
 
+  describe('Provider metadata endpoints', () => {
+    it('returns LLM provider metadata with docs/help', async () => {
+      const response = await request(app)
+        .get('/admin/llm-providers')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.ok).toBe(true);
+      expect(Array.isArray(response.body.providers)).toBe(true);
+      expect(response.body.providers.length).toBeGreaterThan(0);
+      const provider = response.body.providers[0];
+      expect(provider).toHaveProperty('key');
+      expect(provider).toHaveProperty('label');
+      expect(provider).toHaveProperty('docsUrl');
+      expect(provider).toHaveProperty('helpText');
+    });
+
+    it('returns messenger provider metadata with docs/help', async () => {
+      const response = await request(app)
+        .get('/admin/messenger-providers')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.ok).toBe(true);
+      expect(Array.isArray(response.body.providers)).toBe(true);
+      expect(response.body.providers.length).toBeGreaterThan(0);
+      const provider = response.body.providers[0];
+      expect(provider).toHaveProperty('key');
+      expect(provider).toHaveProperty('label');
+      expect(provider).toHaveProperty('helpText');
+    });
+  });
+
   describe('Admin-only operations', () => {
     it('should allow admin to create Slack bot', async () => {
       const response = await request(app)
