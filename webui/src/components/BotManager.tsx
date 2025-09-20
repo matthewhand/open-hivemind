@@ -103,11 +103,19 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
     if (!selectedBot) return;
 
     try {
-      // TODO: Implement update bot functionality in API service
-      setSnackbar({ open: true, message: 'Bot update functionality not yet implemented', severity: 'success' });
+      await apiService.updateBot(selectedBot.id, {
+        name: formData.name,
+        messageProvider: formData.messageProvider,
+        llmProvider: formData.llmProvider,
+        persona: formData.persona,
+        systemInstruction: formData.systemInstruction
+      });
+
+      setSnackbar({ open: true, message: 'Bot updated successfully', severity: 'success' });
       setEditDialogOpen(false);
       setSelectedBot(null);
       setFormData({ name: '', messageProvider: '', llmProvider: '', persona: '', systemInstruction: '' });
+      fetchBots();
     } catch (err) {
       setSnackbar({
         open: true,

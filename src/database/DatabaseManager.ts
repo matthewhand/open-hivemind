@@ -56,15 +56,15 @@ export interface BotConfiguration {
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: string;
-  mcpGuard?: string;
-  discordConfig?: string;
-  slackConfig?: string;
-  mattermostConfig?: string;
-  openaiConfig?: string;
-  flowiseConfig?: string;
-  openwebuiConfig?: string;
-  openswarmConfig?: string;
+  mcpServers?: string | string[];
+  mcpGuard?: any;
+  discord?: any;
+  slack?: any;
+  mattermost?: any;
+  openai?: any;
+  flowise?: any;
+  openwebui?: any;
+  openswarm?: any;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -75,21 +75,21 @@ export interface BotConfiguration {
 export interface BotConfigurationVersion {
   id?: number;
   botConfigurationId: number;
-  version: number;
+  version: string;
   name: string;
   messageProvider: string;
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: string;
-  mcpGuard?: string;
-  discordConfig?: string;
-  slackConfig?: string;
-  mattermostConfig?: string;
-  openaiConfig?: string;
-  flowiseConfig?: string;
-  openwebuiConfig?: string;
-  openswarmConfig?: string;
+  mcpServers?: string | string[];
+  mcpGuard?: any;
+  discord?: any;
+  slack?: any;
+  mattermost?: any;
+  openai?: any;
+  flowise?: any;
+  openwebui?: any;
+  openswarm?: any;
   isActive: boolean;
   createdAt: Date;
   createdBy?: string;
@@ -233,13 +233,13 @@ export class DatabaseManager {
         systemInstruction TEXT,
         mcpServers TEXT,
         mcpGuard TEXT,
-        discordConfig TEXT,
-        slackConfig TEXT,
-        mattermostConfig TEXT,
-        openaiConfig TEXT,
-        flowiseConfig TEXT,
-        openwebuiConfig TEXT,
-        openswarmConfig TEXT,
+        discord TEXT,
+        slack TEXT,
+        mattermost TEXT,
+        openai TEXT,
+        flowise TEXT,
+        openwebui TEXT,
+        openswarm TEXT,
         isActive BOOLEAN DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -261,13 +261,13 @@ export class DatabaseManager {
         systemInstruction TEXT,
         mcpServers TEXT,
         mcpGuard TEXT,
-        discordConfig TEXT,
-        slackConfig TEXT,
-        mattermostConfig TEXT,
-        openaiConfig TEXT,
-        flowiseConfig TEXT,
-        openwebuiConfig TEXT,
-        openswarmConfig TEXT,
+        discord TEXT,
+        slack TEXT,
+        mattermost TEXT,
+        openai TEXT,
+        flowise TEXT,
+        openwebui TEXT,
+        openswarm TEXT,
         isActive BOOLEAN DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         createdBy TEXT,
@@ -303,6 +303,13 @@ export class DatabaseManager {
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`);
+
+    // Bot configuration indexes
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
 
     debug('Database indexes created');
   }
@@ -550,6 +557,420 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error getting stats:', error);
       throw new Error(`Failed to get database stats: ${error}`);
+    }
+  }
+
+  // Bot Configuration methods
+  async createBotConfiguration(config: BotConfiguration): Promise<number> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const result = await this.db.run(`
+        INSERT INTO bot_configurations (
+          name, messageProvider, llmProvider, persona, systemInstruction,
+          mcpServers, mcpGuard, discordConfig, slackConfig, mattermostConfig,
+          openaiConfig, flowiseConfig, openwebuiConfig, openswarmConfig,
+          isActive, createdAt, updatedAt, createdBy, updatedBy
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        config.name,
+        config.messageProvider,
+        config.llmProvider,
+        config.persona,
+        config.systemInstruction,
+        config.mcpServers,
+        config.mcpGuard,
+        config.discord,
+        config.slack,
+        config.mattermost,
+        config.openai,
+        config.flowise,
+        config.openwebui,
+        config.openswarm,
+        config.isActive ? 1 : 0,
+        config.createdAt.toISOString(),
+        config.updatedAt.toISOString(),
+        config.createdBy,
+        config.updatedBy
+      ]);
+
+      debug(`Bot configuration created with ID: ${result.lastID}`);
+      return result.lastID as number;
+    } catch (error) {
+      debug('Error creating bot configuration:', error);
+      throw new Error(`Failed to create bot configuration: ${error}`);
+    }
+  }
+
+  async getBotConfiguration(id: number): Promise<BotConfiguration | null> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const row = await this.db.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
+
+      if (!row) return null;
+
+      return {
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        createdBy: row.createdBy,
+        updatedBy: row.updatedBy
+      };
+    } catch (error) {
+      debug('Error getting bot configuration:', error);
+      throw new Error(`Failed to get bot configuration: ${error}`);
+    }
+  }
+
+  async getBotConfigurationByName(name: string): Promise<BotConfiguration | null> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const row = await this.db.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
+
+      if (!row) return null;
+
+      return {
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        createdBy: row.createdBy,
+        updatedBy: row.updatedBy
+      };
+    } catch (error) {
+      debug('Error getting bot configuration by name:', error);
+      throw new Error(`Failed to get bot configuration by name: ${error}`);
+    }
+  }
+
+  async getAllBotConfigurations(): Promise<BotConfiguration[]> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const rows = await this.db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
+
+      return rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        createdBy: row.createdBy,
+        updatedBy: row.updatedBy
+      }));
+    } catch (error) {
+      debug('Error getting all bot configurations:', error);
+      throw new Error(`Failed to get all bot configurations: ${error}`);
+    }
+  }
+
+  async updateBotConfiguration(id: number, config: Partial<BotConfiguration>): Promise<void> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const updateFields = [];
+      const values = [];
+
+      if (config.name !== undefined) {
+        updateFields.push('name = ?');
+        values.push(config.name);
+      }
+      if (config.messageProvider !== undefined) {
+        updateFields.push('messageProvider = ?');
+        values.push(config.messageProvider);
+      }
+      if (config.llmProvider !== undefined) {
+        updateFields.push('llmProvider = ?');
+        values.push(config.llmProvider);
+      }
+      if (config.persona !== undefined) {
+        updateFields.push('persona = ?');
+        values.push(config.persona);
+      }
+      if (config.systemInstruction !== undefined) {
+        updateFields.push('systemInstruction = ?');
+        values.push(config.systemInstruction);
+      }
+      if (config.mcpServers !== undefined) {
+        updateFields.push('mcpServers = ?');
+        values.push(config.mcpServers);
+      }
+      if (config.mcpGuard !== undefined) {
+        updateFields.push('mcpGuard = ?');
+        values.push(config.mcpGuard);
+      }
+      if (config.discord !== undefined) {
+        updateFields.push('discord = ?');
+        values.push(config.discord);
+      }
+      if (config.slack !== undefined) {
+        updateFields.push('slack = ?');
+        values.push(config.slack);
+      }
+      if (config.mattermost !== undefined) {
+        updateFields.push('mattermost = ?');
+        values.push(config.mattermost);
+      }
+      if (config.openai !== undefined) {
+        updateFields.push('openai = ?');
+        values.push(config.openai);
+      }
+      if (config.flowise !== undefined) {
+        updateFields.push('flowise = ?');
+        values.push(config.flowise);
+      }
+      if (config.openwebui !== undefined) {
+        updateFields.push('openwebui = ?');
+        values.push(config.openwebui);
+      }
+      if (config.openswarm !== undefined) {
+        updateFields.push('openswarm = ?');
+        values.push(config.openswarm);
+      }
+      if (config.isActive !== undefined) {
+        updateFields.push('isActive = ?');
+        values.push(config.isActive ? 1 : 0);
+      }
+      if (config.updatedAt !== undefined) {
+        updateFields.push('updatedAt = ?');
+        values.push(config.updatedAt.toISOString());
+      }
+      if (config.updatedBy !== undefined) {
+        updateFields.push('updatedBy = ?');
+        values.push(config.updatedBy);
+      }
+
+      if (updateFields.length === 0) {
+        return;
+      }
+
+      values.push(id);
+
+      await this.db.run(
+        `UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`,
+        values
+      );
+
+      debug(`Bot configuration updated: ${id}`);
+    } catch (error) {
+      debug('Error updating bot configuration:', error);
+      throw new Error(`Failed to update bot configuration: ${error}`);
+    }
+  }
+
+  async deleteBotConfiguration(id: number): Promise<boolean> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const result = await this.db.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
+      const deleted = (result.changes ?? 0) > 0;
+
+      if (deleted) {
+        debug(`Bot configuration deleted: ${id}`);
+      }
+
+      return deleted;
+    } catch (error) {
+      debug('Error deleting bot configuration:', error);
+      throw new Error(`Failed to delete bot configuration: ${error}`);
+    }
+  }
+
+  async createBotConfigurationVersion(version: BotConfigurationVersion): Promise<number> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const result = await this.db.run(`
+        INSERT INTO bot_configuration_versions (
+          botConfigurationId, version, name, messageProvider, llmProvider,
+          persona, systemInstruction, mcpServers, mcpGuard, discordConfig,
+          slackConfig, mattermostConfig, openaiConfig, flowiseConfig,
+          openwebuiConfig, openswarmConfig, isActive, createdAt, createdBy, changeLog
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        version.botConfigurationId,
+        version.version,
+        version.name,
+        version.messageProvider,
+        version.llmProvider,
+        version.persona,
+        version.systemInstruction,
+        version.mcpServers,
+        version.mcpGuard,
+        version.discord,
+        version.slack,
+        version.mattermost,
+        version.openai,
+        version.flowise,
+        version.openwebui,
+        version.openswarm,
+        version.isActive ? 1 : 0,
+        version.createdAt.toISOString(),
+        version.createdBy,
+        version.changeLog
+      ]);
+
+      debug(`Bot configuration version created with ID: ${result.lastID}`);
+      return result.lastID as number;
+    } catch (error) {
+      debug('Error creating bot configuration version:', error);
+      throw new Error(`Failed to create bot configuration version: ${error}`);
+    }
+  }
+
+  async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const rows = await this.db.all(
+        'SELECT * FROM bot_configuration_versions WHERE botConfigurationId = ? ORDER BY version DESC',
+        [botConfigurationId]
+      );
+
+      return rows.map(row => ({
+        id: row.id,
+        botConfigurationId: row.botConfigurationId,
+        version: row.version,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        createdBy: row.createdBy,
+        changeLog: row.changeLog
+      }));
+    } catch (error) {
+      debug('Error getting bot configuration versions:', error);
+      throw new Error(`Failed to get bot configuration versions: ${error}`);
+    }
+  }
+
+  async createBotConfigurationAudit(audit: BotConfigurationAudit): Promise<number> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const result = await this.db.run(`
+        INSERT INTO bot_configuration_audit (
+          botConfigurationId, action, oldValues, newValues, performedBy,
+          performedAt, ipAddress, userAgent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        audit.botConfigurationId,
+        audit.action,
+        audit.oldValues,
+        audit.newValues,
+        audit.performedBy,
+        audit.performedAt.toISOString(),
+        audit.ipAddress,
+        audit.userAgent
+      ]);
+
+      debug(`Bot configuration audit created with ID: ${result.lastID}`);
+      return result.lastID as number;
+    } catch (error) {
+      debug('Error creating bot configuration audit:', error);
+      throw new Error(`Failed to create bot configuration audit: ${error}`);
+    }
+  }
+
+  async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    try {
+      const rows = await this.db.all(
+        'SELECT * FROM bot_configuration_audit WHERE botConfigurationId = ? ORDER BY performedAt DESC',
+        [botConfigurationId]
+      );
+
+      return rows.map(row => ({
+        id: row.id,
+        botConfigurationId: row.botConfigurationId,
+        action: row.action,
+        oldValues: row.oldValues,
+        newValues: row.newValues,
+        performedBy: row.performedBy,
+        performedAt: new Date(row.performedAt),
+        ipAddress: row.ipAddress,
+        userAgent: row.userAgent
+      }));
+    } catch (error) {
+      debug('Error getting bot configuration audit:', error);
+      throw new Error(`Failed to get bot configuration audit: ${error}`);
     }
   }
 }

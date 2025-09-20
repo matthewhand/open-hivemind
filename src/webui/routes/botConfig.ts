@@ -8,6 +8,8 @@ import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from '../../webui/services/ConfigurationValidator';
+import { validateBotConfigCreation, validateBotConfigUpdate, sanitizeBotConfig } from '../middleware/formValidation';
+import { BotConfigService } from '../services/BotConfigService';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
@@ -109,85 +111,15 @@ router.get('/:botId', async (req: Request, res: Response) => {
  * POST /webui/api/bot-config
  * Create a new bot configuration (admin only)
  */
-router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
+router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, async (req: AuditedRequest, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const configData = req.body;
+    const createdBy = authReq.user?.username || 'unknown';
 
-    // Validate configuration using convict schema
-    const schemaValidationResult = configValidator.validateBotConfigWithSchema(configData);
-    if (!schemaValidationResult.isValid) {
-      logConfigChange(req, 'CREATE', configData.name || 'unknown', 'failure', `Schema validation failed: ${schemaValidationResult.errors.join(', ')}`);
-      return res.status(400).json({
-        error: 'Schema validation error',
-        message: 'Configuration schema validation failed',
-        details: schemaValidationResult.errors
-      });
-    }
-
-    // Additional business logic validation
-    const businessValidationResult = configValidator.validateBotConfig(configData);
-    if (!businessValidationResult.isValid) {
-      logConfigChange(req, 'CREATE', configData.name || 'unknown', 'failure', `Business validation failed: ${businessValidationResult.errors.join(', ')}`);
-      return res.status(400).json({
-        error: 'Business validation error',
-        message: 'Configuration business validation failed',
-        details: businessValidationResult.errors,
-        warnings: businessValidationResult.warnings,
-        suggestions: businessValidationResult.suggestions
-      });
-    }
-
-    // Check if bot name already exists
-    const existingBots = botConfigManager.getAllBots();
-    if (existingBots.some(bot => bot.name === configData.name)) {
-      logConfigChange(req, 'CREATE', configData.name, 'failure', 'Bot name already exists');
-      return res.status(409).json({
-        error: 'Conflict',
-        message: 'Bot configuration with this name already exists'
-      });
-    }
-
-    // Store in secure config if sensitive data is present
-    if (configData.discord?.token || configData.slack?.botToken || configData.openai?.apiKey) {
-      await secureConfigManager.storeConfig({
-        id: configData.name,
-        name: configData.name,
-        type: 'bot',
-        data: {
-          discord: configData.discord,
-          slack: configData.slack,
-          openai: configData.openai,
-          flowise: configData.flowise,
-          openwebui: configData.openwebui
-        },
-        createdAt: new Date().toISOString()
-      });
-    }
-
-    // Create user override to "create" the bot configuration
-    userConfigStore.setBotOverride(configData.name, {
-      messageProvider: configData.messageProvider,
-      llmProvider: configData.llmProvider,
-      persona: configData.persona,
-      systemInstruction: configData.systemInstruction,
-      mcpServers: configData.mcpServers,
-      mcpGuard: configData.mcpGuard
-    });
-
-    // Reload configuration to pick up the new bot
-    botConfigManager.reload();
-
-    // Get the newly created bot
-    const newBot = botConfigManager.getBot(configData.name);
-
-    if (!newBot) {
-      logConfigChange(req, 'CREATE', configData.name, 'failure', 'Failed to create bot configuration - bot not found after creation');
-      return res.status(500).json({
-        error: 'Failed to create bot configuration',
-        message: 'Bot configuration was not found after creation'
-      });
-    }
+    // Use BotConfigService to create the configuration
+    const botConfigService = BotConfigService.getInstance();
+    const newBot = await botConfigService.createBotConfig(configData, createdBy);
 
     logConfigChange(req, 'CREATE', newBot.name, 'success', 'Bot configuration created successfully', {
       newValue: newBot

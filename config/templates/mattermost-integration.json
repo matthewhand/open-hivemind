@@ -1,0 +1,28 @@
+{
+  "id": "mattermost-integration",
+  "name": "Mattermost Integration",
+  "description": "Mattermost bot for workplace communication",
+  "category": "mattermost",
+  "tags": [
+    "mattermost",
+    "workplace",
+    "integration"
+  ],
+  "config": {
+    "messageProvider": "mattermost",
+    "llmProvider": "flowise",
+    "mattermost": {
+      "serverUrl": "${MATTERMOST_SERVER_URL}",
+      "token": "${MATTERMOST_TOKEN}",
+      "team": "${MATTERMOST_TEAM}"
+    },
+    "flowise": {
+      "apiKey": "${FLOWISE_API_KEY}",
+      "endpoint": "${FLOWISE_ENDPOINT}"
+    }
+  },
+  "isBuiltIn": true,
+  "createdAt": "2025-09-20T02:43:39.152Z",
+  "updatedAt": "2025-09-20T02:43:39.152Z",
+  "usageCount": 0
+}

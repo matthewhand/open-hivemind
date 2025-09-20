@@ -69,6 +69,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.3",
+    "express-validator": "^7.2.1",
     "ffmpeg-static": "^5.2.0",
     "flowise-sdk": "^1.0.8",
     "form-data": "^4.0.4",

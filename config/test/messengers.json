@@ -18,6 +18,10 @@
       {
         "name": "",
         "token": "test-discord-token"
+      },
+      {
+        "name": "",
+        "token": "test-discord-token"
       }
     ]
   },
@@ -28,6 +32,16 @@
         "appToken": "xapp-test-token",
         "signingSecret": "test-secret",
         "botUserId": "U_TESTBOT"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
       },
       {
         "name": "test-bot",

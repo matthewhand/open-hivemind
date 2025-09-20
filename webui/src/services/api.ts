@@ -179,6 +179,20 @@ class ApiService {
     });
   }
 
+  async updateBot(botId: string, updates: {
+    name?: string;
+    messageProvider?: string;
+    llmProvider?: string;
+    persona?: string;
+    systemInstruction?: string;
+    config?: any;
+  }): Promise<{ success: boolean; message: string; bot: Bot }> {
+    return this.request(`/webui/api/bots/${botId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+  }
+
   async cloneBot(name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/webui/api/bots/${name}/clone`, {
       method: 'POST',
