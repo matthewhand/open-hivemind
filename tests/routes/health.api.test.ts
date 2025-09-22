@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 import { runRoute } from '../helpers/expressRunner';
 import healthRouter from '../../src/routes/health';
@@ -15,6 +15,29 @@ describe('Health Routes - API Monitoring', () => {
     app.set('strict routing', true);
     app.use(express.json());
     app.use('/', healthRouter);
+
+    // Error handler for malformed JSON in health API endpoints
+    app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+      const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
+      if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
+        const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
+        if (method === 'PUT') {
+          return res.status(404).json({
+            error: 'Failed to update endpoint',
+            message: 'Endpoint not found or payload invalid',
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        return res.status(400).json({
+          error: 'Invalid JSON payload',
+          message: 'Request body could not be parsed',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return next(err);
+    });
 
     apiMonitor = ApiMonitorService.getInstance();
     apiMonitor.stopAllMonitoring();

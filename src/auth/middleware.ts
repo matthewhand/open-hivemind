@@ -19,7 +19,9 @@ export class AuthMiddleware {
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Check if request is from localhost - bypass authentication
+      const authHeader = (req.headers as any).authorization;
+
+      // Check if request is from localhost - bypass authentication when no auth header provided
       const clientIP = (req as any).ip || (req as any).connection?.remoteAddress ||
                       (req as any).socket?.remoteAddress ||
                       '';
@@ -33,7 +35,9 @@ export class AuthMiddleware {
                          ((req as any).headers?.host && (req as any).headers.host.includes('localhost')) ||
                          ((req as any).headers?.origin && (req as any).headers.origin.includes('localhost'));
 
-      if (isLocalhost) {
+      const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
+
+      if ((!authHeader || !authHeader.startsWith('Bearer ')) && isLocalhost && allowLocalBypass) {
         debug(`Bypassing authentication for localhost request: ${req.method} ${req.path} from ${clientIP}`);
         // Create a default admin user for localhost access
         const defaultUser: User = {
@@ -51,8 +55,6 @@ export class AuthMiddleware {
         next();
         return;
       }
-
-      const authHeader = (req.headers as any).authorization;
 
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         res.status(401).json({

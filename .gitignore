@@ -148,3 +148,5 @@ discord_message.log
 logs/
 # Coverage reports
 coverage/
+# Serena tool cache
+.serena/
