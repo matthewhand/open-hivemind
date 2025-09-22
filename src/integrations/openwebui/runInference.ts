@@ -51,7 +51,7 @@ export async function generateChatCompletion(
     if (metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.trim() !== '') {
       payload.systemPrompt = metadata.systemPrompt;
     }
-    const response = await axios.post(url, payload, { headers });
+    const response = await axios.post(url, payload, { headers, timeout: 15000 });
 
     debug('Inference result:', response.data);
     // Assume OpenWebUI returns a string or object with a text field; adjust as needed
