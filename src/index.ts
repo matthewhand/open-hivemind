@@ -60,8 +60,15 @@ process.on('SIGTERM', async () => {
 
 async function shutdown(): Promise<void> {
     console.log('[INFO] Performing cleanup...');
-    // Add any cleanup logic here
-    // For example, closing database connections, stopping services, etc.
+    
+    // Clean up WebSocket service
+    try {
+        const wsService = WebSocketService.getInstance();
+        wsService.shutdown();
+        console.log('[INFO] WebSocket service shut down');
+    } catch (error) {
+        console.error('[ERROR] Failed to shut down WebSocket service:', error);
+    }
     
     // Clean up idle response manager timers
     try {
