@@ -100,7 +100,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
+    indexLog(`Incoming request: ${req.method} ${req.path}`);
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -112,22 +112,22 @@ app.use(healthRoute);
 
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
-    console.log('[DEBUG] Root route hit');
-    console.log('[DEBUG] __dirname:', __dirname);
+    indexLog('Root route hit');
+    indexLog('__dirname:', __dirname);
     const dashboardPath = path.join(__dirname, '../public/index.html');
-    console.log('[DEBUG] Resolved dashboardPath:', dashboardPath);
+    indexLog('Resolved dashboardPath:', dashboardPath);
     if (fs.existsSync(dashboardPath)) {
-        console.log('[DEBUG] File exists, sending...');
+        indexLog('File exists, sending...');
         res.sendFile(dashboardPath, (err) => {
             if (err) {
-                console.error('[DEBUG] Error sending file:', err);
+                indexLog('Error sending file:', err);
                 res.status(500).send('Error serving file');
             } else {
-                console.log('[DEBUG] File sent successfully');
+                indexLog('File sent successfully');
             }
         });
     } else {
-        console.error('[DEBUG] File does not exist at path:', dashboardPath);
+        indexLog('File does not exist at path:', dashboardPath);
         res.status(404).send('File not found');
     }
 });
@@ -194,7 +194,7 @@ async function startBot(messengerService: any) {
 
 async function main() {
     const llmProviders = getLlmProvider();
-    console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
+    indexLog('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
     const messageProviders = (typeof rawMessageProviders === 'string'
@@ -202,7 +202,7 @@ async function main() {
         : Array.isArray(rawMessageProviders)
         ? rawMessageProviders
         : ['slack']) as string[];
-    console.log('Message Providers in use:', messageProviders.join(', ') || 'Default Message Service');
+    indexLog('Message Providers in use:', messageProviders.join(', ') || 'Default Message Service');
 
     const messengerServices = messengerProviderModule.getMessengerProvider();
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
@@ -233,21 +233,21 @@ async function main() {
         wsService.initialize(server);
 
         server.on('error', (err) => {
-            console.error('[DEBUG] Server error:', err);
+            indexLog('Server error:', err);
         });
 
-        console.log(`[DEBUG] Attempting to bind server to port ${port} on host 0.0.0.0`);
+        indexLog(`Attempting to bind server to port ${port} on host 0.0.0.0`);
         server.listen({port: port, host: '0.0.0.0'}, () => {
-            console.log('Server is listening on port ' + port);
-            console.log('WebSocket service available at /webui/socket.io');
+            indexLog('Server is listening on port ' + port);
+            indexLog('WebSocket service available at /webui/socket.io');
         });
     } else {
-        console.log('HTTP server is disabled (HTTP_ENABLED=false).');
+        indexLog('HTTP server is disabled (HTTP_ENABLED=false).');
     }
 
     const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
-        console.log('Webhook service is enabled, registering routes...');
+        indexLog('Webhook service is enabled, registering routes...');
         for (const messengerService of messengerServices) {
             const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
             if (channelId) {
@@ -255,7 +255,7 @@ async function main() {
             }
         }
     } else {
-        console.log('Webhook service is disabled.');
+        indexLog('Webhook service is disabled.');
     }
 }
 
