@@ -49,11 +49,17 @@ const configPath = path.join(configDir, 'providers/flowise.json');
 if (process.env.NODE_ENV !== 'test') {
   try {
     flowiseConfig.loadFile(configPath);
-    flowiseConfig.validate({ allowed: 'strict' });
   } catch {
     // Fallback to defaults if config file is missing or invalid
     console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
   }
+}
+
+// Always validate the config to ensure it works properly, even in test environment
+try {
+  flowiseConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  console.warn(`Warning: Flowise config validation failed: ${error}, using defaults`);
 }
 
 // Override the get method to handle undefined keys gracefully
