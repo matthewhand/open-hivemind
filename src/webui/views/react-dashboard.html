@@ -238,6 +238,15 @@
                                         <span className="capability">{bot.provider}</span>
                                         <span className="capability">{bot.llmProvider}</span>
                                     </div>
+                                    <div style={{marginTop: '15px', textAlign: 'right'}}>
+                                        <button 
+                                            className="btn btn-secondary"
+                                            onClick={() => window.open(`/admin/#/bots/${encodeURIComponent(bot.name)}`, '_blank')}
+                                            title="Configure bot"
+                                        >
+                                            ⚙️ Settings
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
