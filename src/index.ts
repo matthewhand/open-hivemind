@@ -62,6 +62,15 @@ async function shutdown(): Promise<void> {
     console.log('[INFO] Performing cleanup...');
     // Add any cleanup logic here
     // For example, closing database connections, stopping services, etc.
+    
+    // Clean up idle response manager timers
+    try {
+        const idleResponseManager = IdleResponseManager.getInstance();
+        idleResponseManager.clearAllChannels();
+        console.log('[INFO] Idle response manager timers cleared');
+    } catch (error) {
+        console.error('[ERROR] Failed to clear idle response manager timers:', error);
+    }
 }
 
 const indexLog = debug('app:index');
