@@ -149,4 +149,21 @@ export interface IMessengerService {
    * ```
    */
   setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void;
+
+  /**
+   * Gets the owner/creator of a forum/channel.
+   *
+   * This method is used by MCP guards to determine channel ownership
+   * for permission checks.
+   *
+   * @param {string} forumId - The forum/channel identifier
+   * @returns {Promise<string>} The user ID of the forum/channel owner
+   *
+   * @example
+   * ```typescript
+   * const ownerId = await service.getForumOwner("C1234567890");
+   * console.log(`Channel owner: ${ownerId}`);
+   * ```
+   */
+  getForumOwner?(forumId: string): Promise<string>;
 }

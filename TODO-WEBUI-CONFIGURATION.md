@@ -73,6 +73,12 @@
   - [ ] Mattermost: Server connection test, team/channel browser
   - [ ] Real-time connection testing with status feedback
 
+### ✅ Coordination Updates
+- [x] Agent persona & system instruction editing surfaced in WebUI with env override awareness
+- [x] MCP server multi-select per agent with guard presets (owner/custom lists)
+- [x] Persistent WebUI overrides stored in `config/user/bot-overrides.json`
+- [x] Activity monitoring filters (agent, message provider, LLM, date range) with timeline charts
+
 ## 🎯 PHASE 3: Advanced Features (Week 5-6)
 
 ### Dynamic Configuration

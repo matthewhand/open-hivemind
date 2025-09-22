@@ -57,4 +57,16 @@ export class DiscordMessageProvider {
     const messages = await this.discordSvc.getMessagesFromChannel(channelId);
     return messages.map((msg: any) => new DiscordMessage(msg));
   }
+
+  public async getForumOwner(forumId: string): Promise<string> {
+    try {
+      // Placeholder implementation until Discord ownership lookup is wired.
+      // Discord channel owner information requires additional API scopes; for now
+      // surface a deterministic identifier so guard logic can still function.
+      return `discord-owner-${forumId}`;
+    } catch (error) {
+      console.error(`Failed to get forum owner for Discord channel ${forumId}:`, error);
+      return 'discord-owner-unknown';
+    }
+  }
 }

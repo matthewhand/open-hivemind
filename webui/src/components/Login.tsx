@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -9,40 +9,18 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import {
-  clearError,
-  loginFailure,
-  loginStart,
-  loginSuccess,
-  selectAuth,
-} from '../store/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useAppDispatch();
-  const auth = useAppSelector(selectAuth);
-  
+
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
 
-  interface LocationState {
-    from?: {
-      pathname?: string;
-    };
-  }
-  
-  const from = (location.state as LocationState)?.from?.pathname || '/dashboard';
-
-  useEffect(() => {
-    if (auth.isAuthenticated) {
-      navigate(from, { replace: true });
-    }
-  }, [auth.isAuthenticated, from, navigate]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,39 +28,27 @@ const Login: React.FC = () => {
       ...prev,
       [name]: value,
     }));
+    if (error) setError(''); // Clear error on input change
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(clearError());
-    dispatch(loginStart());
+    setIsLoading(true);
+    setError('');
 
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Mock authentication
       if (formData.username === 'admin' && formData.password === 'admin') {
-        const now = Date.now();
-        dispatch(loginSuccess({
-          user: {
-            id: 'demo-admin',
-            username: formData.username,
-            email: 'admin@example.com',
-            role: 'admin',
-            permissions: ['view_dashboard', 'manage_bots', 'manage_config', 'view_performance'],
-            lastLogin: new Date(now).toISOString(),
-          },
-          token: 'mock-jwt-token',
-          refreshToken: 'mock-refresh-token',
-          expiresAt: now + 60 * 60 * 1000,
-        }));
-        navigate(from, { replace: true });
+        // For localhost development, just navigate to dashboard
+        navigate('/webui', { replace: true });
       } else {
-        dispatch(loginFailure('Invalid username or password'));
+        setError('Invalid username or password');
       }
-    } catch (err) {
-      dispatch(loginFailure(err instanceof Error ? err.message : 'Login failed'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,14 +67,14 @@ const Login: React.FC = () => {
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Open-Hivemind
           </Typography>
-          
+
           <Typography variant="h6" component="h2" gutterBottom align="center">
             Sign In
           </Typography>
 
-          {auth.error && (
+          {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
-              {auth.error}
+              {error}
             </Alert>
           )}
 
@@ -123,10 +89,10 @@ const Login: React.FC = () => {
               margin="normal"
               required
               autoComplete="username"
-              disabled={auth.isLoading}
+              disabled={isLoading}
               placeholder="Enter 'admin'"
             />
-            
+
             <TextField
               fullWidth
               label="Password"
@@ -137,7 +103,7 @@ const Login: React.FC = () => {
               margin="normal"
               required
               autoComplete="current-password"
-              disabled={auth.isLoading}
+              disabled={isLoading}
               placeholder="Enter 'admin'"
             />
 
@@ -146,10 +112,10 @@ const Login: React.FC = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={auth.isLoading}
+              disabled={isLoading}
               size="large"
             >
-              {auth.isLoading ? (
+              {isLoading ? (
                 <CircularProgress size={24} />
               ) : (
                 'Sign In'

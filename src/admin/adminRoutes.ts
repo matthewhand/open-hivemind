@@ -78,6 +78,56 @@ adminRouter.get('/personas', (_req: Request, res: Response) => {
   res.json({ ok: true, personas: loadPersonas() });
 });
 
+const LLM_PROVIDERS = [
+  {
+    key: 'openai',
+    label: 'OpenAI',
+    docsUrl: 'https://platform.openai.com/account/api-keys',
+    helpText: 'Create an OpenAI API key from the developer dashboard and paste it here.',
+  },
+  {
+    key: 'flowise',
+    label: 'Flowise',
+    docsUrl: 'https://docs.flowiseai.com/installation/overview',
+    helpText: 'Use the Flowise REST endpoint and API key configured in your Flowise instance.',
+  },
+  {
+    key: 'openwebui',
+    label: 'OpenWebUI',
+    docsUrl: 'https://docs.openwebui.com/',
+    helpText: 'Enable API access in OpenWebUI and copy the token from the administration panel.',
+  },
+];
+
+const MESSENGER_PROVIDERS = [
+  {
+    key: 'discord',
+    label: 'Discord',
+    docsUrl: 'https://discord.com/developers/applications',
+    helpText: 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.',
+  },
+  {
+    key: 'slack',
+    label: 'Slack',
+    docsUrl: 'https://api.slack.com/apps',
+    helpText: 'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.',
+  },
+  {
+    key: 'mattermost',
+    label: 'Mattermost',
+    docsUrl: 'https://developers.mattermost.com/integrate/admin-guide/admin-bot-accounts/',
+    helpText: 'Create a Mattermost bot account and generate a personal access token for it.',
+  },
+];
+
+adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
+  res.json({ ok: true, providers: LLM_PROVIDERS });
+});
+
+adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
+  res.json({ ok: true, providers: MESSENGER_PROVIDERS });
+});
+
 // Minimal Slack bot creation: supports a single instance add at runtime
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   try {

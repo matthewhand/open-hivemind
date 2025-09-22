@@ -87,4 +87,14 @@ export interface IMessageProvider {
    * ```
    */
   getClientId(): string;
+
+  /**
+   * Gets the owner/creator of a message forum (channel, group, etc.)
+   *
+   * This method is used for permission checking when using MCP tools.
+   *
+   * @param {string} forumId - The unique identifier of the forum (channel, group, etc.)
+   * @returns {Promise<string>} A promise that resolves to the user ID of the forum owner
+   */
+  getForumOwner(forumId: string): Promise<string>;
 }

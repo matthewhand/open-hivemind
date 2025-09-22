@@ -16,14 +16,18 @@ import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/webui/routes/dashboard';
 import configRouter from '@src/webui/routes/config';
 import botsRouter from '@src/webui/routes/bots';
+import botConfigRouter from '@src/webui/routes/botConfig';
 import validationRouter from '@src/webui/routes/validation';
 import hotReloadRouter from '@src/webui/routes/hotReload';
 import ciRouter from '@src/webui/routes/ci';
 import enterpriseRouter from '@src/webui/routes/enterprise';
 import secureConfigRouter from '@src/webui/routes/secureConfig';
 import authRouter from '@src/webui/routes/auth';
+import adminApiRouter from '@src/webui/routes/admin';
+import openapiRouter from '@src/webui/routes/openapi';
 import WebSocketService from '@src/webui/services/WebSocketService';
 import path from 'path';
+import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
@@ -38,11 +42,69 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS middleware for localhost development
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin;
+    const isLocalhost = origin?.includes('localhost') ||
+                       origin?.includes('127.0.0.1') ||
+                       req.hostname === 'localhost' ||
+                       req.hostname === '127.0.0.1';
+
+    if (isLocalhost) {
+        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
+
+        // Handle preflight requests
+        if (req.method === 'OPTIONS') {
+            res.status(200).end();
+            return;
+        }
+    }
+
+    next();
+});
+
 app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
+
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data:; object-src 'none'; frame-ancestors 'none';");
+
     next();
 });
 app.use(healthRoute);
+
+// Serve unified dashboard at root
+app.get('/', (req: Request, res: Response) => {
+    console.log('[DEBUG] Root route hit');
+    console.log('[DEBUG] __dirname:', __dirname);
+    const dashboardPath = path.join(__dirname, '../public/index.html');
+    console.log('[DEBUG] Resolved dashboardPath:', dashboardPath);
+    if (fs.existsSync(dashboardPath)) {
+        console.log('[DEBUG] File exists, sending...');
+        res.sendFile(dashboardPath, (err) => {
+            if (err) {
+                console.error('[DEBUG] Error sending file:', err);
+                res.status(500).send('Error serving file');
+            } else {
+                console.log('[DEBUG] File sent successfully');
+            }
+        });
+    } else {
+        console.error('[DEBUG] File does not exist at path:', dashboardPath);
+        res.status(404).send('File not found');
+    }
+});
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve static files from webui dist directory
+app.use(express.static(path.join(__dirname, '../webui/dist')));
 
 // Admin UI (demo)
 app.use('/api/admin', adminRouter);
@@ -52,28 +114,25 @@ app.use('/admin', (req: Request, res: Response) => {
     res.sendFile(adminPath);
 });
 
-// WebUI Dashboard routes
+// WebUI (React app)
+app.use('/webui', (req: Request, res: Response) => {
+    const webuiPath = path.join(__dirname, '../webui/dist/index.html');
+    res.sendFile(webuiPath);
+});
+
+// WebUI API routes - dashboard router for API endpoints only
 app.use('/dashboard', dashboardRouter);
 app.use('/webui', configRouter);
 app.use('/webui', botsRouter);
+app.use('/webui', botConfigRouter);
 app.use('/webui', validationRouter);
 app.use('/webui', hotReloadRouter);
 app.use('/webui', ciRouter);
 app.use('/webui', enterpriseRouter);
 app.use('/webui', secureConfigRouter);
 app.use('/webui', authRouter);
-
-// Serve React dashboard
-app.use('/react-dashboard', (req: Request, res: Response) => {
-    const dashboardPath = path.join(__dirname, 'webui/views/react-dashboard.html');
-    res.sendFile(dashboardPath);
-});
-
-// Serve Real-time dashboard
-app.use('/realtime-dashboard', (req: Request, res: Response) => {
-    const dashboardPath = path.join(__dirname, 'webui/views/realtime-dashboard.html');
-    res.sendFile(dashboardPath);
-});
+app.use('/webui', adminApiRouter);
+app.use('/webui', openapiRouter);
 
 async function startBot(messengerService: any) {
     try {

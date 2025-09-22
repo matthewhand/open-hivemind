@@ -1,0 +1,29 @@
+{
+  "id": "openai-assistant",
+  "name": "OpenAI Assistant",
+  "description": "General purpose assistant using OpenAI GPT models",
+  "category": "llm",
+  "tags": [
+    "openai",
+    "assistant",
+    "general"
+  ],
+  "config": {
+    "messageProvider": "discord",
+    "llmProvider": "openai",
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "model": "gpt-4",
+      "temperature": 0.7,
+      "maxTokens": 1000
+    },
+    "discord": {
+      "token": "${DISCORD_BOT_TOKEN}",
+      "clientId": "${DISCORD_CLIENT_ID}"
+    }
+  },
+  "isBuiltIn": true,
+  "createdAt": "2025-09-20T02:43:39.152Z",
+  "updatedAt": "2025-09-20T02:43:39.152Z",
+  "usageCount": 0
+}

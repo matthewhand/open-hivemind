@@ -1,180 +1,201 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  Box,
+  Button,
+  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
-  Box,
-  Typography,
-  Alert,
-  Card,
-  CardContent,
-  CardActions,
+  FormControl,
+  InputLabel,
+  Chip,
   IconButton,
   Tooltip,
-  Chip,
+  Alert,
+  Snackbar,
   CircularProgress,
-  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   Add as AddIcon,
-  ContentCopy as CloneIcon,
+  Edit as EditIcon,
   Delete as DeleteIcon,
+  PlayArrow as StartIcon,
+  Stop as StopIcon,
+  ContentCopy as CloneIcon,
 } from '@mui/icons-material';
-import {
-  useGetConfigQuery,
-  useCreateBotMutation,
-  useCloneBotMutation,
-  useDeleteBotMutation,
-} from '../store/slices/apiSlice';
+import { apiService, type Bot } from '../services/api';
 
-const BotManager: React.FC = () => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedBotName, setSelectedBotName] = useState<string | null>(null);
+interface BotManagerProps {
+  onBotSelect?: (bot: unknown) => void;
+}
+
+const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-  // Form states
-  const [botName, setBotName] = useState('');
-  const [messageProvider, setMessageProvider] = useState('discord');
-  const [llmProvider, setLlmProvider] = useState('openai');
-  const [discordToken, setDiscordToken] = useState('');
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [newBotName, setNewBotName] = useState('');
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    messageProvider: '',
+    llmProvider: '',
+    persona: '',
+    systemInstruction: '',
+  });
 
-  const { data, isLoading, isFetching, refetch } = useGetConfigQuery();
-  const [createBot, { isLoading: isCreating }] = useCreateBotMutation();
-  const [cloneBot, { isLoading: isCloning }] = useCloneBotMutation();
-  const [deleteBot, { isLoading: isDeleting }] = useDeleteBotMutation();
+  const messageProviders = ['discord', 'slack', 'mattermost'];
+  const llmProviders = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
 
-  const bots = useMemo(() => data?.bots ?? [], [data]);
-  const selectedBot = useMemo(
-    () => bots.find(bot => bot.name === selectedBotName) ?? null,
-    [bots, selectedBotName]
-  );
-
-  const mutationInFlight = isCreating || isCloning || isDeleting;
-
-  const resetForm = () => {
-    setBotName('');
-    setMessageProvider('discord');
-    setLlmProvider('openai');
-    setDiscordToken('');
-    setOpenaiApiKey('');
-    setNewBotName('');
-    setError(null);
-    setSuccess(null);
-    setSelectedBotName(null);
+  const fetchBots = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.getConfig();
+      setBots(response.bots);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch bots');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchBots();
+  }, []);
 
   const handleCreateBot = async () => {
-    if (!botName.trim()) {
-      setError('Bot name is required');
-      return;
-    }
-
-    setError(null);
-
     try {
-      const config: Record<string, unknown> = {};
+      await apiService.createBot({
+        name: formData.name,
+        messageProvider: formData.messageProvider,
+        llmProvider: formData.llmProvider,
+      });
 
-      if (messageProvider === 'discord' && discordToken.trim()) {
-        config.discord = { token: discordToken.trim() };
-      }
-
-      if (llmProvider === 'openai' && openaiApiKey.trim()) {
-        config.openai = { apiKey: openaiApiKey.trim() };
-      }
-
-      await createBot({
-        name: botName.trim(),
-        messageProvider,
-        llmProvider,
-        config,
-      }).unwrap();
-
-      setSuccess(`Bot '${botName}' created successfully!`);
+      setSnackbar({ open: true, message: 'Bot created successfully', severity: 'success' });
       setCreateDialogOpen(false);
-      resetForm();
-      await refetch();
+      setFormData({ name: '', messageProvider: '', llmProvider: '', persona: '', systemInstruction: '' });
+      fetchBots();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create bot';
-      setError(message);
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to create bot',
+        severity: 'error'
+      });
     }
   };
 
-  const handleCloneBot = async () => {
-    if (!selectedBot || !newBotName.trim()) {
-      setError('New bot name is required');
-      return;
-    }
-
-    setError(null);
-
-    try {
-      await cloneBot({ name: selectedBot.name, newName: newBotName.trim() }).unwrap();
-      setSuccess(`Bot '${selectedBot.name}' cloned as '${newBotName}' successfully!`);
-      setCloneDialogOpen(false);
-      resetForm();
-      await refetch();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to clone bot';
-      setError(message);
-    }
-  };
-
-  const handleDeleteBot = async () => {
+  const handleEditBot = async () => {
     if (!selectedBot) return;
 
-    setError(null);
-
     try {
-      await deleteBot(selectedBot.name).unwrap();
-      setSuccess(`Bot '${selectedBot.name}' deleted successfully!`);
-      setDeleteDialogOpen(false);
-      setSelectedBotName(null);
-      await refetch();
+      await apiService.updateBot(selectedBot.id, {
+        name: formData.name,
+        messageProvider: formData.messageProvider,
+        llmProvider: formData.llmProvider,
+        persona: formData.persona,
+        systemInstruction: formData.systemInstruction
+      });
+
+      setSnackbar({ open: true, message: 'Bot updated successfully', severity: 'success' });
+      setEditDialogOpen(false);
+      setSelectedBot(null);
+      setFormData({ name: '', messageProvider: '', llmProvider: '', persona: '', systemInstruction: '' });
+      fetchBots();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete bot';
-      setError(message);
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to update bot',
+        severity: 'error'
+      });
     }
   };
 
-  const openCloneDialog = (name: string) => {
-    setSelectedBotName(name);
-    setNewBotName(`${name}_copy`);
-    setCloneDialogOpen(true);
+  const handleDeleteBot = async (botName: string) => {
+    if (!confirm(`Are you sure you want to delete bot "${botName}"?`)) return;
+
+    try {
+      await apiService.deleteBot(botName);
+      setSnackbar({ open: true, message: 'Bot deleted successfully', severity: 'success' });
+      fetchBots();
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to delete bot',
+        severity: 'error'
+      });
+    }
   };
 
-  const openDeleteDialog = (name: string) => {
-    setSelectedBotName(name);
-    setDeleteDialogOpen(true);
+  const handleCloneBot = async (botName: string) => {
+    const newName = prompt(`Enter new name for cloned bot "${botName}":`);
+    if (!newName) return;
+
+    try {
+      await apiService.cloneBot(botName, newName);
+      setSnackbar({ open: true, message: 'Bot cloned successfully', severity: 'success' });
+      fetchBots();
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to clone bot',
+        severity: 'error'
+      });
+    }
   };
+
+  const openEditDialog = (bot: Bot) => {
+    setSelectedBot(bot);
+    setFormData({
+      name: bot.name,
+      messageProvider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      persona: bot.persona || '',
+      systemInstruction: bot.systemInstruction || '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setFormData({ name: '', messageProvider: '', llmProvider: '', persona: '', systemInstruction: '' });
+    setCreateDialogOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" component="h2">
-          Bot Instance Manager
+          Bot Management
         </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          {(isFetching || (isLoading && bots.length > 0)) && <CircularProgress size={20} />}
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            Create Bot
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={openCreateDialog}
+        >
+          Create Bot
+        </Button>
       </Box>
 
       {error && (
@@ -183,244 +204,242 @@ const BotManager: React.FC = () => {
         </Alert>
       )}
 
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
-
-      {isLoading && bots.length === 0 ? (
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ py: 6 }}>
-          <CircularProgress size={32} />
-          <Typography variant="body2" color="text.secondary">
-            Loading bots...
-          </Typography>
-        </Stack>
-      ) : bots.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No bots configured yet. Use the Create Bot button to get started.
-        </Alert>
-      ) : (
-        <Box display="flex" flexWrap="wrap" gap={2}>
-          {bots.map((bot) => (
-            <Card key={bot.name} sx={{ minWidth: 300, flex: '1 1 auto' }}>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Typography variant="h6" component="h3" sx={{ mr: 1 }}>
-                    🤖
-                  </Typography>
-                  <Typography variant="h6" component="h3">
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Message Provider</TableCell>
+              <TableCell>LLM Provider</TableCell>
+              <TableCell>Persona</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {bots.map((bot) => (
+              <TableRow key={bot.name} hover>
+                <TableCell>
+                  <Typography variant="body1" fontWeight="medium">
                     {bot.name}
                   </Typography>
-                </Box>
-
-                <Box mb={2}>
+                </TableCell>
+                <TableCell>
                   <Chip
-                    label={`Message: ${bot.messageProvider}`}
-                    size="small"
-                    sx={{ mr: 1, mb: 1 }}
-                  />
-                  <Chip
-                    label={`LLM: ${bot.llmProvider}`}
-                    size="small"
-                    sx={{ mr: 1, mb: 1 }}
-                  />
-                </Box>
-              </CardContent>
-
-              <CardActions>
-                <Tooltip title="Clone Bot">
-                  <IconButton
-                    size="small"
-                    onClick={() => openCloneDialog(bot.name)}
+                    label={bot.messageProvider}
                     color="primary"
-                    disabled={mutationInFlight}
-                  >
-                    <CloneIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Bot">
-                  <IconButton
+                    variant="outlined"
                     size="small"
-                    onClick={() => openDeleteDialog(bot.name)}
-                    color="error"
-                    disabled={mutationInFlight}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              </CardActions>
-            </Card>
-          ))}
-        </Box>
-      )}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={bot.llmProvider}
+                    color="secondary"
+                    variant="outlined"
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  {bot.persona && (
+                    <Chip
+                      label={bot.persona}
+                      variant="outlined"
+                      size="small"
+                    />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label="Active"
+                    color="success"
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box display="flex" gap={1}>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => openEditDialog(bot)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Clone">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleCloneBot(bot.name)}
+                      >
+                        <CloneIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Start">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSnackbar({ open: true, message: 'Bot start functionality not yet implemented', severity: 'success' })}
+                        color="success"
+                      >
+                        <StartIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Stop">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSnackbar({ open: true, message: 'Bot stop functionality not yet implemented', severity: 'success' })}
+                        color="warning"
+                      >
+                        <StopIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteBot(bot.name)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Create Bot Dialog */}
-      <Dialog
-        open={createDialogOpen}
-        onClose={() => {
-          setCreateDialogOpen(false);
-          resetForm();
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Bot</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Bot Name"
-            fullWidth
-            variant="outlined"
-            value={botName}
-            onChange={(e) => setBotName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Message Provider</InputLabel>
-            <Select
-              value={messageProvider}
-              label="Message Provider"
-              onChange={(e) => setMessageProvider(e.target.value)}
-            >
-              <MenuItem value="discord">Discord</MenuItem>
-              <MenuItem value="slack">Slack</MenuItem>
-              <MenuItem value="mattermost">Mattermost</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>LLM Provider</InputLabel>
-            <Select
-              value={llmProvider}
-              label="LLM Provider"
-              onChange={(e) => setLlmProvider(e.target.value)}
-            >
-              <MenuItem value="openai">OpenAI</MenuItem>
-              <MenuItem value="flowise">Flowise</MenuItem>
-              <MenuItem value="openwebui">OpenWebUI</MenuItem>
-            </Select>
-          </FormControl>
-
-          {messageProvider === 'discord' && (
+          <Box sx={{ mt: 1 }}>
             <TextField
-              margin="dense"
-              label="Discord Bot Token"
               fullWidth
-              variant="outlined"
-              type="password"
-              value={discordToken}
-              onChange={(e) => setDiscordToken(e.target.value)}
+              label="Bot Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
               sx={{ mb: 2 }}
             />
-          )}
+            <Box display="flex" gap={2} sx={{ mb: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Message Provider</InputLabel>
+                <Select
+                  value={formData.messageProvider}
+                  onChange={(e) => setFormData({ ...formData, messageProvider: e.target.value })}
+                >
+                  {messageProviders.map((provider) => (
+                    <MenuItem key={provider} value={provider}>
+                      {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel>LLM Provider</InputLabel>
+                <Select
+                  value={formData.llmProvider}
+                  onChange={(e) => setFormData({ ...formData, llmProvider: e.target.value })}
+                >
+                  {llmProviders.map((provider) => (
+                    <MenuItem key={provider} value={provider}>
+                      {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreateBot} variant="contained">
+            Create Bot
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          {llmProvider === 'openai' && (
+      {/* Edit Bot Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Bot</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
             <TextField
-              margin="dense"
-              label="OpenAI API Key"
               fullWidth
-              variant="outlined"
-              type="password"
-              value={openaiApiKey}
-              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              label="Bot Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
               sx={{ mb: 2 }}
             />
-          )}
+            <Box display="flex" gap={2} sx={{ mb: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel>Message Provider</InputLabel>
+                <Select
+                  value={formData.messageProvider}
+                  onChange={(e) => setFormData({ ...formData, messageProvider: e.target.value })}
+                >
+                  {messageProviders.map((provider) => (
+                    <MenuItem key={provider} value={provider}>
+                      {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel>LLM Provider</InputLabel>
+                <Select
+                  value={formData.llmProvider}
+                  onChange={(e) => setFormData({ ...formData, llmProvider: e.target.value })}
+                >
+                  {llmProviders.map((provider) => (
+                    <MenuItem key={provider} value={provider}>
+                      {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+            <TextField
+              fullWidth
+              label="Persona"
+              value={formData.persona}
+              onChange={(e) => setFormData({ ...formData, persona: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="System Instruction"
+              value={formData.systemInstruction}
+              onChange={(e) => setFormData({ ...formData, systemInstruction: e.target.value })}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => {
-              setCreateDialogOpen(false);
-              resetForm();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateBot}
-            variant="contained"
-            disabled={isCreating}
-          >
-            {isCreating ? 'Creating...' : 'Create'}
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditBot} variant="contained">
+            Update Bot
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Clone Bot Dialog */}
-      <Dialog
-        open={cloneDialogOpen}
-        onClose={() => {
-          setCloneDialogOpen(false);
-          resetForm();
-        }}
-        maxWidth="sm"
-        fullWidth
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <DialogTitle>Clone Bot</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Clone bot "{selectedBot?.name}" with a new name:
-          </Typography>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="New Bot Name"
-            fullWidth
-            variant="outlined"
-            value={newBotName}
-            onChange={(e) => setNewBotName(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setCloneDialogOpen(false);
-              resetForm();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCloneBot}
-            variant="contained"
-            disabled={isCloning}
-          >
-            {isCloning ? 'Cloning...' : 'Clone'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Bot Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Delete Bot</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete bot "{selectedBot?.name}"?
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleDeleteBot}
-            color="error"
-            variant="contained"
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

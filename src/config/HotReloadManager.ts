@@ -1,4 +1,5 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
+import UserConfigStore, { BotOverride } from './UserConfigStore';
 import { WebSocketService } from '@src/webui/services/WebSocketService';
 import Debug from 'debug';
 import fs from 'fs';
@@ -34,6 +35,7 @@ export class HotReloadManager {
   private rollbackSnapshots: Map<string, Record<string, any>> = new Map();
   private isReloading = false;
   private configWatchers: Map<string, fs.FSWatcher> = new Map();
+  private userConfigStore = UserConfigStore.getInstance();
 
   private constructor() {
     this.initializeFileWatchers();
@@ -59,7 +61,7 @@ export class HotReloadManager {
           const watcher = fs.watch(configPath, { recursive: true }, (eventType, filename) => {
             if (filename && (filename.endsWith('.json') || filename.endsWith('.js'))) {
               debug(`Configuration file changed: ${filename}`);
-              this.handleFileChange(eventType, filename);
+              this.handleFileChange();
             }
           });
           this.configWatchers.set(configPath, watcher);
@@ -70,7 +72,7 @@ export class HotReloadManager {
     });
   }
 
-  private handleFileChange(eventType: string, filename: string): void {
+  private handleFileChange(): void {
     // Debounce file changes to avoid multiple reloads
     setTimeout(() => {
       this.detectConfigurationChanges();
@@ -79,12 +81,6 @@ export class HotReloadManager {
 
   private detectConfigurationChanges(): void {
     try {
-      const manager = BotConfigurationManager.getInstance();
-      const currentBots = manager.getAllBots();
-
-      // Compare with previous state and detect changes
-      // This is a simplified implementation - in production you'd want more sophisticated diffing
-
       debug('Configuration changes detected, triggering hot reload check');
       // For now, just log the detection - full auto-reload would be implemented here
 
@@ -313,20 +309,48 @@ export class HotReloadManager {
 
   private async applyBotChange(botName: string, changes: Record<string, any>): Promise<boolean> {
     try {
-      const manager = BotConfigurationManager.getInstance();
-
-      // Apply changes to the bot configuration
-      // This is a simplified implementation - in production you'd want more sophisticated
-      // bot reconfiguration logic that can update running bot instances
-
       debug(`Applying changes to bot '${botName}':`, changes);
 
-      // For now, just update the configuration in memory
-      // In a full implementation, this would:
-      // 1. Update the bot's configuration
-      // 2. Reinitialize the bot's connections if necessary
-      // 3. Update message handlers
-      // 4. Refresh LLM provider settings
+      const allowedFields: (keyof BotOverride)[] = [
+        'messageProvider',
+        'llmProvider',
+        'persona',
+        'systemInstruction',
+        'mcpServers',
+        'mcpGuard',
+      ];
+
+      const sanitizedChanges: Partial<BotOverride> = {};
+
+      for (const [key, value] of Object.entries(changes)) {
+        if (!allowedFields.includes(key as keyof BotOverride)) {
+          continue;
+        }
+
+        if (key === 'mcpGuard' && value) {
+          const guard = value as BotOverride['mcpGuard'];
+          sanitizedChanges.mcpGuard = {
+            enabled: Boolean(guard?.enabled),
+            type: guard?.type === 'custom' ? 'custom' : 'owner',
+            allowedUserIds: Array.isArray(guard?.allowedUserIds)
+              ? guard?.allowedUserIds.filter(Boolean)
+              : typeof guard?.allowedUserIds === 'string'
+                ? (guard?.allowedUserIds as string).split(',').map((id: string) => id.trim()).filter(Boolean)
+                : undefined,
+          };
+          continue;
+        }
+
+        (sanitizedChanges as any)[key] = value;
+      }
+
+      if (Object.keys(sanitizedChanges).length > 0) {
+        this.userConfigStore.setBotOverride(botName, sanitizedChanges);
+
+        // Reload configuration so changes take effect immediately
+        const manager = BotConfigurationManager.getInstance();
+        manager.reload();
+      }
 
       return true;
     } catch (error) {
@@ -342,8 +366,6 @@ export class HotReloadManager {
         debug(`Rollback snapshot '${snapshotId}' not found`);
         return false;
       }
-
-      const manager = BotConfigurationManager.getInstance();
 
       // Restore the snapshot
       for (const [botName, botConfig] of Object.entries(snapshot)) {

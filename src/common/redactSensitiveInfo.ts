@@ -18,12 +18,26 @@ export function redactSensitiveInfo(key: string, value: any): string {
   try {
     const lowerKey = key.toLowerCase();
     const isSensitive = sensitivePatterns.some(pattern => lowerKey.includes(pattern));
-    
-    if (isSensitive) {
+
+    if (!isSensitive) {
+      return value === undefined || value === null ? '' : String(value);
+    }
+
+    const stringValue = value === undefined || value === null ? '' : String(value);
+    if (stringValue.length === 0) {
       return '********';
     }
-    
-    return String(value);
+
+    if (stringValue.length <= 8) {
+      const visible = stringValue.slice(-4);
+      const redactionLength = Math.max(stringValue.length - visible.length, 4);
+      return `${'*'.repeat(redactionLength)}${visible}`;
+    }
+
+    const start = stringValue.slice(0, 4);
+    const end = stringValue.slice(-4);
+    const middleLength = Math.max(stringValue.length - 8, 4);
+    return `${start}${'*'.repeat(middleLength)}${end}`;
   } catch (error: unknown) {
     redactDebug(`Error processing value: ${(error as Error).message}`);
     return '********';

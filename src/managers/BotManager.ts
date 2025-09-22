@@ -5,6 +5,10 @@ import { EventEmitter } from 'events';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { MCPConfig } from '../mcp/MCPService';
+import { MCPGuardConfig } from '../mcp/MCPGuard';
+import { webUIStorage } from '../storage/webUIStorage';
+import { checkBotEnvOverrides } from '../utils/envUtils';
 
 const debug = Debug('app:BotManager');
 
@@ -17,6 +21,11 @@ export interface BotInstance {
   createdAt: string;
   lastModified: string;
   config: any;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: MCPConfig[];
+  mcpGuard?: MCPGuardConfig;
+  envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
 export interface CreateBotRequest {
@@ -50,6 +59,10 @@ export interface CreateBotRequest {
       endpoint?: string;
     };
   };
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: MCPConfig[];
+  mcpGuard?: MCPGuardConfig;
 }
 
 export class BotManager extends EventEmitter {
@@ -131,13 +144,19 @@ export class BotManager extends EventEmitter {
           isActive: true, // Configured bots are considered active
           createdAt: new Date().toISOString(),
           lastModified: new Date().toISOString(),
-          config: this.sanitizeConfig(bot)
+          config: this.sanitizeConfig(bot),
+          persona: bot.persona || 'default',
+          systemInstruction: bot.systemInstruction,
+          mcpServers: bot.mcpServers || [],
+          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
+          envOverrides: checkBotEnvOverrides(bot.name)
         };
         botInstances.push(botInstance);
       }
 
-      // Add custom bots
-      for (const bot of this.customBots.values()) {
+      // Add custom bots from web UI storage
+      const customBots = webUIStorage.getAgents();
+      for (const bot of customBots) {
         botInstances.push(bot);
       }
 
@@ -198,15 +217,18 @@ export class BotManager extends EventEmitter {
         isActive: false, // New bots start inactive
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
-        config: this.sanitizeConfig(request.config)
+        config: this.sanitizeConfig(request.config),
+        persona: request.persona,
+        systemInstruction: request.systemInstruction,
+        mcpServers: request.mcpServers,
+        mcpGuard: request.mcpGuard
       };
 
       // Store sensitive configuration securely
       await this.storeSecureConfig(botId, request.config);
 
-      // Add to custom bots
-      this.customBots.set(botId, botInstance);
-      this.saveCustomBots();
+      // Add to web UI storage
+      webUIStorage.saveAgent(botInstance);
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -235,7 +257,11 @@ export class BotManager extends EventEmitter {
         name: newName,
         messageProvider: sourceBot.messageProvider as any,
         llmProvider: sourceBot.llmProvider as any,
-        config: sourceBot.config
+        config: sourceBot.config,
+        persona: sourceBot.persona,
+        systemInstruction: sourceBot.systemInstruction,
+        mcpServers: sourceBot.mcpServers,
+        mcpGuard: sourceBot.mcpGuard
       };
 
       const clonedBot = await this.createBot(cloneRequest);
@@ -272,7 +298,11 @@ export class BotManager extends EventEmitter {
         ...existingBot,
         ...updates,
         lastModified: new Date().toISOString(),
-        config: updates.config ? this.sanitizeConfig({ ...existingBot.config, ...updates.config }) : existingBot.config
+        config: updates.config ? this.sanitizeConfig({ ...existingBot.config, ...updates.config }) : existingBot.config,
+        persona: updates.persona !== undefined ? updates.persona : existingBot.persona,
+        systemInstruction: updates.systemInstruction !== undefined ? updates.systemInstruction : existingBot.systemInstruction,
+        mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : existingBot.mcpServers,
+        mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard
       };
 
       // Store updated secure config if provided
@@ -280,9 +310,8 @@ export class BotManager extends EventEmitter {
         await this.storeSecureConfig(botId, updates.config);
       }
 
-      // Update in custom bots
-      this.customBots.set(botId, updatedBot);
-      this.saveCustomBots();
+      // Update in web UI storage
+      webUIStorage.saveAgent(updatedBot);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 
@@ -306,22 +335,18 @@ export class BotManager extends EventEmitter {
         return false;
       }
 
-      // Remove from custom bots
-      const deleted = this.customBots.delete(botId);
+      // Remove from web UI storage
+      webUIStorage.deleteAgent(botId);
 
-      if (deleted) {
-        this.saveCustomBots();
+      // Remove secure configuration
+      await this.secureConfigManager.deleteConfig(`bot_${botId}`);
 
-        // Remove secure configuration
-        await this.secureConfigManager.deleteConfig(`bot_${botId}`);
+      debug(`Deleted bot: ${bot.name} (${botId})`);
 
-        debug(`Deleted bot: ${bot.name} (${botId})`);
+      // Emit event for real-time updates
+      this.emit('botDeleted', bot);
 
-        // Emit event for real-time updates
-        this.emit('botDeleted', bot);
-      }
-
-      return deleted;
+      return true;
     } catch (error: any) {
       debug('Error deleting bot:', error);
       throw new Error(`Failed to delete bot: ${error.message}`);
