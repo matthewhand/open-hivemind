@@ -13,6 +13,8 @@
     "build": "mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/ && node node_modules/.bin/tsc",
     "start": "node --max-old-space-size=256 dist/src/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
+    "start:dev:timeout": "timeout 600 npm run start:dev || echo \"Dev server failed to start within 600 seconds\""
+    "start:timeout": "timeout 600 npm start || echo \"Server failed to start within 600 seconds\""
     "validate": "npm-run-all --parallel lint test",
     "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand --testTimeout=10000",
     "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/jest --coverage --runInBand --testTimeout=10000",
