@@ -26,8 +26,8 @@ export class IdleResponseManager {
   private static instance: IdleResponseManager;
   private serviceActivities: Map<string, ServiceActivity> = new Map();
   private enabled: boolean = true;
-  private minDelay: number = 60000; // 60 seconds
-  private maxDelay: number = 3600000; // 60 minutes
+  private minDelay: number = parseInt(process.env.IDLE_RESPONSE_MIN_DELAY || '60000', 10); // 60 seconds
+  private maxDelay: number = parseInt(process.env.IDLE_RESPONSE_MAX_DELAY || '3600000', 10); // 60 minutes
   private idlePrompts: string[] = [
     "The conversation seems to have paused. Is there anything else you'd like to discuss or any questions I can help with?",
     "I notice it's been quiet for a bit. I'm here if you need assistance or want to continue our conversation.",
