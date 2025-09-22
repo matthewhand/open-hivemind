@@ -1,8 +1,20 @@
 import { EventEmitter } from 'events';
-import fetch from 'node-fetch';
 import Debug from 'debug';
 
+import type { Response } from 'node-fetch';
+
 const debug = Debug('app:ApiMonitorService');
+
+type FetchImplementation = (input: any, init?: any) => Promise<Response>;
+
+const resolveFetch = async (): Promise<FetchImplementation> => {
+  if (typeof fetch === 'function') {
+    return fetch as unknown as FetchImplementation;
+  }
+
+  const { default: nodeFetch } = await import('node-fetch');
+  return nodeFetch as unknown as FetchImplementation;
+};
 
 export interface EndpointConfig {
   id: string;
@@ -247,7 +259,8 @@ export class ApiMonitorService extends EventEmitter {
     const timeoutId = setTimeout(() => controller.abort(), config.timeout || 10000);
 
     try {
-      const response = await fetch(config.url, {
+      const fetchImpl = await resolveFetch();
+      const response = await fetchImpl(config.url, {
         method: config.method,
         headers: {
           'User-Agent': 'Open-Hivemind API Monitor',
