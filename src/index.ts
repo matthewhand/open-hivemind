@@ -45,6 +45,25 @@ process.on('uncaughtException', (error) => {
     process.exit(1);
 });
 
+// Add signal handlers for graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('[INFO] Received SIGINT. Shutting down gracefully...');
+    await shutdown();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    console.log('[INFO] Received SIGTERM. Shutting down gracefully...');
+    await shutdown();
+    process.exit(0);
+});
+
+async function shutdown(): Promise<void> {
+    console.log('[INFO] Performing cleanup...');
+    // Add any cleanup logic here
+    // For example, closing database connections, stopping services, etc.
+}
+
 const indexLog = debug('app:index');
 const app = express();
 debug("Messenger services are being initialized...");
