@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import ApiMonitorService from '../services/ApiMonitorService';
 import os from 'os';
 import process from 'process';
@@ -79,6 +79,13 @@ router.post('/health/api-endpoints', (req, res) => {
   try {
     const config = req.body;
 
+    if (!config || Object.keys(config).length === 0) {
+      return res.json({
+        message: 'No endpoint data provided',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
       return res.status(400).json({
@@ -138,6 +145,13 @@ router.delete('/health/api-endpoints/:id', (req, res) => {
 
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
+    if (!endpoint) {
+      return res.status(404).json({
+        error: 'Failed to remove endpoint',
+        message: 'Endpoint not found',
+        timestamp: new Date().toISOString(),
+      });
+    }
     apiMonitor.removeEndpoint(req.params.id);
 
     res.json({
@@ -174,6 +188,28 @@ router.post('/health/api-endpoints/stop', (req, res) => {
     message: 'Stopped monitoring all endpoints',
     timestamp: new Date().toISOString(),
   });
+});
+
+router.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
+  if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
+    const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
+    if (method === 'PUT') {
+      return res.status(404).json({
+        error: 'Failed to update endpoint',
+        message: 'Endpoint not found or payload invalid',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return res.status(400).json({
+      error: 'Invalid JSON payload',
+      message: 'Request body could not be parsed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return next(err);
 });
 
 export default router;
