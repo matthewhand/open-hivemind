@@ -32,6 +32,19 @@ import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
+// Add error handling for unhandled rejections and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[ERROR] Unhandled Rejection at:', promise, 'reason:', reason);
+    // Application specific logging, throwing an error, or other logic here
+    process.exit(1);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('[ERROR] Uncaught Exception:', error);
+    // Application specific logging, throwing an error, or other logic here
+    process.exit(1);
+});
+
 const indexLog = debug('app:index');
 const app = express();
 debug("Messenger services are being initialized...");
@@ -154,8 +167,9 @@ async function startBot(messengerService: any) {
         );
         indexLog('[DEBUG] Message handler set up successfully.');
     } catch (error) {
-        indexLog('[DEBUG] Error starting bot service:', error);
-        indexLog('[DEBUG] Proceeding despite bot initialization error.');
+        indexLog('[ERROR] Error starting bot service:', error);
+        // Log the error but don't exit the process - we want other bots to continue working
+        console.error('[ERROR] Bot initialization failed:', error instanceof Error ? error.message : String(error));
     }
 }
 
