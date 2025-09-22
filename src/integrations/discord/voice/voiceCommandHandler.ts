@@ -55,6 +55,8 @@ export class VoiceCommandHandler {
       apiKey: openaiConfig.get('OPENAI_API_KEY') as string
     });
 
+    const tempPath = path.join('./temp', `response_${Date.now()}.mp3`);
+    
     try {
       const response = await openai.audio.speech.create({
         model: 'tts-1',
@@ -62,7 +64,6 @@ export class VoiceCommandHandler {
         input: text,
       });
 
-      const tempPath = path.join('./temp', `response_${Date.now()}.mp3`);
       const buffer = Buffer.from(await response.arrayBuffer());
       fs.writeFileSync(tempPath, buffer);
 
@@ -71,8 +72,36 @@ export class VoiceCommandHandler {
       player.play(resource);
       this.connection.subscribe(player);
 
-      player.on(AudioPlayerStatus.Idle, () => fs.unlinkSync(tempPath));
+      player.on(AudioPlayerStatus.Idle, () => {
+        try {
+          if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+          }
+        } catch (error) {
+          debug(`Failed to delete temporary file: ${error}`);
+        }
+      });
+      
+      // Also handle error cases
+      player.on('error', () => {
+        try {
+          if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+          }
+        } catch (error) {
+          debug(`Failed to delete temporary file on error: ${error}`);
+        }
+      });
     } catch (error: any) {
+      // Clean up temp file if it was created
+      try {
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
+      } catch (cleanupError) {
+        debug(`Failed to delete temporary file during cleanup: ${cleanupError}`);
+      }
+      
       debug(`TTS error: ${error.message}`);
     }
   }
