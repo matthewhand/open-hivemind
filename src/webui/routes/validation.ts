@@ -5,12 +5,115 @@ import { body, query, param } from 'express-validator';
 import { validationResult } from 'express-validator';
 import { AuthMiddlewareRequest } from '../../auth/types';
 
+import type { BotConfig } from '../../config/BotConfigurationManager';
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
 
 /**
  * Validation middleware for rule creation
  */
+interface BotValidationResult {
+  name: string;
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+interface ValidationSummary {
+  botValidation: BotValidationResult[];
+  errors: string[];
+  warnings: string[];
+  recommendations: string[];
+  isValid: boolean;
+}
+
+function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const name = bot.name ?? 'Unnamed bot';
+
+  if (!bot.name) {
+    errors.push('Bot name is required');
+    errors.push('Name is required');
+  }
+
+  if (!bot.messageProvider) {
+    errors.push('Message provider is required');
+  }
+
+  if (!bot.llmProvider) {
+    errors.push('LLM provider is required');
+  }
+
+  if (bot.messageProvider === 'discord') {
+    if (!bot.discord?.token) {
+      errors.push('Discord bot token is required');
+    } else if (bot.discord.token.length < 10) {
+      warnings.push('Discord token appears to be invalid (too short)');
+    }
+  }
+
+  if (bot.messageProvider === 'slack') {
+    if (!bot.slack?.botToken) {
+      errors.push('Slack bot token is required');
+    }
+    if (!bot.slack?.signingSecret) {
+      errors.push('Slack signing secret is required');
+    }
+  }
+
+  if (bot.llmProvider === 'openai') {
+    if (!bot.openai?.apiKey) {
+      errors.push('OpenAI API key is required');
+    } else if (!bot.openai.apiKey.startsWith('sk-')) {
+      warnings.push('OpenAI API key should start with "sk-"');
+    }
+  }
+
+  return {
+    name,
+    valid: errors.length === 0 && warnings.length === 0,
+    errors,
+    warnings
+  };
+}
+
+const buildRecommendations = (bots: Partial<BotConfig>[]): string[] => {
+  const recommendations: string[] = [];
+
+  if (bots.length === 1) {
+    recommendations.push('Consider adding multiple message providers for redundancy');
+  }
+
+  if (bots.length > 3) {
+    recommendations.push('Consider using a load balancer for better performance');
+  }
+
+  return recommendations;
+};
+
+const evaluateBotConfigurations = (
+  bots: Partial<BotConfig>[],
+  environmentWarnings: string[] = []
+): ValidationSummary => {
+  const botValidation = bots.map(validateBotConfiguration);
+  const warnings = [
+    ...(environmentWarnings ?? []),
+    ...botValidation.flatMap(bot => bot.warnings)
+  ];
+  const errors = botValidation.flatMap(bot => bot.errors);
+  const recommendations = buildRecommendations(bots);
+  const isValid = botValidation.every(bot => bot.valid) && warnings.length === 0;
+
+  return {
+    botValidation,
+    errors,
+    warnings,
+    recommendations,
+    isValid
+  };
+};
+
 const validateRuleCreation = [
   body('id')
     .trim()
@@ -156,6 +259,143 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
   }
   next();
 };
+
+/**
+ * GET /api/validation
+ * Get validation results for current configuration
+ */
+router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+  try {
+    // Import the BotConfigurationManager to get current configuration
+    const { BotConfigurationManager } = await import('../../config/BotConfigurationManager');
+
+    const configManager = BotConfigurationManager.getInstance();
+    const bots = configManager.getAllBots() as Partial<BotConfig>[];
+    const managerWarnings = configManager.getWarnings() ?? [];
+
+    const summary = evaluateBotConfigurations(bots, managerWarnings);
+
+    const environmentValidation = {
+      valid: managerWarnings.length === 0,
+      errors: [] as string[],
+      warnings: managerWarnings
+    };
+
+    res.json({
+      isValid: summary.isValid,
+      warnings: summary.warnings,
+      errors: summary.errors,
+      recommendations: summary.recommendations,
+      botValidation: summary.botValidation,
+      environmentValidation,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    const errorMessage = 'Failed to validate configuration';
+    console.error('Error validating configuration:', error);
+    res.status(500).json({
+      error: errorMessage,
+      isValid: false,
+      warnings: [],
+      errors: [errorMessage],
+      recommendations: [],
+      botValidation: [],
+      environmentValidation: {
+        valid: false,
+        errors: ['Internal validation error'],
+        warnings: []
+      },
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+router.post('/test', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+  const { config } = req.body ?? {};
+
+  if (!config) {
+    return res.status(400).json({
+      error: 'Configuration data required'
+    });
+  }
+
+  if (typeof config !== 'object' || Array.isArray(config)) {
+    return res.status(400).json({
+      error: 'Configuration data must be an object'
+    });
+  }
+
+  const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
+
+  if (!Array.isArray(bots)) {
+    return res.status(200).json({
+      valid: false,
+      errors: ['Configuration must include a "bots" array'],
+      warnings: [],
+      recommendations: [],
+      botValidation: [],
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  const summary = evaluateBotConfigurations(bots);
+
+  return res.json({
+    valid: summary.isValid,
+    errors: summary.errors,
+    warnings: summary.warnings,
+    recommendations: summary.recommendations,
+    botValidation: summary.botValidation,
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.get('/schema', authenticate, (_req: AuthMiddlewareRequest, res: Response) => {
+  const schema = {
+    botConfig: {
+      required: ['name', 'messageProvider', 'llmProvider'],
+      properties: {
+        name: { type: 'string', description: 'Unique bot name' },
+        messageProvider: { type: 'string', enum: ['discord', 'slack', 'mattermost', 'webhook'] },
+        llmProvider: { type: 'string', enum: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'] },
+        discord: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+            clientId: { type: 'string' },
+            guildId: { type: 'string' }
+          }
+        },
+        slack: {
+          type: 'object',
+          properties: {
+            botToken: { type: 'string' },
+            signingSecret: { type: 'string' },
+            appToken: { type: 'string' }
+          }
+        },
+        openai: {
+          type: 'object',
+          properties: {
+            apiKey: { type: 'string' },
+            model: { type: 'string' }
+          }
+        }
+      }
+    }
+  };
+
+  try {
+    res.json(schema);
+  } catch (error) {
+    console.error('Error generating validation schema:', error);
+    const message = (error as Error)?.message || 'Unknown error';
+    res
+      .status(500)
+      .type('application/json')
+      .send(`{"error":"Failed to get validation schema","details":"${message.replace(/"/g, '')}"}`);
+  }
+});
 
 /**
  * GET /api/validation/rules

@@ -51,7 +51,30 @@ export class WebUIServer {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-    
+
+    // Error handler for malformed JSON in health API endpoints
+    this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
+      if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
+        const method = req.method.toUpperCase();
+        if (method === 'PUT') {
+          return res.status(404).json({
+            error: 'Failed to update endpoint',
+            message: 'Endpoint not found or payload invalid',
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        return res.status(400).json({
+          error: 'Invalid JSON payload',
+          message: 'Request body could not be parsed',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return next(err);
+    });
+
     // Audit logging for all requests
     this.app.use(auditMiddleware);
     

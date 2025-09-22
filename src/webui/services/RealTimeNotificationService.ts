@@ -58,7 +58,7 @@ export class RealTimeNotificationService extends EventEmitter {
     this.emit('notification', notification);
 
     // Send via WebSocket to connected clients
-    this.webSocketService.broadcast('notification', notification);
+    (this.webSocketService as any).io?.sockets?.emit('notification', notification);
 
     debug(`Notification sent: ${notification.type}/${notification.severity} - ${notification.title}`);
     

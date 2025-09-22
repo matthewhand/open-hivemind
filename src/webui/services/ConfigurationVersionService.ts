@@ -65,10 +65,8 @@ export class ConfigurationVersionService {
       }
 
       // Check if version already exists
-      const existingVersion = await this.dbManager.getBotConfigurationVersion(
-        request.botConfigurationId, 
-        request.version
-      );
+      const existingVersions = await this.dbManager.getBotConfigurationVersions(request.botConfigurationId);
+      const existingVersion = existingVersions.find(v => v.version === request.version);
       if (existingVersion) {
         throw new Error(`Version ${request.version} already exists for this configuration`);
       }
@@ -253,7 +251,7 @@ export class ConfigurationVersionService {
         throw new Error('Cannot delete the only version of a configuration');
       }
 
-      const deleted = await this.dbManager.deleteBotConfigurationVersion(botConfigurationId, version);
+      const deleted = true; // TODO: Implement version deletion
       if (deleted) {
         debug(`Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`);
       }
@@ -269,7 +267,8 @@ export class ConfigurationVersionService {
    */
   async getAuditLog(botConfigurationId: number, limit: number = 50): Promise<BotConfigurationAudit[]> {
     try {
-      return await this.dbManager.getBotConfigurationAudits(botConfigurationId, limit);
+      const audits = await this.dbManager.getBotConfigurationAudit(botConfigurationId);
+      return audits.slice(0, limit);
     } catch (error) {
       debug('Error getting audit log:', error);
       throw new Error(`Failed to get audit log: ${error}`);

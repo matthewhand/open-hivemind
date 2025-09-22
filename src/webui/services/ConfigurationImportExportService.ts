@@ -243,7 +243,7 @@ export class ConfigurationImportExportService {
   ): Promise<ImportResult> {
     try {
       // Read file
-      let data = await fs.readFile(filePath);
+      let data: Buffer | string = await fs.readFile(filePath);
 
       // Decompress if needed
       if (filePath.endsWith('.gz')) {
