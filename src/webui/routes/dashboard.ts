@@ -39,6 +39,7 @@ router.get('/api/status', (req, res) => {
 
     // Keep status lightweight and deterministic for tests: mark configured bots as active
     const status = bots.map(bot => ({
+      id: bot.name, // Using name as ID for now, could be improved with a real ID
       name: bot.name,
       provider: bot.messageProvider,
       llmProvider: bot.llmProvider,

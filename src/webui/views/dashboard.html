@@ -27,6 +27,13 @@
             <p><strong>Message Provider:</strong> {{messageProvider}}</p>
             <p><strong>LLM Provider:</strong> {{llmProvider}}</p>
             <span class="status active">Active</span>
+            <div style="margin-top: 10px;">
+                <a href="/admin/#/bots/{{name}}" target="_blank" style="text-decoration: none;">
+                    <button style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                        ⚙️ Settings
+                    </button>
+                </a>
+            </div>
         </div>
         {{/each}}
     </div>
