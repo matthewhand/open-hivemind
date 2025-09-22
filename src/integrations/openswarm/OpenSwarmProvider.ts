@@ -37,7 +37,8 @@ export class OpenSwarmProvider implements ILlmProvider {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 15000
       });
 
       return response.data.choices[0]?.message?.content || 'No response';

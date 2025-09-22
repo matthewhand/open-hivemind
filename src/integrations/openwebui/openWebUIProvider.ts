@@ -13,6 +13,7 @@ const openWebUIClient = axios.create({
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ollama',  // Adjust as needed
   },
+  timeout: 15000,
 });
 
 const model = openWebUIConfig.get('model');

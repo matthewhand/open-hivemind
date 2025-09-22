@@ -124,7 +124,8 @@ export class SlackMessageProcessor {
                   if (!contentInfo.content && contentInfo.file?.url_private) {
                     try {
                       const contentResponse = await axios.get(contentInfo.file.url_private, {
-                        headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` }
+                        headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
+                        timeout: 15000
                       });
                       channelContent.content = contentResponse.data || 'No content available';
                       debug(`Fetched content from url_private: ${channelContent.content.substring(0, 50)}...`);
@@ -136,7 +137,8 @@ export class SlackMessageProcessor {
                 } else if (contentInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfo.file.filetype || '')) {
                   const fileResponse = await axios.get(contentInfo.file.url_private!, {
                     headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
-                    responseType: 'arraybuffer'
+                    responseType: 'arraybuffer',
+                    timeout: 15000
                   });
                   const base64Content = Buffer.from(fileResponse.data).toString('base64');
                   channelContent = {

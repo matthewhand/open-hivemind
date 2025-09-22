@@ -35,7 +35,7 @@ export async function uploadKnowledgeFileOnStartup(): Promise<void> {
     };
 
     const fileData = fs.createReadStream(knowledgeFile);
-    const response = await axios.post(apiUrl + '/v1/files', fileData, { headers });
+    const response = await axios.post(apiUrl + '/v1/files', fileData, { headers, timeout: 30000 });
 
     knowledgeFileId = response.data.fileId;
     if (!knowledgeFileId) {

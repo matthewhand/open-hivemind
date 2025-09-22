@@ -9,6 +9,7 @@ export async function generateCompletion(prompt: string): Promise<string> {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.API_AUTH_TOKEN}`,
     },
+    timeout: 15000
   });
 
   return response.data.choices[0].text;
