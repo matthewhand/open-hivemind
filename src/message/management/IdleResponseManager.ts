@@ -26,8 +26,8 @@ export class IdleResponseManager {
   private static instance: IdleResponseManager;
   private serviceActivities: Map<string, ServiceActivity> = new Map();
   private enabled: boolean = true;
-  private minDelay: number = parseInt(process.env.IDLE_RESPONSE_MIN_DELAY || '60000', 10); // 60 seconds
-  private maxDelay: number = parseInt(process.env.IDLE_RESPONSE_MAX_DELAY || '3600000', 10); // 60 minutes
+  private minDelay: number = this.parseEnvInt(process.env.IDLE_RESPONSE_MIN_DELAY, 60000); // 60 seconds
+  private maxDelay: number = this.parseEnvInt(process.env.IDLE_RESPONSE_MAX_DELAY, 3600000); // 60 minutes
   private idlePrompts: string[] = [
     "The conversation seems to have paused. Is there anything else you'd like to discuss or any questions I can help with?",
     "I notice it's been quiet for a bit. I'm here if you need assistance or want to continue our conversation.",
@@ -43,6 +43,12 @@ export class IdleResponseManager {
 
   private constructor() {
     this.loadConfiguration();
+  }
+
+  private parseEnvInt(value: string | undefined, fallback: number): number {
+    if (!value) return fallback;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? fallback : parsed;
   }
 
   public static getInstance(): IdleResponseManager {
@@ -64,15 +70,8 @@ export class IdleResponseManager {
       
       this.enabled = envEnabled !== undefined ? envEnabled === 'true' : (config.enabled ?? true);
       
-      // Use environment variables with fallback to config, then defaults
-      const parseEnvInt = (value: string | undefined, fallback: number): number => {
-        if (!value) return fallback;
-        const parsed = parseInt(value, 10);
-        return isNaN(parsed) ? fallback : parsed;
-      };
-      
-      this.minDelay = parseEnvInt(envMinDelay, config.minDelay ?? 60000);
-      this.maxDelay = parseEnvInt(envMaxDelay, config.maxDelay ?? 3600000);
+      this.minDelay = this.parseEnvInt(envMinDelay, config.minDelay ?? 60000);
+      this.maxDelay = this.parseEnvInt(envMaxDelay, config.maxDelay ?? 3600000);
       
       // Ensure minDelay is not greater than maxDelay
       if (this.minDelay > this.maxDelay) {
