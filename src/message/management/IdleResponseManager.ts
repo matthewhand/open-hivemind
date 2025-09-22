@@ -336,30 +336,19 @@ export class IdleResponseManager {
 
       log(`Triggering idle response for ${serviceName}:${channelId}`);
       
-      // Get the most recent messages from the channel
-      const messages = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
+      // Get a random idle prompt
+      const idlePrompt = this.getRandomIdlePrompt();
       
-      if (messages.length === 0) {
-        log(`No messages found in ${serviceName}:${channelId}, skipping idle response`);
-        return;
-      }
-
-      // Create a unique synthetic message with contextual information
-      const syntheticMessage = this.createUniqueSyntheticMessage(messages, serviceName, channelId);
+      // Send the idle response directly without going through message processing
+      const botName = serviceActivity.botConfig.MESSAGE_USERNAME_OVERRIDE || 'Assistant';
+      await serviceActivity.messengerService.sendMessageToChannel(
+        channelId,
+        idlePrompt,
+        botName
+      );
       
-      // Process this through the normal message handler flow
-      const response = await handleMessage(syntheticMessage, messages, serviceActivity.botConfig);
-      
-      if (response && response.trim()) {
-        await serviceActivity.messengerService.sendMessageToChannel(
-          channelId,
-          response,
-          serviceActivity.botConfig.MESSAGE_USERNAME_OVERRIDE || 'Assistant'
-        );
-        
-        this.recordBotResponse(serviceName, channelId);
-        log(`Sent idle response to ${serviceName}:${channelId}: "${response.substring(0, 100)}..."`);
-      }
+      this.recordBotResponse(serviceName, channelId);
+      log(`Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`);
       
       // Don't immediately reschedule - wait for next interaction
       log(`Idle response completed for ${serviceName}:${channelId}, waiting for next interaction`);
@@ -369,27 +358,8 @@ export class IdleResponseManager {
     }
   }
 
-  private createUniqueSyntheticMessage(messages: IMessage[], serviceName: string, channelId: string): IMessage {
-    // Create a more unique prompt based on conversation context
-    const recentMessages = messages.slice(-5); // Last 5 messages
-    const conversationContext = recentMessages.map(m => m.getText()).join(' ').substring(0, 200);
-    
-    // Generate a unique prompt based on context
-    const basePrompts = [
-      "The conversation has naturally paused. Based on our recent discussion about: {context}",
-      "Taking a thoughtful pause here. Our last exchange touched on: {context}",
-      "In this moment of quiet, I'm curious about where our conversation about {context} might lead next.",
-      "The digital space breathes... our dialogue about {context} feels like it's opening new possibilities.",
-      "This pause invites reflection. Our exploration of {context} seems rich with potential directions."
-    ];
-    
-    const selectedPrompt = basePrompts[Math.floor(Math.random() * basePrompts.length)];
-    const contextualPrompt = selectedPrompt.replace('{context}', conversationContext || 'various topics');
-    
-    // Add timestamp and service info for uniqueness
-    const uniquePrompt = `${contextualPrompt} [${serviceName}:${channelId}:${Date.now()}]`;
-    
-    return new SyntheticMessage(messages[0], uniquePrompt);
+  private getRandomIdlePrompt(): string {
+    return this.idlePrompts[Math.floor(Math.random() * this.idlePrompts.length)];
   }
 
   public configure(config: {
