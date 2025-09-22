@@ -4,7 +4,7 @@ import type {
   MessageFlowEvent,
   PerformanceMetric,
   AlertEvent
-} from '../../../src/webui/services/WebSocketService';
+} from '@src/webui/services/WebSocketService';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 

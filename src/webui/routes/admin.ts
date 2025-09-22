@@ -14,7 +14,17 @@ import activityRouter from './activity';
 const router = Router();
 const debug = Debug('app:webui:admin');
 
-// Apply authentication middleware to all admin routes
+// Serve admin HTML page
+router.get('/', (req: Request, res: Response) => {
+  const adminHtmlPath = path.join(__dirname, '../views/admin.html');
+  if (fs.existsSync(adminHtmlPath)) {
+    res.sendFile(adminHtmlPath);
+  } else {
+    res.status(404).send('Admin panel not found');
+  }
+});
+
+// Apply authentication middleware to all admin routes except the HTML page
 router.use(authenticate, requireAdmin);
 
 // Mount sub-routes

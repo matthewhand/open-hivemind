@@ -18,13 +18,12 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,6 +32,8 @@ import {
   PlayArrow as StartIcon,
   Stop as StopIcon,
   ContentCopy as CloneIcon,
+  ExpandMore as ExpandMoreIcon,
+  SmartToy as BotIcon,
 } from '@mui/icons-material';
 import { apiService, type Bot } from '../services/api';
 
@@ -204,110 +205,153 @@ const BotManager: React.FC<BotManagerProps> = ({ onBotSelect }) => {
         </Alert>
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Message Provider</TableCell>
-              <TableCell>LLM Provider</TableCell>
-              <TableCell>Persona</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {bots.map((bot) => (
-              <TableRow key={bot.name} hover>
-                <TableCell>
-                  <Typography variant="body1" fontWeight="medium">
+      <Box>
+        {bots.map((bot) => (
+          <Accordion key={bot.name} sx={{ mb: 2 }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={2} width="100%">
+                <BotIcon color="primary" />
+                <Box flex={1}>
+                  <Typography variant="h6" component="div">
                     {bot.name}
                   </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={bot.messageProvider}
-                    color="primary"
-                    variant="outlined"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={bot.llmProvider}
-                    color="secondary"
-                    variant="outlined"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  {bot.persona && (
+                  <Box display="flex" gap={1} mt={1}>
                     <Chip
-                      label={bot.persona}
+                      label={bot.messageProvider}
+                      color="primary"
                       variant="outlined"
                       size="small"
                     />
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label="Active"
-                    color="success"
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" gap={1}>
-                    <Tooltip title="Edit">
-                      <IconButton
+                    <Chip
+                      label={bot.llmProvider}
+                      color="secondary"
+                      variant="outlined"
+                      size="small"
+                    />
+                    {bot.persona && (
+                      <Chip
+                        label={bot.persona}
+                        variant="outlined"
                         size="small"
-                        onClick={() => openEditDialog(bot)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Clone">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleCloneBot(bot.name)}
-                      >
-                        <CloneIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Start">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSnackbar({ open: true, message: 'Bot start functionality not yet implemented', severity: 'success' })}
-                        color="success"
-                      >
-                        <StartIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Stop">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSnackbar({ open: true, message: 'Bot stop functionality not yet implemented', severity: 'success' })}
-                        color="warning"
-                      >
-                        <StopIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteBot(bot.name)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                      />
+                    )}
+                    <Chip
+                      label="Active"
+                      color="success"
+                      size="small"
+                    />
                   </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </Box>
+                <Box display="flex" gap={1}>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      onClick={() => openEditDialog(bot)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Clone">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleCloneBot(bot.name)}
+                    >
+                      <CloneIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Start">
+                    <IconButton
+                      size="small"
+                      onClick={() => setSnackbar({ open: true, message: 'Bot start functionality not yet implemented', severity: 'success' })}
+                      color="success"
+                    >
+                      <StartIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Stop">
+                    <IconButton
+                      size="small"
+                      onClick={() => setSnackbar({ open: true, message: 'Bot stop functionality not yet implemented', severity: 'success' })}
+                      color="warning"
+                    >
+                      <StopIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteBot(bot.name)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Configuration
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={1}>
+                        <Typography variant="body2">
+                          <strong>Message Provider:</strong> {bot.messageProvider}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>LLM Provider:</strong> {bot.llmProvider}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>Persona:</strong> {bot.persona || 'None'}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>System Instruction:</strong> {bot.systemInstruction || 'None'}
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        MCP Servers
+                      </Typography>
+                      {Array.isArray(bot.mcpServers) && bot.mcpServers.length > 0 ? (
+                        <Box>
+                          {bot.mcpServers.map((server, index) => (
+                            <Chip
+                              key={index}
+                              label={typeof server === 'object' && server.name ? server.name : `Server ${index + 1}`}
+                              variant="outlined"
+                              size="small"
+                              sx={{ mr: 1, mb: 1 }}
+                            />
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No MCP servers configured
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </Box>
 
       {/* Create Bot Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>

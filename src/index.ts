@@ -30,6 +30,7 @@ import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 // Add error handling for unhandled rejections and exceptions
@@ -126,61 +127,37 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(healthRoute);
 
-// Serve unified dashboard at root
-app.get('/', (req: Request, res: Response) => {
-    indexLog('Root route hit');
-    indexLog('__dirname:', __dirname);
-    const dashboardPath = path.join(__dirname, '../public/index.html');
-    indexLog('Resolved dashboardPath:', dashboardPath);
-    if (fs.existsSync(dashboardPath)) {
-        indexLog('File exists, sending...');
-        res.sendFile(dashboardPath, (err) => {
-            if (err) {
-                indexLog('Error sending file:', err);
-                res.status(500).send('Error serving file');
-            } else {
-                indexLog('File sent successfully');
-            }
-        });
-    } else {
-        indexLog('File does not exist at path:', dashboardPath);
-        res.status(404).send('File not found');
-    }
-});
-
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Serve static files from webui dist directory
-app.use(express.static(path.join(__dirname, '../webui/dist')));
-
-// Admin UI (demo)
+// API routes
 app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
-app.use('/admin', (req: Request, res: Response) => {
-    const adminPath = path.join(__dirname, '../public/admin/index.html');
-    res.sendFile(adminPath);
-});
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/config', configRouter);
+app.use('/api/bots', botsRouter);
+app.use('/api/botConfig', botConfigRouter);
+app.use('/api/validation', validationRouter);
+app.use('/api/hotReload', hotReloadRouter);
+app.use('/api/ci', ciRouter);
+app.use('/api/enterprise', enterpriseRouter);
+app.use('/api/secureConfig', secureConfigRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/adminApi', adminApiRouter);
+app.use('/api/openapi', openapiRouter);
 
-// WebUI (React app)
-app.use('/webui', (req: Request, res: Response) => {
-    const webuiPath = path.join(__dirname, '../webui/dist/index.html');
-    res.sendFile(webuiPath);
-});
+// Serve static files from frontend dist directory
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-// WebUI API routes - dashboard router for API endpoints only
-app.use('/dashboard', dashboardRouter);
-app.use('/webui', configRouter);
-app.use('/webui', botsRouter);
-app.use('/webui', botConfigRouter);
-app.use('/webui', validationRouter);
-app.use('/webui', hotReloadRouter);
-app.use('/webui', ciRouter);
-app.use('/webui', enterpriseRouter);
-app.use('/webui', secureConfigRouter);
-app.use('/webui', authRouter);
-app.use('/webui', adminApiRouter);
-app.use('/webui', openapiRouter);
+// Catch-all for SPA - serve WebUI index.html for all non-API paths
+app.get('*', (req: Request, res: Response) => {
+   if (req.path.startsWith('/api') || req.path.startsWith('/webhook')) {
+       return res.status(404).send('Not Found');
+   }
+   const webuiPath = path.join(__dirname, '../frontend/index.html');
+   if (fs.existsSync(webuiPath)) {
+       res.sendFile(webuiPath);
+   } else {
+       res.status(404).send('Frontend not built. Run "npm run build:frontend" first.');
+   }
+});
 
 async function startBot(messengerService: any) {
     try {
@@ -209,8 +186,13 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-    const llmProviders = getLlmProvider();
-    indexLog('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
+    const llmProviders = getLlmProvider() as ILlmProvider[];
+    indexLog(
+        'LLM Providers in use:',
+        llmProviders
+            .map((provider: ILlmProvider) => provider.constructor.name || 'Unknown')
+            .join(', ') || 'Default OpenAI'
+    );
 
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
     const messageProviders = (typeof rawMessageProviders === 'string'

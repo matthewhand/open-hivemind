@@ -46,7 +46,8 @@
         }
         .bot-card:hover { transform: translateY(-2px); }
         .bot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .bot-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; }
+        .bot-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 8px; }
+        .bot-emoji { font-size: 1.5rem; }
         .status-badge { 
             padding: 4px 12px; 
             border-radius: 20px; 
@@ -93,6 +94,63 @@
         .config-item { margin: 5px 0; padding: 5px; border-radius: 3px; }
         .config-sensitive { background: #fff3cd; }
         .config-override { background: #d1ecf1; }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { margin: 0; color: #2c3e50; }
+        .modal-close { cursor: pointer; font-size: 1.5rem; color: #7f8c8d; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; margin-bottom: 5px; font-weight: 500; color: #2c3e50; }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #3498db; }
+        .form-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 4px; }
+        .form-section h3 { margin-top: 0; color: #34495e; }
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .message { padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .message-success { background: #d4edda; color: #155724; }
+        .message-error { background: #f8d7da; color: #721c24; }
+        .form-help { display: block; margin-top: 5px; font-size: 0.8rem; color: #7f8c8d; }
+        .confirm-modal { text-align: center; max-width: 400px; }
+        .confirm-modal h3 { color: #2c3e50; margin-bottom: 10px; }
+        .confirm-modal p { color: #7f8c8d; margin-bottom: 20px; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #7f8c8d; }
+        .modal-close:hover { color: #2c3e50; }
+        @media (max-width: 768px) {
+            .modal-content { width: 95%; max-height: 90vh; }
+            .form-section { padding: 10px; }
+            .btn-group { flex-direction: column; align-items: stretch; }
+        }
     </style>
 </head>
 <body>
@@ -101,12 +159,230 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        const SENSITIVE_KEYS = ['token', 'apikey', 'secret', 'password', 'key'];
+
+        const getBotEmoji = (botName) => {
+            const emojis = ['🤖', '🦾', '⚙️', '🔧', '🚀', '💡', '🎯', '🌟', '🔥', '⚡'];
+            let hash = 0;
+            for (let i = 0; i < botName.length; i++) {
+                hash = botName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return emojis[Math.abs(hash) % emojis.length];
+        };
+
+        const getConnectivityStatus = (bot) => {
+            // Simple logic: if status is active and has provider, assume connected
+            if (bot.status === 'active' && bot.provider) {
+                return { status: 'connected', color: '#28a745', text: 'Connected' };
+            }
+            return { status: 'disconnected', color: '#dc3545', text: 'Disconnected' };
+        };
+
+        function EditConfigModal({ isOpen, onClose, bot, onSave, message }) {
+            const [formData, setFormData] = useState({});
+            const [loading, setLoading] = useState(false);
+            const [confirmSave, setConfirmSave] = useState(false);
+
+            useEffect(() => {
+                if (bot) {
+                    setFormData(flattenConfig(bot));
+                }
+            }, [bot]);
+
+            const flattenConfig = (config) => {
+                const flat = {};
+                const flatten = (obj, prefix = '') => {
+                    for (const key in obj) {
+                        if (typeof obj[key] === 'object' && obj[key] !== null) {
+                            flatten(obj[key], prefix + key + '.');
+                        } else {
+                            flat[prefix + key] = obj[key];
+                        }
+                    }
+                };
+                flatten(config);
+                return flat;
+            };
+
+            const unflattenConfig = (flat) => {
+                const result = {};
+                for (const key in flat) {
+                    const keys = key.split('.');
+                    let current = result;
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        if (!current[keys[i]]) current[keys[i]] = {};
+                        current = current[keys[i]];
+                    }
+                    current[keys[keys.length - 1]] = flat[key];
+                }
+                return result;
+            };
+
+            const handleInputChange = (key, value) => {
+                setFormData(prev => ({ ...prev, [key]: value }));
+            };
+
+            const validateForm = () => {
+                const errors = [];
+                // Required fields
+                if (!formData['discord.guildId']) errors.push('Discord Guild ID is required');
+                if (!formData['llm.model']) errors.push('LLM Model is required');
+                // Type checks
+                if (formData['llm.temperature'] && isNaN(Number(formData['llm.temperature']))) {
+                    errors.push('LLM Temperature must be a number');
+                }
+                if (formData['llm.maxTokens'] && isNaN(Number(formData['llm.maxTokens']))) {
+                    errors.push('LLM Max Tokens must be a number');
+                }
+                return errors;
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const errors = validateForm();
+                if (errors.length > 0) {
+                    onSave(null, errors.join('; '));
+                    return;
+                }
+                setConfirmSave(true);
+            };
+
+            const confirmSubmit = async () => {
+                setConfirmSave(false);
+                setLoading(true);
+                try {
+                    const updates = unflattenConfig(formData);
+                    const response = await fetch(`/api/config/${bot.name}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updates)
+                    });
+                    if (response.ok) {
+                        onSave('Configuration updated successfully!', null);
+                        onClose();
+                    } else {
+                        const error = await response.text();
+                        onSave(null, `Failed to update config: ${error}`);
+                    }
+                } catch (err) {
+                    onSave(null, `Error: ${err.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (!isOpen || !bot) return null;
+
+            const renderFormFields = (prefix, obj) => {
+                return Object.keys(obj).map(key => {
+                    const fullKey = prefix ? `${prefix}.${key}` : key;
+                    const value = obj[key];
+                    const isSensitive = SENSITIVE_KEYS.some(s => key.toLowerCase().includes(s));
+
+                    if (isSensitive) return null;
+
+                    if (typeof value === 'object' && value !== null) {
+                        return (
+                            <div key={fullKey} className="form-section">
+                                <h3>{key.charAt(0).toUpperCase() + key.slice(1)} Settings</h3>
+                                {renderFormFields(fullKey, value)}
+                            </div>
+                        );
+                    }
+
+                    const label = key.charAt(0).toUpperCase() + key.slice(1);
+                    const inputValue = formData[fullKey] || '';
+
+                    if (key === 'model' && prefix.includes('llm')) {
+                        // Dropdown for LLM models
+                        return (
+                            <div key={fullKey} className="form-group">
+                                <label className="form-label" htmlFor={fullKey}>{label}:</label>
+                                <select
+                                    id={fullKey}
+                                    className="form-select"
+                                    value={inputValue}
+                                    onChange={(e) => handleInputChange(fullKey, e.target.value)}
+                                    aria-describedby={`${fullKey}-help`}
+                                >
+                                    <option value="">Select a model</option>
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    <option value="gpt-4">GPT-4</option>
+                                    <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                    <option value="llama-2-70b">Llama 2 70B</option>
+                                </select>
+                                <small id={`${fullKey}-help`} className="form-help">Choose the LLM model for responses</small>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={fullKey} className="form-group">
+                            <label className="form-label" htmlFor={fullKey}>{label}:</label>
+                            <input
+                                id={fullKey}
+                                type={typeof value === 'number' ? 'number' : 'text'}
+                                className="form-input"
+                                value={inputValue}
+                                onChange={(e) => handleInputChange(fullKey, e.target.value)}
+                                aria-describedby={`${fullKey}-help`}
+                            />
+                            {key === 'temperature' && <small id={`${fullKey}-help`} className="form-help">0-2, controls randomness</small>}
+                            {key === 'maxTokens' && <small id={`${fullKey}-help`} className="form-help">Max response length</small>}
+                        </div>
+                    );
+                });
+            };
+
+            return (
+                <>
+                    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 id="modal-title">Edit Configuration for {bot.name}</h2>
+                                <button className="modal-close" onClick={onClose} aria-label="Close modal">&times;</button>
+                            </div>
+                            {message && (
+                                <div className={`message ${message.type === 'success' ? 'message-success' : 'message-error'}`} role="alert">
+                                    {message.text}
+                                </div>
+                            )}
+                            <form onSubmit={handleSubmit}>
+                                {renderFormFields('', bot)}
+                                <div className="btn-group">
+                                    <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary" disabled={loading}>
+                                        {loading ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {confirmSave && (
+                        <div className="modal-overlay" onClick={() => setConfirmSave(false)} role="dialog" aria-modal="true">
+                            <div className="modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
+                                <h3>Confirm Save</h3>
+                                <p>Are you sure you want to update the configuration? This may restart services.</p>
+                                <div className="btn-group">
+                                    <button className="btn btn-secondary" onClick={() => setConfirmSave(false)}>Cancel</button>
+                                    <button className="btn btn-primary" onClick={confirmSubmit}>Confirm</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
         function Dashboard() {
             const [data, setData] = useState(null);
             const [config, setConfig] = useState(null);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
             const [activeTab, setActiveTab] = useState('overview');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [selectedBot, setSelectedBot] = useState(null);
+            const [modalMessage, setModalMessage] = useState(null);
 
             useEffect(() => {
                 fetchData();
@@ -149,6 +425,21 @@
                     }
                 } catch (err) {
                     alert('Error reloading configuration: ' + err.message);
+                }
+            };
+
+            const openModal = (bot) => {
+                setSelectedBot(bot);
+                setIsModalOpen(true);
+                setModalMessage(null);
+            };
+
+            const handleSave = (success, error) => {
+                if (success) {
+                    setModalMessage({ type: 'success', text: success });
+                    fetchData();
+                } else {
+                    setModalMessage({ type: 'error', text: error });
                 }
             };
 
@@ -216,14 +507,23 @@
 
                     {activeTab === 'overview' && (
                         <div className="bots-grid">
-                            {data?.bots?.map(bot => (
-                                <div key={bot.name} className="bot-card">
-                                    <div className="bot-header">
-                                        <div className="bot-name">{bot.name}</div>
-                                        <div className={`status-badge status-${bot.status}`}>
-                                            {bot.status}
+                            {data?.bots?.map(bot => {
+                                const emoji = getBotEmoji(bot.name);
+                                const connectivity = getConnectivityStatus(bot);
+                                return (
+                                    <div key={bot.name} className="bot-card">
+                                        <div className="bot-header">
+                                            <div className="bot-name">
+                                                <span className="bot-emoji">{emoji}</span>
+                                                {bot.name}
+                                            </div>
+                                            <div className={`status-badge status-${bot.status}`}>
+                                                {bot.status}
+                                            </div>
                                         </div>
-                                    </div>
+                                        <div className="connectivity-status" style={{color: connectivity.color, fontSize: '0.9rem', marginBottom: '10px'}}>
+                                            🔗 {connectivity.text}
+                                        </div>
                                     <div className="bot-info">
                                         <div className="info-row">
                                             <span className="info-label">Message Provider:</span>
@@ -239,7 +539,7 @@
                                         <span className="capability">{bot.llmProvider}</span>
                                     </div>
                                     <div style={{marginTop: '15px', textAlign: 'right'}}>
-                                        <button 
+                                        <button
                                             className="btn btn-secondary"
                                             onClick={() => window.open(`/admin/#/bots/${encodeURIComponent(bot.name)}`, '_blank')}
                                             title="Configure bot"
@@ -248,7 +548,8 @@
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                               );
+                           })}
                         </div>
                     )}
 
@@ -273,7 +574,10 @@
                                 <div><strong>Configured Bots:</strong></div>
                                 {config.bots?.map(bot => (
                                     <div key={bot.name} style={{marginLeft: '20px', marginTop: '10px'}}>
-                                        <div><strong>{bot.name}:</strong></div>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                            <strong>{bot.name}:</strong>
+                                            <button className="btn btn-secondary" onClick={() => openModal(bot)} style={{fontSize: '0.8rem', padding: '4px 8px'}}>Edit</button>
+                                        </div>
                                         <div style={{marginLeft: '20px'}}>
                                             <div>Message Provider: {bot.messageProvider}</div>
                                             <div>LLM Provider: {bot.llmProvider}</div>
@@ -287,6 +591,14 @@
                             </div>
                         </div>
                     )}
+
+                    <EditConfigModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        bot={selectedBot}
+                        onSave={handleSave}
+                        message={modalMessage}
+                    />
                 </div>
             );
         }

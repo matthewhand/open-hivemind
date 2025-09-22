@@ -13,13 +13,11 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Card,
+  CardContent,
   Chip,
   List,
   ListItem,
@@ -32,6 +30,7 @@ import {
   LinkOff as LinkOffIcon,
   Refresh as RefreshIcon,
   Build as BuildIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 
 interface MCPServer {
@@ -234,67 +233,80 @@ const MCPServerManager: React.FC = () => {
         </Alert>
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Server URL</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {servers.map((server) => (
-              <TableRow key={server.name} hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <BuildIcon color="action" />
-                    <Typography variant="body1" fontWeight="medium">
-                      {server.name}
+      <Box>
+        {servers.map((server) => (
+          <Accordion key={server.name} sx={{ mb: 2 }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={2} width="100%">
+                <BuildIcon color="primary" />
+                <Box flex={1}>
+                  <Typography variant="h6" component="div">
+                    {server.name}
+                  </Typography>
+                  <Box display="flex" gap={1} mt={1}>
+                    <Chip
+                      label={server.connected ? 'Connected' : 'Disconnected'}
+                      color={server.connected ? 'success' : 'default'}
+                      size="small"
+                    />
+                    <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                      {server.serverUrl}
                     </Typography>
                   </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontFamily="monospace">
-                    {server.serverUrl}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={server.connected ? 'Connected' : 'Disconnected'}
-                    color={server.connected ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" gap={1}>
-                    {server.connected && (
-                      <Tooltip title="View Tools">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewTools(server)}
-                        >
-                          <BuildIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title="Disconnect">
+                </Box>
+                <Box display="flex" gap={1}>
+                  {server.connected && (
+                    <Tooltip title="View Tools">
                       <IconButton
                         size="small"
-                        onClick={() => handleDisconnectServer(server.name)}
-                        color="error"
+                        onClick={() => handleViewTools(server)}
                       >
-                        <LinkOffIcon />
+                        <BuildIcon />
                       </IconButton>
                     </Tooltip>
+                  )}
+                  <Tooltip title="Disconnect">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDisconnectServer(server.name)}
+                      color="error"
+                    >
+                      <LinkOffIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Server Details
+                  </Typography>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    <Typography variant="body2">
+                      <strong>Server URL:</strong> {server.serverUrl}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>API Key:</strong> {server.apiKey ? '••••••••' : 'None'}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Status:</strong> {server.connected ? 'Connected' : 'Disconnected'}
+                    </Typography>
                   </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </CardContent>
+              </Card>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </Box>
 
       {/* Connect Server Dialog */}
       <Dialog open={connectDialogOpen} onClose={() => setConnectDialogOpen(false)} maxWidth="sm" fullWidth>

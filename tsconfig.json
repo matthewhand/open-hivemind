@@ -13,17 +13,14 @@
     "skipLibCheck": true,
     "downlevelIteration": true
   },
-  "paths": {
-    "@src/*": ["src/*"],
-    "@tests/*": ["tests/*"],
-    "testUtils": ["./tests/testUtils"]
-  },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "tests/**/*",
-    "node_modules"
+    "src/frontend/**/*",
+    "node_modules",
+    "dist"
   ],
   "files": [
     "src/types/express.d.ts",

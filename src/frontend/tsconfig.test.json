@@ -12,10 +12,11 @@
     "types": ["jest", "@testing-library/jest-dom"]
   },
   "include": [
-    "src/**/*",
+    "./**/*",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx"
-  ]
+  ],
+  "exclude": ["./dist", "./coverage", "./node_modules"]
 }

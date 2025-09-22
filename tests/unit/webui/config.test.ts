@@ -2,10 +2,16 @@ import request from 'supertest';
 import express from 'express';
 import configRouter from '@src/webui/routes/config';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import server from '@src/webui/server'; // Import the server app
 
 const app = express();
 app.use(express.json());
 app.use('/webui', configRouter);
+
+// Test app for server routes
+const serverApp = express();
+serverApp.use(express.json());
+serverApp.use('/api', server); // Assuming server exports router or app with /config routes
 
 // Mock BotConfigurationManager
 jest.mock('@config/BotConfigurationManager');

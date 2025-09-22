@@ -1,11 +1,12 @@
 export default {
+  rootDir: __dirname,
   // Use jsdom environment for DOM testing
   testEnvironment: 'jsdom',
 
   // Transform TypeScript and JSX files
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
+      tsconfig: './tsconfig.test.json',
     }],
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
@@ -15,15 +16,15 @@ export default {
 
   // Module name mapping for path aliases
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@components/(.*)$': '<rootDir>/src/components/$1',
-    '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
-    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@store/(.*)$': '<rootDir>/src/store/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1',
-    '^@assets/(.*)$': '<rootDir>/src/assets/$1',
-    '^@styles/(.*)$': '<rootDir>/src/styles/$1',
+    '^@/(.*)$': '<rootDir>/$1',
+    '^@components/(.*)$': '<rootDir>/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@utils/(.*)$': '<rootDir>/utils/$1',
+    '^@services/(.*)$': '<rootDir>/services/$1',
+    '^@store/(.*)$': '<rootDir>/store/$1',
+    '^@types/(.*)$': '<rootDir>/types/$1',
+    '^@assets/(.*)$': '<rootDir>/assets/$1',
+    '^@styles/(.*)$': '<rootDir>/styles/$1',
     // Handle CSS imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Handle image imports
@@ -31,21 +32,21 @@ export default {
   },
 
   // Setup files
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
 
   // Test match patterns
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.(ts|tsx|js)',
-    '<rootDir>/src/**/*.(test|spec).(ts|tsx|js)',
+    '<rootDir>/**/__tests__/**/*.(ts|tsx|js)',
+    '<rootDir>/**/*.(test|spec).(ts|tsx|js)',
   ],
 
   // Coverage configuration
   collectCoverageFrom: [
-    'src/**/*.(ts|tsx)',
-    '!src/**/*.d.ts',
-    '!src/main.tsx',
-    '!src/vite-env.d.ts',
-    '!src/setupTests.ts',
+    '**/*.(ts|tsx)',
+    '!**/*.d.ts',
+    '!main.tsx',
+    '!vite-env.d.ts',
+    '!setupTests.ts',
   ],
 
   coverageDirectory: 'coverage',

@@ -43,8 +43,7 @@ const AppRouter: React.FC = () => {
     <MainLayout>
       <Suspense fallback={<LoadingFallback message="Loading page..." />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/webui" replace />} />
-          <Route path="/webui" element={<DashboardPage />} />
+          <Route path="/" element={<DashboardPage />} />
           <Route
             path="/admin"
             element={
