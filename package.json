@@ -10,7 +10,7 @@
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
-    "build": "mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/ && node node_modules/.bin/tsc",
+    "build": "npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && node node_modules/.bin/tsc",
     "start": "node --max-old-space-size=256 dist/src/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "start:dev:timeout": "timeout 600 npm run start:dev || echo \"Dev server failed to start within 600 seconds\"",
