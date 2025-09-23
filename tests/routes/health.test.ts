@@ -14,6 +14,7 @@ describe('Health Route', () => {
         app.set('case sensitive routing', true);
         app.set('strict routing', true);
         app.use('/', healthRouter);
+        app.use('/api', healthRouter);
     });
 
     describe('GET /health endpoint', () => {
@@ -29,7 +30,7 @@ describe('Health Route', () => {
 
         it('should have correct content type', async () => {
             const response = await request(app).get('/health');
-            expect(response.headers['content-type']).toMatch(/text/);
+            expect(response.headers['content-type']).toMatch(/text\/plain/);
         });
 
         it('should respond quickly', async () => {
@@ -125,13 +126,14 @@ describe('Health Route', () => {
             expect(response.text).toBe('OK');
         });
 
-        it('should handle requests with different Accept headers', async () => {
+        it('should return JSON when the client explicitly requests application/json', async () => {
             const response = await request(app)
                 .get('/health')
                 .set('Accept', 'application/json');
-            
+
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.headers['content-type']).toMatch(/application\/json/);
+            expect(response.body).toEqual({ status: 'OK' });
         });
 
         it('should handle requests with User-Agent headers', async () => {
@@ -192,6 +194,14 @@ describe('Health Route', () => {
             
             expect(response.status).toBe(200);
             expect(response.text).toBe('OK');
+        });
+
+        it('should respond on the /api/health path when mounted under /api', async () => {
+            const response = await request(app).get('/api/health');
+
+            expect(response.status).toBe(200);
+            expect(response.text).toBe('OK');
+            expect(response.headers['content-type']).toMatch(/text\/plain/);
         });
 
         it('should handle requests with special characters in query', async () => {

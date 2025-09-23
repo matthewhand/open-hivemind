@@ -14,11 +14,11 @@ describe('Health Route Additional Tests', () => {
   });
 
   describe('GET /health additional tests', () => {
-    it('should respond with text/html content type', async () => {
+    it('should respond with text/plain content type', async () => {
       const response = await request(app).get('/health');
       expect(response.status).toBe(200);
       expect(response.text).toBe('OK');
-      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.headers['content-type']).toContain('text/plain');
     });
 
     it('should handle requests with custom headers', async () => {
@@ -73,7 +73,7 @@ describe('Health Route Additional Tests', () => {
         const response = await request(app).get('/health');
         expect(response.status).toBe(200);
         expect(response.text).toBe('OK');
-        expect(response.headers['content-type']).toMatch(/text/);
+        expect(response.headers['content-type']).toMatch(/text\/plain/);
       }
     });
 

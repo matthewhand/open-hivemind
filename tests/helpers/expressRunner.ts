@@ -44,6 +44,10 @@ function createMockRes(done: (res: MockResponse) => void): any {
     setHeader(name: string, value: string) {
       res.headers[name.toLowerCase()] = String(value);
     },
+    type(value: string) {
+      res.headers['content-type'] = value;
+      return api;
+    },
     json(payload: any) {
       res.body = payload;
       done(res);
@@ -123,4 +127,3 @@ export async function runRoute(
     next();
   });
 }
-
