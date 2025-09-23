@@ -17,6 +17,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navItems = [
     { label: 'WebUI', to: '/webui' },
     { label: 'Admin', to: '/admin' },
+    { label: 'Settings', to: '/admin/settings' },
   ];
 
   return (

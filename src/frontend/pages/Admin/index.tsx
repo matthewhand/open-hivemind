@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -10,17 +10,18 @@ import {
   Card,
   CardContent,
   Grid,
+  Badge,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
   People as PeopleIcon,
   Build as BuildIcon,
-  Edit as EditIcon,
   Monitor as MonitorIcon,
   SmartToy as BotIcon,
   Person as PersonaIcon,
   Link as LinkIcon,
   Assessment as ActivityIcon,
+  Dns as ServerIcon,
 } from '@mui/icons-material';
 import BotManager from '../../components/BotManager';
 import PersonaManager from '../../components/PersonaManager';
@@ -50,17 +51,45 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedBot, setSelectedBot] = useState<unknown>(null);
+  const [hasServerUnsavedChanges, setHasServerUnsavedChanges] = useState(false);
+  const [activityUnseenCount, setActivityUnseenCount] = useState(0);
+
+  const SERVER_TAB_INDEX = 4;
+  const ACTIVITY_TAB_INDEX = 5;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    if (activeTab === SERVER_TAB_INDEX && newValue !== SERVER_TAB_INDEX && hasServerUnsavedChanges) {
+      const confirmLeave = window.confirm('You have unsaved server configuration changes. Leave without saving?');
+      if (!confirmLeave) {
+        return;
+      }
+    }
+
+    if (newValue === ACTIVITY_TAB_INDEX) {
+      setActivityUnseenCount(0);
+    }
+
     setActiveTab(newValue);
   };
 
-  const handleBotSelect = (bot: unknown) => {
-    setSelectedBot(bot);
+  const handleBotSelect = (_bot: unknown) => {
     // Switch to configuration tab when a bot is selected
-    setActiveTab(3);
+    setActiveTab(SERVER_TAB_INDEX);
   };
+
+  useEffect(() => {
+    if (!hasServerUnsavedChanges) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasServerUnsavedChanges]);
 
   const tabs = [
     {
@@ -191,14 +220,27 @@ const AdminPage: React.FC = () => {
       component: <MCPServerManager />,
     },
     {
-      label: 'Configuration',
-      icon: <EditIcon />,
-      component: <ConfigurationEditor />,
+      label: 'Server',
+      icon: <ServerIcon />,
+      component: <ConfigurationEditor onDirtyChange={setHasServerUnsavedChanges} />,
     },
     {
       label: 'Activity',
-      icon: <MonitorIcon />,
-      component: <ActivityMonitor />,
+      icon: (
+        <Badge
+          color="error"
+          badgeContent={activityUnseenCount > 99 ? '99+' : activityUnseenCount}
+          invisible={activityUnseenCount === 0}
+        >
+          <MonitorIcon />
+        </Badge>
+      ),
+      component: (
+        <ActivityMonitor
+          isActive={activeTab === ACTIVITY_TAB_INDEX}
+          onUnseenActivityChange={setActivityUnseenCount}
+        />
+      ),
     },
   ];
 

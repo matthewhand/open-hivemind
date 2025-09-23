@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Box,
-  Typography,
+  Button,
   Card,
   CardContent,
+  Chip,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
+  Typography,
 } from '@mui/material';
 import {
+  Error as ErrorIcon,
+  Message as MessageIcon,
   Refresh as RefreshIcon,
   Timeline as TimelineIcon,
-  Message as MessageIcon,
-  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 
@@ -50,7 +50,20 @@ interface ActivityMetrics {
   errorCount: number;
 }
 
-const ActivityMonitor: React.FC = () => {
+interface ActivityMonitorProps {
+  isActive?: boolean;
+  onUnseenActivityChange?: (count: number) => void;
+}
+
+const timeRanges = [
+  { value: '15m', label: 'Last 15 minutes' },
+  { value: '1h', label: 'Last hour' },
+  { value: '6h', label: 'Last 6 hours' },
+  { value: '24h', label: 'Last 24 hours' },
+  { value: '7d', label: 'Last 7 days' },
+];
+
+const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ isActive = false, onUnseenActivityChange }) => {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [metrics, setMetrics] = useState<ActivityMetrics>({
     totalMessages: 0,
@@ -63,14 +76,10 @@ const ActivityMonitor: React.FC = () => {
   const [selectedBot, setSelectedBot] = useState<string>('all');
   const [selectedProvider, setSelectedProvider] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('1h');
+  const [unseenCount, setUnseenCount] = useState(0);
 
-  const timeRanges = [
-    { value: '15m', label: 'Last 15 minutes' },
-    { value: '1h', label: 'Last hour' },
-    { value: '6h', label: 'Last 6 hours' },
-    { value: '24h', label: 'Last 24 hours' },
-    { value: '7d', label: 'Last 7 days' },
-  ];
+  const lastSeenTimestampRef = useRef<string | null>(null);
+  const latestTimestampRef = useRef<string | null>(null);
 
   const fetchActivity = async () => {
     try {
@@ -81,7 +90,6 @@ const ActivityMonitor: React.FC = () => {
       if (selectedBot !== 'all') params.bot = selectedBot;
       if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
 
-      // Calculate time range
       const now = new Date();
       const from = new Date();
       switch (timeRange) {
@@ -108,14 +116,13 @@ const ActivityMonitor: React.FC = () => {
       params.to = now.toISOString();
 
       const response = await apiService.getActivity(params);
+      const fetchedEvents = response.events || [];
+      setEvents(fetchedEvents);
 
-      setEvents(response.events || []);
-
-      // Calculate metrics
-      const totalMessages = response.events.length;
-      const successCount = response.events.filter(e => e.status === 'success').length;
-      const errorCount = response.events.filter(e => e.status === 'error').length;
-      const totalProcessingTime = response.events.reduce((sum, e) => sum + (e.processingTime || 0), 0);
+      const totalMessages = fetchedEvents.length;
+      const successCount = fetchedEvents.filter((e) => e.status === 'success').length;
+      const errorCount = fetchedEvents.filter((e) => e.status === 'error').length;
+      const totalProcessingTime = fetchedEvents.reduce((sum, e) => sum + (e.processingTime || 0), 0);
       const averageResponseTime = totalMessages > 0 ? totalProcessingTime / totalMessages : 0;
 
       setMetrics({
@@ -124,6 +131,33 @@ const ActivityMonitor: React.FC = () => {
         averageResponseTime,
         errorCount,
       });
+
+      const sorted = [...fetchedEvents].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const newestTimestamp = sorted[0]?.timestamp ?? null;
+      latestTimestampRef.current = newestTimestamp;
+
+      if (isActive) {
+        if (newestTimestamp) {
+          lastSeenTimestampRef.current = newestTimestamp;
+        }
+        if (unseenCount !== 0) {
+          setUnseenCount(0);
+          onUnseenActivityChange?.(0);
+        }
+      } else if (newestTimestamp) {
+        const referenceTimestamp = lastSeenTimestampRef.current;
+        const newEventsCount = referenceTimestamp
+          ? sorted.filter((event) => new Date(event.timestamp) > new Date(referenceTimestamp)).length
+          : sorted.length;
+
+        if (newEventsCount > 0) {
+          setUnseenCount((prev) => {
+            const next = prev + newEventsCount;
+            onUnseenActivityChange?.(next);
+            return next;
+          });
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch activity data');
     } finally {
@@ -133,12 +167,23 @@ const ActivityMonitor: React.FC = () => {
 
   useEffect(() => {
     fetchActivity();
-
-    // Set up polling for real-time updates
-    const interval = setInterval(fetchActivity, 30000); // Update every 30 seconds
-
+    const interval = setInterval(fetchActivity, 30000);
     return () => clearInterval(interval);
-  }, [selectedBot, selectedProvider, timeRange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBot, selectedProvider, timeRange, isActive]);
+
+  useEffect(() => {
+    if (isActive) {
+      const newest = latestTimestampRef.current;
+      if (newest) {
+        lastSeenTimestampRef.current = newest;
+      }
+      if (unseenCount !== 0) {
+        setUnseenCount(0);
+        onUnseenActivityChange?.(0);
+      }
+    }
+  }, [isActive, unseenCount, onUnseenActivityChange]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -166,14 +211,11 @@ const ActivityMonitor: React.FC = () => {
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
-  };
+  const formatTime = (timestamp: string) => new Date(timestamp).toLocaleTimeString();
+  const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
 
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(1)}s`;
-  };
+  const uniqueBots = useMemo(() => Array.from(new Set(events.map((event) => event.botName))), [events]);
+  const uniqueProviders = useMemo(() => Array.from(new Set(events.map((event) => event.provider))), [events]);
 
   if (loading && events.length === 0) {
     return (
@@ -208,91 +250,47 @@ const ActivityMonitor: React.FC = () => {
         </Alert>
       )}
 
-      {/* Metrics Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2, mb: 3 }}>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Total Messages
-            </Typography>
-            <Typography variant="h4">
-              {metrics.totalMessages}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Success Rate
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {metrics.successRate.toFixed(1)}%
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Avg Response Time
-            </Typography>
-            <Typography variant="h4">
-              {formatDuration(metrics.averageResponseTime)}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Errors
-            </Typography>
-            <Typography variant="h4" color="error.main">
-              {metrics.errorCount}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Filters
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+          <Box display="flex" flexWrap="wrap" gap={2}>
+            <FormControl sx={{ minWidth: 180 }}>
               <InputLabel>Bot</InputLabel>
               <Select
                 value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
                 label="Bot"
+                onChange={(e) => setSelectedBot(e.target.value)}
               >
-                <MenuItem value="all">All Bots</MenuItem>
-                <MenuItem value="Bot1">Bot 1</MenuItem>
-                <MenuItem value="Bot2">Bot 2</MenuItem>
-                <MenuItem value="Bot3">Bot 3</MenuItem>
+                <MenuItem value="all">All bots</MenuItem>
+                {uniqueBots.map((bot) => (
+                  <MenuItem key={bot} value={bot}>
+                    {bot}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Provider</InputLabel>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Message Provider</InputLabel>
               <Select
                 value={selectedProvider}
+                label="Message Provider"
                 onChange={(e) => setSelectedProvider(e.target.value)}
-                label="Provider"
               >
-                <MenuItem value="all">All Providers</MenuItem>
-                <MenuItem value="discord">Discord</MenuItem>
-                <MenuItem value="slack">Slack</MenuItem>
-                <MenuItem value="mattermost">Mattermost</MenuItem>
+                <MenuItem value="all">All providers</MenuItem>
+                {uniqueProviders.map((provider) => (
+                  <MenuItem key={provider} value={provider}>
+                    {provider}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+            <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Time Range</InputLabel>
               <Select
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
                 label="Time Range"
+                onChange={(e) => setTimeRange(e.target.value)}
               >
                 {timeRanges.map((range) => (
                   <MenuItem key={range.value} value={range.value}>
@@ -301,86 +299,86 @@ const ActivityMonitor: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
+
+            {unseenCount > 0 && !isActive && (
+              <Chip
+                color="warning"
+                label={`${unseenCount} new ${unseenCount === 1 ? 'event' : 'events'}`}
+                sx={{ alignSelf: 'center' }}
+              />
+            )}
           </Box>
         </CardContent>
       </Card>
 
-      {/* Activity Table */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box display="flex" gap={3} flexWrap="wrap">
+            <Box>
+              <Typography variant="h6">Total Messages</Typography>
+              <Typography variant="h4">{metrics.totalMessages}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6">Success Rate</Typography>
+              <Typography variant="h4">{metrics.successRate.toFixed(1)}%</Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6">Average Response Time</Typography>
+              <Typography variant="h4">{formatDuration(metrics.averageResponseTime)}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6">Errors</Typography>
+              <Typography variant="h4">{metrics.errorCount}</Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+
       <TableContainer component={Paper}>
-        <Table>
+        <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Time</TableCell>
+              <TableCell>Timestamp</TableCell>
               <TableCell>Bot</TableCell>
               <TableCell>Provider</TableCell>
-              <TableCell>Type</TableCell>
+              <TableCell>LLM</TableCell>
+              <TableCell>Message Type</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Response Time</TableCell>
-              <TableCell>Content Length</TableCell>
+              <TableCell>Duration</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {events.length > 0 ? (
-              events.map((event) => (
-                <TableRow key={event.id} hover>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {formatTime(event.timestamp)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
-                      {event.botName}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={event.provider}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {getStatusIcon(event.messageType)}
-                      <Typography variant="body2">
-                        {event.messageType}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={event.status}
-                      color={getStatusColor(event.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {event.processingTime ? formatDuration(event.processingTime) : '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {event.contentLength} chars
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography variant="body2" color="text.secondary">
-                    No activity data available
-                  </Typography>
+            {events.map((event) => (
+              <TableRow key={event.id}>
+                <TableCell>{formatTime(event.timestamp)}</TableCell>
+                <TableCell>{event.botName}</TableCell>
+                <TableCell>{event.provider}</TableCell>
+                <TableCell>{event.llmProvider}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={capitalize(event.messageType)}
+                    color={event.messageType === 'incoming' ? 'info' : 'primary'}
+                    size="small"
+                  />
                 </TableCell>
+                <TableCell>
+                  <Chip
+                    icon={getStatusIcon(event.status)}
+                    label={capitalize(event.status)}
+                    color={getStatusColor(event.status) as any}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>{event.processingTime ? formatDuration(event.processingTime) : '—'}</TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
   );
 };
+
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 export default ActivityMonitor;

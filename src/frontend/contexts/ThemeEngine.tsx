@@ -31,16 +31,59 @@ interface ThemeEngineProviderProps {
   children: ReactNode;
 }
 
+const parseStoredTheme = (value: string | null): boolean => {
+  if (!value) return false;
+
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed === 'boolean') {
+      return parsed;
+    }
+  } catch (error) {
+    // Ignore JSON parse issues and fall back to string handling below
+  }
+
+  const normalized = value.replace(/^"|"$/g, '').toLowerCase();
+  if (normalized === 'auto') {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  }
+
+  if (['dark', 'true', '1'].includes(normalized)) {
+    return true;
+  }
+  if (['light', 'false', '0'].includes(normalized)) {
+    return false;
+  }
+
+  return false;
+};
+
+const storeTheme = (isDark: boolean) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  } catch (error) {
+    // Non-critical failure; ignore persistence errors
+  }
+};
+
+const getInitialTheme = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return parseStoredTheme(window.localStorage.getItem('theme'));
+};
+
 export const ThemeEngineProvider: React.FC<ThemeEngineProviderProps> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialTheme);
 
   const toggleTheme = () => {
     setIsDarkMode((prev: boolean) => {
       const newMode = !prev;
-      localStorage.setItem('theme', JSON.stringify(newMode));
+      storeTheme(newMode);
       return newMode;
     });
   };
@@ -109,6 +152,8 @@ export const ThemeEngineProvider: React.FC<ThemeEngineProviderProps> = ({ childr
   });
 
   useEffect(() => {
+    storeTheme(isDarkMode);
+
     // Load Inter font from Google Fonts
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
@@ -118,7 +163,7 @@ export const ThemeEngineProvider: React.FC<ThemeEngineProviderProps> = ({ childr
     return () => {
       document.head.removeChild(link);
     };
-  }, []);
+  }, [isDarkMode]);
 
   return (
     <ThemeContext.Provider value={{ toggleTheme, isDarkMode }}>
