@@ -2,6 +2,13 @@ import request from 'supertest';
 import express from 'express';
 import validationRouter from '@src/webui/routes/validation';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { RealTimeValidationService } from '@src/webui/services/RealTimeValidationService';
+
+// Mock auth middleware
+jest.mock('@src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next(),
+}));
 
 const app = express();
 app.use(express.json());
@@ -27,7 +34,13 @@ describe('Validation API Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe('GET /webui/api/validation', () => {
+  afterAll(() => {
+    // Clean up the validation service interval to prevent Jest from hanging
+    const validationService = RealTimeValidationService.getInstance();
+    validationService.shutdown();
+  });
+
+  describe('GET /webui/', () => {
     it('should return validation results for current configuration', async () => {
       const mockBots = [
         {
@@ -43,7 +56,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue([]);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body).toHaveProperty('isValid');
@@ -75,7 +88,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue(['Test warning']);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body.isValid).toBe(false);
@@ -99,7 +112,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue([]);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body.botValidation[0].valid).toBe(false);
@@ -113,7 +126,7 @@ describe('Validation API Routes', () => {
       });
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(500);
 
       expect(response.body).toHaveProperty('error');
@@ -121,7 +134,7 @@ describe('Validation API Routes', () => {
     });
   });
 
-  describe('POST /webui/api/validation/test', () => {
+  describe('POST /webui/test', () => {
     it('should validate test configuration successfully', async () => {
       const testConfig = {
         bots: [
@@ -136,7 +149,7 @@ describe('Validation API Routes', () => {
       };
 
       const response = await request(app)
-        .post('/webui/api/validation/test')
+        .post('/webui/test')
         .send({ config: testConfig })
         .expect(200);
 
@@ -162,7 +175,7 @@ describe('Validation API Routes', () => {
       };
 
       const response = await request(app)
-        .post('/webui/api/validation/test')
+        .post('/webui/test')
         .send({ config: testConfig })
         .expect(200);
 
@@ -173,7 +186,7 @@ describe('Validation API Routes', () => {
 
     it('should return 400 for missing configuration data', async () => {
       const response = await request(app)
-        .post('/webui/api/validation/test')
+        .post('/webui/test')
         .send({})
         .expect(400);
 
@@ -187,7 +200,7 @@ describe('Validation API Routes', () => {
       };
 
       const response = await request(app)
-        .post('/webui/api/validation/test')
+        .post('/webui/test')
         .send({ config: testConfig })
         .expect(200);
 
@@ -196,10 +209,10 @@ describe('Validation API Routes', () => {
     });
   });
 
-  describe('GET /webui/api/validation/schema', () => {
+  describe('GET /webui/schema', () => {
     it('should return validation schema', async () => {
       const response = await request(app)
-        .get('/webui/api/validation/schema')
+        .get('/webui/schema')
         .expect(200);
 
       expect(response.body).toHaveProperty('botConfig');
@@ -223,7 +236,7 @@ describe('Validation API Routes', () => {
       });
 
       const response = await request(app)
-        .get('/webui/api/validation/schema')
+        .get('/webui/schema')
         .expect(500);
 
       expect(response.body).toHaveProperty('error');
@@ -250,7 +263,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue([]);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body.recommendations.some(rec => 
@@ -276,7 +289,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue([]);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body.botValidation[0].valid).toBe(true);
@@ -300,7 +313,7 @@ describe('Validation API Routes', () => {
       mockManager.getWarnings.mockReturnValue([]);
 
       const response = await request(app)
-        .get('/webui/api/validation')
+        .get('/webui/')
         .expect(200);
 
       expect(response.body.botValidation[0].valid).toBe(false);

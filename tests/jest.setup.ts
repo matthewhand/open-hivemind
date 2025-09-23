@@ -27,3 +27,6 @@ if (!allow) {
     trace: noop,
   };
 }
+
+// Use fake timers to prevent tests from hanging due to setInterval/setTimeout
+jest.useFakeTimers();
