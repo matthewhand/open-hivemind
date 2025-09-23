@@ -100,7 +100,7 @@ export class WebUIServer {
     this.app.use('/', healthRouter);
     
     // Public API routes (optional auth)
-    this.app.use('/api/health', optionalAuth, healthRouter);
+    this.app.use('/api', optionalAuth, healthRouter);
     
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);

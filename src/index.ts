@@ -85,6 +85,31 @@ const indexLog = debug('app:index');
 const app = express();
 debug("Messenger services are being initialized...");
 
+const defaultAllowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:3028',
+    'http://127.0.0.1:3028',
+    'http://localhost:5005',
+    'http://127.0.0.1:5005',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+];
+const envAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+const allowedOrigins = new Set<string>([...defaultAllowedOrigins, ...envAllowedOrigins]);
+
+const isLocalhostOrigin = (origin: string): boolean => {
+    try {
+        const { hostname } = new URL(origin);
+        return hostname === 'localhost' || hostname === '127.0.0.1';
+    } catch (error) {
+        return false;
+    }
+};
+
 const healthRoute = healthRouteModule.default || healthRouteModule;
 const messageConfig = messageConfigModule.default || messageConfigModule;
 const webhookConfig = webhookConfigModule.default || webhookConfigModule;
@@ -95,22 +120,17 @@ app.use(express.urlencoded({ extended: true }));
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
-    const isLocalhost = origin?.includes('localhost') ||
-                       origin?.includes('127.0.0.1') ||
-                       req.hostname === 'localhost' ||
-                       req.hostname === '127.0.0.1';
 
-    if (isLocalhost) {
-        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+    if (origin && (allowedOrigins.has(origin) || isLocalhostOrigin(origin))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
         res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
+    }
 
-        // Handle preflight requests
-        if (req.method === 'OPTIONS') {
-            res.status(200).end();
-            return;
-        }
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
     }
 
     next();
@@ -126,6 +146,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
+app.use('/api', healthRoute);
 
 // API routes
 app.use('/api/admin', adminRouter);

@@ -6,8 +6,15 @@ import process from 'process';
 const router = Router();
 
 // Basic health check route
-router.get('/health', (req, res) => {
-  res.status(200).send('OK');
+router.get('/health', (req: Request, res: Response) => {
+  const acceptHeader = (req.headers.accept || '').toLowerCase();
+  const wantsJson = acceptHeader.includes('application/json');
+
+  if (wantsJson) {
+    return res.json({ status: 'OK' });
+  }
+
+  res.type('text/plain').send('OK');
 });
 
 // Detailed health check with system metrics

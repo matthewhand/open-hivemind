@@ -98,6 +98,7 @@ export class RealTimeValidationService extends EventEmitter {
   private subscriptions: Map<string, ValidationSubscription> = new Map();
   private validationHistory: ValidationReport[] = [];
   private maxHistorySize = 100;
+  private validationInterval?: NodeJS.Timeout;
 
   private constructor() {
     super();
@@ -519,7 +520,7 @@ export class RealTimeValidationService extends EventEmitter {
    */
   private setupEventHandlers(): void {
     // Periodic validation for subscribed configurations
-    setInterval(() => {
+    this.validationInterval = setInterval(() => {
       this.validateSubscribedConfigurations().catch((error: any) => {
         debug('Error in periodic validation:', error);
       });
@@ -972,5 +973,16 @@ export class RealTimeValidationService extends EventEmitter {
    */
   private getSubscriptionId(configId: number, clientId: string): string {
     return `sub-${configId}-${clientId}`;
+  }
+
+  /**
+   * Shutdown the service and clean up resources
+   */
+  public shutdown(): void {
+    if (this.validationInterval) {
+      clearInterval(this.validationInterval);
+      this.validationInterval = undefined;
+      debug('Validation interval cleared');
+    }
   }
 }
