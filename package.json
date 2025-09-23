@@ -7,10 +7,19 @@
     "hivemind": "dist/src/cli/HivemindCLI.js"
   },
   "scripts": {
-    "build": "mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/ && node ./node_modules/typescript/bin/tsc && node ./node_modules/vite/bin/vite.js build",
+    "lint": "eslint src/**/*.ts src/frontend/**/*.ts(x)",
+    "lint:fix": "eslint --fix src/**/*.ts src/frontend/**/*.ts(x)",
+    "check-types": "node ./node_modules/typescript/bin/tsc --noEmit",
+    "build:backend": "mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true && cp -r config dist/ && node ./node_modules/typescript/bin/tsc",
+    "build:frontend": "node ./node_modules/vite/bin/vite.js build",
+    "build": "npm run build:backend && npm run build:frontend",
     "start": "node --max-old-space-size=256 dist/src/index.js",
-    "dev": "concurrently \"nodemon --exec ts-node src/index.ts\" \"node ./node_modules/vite/bin/vite.js\" --kill-others-on-fail --success first",
-    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --runInBand --testTimeout=10000 && NODE_ENV=test jest src/frontend/ --config src/frontend/jest.config.js --runInBand --testTimeout=10000"
+    "start:dev": "concurrently \"nodemon --exec ts-node src/index.ts\" \"npm run dev:frontend\" --kill-others-on-fail --success first",
+    "dev:frontend": "node ./node_modules/vite/bin/vite.js",
+    "dev": "npm run start:dev",
+    "test:backend": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --runInBand --testTimeout=10000",
+    "test:frontend": "NODE_ENV=test jest src/frontend/ --config src/frontend/jest.config.js --runInBand --testTimeout=10000",
+    "test": "npm run test:backend && npm run test:frontend"
   },
   "_moduleAliases": {
     "@src": "dist/src",
