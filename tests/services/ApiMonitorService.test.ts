@@ -10,10 +10,14 @@ describe('ApiMonitorService', () => {
     service.getAllEndpoints().forEach(endpoint => {
       service.removeEndpoint(endpoint.id);
     });
+    // Remove all listeners to prevent accumulation
+    service.removeAllListeners();
   });
 
   afterEach(() => {
     service.stopAllMonitoring();
+    // Clean up any remaining listeners
+    service.removeAllListeners();
   });
 
   describe('Singleton Pattern', () => {
