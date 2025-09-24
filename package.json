@@ -21,7 +21,7 @@
     "start:dev:timeout": "timeout 600 npm run start:dev || echo \"Dev server failed to start within 600 seconds\"",
     "start:timeout": "timeout 600 npm start || echo \"Server failed to start within 600 seconds\"",
     "test": "./node_modules/.bin/concurrently \"npm run test:backend\" \"npm run test:frontend\"",
-    "test:backend": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand --testTimeout=10000 --forceExit",
+    "test:backend": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand --testTimeout=10000",
     "test:frontend": "cd src/client && ../../node_modules/.bin/jest --passWithNoTests",
     "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/jest --coverage --runInBand --testTimeout=10000",
     "test:real": "NODE_ENV=test jest --config jest.real.config.js",

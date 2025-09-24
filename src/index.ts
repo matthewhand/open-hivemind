@@ -143,11 +143,6 @@ app.use(express.static(frontendDistPath));
 // Global assets static for root-relative asset paths
 app.use('/assets', express.static(frontendAssetsPath));
 
-// Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
 
 // Legacy /webui support
 app.use('/webui', express.static(frontendDistPath));
@@ -173,8 +168,8 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // });
 
 // API routes under /api/uber
-// import uberRouter from './routes/uberRouter';
-// app.use('/api/uber', uberRouter);
+import uberRouter from './routes/uberRouter';
+app.use('/api/uber', uberRouter);
 
 // Keep old API routes for compatibility
 // app.use('/api/admin', adminRouter);

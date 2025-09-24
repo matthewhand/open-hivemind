@@ -78,7 +78,7 @@ npm run build
 # Run all tests
 npm test
 
-# Production start (serves frontend from /uber)
+
 npm start
 ```
 
