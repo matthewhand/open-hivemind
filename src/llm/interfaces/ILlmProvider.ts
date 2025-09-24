@@ -26,6 +26,11 @@ import { IMessage } from '@src/message/interfaces/IMessage';
  */
 export interface ILlmProvider {
   /**
+   * The name of the provider (e.g., 'openai', 'flowise', 'openwebui')
+   */
+  name: string;
+
+  /**
    * Indicates whether the provider supports chat completions.
    *
    * Chat completions maintain conversation context and are suitable for

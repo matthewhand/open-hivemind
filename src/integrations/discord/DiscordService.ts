@@ -16,7 +16,7 @@ import * as path from 'path';
 import messageConfig from '@config/messageConfig';
 // ChannelRouter exports functions, not a class
 import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import WebSocketService from '@src/webui/services/WebSocketService';
+import WebSocketService from '@src/server/services/WebSocketService';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};

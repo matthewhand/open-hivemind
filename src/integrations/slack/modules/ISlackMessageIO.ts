@@ -3,7 +3,7 @@ import { IMessage } from '@message/interfaces/IMessage';
 import SlackMessage from '../SlackMessage';
 import Debug from 'debug';
 import { SlackBotManager } from '../SlackBotManager';
-import WebSocketService from '@src/webui/services/WebSocketService';
+import WebSocketService from '@src/server/services/WebSocketService';
 
 const debug = Debug('app:SlackMessageIO');
 

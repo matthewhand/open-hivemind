@@ -13,6 +13,7 @@ function withTokenCounting(provider: ILlmProvider): ILlmProvider {
   const metrics = MetricsCollector.getInstance();
 
   return {
+    name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
     generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {
@@ -48,6 +49,7 @@ function withTokenCounting(provider: ILlmProvider): ILlmProvider {
  * ```
  */
 const openWebUI: ILlmProvider = {
+  name: 'openwebui',
   supportsChatCompletion: () => true,
   supportsCompletion: () => false,
   generateChatCompletion: async (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => {

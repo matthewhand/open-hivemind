@@ -55,6 +55,8 @@ const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(r
  * ```
  */
 export class OpenAiProvider implements ILlmProvider {
+  name = 'openai';
+
   supportsChatCompletion(): boolean {
     debug('Checking chat completion support: true');
     return true;
@@ -79,6 +81,7 @@ export class OpenAiProvider implements ILlmProvider {
 }
 
 export const openAiProvider: ILlmProvider = {
+  name: 'openai',
   supportsChatCompletion: (): boolean => {
     debug('Checking chat completion support: true');
     return true;

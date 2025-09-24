@@ -3,6 +3,8 @@ import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import axios from 'axios';
 
 export class OpenSwarmProvider implements ILlmProvider {
+  name = 'openswarm';
+
   private baseUrl: string;
   private apiKey: string;
 
