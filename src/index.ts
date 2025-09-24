@@ -12,19 +12,19 @@ const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import swarmRouter from '@src/admin/swarmRoutes';
-import dashboardRouter from '@src/webui/routes/dashboard';
-import configRouter from '@src/webui/routes/config';
-import botsRouter from '@src/webui/routes/bots';
-import botConfigRouter from '@src/webui/routes/botConfig';
-import validationRouter from '@src/webui/routes/validation';
-import hotReloadRouter from '@src/webui/routes/hotReload';
-import ciRouter from '@src/webui/routes/ci';
-import enterpriseRouter from '@src/webui/routes/enterprise';
-import secureConfigRouter from '@src/webui/routes/secureConfig';
-import authRouter from '@src/webui/routes/auth';
-import adminApiRouter from '@src/webui/routes/admin';
-import openapiRouter from '@src/webui/routes/openapi';
-import WebSocketService from '@src/webui/services/WebSocketService';
+import dashboardRouter from '@src/server/routes/dashboard';
+import configRouter from '@src/server/routes/config';
+import botsRouter from '@src/server/routes/bots';
+import botConfigRouter from '@src/server/routes/botConfig';
+import validationRouter from '@src/server/routes/validation';
+import hotReloadRouter from '@src/server/routes/hotReload';
+import ciRouter from '@src/server/routes/ci';
+import enterpriseRouter from '@src/server/routes/enterprise';
+import secureConfigRouter from '@src/server/routes/secureConfig';
+import authRouter from '@src/server/routes/auth';
+import adminApiRouter from '@src/server/routes/admin';
+import openapiRouter from '@src/server/routes/openapi';
+import WebSocketService from '@src/server/services/WebSocketService';
 import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
@@ -33,8 +33,8 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
-        path.join(process.cwd(), 'dist/webui/frontend/dist'),
-        path.join(process.cwd(), 'src/webui/frontend/dist'),
+        path.join(process.cwd(), 'dist/client/dist'),
+        path.join(process.cwd(), 'src/client/dist'),
     ];
 
     for (const candidate of candidates) {
