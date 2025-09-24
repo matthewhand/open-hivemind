@@ -22,6 +22,7 @@ const model = openWebUIConfig.get('model');
  * Provides chat and non-chat completion functionality for OpenWebUI.
  */
 export const openWebUIProvider: ILlmProvider = {
+  name: 'openwebui',
   supportsChatCompletion: (): boolean => true,
   supportsCompletion: (): boolean => true,
 

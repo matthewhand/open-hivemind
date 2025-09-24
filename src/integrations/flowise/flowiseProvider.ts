@@ -48,6 +48,8 @@ const flowiseDebug = Debug('app:flowiseProvider');
  * ```
  */
 class FlowiseProvider implements ILlmProvider {
+  name = 'flowise';
+
   supportsCompletion(): boolean {
     return false; // This provider now focuses on chat completions.
   }
