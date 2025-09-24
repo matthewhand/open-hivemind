@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import SlackService from '@integrations/slack/SlackService';
 import { Discord } from '@integrations/discord/DiscordService';
-import { auditMiddleware, AuditedRequest, logAdminAction } from '../webui/middleware/audit';
-import { ipWhitelist } from '../webui/middleware/security';
+import { auditMiddleware, AuditedRequest, logAdminAction } from '../server/middleware/audit';
+import { ipWhitelist } from '../server/middleware/security';
 import { authenticate, requireAdmin } from '../auth/middleware';
 
 const debug = Debug('app:admin');
