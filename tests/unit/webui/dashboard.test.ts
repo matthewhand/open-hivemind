@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import dashboardRouter from '@src/webui/routes/dashboard';
+import dashboardRouter from '@src/server/routes/dashboard';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 
 // Mock BotConfigurationManager

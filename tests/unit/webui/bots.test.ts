@@ -34,7 +34,7 @@ jest.mock('fs', () => ({
 }));
 
 // Mock the entire route file
-jest.mock('@src/webui/routes/bots', () => {
+jest.mock('@src/server/routes/bots', () => {
   const express = require('express');
   const router = express.Router();
 
@@ -63,7 +63,7 @@ jest.mock('@src/webui/routes/bots', () => {
 });
 
 // Import after mocks are set up
-import botsRouter from '@src/webui/routes/bots';
+import botsRouter from '@src/server/routes/bots';
 
 describe('Bots API Routes', () => {
   let mockManager: jest.Mocked<BotManager>;

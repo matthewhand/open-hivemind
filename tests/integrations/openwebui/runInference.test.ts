@@ -57,6 +57,7 @@ describe('runInference.generateChatCompletion', () => {
         Authorization: 'Bearer sk-123',
         'Content-Type': 'application/json',
       },
+      timeout: 15000,
     });
 
     expect(res).toEqual({ text: 'hello world' });

@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import openapiRouter from '../../src/webui/routes/openapi';
+import openapiRouter from '../../src/server/routes/openapi';
 
 describe('OpenAPI route', () => {
   let app: express.Application;

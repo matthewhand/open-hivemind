@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { ipWhitelist } from '../../../src/webui/middleware/security';
+import { ipWhitelist } from '../../../src/server/middleware/security';
 
 const app = express();
 app.use(express.json());

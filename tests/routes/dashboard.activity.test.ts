@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import dashboardRouter from '../../src/webui/routes/dashboard';
+import dashboardRouter from '../../src/server/routes/dashboard';
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
@@ -8,7 +8,7 @@ jest.mock('@src/config/BotConfigurationManager', () => ({
   },
 }));
 
-jest.mock('@src/webui/services/WebSocketService', () => ({
+jest.mock('@src/server/services/WebSocketService', () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn(),
@@ -33,7 +33,7 @@ describe('dashboard activity route', () => {
     app.use('/dashboard', dashboardRouter);
 
     const { BotConfigurationManager } = require('@src/config/BotConfigurationManager');
-    const WebSocketService = require('@src/webui/services/WebSocketService').default;
+    const WebSocketService = require('@src/server/services/WebSocketService').default;
 
     (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockManagerInstance);
     (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWsInstance);

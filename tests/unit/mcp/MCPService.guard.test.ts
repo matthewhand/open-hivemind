@@ -2,25 +2,15 @@ import { jest } from '@jest/globals';
 import { MCPService } from '../../../src/mcp/MCPService';
 import type { MCPGuardConfig } from '../../../src/mcp/MCPGuard';
 
-jest.mock('@modelcontextprotocol/sdk', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    connect: jest.fn(),
-    listTools: jest.fn().mockResolvedValue({ tools: [] }),
-  })),
-}));
-
-const slackOwner = jest.fn();
-const discordOwner = jest.fn();
-
 jest.mock('@integrations/slack/providers/SlackMessageProvider', () => ({
   SlackMessageProvider: jest.fn().mockImplementation(() => ({
-    getForumOwner: slackOwner,
+    getForumOwner: jest.fn(),
   })),
 }));
 
 jest.mock('@integrations/discord/providers/DiscordMessageProvider', () => ({
   DiscordMessageProvider: jest.fn().mockImplementation(() => ({
-    getForumOwner: discordOwner,
+    getForumOwner: jest.fn(),
   })),
 }));
 
@@ -36,7 +26,7 @@ jest.mock('@config/BotConfigurationManager', () => ({
 
 describe('MCPService guard enforcement', () => {
   let service: MCPService;
-  const callTool = jest.fn().mockResolvedValue({ ok: true });
+  const callTool = jest.fn().mockResolvedValue({ ok: true }) as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,7 +91,12 @@ describe('MCPService guard enforcement', () => {
   });
 
   it('derives forum owner via provider when not supplied', async () => {
-    slackOwner.mockResolvedValue('slack-owner');
+    const { SlackMessageProvider } = require('@integrations/slack/providers/SlackMessageProvider');
+    const mockGetForumOwner = jest.fn().mockResolvedValue('slack-owner') as any;
+    SlackMessageProvider.mockImplementation(() => ({
+      getForumOwner: mockGetForumOwner,
+    }));
+
     setGuard({ enabled: true, type: 'owner' });
     await expect(
       service.executeTool('server', 'demo', {}, {
@@ -111,6 +106,6 @@ describe('MCPService guard enforcement', () => {
         forumId: 'C123',
       })
     ).resolves.toEqual({ ok: true });
-    expect(slackOwner).toHaveBeenCalledWith('C123');
+    expect(mockGetForumOwner).toHaveBeenCalledWith('C123');
   });
 });
