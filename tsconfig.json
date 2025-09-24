@@ -11,19 +11,16 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
-    "downlevelIteration": true
-  },
-  "paths": {
-    "@src/*": ["src/*"],
-    "@tests/*": ["tests/*"],
-    "testUtils": ["./tests/testUtils"]
+    "downlevelIteration": true,
+    "jsx": "react"
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "tests/**/*",
-    "node_modules"
+    "node_modules",
+    "src/webui/frontend/**/*"
   ],
   "files": [
     "src/types/express.d.ts",

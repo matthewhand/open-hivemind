@@ -7,7 +7,7 @@ import { BotConfigurationManager, BotConfig } from '../../config/BotConfiguratio
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { ConfigurationValidator } from '../../webui/services/ConfigurationValidator';
+import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { validateBotConfigCreation, validateBotConfigUpdate, sanitizeBotConfig } from '../middleware/formValidation';
 import { BotConfigService } from '../services/BotConfigService';
 
