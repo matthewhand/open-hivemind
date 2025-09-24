@@ -2,7 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { createServer } from 'http';
 import express from 'express';
-import WebSocketService from '@src/webui/services/WebSocketService';
+import WebSocketService from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { io as Client } from 'socket.io-client';
 

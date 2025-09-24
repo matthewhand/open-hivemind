@@ -1,7 +1,22 @@
 import request from 'supertest';
 import express from 'express';
-import validationRouter from '@src/webui/routes/validation';
+import validationRouter from '@src/server/routes/validation';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+
+// Mock auth middleware
+jest.mock('@src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next(),
+}));
+
+// Mock RealTimeValidationService to avoid setInterval
+jest.mock('@src/server/services/RealTimeValidationService', () => ({
+  RealTimeValidationService: {
+    getInstance: jest.fn().mockReturnValue({
+      // Mock methods as needed
+    }),
+  },
+}));
 
 const app = express();
 app.use(express.json());

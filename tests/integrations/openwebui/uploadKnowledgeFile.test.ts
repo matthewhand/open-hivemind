@@ -111,6 +111,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
         Authorization: 'Bearer sk-abc',
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000,
     });
 
     // Cached id is retrievable

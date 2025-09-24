@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import WebSocketService from '@src/webui/services/WebSocketService';
-import type { MessageFlowEvent } from '@src/webui/services/WebSocketService';
+import WebSocketService from '@src/server/services/WebSocketService';
+import type { MessageFlowEvent } from '@src/server/services/WebSocketService';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 

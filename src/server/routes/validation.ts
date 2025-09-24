@@ -264,7 +264,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
  * GET /api/validation
  * Get validation results for current configuration
  */
-router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     // Import the BotConfigurationManager to get current configuration
     const { BotConfigurationManager } = await import('../../config/BotConfigurationManager');
@@ -310,7 +310,7 @@ router.get('/', authenticate, async (req: AuthMiddlewareRequest, res: Response) 
   }
 });
 
-router.post('/test', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/test', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   const { config } = req.body ?? {};
 
   if (!config) {
@@ -350,7 +350,7 @@ router.post('/test', authenticate, async (req: AuthMiddlewareRequest, res: Respo
   });
 });
 
-router.get('/schema', authenticate, (_req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/schema', authenticate, (_req: AuthMiddlewareRequest, res: Response) => {
   const schema = {
     botConfig: {
       required: ['name', 'messageProvider', 'llmProvider'],
@@ -401,7 +401,7 @@ router.get('/schema', authenticate, (_req: AuthMiddlewareRequest, res: Response)
  * GET /api/validation/rules
  * Get all validation rules
  */
-router.get('/rules', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/rules', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const rules = validationService.getAllRules();
     res.json({
@@ -423,7 +423,7 @@ router.get('/rules', authenticate, async (req: AuthMiddlewareRequest, res: Respo
  * GET /api/validation/rules/:ruleId
  * Get a specific validation rule
  */
-router.get('/rules/:ruleId', authenticate, param('ruleId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/rules/:ruleId', authenticate, param('ruleId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { ruleId } = req.params;
     const rule = validationService.getRule(ruleId);
@@ -453,7 +453,7 @@ router.get('/rules/:ruleId', authenticate, param('ruleId').trim().notEmpty(), ha
  * POST /api/validation/rules
  * Create a new validation rule
  */
-router.post('/rules', requireAdmin, validateRuleCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/rules', requireAdmin, validateRuleCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     // Check if rule already exists
     const existingRule = validationService.getRule(req.body.id);
@@ -498,7 +498,7 @@ router.post('/rules', requireAdmin, validateRuleCreation, handleValidationErrors
  * DELETE /api/validation/rules/:ruleId
  * Delete a validation rule
  */
-router.delete('/rules/:ruleId', requireAdmin, param('ruleId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.delete('/api/validation/rules/:ruleId', requireAdmin, param('ruleId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { ruleId } = req.params;
     const success = validationService.removeRule(ruleId);
@@ -528,7 +528,7 @@ router.delete('/rules/:ruleId', requireAdmin, param('ruleId').trim().notEmpty(),
  * GET /api/validation/profiles
  * Get all validation profiles
  */
-router.get('/profiles', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/profiles', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const profiles = validationService.getAllProfiles();
     res.json({
@@ -550,7 +550,7 @@ router.get('/profiles', authenticate, async (req: AuthMiddlewareRequest, res: Re
  * GET /api/validation/profiles/:profileId
  * Get a specific validation profile
  */
-router.get('/profiles/:profileId', authenticate, param('profileId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/profiles/:profileId', authenticate, param('profileId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { profileId } = req.params;
     const profile = validationService.getProfile(profileId);
@@ -580,7 +580,7 @@ router.get('/profiles/:profileId', authenticate, param('profileId').trim().notEm
  * POST /api/validation/profiles
  * Create a new validation profile
  */
-router.post('/profiles', requireAdmin, validateProfileCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/profiles', requireAdmin, validateProfileCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const authReq = req as any;
     const createdBy = authReq.user?.username || 'unknown';
@@ -634,7 +634,7 @@ router.post('/profiles', requireAdmin, validateProfileCreation, handleValidation
  * DELETE /api/validation/profiles/:profileId
  * Delete a validation profile
  */
-router.delete('/profiles/:profileId', requireAdmin, param('profileId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.delete('/api/validation/profiles/:profileId', requireAdmin, param('profileId').trim().notEmpty(), handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { profileId } = req.params;
     const success = validationService.removeProfile(profileId);
@@ -664,7 +664,7 @@ router.delete('/profiles/:profileId', requireAdmin, param('profileId').trim().no
  * POST /api/validation/validate
  * Validate a configuration
  */
-router.post('/validate', authenticate, validateConfigurationValidation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/validate', authenticate, validateConfigurationValidation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { configId, profileId = 'standard', clientId } = req.body;
     
@@ -693,7 +693,7 @@ router.post('/validate', authenticate, validateConfigurationValidation, handleVa
  * POST /api/validation/validate-data
  * Validate configuration data directly
  */
-router.post('/validate-data', authenticate, validateConfigurationData, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/validate-data', authenticate, validateConfigurationData, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { configData, profileId = 'standard' } = req.body;
     
@@ -721,7 +721,7 @@ router.post('/validate-data', authenticate, validateConfigurationData, handleVal
  * POST /api/validation/subscribe
  * Subscribe to real-time validation for a configuration
  */
-router.post('/subscribe', authenticate, validateSubscription, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
+router.post('/api/validation/subscribe', authenticate, validateSubscription, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { configId, clientId, profileId = 'standard' } = req.body;
     
@@ -750,7 +750,7 @@ router.post('/subscribe', authenticate, validateSubscription, handleValidationEr
  * DELETE /api/validation/unsubscribe/:configId/:clientId
  * Unsubscribe from real-time validation
  */
-router.delete('/unsubscribe/:configId/:clientId', authenticate, 
+router.delete('/api/validation/unsubscribe/:configId/:clientId', authenticate,
   param('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
   param('clientId').trim().notEmpty().withMessage('Client ID is required'),
   handleValidationErrors, 
@@ -787,7 +787,7 @@ router.delete('/unsubscribe/:configId/:clientId', authenticate,
  * GET /api/validation/history
  * Get validation history
  */
-router.get('/history', authenticate, 
+router.get('/api/validation/history', authenticate,
   query('configId').optional().isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   handleValidationErrors, 
@@ -818,7 +818,7 @@ router.get('/history', authenticate,
  * GET /api/validation/statistics
  * Get validation statistics
  */
-router.get('/statistics', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/statistics', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const statistics = validationService.getValidationStatistics();
     
@@ -840,7 +840,7 @@ router.get('/statistics', authenticate, async (req: AuthMiddlewareRequest, res: 
  * WebSocket endpoint for real-time validation updates
  * This would be implemented with a WebSocket library like Socket.io
  */
-router.get('/ws', authenticate, (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/api/validation/ws', authenticate, (req: AuthMiddlewareRequest, res: Response) => {
   // This is a placeholder for WebSocket implementation
   // In a real implementation, you would set up a WebSocket connection
   res.json({

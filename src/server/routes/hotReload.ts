@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HotReloadManager, ConfigurationChange } from '@config/HotReloadManager';
-import { WebSocketService } from '@src/webui/services/WebSocketService';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import Debug from 'debug';
 
 const debug = Debug('app:hotReloadRoutes');

@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import configRouter from '@src/webui/routes/config';
+import configRouter from '@src/server/routes/config';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 
 const app = express();

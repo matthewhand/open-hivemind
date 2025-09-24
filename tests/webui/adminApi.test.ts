@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 
 // Import the router directly
-import adminRouter from '../../src/webui/routes/admin';
+import adminRouter from '../../src/server/routes/admin';
 
 // Create a minimal express app for testing
 const app = express();
