@@ -7,17 +7,6 @@ jest.mock('debug', () => {
 
 import { ConfigurationManager } from '../../src/config/ConfigurationManager';
 
-// Mock convict to avoid schema validation issues in tests
-jest.mock('convict', () => {
-  const mockConvict = jest.fn(() => ({
-    validate: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-    load: jest.fn(),
-    loadFile: jest.fn(),
-  }));
-  return mockConvict;
-});
 
 describe('ConfigurationManager', () => {
   let configManager: ConfigurationManager;
@@ -355,4 +344,95 @@ describe('ConfigurationManager', () => {
       expect(result).toBe(`${unicodeIntegration}-${unicodeChannel}-${unicodeSession}`);
     });
   });
-});
+
+  describe('Environment Configuration', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      // Restore original env and clear mocks
+      process.env = { ...originalEnv };
+      jest.restoreAllMocks();
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    describe('URL Environment Variables', () => {
+      it('should load default values when no environment variables are set', () => {
+        // Ensure no env vars are set
+        delete process.env.VITE_API_BASE_URL;
+        delete process.env.PLAYWRIGHT_BASE_URL;
+
+        const configManager = ConfigurationManager.getInstance();
+        const envConfig = configManager.getConfig('environment');
+
+        expect(envConfig).not.toBeNull();
+        expect((envConfig as any).get('VITE_API_BASE_URL')).toBe('http://localhost:3000/api');
+        expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:3000');
+      });
+
+      it('should override defaults with valid environment variables', () => {
+        process.env.VITE_API_BASE_URL = 'https://api.example.com/v1';
+        process.env.PLAYWRIGHT_BASE_URL = 'https://test.example.com';
+
+        const configManager = ConfigurationManager.getInstance();
+        const envConfig = configManager.getConfig('environment');
+
+        expect((envConfig as any).get('VITE_API_BASE_URL')).toBe('https://api.example.com/v1');
+        expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('https://test.example.com');
+      });
+
+      it('should fallback to defaults when environment variables are empty strings', () => {
+        process.env.VITE_API_BASE_URL = '';
+        process.env.PLAYWRIGHT_BASE_URL = '';
+
+        const configManager = ConfigurationManager.getInstance();
+        const envConfig = configManager.getConfig('environment');
+
+        expect((envConfig as any).get('VITE_API_BASE_URL')).toBe('http://localhost:3000/api');
+        expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:3000');
+      });
+
+      it('should throw validation error for invalid URL formats', () => {
+        process.env.VITE_API_BASE_URL = 'invalid-url';
+        process.env.PLAYWRIGHT_BASE_URL = 'also-invalid';
+
+        expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
+      });
+
+      it('should handle partial invalid configurations by validating all', () => {
+        process.env.VITE_API_BASE_URL = 'https://valid.example.com';
+        process.env.PLAYWRIGHT_BASE_URL = 'invalid';
+
+        expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
+      });
+
+      it('should load correctly in test environment', () => {
+        process.env.NODE_ENV = 'test';
+        process.env.VITE_API_BASE_URL = 'https://test-api.example.com';
+        process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:8080';
+
+        const configManager = ConfigurationManager.getInstance();
+        const envConfig = configManager.getConfig('environment');
+
+        expect((envConfig as any).get('NODE_ENV')).toBe('test');
+        expect((envConfig as any).get('VITE_API_BASE_URL')).toBe('https://test-api.example.com');
+        expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:8080');
+      });
+
+      it('should validate URL parsing with protocol variations', () => {
+        process.env.VITE_API_BASE_URL = 'https://api.example.com/path';
+        process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:3001';
+
+        const configManager = ConfigurationManager.getInstance();
+        const envConfig = configManager.getConfig('environment');
+
+        const viteUrl = (envConfig as any).get('VITE_API_BASE_URL');
+        const pwUrl = (envConfig as any).get('PLAYWRIGHT_BASE_URL');
+
+        expect(viteUrl).toContain('https://');
+        expect(pwUrl).toContain('http://');
+      });
+    });
+  });

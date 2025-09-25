@@ -155,7 +155,7 @@ const shouldBypassSpa = (pathName: string): boolean => {
     return SPA_BYPASS_PREFIXES.some(prefix => pathName.startsWith(prefix));
 };
 
-async function configureFrontend() {
+export async function configureFrontend() {
     if (isDev) {
         const clientRoot = path.resolve(process.cwd(), 'src/client');
         const { createServer: createViteServer } = await import('vite');

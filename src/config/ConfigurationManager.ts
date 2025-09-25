@@ -14,6 +14,18 @@ const schema = convict({
         format: ['production', 'development', 'test'],
         default: 'development',
         env: 'NODE_ENV',
+    },
+    VITE_API_BASE_URL: {
+        doc: 'API base URL for Vite frontend',
+        format: 'url',
+        default: 'http://localhost:3000/api',
+        env: 'VITE_API_BASE_URL',
+    },
+    PLAYWRIGHT_BASE_URL: {
+        doc: 'Base URL for Playwright E2E tests',
+        format: 'url',
+        default: 'http://localhost:3000',
+        env: 'PLAYWRIGHT_BASE_URL',
     }
 });
 
@@ -42,6 +54,14 @@ export class ConfigurationManager {
      */
     private constructor() {
         schema.validate({ allowed: 'strict' });
+        
+        // Load environment variables by accessing all schema keys and validate
+        Object.keys(schema.getSchema()).forEach((key: string) => {
+            schema.get(key as keyof typeof schema.default);
+        });
+        schema.validate({ allowed: 'strict' });
+        
+        this.configs['environment'] = schema;
         debug('ConfigurationManager initialized in development environment');
     }
 
