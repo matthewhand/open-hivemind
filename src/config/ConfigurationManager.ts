@@ -1,6 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
 
+import { SecureConfigManager } from './SecureConfigManager';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -54,6 +55,14 @@ export class ConfigurationManager {
      */
     private constructor() {
         schema.validate({ allowed: 'strict' });
+        
+        const secureManager = SecureConfigManager.getInstance();
+        const env = process.env.NODE_ENV || 'default';
+        const fileConfig = secureManager.getDecryptedMainConfig(env);
+        if (fileConfig) {
+          schema.load(fileConfig);
+          schema.validate({ allowed: 'strict' });
+        }
         
         // Load environment variables by accessing all schema keys and validate
         Object.keys(schema.getSchema()).forEach((key: string) => {
