@@ -31,6 +31,8 @@ import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
+type ViteDevServer = import('vite').ViteDevServer;
+
 const resolveFrontendDistPath = (): string => {
     const candidates = [
         path.join(process.cwd(), 'dist/client/dist'),
@@ -48,6 +50,11 @@ const resolveFrontendDistPath = (): string => {
 
 const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
+
+const isDev = process.env.NODE_ENV !== 'production';
+const SPA_BYPASS_PREFIXES = ['/webui/api', '/webui/socket.io', '/dashboard/api', '/api', '/health'];
+
+let viteServer: ViteDevServer | null = null;
 
 if (!fs.existsSync(frontendDistPath)) {
     console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
@@ -86,7 +93,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
                        req.hostname === '127.0.0.1';
 
     if (isLocalhost) {
-        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+        const derivedOrigin = origin || `${req.protocol}://${req.headers.host ?? 'localhost'}`;
+        res.setHeader('Access-Control-Allow-Origin', derivedOrigin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
         res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
@@ -111,55 +119,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 app.use(healthRoute);
-
-// Serve unified dashboard at root
-app.get('/', (req: Request, res: Response) => {
-    console.log('[DEBUG] Root route hit');
-    console.log('[DEBUG] __dirname:', __dirname);
-    const dashboardPath = path.join(__dirname, '../public/index.html');
-    console.log('[DEBUG] Resolved dashboardPath:', dashboardPath);
-    if (fs.existsSync(dashboardPath)) {
-        console.log('[DEBUG] File exists, sending...');
-        res.sendFile(dashboardPath, (err) => {
-            if (err) {
-                console.error('[DEBUG] Error sending file:', err);
-                res.status(500).send('Error serving file');
-            } else {
-                console.log('[DEBUG] File sent successfully');
-            }
-        });
-    } else {
-        console.error('[DEBUG] File does not exist at path:', dashboardPath);
-        res.status(404).send('File not found');
-    }
-});
-
-// Serve static files from public directory
-app.use(express.static(path.join(process.cwd(), 'public')));
-
-// Serve static files from webui dist directory
-app.use(express.static(frontendDistPath));
-
-// Global assets static for root-relative asset paths
-app.use('/assets', express.static(frontendAssetsPath));
-
-// Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
-
-// Legacy /webui support
-app.use('/webui', express.static(frontendDistPath));
-app.use('/webui/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
-
-// Admin UI (unified dashboard)
-app.use('/admin', express.static(frontendDistPath));
-app.use('/admin/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
 
 // Redirects
 // app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/uber' + req.path));
@@ -192,6 +151,87 @@ app.use('/webui', authRouter);
 app.use('/webui', adminApiRouter);
 app.use('/webui', openapiRouter);
 
+const shouldBypassSpa = (pathName: string): boolean => {
+    return SPA_BYPASS_PREFIXES.some(prefix => pathName.startsWith(prefix));
+};
+
+async function configureFrontend() {
+    if (isDev) {
+        const clientRoot = path.resolve(process.cwd(), 'src/client');
+        const { createServer: createViteServer } = await import('vite');
+
+        viteServer = await createViteServer({
+            root: clientRoot,
+            configFile: path.join(clientRoot, 'vite.config.ts'),
+            server: {
+                middlewareMode: true,
+            },
+            appType: 'custom',
+        });
+
+        app.use(viteServer.middlewares);
+
+        app.use(async (req: Request, res: Response, next: NextFunction) => {
+            if (req.method !== 'GET' || shouldBypassSpa(req.path)) {
+                return next();
+            }
+
+            try {
+                const templatePath = path.join(clientRoot, 'index.html');
+                let template = await fs.promises.readFile(templatePath, 'utf-8');
+                template = await viteServer!.transformIndexHtml(req.originalUrl, template);
+                res.status(200).setHeader('Content-Type', 'text/html').send(template);
+            } catch (error) {
+                viteServer?.ssrFixStacktrace(error as Error);
+                next(error);
+            }
+        });
+    } else {
+        // Serve unified dashboard at root
+        app.get('/', (req: Request, res: Response) => {
+            console.log('[DEBUG] Root route hit');
+            const dashboardPath = path.join(__dirname, '../public/index.html');
+            if (fs.existsSync(dashboardPath)) {
+                res.sendFile(dashboardPath, (err) => {
+                    if (err) {
+                        console.error('[DEBUG] Error sending file:', err);
+                        res.status(500).send('Error serving file');
+                    }
+                });
+            } else {
+                res.status(404).send('File not found');
+            }
+        });
+
+        // Serve static files from public directory
+        app.use(express.static(path.join(process.cwd(), 'public')));
+
+        // Serve static files from webui dist directory
+        app.use(express.static(frontendDistPath));
+
+        // Global assets static for root-relative asset paths
+        app.use('/assets', express.static(frontendAssetsPath));
+
+        // Uber UI (unified dashboard)
+        app.use('/uber', express.static(frontendDistPath));
+        app.use('/uber/*', (req: Request, res: Response) => {
+            res.sendFile(path.join(frontendDistPath, 'index.html'));
+        });
+
+        // Legacy /webui support
+        app.use('/webui', express.static(frontendDistPath));
+        app.use('/webui/*', (req: Request, res: Response) => {
+            res.sendFile(path.join(frontendDistPath, 'index.html'));
+        });
+
+        // Admin UI (unified dashboard)
+        app.use('/admin', express.static(frontendDistPath));
+        app.use('/admin/*', (req: Request, res: Response) => {
+            res.sendFile(path.join(frontendDistPath, 'index.html'));
+        });
+    }
+}
+
 
 async function startBot(messengerService: any) {
     try {
@@ -220,6 +260,8 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+    await configureFrontend();
+
     const llmProviders = getLlmProvider();
     console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 

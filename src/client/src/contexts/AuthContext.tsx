@@ -26,7 +26,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
+
+const buildUrl = (path: string): string => (API_BASE_URL ? `${API_BASE_URL}${path}` : path);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -70,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/webui/api/auth/login`, {
+      const response = await fetch(buildUrl('/webui/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/webui/api/auth/refresh`, {
+      const response = await fetch(buildUrl('/webui/api/auth/refresh'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +165,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const verifyToken = async (token: string): Promise<User | null> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/webui/api/auth/verify`, {
+      const response = await fetch(buildUrl('/webui/api/auth/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

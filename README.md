@@ -69,7 +69,7 @@ npm start
 # Install dependencies (includes frontend and backend)
 npm install
 
-# Development mode - runs both frontend and backend in parallel
+# Development mode - serves API and WebUI from a single dev server
 npm run dev
 
 # Production build - builds both frontend and backend
@@ -84,9 +84,6 @@ npm start
 
 ### Development
 ```bash
-# Start both frontend and backend in parallel
-npm run dev
-
 # Build both frontend and backend
 npm run build
 
@@ -96,11 +93,8 @@ npm test
 
 ### Advanced Options
 ```bash
-# Run only backend
-npm run dev:only:backend
-
-# Run only frontend
-npm run dev:only:frontend
+# Run the dev server on a custom port
+PORT=4000 npm run dev
 
 # Build only backend
 npm run build:only:backend
@@ -374,6 +368,8 @@ Mix and match based on your needs:
 
 Open-Hivemind includes a powerful, intuitive web interface for monitoring and managing your agents. The UI is designed to provide a comprehensive overview of your system at a glance, while also offering detailed configuration options in a secure, dedicated section.
 
+> Development tip: run `npm run dev` and open `http://localhost:5005`—the Express server now serves both the WebUI and the API on a single port in development. Set the `PORT` environment variable if you need a different host.
+
 ### The Unified Dashboard (`/`)
 
 The main dashboard, accessible at the root of the application, provides a real-time, unified view of your entire agent ecosystem. It is designed for monitoring and quick actions.
@@ -522,7 +518,15 @@ npm test -- --testPathPattern=ErrorHandler
 
 # Real API testing (requires tokens)
 npm run test:real
+
+# WebUI smoke tests (requires Playwright browsers)
+npm run test:e2e:playwright
+
+# Interactive Playwright runner
+npm run test:e2e:playwright:ui
 ```
+
+> ℹ️  Install the Playwright browser binaries once with `npx playwright install` before running the WebUI tests.
 
 ### Pull Request Process
 1. **Fork** the repository
