@@ -104,8 +104,22 @@ export interface BotConfigurationAudit {
   newValues?: string;
   performedBy?: string;
   performedAt: Date;
-  ipAddress?: string;
-  userAgent?: string;
+ ipAddress?: string;
+ userAgent?: string;
+}
+
+export interface ApprovalRequest {
+  id?: number;
+  resourceType: 'BotConfiguration' | 'User';
+  resourceId: number | string;
+  changeType: 'CREATE' | 'UPDATE' | 'DELETE';
+  requestedBy: string;
+  requestedAt: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Date;
+  comments?: string;
+  diff?: string;
 }
 
 export class DatabaseManager {
@@ -292,6 +306,23 @@ export class DatabaseManager {
       )
     `);
 
+    // Approval requests table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS approval_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        resourceType TEXT NOT NULL,
+        resourceId TEXT NOT NULL,
+        changeType TEXT NOT NULL,
+        requestedBy TEXT NOT NULL,
+        requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending',
+        approvedBy TEXT,
+        approvedAt DATETIME,
+        comments TEXT,
+        diff TEXT
+      )
+    `);
+
     debug('Database tables created');
   }
 
@@ -310,6 +341,8 @@ export class DatabaseManager {
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`);
 
     debug('Database indexes created');
   }
@@ -972,5 +1005,54 @@ export class DatabaseManager {
       debug('Error getting bot configuration audit:', error);
       throw new Error(`Failed to get bot configuration audit: ${error}`);
     }
+  }
+  async createApprovalRequest(request: Omit<ApprovalRequest, 'id' | 'requestedAt' | 'status'>): Promise<number> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    const result = await this.db.run(
+      `INSERT INTO approval_requests (resourceType, resourceId, changeType, requestedBy, diff)
+       VALUES (?, ?, ?, ?, ?)`,
+      [request.resourceType, request.resourceId, request.changeType, request.requestedBy, request.diff]
+    );
+
+    return result.lastID as number;
+  }
+
+  async getApprovalRequest(id: number): Promise<ApprovalRequest | null> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    const row = await this.db.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
+    return row ? (row as ApprovalRequest) : null;
+  }
+
+  async getPendingApprovalRequests(): Promise<ApprovalRequest[]> {
+    if (!this.db || !this.connected) {
+      return [];
+    }
+
+    const rows = await this.db.all("SELECT * FROM approval_requests WHERE status = 'pending' ORDER BY requestedAt DESC");
+    return rows as ApprovalRequest[];
+  }
+
+  async updateApprovalRequestStatus(
+    id: number,
+    status: 'approved' | 'rejected',
+    approvedBy: string,
+    comments?: string
+  ): Promise<void> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    await this.db.run(
+      `UPDATE approval_requests
+       SET status = ?, approvedBy = ?, approvedAt = CURRENT_TIMESTAMP, comments = ?
+       WHERE id = ?`,
+      [status, approvedBy, comments, id]
+    );
   }
 }
