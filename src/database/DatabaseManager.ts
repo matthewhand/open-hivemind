@@ -65,6 +65,7 @@ export interface BotConfiguration {
   flowise?: any;
   openwebui?: any;
   openswarm?: any;
+  tenantId?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +91,7 @@ export interface BotConfigurationVersion {
   flowise?: any;
   openwebui?: any;
   openswarm?: any;
+  tenantId?: string;
   isActive: boolean;
   createdAt: Date;
   createdBy?: string;
@@ -106,6 +108,76 @@ export interface BotConfigurationAudit {
   performedAt: Date;
   ipAddress?: string;
   userAgent?: string;
+  tenantId?: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  domain: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  maxBots: number;
+  maxUsers: number;
+  storageQuota: number;
+  features: string[];
+  isActive: boolean;
+  createdAt: Date;
+  expiresAt?: Date;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string;
+  level: number;
+  permissions: string[];
+  isActive: boolean;
+  tenantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  passwordHash: string;
+  roleId: number;
+  tenantId: string;
+  isActive: boolean;
+  createdAt: Date;
+  lastLogin?: Date;
+}
+
+export interface AuditEvent {
+  id: number;
+  timestamp: Date;
+  userId: number;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  tenantId: string;
+  ipAddress: string;
+  userAgent: string;
+  severity: 'info' | 'warning' | 'error' | 'critical' | 'debug';
+  status: 'success' | 'failure' | 'pending';
+  details: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+}
+
+export interface Anomaly {
+  id: string;
+  timestamp: Date;
+  metric: string;
+  value: number;
+  expectedMean: number;
+  standardDeviation: number;
+  zScore: number;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  explanation: string;
+  resolved: boolean;
+  tenantId?: string;
 }
 
 export class DatabaseManager {
@@ -145,6 +217,7 @@ export class DatabaseManager {
 
         await this.createTables();
         await this.createIndexes();
+        await this.migrate();
       } else {
         throw new Error(`Database type ${this.config.type} not yet implemented`);
       }
@@ -292,6 +365,97 @@ export class DatabaseManager {
       )
     `);
 
+    // Tenants table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS tenants (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        domain TEXT UNIQUE NOT NULL,
+        plan TEXT NOT NULL DEFAULT 'free',
+        maxBots INTEGER DEFAULT 5,
+        maxUsers INTEGER DEFAULT 3,
+        storageQuota INTEGER DEFAULT 1073741824,
+        features TEXT, -- JSON array
+        isActive BOOLEAN DEFAULT 1,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expiresAt DATETIME
+      )
+    `);
+
+    // Roles table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        level INTEGER DEFAULT 0,
+        permissions TEXT, -- JSON array
+        isActive BOOLEAN DEFAULT 1,
+        tenantId TEXT NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Users table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        passwordHash TEXT NOT NULL,
+        roleId INTEGER,
+        tenantId TEXT NOT NULL,
+        isActive BOOLEAN DEFAULT 1,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        lastLogin DATETIME,
+        FOREIGN KEY (roleId) REFERENCES roles(id),
+        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Audits table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS audits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        userId INTEGER,
+        action TEXT NOT NULL,
+        resource TEXT NOT NULL,
+        resourceId TEXT,
+        tenantId TEXT NOT NULL,
+        ipAddress TEXT,
+        userAgent TEXT,
+        severity TEXT DEFAULT 'info',
+        status TEXT DEFAULT 'success',
+        details TEXT, -- JSON
+        metadata TEXT, -- JSON
+        FOREIGN KEY (userId) REFERENCES users(id),
+        FOREIGN KEY (tenantId) REFERENCES tenants(id)
+      )
+    `);
+
+    // Anomalies table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS anomalies (
+        id TEXT PRIMARY KEY,
+        timestamp DATETIME NOT NULL,
+        metric TEXT NOT NULL,
+        value REAL NOT NULL,
+        expectedMean REAL NOT NULL,
+        standardDeviation REAL NOT NULL,
+        zScore REAL NOT NULL,
+        threshold REAL NOT NULL,
+        severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+        explanation TEXT NOT NULL,
+        resolved BOOLEAN DEFAULT 0,
+        tenantId TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+      )
+    `);
+
     debug('Database tables created');
   }
 
@@ -311,7 +475,61 @@ export class DatabaseManager {
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
 
+    // Anomalies indexes
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
+
     debug('Database indexes created');
+  }
+
+  private async migrate(): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    try {
+      // Add tenantId columns to existing tables
+      await this.db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
+      await this.db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
+      await this.db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
+      await this.db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
+      await this.db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
+      await this.db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
+
+      // Add RBAC enhancements to roles table
+      await this.db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
+      await this.db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
+      await this.db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
+      await this.db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+      await this.db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+
+      // Add foreign keys if possible (SQLite limited, but for new DB ok)
+      // Note: Foreign keys added only if table recreated; for existing, manual migration needed
+
+      // Add indexes for tenantId
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
+
+      debug('Database migration completed');
+    } catch (error) {
+      // Ignore errors if columns already exist (SQLite ALTER throws if exists)
+      if ((error as Error).message.includes('duplicate column name')) {
+        debug('Some columns already exist, skipping');
+      } else {
+        debug('Migration error:', error);
+        throw error;
+      }
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -971,6 +1189,139 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error getting bot configuration audit:', error);
       throw new Error(`Failed to get bot configuration audit: ${error}`);
+    }
+  }
+
+  async storeAnomaly(anomaly: Anomaly): Promise<void> {
+    if (!this.db || !this.connected) {
+      debug('Database not connected, anomaly not stored');
+      return;
+    }
+
+    try {
+      await this.db.run(`
+        INSERT OR REPLACE INTO anomalies (
+          id, timestamp, metric, value, expectedMean, standardDeviation,
+          zScore, threshold, severity, explanation, resolved, tenantId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        anomaly.id,
+        anomaly.timestamp,
+        anomaly.metric,
+        anomaly.value,
+        anomaly.expectedMean,
+        anomaly.standardDeviation,
+        anomaly.zScore,
+        anomaly.threshold,
+        anomaly.severity,
+        anomaly.explanation,
+        anomaly.resolved ? 1 : 0,
+        anomaly.tenantId
+      ]);
+
+      debug(`Anomaly stored: ${anomaly.id}`);
+    } catch (error) {
+      debug('Error storing anomaly:', error);
+      throw error;
+    }
+  }
+
+  async getAnomalies(tenantId?: string): Promise<Anomaly[]> {
+    if (!this.db || !this.connected) {
+      return [];
+    }
+
+    try {
+      let query = `SELECT * FROM anomalies`;
+      const params: any[] = [];
+
+      if (tenantId) {
+        query += ` WHERE tenantId = ?`;
+        params.push(tenantId);
+      }
+
+      query += ` ORDER BY timestamp DESC`;
+
+      const rows = await this.db.all(query, params);
+
+      return rows.map(row => ({
+        id: row.id,
+        timestamp: new Date(row.timestamp),
+        metric: row.metric,
+        value: row.value,
+        expectedMean: row.expectedMean,
+        standardDeviation: row.standardDeviation,
+        zScore: row.zScore,
+        threshold: row.threshold,
+        severity: row.severity,
+        explanation: row.explanation,
+        resolved: !!row.resolved,
+        tenantId: row.tenantId,
+      }));
+    } catch (error) {
+      debug('Error getting anomalies:', error);
+      throw error;
+    }
+  }
+
+  async getActiveAnomalies(tenantId?: string): Promise<Anomaly[]> {
+    if (!this.db || !this.connected) {
+      return [];
+    }
+
+    try {
+      let query = `SELECT * FROM anomalies WHERE resolved = 0`;
+      const params: any[] = [];
+
+      if (tenantId) {
+        query += ` AND tenantId = ?`;
+        params.push(tenantId);
+      }
+
+      query += ` ORDER BY timestamp DESC`;
+
+      const rows = await this.db.all(query, params);
+
+      return rows.map(row => ({
+        id: row.id,
+        timestamp: new Date(row.timestamp),
+        metric: row.metric,
+        value: row.value,
+        expectedMean: row.expectedMean,
+        standardDeviation: row.standardDeviation,
+        zScore: row.zScore,
+        threshold: row.threshold,
+        severity: row.severity,
+        explanation: row.explanation,
+        resolved: !!row.resolved,
+        tenantId: row.tenantId,
+      }));
+    } catch (error) {
+      debug('Error getting active anomalies:', error);
+      throw error;
+    }
+  }
+
+  async resolveAnomaly(id: string, tenantId?: string): Promise<boolean> {
+    if (!this.db || !this.connected) {
+      return false;
+    }
+
+    try {
+      let query = `UPDATE anomalies SET resolved = 1 WHERE id = ?`;
+      const params: any[] = [id];
+
+      if (tenantId) {
+        query += ` AND tenantId = ?`;
+        params.push(tenantId);
+      }
+
+      const result = await this.db.run(query, params);
+
+      return (result.changes ?? 0) > 0;
+    } catch (error) {
+      debug('Error resolving anomaly:', error);
+      throw error;
     }
   }
 }
