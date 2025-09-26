@@ -55,3 +55,18 @@ export function ensureTrailingSlash(url: string): string {
 export function removeTrailingSlash(url: string): string {
   return normalizeUrl(url);
 }
+
+/**
+ * Validates if a given string is a valid URL.
+ *
+ * @param url - The string to validate
+ * @returns True if the URL is valid, false otherwise
+ */
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
