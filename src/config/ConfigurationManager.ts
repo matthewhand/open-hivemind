@@ -18,13 +18,13 @@ const schema = convict({
     },
     VITE_API_BASE_URL: {
         doc: 'API base URL for Vite frontend',
-        format: String,
+        format: 'url',
         default: 'http://localhost:3000/api',
         env: 'VITE_API_BASE_URL',
     },
     PLAYWRIGHT_BASE_URL: {
         doc: 'Base URL for Playwright E2E tests',
-        format: String,
+        format: 'url',
         default: 'http://localhost:3000',
         env: 'PLAYWRIGHT_BASE_URL',
     }
