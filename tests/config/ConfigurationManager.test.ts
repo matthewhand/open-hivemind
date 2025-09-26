@@ -389,8 +389,9 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://api.example.com/v1';
         process.env.PLAYWRIGHT_BASE_URL = 'https://test.example.com';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -415,8 +416,9 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'invalid-url';
         process.env.PLAYWRIGHT_BASE_URL = 'also-invalid';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
       });
 
@@ -424,8 +426,9 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://valid.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'invalid';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
       });
 
@@ -434,8 +437,9 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://test-api.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:8080';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -448,8 +452,9 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://api.example.com/path';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:3001';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
