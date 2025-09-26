@@ -419,7 +419,8 @@ describe('ConfigurationManager', () => {
         // Reset modules to apply environment variables
         jest.resetModules();
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
-        expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
+        expect(() => ConfigurationManager.getInstance()).toThrow('VITE_API_BASE_URL: Value must be a valid URL: value was "invalid-url"');
+        expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "also-invalid"');
       });
 
       it('should handle partial invalid configurations by validating all', () => {
@@ -429,7 +430,7 @@ describe('ConfigurationManager', () => {
         // Reset modules to apply environment variables
         jest.resetModules();
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
-        expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
+        expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "invalid"');
       });
 
       it('should load correctly in test environment', () => {
