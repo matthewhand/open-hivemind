@@ -1,14 +1,14 @@
 import express, { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { requireRole } from '../middleware/auth';
+import { DatabaseManager, AuditLog } from '../../database/DatabaseManager';
+import { requireRole, requirePermission } from '../middleware/auth';
 import { UserRole } from '../../auth/types';
 
 const debug = Debug('app:approvals');
 const router = express.Router();
 
 // Get all pending approval requests
-router.get('/pending', requireRole('admin'), async (req: Request, res: Response) => {
+router.get('/pending', requirePermission('approvals:read'), async (req: Request, res: Response) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
@@ -32,7 +32,7 @@ router.get('/pending', requireRole('admin'), async (req: Request, res: Response)
 });
 
 // Get a specific approval request
-router.get('/:id', requireRole('admin'), async (req: Request, res: Response) => {
+router.get('/:id', requirePermission('approvals:read'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const requestId = parseInt(id, 10);
@@ -72,9 +72,9 @@ router.get('/:id', requireRole('admin'), async (req: Request, res: Response) => 
 });
 
 // Create a new approval request
-router.post('/', requireRole('user'), async (req: Request, res: Response) => {
+router.post('/', requirePermission('approvals:create'), async (req: Request, res: Response) => {
   try {
-    const { resourceType, resourceId, changeType, requestedBy, diff } = req.body;
+    const { resourceType, resourceId, changeType, requestedBy, diff, assignees } = req.body;
 
     // Validate required fields
     if (!resourceType || !resourceId || !changeType || !requestedBy) {
@@ -121,8 +121,22 @@ router.post('/', requireRole('user'), async (req: Request, res: Response) => {
       resourceId: parseInt(resourceId, 10),
       changeType,
       requestedBy,
-      diff
+      diff,
+      assignees: Array.isArray(assignees) ? assignees : []
     });
+
+    // Log the creation
+    const createAudit: AuditLog = {
+      userId: requestedBy,
+      action: 'create_approval_request',
+      resourceType,
+      resourceId: requestId.toString(),
+      details: `Change type: ${changeType}${diff ? `, Diff preview: ${diff.substring(0, 100)}...` : ''}`,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      createdAt: new Date(),
+    };
+    await dbManager.createAuditLog(createAudit);
 
     res.status(201).json({
       success: true,
@@ -140,7 +154,7 @@ router.post('/', requireRole('user'), async (req: Request, res: Response) => {
 });
 
 // Update approval request status (approve/reject)
-router.put('/:id', requireRole('admin'), async (req: Request, res: Response) => {
+router.put('/:id', requirePermission('approvals:approve'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, comments } = req.body;
@@ -190,8 +204,43 @@ router.put('/:id', requireRole('admin'), async (req: Request, res: Response) => 
       });
     }
 
+    // Security: Verify that approvedBy is in assignees (or admin override if needed)
+    if (!existingRequest.assignees?.includes(approvedBy)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only assigned users can approve or reject this request'
+      });
+    }
+
     // Update the status
     await dbManager.updateApprovalRequestStatus(requestId, status, approvedBy, comments);
+
+    // Log the approval/rejection
+    let updateDetails = `Approval request ${status}`;
+    if (existingRequest.resourceType) {
+      updateDetails += ` for ${existingRequest.resourceType} ${existingRequest.resourceId}`;
+    }
+    if (comments) {
+      updateDetails += ` - Comments: ${comments}`;
+    }
+
+    const updateAudit: AuditLog = {
+      userId: approvedBy,
+      action: `approval_request_${status}`,
+      resourceType: 'ApprovalRequest',
+      resourceId: requestId.toString(),
+      details: updateDetails,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      createdAt: new Date(),
+    };
+    await dbManager.createAuditLog(updateAudit);
+
+    // If approved, notify assignees
+    if (status === 'approved' && existingRequest.assignees && existingRequest.assignees.length > 0) {
+      // In a real implementation, you would send notifications to assignees
+      debug(`Notifying assignees: ${existingRequest.assignees.join(', ')} about approval of request ${requestId}`);
+    }
 
     res.json({
       success: true,

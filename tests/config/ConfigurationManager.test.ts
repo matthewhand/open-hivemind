@@ -346,16 +346,27 @@ describe('ConfigurationManager', () => {
   });
 
   describe('Environment Configuration', () => {
-    const originalEnv = process.env;
+    let originalEnv: NodeJS.ProcessEnv;
 
     beforeEach(() => {
-      // Restore original env and clear mocks
-      process.env = { ...originalEnv };
+      // Save original environment
+      originalEnv = { ...process.env };
       jest.restoreAllMocks();
+      
+      // Reset singleton instance for environment tests
+      (ConfigurationManager as any).instance = null;
     });
 
     afterEach(() => {
-      process.env = originalEnv;
+      // Restore original environment by resetting each key
+      for (const key of Object.keys(process.env)) {
+        if (!(key in originalEnv)) {
+          delete process.env[key];
+        }
+      }
+      for (const key of Object.keys(originalEnv)) {
+        process.env[key] = originalEnv[key];
+      }
     });
 
     describe('URL Environment Variables', () => {
@@ -364,6 +375,8 @@ describe('ConfigurationManager', () => {
         delete process.env.VITE_API_BASE_URL;
         delete process.env.PLAYWRIGHT_BASE_URL;
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -376,6 +389,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://api.example.com/v1';
         process.env.PLAYWRIGHT_BASE_URL = 'https://test.example.com';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -387,6 +402,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = '';
         process.env.PLAYWRIGHT_BASE_URL = '';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -398,6 +415,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'invalid-url';
         process.env.PLAYWRIGHT_BASE_URL = 'also-invalid';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
       });
 
@@ -405,6 +424,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://valid.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'invalid';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         expect(() => ConfigurationManager.getInstance()).toThrow(/validation/i);
       });
 
@@ -413,6 +434,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://test-api.example.com';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:8080';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -425,6 +448,8 @@ describe('ConfigurationManager', () => {
         process.env.VITE_API_BASE_URL = 'https://api.example.com/path';
         process.env.PLAYWRIGHT_BASE_URL = 'http://localhost:3001';
 
+        // Reset instance to force reinitialization
+        (ConfigurationManager as any).instance = null;
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -436,3 +461,4 @@ describe('ConfigurationManager', () => {
       });
     });
   });
+});

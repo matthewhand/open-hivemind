@@ -120,6 +120,19 @@ export interface ApprovalRequest {
   approvedAt?: Date;
   comments?: string;
   diff?: string;
+  assignees?: string[];
+}
+
+export interface AuditLog {
+  id?: number;
+  userId: string;
+  action: string;
+  resourceType?: string;
+  resourceId?: string;
+  details?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt?: Date;
 }
 
 export class DatabaseManager {
@@ -319,7 +332,23 @@ export class DatabaseManager {
         approvedBy TEXT,
         approvedAt DATETIME,
         comments TEXT,
-        diff TEXT
+        diff TEXT,
+        assignees TEXT
+      )
+    `);
+
+    // General audit log table
+    await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId TEXT NOT NULL,
+        action TEXT NOT NULL,
+        resourceType TEXT,
+        resourceId TEXT,
+        details TEXT,
+        ipAddress TEXT,
+        userAgent TEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -343,6 +372,8 @@ export class DatabaseManager {
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`);
     await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action ON audit_logs(userId, action)`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(createdAt DESC)`);
 
     debug('Database indexes created');
   }
@@ -1012,9 +1043,9 @@ export class DatabaseManager {
     }
 
     const result = await this.db.run(
-      `INSERT INTO approval_requests (resourceType, resourceId, changeType, requestedBy, diff)
-       VALUES (?, ?, ?, ?, ?)`,
-      [request.resourceType, request.resourceId, request.changeType, request.requestedBy, request.diff]
+      `INSERT INTO approval_requests (resourceType, resourceId, changeType, requestedBy, diff, assignees)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [request.resourceType, request.resourceId, request.changeType, request.requestedBy, request.diff, request.assignees ? JSON.stringify(request.assignees) : null]
     );
 
     return result.lastID as number;
@@ -1026,7 +1057,12 @@ export class DatabaseManager {
     }
 
     const row = await this.db.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
-    return row ? (row as ApprovalRequest) : null;
+    if (!row) return null;
+    
+    return {
+      ...row,
+      assignees: row.assignees ? JSON.parse(row.assignees) : null
+    } as ApprovalRequest;
   }
 
   async getPendingApprovalRequests(): Promise<ApprovalRequest[]> {
@@ -1042,7 +1078,9 @@ export class DatabaseManager {
     id: number,
     status: 'approved' | 'rejected',
     approvedBy: string,
-    comments?: string
+    comments?: string,
+    ipAddress?: string,
+    userAgent?: string
   ): Promise<void> {
     if (!this.db || !this.connected) {
       throw new Error('Database not connected');
@@ -1054,5 +1092,78 @@ export class DatabaseManager {
        WHERE id = ?`,
       [status, approvedBy, comments, id]
     );
+    
+    // Create audit log for the approval action
+    await this.createAuditLog({
+      userId: approvedBy,
+      action: status === 'approved' ? 'APPROVE' : 'REJECT',
+      resourceType: 'ApprovalRequest',
+      resourceId: id.toString(),
+      details: JSON.stringify({ comments, status }),
+      ipAddress,
+      userAgent
+    });
+  }
+
+  async createAuditLog(audit: AuditLog): Promise<number> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    const result = await this.db.run(`
+      INSERT INTO audit_logs (
+        userId, action, resourceType, resourceId, details, ipAddress, userAgent
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [
+      audit.userId,
+      audit.action,
+      audit.resourceType,
+      audit.resourceId,
+      audit.details,
+      audit.ipAddress,
+      audit.userAgent
+    ]);
+
+    return result.lastID as number;
+  }
+
+  async getAuditLogs(userId?: string, action?: string, limit: number = 100): Promise<AuditLog[]> {
+    if (!this.db || !this.connected) {
+      throw new Error('Database not connected');
+    }
+
+    let query = 'SELECT * FROM audit_logs';
+    const params: any[] = [];
+
+    const conditions = [];
+    if (userId) {
+      conditions.push('userId = ?');
+      params.push(userId);
+    }
+    if (action) {
+      conditions.push('action = ?');
+      params.push(action);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY createdAt DESC LIMIT ?';
+    params.push(limit);
+
+    const rows = await this.db.all(query, params);
+
+    return rows.map(row => ({
+      id: row.id,
+      userId: row.userId,
+      action: row.action,
+      resourceType: row.resourceType,
+      resourceId: row.resourceId,
+      details: row.details,
+      ipAddress: row.ipAddress,
+      userAgent: row.userAgent,
+      createdAt: new Date(row.createdAt)
+    }));
   }
 }
