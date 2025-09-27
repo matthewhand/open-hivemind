@@ -5,19 +5,21 @@
 import '@testing-library/jest-dom';
 
 // Polyfill TextEncoder/TextDecoder for react-router
-import { TextEncoder, TextDecoder } from 'util';
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
+if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
+  const { TextEncoder, TextDecoder } = require('util');
+  (global as any).TextEncoder = TextEncoder;
+  (global as any).TextDecoder = TextDecoder;
+}
 
 // Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
+(global as any).IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   disconnect: jest.fn(),
   unobserve: jest.fn(),
 })) as any;
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+(global as any).ResizeObserver = class ResizeObserver {
   constructor() {}
   observe() {
     return null;
@@ -54,7 +56,7 @@ const localStorageMock = {
   length: 0,
   key: jest.fn(),
 };
-global.localStorage = localStorageMock as any;
+(global as any).localStorage = localStorageMock as any;
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -65,15 +67,15 @@ const sessionStorageMock = {
   length: 0,
   key: jest.fn(),
 };
-global.sessionStorage = sessionStorageMock as any;
+(global as any).sessionStorage = sessionStorageMock as any;
 
 // Mock fetch if not already available
-if (!global.fetch) {
-  global.fetch = jest.fn();
+if (!(global as any).fetch) {
+  (global as any).fetch = jest.fn();
 }
 
 // Mock WebSocket
-global.WebSocket = jest.fn().mockImplementation(() => ({
+(global as any).WebSocket = jest.fn().mockImplementation(() => ({
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),

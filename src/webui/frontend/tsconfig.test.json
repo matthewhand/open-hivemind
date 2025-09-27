@@ -9,7 +9,7 @@
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "types": ["jest", "@testing-library/jest-dom"]
+    "types": ["jest", "@testing-library/jest-dom", "node"]
   },
   "include": [
     "src/**/*",

@@ -64,10 +64,28 @@ cp .env.sample .env
 npm start
 ```
 
+### Unified Development Setup
+```bash
+# Install dependencies (includes frontend and backend)
+npm install
+
+# Development mode with concurrent servers (backend on 3028, Vite on 5173 with API proxy)
+npm run dev
+
+# Production build (builds backend and frontend)
+npm run build
+
+# Production start (serves frontend from /uber)
+npm start
+```
+
 ### Advanced Setup Options
 ```bash
-# Development mode with hot reload
-npm run start:dev
+# Backend-only development
+npm run dev:backend
+
+# Frontend-only development (Vite dev server with API proxy to backend)
+npm run dev:frontend
 
 # Run tests before starting
 npm test && npm start
@@ -545,3 +563,21 @@ For further technical details, refer to the Development Guide and User Guide sec
 For a comprehensive breakdown of all working features, test coverage, and technical capabilities, see [PACKAGE.md](PACKAGE.md).
 
 **Current Status:** Enterprise-grade with 1,337 passing tests, 4 LLM providers, 3 messaging platforms, WebUI backend, performance monitoring, and production deployment features.
+
+## TODO: Orphaned and Unfinished Features
+
+These areas contain orphaned code or unfinished integrations identified during analysis. They are gated by configuration or commented out, and should be either completed, integrated, or removed.
+
+### High Impact (Full Modules)
+- **src/integrations/mattermost/** (entire directory): Gated by MESSAGE_PROVIDER; no instantiation in typical configs. TODO: Complete Mattermost integration or remove if deprecated.
+- **src/integrations/telegram/** (entire directory): No references or imports in production code. TODO: Implement Telegram support or prune the module.
+
+### Medium Impact (Classes/Functions)
+- **Voice Classes**:
+  - VoiceCommandHandler ([src/integrations/discord/voice/voiceCommandHandler.ts](src/integrations/discord/voice/voiceCommandHandler.ts)): Internal uses but no main triggers; imports commented in DiscordService.ts. TODO: Integrate voice command handling or remove.
+  - AudioRecorder ([src/integrations/discord/voice/audioRecorder.ts](src/integrations/discord/voice/audioRecorder.ts)): No usages found; voice feature incomplete. TODO: Complete audio recording for voice or delete.
+  - VoiceActivityDetection ([src/integrations/discord/voice/voiceActivityDetection.ts](src/integrations/discord/voice/voiceActivityDetection.ts)): Used internally but voice not activated. TODO: Enable voice activity detection or prune.
+- **Voice Functions**:
+  - DiscordService.joinVoiceChannel/leaveVoiceChannel/getVoiceChannels ([src/integrations/discord/DiscordService.ts](src/integrations/discord/DiscordService.ts)): No production calls; voice features initialized but not triggered. TODO: Add triggers for voice channel management or remove methods.
+- **LLM Function**:
+  - generateCompletion() in OpenAI ([src/integrations/openai/openAiProvider.ts](src/integrations/openai/openAiProvider.ts)): Supported but not invoked in main message flow; handleMessage uses chat completion only. TODO: Integrate non-chat completions if needed or remove support.

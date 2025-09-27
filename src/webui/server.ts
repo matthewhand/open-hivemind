@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import Debug from 'debug';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 // Route imports
 import healthRouter from '../routes/health';
@@ -21,14 +22,34 @@ import { securityHeaders } from './middleware/security';
 
 const debug = Debug('app:webui:server');
 
+const resolveFrontendDistPath = (): string => {
+  const candidates = [
+    join(process.cwd(), 'dist', 'webui', 'frontend', 'dist'),
+    join(process.cwd(), 'src', 'webui', 'frontend', 'dist'),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[candidates.length - 1];
+};
+
 export class WebUIServer {
   private app: express.Application;
   private server: any;
   private port: number;
+  private readonly frontendDistPath: string;
 
   constructor(port: number = 3000) {
     this.port = port;
     this.app = express();
+    this.frontendDistPath = resolveFrontendDistPath();
+    if (!existsSync(this.frontendDistPath)) {
+      debug('Frontend dist directory not found at %s', this.frontendDistPath);
+    }
     this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
@@ -79,9 +100,8 @@ export class WebUIServer {
     this.app.use(auditMiddleware);
     
     // Serve static files for the WebUI
-    const webUIPath = join(__dirname, '../../webui/dist');
-    this.app.use('/admin', express.static(webUIPath));
-    this.app.use('/webui', express.static(webUIPath));
+    this.app.use('/admin', express.static(this.frontendDistPath));
+    this.app.use('/webui', express.static(this.frontendDistPath));
     
     debug('Middleware setup completed');
   }
@@ -105,11 +125,11 @@ export class WebUIServer {
     
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {
-      res.sendFile(join(__dirname, '../../webui/dist/index.html'));
+      res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
     
     this.app.get('/webui/*', (req, res) => {
-      res.sendFile(join(__dirname, '../../webui/dist/index.html'));
+      res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
     
     // API documentation

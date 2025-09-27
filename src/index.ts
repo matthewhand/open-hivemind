@@ -11,7 +11,6 @@ const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
-import adminRouter from '@src/admin/adminRoutes';
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/webui/routes/dashboard';
 import configRouter from '@src/webui/routes/config';
@@ -31,6 +30,28 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+
+const resolveFrontendDistPath = (): string => {
+    const candidates = [
+        path.join(process.cwd(), 'dist/webui/frontend/dist'),
+        path.join(process.cwd(), 'src/webui/frontend/dist'),
+    ];
+
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    return candidates[candidates.length - 1];
+};
+
+const frontendDistPath = resolveFrontendDistPath();
+const frontendAssetsPath = path.join(frontendDistPath, 'assets');
+
+if (!fs.existsSync(frontendDistPath)) {
+    console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
+}
 
 // Add error handling for unhandled rejections and exceptions
 process.on('unhandledRejection', (reason, promise) => {
@@ -114,26 +135,50 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Serve static files from public directory
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Serve static files from webui dist directory
-app.use(express.static(path.join(__dirname, '../webui/dist')));
+app.use(express.static(frontendDistPath));
 
-// Admin UI (demo)
-app.use('/api/admin', adminRouter);
+// Global assets static for root-relative asset paths
+app.use('/assets', express.static(frontendAssetsPath));
+
+// Uber UI (unified dashboard)
+app.use('/uber', express.static(frontendDistPath));
+app.use('/uber/*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
+// Legacy /webui support
+app.use('/webui', express.static(frontendDistPath));
+app.use('/webui/*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
+// Admin UI (unified dashboard)
+app.use('/admin', express.static(frontendDistPath));
+app.use('/admin/*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
+// Redirects
+// app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/uber' + req.path));
+// app.use('/admin', (req: Request, res: Response) => res.redirect(301, '/uber/guards'));
+
+// Deprecated /admin static serve (commented out)
+// app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
+// app.use('/admin', (req: Request, res: Response) => {
+//     const adminPath = path.join(process.cwd(), 'public/admin/index.html');
+//     res.sendFile(adminPath);
+// });
+
+// API routes under /api/uber
+// import uberRouter from './routes/uberRouter';
+// app.use('/api/uber', uberRouter);
+
+// Keep old API routes for compatibility
+// app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
-app.use('/admin', (req: Request, res: Response) => {
-    const adminPath = path.join(__dirname, '../public/admin/index.html');
-    res.sendFile(adminPath);
-});
-
-// WebUI (React app)
-app.use('/webui', (req: Request, res: Response) => {
-    const webuiPath = path.join(__dirname, '../webui/dist/index.html');
-    res.sendFile(webuiPath);
-});
-
-// WebUI API routes - dashboard router for API endpoints only
 app.use('/dashboard', dashboardRouter);
 app.use('/webui', configRouter);
 app.use('/webui', botsRouter);
@@ -146,6 +191,7 @@ app.use('/webui', secureConfigRouter);
 app.use('/webui', authRouter);
 app.use('/webui', adminApiRouter);
 app.use('/webui', openapiRouter);
+
 
 async function startBot(messengerService: any) {
     try {
