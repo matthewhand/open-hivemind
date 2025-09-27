@@ -151,3 +151,6 @@ logs/
 coverage/
 # Serena tool cache
 .serena/
+# Test results
+playwright-report/
+test-results/
