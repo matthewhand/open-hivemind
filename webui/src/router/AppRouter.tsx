@@ -15,9 +15,14 @@ const BotManager = lazy(() =>
     default: module.default 
   }))
 );
-const ConfigManager = lazy(() => 
-  import('../components/ConfigManager').then(module => ({ 
-    default: module.default 
+const ConfigManager = lazy(() =>
+  import('../components/ConfigManager').then(module => ({
+    default: module.default
+  }))
+);
+const ConfigurationWizard = lazy(() =>
+  import('../components/ConfigurationWizard').then(module => ({
+    default: module.default
   }))
 );
 const PerformanceMonitor = lazy(() => 
@@ -25,14 +30,24 @@ const PerformanceMonitor = lazy(() =>
     default: module.default 
   }))
 );
-const Settings = lazy(() => 
-  import('../components/Settings').then(module => ({ 
-    default: module.default 
+const Settings = lazy(() =>
+  import('../components/Settings').then(module => ({
+    default: module.default
   }))
 );
-const Login = lazy(() => 
-  import('../components/Login').then(module => ({ 
-    default: module.default 
+const MonitoringDashboard = lazy(() =>
+  import('../components/MonitoringDashboard').then(module => ({
+    default: module.default
+  }))
+);
+const SystemInfo = lazy(() =>
+  import('../components/SystemInfo').then(module => ({
+    default: module.default
+  }))
+);
+const Login = lazy(() =>
+  import('../components/Login').then(module => ({
+    default: module.default
   }))
 );
 
@@ -139,6 +154,14 @@ const routes: RouteConfig[] = [
     description: 'System configuration management',
   },
   {
+    path: '/config-wizard',
+    element: <ConfigurationWizard />,
+    protected: true,
+    requiredPermission: 'manage_config',
+    title: 'Configuration Wizard',
+    description: 'Step-by-step configuration setup',
+  },
+  {
     path: '/performance',
     element: <PerformanceMonitor />,
     protected: true,
@@ -152,6 +175,22 @@ const routes: RouteConfig[] = [
     protected: true,
     title: 'Settings',
     description: 'Application settings and preferences',
+  },
+  {
+    path: '/monitoring',
+    element: <MonitoringDashboard />,
+    protected: true,
+    requiredPermission: 'view_monitoring',
+    title: 'Real-Time Dashboard',
+    description: 'Real-time monitoring dashboard with live metrics',
+  },
+  {
+    path: '/system',
+    element: <SystemInfo />,
+    protected: true,
+    requiredPermission: 'view_system_info',
+    title: 'System Info',
+    description: 'System information and controls',
   },
   {
     path: '/login',

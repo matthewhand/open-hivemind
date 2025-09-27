@@ -1,5 +1,5 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
-import { WebSocketService } from '@src/webui/services/WebSocketService';
+import { WebSocketService } from '@src/services/WebSocketService';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';

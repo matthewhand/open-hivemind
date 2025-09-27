@@ -44,6 +44,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(healthRoute);
 
+// Serve the loading page with metrics at the root
+app.use('/', (req: Request, res: Response) => {
+    const indexPath = path.join(__dirname, '../public/index.html');
+    res.sendFile(indexPath);
+});
+
 // Admin UI (demo)
 app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);

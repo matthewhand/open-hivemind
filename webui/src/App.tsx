@@ -7,6 +7,7 @@ import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRouter from './router/AppRouter';
 import { createTheme } from '@mui/material/styles';
+import Screensaver from './components/Screensaver';
 
 function App() {
   // Create a basic theme for the application
@@ -37,6 +38,11 @@ function App() {
             <CssBaseline />
             <BrowserRouter>
               <AppRouter />
+              {/* Screensaver overlay (auto idle) */}
+              <Screensaver 
+                enabled={process.env.REACT_APP_SCREENSAVER_ENABLED !== 'false'} 
+                timeoutMs={Number(process.env.REACT_APP_SCREENSAVER_TIMEOUT_MS) || 300000} 
+              />
             </BrowserRouter>
           </ThemeProvider>
         </ReduxProvider>

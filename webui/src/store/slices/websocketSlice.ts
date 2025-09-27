@@ -1,10 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 
 interface WebSocketMessage {
   id: string;
   type: 'status_update' | 'config_change' | 'error' | 'notification' | 'metric_update';
-  payload: any;
+  payload: unknown;
   timestamp: string;
 }
 

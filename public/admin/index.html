@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenHiveMind Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            color: #e6e6e6;
+            min-height: 100vh;
+        }
+
+        .admin-card {
+            background: rgba(30, 30, 46, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+
+        .status-online {
+            color: #10b981;
+        }
+
+        .status-offline {
+            color: #ef4444;
+        }
+
+        .status-loading {
+            color: #f59e0b;
+        }
+
+        .form-input {
+            background: rgba(55, 65, 81, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e6e6e6;
+        }
+
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+
+        .btn-secondary {
+            background: rgba(75, 85, 99, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+
+        .sidebar {
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                width: 280px;
+                z-index: 50;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal modal-open">
+        <div class="modal-box admin-card max-w-md">
+            <h3 class="font-bold text-xl mb-4 text-center">
+                <i class="fas fa-shield-alt mr-2"></i>Admin Login
+            </h3>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Username</label>
+                    <input type="text" id="username" class="form-input input input-bordered w-full" placeholder="admin" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="password" class="form-input input input-bordered w-full" placeholder="admin123!" required>
+                </div>
+                <div id="loginError" class="text-red-400 text-sm hidden"></div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <span id="loginBtnText">Login</span>
+                        <div id="loginSpinner" class="loading-spinner ml-2 hidden"></div>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Admin Interface -->
+    <div id="adminInterface" class="hidden min-h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar fixed left-0 top-0 h-full w-64 p-4 overflow-y-auto">
+            <div class="flex items-center mb-8">
+                <i class="fas fa-cog text-2xl mr-3 text-blue-400"></i>
+                <h1 class="text-xl font-bold">Admin Panel</h1>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#dashboard" class="nav-link active flex items-center p-3 text-gray-300" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+                </a>
+                <a href="#bots" class="nav-link flex items-center p-3 text-gray-300" onclick="showSection('bots')">
+                    <i class="fas fa-robot mr-3"></i>Bot Management
+                </a>
+                <a href="#personas" class="nav-link flex items-center p-3 text-gray-300" onclick="showSection('personas')">
+                    <i class="fas fa-user-circle mr-3"></i>Personas
+                </a>
+                <a href="#system" class="nav-link flex items-center p-3 text-gray-300" onclick="showSection('system')">
+                    <i class="fas fa-server mr-3"></i>System
+                </a>
+            </nav>
+
+            <div class="mt-8 pt-4 border-t border-gray-600">
+                <button class="btn btn-secondary btn-sm w-full" onclick="logout()">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn" class="fixed top-4 left-4 z-40 md:hidden btn btn-circle btn-ghost">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Main Content -->
+        <div class="main-content md:ml-64 p-4 md:p-8">
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="section fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Dashboard</h2>
+                    <button class="btn btn-primary" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="admin-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Slack Bots</p>
+                                <p class="text-2xl font-bold" id="slackCount">-</p>
+                            </div>
+                            <i class="fas fa-slack text-3xl text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="admin-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Discord Bots</p>
+                                <p class="text-2xl font-bold" id="discordCount">-</p>
+                            </div>
+                            <i class="fab fa-discord text-3xl text-indigo-400"></i>
+                        </div>
+                    </div>
+                    <div class="admin-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Total Bots</p>
+                                <p class="text-2xl font-bold" id="totalBots">-</p>
+                            </div>
+                            <i class="fas fa-robot text-3xl text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="admin-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">System Status</p>
+                                <p class="text-lg font-bold status-online" id="systemStatus">Online</p>
+                            </div>
+                            <i class="fas fa-circle text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bot List -->
+                <div class="admin-card p-6">
+                    <h3 class="text-xl font-bold mb-4">Active Bots</h3>
+                    <div id="botList" class="space-y-3">
+                        <div class="text-center text-gray-400 py-8">
+                            <div class="loading-spinner mx-auto mb-4"></div>
+                            Loading bot information...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bot Management Section -->
+            <div id="botsSection" class="section hidden fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Bot Management</h2>
+                    <div class="flex gap-2">
+                        <button class="btn btn-primary" onclick="showCreateBotModal('slack')">
+                            <i class="fas fa-plus mr-2"></i>Add Slack Bot
+                        </button>
+                        <button class="btn btn-secondary" onclick="showCreateBotModal('discord')">
+                            <i class="fas fa-plus mr-2"></i>Add Discord Bot
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Slack Bots -->
+                    <div class="admin-card p-6">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-slack text-purple-400 mr-2"></i>Slack Bots
+                        </h3>
+                        <div id="slackBotList" class="space-y-3">
+                            <div class="text-center text-gray-400 py-4">
+                                <div class="loading-spinner mx-auto mb-2"></div>
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discord Bots -->
+                    <div class="admin-card p-6">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fab fa-discord text-indigo-400 mr-2"></i>Discord Bots
+                        </h3>
+                        <div id="discordBotList" class="space-y-3">
+                            <div class="text-center text-gray-400 py-4">
+                                <div class="loading-spinner mx-auto mb-2"></div>
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personas Section -->
+            <div id="personasSection" class="section hidden fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Personas</h2>
+                    <button class="btn btn-primary" onclick="loadPersonas()">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+
+                <div class="admin-card p-6">
+                    <div id="personasList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="text-center text-gray-400 py-8 col-span-full">
+                            <div class="loading-spinner mx-auto mb-4"></div>
+                            Loading personas...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Section -->
+            <div id="systemSection" class="section hidden fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">System Management</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="admin-card p-6">
+                        <h3 class="text-xl font-bold mb-4">Bot Configuration</h3>
+                        <p class="text-gray-400 mb-4">Reload bot configurations from messengers.json</p>
+                        <button class="btn btn-primary w-full" onclick="reloadBots()">
+                            <i class="fas fa-refresh mr-2"></i>Reload Bots
+                        </button>
+                        <div id="reloadStatus" class="mt-4 text-sm hidden"></div>
+                    </div>
+
+                    <div class="admin-card p-6">
+                        <h3 class="text-xl font-bold mb-4">System Health</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span>API Status</span>
+                                <span class="status-online">Online</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Database</span>
+                                <span class="status-online">Connected</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>WebSocket</span>
+                                <span class="status-online">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Bot Modal -->
+    <div id="createBotModal" class="modal">
+        <div class="modal-box admin-card max-w-lg">
+            <h3 class="font-bold text-xl mb-4" id="modalTitle">Create Bot</h3>
+            <form id="createBotForm" class="space-y-4">
+                <input type="hidden" id="botType">
+
+                <!-- Common Fields -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bot Name</label>
+                    <input type="text" id="botName" class="form-input input input-bordered w-full" placeholder="My Bot">
+                </div>
+
+                <!-- Slack Specific Fields -->
+                <div id="slackFields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Bot Token</label>
+                        <input type="password" id="slackBotToken" class="form-input input input-bordered w-full" placeholder="xoxb-...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Signing Secret</label>
+                        <input type="password" id="slackSigningSecret" class="form-input input input-bordered w-full" placeholder="...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">App Token (Optional)</label>
+                        <input type="password" id="slackAppToken" class="form-input input input-bordered w-full" placeholder="xapp-...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Default Channel ID (Optional)</label>
+                        <input type="text" id="slackDefaultChannel" class="form-input input input-bordered w-full" placeholder="C...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Mode</label>
+                        <select id="slackMode" class="form-input select select-bordered w-full">
+                            <option value="socket">Socket Mode</option>
+                            <option value="webhook">Webhook</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Discord Specific Fields -->
+                <div id="discordFields" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Bot Token</label>
+                        <input type="password" id="discordToken" class="form-input input input-bordered w-full" placeholder="...">
+                    </div>
+                </div>
+
+                <!-- LLM Configuration -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">LLM Provider (Optional)</label>
+                    <select id="llmProvider" class="form-input select select-bordered w-full">
+                        <option value="">Default</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="openwebui">OpenWebUI</option>
+                    </select>
+                </div>
+
+                <div id="botError" class="text-red-400 text-sm hidden"></div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <span id="createBtnText">Create Bot</span>
+                        <div id="createSpinner" class="loading-spinner ml-2 hidden"></div>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateBotModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('adminToken');
+        let currentSection = 'dashboard';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken) {
+                showAdminInterface();
+                loadDashboard();
+            } else {
+                showLoginModal();
+            }
+
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+            // Create bot form
+            document.getElementById('createBotForm').addEventListener('submit', handleCreateBot);
+        });
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('modal-open');
+            document.getElementById('adminInterface').classList.add('hidden');
+        }
+
+        function showAdminInterface() {
+            document.getElementById('loginModal').classList.remove('modal-open');
+            document.getElementById('adminInterface').classList.remove('hidden');
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Remove active class from nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + 'Section').classList.remove('hidden');
+
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+
+            currentSection = sectionName;
+
+            // Load section data
+            switch(sectionName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'bots':
+                    loadBots();
+                    break;
+                case 'personas':
+                    loadPersonas();
+                    break;
+                case 'system':
+                    // System section doesn't need loading
+                    break;
+            }
+
+            // Close mobile menu
+            document.querySelector('.sidebar').classList.remove('open');
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            const loginError = document.getElementById('loginError');
+
+            loginBtnText.textContent = 'Logging in...';
+            loginSpinner.classList.remove('hidden');
+            loginError.classList.add('hidden');
+
+            try {
+                const response = await fetch('/webui/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.accessToken) {
+                    authToken = data.accessToken;
+                    localStorage.setItem('adminToken', authToken);
+                    showAdminInterface();
+                    loadDashboard();
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.classList.remove('hidden');
+            } finally {
+                loginBtnText.textContent = 'Login';
+                loginSpinner.classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('adminToken');
+            showLoginModal();
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/admin/status', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    document.getElementById('slackCount').textContent = data.slackBots?.length || 0;
+                    document.getElementById('discordCount').textContent = data.discordCount || 0;
+                    document.getElementById('totalBots').textContent = (data.slackBots?.length || 0) + (data.discordCount || 0);
+
+                    // Update bot list
+                    const botList = document.getElementById('botList');
+                    botList.innerHTML = '';
+
+                    if (data.slackInfo && data.slackInfo.length > 0) {
+                        data.slackInfo.forEach(bot => {
+                            const botItem = document.createElement('div');
+                            botItem.className = 'flex items-center justify-between p-3 bg-gray-700 rounded-lg';
+                            botItem.innerHTML = `
+                                <div class="flex items-center">
+                                    <i class="fas fa-slack text-purple-400 mr-3"></i>
+                                    <div>
+                                        <p class="font-medium">${bot.name}</p>
+                                        <p class="text-sm text-gray-400">Slack • ${bot.mode} • ${bot.defaultChannel || 'No default channel'}</p>
+                                    </div>
+                                </div>
+                                <span class="status-online">Online</span>
+                            `;
+                            botList.appendChild(botItem);
+                        });
+                    }
+
+                    if (data.discordInfo && data.discordInfo.length > 0) {
+                        data.discordInfo.forEach(bot => {
+                            const botItem = document.createElement('div');
+                            botItem.className = 'flex items-center justify-between p-3 bg-gray-700 rounded-lg';
+                            botItem.innerHTML = `
+                                <div class="flex items-center">
+                                    <i class="fab fa-discord text-indigo-400 mr-3"></i>
+                                    <div>
+                                        <p class="font-medium">${bot.name}</p>
+                                        <p class="text-sm text-gray-400">Discord</p>
+                                    </div>
+                                </div>
+                                <span class="status-online">Online</span>
+                            `;
+                            botList.appendChild(botItem);
+                        });
+                    }
+
+                    if ((!data.slackInfo || data.slackInfo.length === 0) && (!data.discordInfo || data.discordInfo.length === 0)) {
+                        botList.innerHTML = '<p class="text-gray-400 text-center py-4">No active bots</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('botList').innerHTML = '<p class="text-red-400 text-center py-4">Error loading bot information</p>';
+            }
+        }
+
+        async function loadBots() {
+            try {
+                const response = await fetch('/api/admin/status', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Update Slack bots
+                const slackBotList = document.getElementById('slackBotList');
+                slackBotList.innerHTML = '';
+                if (data.slackInfo && data.slackInfo.length > 0) {
+                    data.slackInfo.forEach(bot => {
+                        const botItem = document.createElement('div');
+                        botItem.className = 'p-4 bg-gray-700 rounded-lg';
+                        botItem.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">${bot.name}</h4>
+                                <span class="status-online text-sm">Active</span>
+                            </div>
+                            <p class="text-sm text-gray-400">Mode: ${bot.mode}</p>
+                            <p class="text-sm text-gray-400">Channel: ${bot.defaultChannel || 'None'}</p>
+                        `;
+                        slackBotList.appendChild(botItem);
+                    });
+                } else {
+                    slackBotList.innerHTML = '<p class="text-gray-400 text-center py-4">No Slack bots configured</p>';
+                }
+
+                // Update Discord bots
+                const discordBotList = document.getElementById('discordBotList');
+                discordBotList.innerHTML = '';
+                if (data.discordInfo && data.discordInfo.length > 0) {
+                    data.discordInfo.forEach(bot => {
+                        const botItem = document.createElement('div');
+                        botItem.className = 'p-4 bg-gray-700 rounded-lg';
+                        botItem.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">${bot.name}</h4>
+                                <span class="status-online text-sm">Active</span>
+                            </div>
+                            <p class="text-sm text-gray-400">Discord Bot</p>
+                        `;
+                        discordBotList.appendChild(botItem);
+                    });
+                } else {
+                    discordBotList.innerHTML = '<p class="text-gray-400 text-center py-4">No Discord bots configured</p>';
+                }
+            } catch (error) {
+                console.error('Error loading bots:', error);
+            }
+        }
+
+        async function loadPersonas() {
+            try {
+                const response = await fetch('/api/admin/personas', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+                const personasList = document.getElementById('personasList');
+                personasList.innerHTML = '';
+
+                if (data.ok && data.personas && data.personas.length > 0) {
+                    data.personas.forEach(persona => {
+                        const personaCard = document.createElement('div');
+                        personaCard.className = 'admin-card p-4';
+                        personaCard.innerHTML = `
+                            <h4 class="font-bold mb-2">${persona.name}</h4>
+                            <p class="text-sm text-gray-400 mb-2">${persona.key}</p>
+                            <p class="text-sm">${persona.systemPrompt.substring(0, 100)}...</p>
+                        `;
+                        personasList.appendChild(personaCard);
+                    });
+                } else {
+                    personasList.innerHTML = '<p class="text-gray-400 text-center py-4 col-span-full">No personas configured</p>';
+                }
+            } catch (error) {
+                console.error('Error loading personas:', error);
+                document.getElementById('personasList').innerHTML = '<p class="text-red-400 text-center py-4 col-span-full">Error loading personas</p>';
+            }
+        }
+
+        function showCreateBotModal(type) {
+            document.getElementById('botType').value = type;
+            document.getElementById('modalTitle').textContent = `Create ${type.charAt(0).toUpperCase() + type.slice(1)} Bot`;
+
+            // Show/hide relevant fields
+            document.getElementById('slackFields').classList.toggle('hidden', type !== 'slack');
+            document.getElementById('discordFields').classList.toggle('hidden', type !== 'discord');
+
+            document.getElementById('createBotModal').classList.add('modal-open');
+        }
+
+        function closeCreateBotModal() {
+            document.getElementById('createBotModal').classList.remove('modal-open');
+            document.getElementById('createBotForm').reset();
+            document.getElementById('botError').classList.add('hidden');
+        }
+
+        async function handleCreateBot(event) {
+            event.preventDefault();
+
+            const botType = document.getElementById('botType').value;
+            const createBtnText = document.getElementById('createBtnText');
+            const createSpinner = document.getElementById('createSpinner');
+            const botError = document.getElementById('botError');
+
+            createBtnText.textContent = 'Creating...';
+            createSpinner.classList.remove('hidden');
+            botError.classList.add('hidden');
+
+            try {
+                let payload = {
+                    name: document.getElementById('botName').value,
+                    llm: document.getElementById('llmProvider').value || undefined,
+                };
+
+                if (botType === 'slack') {
+                    payload.botToken = document.getElementById('slackBotToken').value;
+                    payload.signingSecret = document.getElementById('slackSigningSecret').value;
+                    payload.appToken = document.getElementById('slackAppToken').value || undefined;
+                    payload.defaultChannelId = document.getElementById('slackDefaultChannel').value || undefined;
+                    payload.mode = document.getElementById('slackMode').value;
+                } else if (botType === 'discord') {
+                    payload.token = document.getElementById('discordToken').value;
+                }
+
+                const response = await fetch(`/api/admin/${botType}-bots`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.ok) {
+                    closeCreateBotModal();
+                    loadBots();
+                    loadDashboard();
+                    showNotification('Bot created successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to create bot');
+                }
+            } catch (error) {
+                botError.textContent = error.message;
+                botError.classList.remove('hidden');
+            } finally {
+                createBtnText.textContent = 'Create Bot';
+                createSpinner.classList.add('hidden');
+            }
+        }
+
+        async function reloadBots() {
+            const reloadStatus = document.getElementById('reloadStatus');
+            reloadStatus.classList.remove('hidden');
+            reloadStatus.innerHTML = '<div class="loading-spinner mr-2"></div>Reloading bots...';
+
+            try {
+                const response = await fetch('/api/admin/reload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.ok) {
+                    reloadStatus.innerHTML = `<span class="text-green-400">✓ Reloaded ${data.addedSlack || 0} Slack and ${data.addedDiscord || 0} Discord bots</span>`;
+                    loadDashboard();
+                    loadBots();
+                } else {
+                    throw new Error(data.error || 'Reload failed');
+                }
+            } catch (error) {
+                reloadStatus.innerHTML = `<span class="text-red-400">✗ ${error.message}</span>`;
+            }
+
+            setTimeout(() => {
+                reloadStatus.classList.add('hidden');
+            }, 5000);
+        }
+
+        function refreshDashboard() {
+            loadDashboard();
+            showNotification('Dashboard refreshed', 'info');
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification - could be enhanced with a proper notification system
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+            if (!sidebar.contains(event.target) && event.target !== mobileMenuBtn && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>

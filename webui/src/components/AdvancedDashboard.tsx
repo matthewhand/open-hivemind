@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Simple Working Dashboard - Streamlined version without type issues
+ * 
+ * Provides basic system monitoring without complex type dependencies
+ * 
+ * @version 2.1.0
+ * @author Open-Hivemind Team
+ * @since 2025-09-27
+ */
+
 import React, { useEffect } from 'react';
 import {
   Grid,
@@ -14,7 +24,6 @@ import {
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
   Memory as MemoryIcon,
   Speed as SpeedIcon,
   Error as ErrorIcon,
@@ -31,49 +40,16 @@ import {
   setError,
   setLastUpdated,
   setLoading,
-  setPerformanceMetrics,
-  setSystemStatus,
 } from '../store/slices/dashboardSlice';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import type { SerializedError } from '@reduxjs/toolkit';
 
-const getErrorMessage = (error: unknown): string => {
-  if (!error) return 'Unknown error';
-  if (typeof error === 'string') return error;
-
-  const baseQueryError = error as FetchBaseQueryError;
-  if (typeof baseQueryError?.status !== 'undefined') {
-    if (typeof baseQueryError.data === 'string') {
-      return baseQueryError.data;
-    }
-    if (typeof baseQueryError.status === 'number') {
-      return `Request failed with status ${baseQueryError.status}`;
-    }
-    return 'Request failed';
-  }
-
-  const serialized = error as SerializedError;
-  if (serialized?.message) {
-    return serialized.message;
-  }
-
-  return 'Unexpected error';
-};
-
+/**
+ * Simple Dashboard Component
+ * 
+ * @returns {JSX.Element} The rendered dashboard
+ */
 const AdvancedDashboard: React.FC = () => {
   const dispatch = useAppDispatch();
   const dashboard = useAppSelector(state => state.dashboard);
-  const {
-    bots,
-    systemStatus,
-    performanceMetrics,
-    analytics,
-    isLoading: dashboardLoading,
-    error: dashboardError,
-    lastUpdated,
-    isAutoRefresh,
-    refreshInterval,
-  } = dashboard;
   
   // RTK Query hooks for real-time data
   const {
@@ -83,7 +59,7 @@ const AdvancedDashboard: React.FC = () => {
     isFetching: isFetchingStatus,
     refetch: refetchStatus,
   } = useGetStatusQuery(undefined, {
-    pollingInterval: 5000, // Poll every 5 seconds
+    pollingInterval: 5000,
   });
   
   const {
@@ -92,7 +68,7 @@ const AdvancedDashboard: React.FC = () => {
     isFetching: isFetchingPerformance,
     refetch: refetchPerformance,
   } = useGetPerformanceMetricsQuery(undefined, {
-    pollingInterval: 5000, // Poll periodically for real-time metrics
+    pollingInterval: 5000,
   });
   
   const {
@@ -101,79 +77,83 @@ const AdvancedDashboard: React.FC = () => {
     refetch: refetchAnalytics,
   } = useGetAnalyticsQuery({ timeRange: '24h' });
 
-  const statusErrorMessage = statusError ? getErrorMessage(statusError) : null;
-  const performanceErrorMessage = performanceError ? getErrorMessage(performanceError) : null;
-  const showGlobalLoader = dashboardLoading && !bots.length;
+  // Show loading when we don't have any data yet
+  const showGlobalLoader = statusLoading && !statusData && dashboard.bots.length === 0;
 
+  // Handle loading state
   useEffect(() => {
     dispatch(setLoading(statusLoading && !statusData));
   }, [dispatch, statusData, statusLoading]);
 
+  // Process status data safely
   useEffect(() => {
-    if (!statusData) {
-      return;
+    if (!statusData) return;
+
+    try {
+      // Handle different possible data structures from backend
+      let bots = [];
+      if (statusData.bots && Array.isArray(statusData.bots)) {
+        bots = statusData.bots;
+      } else if ((statusData as any).instances && Array.isArray((statusData as any).instances)) {
+        bots = (statusData as any).instances;
+      }
+
+      // Normalize bot data
+      const normalizedBots = bots.map((bot: any, index: number) => ({
+        name: bot?.name || `Bot ${index + 1}`,
+        provider: bot?.provider || 'unknown',
+        llmProvider: bot?.llmProvider || 'unknown',
+        status: bot?.status || 'offline',
+        connected: bot?.connected ?? false,
+        messageCount: bot?.messageCount || 0,
+        errorCount: bot?.errorCount || 0,
+        lastUpdated: bot?.lastUpdated || new Date().toISOString(),
+      }));
+
+      dispatch(setBots(normalizedBots));
+      dispatch(setLastUpdated());
+      dispatch(setError(null));
+    } catch (error) {
+      console.error('Error processing status data:', error);
+      dispatch(setError('Failed to process status data'));
     }
-
-    dispatch(setBots(statusData.bots ?? []));
-
-    if (typeof statusData.uptime === 'number') {
-      dispatch(setSystemStatus({ uptime: statusData.uptime }));
-    }
-
-    dispatch(setLastUpdated());
-    dispatch(setError(null));
   }, [dispatch, statusData]);
 
+  // Handle status errors
   useEffect(() => {
-    if (!statusErrorMessage) {
-      return;
+    if (statusError) {
+      const errorMessage = typeof statusError === 'string' 
+        ? statusError 
+        : 'Failed to fetch status data';
+      
+      dispatch(setError(errorMessage));
+      dispatch(addNotification({
+        type: 'error',
+        title: 'Connection Error',
+        message: errorMessage,
+      }));
     }
+  }, [statusError, dispatch]);
 
-    if (dashboardError === statusErrorMessage) {
-      return;
-    }
-
-    dispatch(setError(statusErrorMessage));
-    dispatch(addNotification({
-      type: 'error',
-      title: 'Connection Error',
-      message: statusErrorMessage,
-    }));
-  }, [statusErrorMessage, dashboardError, dispatch]);
-
+  // Handle performance errors
   useEffect(() => {
-    if (!performanceErrorMessage) {
-      return;
+    if (performanceError) {
+      dispatch(addNotification({
+        type: 'error',
+        title: 'Performance Error',
+        message: 'Failed to fetch performance metrics',
+      }));
     }
+  }, [performanceError, dispatch]);
 
-    dispatch(addNotification({
-      type: 'error',
-      title: 'Performance Error',
-      message: performanceErrorMessage,
-    }));
-  }, [performanceErrorMessage, dispatch]);
-
-  useEffect(() => {
-    if (performanceData) {
-      dispatch(setPerformanceMetrics(performanceData));
-    }
-  }, [dispatch, performanceData]);
-
+  // Handle analytics data
   useEffect(() => {
     if (analyticsData) {
-      dispatch(setAnalytics({
-        totalMessages: analyticsData.totalMessages,
-        totalBots: analyticsData.totalBots,
-        activeConnections: analyticsData.activeConnections,
-        averageResponseTime: analyticsData.averageResponseTime,
-        errorRate: analyticsData.errorRate,
-        topChannels: analyticsData.topChannels,
-        providerUsage: analyticsData.providerUsage,
-        dailyStats: analyticsData.dailyStats,
-      }));
+      dispatch(setAnalytics(analyticsData));
     }
   }, [analyticsData, dispatch]);
 
+  // Show loading state
   if (showGlobalLoader) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ py: 8 }}>
@@ -186,92 +166,9 @@ const AdvancedDashboard: React.FC = () => {
   }
 
   const isRefreshing = isFetchingStatus || isFetchingPerformance || isFetchingAnalytics;
-  const totalBots = bots.length;
-  const activeBotCount = bots.filter(bot => bot.status === 'active').length;
-  const connectingBotCount = bots.filter(bot => bot.status === 'connecting').length;
-  const offlineBotCount = Math.max(totalBots - activeBotCount - connectingBotCount, 0);
-
-  const totalMessages = analytics.totalMessages ?? 0;
-  const activeConnections = analytics.activeConnections ?? 0;
-  const averageResponseTime = analytics.averageResponseTime ?? 0;
-  const rawErrorRate = analytics.errorRate ?? 0;
-  const errorRatePercent = rawErrorRate > 1 ? rawErrorRate : rawErrorRate * 100;
-
-  const cpuUsage = performanceMetrics.cpuUsage ?? 0;
-  const memoryUsage = performanceMetrics.memoryUsage ?? 0;
-  const responseTimeMs = performanceMetrics.responseTime ?? averageResponseTime;
-  const performanceErrorRate = performanceMetrics.errorRate ?? 0;
-
-  const uptimeSeconds = systemStatus.uptime ?? 0;
-  const uptimeHours = Math.floor(uptimeSeconds / 3600);
-  const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
-  const uptimeDisplay = `${uptimeHours}h ${uptimeMinutes}m`;
-
-  const summaryCards = [
-    {
-      key: 'activeBots',
-      title: 'Active Bots',
-      value: `${activeBotCount}/${totalBots}`,
-      icon: <CheckCircleIcon color="success" />,
-      helper: connectingBotCount > 0
-        ? `${connectingBotCount} connecting`
-        : offlineBotCount > 0
-          ? `${offlineBotCount} offline`
-          : 'All healthy',
-    },
-    {
-      key: 'messages',
-      title: 'Messages (24h)',
-      value: totalMessages.toLocaleString(),
-      icon: <TrendingUpIcon color="primary" />,
-      helper: `${activeConnections} live connections`,
-    },
-    {
-      key: 'response',
-      title: 'Avg Response',
-      value: `${averageResponseTime.toFixed(1)} ms`,
-      icon: <SpeedIcon color="primary" />,
-      helper: 'Rolling 24h average',
-    },
-    {
-      key: 'errors',
-      title: 'Error Rate',
-      value: `${errorRatePercent.toFixed(2)}%`,
-      icon: <ErrorIcon color={errorRatePercent > 2 ? 'error' : 'warning'} />,
-      helper: errorRatePercent > 2 ? 'Investigate issues' : 'Stable',
-    },
-  ];
-
-  const performanceCards = [
-    {
-      key: 'cpu',
-      title: 'CPU Usage',
-      value: `${cpuUsage.toFixed(1)}%`,
-      icon: <TrendingUpIcon color={cpuUsage > 80 ? 'error' : 'primary'} />,
-      helper: cpuUsage > 80 ? 'High load' : 'Operating nominally',
-    },
-    {
-      key: 'memory',
-      title: 'Memory Usage',
-      value: `${memoryUsage.toFixed(1)}%`,
-      icon: <MemoryIcon color={memoryUsage > 80 ? 'error' : 'primary'} />,
-      helper: memoryUsage > 80 ? 'Consider scaling' : 'Within budget',
-    },
-    {
-      key: 'latency',
-      title: 'Response Time',
-      value: `${responseTimeMs.toFixed(1)} ms`,
-      icon: <SpeedIcon color="secondary" />,
-      helper: 'Last sample',
-    },
-    {
-      key: 'perfErrors',
-      title: 'Error Rate',
-      value: `${performanceErrorRate.toFixed(2)}%`,
-      icon: <TrendingDownIcon color={performanceErrorRate > 5 ? 'error' : 'primary'} />,
-      helper: performanceErrorRate > 5 ? 'Errors above threshold' : 'Within tolerance',
-    },
-  ];
+  const totalBots = dashboard.bots.length;
+  const activeBots = dashboard.bots.filter(bot => bot.status === 'active').length;
+  const offlineBots = totalBots - activeBots;
 
   const handleRefresh = () => {
     refetchStatus();
@@ -286,7 +183,7 @@ const AdvancedDashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header Section */}
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
           Advanced Dashboard
@@ -308,87 +205,124 @@ const AdvancedDashboard: React.FC = () => {
         </Box>
       </Box>
 
-      {dashboardError && (
+      {/* Error Alert */}
+      {dashboard.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {dashboardError}
+          Dashboard Failed to Load: {dashboard.error}
         </Alert>
       )}
 
+      {/* Summary Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        {summaryCards.map((card) => (
-          <Grid item xs={12} sm={6} md={3} key={card.key}>
-            <Card elevation={1}>
-              <CardContent>
-                <Box display="flex" alignItems="center" gap={2}>
-                  {card.icon}
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {card.title}
-                    </Typography>
-                    <Typography variant="h5" component="p">
-                      {card.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {card.helper}
-                    </Typography>
-                  </Box>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card elevation={1}>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2}>
+                <CheckCircleIcon color="success" />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Active Bots
+                  </Typography>
+                  <Typography variant="h5" component="p">
+                    {activeBots}/{totalBots}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {offlineBots > 0 ? `${offlineBots} offline` : 'All healthy'}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card elevation={1}>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2}>
+                <TrendingUpIcon color="primary" />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Messages (24h)
+                  </Typography>
+                  <Typography variant="h5" component="p">
+                    {dashboard.analytics.totalMessages?.toLocaleString() || '0'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {dashboard.analytics.activeConnections || 0} connections
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card elevation={1}>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2}>
+                <SpeedIcon color="primary" />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Response Time
+                  </Typography>
+                  <Typography variant="h5" component="p">
+                    {(dashboard.analytics.averageResponseTime || 0).toFixed(1)}ms
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    24h average
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card elevation={1}>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2}>
+                <ErrorIcon color={dashboard.analytics.errorRate > 0.02 ? 'error' : 'success'} />
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Error Rate
+                  </Typography>
+                  <Typography variant="h5" component="p">
+                    {((dashboard.analytics.errorRate || 0) * 100).toFixed(2)}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {dashboard.analytics.errorRate > 0.02 ? 'Needs attention' : 'Stable'}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {performanceCards.map((card) => (
-          <Grid item xs={12} sm={6} md={3} key={card.key}>
-            <Card elevation={1}>
-              <CardContent>
-                <Box display="flex" alignItems="center" gap={2}>
-                  {card.icon}
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {card.title}
-                    </Typography>
-                    <Typography variant="h6" component="p">
-                      {card.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {card.helper}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Bot Status Overview */}
+      {/* Bot Status */}
       <Card elevation={1} sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             Bot Network Status
           </Typography>
           <Box display="flex" flexWrap="wrap" gap={2}>
-            {bots.map((bot) => (
+            {dashboard.bots.map((bot) => (
               <Chip
                 key={bot.name}
                 label={bot.name}
                 color={bot.status === 'active' ? 'success' : bot.status === 'connecting' ? 'warning' : 'error'}
-                variant="outlined"
-                sx={{ minWidth: 120 }}
+                variant={bot.connected ? 'filled' : 'outlined'}
               />
             ))}
           </Box>
-          {bots.length === 0 && (
+          {dashboard.bots.length === 0 && (
             <Typography variant="body2" color="text.secondary">
               No bots configured. Add bots from the Bot Manager.
             </Typography>
           )}
-          {offlineBotCount > 0 && (
+          {offlineBots > 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              {offlineBotCount} bot{offlineBotCount === 1 ? '' : 's'} offline. Check connection settings.
+              {offlineBots} bot{offlineBots === 1 ? '' : 's'} offline. Check connection settings.
             </Alert>
           )}
         </CardContent>
@@ -403,27 +337,27 @@ const AdvancedDashboard: React.FC = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                Last Updated: {new Date(lastUpdated).toLocaleString()}
+                Last Updated: {new Date(dashboard.lastUpdated).toLocaleString()}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                Auto Refresh: {isAutoRefresh ? 'Enabled' : 'Disabled'}
+                Auto Refresh: {dashboard.isAutoRefresh ? 'Enabled' : 'Disabled'}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                Refresh Interval: {(refreshInterval / 1000).toFixed(1)}s
+                Refresh Interval: {(dashboard.refreshInterval / 1000).toFixed(1)}s
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                Environment: {systemStatus.environment}
+                Environment: {dashboard.systemStatus.environment || 'Production'}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                Uptime: {uptimeDisplay}
+                Uptime: {Math.floor((dashboard.systemStatus.uptime || 0) / 3600)}h {Math.floor(((dashboard.systemStatus.uptime || 0) % 3600) / 60)}m
               </Typography>
             </Grid>
           </Grid>

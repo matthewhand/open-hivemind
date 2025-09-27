@@ -1,5 +1,4 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../index';
 import type { Bot, ConfigResponse, StatusResponse, ConfigSourcesResponse, SecureConfig } from '../../services/api';
 
 // Define proper types for API responses

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenHiveMind - Loading Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e6e6e6;
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(30, 30, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #4f46e5;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #374151;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div class="container mx-auto px-4 py-12">
+        <div class="flex flex-col items-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+                OpenHiveMind Dashboard Loading...
+            </h1>
+            <p class="text-lg text-gray-400 text-center max-w-2xl">
+                Initializing system components and preparing your dashboard experience
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="card p-8 mb-12">
+            <div class="text-center">
+                <div class="loading-spinner"></div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <p class="text-xl mt-4" id="statusText">Loading dashboard components...</p>
+                <p class="text-lg mt-2 text-blue-400" id="countdownText">Redirecting in <span id="countdown">10</span> seconds</p>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button id="redirectButton" class="btn btn-primary btn-lg mr-4" onclick="redirectToDashboard()">
+                Go to Dashboard Now
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="window.location.href='/admin'">
+                Go to Admin Panel
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch real stats data from API
+        async function fetchStats() {
+            try {
+                const response = await fetch('/webui/api/health/detailed');
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                const data = await response.json();
+                const metrics = data.metrics;
+                const uptime = data.uptime;
+
+                // Calculate uptime percentage (assuming 24/7 operation)
+                const uptimePercent = uptime > 86400 ? '99.9%' : ((uptime / 86400) * 100).toFixed(1) + '%';
+
+                // Format uptime change
+                const uptimeHours = Math.floor(uptime / 3600);
+                const uptimeChange = uptimeHours > 24 ? `Running for ${Math.floor(uptimeHours / 24)} days` : `Running for ${uptimeHours} hours`;
+
+                const activeBots = metrics.botMetrics ? metrics.botMetrics.activeBots : 0;
+                const messagesProcessed = metrics.botMetrics ? metrics.botMetrics.messagesProcessed : 0;
+                const avgResponseTime = metrics.responseTime ? Math.round(metrics.responseTime.avg) + 'ms' : 'N/A';
+
+                return [
+                    { label: 'Active Bots', value: activeBots.toString(), icon: '🤖', change: 'Active now' },
+                    { label: 'Messages Processed', value: messagesProcessed.toLocaleString(), icon: '💬', change: 'Total processed' },
+                    { label: 'Uptime', value: uptimePercent, icon: '⏱️', change: uptimeChange },
+                    { label: 'Avg. Response Time', value: avgResponseTime, icon: '⚡', change: 'Current average' }
+                ];
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                return [
+                    { label: 'Active Bots', value: 'Error', icon: '❌', change: 'Failed to load' },
+                    { label: 'Messages Processed', value: 'Error', icon: '❌', change: 'Failed to load' },
+                    { label: 'Uptime', value: 'Error', icon: '❌', change: 'Failed to load' },
+                    { label: 'Avg. Response Time', value: 'Error', icon: '❌', change: 'Failed to load' }
+                ];
+            }
+        }
+
+        // Populate stats cards with loading state initially
+        const statsContainer = document.querySelector('.grid.grid-cols-1');
+        const loadingStats = [
+            { label: 'Active Bots', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
+            { label: 'Messages Processed', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
+            { label: 'Uptime', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
+            { label: 'Avg. Response Time', value: 'Loading...', icon: '⏳', change: 'Fetching data' }
+        ];
+
+        function populateStats(statsData) {
+            statsContainer.innerHTML = '';
+            statsData.forEach(stat => {
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card card p-6 shadow-xl hover:shadow-2xl transition-all duration-300';
+                statCard.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">${stat.icon}</div>
+                        <h3 class="text-2xl font-bold mb-2">${stat.value}</h3>
+                        <p class="text-gray-400 mb-1">${stat.label}</p>
+                        <p class="text-sm text-green-400">${stat.change}</p>
+                    </div>
+                `;
+                statsContainer.appendChild(statCard);
+            });
+        }
+
+        // Initial loading state
+        populateStats(loadingStats);
+
+        // Fetch and update stats
+        fetchStats().then(statsData => {
+            populateStats(statsData);
+        });
+
+        // Simulate loading progress
+        let progress = 0;
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const countdownText = document.getElementById('countdownText');
+        const countdownElement = document.getElementById('countdown');
+        const redirectButton = document.getElementById('redirectButton');
+
+        const statuses = [
+            "Initializing core services...",
+            "Connecting to message providers...",
+            "Loading configuration data...",
+            "Preparing dashboard components...",
+            "Finalizing setup..."
+        ];
+
+        let statusIndex = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(progressInterval);
+            }
+            progressBar.style.width = `${progress}%`;
+
+            if (statusIndex < statuses.length) {
+                statusText.textContent = statuses[statusIndex];
+                statusIndex++;
+            }
+        }, 500);
+
+        // Countdown and redirect logic
+        let countdown = 10;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                redirectToDashboard();
+            }
+        }, 1000);
+
+        function redirectToDashboard() {
+            clearInterval(countdownInterval);
+            window.location.href = '/webui';
+        }
+    </script>
+</body>
+</html>

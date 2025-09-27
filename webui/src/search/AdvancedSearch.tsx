@@ -30,8 +30,8 @@ import {
   StarBorder as StarBorderIcon,
   SearchOff as SearchOffIcon,
 } from '@mui/icons-material';
-import { useAppSelector } from '../store/hooks';
-import { selectDashboard } from '../store/slices/dashboardSlice';
+// import { useAppSelector } from '../store/hooks';
+// import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
 interface SearchResult {
@@ -103,7 +103,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     hasMore: false,
   });
 
-  const { bots } = useAppSelector(selectDashboard);
+  // const { bots } = useAppSelector(selectDashboard);
   // bots data can be used for suggestions if needed
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
