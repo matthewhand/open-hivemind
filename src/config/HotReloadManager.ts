@@ -1,6 +1,6 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
 import UserConfigStore, { BotOverride } from './UserConfigStore';
-import { WebSocketService } from '@src/webui/services/WebSocketService';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';

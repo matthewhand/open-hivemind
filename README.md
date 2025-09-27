@@ -69,30 +69,50 @@ npm start
 # Install dependencies (includes frontend and backend)
 npm install
 
-# Development mode with concurrent servers (backend on 3028, Vite on 5173 with API proxy)
+# Development mode - runs both frontend and backend in parallel
 npm run dev
 
-# Production build (builds backend and frontend)
+# Production build - builds both frontend and backend
 npm run build
+
+# Run all tests
+npm test
 
 # Production start (serves frontend from /uber)
 npm start
 ```
 
-### Advanced Setup Options
+### Development
 ```bash
-# Backend-only development
-npm run dev:backend
+# Start both frontend and backend in parallel
+npm run dev
 
-# Frontend-only development (Vite dev server with API proxy to backend)
-npm run dev:frontend
-
-# Run tests before starting
-npm test && npm start
-
-# Production deployment
+# Build both frontend and backend
 npm run build
-npm run start
+
+# Run all tests
+npm test
+```
+
+### Advanced Options
+```bash
+# Run only backend
+npm run dev:only:backend
+
+# Run only frontend
+npm run dev:only:frontend
+
+# Build only backend
+npm run build:only:backend
+
+# Build only frontend
+npm run build:only:frontend
+
+# Test only backend
+npm run test:only:backend
+
+# Test only frontend
+npm run test:only:frontend
 ```
 
 ### Docker Deployment
@@ -104,6 +124,32 @@ docker run -p 3000:3000 --env-file .env open-hivemind
 # Or use Docker Compose
 docker-compose up -d
 ```
+
+### Project Structure
+
+Open-Hivemind follows a consolidated structure with all source code organized under the `src/` directory:
+
+```
+src/
+├── client/          # Frontend React application
+│   ├── components/  # React components
+│   ├── pages/       # Page components
+│   ├── hooks/       # Custom React hooks
+│   ├── utils/       # Frontend utilities
+│   └── styles/      # CSS and styling
+├── server/          # Backend Node.js/Express application
+│   ├── routes/      # API routes
+│   ├── middleware/  # Express middleware
+│   ├── services/    # Business logic services
+│   ├── models/      # Data models
+│   └── utils/       # Backend utilities
+├── integrations/    # Platform integrations (Discord, Slack, etc.)
+├── config/          # Configuration management
+├── database/        # Database connections and models
+└── common/          # Shared utilities and types
+```
+
+This consolidated structure makes it easy to navigate between frontend and backend code while maintaining clear separation of concerns.
 
 ### Configuration Examples
 

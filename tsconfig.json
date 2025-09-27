@@ -20,7 +20,7 @@
   "exclude": [
     "tests/**/*",
     "node_modules",
-    "src/webui/frontend/**/*"
+    "src/client/**/*"
   ],
   "files": [
     "src/types/express.d.ts",
