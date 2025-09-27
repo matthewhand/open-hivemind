@@ -12,6 +12,7 @@ import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
+import processingLocks from '../processing/processingLocks';
 
 const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
@@ -44,6 +45,16 @@ const idleResponseManager = IdleResponseManager.getInstance();
  */
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(async () => {
+    const channelId = message.getChannelId();
+
+    // Concurrency guard: prevent processing multiple messages from the same channel simultaneously
+    if (processingLocks.isLocked(channelId)) {
+      logger(`Channel ${channelId} is currently processing another message, skipping to prevent concurrency issues.`);
+      return null;
+    }
+
+    processingLocks.lock(channelId);
+
     try {
       const text = message.getText();
       if (!text) {
@@ -175,6 +186,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'messageHandler.handleMessage');
       return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
+    } finally {
+      // Always unlock the channel after processing
+      processingLocks.unlock(channelId);
     }
   }, 'handleMessage', 5000); // 5 second threshold for warnings
 }

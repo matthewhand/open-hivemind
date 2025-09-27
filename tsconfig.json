@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es2018",
     "module": "CommonJS",
@@ -8,11 +7,25 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./",
+    "baseUrl": "./",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
     "downlevelIteration": true,
-    "jsx": "react"
+    "jsx": "react",
+    "paths": {
+      "@command/*": ["src/command/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@llm/*": ["src/llm/*"],
+      "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
+      "@integrations/*": ["src/integrations/*"],
+      "@types/*": ["src/types/*"],
+      "@src/*": ["src/*"],
+      "@tests/*": ["tests/*"],
+      "testUtils": ["./tests/testUtils"]
+    }
   },
   "include": [
     "src/**/*"

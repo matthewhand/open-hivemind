@@ -514,6 +514,24 @@ export const Discord = {
     }
 
     /**
+     * Get health status for all Discord bot instances
+     */
+    public getHealthStatus(): Record<string, any> {
+      const botStatus: Record<string, any> = {};
+      for (const bot of this.bots) {
+        const status = bot.client.ws.status;
+        const uptime = bot.client.uptime ? bot.client.uptime / 1000 : 0;
+        botStatus[bot.botUserName] = {
+          connected: status === 0, // 0 = READY
+          status: ['READY', 'CONNECTING', 'RECONNECTING', 'IDLE', 'NEARLY', 'DISCONNECTED'][status] || 'UNKNOWN',
+          uptime: uptime,
+          ping: bot.client.ws.ping,
+        };
+      }
+      return botStatus;
+    }
+
+    /**
      * Channel scoring hook for router parity.
      * Returns 0 when MESSAGE_CHANNEL_ROUTER_ENABLED is disabled.
      * Delegates to ChannelRouter.computeScore when enabled.

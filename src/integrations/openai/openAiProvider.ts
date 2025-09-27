@@ -78,6 +78,23 @@ export class OpenAiProvider implements ILlmProvider {
   async generateCompletion(prompt: string): Promise<string> {
     return openAiProvider.generateCompletion(prompt);
   }
+
+  async generateStreamingChatCompletion(
+    userMessage: string,
+    historyMessages: IMessage[],
+    onChunk: (chunk: string) => void,
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    if (openAiProvider.generateStreamingChatCompletion) {
+      return openAiProvider.generateStreamingChatCompletion(
+        userMessage,
+        historyMessages,
+        onChunk,
+        metadata
+      );
+    }
+    throw new Error('Streaming not supported by this provider instance');
+  }
 }
 
 export const openAiProvider: ILlmProvider = {
@@ -288,5 +305,50 @@ export const openAiProvider: ILlmProvider = {
 
     debug('Unexpected exit from retry loop');
     return 'An unexpected error occurred.';
-  }
+  },
+
+  async generateStreamingChatCompletion(
+    userMessage: string,
+    historyMessages: IMessage[],
+    onChunk: (chunk: string) => void,
+    metadata?: Record<string, any>
+  ): Promise<string> {
+    debug('Starting streaming chat completion generation');
+    const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is missing');
+    }
+
+    const openai = new OpenAI({
+      apiKey,
+      baseURL: openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL,
+      timeout: openaiConfig.get('OPENAI_TIMEOUT') || 10000,
+      organization: openaiConfig.get('OPENAI_ORGANIZATION') || undefined,
+    });
+
+    const messages = [
+      { role: 'system' as const, content: openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.' },
+      ...historyMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.getText() || '',
+      })),
+      { role: 'user' as const, content: userMessage },
+    ];
+
+    const stream = await openai.chat.completions.create({
+      model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+      messages,
+      stream: true,
+    });
+
+    let fullResponse = '';
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      if (content) {
+        fullResponse += content;
+        onChunk(content);
+      }
+    }
+    return fullResponse;
+  },
 };

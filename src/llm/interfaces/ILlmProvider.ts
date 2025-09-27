@@ -73,6 +73,30 @@ export interface ILlmProvider {
   generateChatCompletion: (userMessage: string, historyMessages: IMessage[], metadata?: Record<string, any>) => Promise<string>;
 
   /**
+   * Generates a streaming chat-based completion using conversation history.
+   *
+   * This method streams the response in chunks as they become available,
+   * allowing for real-time display of the response.
+   *
+   * @param {string} userMessage - The latest user message to respond to
+   * @param {IMessage[]} historyMessages - The complete message history for context
+   * @param {(chunk: string) => void} onChunk - Callback function called for each chunk
+   * @param {Record<string, any>} [metadata] - Optional metadata for additional context
+   * @returns {Promise<string>} A promise that resolves to the complete generated response
+   *
+   * @example
+   * ```typescript
+   * const response = await provider.generateStreamingChatCompletion(
+   *   "What's the weather like?",
+   *   [{ role: "user", content: "Hello" }, { role: "assistant", content: "Hi there!" }],
+   *   (chunk) => console.log('Received chunk:', chunk),
+   *   { channel: "general", user: "john_doe" }
+   * );
+   * ```
+   */
+  generateStreamingChatCompletion?: (userMessage: string, historyMessages: IMessage[], onChunk: (chunk: string) => void, metadata?: Record<string, any>) => Promise<string>;
+
+  /**
    * Generates a non-chat text completion.
    *
    * This method performs single-turn text generation based solely on
