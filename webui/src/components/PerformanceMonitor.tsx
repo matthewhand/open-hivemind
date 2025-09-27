@@ -127,6 +127,56 @@ const PerformanceMonitor: React.FC = () => {
   const uptimeHours = Math.floor(uptimeSeconds / 3600);
   const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
 
+  // Alert thresholds
+  const alerts = [];
+  if (cpuUsage > 80) {
+    alerts.push({
+      severity: 'error' as const,
+      message: `High CPU usage: ${cpuUsage.toFixed(1)}%`,
+    });
+  } else if (cpuUsage > 60) {
+    alerts.push({
+      severity: 'warning' as const,
+      message: `Elevated CPU usage: ${cpuUsage.toFixed(1)}%`,
+    });
+  }
+
+  if (memoryUsage > 85) {
+    alerts.push({
+      severity: 'error' as const,
+      message: `High memory usage: ${memoryUsage.toFixed(1)}%`,
+    });
+  } else if (memoryUsage > 70) {
+    alerts.push({
+      severity: 'warning' as const,
+      message: `Elevated memory usage: ${memoryUsage.toFixed(1)}%`,
+    });
+  }
+
+  if (responseTime > 1000) {
+    alerts.push({
+      severity: 'error' as const,
+      message: `Slow response time: ${responseTime.toFixed(1)}ms`,
+    });
+  } else if (responseTime > 500) {
+    alerts.push({
+      severity: 'warning' as const,
+      message: `Elevated response time: ${responseTime.toFixed(1)}ms`,
+    });
+  }
+
+  if (errorRate > 5) {
+    alerts.push({
+      severity: 'error' as const,
+      message: `High error rate: ${errorRate.toFixed(2)}%`,
+    });
+  } else if (errorRate > 1) {
+    alerts.push({
+      severity: 'warning' as const,
+      message: `Elevated error rate: ${errorRate.toFixed(2)}%`,
+    });
+  }
+
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
@@ -167,6 +217,16 @@ const PerformanceMonitor: React.FC = () => {
           {errorMessage}
         </Alert>
       )}
+      {alerts.map((a, idx) => (
+        <Alert
+          key={`metric-alert-${idx}`}
+          severity={a.severity}
+          sx={{ mb: 2 }}
+          variant="outlined"
+        >
+          {a.message}
+        </Alert>
+      ))}
 
       <Grid container spacing={3}>
         {/* Metric Cards */}

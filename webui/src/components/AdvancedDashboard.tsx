@@ -21,6 +21,7 @@ import {
   Alert,
   CircularProgress,
   Stack,
+  Skeleton,
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -43,8 +44,49 @@ import {
 } from '../store/slices/dashboardSlice';
 
 /**
+ * Summary Card Component with Loading State
+ */
+const SummaryCard: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  subtitle: string;
+  loading?: boolean;
+  color?: 'success' | 'primary' | 'error';
+}> = ({ icon, title, value, subtitle, loading = false, color = 'primary' }) => (
+  <Card elevation={1} sx={{ transition: 'transform 0.2s ease-in-out', '&:hover': { transform: 'translateY(-2px)' } }}>
+    <CardContent>
+      <Box display="flex" alignItems="center" gap={2}>
+        {loading ? <Skeleton variant="circular" width={24} height={24} /> : icon}
+        <Box flex={1}>
+          {loading ? (
+            <>
+              <Skeleton variant="text" width="60%" height={20} />
+              <Skeleton variant="text" width="40%" height={28} />
+              <Skeleton variant="text" width="80%" height={16} />
+            </>
+          ) : (
+            <>
+              <Typography variant="subtitle2" color="text.secondary">
+                {title}
+              </Typography>
+              <Typography variant="h5" component="p">
+                {value}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {subtitle}
+              </Typography>
+            </>
+          )}
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
+
+/**
  * Simple Dashboard Component
- * 
+ *
  * @returns {JSX.Element} The rendered dashboard
  */
 const AdvancedDashboard: React.FC = () => {
@@ -94,8 +136,8 @@ const AdvancedDashboard: React.FC = () => {
       let bots = [];
       if (statusData.bots && Array.isArray(statusData.bots)) {
         bots = statusData.bots;
-      } else if ((statusData as any).instances && Array.isArray((statusData as any).instances)) {
-        bots = (statusData as any).instances;
+      } else if (statusData.instances && Array.isArray(statusData.instances)) {
+        bots = statusData.instances;
       }
 
       // Normalize bot data
@@ -214,88 +256,44 @@ const AdvancedDashboard: React.FC = () => {
 
       {/* Summary Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={1}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <CheckCircleIcon color="success" />
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Active Bots
-                  </Typography>
-                  <Typography variant="h5" component="p">
-                    {activeBots}/{totalBots}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {offlineBots > 0 ? `${offlineBots} offline` : 'All healthy'}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <SummaryCard
+            icon={<CheckCircleIcon color="success" />}
+            title="Active Bots"
+            value={`${activeBots}/${totalBots}`}
+            subtitle={offlineBots > 0 ? `${offlineBots} offline` : 'All healthy'}
+            loading={statusLoading}
+          />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={1}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <TrendingUpIcon color="primary" />
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Messages (24h)
-                  </Typography>
-                  <Typography variant="h5" component="p">
-                    {dashboard.analytics.totalMessages?.toLocaleString() || '0'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {dashboard.analytics.activeConnections || 0} connections
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <SummaryCard
+            icon={<TrendingUpIcon color="primary" />}
+            title="Messages (24h)"
+            value={dashboard.analytics.totalMessages?.toLocaleString() || '0'}
+            subtitle={`${dashboard.analytics.activeConnections || 0} connections`}
+            loading={isFetchingAnalytics}
+          />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={1}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <SpeedIcon color="primary" />
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Response Time
-                  </Typography>
-                  <Typography variant="h5" component="p">
-                    {(dashboard.analytics.averageResponseTime || 0).toFixed(1)}ms
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    24h average
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <SummaryCard
+            icon={<SpeedIcon color="primary" />}
+            title="Response Time"
+            value={`${(dashboard.analytics.averageResponseTime || 0).toFixed(1)}ms`}
+            subtitle="24h average"
+            loading={isFetchingPerformance}
+          />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={1}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <ErrorIcon color={dashboard.analytics.errorRate > 0.02 ? 'error' : 'success'} />
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Error Rate
-                  </Typography>
-                  <Typography variant="h5" component="p">
-                    {((dashboard.analytics.errorRate || 0) * 100).toFixed(2)}%
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {dashboard.analytics.errorRate > 0.02 ? 'Needs attention' : 'Stable'}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <SummaryCard
+            icon={<ErrorIcon color={dashboard.analytics.errorRate > 0.02 ? 'error' : 'success'} />}
+            title="Error Rate"
+            value={`${((dashboard.analytics.errorRate || 0) * 100).toFixed(2)}%`}
+            subtitle={dashboard.analytics.errorRate > 0.02 ? 'Needs attention' : 'Stable'}
+            loading={isFetchingAnalytics}
+          />
         </Grid>
       </Grid>
 

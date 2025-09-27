@@ -35,7 +35,13 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
-  SelectAll as SelectAllIcon
+  SelectAll as SelectAllIcon,
+  PlayArrow as PlayIcon,
+  Stop as StopIcon,
+  CheckCircle as OnlineIcon,
+  Error as ErrorIcon,
+  HourglassEmpty as StartingIcon,
+  Sync as ProcessingIcon,
 } from '@mui/icons-material';
 import {
   useGetConfigQuery,
@@ -66,12 +72,12 @@ interface Toast {
   persist?: boolean;
 }
 
-const STATUS_COLORS: Record<NonNullable<UIBot['status']>, { color: 'success' | 'default' | 'error' | 'warning'; label: string }> = {
-  online: { color: 'success', label: 'Online' },
-  offline: { color: 'default', label: 'Offline' },
-  error: { color: 'error', label: 'Error' },
-  starting: { color: 'warning', label: 'Starting' },
-  processing: { color: 'warning', label: 'Processing' },
+const STATUS_COLORS: Record<NonNullable<UIBot['status']>, { color: 'success' | 'default' | 'error' | 'warning'; label: string; icon: React.ReactNode }> = {
+  online: { color: 'success', label: 'Online', icon: <OnlineIcon fontSize="small" /> },
+  offline: { color: 'default', label: 'Offline', icon: null },
+  error: { color: 'error', label: 'Error', icon: <ErrorIcon fontSize="small" /> },
+  starting: { color: 'warning', label: 'Starting', icon: <StartingIcon fontSize="small" /> },
+  processing: { color: 'warning', label: 'Processing', icon: <ProcessingIcon fontSize="small" /> },
 };
 
 const BotManager: React.FC = () => {
@@ -360,6 +366,7 @@ const BotManager: React.FC = () => {
     return (
       <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={1}>
         <Chip
+          icon={meta.icon}
           label={meta.label}
           size="small"
           color={meta.color}

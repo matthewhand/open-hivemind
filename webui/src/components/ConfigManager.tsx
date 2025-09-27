@@ -22,6 +22,7 @@ import {
   Select,
   MenuItem,
   InputAdornment,
+  Snackbar,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -47,6 +48,12 @@ const ConfigManager: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [configToDelete, setConfigToDelete] = useState<any>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // Mock configuration data for demonstration
   const mockConfigs = [
@@ -59,17 +66,46 @@ const ConfigManager: React.FC = () => {
   const [configs, setConfigs] = useState(mockConfigs);
 
   const handleSaveConfig = () => {
+    // Basic validation
+    const errors: Record<string, string> = {};
+    if (!editingConfig.name || editingConfig.name.trim() === '') {
+      errors.name = 'Configuration name is required';
+    }
+    if (!editingConfig.environment || editingConfig.environment.trim() === '') {
+      errors.environment = 'Environment is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setSnackbar({
+        open: true,
+        message: 'Please fix validation errors before saving',
+        severity: 'error',
+      });
+      return;
+    }
+
     try {
       // Simulate saving configuration
       const updatedConfig = { ...editingConfig, lastModified: new Date() };
       setConfigs(prev => prev.map(c => c.id === editingConfig.id ? updatedConfig : c));
       setEditingConfig(updatedConfig);
-      console.log('Saving configuration:', updatedConfig);
       setHasChanges(false);
+      setValidationErrors({});
+      setSnackbar({
+        open: true,
+        message: 'Configuration saved successfully',
+        severity: 'success',
+      });
     } catch (error) {
       console.error('Failed to save configuration:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to save configuration',
+        severity: 'error',
+      });
     }
-  };
+ };
 
   const handleEnvironmentChange = (env: string) => {
     setSelectedEnv(env);
@@ -278,9 +314,14 @@ const ConfigManager: React.FC = () => {
                       fullWidth
                       label="Configuration Name"
                       value={editingConfig.name || ''}
+                      error={!!validationErrors.name}
+                      helperText={validationErrors.name}
                       onChange={(e) => {
                         setEditingConfig({ ...editingConfig, name: e.target.value });
                         setHasChanges(true);
+                        if (validationErrors.name) {
+                          setValidationErrors(prev => ({ ...prev, name: '' }));
+                        }
                       }}
                     />
                   </Grid>
@@ -289,9 +330,14 @@ const ConfigManager: React.FC = () => {
                       fullWidth
                       label="Environment"
                       value={editingConfig.environment || 'development'}
+                      error={!!validationErrors.environment}
+                      helperText={validationErrors.environment}
                       onChange={(e) => {
                         setEditingConfig({ ...editingConfig, environment: e.target.value });
                         setHasChanges(true);
+                        if (validationErrors.environment) {
+                          setValidationErrors(prev => ({ ...prev, environment: '' }));
+                        }
                       }}
                     />
                   </Grid>
@@ -323,6 +369,22 @@ const ConfigManager: React.FC = () => {
           )}
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
