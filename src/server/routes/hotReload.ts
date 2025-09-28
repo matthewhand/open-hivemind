@@ -26,7 +26,7 @@ router.post('/api/config/hot-reload', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Hot reload failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'An internal error occurred' : error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -46,7 +46,7 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get change history',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'An internal error occurred' : error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -65,7 +65,7 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get available rollbacks',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'An internal error occurred' : error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -102,7 +102,7 @@ router.post('/api/config/hot-reload/rollback/:snapshotId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Rollback failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'An internal error occurred' : error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -125,7 +125,7 @@ router.get('/api/config/hot-reload/status', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get hot reload status',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'An internal error occurred' : error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

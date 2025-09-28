@@ -14,6 +14,7 @@ import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
 import configRouter from './routes/config';
 import hotReloadRouter from './routes/hotReload';
+import sitemapRouter from './routes/sitemap';
 
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -24,8 +25,8 @@ const debug = Debug('app:webui:server');
 
 const resolveFrontendDistPath = (): string => {
   const candidates = [
-    join(process.cwd(), 'dist', 'webui', 'frontend', 'dist'),
-    join(process.cwd(), 'src', 'webui', 'frontend', 'dist'),
+    join(process.cwd(), 'dist', 'client', 'dist'),
+    join(process.cwd(), 'src', 'client', 'dist'),
   ];
 
   for (const candidate of candidates) {
@@ -109,6 +110,9 @@ export class WebUIServer {
   private setupRoutes(): void {
     // Health check (no auth required)
     this.app.use('/', healthRouter);
+    
+    // Sitemap routes (no auth required)
+    this.app.use('/', sitemapRouter);
     
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);

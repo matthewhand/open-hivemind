@@ -14,9 +14,9 @@ import {
   AccordionSummary,
   AccordionDetails,
   Button,
-  IconButton,
   Tooltip,
 } from '@mui/material';
+import { Button as DaisyButton } from './DaisyUI';
 import {
   ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckCircleIcon,
@@ -251,9 +251,9 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           </Typography>
           <Box display="flex" gap={1}>
             <Tooltip title="Refresh">
-              <IconButton onClick={handleRefresh} size="small">
+              <DaisyButton onClick={handleRefresh} size="sm" variant="ghost">
                 <RefreshIcon />
-              </IconButton>
+              </DaisyButton>
             </Tooltip>
             <Button
               startIcon={monitoringActive ? <StopIcon /> : <PlayIcon />}

@@ -27,6 +27,20 @@
   "OPENAI_TOP_P": 0.9,
   "OPENAI_SYSTEM_PROMPT": "Greetings, human...",
   "OPENAI_RESPONSE_MAX_TOKENS": 100,
+  "MESSAGE_FOLLOW_UP_ENABLED": true,
+  "MESSAGE_LLM_CHAT": true,
+  "MESSAGE_LLM_COMPLETE_SENTENCE": true,
+  "MESSAGE_LLM_SUMMARISE": false,
+  "MESSAGE_COMMAND_SLASH": true,
+  "MESSAGE_WEBHOOK_ENABLED": true,
+  "MESSAGE_MENTION_BONUS": 0.1,
+  "MESSAGE_FILTER_BY_USER": "",
+  "MESSAGE_HISTORY_LIMIT": 10,
+  "MESSAGE_DECAY_RATE": 0.001,
+  "MESSAGE_CALM_WINDOW": 300000,
+  "PLATFORM": "discord",
+  "NAME": "Open-Hivemind",
+  "PORT": 3028,
   "admin": {
     "ipWhitelist": ["127.0.0.1", "::1", "localhost"]
   }

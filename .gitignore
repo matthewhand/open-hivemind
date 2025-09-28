@@ -153,4 +153,5 @@ coverage/
 .serena/
 # Test results
 playwright-report/
-test-results/
+test-results/archive/
+*.archive

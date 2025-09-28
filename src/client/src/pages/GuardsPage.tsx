@@ -3,11 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   TextField,
   Button,
   Alert,
@@ -20,6 +15,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setGuardsConfig } from '../store/slices/configSlice';
+import { Radio } from '../components/DaisyUI';
 
 interface GuardsConfig {
   type: 'owner' | 'users' | 'disabled';
@@ -122,32 +118,34 @@ const GuardsPage: React.FC = () => {
       </Typography>
 
       <Paper sx={{ p: 3 }}>
-        <FormControl component="fieldset" sx={{ width: '100%' }}>
-          <FormLabel component="legend" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Guard Type
-          </FormLabel>
-          <RadioGroup
-            value={formData.type}
-            onChange={handleTypeChange}
-            sx={{ mb: 3 }}
-          >
-            <FormControlLabel
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text font-bold">Guard Type</span>
+          </label>
+          <div className="space-y-2 mb-6">
+            <Radio
+              name="guard-type"
               value="disabled"
-              control={<Radio />}
+              checked={formData.type === 'disabled'}
+              onChange={handleTypeChange}
               label="Disabled - No restrictions (anyone can use MCP tools)"
             />
-            <FormControlLabel
+            <Radio
+              name="guard-type"
               value="owner"
-              control={<Radio />}
+              checked={formData.type === 'owner'}
+              onChange={handleTypeChange}
               label="Owner Only - Only the server/forum owner can use MCP tools"
             />
-            <FormControlLabel
+            <Radio
+              name="guard-type"
               value="users"
-              control={<Radio />}
+              checked={formData.type === 'users'}
+              onChange={handleTypeChange}
               label="Specific Users - Only listed users can use MCP tools"
             />
-          </RadioGroup>
-        </FormControl>
+          </div>
+        </div>
 
         {formData.type === 'users' && (
           <Box sx={{ mb: 3 }}>

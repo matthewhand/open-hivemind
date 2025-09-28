@@ -23,6 +23,8 @@ import {
   toggleAutoRefresh,
 } from '../store/slices/uiSlice';
 import type { UIState } from '../store/slices/uiSlice';
+import { Accordion } from './DaisyUI/Accordion';
+import type { AccordionItem } from './DaisyUI/Accordion';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -35,6 +37,120 @@ const Settings: React.FC = () => {
     { value: 'dark', label: 'Dark' },
     { value: 'high-contrast', label: 'High Contrast' },
     { value: 'auto', label: 'Auto (System)' },
+  ];
+
+  const accordionItems: AccordionItem[] = [
+    {
+      id: 'appearance',
+      title: 'Appearance',
+      icon: '🎨',
+      content: (
+        <Box>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ui.theme === 'dark'}
+                onChange={(event) => handleThemeToggle(event.target.checked)}
+                color="primary"
+              />
+            }
+            label="Dark Mode"
+          />
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Theme preset
+          </Typography>
+          <Select
+            value={ui.theme}
+            onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
+            size="small"
+            sx={{ minWidth: 200 }}
+          >
+            {themeOptions.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      ),
+    },
+    {
+      id: 'dashboard',
+      title: 'Dashboard Settings',
+      icon: '📊',
+      content: (
+        <Box>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ui.autoRefreshEnabled}
+                onChange={handleAutoRefreshToggle}
+                color="primary"
+              />
+            }
+            label="Auto Refresh"
+          />
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Refresh Interval:
+            </Typography>
+            <Select
+              value={ui.refreshInterval}
+              onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
+              size="small"
+              sx={{ minWidth: 120 }}
+              disabled={!ui.autoRefreshEnabled}
+            >
+              <MenuItem value={1000}>1 second</MenuItem>
+              <MenuItem value={5000}>5 seconds</MenuItem>
+              <MenuItem value={10000}>10 seconds</MenuItem>
+              <MenuItem value={30000}>30 seconds</MenuItem>
+              <MenuItem value={60000}>1 minute</MenuItem>
+            </Select>
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      id: 'accessibility',
+      title: 'Accessibility',
+      icon: '♿',
+      content: (
+        <Box>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={!ui.animationsEnabled}
+                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Reduced Motion"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ui.showTooltips}
+                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Show Tooltips"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={ui.showKeyboardShortcuts}
+                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
+                color="primary"
+              />
+            }
+            label="Keyboard Shortcuts Overlay"
+          />
+        </Box>
+      ),
+    },
   ];
 
   const handleThemeToggle = (checked: boolean) => {
@@ -90,121 +206,7 @@ const Settings: React.FC = () => {
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Appearance
-          </Typography>
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.theme === 'dark'}
-                onChange={(event) => handleThemeToggle(event.target.checked)}
-                color="primary"
-              />
-            }
-            label="Dark Mode"
-          />
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Theme preset
-          </Typography>
-          <Select
-            value={ui.theme}
-            onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
-            size="small"
-            sx={{ minWidth: 200 }}
-          >
-            {themeOptions.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </CardContent>
-      </Card>
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Dashboard Settings
-          </Typography>
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.autoRefreshEnabled}
-                onChange={handleAutoRefreshToggle}
-                color="primary"
-              />
-            }
-            label="Auto Refresh"
-          />
-          
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Refresh Interval:
-            </Typography>
-            <Select
-              value={ui.refreshInterval}
-              onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
-              size="small"
-              sx={{ minWidth: 120 }}
-              disabled={!ui.autoRefreshEnabled}
-            >
-              <MenuItem value={1000}>1 second</MenuItem>
-              <MenuItem value={5000}>5 seconds</MenuItem>
-              <MenuItem value={10000}>10 seconds</MenuItem>
-              <MenuItem value={30000}>30 seconds</MenuItem>
-              <MenuItem value={60000}>1 minute</MenuItem>
-            </Select>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Accessibility
-          </Typography>
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={!ui.animationsEnabled}
-                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Reduced Motion"
-          />
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.showTooltips}
-                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Show Tooltips"
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.showKeyboardShortcuts}
-                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Keyboard Shortcuts Overlay"
-          />
-        </CardContent>
-      </Card>
+      <Accordion items={accordionItems} allowMultiple defaultOpenItems={['appearance']} />
 
       <Box sx={{ display: 'flex', gap: 2 }}>
         <Button

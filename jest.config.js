@@ -1,6 +1,6 @@
 const unitIntegrationProject = {
   displayName: 'unit-integration',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests', '<rootDir>/src/client'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {

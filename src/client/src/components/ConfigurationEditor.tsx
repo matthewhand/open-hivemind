@@ -3,11 +3,6 @@ import {
   Box,
   Button,
   Typography,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Alert,
   Snackbar,
   CircularProgress,
@@ -17,6 +12,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import { Input, Select } from './DaisyUI';
 import {
   Save as SaveIcon,
   Refresh as RefreshIcon,
@@ -127,49 +123,57 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
             Basic Configuration
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <FormControl fullWidth>
-              <InputLabel>Message Provider</InputLabel>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Message Provider</span>
+              </label>
               <Select
+                options={messageProviders.map(provider => ({
+                  value: provider,
+                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
+                }))}
                 value={config.messageProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, messageProvider: e.target.value }))}
-              >
-                {messageProviders.map((provider) => (
-                  <MenuItem key={provider} value={provider}>
-                    {provider.charAt(0).toUpperCase() + provider.slice(1)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+            </div>
 
-            <FormControl fullWidth>
-              <InputLabel>LLM Provider</InputLabel>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">LLM Provider</span>
+              </label>
               <Select
+                options={llmProviders.map(provider => ({
+                  value: provider,
+                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
+                }))}
                 value={config.llmProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, llmProvider: e.target.value }))}
-              >
-                {llmProviders.map((provider) => (
-                  <MenuItem key={provider} value={provider}>
-                    {provider.charAt(0).toUpperCase() + provider.slice(1)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+            </div>
 
-            <TextField
-              fullWidth
-              label="Persona"
-              value={config.persona}
-              onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
-            />
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Persona</span>
+              </label>
+              <Input
+                value={config.persona}
+                onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
+                placeholder="Enter persona"
+              />
+            </div>
 
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="System Instruction"
-              value={config.systemInstruction}
-              onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
-            />
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">System Instruction</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={3}
+                value={config.systemInstruction}
+                onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
+                placeholder="Enter system instruction"
+              />
+            </div>
           </Box>
         </CardContent>
       </Card>

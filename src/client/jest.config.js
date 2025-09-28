@@ -5,7 +5,7 @@ module.exports = {
   // Transform TypeScript and JSX files
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
+      tsconfig: '<rootDir>/tsconfig.test.json',
     }],
     '^.+\\.(js|jsx)$': 'babel-jest',
   },

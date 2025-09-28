@@ -1,3 +1,23 @@
+import { Server } from 'http';
+import app from '../src/index';
+
+let server: Server;
+
+beforeAll((done) => {
+  const port = 3028;
+  server = app.listen(port, () => {
+    console.log(`Test server running on port ${port}`);
+    done();
+  });
+});
+
+afterAll((done) => {
+  server.close(() => {
+    console.log('Test server closed');
+    done();
+  });
+});
+
 /**
  * Jest setup file to optionally silence console output during tests.
  *

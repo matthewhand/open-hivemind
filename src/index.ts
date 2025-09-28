@@ -1,5 +1,12 @@
 require('dotenv/config');
-require('module-alias/register');
+// In production we rely on compiled output and module-alias mappings (pointing to dist/*)
+// In development (ts-node) we instead leverage tsconfig "paths" via tsconfig-paths/register
+// which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
+// in development because its _moduleAliases in package.json point to dist/, which does not
+// exist (or is stale) when running directly from src.
+if (process.env.NODE_ENV === 'production') {
+    require('module-alias/register');
+}
 const express = require('express');
 // Import Express types for TypeScript
 import { Request, Response, NextFunction } from 'express';
@@ -13,7 +20,7 @@ const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
-import configRouter from '@src/server/routes/config';
+import webuiConfigRouter from '@src/webui/routes/config';
 import botsRouter from '@src/server/routes/bots';
 import botConfigRouter from '@src/server/routes/botConfig';
 import validationRouter from '@src/server/routes/validation';
@@ -23,6 +30,7 @@ import enterpriseRouter from '@src/server/routes/enterprise';
 import secureConfigRouter from '@src/server/routes/secureConfig';
 import authRouter from '@src/server/routes/auth';
 import adminApiRouter from '@src/server/routes/admin';
+import { authenticateToken } from '@src/server/middleware/auth';
 import openapiRouter from '@src/server/routes/openapi';
 import WebSocketService from '@src/server/services/WebSocketService';
 import path from 'path';
@@ -38,11 +46,14 @@ const resolveFrontendDistPath = (): string => {
     ];
 
     for (const candidate of candidates) {
+        console.log(`[DEBUG] Checking frontend path: ${candidate}, exists: ${fs.existsSync(candidate)}`);
         if (fs.existsSync(candidate)) {
+            console.log(`[DEBUG] Using frontend path: ${candidate}`);
             return candidate;
         }
     }
 
+    console.log(`[DEBUG] No frontend path found, defaulting to: ${candidates[candidates.length - 1]}`);
     return candidates[candidates.length - 1];
 };
 
@@ -115,22 +126,22 @@ app.use(healthRoute);
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
     console.log('[DEBUG] Root route hit');
-    console.log('[DEBUG] __dirname:', __dirname);
-    const dashboardPath = path.join(__dirname, '../public/index.html');
-    console.log('[DEBUG] Resolved dashboardPath:', dashboardPath);
-    if (fs.existsSync(dashboardPath)) {
-        console.log('[DEBUG] File exists, sending...');
-        res.sendFile(dashboardPath, (err) => {
+    console.log('[DEBUG] Frontend dist path:', frontendDistPath);
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    console.log('[DEBUG] Resolved index path:', indexPath);
+    if (fs.existsSync(indexPath)) {
+        console.log('[DEBUG] Frontend index.html exists, sending...');
+        res.sendFile(indexPath, (err) => {
             if (err) {
-                console.error('[DEBUG] Error sending file:', err);
-                res.status(500).send('Error serving file');
+                console.error('[DEBUG] Error sending frontend file:', err);
+                res.status(500).send('Error serving frontend');
             } else {
-                console.log('[DEBUG] File sent successfully');
+                console.log('[DEBUG] Frontend sent successfully');
             }
         });
     } else {
-        console.error('[DEBUG] File does not exist at path:', dashboardPath);
-        res.status(404).send('File not found');
+        console.error('[DEBUG] Frontend index.html does not exist at path:', indexPath);
+        res.status(404).send('Frontend not found - please run npm run build:frontend');
     }
 });
 
@@ -149,16 +160,32 @@ app.use('/uber/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
-// Legacy /webui support
+// API routes - MUST come before static file serving
+// app.use('/api/admin', adminRouter);
+app.use('/api/swarm', swarmRouter);
+app.use('/dashboard', dashboardRouter);
+app.use('/webui/api', authenticateToken, webuiConfigRouter);
+app.use('/webui', botsRouter);
+app.use('/webui', botConfigRouter);
+app.use('/webui', validationRouter);
+app.use('/webui', hotReloadRouter);
+app.use('/webui', ciRouter);
+app.use('/webui', enterpriseRouter);
+app.use('/webui', secureConfigRouter);
+app.use('/webui', authRouter);
+app.use('/webui', adminApiRouter);
+app.use('/webui', openapiRouter);
+
+// Legacy /webui support - AFTER API routes
 app.use('/webui', express.static(frontendDistPath));
 app.use('/webui/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+    res.status(404).json({ error: 'WebUI route not found' });
 });
 
 // Admin UI (unified dashboard)
 app.use('/admin', express.static(frontendDistPath));
 app.use('/admin/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+    res.status(404).json({ error: 'Admin route not found' });
 });
 
 // Redirects
@@ -176,22 +203,12 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // import uberRouter from './routes/uberRouter';
 // app.use('/api/uber', uberRouter);
 
-// Keep old API routes for compatibility
-// app.use('/api/admin', adminRouter);
-app.use('/api/swarm', swarmRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/webui', configRouter);
-app.use('/webui', botsRouter);
-app.use('/webui', botConfigRouter);
-app.use('/webui', validationRouter);
-app.use('/webui', hotReloadRouter);
-app.use('/webui', ciRouter);
-app.use('/webui', enterpriseRouter);
-app.use('/webui', secureConfigRouter);
-app.use('/webui', authRouter);
-app.use('/webui', adminApiRouter);
-app.use('/webui', openapiRouter);
-
+// Catch-all handler for React Router (must be AFTER all API routes)
+// Return 404 for all non-existent routes
+app.get('*', (req: Request, res: Response) => {
+    console.log('[DEBUG] Catch-all route hit for:', req.path);
+    res.status(404).json({ error: 'Endpoint not found' });
+});
 
 async function startBot(messengerService: any) {
     try {
@@ -252,7 +269,7 @@ async function main() {
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
-        const port = process.env.PORT || 5005;
+        const port = parseInt(process.env.PORT || '5005', 10);
         const server = createServer(app);
 
         // Initialize WebSocket service
@@ -264,7 +281,7 @@ async function main() {
         });
 
         console.log(`[DEBUG] Attempting to bind server to port ${port} on host 0.0.0.0`);
-        server.listen({port: port, host: '0.0.0.0'}, () => {
+        server.listen(port, '0.0.0.0', () => {
             console.log('Server is listening on port ' + port);
             console.log('WebSocket service available at /webui/socket.io');
         });
@@ -290,3 +307,5 @@ main().catch((error) => {
     console.error('[DEBUG] Unexpected error in main execution:', error);
     process.exit(1);
 });
+
+export default app;
