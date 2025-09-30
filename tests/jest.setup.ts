@@ -1,22 +1,51 @@
+import '@testing-library/jest-dom';
+// Only spin up the full Express server for tests that explicitly require backend integration.
+// Heuristic: if TEST_BACKEND env var is set, or test filename contains ".integration".
+// Jest doesn't expose current test filename here, so we rely on env.
 import { Server } from 'http';
-import app from '../src/index';
-
-let server: Server;
-
-beforeAll((done) => {
-  const port = 3028;
-  server = app.listen(port, () => {
-    console.log(`Test server running on port ${port}`);
-    done();
+let server: Server | undefined;
+if (process.env.TEST_BACKEND) {
+  // Lazy import to avoid pulling heavy dependencies for pure frontend tests
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const app = require('../src/index').default;
+  beforeAll((done) => {
+    const port = 3028;
+    server = app.listen(port, () => {
+      console.log(`Test server running on port ${port}`);
+      done();
+    });
   });
+
+  afterAll((done) => {
+    if (server) {
+      server.close(() => {
+        console.log('Test server closed');
+        done();
+      });
+    } else {
+      done();
+    }
+  });
+}
+
+// Mock OpenAI to prevent fetch shim requirements in component tests
+jest.mock('openai', () => {
+  return {
+    OpenAI: class MockOpenAI {
+      chat = { completions: { create: async () => ({ choices: [{ message: { content: 'mock' } }] }) } };
+    }
+  };
 });
 
-afterAll((done) => {
-  server.close(() => {
-    console.log('Test server closed');
-    done();
-  });
-});
+// Polyfill TextEncoder/TextDecoder for react-router / whatwg-encoding usage in jsdom
+if (typeof global.TextEncoder === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { TextEncoder, TextDecoder } = require('util');
+  // @ts-ignore
+  global.TextEncoder = TextEncoder;
+  // @ts-ignore
+  global.TextDecoder = TextDecoder;
+}
 
 /**
  * Jest setup file to optionally silence console output during tests.

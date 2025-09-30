@@ -78,4 +78,56 @@ describe('getLlmProvider', () => {
     (mockedLlmConfig.get as jest.Mock).mockReturnValue('unknown, invalid');
     expect(() => getLlmProvider()).toThrow('No valid LLM providers initialized');
   });
+
+  describe('Integration with realistic configurations', () => {
+    it('should load realistic openai configuration and instantiate provider', () => {
+      process.env.LLM_PROVIDER = 'openai';
+      process.env.OPENAI_API_KEY = 'test-key';
+      
+      const providers = getLlmProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should load realistic flowise configuration and instantiate provider', () => {
+      process.env.LLM_PROVIDER = 'flowise';
+      process.env.FLOWISE_API_KEY = 'test-key';
+      
+      const providers = getLlmProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should load realistic openwebui configuration and instantiate provider', () => {
+      process.env.LLM_PROVIDER = 'openwebui';
+      // OpenWebUI doesn't have specific config keys, so we just test the provider
+      const providers = getLlmProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should handle cases where provider is selected but configuration is incomplete', () => {
+      process.env.LLM_PROVIDER = 'openai';
+      process.env.OPENAI_API_KEY = ''; // Empty API key
+      
+      // This should handle the error gracefully and not throw
+      expect(() => getLlmProvider()).not.toThrow();
+      const providers = getLlmProvider();
+      expect(Array.isArray(providers)).toBe(true);
+    });
+
+    it('should instantiate multiple providers correctly', () => {
+      process.env.LLM_PROVIDER = 'openai,flowise,openwebui';
+      process.env.OPENAI_API_KEY = 'test-key';
+      process.env.FLOWISE_API_KEY = 'test-key';
+      
+      const providers = getLlmProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(1);
+    });
+  });
 });

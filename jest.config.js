@@ -2,7 +2,8 @@ const unitIntegrationProject = {
   displayName: 'unit-integration',
   roots: ['<rootDir>/tests', '<rootDir>/src/client'],
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  // Use jsdom so React Testing Library can render components
+  testEnvironment: 'jsdom',
   transform: {
     '^.+\\.tsx?$': 'babel-jest',
     '^.+\\.jsx?$': 'babel-jest',
@@ -59,17 +60,53 @@ const realIntegrationProject = {
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/unit/', '/tests/integration/'],
 };
 
-const projects = [unitIntegrationProject];
+// Fast client-only project (no backend heavy tests). Activated when JEST_FRONTEND_ONLY=1
+const clientOnlyProject = {
+  displayName: 'client-ui-fast',
+  roots: ['<rootDir>/src/client/src'],
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.tsx?$': 'babel-jest',
+    '^.+\\.jsx?$': 'babel-jest'
+  },
+  testRegex: '(\\.|/)(test)\\.[tj]sx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: unitIntegrationProject.moduleNameMapper,
+  setupFilesAfterEnv: unitIntegrationProject.setupFilesAfterEnv,
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+};
+
+// Optional single test isolation to prevent discovery of all files when running one test.
+// Usage: ONLY_TEST_PATH=relative/path/to/testfile.test.tsx JEST_FRONTEND_ONLY=1 npx jest --selectProjects client-ui-fast
+if (process.env.ONLY_TEST_PATH && process.env.JEST_FRONTEND_ONLY === '1') {
+  const normalized = process.env.ONLY_TEST_PATH.replace(/^\.\/?/, '');
+  // Remove broad testRegex so only the specified file runs.
+  delete clientOnlyProject.testRegex;
+  clientOnlyProject.testMatch = [`<rootDir>/${normalized}`];
+  // Narrow roots to rootDir to avoid scanning the entire client tree.
+  clientOnlyProject.roots = ['<rootDir>'];
+  // Provide a hint in console when not in silent mode.
+  console.log(`[jest] ONLY_TEST_PATH enabled -> running: ${normalized}`);
+}
+
+let projects = [unitIntegrationProject];
+if (process.env.JEST_FRONTEND_ONLY === '1') {
+  projects = [clientOnlyProject];
+}
 
 if (process.env.RUN_REAL_TESTS === 'true') {
   projects.push(realIntegrationProject);
 }
 
+const fastFrontendOnly = process.env.JEST_FRONTEND_ONLY === '1';
+
 module.exports = {
-  collectCoverage: true,
+  // Disable coverage collection for the fast frontend-only run to improve performance
+  collectCoverage: !fastFrontendOnly,
   coverageDirectory: 'coverage',
   coverageReporters: ['html', 'text', 'lcov'],
-  coverageThreshold: {
+  coverageThreshold: fastFrontendOnly ? undefined : {
     global: {
       branches: 59,
       functions: 72,

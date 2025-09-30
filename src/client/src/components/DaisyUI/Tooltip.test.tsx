@@ -3,42 +3,41 @@ import '@testing-library/jest-dom';
 import Tooltip from './Tooltip';
 
 describe('Tooltip', () => {
-  test('renders children and hides tooltip content initially', () => {
+  test('renders children and stores tooltip content in data attribute', () => {
     render(
       <Tooltip content="Hello World">
         <button>Hover me</button>
       </Tooltip>
     );
-
-    expect(screen.getByText('Hover me')).toBeInTheDocument();
-    expect(screen.queryByText('Hello World')).not.toBeInTheDocument();
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip).toHaveAttribute('data-tip', 'Hello World');
   });
 
-  test('shows tooltip content on hover', () => {
+  test('tooltip data attribute persists on hover (visual handled by CSS)', () => {
     render(
       <Tooltip content="Hello World">
         <button>Hover me</button>
       </Tooltip>
     );
-
+    const tooltip = screen.getByRole('tooltip');
     const button = screen.getByText('Hover me');
     fireEvent.mouseOver(button);
-    expect(screen.getByText('Hello World')).toBeInTheDocument();
+    expect(tooltip).toHaveAttribute('data-tip', 'Hello World');
   });
 
- test('hides tooltip content on mouse out', () => {
+ test('mouse events do not remove data attribute (visual hide is CSS only)', () => {
     render(
       <Tooltip content="Hello World">
         <button>Hover me</button>
       </Tooltip>
     );
-
+    const tooltip = screen.getByRole('tooltip');
     const button = screen.getByText('Hover me');
     fireEvent.mouseOver(button);
-    expect(screen.getByText('Hello World')).toBeInTheDocument();
-
+    expect(tooltip).toHaveAttribute('data-tip', 'Hello World');
     fireEvent.mouseOut(button);
-    expect(screen.queryByText('Hello World')).not.toBeInTheDocument();
+    expect(tooltip).toHaveAttribute('data-tip', 'Hello World');
   });
 
   test('applies correct position class', () => {
@@ -91,9 +90,8 @@ describe('Tooltip', () => {
         <span>Hover me</span>
       </Tooltip>
     );
-
     const span = screen.getByText('Hover me');
     fireEvent.mouseOver(span);
-    expect(screen.getByText('Hello World')).toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toHaveAttribute('data-tip', 'Hello World');
   });
 });

@@ -10,9 +10,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -37,16 +39,25 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock authentication
+      // Mock authentication - in real app this would call an API
       if (formData.username === 'admin' && formData.password === 'admin') {
-        // For localhost development, just navigate to dashboard
-        navigate('/webui', { replace: true });
+        // Use the auth context to set user state
+        await login({
+          id: '1',
+          username: 'admin',
+          email: 'admin@open-hivemind.com',
+          role: 'owner',
+          permissions: ['admin', 'owner'],
+          name: 'Administrator'
+        });
+        
+        // Navigate to dashboard after successful login
+        navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid username or password');
       }
+    } catch (error) {
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

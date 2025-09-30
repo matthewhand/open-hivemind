@@ -422,11 +422,11 @@
             const featureCount = document.getElementById('featureCount');
             
             const fallbackFeatures = [
-                { icon: '🏠', name: 'Dashboard', url: '/uber' },
-                { icon: '🤖', name: 'Bot Manager', url: '/uber/bots' },
-                { icon: '📊', name: 'Monitoring', url: '/uber/monitoring' },
-                { icon: '🎭', name: 'Personas', url: '/uber/personas' },
-                { icon: '⚙️', name: 'Settings', url: '/uber/settings' }
+                { icon: '🏠', name: 'Dashboard', url: '/dashboard' },
+                { icon: '🤖', name: 'Bot Manager', url: '/dashboard/bots' },
+                { icon: '📊', name: 'Monitoring', url: '/monitor' },
+                { icon: '🎭', name: 'Personas', url: '/dashboard/personas' },
+                { icon: '⚙️', name: 'Settings', url: '/dashboard/settings' }
             ];
             
             carousel.innerHTML = '';
@@ -445,7 +445,7 @@
 
         // Wake up handlers
         function wakeUp() {
-            window.location.href = '/uber';
+            window.location.href = '/dashboard';
         }
 
         function setupWakeHandlers() {

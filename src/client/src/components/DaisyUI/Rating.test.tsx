@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Rating } from './Rating';
@@ -49,7 +48,7 @@ describe('Rating', () => {
 
   test('supports half ratings', () => {
     const handleChange = jest.fn();
-    render(<Rating half={true} onChange={handleChange} />);
+  render(<Rating allowHalf={true} onChange={handleChange} />);
     const ratingInputs = screen.getAllByRole('radio');
     // With half ratings, there are 1 (0) + 5*2 = 11 inputs
     expect(ratingInputs.length).toBe(11);
@@ -77,7 +76,7 @@ describe('Rating', () => {
   });
 
   test('sets initial half value correctly', () => {
-    render(<Rating value={3.5} half />);
+    render(<Rating value={3.5} allowHalf />);
     const ratingInputs = screen.getAllByRole('radio') as HTMLInputElement[];
     // The 7th input corresponds to 3.5 stars
     expect(ratingInputs[7]).toBeChecked();

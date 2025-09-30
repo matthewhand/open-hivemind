@@ -239,4 +239,46 @@ describe('getMessengerProvider', () => {
       expect(endTime - startTime).toBeLessThan(500); // Should handle many calls efficiently
     });
   });
+
+  describe('Integration with realistic configurations', () => {
+    it('should load realistic discord configuration and instantiate provider', () => {
+      process.env.MESSAGE_PROVIDER = 'discord';
+      process.env.DISCORD_BOT_TOKEN = 'test-token';
+      
+      const providers = getMessengerProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should load realistic slack configuration and instantiate provider', () => {
+      process.env.MESSAGE_PROVIDER = 'slack';
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      
+      const providers = getMessengerProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should load realistic mattermost configuration and instantiate provider', () => {
+      process.env.MESSAGE_PROVIDER = 'mattermost';
+      process.env.MATTERMOST_TOKEN = 'test-token';
+      
+      const providers = getMessengerProvider();
+      expect(providers).toBeDefined();
+      expect(Array.isArray(providers)).toBe(true);
+      expect(providers.length).toBeGreaterThan(0);
+    });
+
+    it('should handle cases where provider is enabled but configuration is invalid', () => {
+      process.env.MESSAGE_PROVIDER = 'discord';
+      process.env.DISCORD_BOT_TOKEN = ''; // Invalid configuration
+      
+      // This should handle the error gracefully and not throw
+      expect(() => getMessengerProvider()).not.toThrow();
+      const providers = getMessengerProvider();
+      expect(Array.isArray(providers)).toBe(true);
+    });
+  });
 });

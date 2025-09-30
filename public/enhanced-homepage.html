@@ -6,7 +6,7 @@
   <title>Open-Hivemind - AI Bot Management Platform</title>
   
   <!-- DaisyUI and TailwindCSS -->
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.24/dist/full.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5.1.25/dist/full.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Custom Styles -->
@@ -15,46 +15,6 @@
       background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
                   radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
                   radial-gradient(circle at 40% 40%, rgba(120, 255, 198, 0.3) 0%, transparent 50%);
-    }
-    
-    .floating-animation {
-      animation: float 3s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    .pulse-glow {
-      animation: pulse-glow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes pulse-glow {
-      from { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
-      to { box-shadow: 0 0 30px rgba(168, 85, 247, 0.8); }
-    }
-    
-    .widget-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    
-    .feature-card {
-      transition: all 0.3s ease;
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-5px);
-    }
-    
-    .theme-preview {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 0 2px;
     }
   </style>
 </head>
@@ -160,9 +120,9 @@
                   <span>☀️</span>
                   <span class="text-sm">Light</span>
                   <div class="flex gap-1">
-                    <div class="theme-preview bg-primary"></div>
-                    <div class="theme-preview bg-secondary"></div>
-                    <div class="theme-preview bg-accent"></div>
+                    <div class="w-5 h-5 rounded-full bg-primary"></div>
+                    <div class="w-5 h-5 rounded-full bg-secondary"></div>
+                    <div class="w-5 h-5 rounded-full bg-accent"></div>
                   </div>
                 </div>
               </div>
@@ -172,9 +132,9 @@
                   <span>🌙</span>
                   <span class="text-sm">Dark</span>
                   <div class="flex gap-1">
-                    <div class="theme-preview bg-primary"></div>
-                    <div class="theme-preview bg-secondary"></div>
-                    <div class="theme-preview bg-accent"></div>
+                    <div class="w-5 h-5 rounded-full bg-primary"></div>
+                    <div class="w-5 h-5 rounded-full bg-secondary"></div>
+                    <div class="w-5 h-5 rounded-full bg-accent"></div>
                   </div>
                 </div>
               </div>
@@ -184,9 +144,9 @@
                   <span>🌆</span>
                   <span class="text-sm">Cyber</span>
                   <div class="flex gap-1">
-                    <div class="theme-preview" style="background: #ff7598;"></div>
-                    <div class="theme-preview" style="background: #75d1f0;"></div>
-                    <div class="theme-preview" style="background: #c7f59b;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #ff7598;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #75d1f0;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #c7f59b;"></div>
                   </div>
                 </div>
               </div>
@@ -196,9 +156,9 @@
                   <span>🌸</span>
                   <span class="text-sm">Synth</span>
                   <div class="flex gap-1">
-                    <div class="theme-preview" style="background: #e779c1;"></div>
-                    <div class="theme-preview" style="background: #58c7f3;"></div>
-                    <div class="theme-preview" style="background: #f3cc30;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #e779c1;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #58c7f3;"></div>
+                    <div class="w-5 h-5 rounded-full" style="background: #f3cc30;"></div>
                   </div>
                 </div>
               </div>
@@ -238,8 +198,8 @@
   <div class="hero min-h-96 relative overflow-hidden">
     <div class="hero-content text-center">
       <div class="max-w-lg">
-        <div class="floating-animation">
-          <div class="text-8xl mb-4 pulse-glow">🧠</div>
+        <div class="animate-bounce">
+          <div class="text-8xl mb-4 animate-pulse ring ring-primary/50">🧠</div>
         </div>
         <h1 class="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
           Open-Hivemind
@@ -248,7 +208,7 @@
           The ultimate AI bot management platform. Create, deploy, and orchestrate intelligent bots across multiple platforms with unprecedented ease.
         </p>
         <div class="flex gap-4 justify-center">
-          <button class="btn btn-primary btn-lg pulse-glow" onclick="window.location.href='/dashboard'">
+          <button class="btn btn-primary btn-lg animate-pulse ring ring-primary/30" onclick="window.location.href='/dashboard'">
             🚀 Launch Dashboard
           </button>
           <button class="btn btn-outline btn-lg" onclick="window.location.href='/docs'">
@@ -301,9 +261,9 @@
       <p class="text-lg text-base-content/70">Everything you need to build and manage intelligent bot ecosystems</p>
     </div>
     
-    <div class="widget-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <!-- Multi-Platform Support -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">🌐</div>
@@ -321,7 +281,7 @@
       </div>
       
       <!-- AI Integration -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">🧠</div>
@@ -339,7 +299,7 @@
       </div>
       
       <!-- Real-time Analytics -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">📊</div>
@@ -356,7 +316,7 @@
       </div>
       
       <!-- Swarm Intelligence -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">🐝</div>
@@ -380,7 +340,7 @@
       </div>
       
       <!-- Security & Privacy -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">🔒</div>
@@ -398,7 +358,7 @@
       </div>
       
       <!-- Custom Workflows -->
-      <div class="card bg-base-100 shadow-xl feature-card">
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1">
         <div class="card-body">
           <div class="flex items-center gap-3 mb-4">
             <div class="text-4xl">⚡</div>

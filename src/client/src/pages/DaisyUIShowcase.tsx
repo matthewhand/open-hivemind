@@ -29,6 +29,7 @@ import {
   FileUpload,
   Dropdown,
   RangeSlider,
+  Toggle,
   
   // Utility Components
   Kbd,
@@ -36,6 +37,16 @@ import {
   ProgressBar,
   Countdown,
   Mockup,
+  Divider,
+  
+  // Layout & Organization Components
+  Collapsible,
+  Join,
+  Artboard,
+  Indicator,
+  
+  // Interactive Components
+  Swap,
   
   // Advanced Components
   AdvancedThemeSwitcher,
@@ -193,6 +204,74 @@ const DaisyUIShowcase: React.FC = () => {
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Accordion</h3>
               <Accordion items={accordionItems} allowMultiple={true} />
+            </section>
+
+            {/* Collapsible */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Collapsible</h3>
+              <div className="space-y-4">
+                <Collapsible title="Bot Configuration Details" defaultOpen={true}>
+                  <div className="p-4 bg-base-200 rounded">
+                    <p>This collapsible section contains detailed bot configuration options.</p>
+                    <ul className="list-disc list-inside mt-2">
+                      <li>Message timeout settings</li>
+                      <li>Rate limiting configuration</li>
+                      <li>Error handling preferences</li>
+                    </ul>
+                  </div>
+                </Collapsible>
+                
+                <Collapsible title="Advanced Features" variant="bordered">
+                  <div className="p-4">
+                    <Badge variant="info" text="Premium Feature" />
+                    <p className="mt-2">Access to advanced bot management features including custom webhooks and automated responses.</p>
+                  </div>
+                </Collapsible>
+              </div>
+            </section>
+
+            {/* Dividers */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Dividers</h3>
+              <div className="space-y-4">
+                <div className="card bg-base-200 p-4">
+                  <h4 className="font-semibold">Bot Statistics</h4>
+                  <Divider />
+                  <p>Total Messages: 1,234</p>
+                  <Divider orientation="horizontal" color="primary" />
+                  <p>Active Users: 567</p>
+                  <Divider text="Performance Metrics" />
+                  <p>Uptime: 99.9%</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Indicators */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Indicators</h3>
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="relative">
+                  <Avatar size="lg" alt="Bot Avatar" />
+                  <Indicator type="badge" color="success" content="3" />
+                </div>
+                
+                <div className="relative">
+                  <Button variant="primary">Messages</Button>
+                  <Indicator type="dot" color="error" />
+                </div>
+                
+                <div className="relative">
+                  <div className="w-16 h-16 bg-base-300 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">🤖</span>
+                  </div>
+                  <Indicator type="badge" color="warning" content="!" />
+                </div>
+                
+                <div className="relative">
+                  <Badge variant="info" text="Status" />
+                  <Indicator type="pulse" color="success" />
+                </div>
+              </div>
             </section>
 
             {/* Data Table */}
@@ -430,7 +509,7 @@ const DaisyUIShowcase: React.FC = () => {
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Range Slider</h3>
               <div className="space-y-4">
-                <RangeSlider 
+                <RangeSlider
                   label="Response Temperature"
                   min={0}
                   max={100}
@@ -440,7 +519,7 @@ const DaisyUIShowcase: React.FC = () => {
                   showValue={true}
                 />
                 
-                <RangeSlider 
+                <RangeSlider
                   label="Message History Limit"
                   min={1}
                   max={50}
@@ -450,6 +529,47 @@ const DaisyUIShowcase: React.FC = () => {
                   showValue={true}
                   color="secondary"
                 />
+              </div>
+            </section>
+
+            {/* Join Component for Form Layouts */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Join - Enhanced Form Layouts</h3>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold mb-2">Search with Action Button</h4>
+                  <Join className="w-full max-w-md">
+                    <input
+                      className="input input-bordered join-item flex-1"
+                      placeholder="Search bots..."
+                    />
+                    <Button className="join-item" variant="primary">Search</Button>
+                  </Join>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Bot Provider Selection</h4>
+                  <Join>
+                    <input className="input input-bordered join-item" placeholder="Bot name" />
+                    <select className="select select-bordered join-item">
+                      <option>Discord</option>
+                      <option>Slack</option>
+                      <option>Telegram</option>
+                    </select>
+                    <Button className="join-item" variant="secondary">Add Bot</Button>
+                  </Join>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-2">Pagination Controls</h4>
+                  <Join>
+                    <Button className="join-item" variant="outline">«</Button>
+                    <Button className="join-item" variant="outline">Page 1</Button>
+                    <Button className="join-item btn-active" variant="outline">Page 2</Button>
+                    <Button className="join-item" variant="outline">Page 3</Button>
+                    <Button className="join-item" variant="outline">»</Button>
+                  </Join>
+                </div>
               </div>
             </section>
 
@@ -601,24 +721,103 @@ const DaisyUIShowcase: React.FC = () => {
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Visual Feedback</h3>
               <div className="space-y-4">
-                <button 
+                <button
                   className="btn btn-success"
                   onClick={() => setToastMessage('Success! Operation completed.')}
                 >
                   Show Success Toast
                 </button>
                 
-                <VisualFeedback 
+                <VisualFeedback
                   type="success"
                   message="Bot connected successfully!"
                   visible={true}
                 />
                 
-                <VisualFeedback 
+                <VisualFeedback
                   type="warning"
                   message="API rate limit approaching..."
                   visible={true}
                 />
+              </div>
+            </section>
+
+            {/* Swap Component */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Swap - Interactive State Toggle</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="card bg-base-200 p-4">
+                  <h4 className="font-semibold mb-4">Theme Toggle</h4>
+                  <Swap
+                    onContent={<span className="text-2xl">🌙</span>}
+                    offContent={<span className="text-2xl">☀️</span>}
+                    defaultChecked={false}
+                    onChange={(checked) => console.log('Theme:', checked ? 'Dark' : 'Light')}
+                  />
+                  <p className="text-sm mt-2">Click to toggle between light and dark theme</p>
+                </div>
+                
+                <div className="card bg-base-200 p-4">
+                  <h4 className="font-semibold mb-4">Bot Status</h4>
+                  <Swap
+                    onContent={<Badge variant="success" text="Online" />}
+                    offContent={<Badge variant="error" text="Offline" />}
+                    defaultChecked={true}
+                    size="lg"
+                    onChange={(checked) => console.log('Bot status:', checked ? 'Online' : 'Offline')}
+                  />
+                  <p className="text-sm mt-2">Toggle bot online/offline status</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Artboard Component */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Artboard - Code Preview & Demos</h3>
+              <div className="space-y-4">
+                <Artboard size="sm" className="bg-gradient-to-br from-primary to-secondary">
+                  <div className="text-primary-content text-center p-4">
+                    <h4 className="text-xl font-bold">Mobile Bot Interface</h4>
+                    <p>Responsive design preview</p>
+                    <Button variant="outline" className="mt-2 text-primary-content border-primary-content">
+                      Get Started
+                    </Button>
+                  </div>
+                </Artboard>
+                
+                <Artboard size="md" className="bg-base-100">
+                  <div className="p-6 text-center">
+                    <div className="mockup-code">
+                      <pre data-prefix="$"><code>npm install open-hivemind</code></pre>
+                      <pre data-prefix=">" className="text-warning"><code>installing dependencies...</code></pre>
+                      <pre data-prefix=">" className="text-success"><code>installation complete!</code></pre>
+                    </div>
+                  </div>
+                </Artboard>
+                
+                <Artboard size="lg" className="bg-base-200">
+                  <div className="p-8">
+                    <div className="stats stats-horizontal shadow w-full">
+                      <div className="stat">
+                        <div className="stat-figure text-primary">
+                          <span className="text-3xl">🤖</span>
+                        </div>
+                        <div className="stat-title">Active Bots</div>
+                        <div className="stat-value text-primary">3</div>
+                        <div className="stat-desc">↗︎ 400 (22%)</div>
+                      </div>
+                      
+                      <div className="stat">
+                        <div className="stat-figure text-secondary">
+                          <span className="text-3xl">💬</span>
+                        </div>
+                        <div className="stat-title">Messages</div>
+                        <div className="stat-value text-secondary">1,234</div>
+                        <div className="stat-desc">↗︎ 90 (14%)</div>
+                      </div>
+                    </div>
+                  </div>
+                </Artboard>
               </div>
             </section>
           </div>

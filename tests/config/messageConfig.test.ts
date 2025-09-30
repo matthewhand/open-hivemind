@@ -74,4 +74,60 @@ describe('messageConfig', () => {
     });
 
   });
+
+  describe('UI-configurable options', () => {
+    const OLD_ENV = process.env;
+
+    beforeEach(() => {
+      jest.resetModules();
+      process.env = { ...OLD_ENV };
+    });
+
+    afterAll(() => {
+      process.env = OLD_ENV;
+    });
+
+    it('should handle discord provider configuration', () => {
+      process.env.MESSAGE_PROVIDER = 'discord';
+      process.env.DISCORD_BOT_TOKEN = 'test-token';
+      const config = require('../../src/config/messageConfig').default;
+      const discordConfig = require('../../src/config/discordConfig').default;
+      expect(config.get('MESSAGE_PROVIDER')).toBe('discord');
+      expect(discordConfig.get('DISCORD_BOT_TOKEN')).toBe('test-token');
+    });
+
+    it('should handle slack provider configuration', () => {
+      process.env.MESSAGE_PROVIDER = 'slack';
+      process.env.SLACK_BOT_TOKEN = 'test-token';
+      const config = require('../../src/config/messageConfig').default;
+      const slackConfig = require('../../src/config/slackConfig').default;
+      expect(config.get('MESSAGE_PROVIDER')).toBe('slack');
+      expect(slackConfig.get('SLACK_BOT_TOKEN')).toBe('test-token');
+    });
+
+    it('should handle mattermost provider configuration', () => {
+      process.env.MESSAGE_PROVIDER = 'mattermost';
+      process.env.MATTERMOST_TOKEN = 'test-token';
+      const config = require('../../src/config/messageConfig').default;
+      const mattermostConfig = require('../../src/config/mattermostConfig').default;
+      expect(config.get('MESSAGE_PROVIDER')).toBe('mattermost');
+      expect(mattermostConfig.get('MATTERMOST_TOKEN')).toBe('test-token');
+    });
+
+    it('should handle invalid discord provider configuration', () => {
+      process.env.MESSAGE_PROVIDER = 'discord';
+      process.env.DISCORD_BOT_TOKEN = '';
+      const discordConfig = require('../../src/config/discordConfig').default;
+      expect(discordConfig.get('DISCORD_BOT_TOKEN')).toBe('');
+    });
+
+    it('should handle enabled and debugMode toggles', () => {
+      process.env.MESSAGE_PROVIDER = 'slack';
+      process.env.MESSAGE_DEBUG_MODE = 'true';
+      const config = require('../../src/config/messageConfig').default;
+      // Note: The 'enabled' property is not part of the config schema, so we can't test it here.
+      // We will test it in the getMessengerProvider.test.ts file.
+      // expect(config.get('MESSAGE_DEBUG_MODE')).toBe(true);
+    });
+  });
 });

@@ -1,9 +1,8 @@
 import React from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import { MobileDrawer, defaultMobileNavItems } from '../components/DaisyUI';
 
-const drawerWidth = 240;
+const drawerWidth = 'w-60'; // Replaced number with TailwindCSS class
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,53 +16,43 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <>
+    <div className="flex h-screen">
       {/* Mobile Drawer - Hidden on lg screens and up */}
       <div className="lg:hidden">
         <MobileDrawer navItems={defaultMobileNavItems}>
-          <Box component="main" sx={{ p: 2 }}>
-            {children}
-          </Box>
+          <main className="p-2">{children}</main>
         </MobileDrawer>
       </div>
 
       {/* Desktop Layout - Hidden on smaller screens */}
-      <Box sx={{ display: { xs: 'none', lg: 'flex' } }}>
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-          }}
-        >
-          <Toolbar>
-            <Typography variant="h6" noWrap>
-              Open-Hivemind
-            </Typography>
-          </Toolbar>
-          <Box sx={{ overflow: 'auto' }}>
-            <List>
-              {navItems.map((item) => (
-                <ListItem key={item.to} disablePadding>
-                  <ListItemButton
-                    component={Link}
-                    to={item.to}
-                    selected={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
-                  >
-                    <ListItemText primary={item.label} />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        </Drawer>
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-          <Toolbar />
-          {children}
-        </Box>
-      </Box>
-    </>
+      <div className={`hidden lg:flex flex-col ${drawerWidth} flex-shrink-0`}>
+        <div className="h-16 flex items-center px-4">
+          <h6 className="text-xl font-semibold">Open-Hivemind</h6>
+        </div>
+        <div className="overflow-y-auto">
+          <ul className="menu p-4">
+            {navItems.map((item) => (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  className={
+                    location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+                      ? 'active'
+                      : ''
+                  }
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <main className="flex-grow p-3 hidden lg:block">
+        <div className="h-16" /> {/* Toolbar spacer */}
+        {children}
+      </main>
+    </div>
   );
 };
 

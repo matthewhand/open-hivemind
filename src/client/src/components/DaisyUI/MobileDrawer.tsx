@@ -12,13 +12,13 @@ interface NavItem {
 }
 
 interface MobileDrawerProps {
-  navItems: NavItem[];
+  navItems?: NavItem[]; // optional so component doesn't crash in tests if omitted
   children: React.ReactNode;
   drawerId?: string;
 }
 
 const MobileDrawer: React.FC<MobileDrawerProps> = ({
-  navItems,
+  navItems = [],
   children,
   drawerId = 'mobile-drawer'
 }) => {
@@ -211,7 +211,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           {/* Navigation Menu */}
           <nav className="p-4">
             <ul className="space-y-1">
-              {navItems.map(item => renderNavItem(item))}
+              {Array.isArray(navItems) && navItems.length > 0 && navItems.map(item => renderNavItem(item))}
             </ul>
           </nav>
 

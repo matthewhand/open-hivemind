@@ -2,31 +2,68 @@ import React, { useEffect, useState } from 'react';
 import {
   Container,
   Card,
-  CardContent,
   Typography,
-  Chip,
-  Box,
-  CircularProgress,
+  Badge,
+  Loading,
   Alert,
   Grid,
   Tabs,
-  Tab,
-  IconButton,
+  Button,
   Tooltip,
   LinearProgress,
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  TrendingUp as TrendingUpIcon,
-  Memory as MemoryIcon,
-  Speed as SpeedIcon,
-  Error as ErrorIcon,
-  CheckCircle as CheckCircleIcon,
-  Wifi as WifiIcon,
-  Message as MessageIcon,
-} from '@mui/icons-material';
+} from '../components/DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
+
+// Inline SVG icons to replace MUI icons
+const RefreshIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const TrendingUpIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
+);
+
+const MemoryIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+  </svg>
+);
+
+const SpeedIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-.708.708a4 4 0 105.656 5.656l.708-.708a4 4 0 000-5.656z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01" />
+  </svg>
+);
+
+const ErrorIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const CheckCircleIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const WifiIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+  </svg>
+);
+
+const MessageIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -45,7 +82,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`dashboard-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <div className="p-6">{children}</div>}
     </div>
   );
 }
@@ -211,31 +248,43 @@ const UnifiedDashboard: React.FC = () => {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" className="mt-8 mb-8">
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <div className="flex justify-between items-center mb-6">
         <Typography variant="h4" component="h1">
           Open-Hivemind Dashboard
         </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          {refreshing && <CircularProgress size={20} />}
-          <Tooltip title="Refresh Data">
-            <span>
-              <IconButton onClick={handleRefresh} disabled={refreshing}>
-                <RefreshIcon />
-              </IconButton>
-            </span>
+        <div className="flex items-center gap-4">
+          {refreshing && <span className="loading loading-spinner loading-sm"></span>}
+          <Tooltip content="Refresh Data">
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshIcon />
+            </button>
           </Tooltip>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard tabs">
-          <Tab label="Overview" id="dashboard-tab-0" aria-controls="dashboard-tabpanel-0" />
-          <Tab label="Performance" id="dashboard-tab-1" aria-controls="dashboard-tabpanel-1" />
-        </Tabs>
-      </Box>
+      <div className="border-b border-base-300 mb-6">
+        <div className="tabs tabs-bordered">
+          <button
+            className={`tab ${tabValue === 0 ? 'tab-active' : ''}`}
+            onClick={() => setTabValue(0)}
+          >
+            Overview
+          </button>
+          <button
+            className={`tab ${tabValue === 1 ? 'tab-active' : ''}`}
+            onClick={() => setTabValue(1)}
+          >
+            Performance
+          </button>
+        </div>
+      </div>
 
       {/* Overview Tab */}
       <TabPanel value={tabValue} index={0}>

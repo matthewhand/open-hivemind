@@ -7,10 +7,11 @@ This document explains the available startup modes, what code paths they exercis
 | Mode | Command | Serves Frontend? | HMR? | Port(s) | Needs Frontend Build? | Notes |
 |------|---------|------------------|------|---------|-----------------------|-------|
 | Unified Dev | `make start-dev` | Yes (if build present or auto-built) | No | 3028 (default) | Auto-builds if missing | Single process (Express + static) |
+| Node Dev Launcher | `npm run dev` | Yes (if build present) | No | 3028 (default) | Builds backend first | Cross-platform Node starter |
 | Dev w/ HMR | `make start-dev-hmr` | Yes (via Vite) | Yes | 3028 (API) / 5173 (UI) | No (Vite in-memory) | Two processes (backend + Vite) |
 | Production  | `make start-prod` | Yes | No | 3028 (if set) or env PORT | Requires full build | Uses compiled JS + dist assets |
-| Backend Only Dev (deprecated) | `npm run dev:backend` | Only if pre-built | No | 5005 or env PORT | Yes | Redundant; use `make start-dev` |
-| Legacy Script | `./dev-start.sh dev` | Depends | Maybe | 3028/5173 | Yes | Deprecated multi-path logic |
+| Backend Only Dev (deprecated) | `npm run dev:backend` | Only if pre-built | No | 3028 (default) | Yes | Redundant; use unified launcher |
+| Legacy Shim | `./dev-start.sh dev` | Depends | Maybe | 3028/5173 | Yes | Calls Node launcher; retained for compatibility |
 | Vite Only | `npm run dev:frontend` | Yes | Yes | 5173 | No | Backend APIs unavailable unless started separately |
 
 ## How Frontend Resolution Works
@@ -77,7 +78,8 @@ Order matters:
 
 ### 4. Deprecated Commands
 
-- `npm run dev:backend`, `npm run dev:frontend`, `./dev-start.sh dev`, `start:dev`, etc. -> Kept temporarily; prefer Make targets.
+- `npm run dev:backend`, `npm run dev:frontend`, `start:dev`, etc. -> Prefer `npm run dev` or `make start-dev`.
+- `./dev-start.sh dev` -> Thin shim that calls the Node launcher; kept for backward compatibility only.
 - These can cause divergent states (missing builds, port drift, etc.)
 
 ## Port Strategy

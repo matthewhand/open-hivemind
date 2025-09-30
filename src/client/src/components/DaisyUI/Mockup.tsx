@@ -38,13 +38,13 @@ const Mockup: React.FC<MockupProps> = ({
     switch (type) {
       case 'code':
         return (
-          <div className={`${baseClasses}code ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className={`${baseClasses}code ${themeClass} ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
             <pre><code>{content}</code></pre>
           </div>
         );
       case 'browser':
         return (
-          <div className={`${baseClasses}browser border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className={`${baseClasses}browser border ${themeClass} ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
             <div className="mockup-browser-toolbar">
               <div className="input">{content}</div>
             </div>
@@ -53,7 +53,7 @@ const Mockup: React.FC<MockupProps> = ({
         );
       case 'phone':
         return (
-          <div className={`${baseClasses}phone ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className={`${baseClasses}phone ${themeClass} ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
             <div className="camera"></div>
             <div className="display">
               <div className={`artboard artboard-demo phone-1 ${themeClass}`}>{content}</div>
@@ -62,7 +62,7 @@ const Mockup: React.FC<MockupProps> = ({
         );
       case 'window':
         return (
-          <div className={`${baseClasses}window border ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
+          <div className={`${baseClasses}window border ${themeClass} ${colorClass} ${className}`} style={containerStyle} role="region" aria-label={ariaLabel}>
             <div className={`flex justify-center px-4 py-16 ${themeClass}`}>{content}</div>
           </div>
         );

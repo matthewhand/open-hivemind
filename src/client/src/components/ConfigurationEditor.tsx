@@ -1,22 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Card,
-  CardContent,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import { Input, Select } from './DaisyUI';
+import { Button, Card, Select, Tabs, TextInput, Textarea, Toggle } from './DaisyUI';
 import {
   Save as SaveIcon,
   Refresh as RefreshIcon,
-  ExpandMore as ExpandMoreIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { type Bot } from '../services/api';
@@ -37,6 +23,8 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
     llmProvider: '',
     persona: '',
     systemInstruction: '',
+    enabled: true,
+    debugMode: false,
   });
 
   const messageProviders = ['discord', 'slack', 'mattermost'];
@@ -49,6 +37,8 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
         llmProvider: bot.llmProvider || '',
         persona: bot.persona || '',
         systemInstruction: bot.systemInstruction || '',
+        enabled: bot.enabled ?? true,
+        debugMode: bot.debugMode ?? false,
       });
     }
   }, [bot]);
@@ -77,133 +67,167 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
 
   if (!bot) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <Typography variant="body1" color="text.secondary">
+      <div className="flex justify-center items-center min-h-[200px]">
+        <p className="text-base-content/70">
           Select a bot to edit its configuration
-        </Typography>
-      </Box>
+        </p>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
           Configuration Editor - {bot.name}
-        </Typography>
-        <Box display="flex" gap={1}>
+        </h2>
+        <div className="flex gap-2">
           <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
+            variant="ghost"
             onClick={() => window.location.reload()}
+            icon={<RefreshIcon />}
           >
             Refresh
           </Button>
           <Button
-            variant="contained"
-            startIcon={<SaveIcon />}
+            variant="primary"
             onClick={handleSave}
-            disabled={loading}
+            loading={loading}
+            icon={<SaveIcon />}
+            loadingText="Saving..."
           >
-            {loading ? <CircularProgress size={20} /> : 'Save Configuration'}
+            Save Configuration
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+        <div className="alert alert-error mb-4">
+          <div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>{error}</span>
+          </div>
+        </div>
       )}
 
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <SettingsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Basic Configuration
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Message Provider</span>
-              </label>
-              <Select
-                options={messageProviders.map(provider => ({
-                  value: provider,
-                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
-                }))}
-                value={config.messageProvider}
-                onChange={(e) => setConfig(prev => ({ ...prev, messageProvider: e.target.value }))}
-              />
-            </div>
+      <Tabs
+        tabs={[
+          {
+            id: 'basic',
+            title: 'Basic Configuration',
+            content: (
+              <Card>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <SettingsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Basic Configuration
+                  </h3>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text">Message Provider</span>
+                      </label>
+                      <Select
+                        options={messageProviders.map(provider => ({
+                          value: provider,
+                          label: provider.charAt(0).toUpperCase() + provider.slice(1)
+                        }))}
+                        value={config.messageProvider}
+                        onChange={(e) => setConfig(prev => ({ ...prev, messageProvider: e.target.value }))}
+                      />
+                    </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">LLM Provider</span>
-              </label>
-              <Select
-                options={llmProviders.map(provider => ({
-                  value: provider,
-                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
-                }))}
-                value={config.llmProvider}
-                onChange={(e) => setConfig(prev => ({ ...prev, llmProvider: e.target.value }))}
-              />
-            </div>
+                    <div className="form-control w-full">
+                      <label className="label">
+                        <span className="label-text">LLM Provider</span>
+                      </label>
+                      <Select
+                        options={llmProviders.map(provider => ({
+                          value: provider,
+                          label: provider.charAt(0).toUpperCase() + provider.slice(1)
+                        }))}
+                        value={config.llmProvider}
+                        onChange={(e) => setConfig(prev => ({ ...prev, llmProvider: e.target.value }))}
+                      />
+                    </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Persona</span>
-              </label>
-              <Input
-                value={config.persona}
-                onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
-                placeholder="Enter persona"
-              />
-            </div>
+                    <TextInput
+                      label="Persona"
+                      value={config.persona}
+                      onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
+                      placeholder="Enter persona"
+                    />
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">System Instruction</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered w-full"
-                rows={3}
-                value={config.systemInstruction}
-                onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
-                placeholder="Enter system instruction"
-              />
-            </div>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6">Advanced Settings</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography variant="body2" color="text.secondary">
-            Advanced configuration options will be available here in a future update.
-          </Typography>
-        </AccordionDetails>
-      </Accordion>
+                    <Textarea
+                      label="System Instruction"
+                      value={config.systemInstruction}
+                      onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
+                      placeholder="Enter system instruction"
+                      rows={3}
+                      resizable="vertical"
+                    />
+                    <Toggle
+                      id="bot-enabled"
+                      label="Enable Bot"
+                      checked={config.enabled}
+                      onChange={(checked) => setConfig(prev => ({ ...prev, enabled: checked }))}
+                      helperText="Toggle the bot on or off"
+                    />
+                    <Toggle
+                      id="debug-mode"
+                      label="Debug Mode"
+                      checked={config.debugMode}
+                      onChange={(checked) => setConfig(prev => ({ ...prev, debugMode: checked }))}
+                      helperText="Enable debug mode for detailed logging"
+                    />
+                  </div>
+                </div>
+              </Card>
+            )
+          },
+          {
+            id: 'advanced',
+            title: 'Advanced Settings',
+            content: (
+              <Card>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold">Advanced Settings</h3>
+                  <p className="text-base-content/70">
+                    Advanced configuration options will be available here in a future update.
+                  </p>
+                </div>
+              </Card>
+            )
+          },
+          {
+            id: 'mcp',
+            title: 'MCP Configuration',
+            content: (
+              <Card>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold">MCP Configuration</h3>
+                  <p className="text-base-content/70">
+                    MCP configuration options will be available here in a future update.
+                  </p>
+                </div>
+              </Card>
+            )
+          }
+        ]}
+        variant="bordered"
+      />
 
       {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {snackbar.open && (
+        <div className="toast toast-end">
+          <div className={`alert alert-${snackbar.severity}`}>
+            <div>
+              <span>{snackbar.message}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

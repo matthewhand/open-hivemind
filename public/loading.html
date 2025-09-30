@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading - Open-Hivemind</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.24/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.1.25/dist/full.min.css" rel="stylesheet" type="text/css" />
     <style>
         .neural-grid {
             background-image: 
@@ -76,10 +76,11 @@
                     Open-Hivemind
                 </h1>
                 
-                <!-- Subtitle -->
-                <p class="text-xl text-base-content/80 mb-8 loading-text">
-                    Initializing Multi-Agent Neural Network...
-                </p>
+                <!-- Enhanced Loading Spinner -->
+                <div class="flex flex-col items-center justify-center mb-8">
+                    <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
+                    <p class="text-xl text-base-content/80">Initializing Multi-Agent Neural Network...</p>
+                </div>
 
                 <!-- Loading Progress -->
                 <div class="w-full max-w-md mx-auto mb-8">

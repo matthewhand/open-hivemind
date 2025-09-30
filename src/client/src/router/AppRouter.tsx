@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Container } from '../components/DaisyUI';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { useAuth } from '../contexts/AuthContext';
 
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
@@ -33,28 +34,30 @@ interface LoadingFallbackProps {
 }
 
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...' }) => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="60vh"
-    flexDirection="column"
-    gap={2}
-  >
+  <Container className="flex justify-center items-center min-h-[60vh] flex-col gap-4">
     <LoadingSpinner size="lg" />
-    <Box component="span" sx={{ color: 'text.secondary' }}>
+    <span className="text-base-content/70">
       {message}
-    </Box>
-  </Box>
+    </span>
+  </Container>
 );
 
-// Simplified ProtectedRoute that always allows access (for localhost development)
+// Protected route that checks authentication
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // For localhost development, always allow access
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <LoadingFallback message="Checking authentication..." />;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
   return <>{children}</>;
 };
 
@@ -63,8 +66,8 @@ const AppRouter: React.FC = () => {
     <MainLayout>
       <Suspense fallback={<LoadingFallback message="Loading page..." />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/uber" replace />} />
-          <Route path="/webui" element={<DashboardPage />} />
+          <Route path="/" element={<Navigate to="/loading-enhanced.html" replace />} />
+          <Route path="/monitor" element={<MonitoringPage />} />
           <Route
             path="/admin"
             element={
@@ -75,9 +78,9 @@ const AppRouter: React.FC = () => {
           />
           <Route path="/login" element={<Login />} />
 
-          {/* Uber routes */}
-          <Route path="/uber" element={<UberLayout />}>
-            <Route index element={<Navigate to="/uber/overview" replace />} />
+          {/* Dashboard routes (renamed from uber) */}
+          <Route path="/dashboard" element={<UberLayout />}>
+            <Route index element={<Navigate to="/dashboard/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
             
             {/* Bot Management Routes */}
@@ -122,10 +125,8 @@ const AppRouter: React.FC = () => {
               }
             />
             
-            {/* Monitoring Routes */}
-            <Route path="monitoring" element={<MonitoringPage />} />
+            {/* System Routes */}
             <Route path="activity" element={<ActivityPage />} />
-            
             <Route path="export" element={<ExportPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="static" element={<StaticPagesPage />} />
@@ -133,6 +134,11 @@ const AppRouter: React.FC = () => {
             <Route path="showcase" element={<DaisyUIShowcase />} />
           </Route>
 
+          {/* Legacy redirects */}
+          <Route path="/uber" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/uber/*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/webui" element={<Navigate to="/monitor" replace />} />
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

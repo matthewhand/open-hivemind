@@ -319,12 +319,12 @@
             </div>
             <p class="loading-tip">
                 💡 Click any feature to navigate directly • 
-                <span onclick="window.location.href='/uber/sitemap'" style="cursor: pointer; text-decoration: underline;">View Full Sitemap</span>
+                <span onclick="window.location.href='/dashboard/sitemap'" style="cursor: pointer; text-decoration: underline;">View Full Sitemap</span>
             </p>
         </div>
     </div>
 
-    <button class="skip-button" onclick="window.location.href='/uber'">
+    <button class="skip-button" onclick="window.location.href='/dashboard'">
         Skip to Dashboard →
     </button>
 
@@ -375,7 +375,7 @@
                 if (countdown <= 0) {
                     clearInterval(timer);
                     if (sitemapLoaded) {
-                        window.location.href = '/uber';
+                        window.location.href = '/dashboard';
                     }
                 }
             }, 1000);
@@ -405,7 +405,7 @@
                 let category = 'Other';
                 let icon = '📄';
                 
-                if (url.url === '/' || url.url.includes('overview')) {
+                if (url.url === '/' || url.url.includes('overview') || url.url.includes('dashboard')) {
                     category = 'Dashboard';
                     icon = '🏠';
                 } else if (url.url.includes('/bots')) {
@@ -480,7 +480,7 @@
                     moreLi.style.opacity = '0.6';
                     moreLi.onclick = (e) => {
                         e.stopPropagation();
-                        window.location.href = '/uber/sitemap';
+                        window.location.href = '/dashboard/sitemap';
                     };
                     pagesList.appendChild(moreLi);
                 }
@@ -507,28 +507,28 @@
         function displayFallbackSitemap() {
             const sitemapGrid = document.getElementById('sitemapGrid');
             sitemapGrid.innerHTML = `
-                <div class="sitemap-category" onclick="window.location.href='/uber'">
+                <div class="sitemap-category" onclick="window.location.href='/dashboard'">
                     <div class="category-title">🏠 Dashboard</div>
                     <ul class="category-pages">
-                        <li onclick="event.stopPropagation(); window.location.href='/uber'">System Overview</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/monitoring'">System Monitoring</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/activity'">Activity Monitor</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard'">System Overview</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/monitor'">System Monitoring</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/activity'">Activity Monitor</li>
                     </ul>
                 </div>
-                <div class="sitemap-category" onclick="window.location.href='/uber/bots'">
+                <div class="sitemap-category" onclick="window.location.href='/dashboard/bots'">
                     <div class="category-title">🤖 Bot Management</div>
                     <ul class="category-pages">
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/bots'">Manage Bots</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/bots/create'">Create Bot</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/personas'">Bot Personas</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/bots'">Manage Bots</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/bots/create'">Create Bot</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/personas'">Bot Personas</li>
                     </ul>
                 </div>
-                <div class="sitemap-category" onclick="window.location.href='/uber/settings'">
+                <div class="sitemap-category" onclick="window.location.href='/dashboard/settings'">
                     <div class="category-title">⚙️ Configuration</div>
                     <ul class="category-pages">
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/settings'">System Settings</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/export'">Export Data</li>
-                        <li onclick="event.stopPropagation(); window.location.href='/uber/sitemap'">Full Sitemap</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/settings'">System Settings</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/export'">Export Data</li>
+                        <li onclick="event.stopPropagation(); window.location.href='/dashboard/sitemap'">Full Sitemap</li>
                     </ul>
                 </div>
             `;
@@ -541,7 +541,7 @@
         function autoRedirect() {
             setTimeout(() => {
                 if (sitemapLoaded) {
-                    window.location.href = '/uber';
+                    window.location.href = '/dashboard';
                 }
             }, 8000);
         }
@@ -556,9 +556,9 @@
         // Handle keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-                window.location.href = '/uber';
+                window.location.href = '/dashboard';
             } else if (e.key === 'Escape') {
-                window.location.href = '/uber/sitemap';
+                window.location.href = '/dashboard/sitemap';
             }
         });
     </script>

@@ -2,32 +2,61 @@ import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
-  Box,
   Stepper,
-  Step,
-  StepLabel,
   Button,
   Card,
-  CardContent,
-  TextField,
-  FormControl,
-  InputLabel,
+  Input,
   Select,
-  MenuItem,
   Alert,
-  Chip,
   Grid,
-  Paper,
-} from '@mui/material';
-import {
-  NavigateNext as NextIcon,
-  NavigateBefore as BackIcon,
-  Check as CheckIcon,
-  Settings as SettingsIcon,
-  Security as SecurityIcon,
-  Storage as StorageIcon,
-  CloudUpload as DeployIcon,
-} from '@mui/icons-material';
+  FormControl,
+} from '../components/DaisyUI';
+
+// Inline SVG icons to replace MUI icons
+const DeployIcon: React.FC = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v14" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7 7 7" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 21h14" />
+  </svg>
+);
+
+const SettingsIcon: React.FC = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const SecurityIcon: React.FC = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const StorageIcon: React.FC = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+  </svg>
+);
+
+const CheckIcon: React.FC = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const NextIcon: React.FC = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
+
+const BackIcon: React.FC = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+);
 import { apiService } from '../services/api';
 import type { Bot } from '../services/api';
 
@@ -96,7 +125,7 @@ const steps: WizardStep[] = [
     id: 'environment',
     title: 'Environment',
     description: 'Configure deployment environment',
-    icon: <CloudUpload />,
+  icon: <DeployIcon />,
     required: false,
   },
   {
@@ -255,111 +284,146 @@ const ConfigurationWizard: React.FC = () => {
     switch (step.id) {
       case 'basics':
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <div className="mt-6">
+            <Typography variant="h6" className="mb-4">
               Basic Bot Configuration
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Bot Name"
-                  value={wizardData.botName}
-                  onChange={(e) => setWizardData(prev => ({ ...prev, botName: e.target.value }))}
-                  helperText="Unique name for your bot"
-                  required
-                />
+                <FormControl fullWidth>
+                  <label className="label">
+                    <span className="label-text">Bot Name *</span>
+                  </label>
+                  <Input
+                    className="input input-bordered w-full"
+                    placeholder="Enter bot name"
+                    value={wizardData.botName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWizardData(prev => ({ ...prev, botName: e.target.value }))}
+                    required
+                  />
+                  <label className="label">
+                    <span className="label-text-alt">Unique name for your bot</span>
+                  </label>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Environment</InputLabel>
+                  <label className="label">
+                    <span className="label-text">Environment</span>
+                  </label>
                   <Select
+                    className="select select-bordered w-full"
                     value={wizardData.environment}
-                    onChange={(e) => setWizardData(prev => ({ ...prev, environment: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setWizardData(prev => ({ ...prev, environment: e.target.value }))}
                   >
-                    <MenuItem value="development">Development</MenuItem>
-                    <MenuItem value="staging">Staging</MenuItem>
-                    <MenuItem value="production">Production</MenuItem>
+                    <option value="development">Development</option>
+                    <option value="staging">Staging</option>
+                    <option value="production">Production</option>
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
-          </Box>
+          </div>
         );
 
       case 'providers':
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <div className="mt-6">
+            <Typography variant="h6" className="mb-4">
               Service Providers
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>Message Provider</InputLabel>
+                  <label className="label">
+                    <span className="label-text">Message Provider *</span>
+                  </label>
                   <Select
+                    className="select select-bordered w-full"
                     value={wizardData.messageProvider}
-                    onChange={(e) => setWizardData(prev => ({ ...prev, messageProvider: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setWizardData(prev => ({ ...prev, messageProvider: e.target.value }))}
+                    required
                   >
-                    <MenuItem value="discord">Discord</MenuItem>
-                    <MenuItem value="slack">Slack</MenuItem>
-                    <MenuItem value="mattermost">Mattermost</MenuItem>
+                    <option value="">Select a provider</option>
+                    <option value="discord">Discord</option>
+                    <option value="slack">Slack</option>
+                    <option value="mattermost">Mattermost</option>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>LLM Provider</InputLabel>
+                  <label className="label">
+                    <span className="label-text">LLM Provider *</span>
+                  </label>
                   <Select
+                    className="select select-bordered w-full"
                     value={wizardData.llmProvider}
-                    onChange={(e) => setWizardData(prev => ({ ...prev, llmProvider: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setWizardData(prev => ({ ...prev, llmProvider: e.target.value }))}
+                    required
                   >
-                    <MenuItem value="openai">OpenAI</MenuItem>
-                    <MenuItem value="flowise">Flowise</MenuItem>
-                    <MenuItem value="openwebui">OpenWebUI</MenuItem>
+                    <option value="">Select a provider</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="flowise">Flowise</option>
+                    <option value="openwebui">OpenWebUI</option>
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
-          </Box>
+          </div>
         );
 
       case 'credentials':
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <div className="mt-6">
+            <Typography variant="h6" className="mb-4">
               Platform Configuration
             </Typography>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Configure platform-specific settings and credentials. Sensitive data is encrypted.
-            </Alert>
+            <Alert 
+              status="info" 
+              message="Configure platform-specific settings and credentials. Sensitive data is encrypted."
+            />
             <Grid container spacing={3}>
               {wizardData.messageProvider === 'discord' && (
                 <>
                   <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                    <Typography variant="subtitle1" className="mt-4 mb-2">
                       Discord Settings
                     </Typography>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Discord Bot Token"
-                      type="password"
-                      value={wizardData.discordToken || ''}
-                      onChange={(e) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))}
-                      helperText="Required: Bot token from Discord Developer Portal"
-                      required
-                    />
+                    <FormControl fullWidth>
+                      <label className="label">
+                        <span className="label-text">Discord Bot Token *</span>
+                      </label>
+                      <Input
+                        type="password"
+                        className="input input-bordered w-full"
+                        placeholder="Enter Discord bot token"
+                        value={wizardData.discordToken || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))}
+                        required
+                      />
+                      <label className="label">
+                        <span className="label-text-alt">Required: Bot token from Discord Developer Portal</span>
+                      </label>
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Discord Client ID"
-                      value={wizardData.discordClientId || ''}
-                      onChange={(e) => setWizardData(prev => ({ ...prev, discordClientId: e.target.value }))}
-                      helperText="Optional: Application ID from Discord Developer Portal"
-                    />
+                    <FormControl fullWidth>
+                      <label className="label">
+                        <span className="label-text">Discord Client ID</span>
+                      </label>
+                      <Input
+                        className="input input-bordered w-full"
+                        placeholder="Enter Discord client ID"
+                        value={wizardData.discordClientId || ''}
+                        onChange={(e) => setWizardData(prev => ({ ...prev, discordClientId: e.target.value }))}
+                      />
+                      <label className="label">
+                        <span className="label-text-alt">Optional: Application ID from Discord Developer Portal</span>
+                      </label>
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
@@ -549,7 +613,7 @@ const ConfigurationWizard: React.FC = () => {
                 </Grid>
               )}
             </Grid>
-          </Box>
+          </div>
         );
 
       case 'environment':

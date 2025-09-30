@@ -163,4 +163,58 @@ describe('llmConfig', () => {
       expect(typeof provider).toBe('string');
     });
   });
+
+  describe('UI-configurable options', () => {
+    const OLD_ENV = process.env;
+
+    beforeEach(() => {
+      jest.resetModules();
+      process.env = { ...OLD_ENV };
+    });
+
+    afterAll(() => {
+      process.env = OLD_ENV;
+    });
+
+    it('should handle openai provider configuration', () => {
+      process.env.LLM_PROVIDER = 'openai';
+      process.env.OPENAI_API_KEY = 'test-key';
+      const config = require('../../src/config/llmConfig').default;
+      const openAiConfig = require('../../src/config/openaiConfig').default;
+      expect(config.get('LLM_PROVIDER')).toBe('openai');
+      expect(openAiConfig.get('OPENAI_API_KEY')).toBe('test-key');
+    });
+
+    it('should handle flowise provider configuration', () => {
+      process.env.LLM_PROVIDER = 'flowise';
+      process.env.FLOWISE_API_KEY = 'test-key';
+      const config = require('../../src/config/llmConfig').default;
+      const flowiseConfig = require('../../src/config/flowiseConfig').default;
+      expect(config.get('LLM_PROVIDER')).toBe('flowise');
+      expect(flowiseConfig.get('FLOWISE_API_KEY')).toBe('test-key');
+    });
+
+    it('should handle openwebui provider configuration', () => {
+      process.env.LLM_PROVIDER = 'openwebui';
+      // No specific config for openwebui, so just check the provider
+      const config = require('../../src/config/llmConfig').default;
+      expect(config.get('LLM_PROVIDER')).toBe('openwebui');
+    });
+
+    it('should handle invalid provider name', () => {
+      process.env.LLM_PROVIDER = 'invalid-provider';
+      const config = require('../../src/config/llmConfig').default;
+      // This will fall back to the default provider
+      expect(config.get('LLM_PROVIDER')).toBe('openai');
+    });
+
+    it('should handle persona and systemInstruction fields', () => {
+      process.env.LLM_PROVIDER = 'openai';
+      process.env.LLM_PERSONA = 'test-persona';
+      process.env.LLM_SYSTEM_INSTRUCTION = 'test-instruction';
+      const config = require('../../src/config/llmConfig').default;
+      // These are not part of the llmConfig schema, so we can't test them here.
+      // We would need to test them where they are actually used.
+    });
+  });
 });

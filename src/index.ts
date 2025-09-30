@@ -18,7 +18,7 @@ const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
-import swarmRouter from '@src/admin/swarmRoutes';
+import swarmRouter from './admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
 import webuiConfigRouter from '@src/webui/routes/config';
 import botsRouter from '@src/server/routes/bots';
@@ -125,24 +125,8 @@ app.use(healthRoute);
 
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
-    console.log('[DEBUG] Root route hit');
-    console.log('[DEBUG] Frontend dist path:', frontendDistPath);
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    console.log('[DEBUG] Resolved index path:', indexPath);
-    if (fs.existsSync(indexPath)) {
-        console.log('[DEBUG] Frontend index.html exists, sending...');
-        res.sendFile(indexPath, (err) => {
-            if (err) {
-                console.error('[DEBUG] Error sending frontend file:', err);
-                res.status(500).send('Error serving frontend');
-            } else {
-                console.log('[DEBUG] Frontend sent successfully');
-            }
-        });
-    } else {
-        console.error('[DEBUG] Frontend index.html does not exist at path:', indexPath);
-        res.status(404).send('Frontend not found - please run npm run build:frontend');
-    }
+    console.log('[DEBUG] Root route hit - issuing redirect to loading portal');
+    res.redirect(302, '/loading-enhanced.html');
 });
 
 // Serve static files from public directory
@@ -155,8 +139,19 @@ app.use(express.static(frontendDistPath));
 app.use('/assets', express.static(frontendAssetsPath));
 
 // Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
+let uberDeprecationLogged = false;
+app.use('/uber', (req: Request, res: Response) => {
+    if (!uberDeprecationLogged) {
+        console.warn('[DEPRECATION] /uber namespace is deprecated. Please use /dashboard instead.');
+        uberDeprecationLogged = true;
+    }
+    const target = req.originalUrl.replace(/^\/uber/, '/dashboard');
+    res.redirect(301, target);
+});
+
+// Monitor route alias (formerly /webui for some monitoring pages)
+app.use('/monitor', express.static(frontendDistPath));
+app.use('/monitor/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
@@ -203,10 +198,27 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // import uberRouter from './routes/uberRouter';
 // app.use('/api/uber', uberRouter);
 
-// Catch-all handler for React Router (must be AFTER all API routes)
-// Return 404 for all non-existent routes
+// SPA fallback: serve index.html for known client-side routes so React Router can handle them
+const spaClientRoutePrefixes = ['/dashboard', '/admin', '/login', '/monitor'];
 app.get('*', (req: Request, res: Response) => {
-    console.log('[DEBUG] Catch-all route hit for:', req.path);
+    const requestPath = req.path;
+    console.log('[DEBUG] Catch-all route hit for:', requestPath);
+
+    // If request appears to be for a file with an extension, treat as 404 static
+    if (path.extname(requestPath)) {
+        return res.status(404).json({ error: 'Resource not found' });
+    }
+
+    // Serve SPA index for designated client prefixes
+    if (spaClientRoutePrefixes.some(prefix => requestPath === prefix || requestPath.startsWith(prefix + '/'))) {
+        const indexPath = path.join(frontendDistPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+            return res.sendFile(indexPath);
+        }
+        return res.status(500).send('SPA index missing');
+    }
+
+    // Default 404 JSON for other unmatched paths (likely API or mis-typed)
     res.status(404).json({ error: 'Endpoint not found' });
 });
 

@@ -13,7 +13,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { Input } from './DaisyUI';
+import { TextInput } from './DaisyUI';
 import {
   Refresh as RefreshIcon,
   Clear as ClearIcon,
@@ -184,20 +184,14 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Enter a filename for the configuration export:
           </Typography>
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text">Filename</span>
-            </label>
-            <Input
-              autoFocus
-              placeholder="Filename"
-              value={exportFilename}
-              onChange={(e) => setExportFilename(e.target.value)}
-            />
-            <label className="label">
-              <span className="label-text-alt">File will be saved as .json</span>
-            </label>
-          </div>
+          <TextInput
+            label="Filename"
+            autoFocus
+            placeholder="Filename"
+            value={exportFilename}
+            onChange={(e) => setExportFilename(e.target.value)}
+            helperText="File will be saved as .json"
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setExportDialog(false)}>Cancel</Button>

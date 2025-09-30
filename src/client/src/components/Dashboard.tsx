@@ -8,7 +8,9 @@ import {
   Button,
   ToastNotification,
   SkeletonCard,
-  SkeletonList
+  SkeletonList,
+  Dropdown,
+  Tooltip
 } from './DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
@@ -254,48 +256,62 @@ const Dashboard: React.FC = () => {
                         <p className="text-sm opacity-70">{bot.messageProvider}</p>
                       </div>
                     </div>
-                    <div className="dropdown dropdown-end">
-                      <label tabIndex={0} className="btn btn-ghost btn-sm">
-                        ⚙️
-                      </label>
-                      <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a>🔧 Configure</a></li>
-                        <li><a>📊 View Logs</a></li>
-                        <li><a>🔄 Restart</a></li>
-                        <li><a>🔍 Debug</a></li>
-                      </ul>
-                    </div>
+                    <Dropdown
+                      trigger="⚙️"
+                      position="bottom"
+                      color="ghost"
+                      size="sm"
+                    >
+                      <li><a>🔧 Configure</a></li>
+                      <li><a>📊 View Logs</a></li>
+                      <li><a>🔄 Restart</a></li>
+                      <li><a>🔍 Debug</a></li>
+                    </Dropdown>
                   </div>
 
                   {/* Status Badges */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge 
-                      variant={getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'info'} 
-                      className="text-xs font-semibold"
+                    <Tooltip
+                      content={`Bot is currently ${botStatus}. ${connected ? 'Connected and operational.' : 'Disconnected or having issues.'}`}
+                      position="top"
                     >
-                      {botStatus.toUpperCase()}
-                    </Badge>
+                      <Badge
+                        variant={getStatusColor(botStatus) === 'info' ? 'neutral' : getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'primary' | 'secondary' | 'neutral'}
+                        className="text-xs font-semibold cursor-help"
+                      >
+                        {botStatus.toUpperCase()}
+                      </Badge>
+                    </Tooltip>
                     {bot.llmProvider && (
                       <Badge variant="secondary" className="text-xs">
                         🧠 {bot.llmProvider.toUpperCase()}
                       </Badge>
                     )}
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       📱 {bot.messageProvider.toUpperCase()}
                     </Badge>
                   </div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="stat bg-base-200 rounded-lg p-3">
-                      <div className="stat-title text-xs">Messages</div>
-                      <div className="stat-value text-lg">{messageCount.toLocaleString()}</div>
-                    </div>
-                    <div className="stat bg-base-200 rounded-lg p-3">
-                      <div className="stat-title text-xs">Status</div>
-                      <div className={`stat-value text-lg ${connected ? 'text-success' : 'text-error'}`}>
-                        {connected ? '🟢' : '🔴'}
+                  <div className="stats stats-vertical lg:stats-horizontal shadow mb-4">
+                    <div className="stat">
+                      <div className="stat-figure text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                       </div>
+                      <div className="stat-title">Messages</div>
+                      <div className="stat-value text-primary">{messageCount.toLocaleString()}</div>
+                      <div className="stat-desc">processed today</div>
+                    </div>
+
+                    <div className="stat">
+                      <div className="stat-figure text-secondary">
+                        <div className={`w-8 h-8 rounded-full ${connected ? 'bg-success' : 'bg-error'}`}></div>
+                      </div>
+                      <div className="stat-title">Connection</div>
+                      <div className={`stat-value ${connected ? 'text-success' : 'text-error'}`}>
+                        {connected ? 'Online' : 'Offline'}
+                      </div>
+                      <div className="stat-desc">{connected ? 'Connected' : 'Disconnected'}</div>
                     </div>
                   </div>
 

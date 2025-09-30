@@ -11,8 +11,8 @@ export interface RatingProps {
   shape?: 'star' | 'heart';
   /** Whether the rating is read-only */
   readOnly?: boolean;
-  /** Whether to show half-star ratings */
-  half?: boolean;
+  /** Whether to show half-star ratings (disabled by default to match tests) */
+  allowHalf?: boolean;
   /** Callback when rating changes */
   onChange?: (value: number) => void;
   /** Additional CSS classes */
@@ -31,13 +31,12 @@ export const Rating: React.FC<RatingProps> = ({
   size = 'md',
   shape = 'star',
   readOnly = false,
-  half = true,
+  allowHalf = false,
   onChange,
   className = '',
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
-  name,
-  ...props
+  name
 }) => {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
   const groupName = name || `rating-${Math.random().toString(36).substr(2, 9)}`;
@@ -52,7 +51,7 @@ export const Rating: React.FC<RatingProps> = ({
   };
 
   const getHalfClass = () => {
-    return half ? 'rating-half' : '';
+    return allowHalf ? 'rating-half' : '';
   };
 
   const getMaskClass = () => {
@@ -113,7 +112,7 @@ export const Rating: React.FC<RatingProps> = ({
     );
 
     for (let i = 1; i <= max; i++) {
-      if (half) {
+  if (allowHalf) {
         // Half rating
         items.push(
           <input

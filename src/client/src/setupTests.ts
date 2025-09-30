@@ -88,6 +88,24 @@ if (!(global as any).fetch) {
   CLOSED: 3,
 })) as unknown as typeof WebSocket;
 
+// Mock dynamic imports for Slack and Discord services
+jest.mock('@integrations/slack/SlackService', () => ({
+  default: {
+    getInstance: () => ({
+      getBotManager: () => ({
+        getAllBots: () => [],
+      }),
+    }),
+  },
+}));
+
+jest.mock('@integrations/discord/DiscordService', () => ({
+  DiscordService: {
+    getInstance: () => ({
+      getAllBots: () => [],
+    }),
+  },
+}));
 // Mock console methods to reduce noise in tests
 const originalError = console.error;
 beforeAll(() => {

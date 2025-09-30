@@ -1,5 +1,6 @@
 // Core UI Components
 export { default as Accordion } from './Accordion';
+export { default as Collapsible } from './Collapsible';
 export { Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as Badge } from './Badge';
@@ -19,6 +20,15 @@ export { default as StepWizard } from './StepWizard';
 export { default as Timeline } from './Timeline';
 export { default as ToastNotification } from './ToastNotification';
 export { default as VisualFeedback } from './VisualFeedback';
+export { default as Tabs } from './Tabs';
+
+// Layout & Structure Components
+export { default as Container } from './Container';
+export { default as Typography } from './Typography';
+export { default as Grid } from './Grid';
+export { default as AppBar, Toolbar } from './AppBar';
+export { default as Stepper } from './Stepper';
+export { default as LinearProgress } from './LinearProgress';
 
 // Navigation Components
 export { default as DrawerNavigation } from './DrawerNavigation';
@@ -28,21 +38,30 @@ export { default as HamburgerMenu } from './HamburgerMenu';
 export { default as Drawer } from './Drawer';
 export { default as Menu } from './Menu';
 
+export { default as Swap } from './Swap';
+export { default as Join } from './Join';
 // Form & Input Components
 export { default as Checkbox } from './Checkbox';
 export { default as FileUpload } from './FileUpload';
 export { default as Dropdown } from './Dropdown';
 export { default as RangeSlider } from './RangeSlider';
 export { default as Form } from './Form';
+export { default as FormControl } from './FormControl';
 export { default as Input } from './Input';
 export { default as Radio } from './Radio';
 export { default as Rating } from './Rating';
 export { default as Select } from './Select';
+export { default as TextInput } from './TextInput';
+export { default as Textarea } from './Textarea';
+export { default as Toggle } from './Toggle';
 
 // Utility Components
 export { default as Kbd } from './Kbd';
 export { default as Tooltip } from './Tooltip';
 export { default as ProgressBar } from './ProgressBar';
+export { default as Indicator } from './Indicator';
+export { default as Divider } from './Divider';
+export { default as Artboard } from './Artboard';
 export { default as Countdown } from './Countdown';
 export { default as Mockup } from './Mockup';
 
