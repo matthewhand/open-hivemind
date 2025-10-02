@@ -148,7 +148,7 @@ export class MattermostService implements IMessengerService {
         const user = await client.getUser(post.user_id);
         const username = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : 'Unknown';
         
-        const { MattermostMessage } = await import('./MattermostMessage');
+        const { MattermostMessage } = await import('./MattermostMessage.js');
         const mattermostMsg = new MattermostMessage(post, username);
         messages.push(mattermostMsg);
       }

@@ -397,7 +397,7 @@ export class DatabaseManager {
     }
   }
 
-  async getMessageHistory(channelId: string, limit = 10): Promise<MessageRecord[]> {
+  async getMessageHistory(channelId: string, limit = 10, offset = 0): Promise<MessageRecord[]> {
     if (!this.db || !this.connected) {
       // Return empty array for tests when not connected
       return [];
@@ -405,11 +405,11 @@ export class DatabaseManager {
 
     try {
       const rows = await this.db.all(`
-        SELECT * FROM messages 
-        WHERE channelId = ? 
-        ORDER BY timestamp DESC 
-        LIMIT ?
-      `, [channelId, limit]);
+        SELECT * FROM messages
+        WHERE channelId = ?
+        ORDER BY timestamp DESC
+        LIMIT ? OFFSET ?
+      `, [channelId, limit, offset]);
 
       const messages: MessageRecord[] = rows.map(row => ({
         id: row.id,
@@ -433,7 +433,7 @@ export class DatabaseManager {
   }
 
   async getMessages(channelId: string, limit: number = 50, offset: number = 0): Promise<MessageRecord[]> {
-    return this.getMessageHistory(channelId, limit);
+    return this.getMessageHistory(channelId, limit, offset);
   }
 
   async storeConversationSummary(summary: ConversationSummary): Promise<number> {

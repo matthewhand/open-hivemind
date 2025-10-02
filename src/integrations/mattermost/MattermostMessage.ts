@@ -71,7 +71,7 @@ export class MattermostMessage extends IMessage {
     return [];
   }
 
-  public mentionsUsers(userId: string): boolean {
+  public mentionsUsers(): boolean {
     return false;
   }
 

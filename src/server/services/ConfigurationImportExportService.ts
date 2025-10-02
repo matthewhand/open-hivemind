@@ -5,8 +5,8 @@ import { ConfigurationVersionService } from './ConfigurationVersionService';
 import Debug from 'debug';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { createReadStream, createWriteStream } from 'fs';
-import { pipeline } from 'stream/promises';
+// import { createReadStream, createWriteStream } from 'fs';
+// import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 
@@ -647,7 +647,7 @@ export class ConfigurationImportExportService {
   /**
    * Parse YAML (simplified implementation)
    */
-  private parseYAML(yamlString: string): any {
+  private parseYAML(_yamlString: string): any {
     // This is a simplified YAML parser
     // In production, use a proper YAML library like js-yaml
     throw new Error('YAML parsing not implemented in this version');

@@ -5,7 +5,6 @@ import DiscordMessage from './DiscordMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
 // import { AudioRecorder } from './voice/audioRecorder';

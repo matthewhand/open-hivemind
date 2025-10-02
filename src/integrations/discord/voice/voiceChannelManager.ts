@@ -1,5 +1,5 @@
 import { VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
-import { VoiceChannel, Client } from 'discord.js';
+import { Client } from 'discord.js';
 import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from './voiceCommandHandler';
 import { VoiceActivityDetection } from './voiceActivityDetection';

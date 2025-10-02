@@ -344,7 +344,7 @@ export class SlackService implements IMessengerService {
       const messageProcessor = this.messageProcessors.get(botName);
       if (!messageProcessor) continue;
 
-      botManager.setMessageHandler(async (message, _history, _botConfig) => {
+      botManager.setMessageHandler(async (message) => {
         // Emit WebSocket monitoring event for incoming message
         try {
           const ws = require('@src/server/services/WebSocketService').default as typeof import('@src/server/services/WebSocketService').default;

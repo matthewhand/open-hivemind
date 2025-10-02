@@ -10,7 +10,7 @@ export function getMinIntervalMs(): number {
     const value = messageConfig.get('MESSAGE_MIN_INTERVAL_MS');
     const numValue = typeof value === 'number' ? value : Number(value) || 1000;
     return isNaN(numValue) ? 1000 : numValue;
-  } catch (error) {
+  } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     // If config access fails, return default
     return 1000;
   }
@@ -37,7 +37,7 @@ export function shouldProcessMessage(message: IMessage): boolean {
     let ignoreBots;
     try {
       ignoreBots = messageConfig.get('MESSAGE_IGNORE_BOTS');
-    } catch (configError) {
+    } catch (_configError) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // If config access fails, default to ignoring bots
       ignoreBots = true;
     }
@@ -49,7 +49,7 @@ export function shouldProcessMessage(message: IMessage): boolean {
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     // If message methods throw, don't process the message
     return false;
   }

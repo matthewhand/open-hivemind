@@ -1,9 +1,8 @@
 import Debug from 'debug';
-import { IMessage } from '@message/interfaces/IMessage';
+// import { IMessage } from '@message/interfaces/IMessage';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { handleMessage } from '@message/handlers/messageHandler';
+// import { handleMessage } from '@message/handlers/messageHandler';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
-import { SyntheticMessage } from './SyntheticMessage';
 
 const log = Debug('app:idleResponseManager');
 
@@ -89,7 +88,7 @@ export class IdleResponseManager {
       if (envMinDelay || envMaxDelay || envEnabled) {
         log(`Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`);
       }
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       log('Using default idle response configuration');
     }
   }
@@ -158,7 +157,7 @@ export class IdleResponseManager {
                 },
                 getDefaultChannel: () => discordService.getDefaultChannel(),
                 shutdown: async () => {},
-                setMessageHandler: (handler: any) => {}
+                setMessageHandler: (_handler: any) => {}
               };
               
               this.serviceActivities.set(botServiceName, {
@@ -279,7 +278,7 @@ export class IdleResponseManager {
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
     // Create a unique timer ID to prevent duplicates
-    const timerId = Date.now() + Math.random();
+    const _timerId = Date.now() + Math.random(); // eslint-disable-line @typescript-eslint/no-unused-vars
     activity.timer = setTimeout(async () => {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);
@@ -395,8 +394,8 @@ export class IdleResponseManager {
   }
 
   public clearAllChannels(): void {
-    for (const [serviceName, serviceActivity] of this.serviceActivities) {
-      for (const [channelId, activity] of serviceActivity.channels) {
+    for (const [_serviceName, serviceActivity] of this.serviceActivities) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      for (const [_channelId, activity] of serviceActivity.channels) { // eslint-disable-line @typescript-eslint/no-unused-vars
         if (activity.timer) {
           clearTimeout(activity.timer);
         }

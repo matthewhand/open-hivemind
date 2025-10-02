@@ -1,5 +1,4 @@
 import { watch } from 'fs';
-import { join } from 'path';
 import { EventEmitter } from 'events';
 
 export class ConfigWatcher extends EventEmitter {

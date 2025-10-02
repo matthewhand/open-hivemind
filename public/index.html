@@ -3,246 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open-Hivemind Dashboard</title>
+    <title>Open-Hivemind - AI Bot Management Platform</title>
     <meta name="description" content="Unified dashboard for Open-Hivemind multi-agent system">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5.1.25/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <style>
-        .theme-controller {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1000;
-        }
-    </style>
 </head>
 <body class="bg-base-100 min-h-screen">
-    <!-- Theme Controller -->
-    <div class="theme-controller dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
-            </svg>
+
+  <!-- Navigation Bar -->
+  <div class="navbar bg-base-100/90 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+    <div class="navbar-start">
+      <a href="/" class="btn btn-ghost text-xl">
+        <div class="avatar placeholder">
+          <div class="bg-primary text-primary-content rounded-full w-8">
+            <span class="text-sm">🧠</span>
+          </div>
         </div>
-        <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="light" aria-label="Light"/></li>
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dark" aria-label="Dark"/></li>
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cupcake" aria-label="Cupcake"/></li>
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cyberpunk" aria-label="Cyberpunk"/></li>
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="synthwave" aria-label="Synthwave"/></li>
-            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dracula" aria-label="Dracula"/></li>
-        </ul>
+        <span class="font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Open-Hivemind
+        </span>
+      </a>
     </div>
+    <div class="navbar-end">
+        <!-- Theme Controller -->
+        <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+            </div>
+            <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="light" aria-label="Light"/></li>
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dark" aria-label="Dark"/></li>
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cupcake" aria-label="Cupcake"/></li>
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cyberpunk" aria-label="Cyberpunk"/></li>
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="synthwave" aria-label="Synthwave"/></li>
+                <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dracula" aria-label="Dracula"/></li>
+            </ul>
+        </div>
+    </div>
+  </div>
 
-    <!-- Hero Section -->
-    <div class="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
-        <div class="hero-content text-center">
-            <div class="max-w-4xl">
-                <!-- Logo and Title -->
-                <div class="avatar placeholder mb-6">
-                    <div class="bg-neutral text-neutral-content rounded-full w-20">
-                        <span class="text-3xl">🤖</span>
-                    </div>
-                </div>
-                
-                <h1 class="text-5xl font-bold text-white mb-4">
-                    Open-Hivemind Dashboard
-                </h1>
-                <p class="text-xl text-white/80 mb-8">
-                    Multi-Agent System Control Center - Orchestrating intelligent conversations across platforms
-                </p>
+  <!-- Hero Section -->
+  <div class="hero min-h-[60vh] bg-base-200">
+    <div class="hero-content text-center">
+      <div class="max-w-2xl">
+        <div class="text-8xl mb-4">🧠</div>
+        <h1 class="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          Open-Hivemind
+        </h1>
+        <p class="py-6 text-xl text-base-content/80">
+          The ultimate AI bot management platform. Create, deploy, and orchestrate intelligent bots across multiple platforms with unprecedented ease.
+        </p>
+        <div class="flex gap-4 justify-center">
+          <a href="/webui" class="btn btn-primary btn-lg">🚀 Launch WebUI</a>
+          <a href="/admin" class="btn btn-outline btn-lg">⚙️ Open Admin</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                <!-- Real-time Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="stats shadow bg-base-100/90 backdrop-blur">
-                        <div class="stat">
-                            <div class="stat-figure text-primary">
-                                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                                    <span class="loading loading-ring loading-sm" id="systemStatusLoader"></span>
-                                    <span class="hidden" id="systemStatusIcon">🟢</span>
-                                </div>
-                            </div>
-                            <div class="stat-title">System Status</div>
-                            <div class="stat-value text-primary" id="systemStatus">Loading...</div>
-                            <div class="stat-desc" id="systemStatusDesc">Checking health...</div>
-                        </div>
-                    </div>
-
-                    <div class="stats shadow bg-base-100/90 backdrop-blur">
-                        <div class="stat">
-                            <div class="stat-figure text-secondary">
-                                <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                                    <span class="loading loading-ring loading-sm" id="activeBotsLoader"></span>
-                                    <span class="hidden text-secondary-content text-sm" id="activeBotsIcon">🤖</span>
-                                </div>
-                            </div>
-                            <div class="stat-title">Active Bots</div>
-                            <div class="stat-value text-secondary" id="activeBots">0</div>
-                            <div class="stat-desc">Connected agents</div>
-                        </div>
-                    </div>
-
-                    <div class="stats shadow bg-base-100/90 backdrop-blur">
-                        <div class="stat">
-                            <div class="stat-figure text-accent">
-                                <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                                    <span class="loading loading-ring loading-sm" id="uptimeLoader"></span>
-                                    <span class="hidden text-accent-content text-sm" id="uptimeIcon">⏱️</span>
-                                </div>
-                            </div>
-                            <div class="stat-title">Uptime</div>
-                            <div class="stat-value text-accent" id="uptime">--</div>
-                            <div class="stat-desc">System running time</div>
-                        </div>
-                    </div>
-
-                    <div class="stats shadow bg-base-100/90 backdrop-blur">
-                        <div class="stat">
-                            <div class="stat-figure text-info">
-                                <div class="w-8 h-8 rounded-full bg-info flex items-center justify-center">
-                                    <span class="loading loading-ring loading-sm" id="messageCountLoader"></span>
-                                    <span class="hidden text-info-content text-sm" id="messageCountIcon">💬</span>
-                                </div>
-                            </div>
-                            <div class="stat-title">Messages</div>
-                            <div class="stat-value text-info" id="messageCount">0</div>
-                            <div class="stat-desc">Total processed</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="card bg-base-100/90 backdrop-blur shadow-xl">
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                <div class="badge badge-primary">🌐</div>
-                                Web UI
-                            </h2>
-                            <p>Access the main user interface for bot management, monitoring, and real-time interactions.</p>
-                            <div class="card-actions justify-end">
-                                <a href="/webui" class="btn btn-primary">Open WebUI</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100/90 backdrop-blur shadow-xl">
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                <div class="badge badge-secondary">⚙️</div>
-                                Admin Panel
-                            </h2>
-                            <p>Advanced configuration controls for system management, MCP servers, and deployment.</p>
-                            <div class="card-actions justify-end">
-                                <a href="/admin" class="btn btn-secondary">Open Admin</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer Info -->
-                <div class="text-white/60 text-sm">
-                    <div class="divider divider-neutral"></div>
-                    <p class="mb-2">Open-Hivemind Multi-Agent System | Version 1.0.0</p>
-                    <p>API endpoints: <code class="bg-base-100/20 px-2 py-1 rounded">/dashboard/api/status</code></p>
+  <!-- Stats Section -->
+  <div class="container mx-auto px-4 -mt-16 relative z-10">
+    <div class="stats stats-vertical lg:stats-horizontal shadow-xl w-full">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span class="loading loading-ring loading-sm" id="systemStatusLoader"></span>
+                    <span class="hidden" id="systemStatusIcon">🟢</span>
                 </div>
             </div>
+            <div class="stat-title">System Status</div>
+            <div class="stat-value text-primary" id="systemStatus">Loading...</div>
+            <div class="stat-desc" id="systemStatusDesc">Checking health...</div>
         </div>
-    </div></body>
+        <div class="stat">
+            <div class="stat-figure text-secondary">
+                <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                    <span class="loading loading-ring loading-sm" id="activeBotsLoader"></span>
+                    <span class="hidden text-secondary-content text-lg" id="activeBotsIcon">🤖</span>
+                </div>
+            </div>
+            <div class="stat-title">Active Bots</div>
+            <div class="stat-value text-secondary" id="activeBots">0</div>
+            <div class="stat-desc">Connected agents</div>
+        </div>
+        <div class="stat">
+            <div class="stat-figure text-accent">
+                <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <span class="loading loading-ring loading-sm" id="uptimeLoader"></span>
+                    <span class="hidden text-accent-content text-lg" id="uptimeIcon">⏱️</span>
+                </div>
+            </div>
+            <div class="stat-title">Uptime</div>
+            <div class="stat-value text-accent" id="uptime">--</div>
+            <div class="stat-desc">System running time</div>
+        </div>
+        <div class="stat">
+            <div class="stat-figure text-info">
+                <div class="w-8 h-8 rounded-full bg-info/20 flex items-center justify-center">
+                    <span class="loading loading-ring loading-sm" id="messageCountLoader"></span>
+                    <span class="hidden text-info-content text-lg" id="messageCountIcon">💬</span>
+                </div>
+            </div>
+            <div class="stat-title">Messages</div>
+            <div class="stat-value text-info" id="messageCount">0</div>
+            <div class="stat-desc">Total processed</div>
+        </div>
+    </div>
+  </div>
 
-    <script>
-        // Theme controller
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeControllers = document.querySelectorAll('.theme-controller');
-            themeControllers.forEach(controller => {
-                controller.addEventListener('change', function() {
-                    if (this.type === 'radio' && this.checked) {
-                        document.documentElement.setAttribute('data-theme', this.value);
-                        localStorage.setItem('theme', this.value);
-                    }
-                });
+  <!-- Features Section -->
+  <div class="container mx-auto px-4 py-24">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold mb-4">🌟 Powerful Features</h2>
+      <p class="text-lg text-base-content/70">Everything you need to build and manage intelligent bot ecosystems</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Multi-Platform Support -->
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+        <div class="card-body">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-4xl">🌐</div>
+            <h3 class="card-title">Multi-Platform Support</h3>
+          </div>
+          <p class="text-base-content/80">
+            Deploy your bots across Discord, Slack, Telegram, and more with unified management.
+          </p>
+          <div class="card-actions justify-end">
+            <div class="badge badge-primary">Discord</div>
+            <div class="badge badge-secondary">Slack</div>
+            <div class="badge badge-accent">Telegram</div>
+          </div>
+        </div>
+      </div>
+      <!-- AI Integration -->
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+        <div class="card-body">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-4xl">🧠</div>
+            <h3 class="card-title">Advanced AI Integration</h3>
+          </div>
+          <p class="text-base-content/80">
+            Connect to OpenAI, Claude, Gemini, and custom LLM providers with intelligent routing.
+          </p>
+          <div class="card-actions justify-end">
+            <div class="badge badge-primary">OpenAI</div>
+            <div class="badge badge-secondary">Claude</div>
+            <div class="badge badge-accent">Gemini</div>
+          </div>
+        </div>
+      </div>
+      <!-- Swarm Intelligence -->
+      <div class="card bg-base-100 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+        <div class="card-body">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-4xl">🐝</div>
+            <h3 class="card-title">Swarm Intelligence</h3>
+          </div>
+          <p class="text-base-content/80">
+            Coordinate multiple bot instances as a unified digital consciousness with shared context.
+          </p>
+          <div class="avatar-group -space-x-6 rtl:space-x-reverse mt-2">
+            <div class="avatar border-2 border-base-100"><div class="w-12 bg-primary text-primary-content"><span>B1</span></div></div>
+            <div class="avatar border-2 border-base-100"><div class="w-12 bg-secondary text-secondary-content"><span>B2</span></div></div>
+            <div class="avatar border-2 border-base-100"><div class="w-12 bg-accent text-accent-content"><span>B3</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer footer-center p-10 bg-base-200 text-base-content">
+    <aside>
+      <div class="text-4xl mb-4">🧠</div>
+      <p class="font-bold text-lg">Open-Hivemind AI Platform</p>
+      <p>Orchestrating intelligent bot ecosystems since 2024</p>
+    </aside>
+    <nav>
+      <div class="grid grid-flow-col gap-4">
+        <a href="https://github.com/Open-Hivemind/Open-Hivemind" class="link link-hover" target="_blank">GitHub</a>
+        <a href="/docs" class="link link-hover">Documentation</a>
+        <a href="/api/docs" class="link link-hover">API Reference</a>
+      </div>
+    </nav>
+  </footer>
+
+  <script>
+    // Theme controller
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeControllers = document.querySelectorAll('.theme-controller');
+        themeControllers.forEach(controller => {
+            controller.addEventListener('change', function() {
+                if (this.type === 'radio' && this.checked) {
+                    document.documentElement.setAttribute('data-theme', this.value);
+                    localStorage.setItem('theme', this.value);
+                }
             });
-
-            // Load saved theme
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            const themeRadio = document.querySelector(`input[value="${savedTheme}"]`);
-            if (themeRadio) themeRadio.checked = true;
         });
 
-        // Enhanced dashboard status fetching with DaisyUI elements
-        async function fetchDashboardStatus() {
-            const hideLoaders = () => {
-                ['systemStatusLoader', 'activeBotsLoader', 'uptimeLoader', 'messageCountLoader'].forEach(id => {
-                    const loader = document.getElementById(id);
-                    const icon = document.getElementById(id.replace('Loader', 'Icon'));
-                    if (loader) loader.classList.add('hidden');
-                    if (icon) icon.classList.remove('hidden');
-                });
-            };
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeRadio = document.querySelector(`input[value="${savedTheme}"]`);
+        if (themeRadio) themeRadio.checked = true;
+    });
 
-            try {
-                const response = await fetch('/dashboard/api/status');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                
-                // Update system status with DaisyUI styling
-                const systemStatusEl = document.getElementById('systemStatus');
-                const systemStatusDesc = document.getElementById('systemStatusDesc');
-                if (data.bots && data.bots.length > 0) {
-                    systemStatusEl.textContent = 'Online';
-                    systemStatusDesc.textContent = 'All systems operational';
-                } else {
-                    systemStatusEl.textContent = 'Standby';
-                    systemStatusDesc.textContent = 'Waiting for connections';
-                }
-                
-                // Update active bots
-                const activeBotsEl = document.getElementById('activeBots');
-                const activeBots = data.bots ? data.bots.filter(bot => bot.status === 'active').length : 0;
-                activeBotsEl.textContent = activeBots;
-                
-                // Update uptime
-                const uptimeEl = document.getElementById('uptime');
-                if (data.uptime) {
-                    const hours = Math.floor(data.uptime / 3600);
-                    const minutes = Math.floor((data.uptime % 3600) / 60);
-                    uptimeEl.textContent = `${hours}h ${minutes}m`;
-                } else {
-                    uptimeEl.textContent = '--';
-                }
-                
-                // Update message count
-                const messageCountEl = document.getElementById('messageCount');
-                const totalMessages = data.bots ? data.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) : 0;
-                messageCountEl.textContent = totalMessages.toLocaleString();
-                
-                hideLoaders();
-                
-            } catch (error) {
-                console.error('Error fetching dashboard status:', error);
-                
-                // Error state with DaisyUI styling
-                document.getElementById('systemStatus').textContent = 'Offline';
-                document.getElementById('systemStatusDesc').textContent = 'Connection failed';
-                document.getElementById('activeBots').textContent = '--';
-                document.getElementById('uptime').textContent = '--';
-                document.getElementById('messageCount').textContent = '--';
-                
-                hideLoaders();
+    // Dashboard status fetching
+    async function fetchDashboardStatus() {
+        const hideLoaders = () => {
+            ['systemStatusLoader', 'activeBotsLoader', 'uptimeLoader', 'messageCountLoader'].forEach(id => {
+                const loader = document.getElementById(id);
+                const icon = document.getElementById(id.replace('Loader', 'Icon'));
+                if (loader) loader.classList.add('hidden');
+                if (icon) icon.classList.remove('hidden');
+            });
+        };
+
+        try {
+            const response = await fetch('/dashboard/api/status');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const data = await response.json();
+            
+            // Update system status
+            const systemStatusEl = document.getElementById('systemStatus');
+            const systemStatusDesc = document.getElementById('systemStatusDesc');
+            if (data.bots && data.bots.length > 0) {
+                systemStatusEl.textContent = 'Online';
+                systemStatusDesc.textContent = 'All systems operational';
+            } else {
+                systemStatusEl.textContent = 'Standby';
+                systemStatusDesc.textContent = 'Waiting for connections';
+            }
+            
+            // Update active bots
+            const activeBotsEl = document.getElementById('activeBots');
+            const activeBots = data.bots ? data.bots.filter(bot => bot.status === 'active').length : 0;
+            activeBotsEl.textContent = activeBots;
+            
+            // Update uptime
+            const uptimeEl = document.getElementById('uptime');
+            if (data.uptime) {
+                const hours = Math.floor(data.uptime / 3600);
+                const minutes = Math.floor((data.uptime % 3600) / 60);
+                uptimeEl.textContent = `${hours}h ${minutes}m`;
+            } else {
+                uptimeEl.textContent = '--';
+            }
+            
+            // Update message count
+            const messageCountEl = document.getElementById('messageCount');
+            const totalMessages = data.bots ? data.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) : 0;
+            messageCountEl.textContent = totalMessages.toLocaleString();
+            
+            hideLoaders();
+            
+        } catch (error) {
+            console.error('Error fetching dashboard status:', error);
+            
+            document.getElementById('systemStatus').textContent = 'Offline';
+            document.getElementById('systemStatusDesc').textContent = 'Connection failed';
+            document.getElementById('activeBots').textContent = '--';
+            document.getElementById('uptime').textContent = '--';
+            document.getElementById('messageCount').textContent = '--';
+            
+            hideLoaders();
         }
-        
-        // Initial fetch
-        fetchDashboardStatus();
-        
-        // Refresh every 30 seconds
-        setInterval(fetchDashboardStatus, 30000);
-    </script>
+    }
+    
+    // Initial fetch
+    fetchDashboardStatus();
+    
+    // Refresh every 30 seconds
+    setInterval(fetchDashboardStatus, 30000);
+  </script>
 </body>
 </html>

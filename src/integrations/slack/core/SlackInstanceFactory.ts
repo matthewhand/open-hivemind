@@ -1,7 +1,6 @@
 import Debug from 'debug';
 import { SlackBotManager } from '../SlackBotManager';
 import { SlackSignatureVerifier } from '../SlackSignatureVerifier';
-import { SlackConfigurationLoader, SlackBotInstance } from './SlackConfigurationLoader';
 
 const debug = Debug('app:SlackService:InstanceFactory');
 

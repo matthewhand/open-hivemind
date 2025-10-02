@@ -314,6 +314,9 @@ export const openAiProvider: ILlmProvider = {
     metadata?: Record<string, any>
   ): Promise<string> {
     debug('Starting streaming chat completion generation');
+    debug('User message:', userMessage);
+    debug('History messages:', JSON.stringify(historyMessages.map(m => ({ role: m.role, content: m.getText() }))));
+    debug('Metadata:', JSON.stringify(metadata || {}));
     const apiKey = openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
     if (!apiKey) {
       throw new Error('OpenAI API key is missing');

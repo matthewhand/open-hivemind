@@ -8,7 +8,7 @@ const SlackMgr = require('@integrations/slack/SlackService');
 const MattermostMgr = (() => {
   try {
     return require('@integrations/mattermost/MattermostService');
-  } catch (_e) {
+  } catch (_e) { // eslint-disable-line @typescript-eslint/no-unused-vars
     return null;
   }
 })();
@@ -25,11 +25,6 @@ const MattermostMgr = (() => {
  *
  * @returns Array of initialized message provider instances.
  */
-// Ensure CommonJS require compatibility for tests using jest.mock()
-function __require(modulePath: string): any {
-   
-  return require(modulePath);
-}
 
 export function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
@@ -38,7 +33,7 @@ export function getMessengerProvider() {
   try {
     const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
     messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
-  } catch (error) {
+  } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
     // If file doesn't exist or JSON is invalid, use empty config
     messengersConfig = {};
   }
@@ -167,7 +162,7 @@ export function getMessengerProvider() {
           }
           messengerServices.push(svc);
         }
-      } catch (_e) {
+      } catch (_e) { // eslint-disable-line @typescript-eslint/no-unused-vars
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',

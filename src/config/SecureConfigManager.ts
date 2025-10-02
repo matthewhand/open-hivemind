@@ -12,14 +12,14 @@ export interface SecureConfig {
   data: Record<string, any>;
   createdAt: string;
   updatedAt: string;
-  checksum: string;
+  checksum?: string;
 }
 
 export interface BackupMetadata {
   id: string;
   timestamp: string;
   configs: string[];
-  checksum: string;
+  checksum?: string;
   version: string;
 }
 
@@ -79,7 +79,8 @@ export class SecureConfigManager {
       };
 
       // Calculate checksum before encryption (exclude checksum field itself)
-      const { checksum, ...configForChecksum } = secureConfig;
+      const configForChecksum = { ...secureConfig };
+      delete configForChecksum.checksum;
       secureConfig.checksum = this.calculateChecksum(configForChecksum);
       debug(`Checksum calculated: ${secureConfig.checksum}`);
 
@@ -187,7 +188,8 @@ export class SecureConfigManager {
       const fullBackupData = { metadata: backupData, data: configData };
 
       // Calculate backup checksum on metadata
-      const { checksum, ...metadataWithoutChecksum } = backupData;
+      const metadataWithoutChecksum = { ...backupData };
+      delete metadataWithoutChecksum.checksum;
       backupData.checksum = this.calculateChecksum(metadataWithoutChecksum);
 
       // Update full backup with checksum
@@ -225,10 +227,10 @@ export class SecureConfigManager {
         throw new Error('Backup integrity check failed');
       }
 
-      const { metadata, data } = fullBackupData;
-
+      const data = fullBackupData.data;
+    
       // Restore configurations
-      for (const [configId, config] of Object.entries(data)) {
+      for (const [, config] of Object.entries(data)) {
         await this.storeConfig(config as SecureConfig);
       }
 

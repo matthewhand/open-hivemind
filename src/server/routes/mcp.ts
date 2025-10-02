@@ -38,8 +38,8 @@ const ensureDataDir = async () => {
   const dataDir = join(process.cwd(), 'data');
   try {
     await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    debug('Error creating data directory:', error);
+  } catch (_error) {
+    debug('Error creating data directory:', _error);
   }
 };
 
@@ -48,7 +48,7 @@ const loadMCPServers = async (): Promise<MCPServer[]> => {
   try {
     const data = await fs.readFile(MCP_SERVERS_CONFIG_FILE, 'utf8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     debug('MCP servers config file not found, using defaults');
     return [];
   }
@@ -125,9 +125,9 @@ const disconnectFromMCPServer = async (serverName: string): Promise<void> => {
       connectedClients.delete(serverName);
       debug(`Disconnected from MCP server: ${serverName}`);
     }
-  } catch (error) {
-    debug(`Error disconnecting from MCP server ${serverName}:`, error);
-    throw error;
+  } catch (_error) {
+    debug(`Error disconnecting from MCP server ${serverName}:`, _error);
+    throw _error;
   }
 };
 

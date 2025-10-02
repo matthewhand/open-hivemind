@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const COMPONENTS_DIR = path.join(__dirname, '../src/client/src/components/DaisyUI');
+const COMPONENTS_DIR = path.join(__dirname, '../webui/client/src/components/DaisyUI');
 const INDEX_FILE = path.join(COMPONENTS_DIR, 'index.ts');
 
 // Expected components list

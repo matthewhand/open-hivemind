@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
+// import * as fs from 'fs';
+// import * as path from 'path';
 
 const debug = Debug('app:AdvancedMonitor');
 
@@ -377,7 +377,7 @@ export class AdvancedMonitor extends EventEmitter {
   private getDiskMetrics(): SystemMetrics['disk'] {
     try {
       // Get disk usage for the current directory
-      const stats = fs.statSync('.');
+      // const stats = fs.statSync('.');
       const diskUsage = this.getDiskUsage(process.cwd());
 
       return [{
@@ -397,9 +397,8 @@ export class AdvancedMonitor extends EventEmitter {
     }
   }
 
-  private getDiskUsage(path: string): { used: number; total: number; free: number; usagePercent: number } {
+  private getDiskUsage(): { used: number; total: number; free: number; usagePercent: number } {
     try {
-      const stats = fs.statSync(path);
       // This is a simplified implementation
       // In a real scenario, you'd use a library like 'diskusage' or 'systeminformation'
       return {
@@ -408,7 +407,7 @@ export class AdvancedMonitor extends EventEmitter {
         free: 50 * 1024 * 1024 * 1024, // 50GB placeholder
         usagePercent: 50
       };
-    } catch (error) {
+    } catch {
       return {
         used: 0,
         total: 0,

@@ -1,7 +1,7 @@
-import Debug from 'debug';
+// import Debug from 'debug';
 import slackConfig from '@config/slackConfig';
 
-const debug = Debug('app:SlackService:ChannelManager');
+// const _debug = Debug('app:SlackService:ChannelManager');
 
 /**
  * Utility class for managing Slack channel operations

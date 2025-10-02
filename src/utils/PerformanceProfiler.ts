@@ -174,6 +174,8 @@ export class PerformanceProfiler {
     try {
       heapStatistics = v8.getHeapStatistics();
     } catch (error) {
+      const err = error as Error;
+      debug(`Heap statistics unavailable in takeSnapshot: ${err.message}`);
       // Fallback for environments where v8.getHeapStatistics is not available
       heapStatistics = {
         total_heap_size: memoryUsage.heapTotal,
@@ -219,6 +221,8 @@ export class PerformanceProfiler {
     try {
       heapStatistics = v8.getHeapStatistics();
     } catch (error) {
+      const err = error as Error;
+      debug(`Heap statistics unavailable in getCurrentMetrics: ${err.message}`);
       heapStatistics = {
         total_heap_size: memoryUsage.heapTotal,
         used_heap_size: memoryUsage.heapUsed,

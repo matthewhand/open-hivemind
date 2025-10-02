@@ -267,7 +267,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
 router.get('/api/validation', authenticate, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     // Import the BotConfigurationManager to get current configuration
-    const { BotConfigurationManager } = await import('../../config/BotConfigurationManager');
+    const { BotConfigurationManager } = await import('../../config/BotConfigurationManager.js');
 
     const configManager = BotConfigurationManager.getInstance();
     const bots = configManager.getAllBots() as Partial<BotConfig>[];
@@ -468,7 +468,7 @@ router.post('/api/validation/rules', requireAdmin, validateRuleCreation, handleV
     // For now, we'll just create a placeholder validator
     const rule = {
       ...req.body,
-      validator: (config: any) => ({
+      validator: (_config: any) => ({
         isValid: true,
         errors: [],
         warnings: [],
@@ -582,8 +582,7 @@ router.get('/api/validation/profiles/:profileId', authenticate, param('profileId
  */
 router.post('/api/validation/profiles', requireAdmin, validateProfileCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const createdBy = authReq.user?.username || 'unknown';
+    // const createdBy = (req as any).user?.username || 'unknown';
     
     // Check if profile already exists
     const existingProfile = validationService.getProfile(req.body.id);
@@ -608,7 +607,7 @@ router.post('/api/validation/profiles', requireAdmin, validateProfileCreation, h
 
     const profile = {
       ...req.body,
-      createdBy,
+      // createdBy,
       createdAt: new Date(),
       updatedAt: new Date()
     };

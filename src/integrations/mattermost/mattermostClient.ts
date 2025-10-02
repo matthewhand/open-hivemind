@@ -102,7 +102,7 @@ export default class MattermostClient {
     try {
       const response = await this.api.get(`/users/${userId}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -111,7 +111,7 @@ export default class MattermostClient {
     try {
       const response = await this.api.get(`/channels/${channelId}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -120,7 +120,7 @@ export default class MattermostClient {
     try {
       const response = await this.api.get(`/teams/${teamId}/channels/name/${channelName}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

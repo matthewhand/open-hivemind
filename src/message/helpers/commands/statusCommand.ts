@@ -13,7 +13,7 @@ export interface SystemStatus {
 }
 
 export function getSystemStatus(): SystemStatus {
-  const memInfo = process.memoryUsage();
+  const _memInfo = process.memoryUsage(); // eslint-disable-line @typescript-eslint/no-unused-vars
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
   

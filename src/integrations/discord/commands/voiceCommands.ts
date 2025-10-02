@@ -24,7 +24,7 @@ export async function handleJoinVoice(interaction: any): Promise<void> {
   }
 
   try {
-    const connection = await connectToVoiceChannel(interaction.client, voiceChannel.id);
+    await connectToVoiceChannel(interaction.client, voiceChannel.id);
     await interaction.reply(`Joined ${voiceChannel.name}!`);
   } catch (error: any) {
     await interaction.reply(`Failed to join voice channel: ${error.message}`);

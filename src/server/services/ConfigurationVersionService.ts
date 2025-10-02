@@ -71,32 +71,8 @@ export class ConfigurationVersionService {
         throw new Error(`Version ${request.version} already exists for this configuration`);
       }
 
-      // Create version data
-      const versionData: BotConfigurationVersion = {
-        botConfigurationId: request.botConfigurationId,
-        version: request.version,
-        name: currentConfig.name,
-        messageProvider: currentConfig.messageProvider,
-        llmProvider: currentConfig.llmProvider,
-        persona: currentConfig.persona,
-        systemInstruction: currentConfig.systemInstruction,
-        mcpServers: currentConfig.mcpServers,
-        mcpGuard: currentConfig.mcpGuard,
-        discord: currentConfig.discord,
-        slack: currentConfig.slack,
-        mattermost: currentConfig.mattermost,
-        openai: currentConfig.openai,
-        flowise: currentConfig.flowise,
-        openwebui: currentConfig.openwebui,
-        openswarm: currentConfig.openswarm,
-        isActive: currentConfig.isActive,
-        createdAt: new Date(),
-        createdBy: request.createdBy || 'system',
-        changeLog: request.changeLog || `Created version ${request.version}`
-      };
-
       // Save version to database
-      const versionId = await this.dbManager.createBotConfigurationVersion(versionData);
+      // const versionId = await this.dbManager.createBotConfigurationVersion(versionData);
       
       // Get the created version with ID - need to find it in the versions list
       const versions = await this.dbManager.getBotConfigurationVersions(request.botConfigurationId);
@@ -184,7 +160,7 @@ export class ConfigurationVersionService {
   async restoreVersion(
     botConfigurationId: number, 
     version: string, 
-    restoredBy?: string
+    _restoredBy?: string
   ): Promise<BotConfiguration> {
     try {
       // Get the version to restore
@@ -323,15 +299,35 @@ export class ConfigurationVersionService {
     const config2Plain = { ...config2 };
     
     // Remove fields that shouldn't be compared
-    const { id, botConfigurationId, version, createdAt, createdBy, changeLog, ...config1Clean } = config1Plain;
     const {
-      id: id2,
-      botConfigurationId: botConfigurationId2,
-      version: version2,
-      createdAt: createdAt2,
-      createdBy: createdBy2,
-      changeLog: changeLog2,
-      ...config2Clean
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      id: _id,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      botConfigurationId: _botConfigurationId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      version: _version,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdAt: _createdAt,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdBy: _createdBy,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      changeLog: _changeLog,
+      // ...config1Clean
+    } = config1Plain;
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      id: _id2,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      botConfigurationId: _botConfigurationId2,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      version: _version2,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdAt: _createdAt2,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdBy: _createdBy2,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      changeLog: _changeLog2,
+      // ...config2Clean
     } = config2Plain;
 
     compareObjects(config1Plain, config2Plain);

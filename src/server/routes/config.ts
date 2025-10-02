@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
+import { AuditedRequest, logConfigChange } from '../middleware/audit';
 import UserConfigStore from '@config/UserConfigStore';
 
 const router = Router();
@@ -276,9 +276,9 @@ router.get('/api/config/validate', (req, res) => {
 // Create configuration backup
 router.post('/api/config/backup', (req: AuditedRequest, res) => {
   try {
-    const manager = BotConfigurationManager.getInstance();
-    const bots = manager.getAllBots();
-    const warnings = manager.getWarnings();
+    // const manager = BotConfigurationManager.getInstance();
+    // const bots = manager.getAllBots();
+    // const warnings = manager.getWarnings();
 
     const backupId = `backup_${Date.now()}`;
 

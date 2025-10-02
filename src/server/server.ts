@@ -3,22 +3,26 @@ import cors from 'cors';
 import Debug from 'debug';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import * as vite from 'vite';
+// import * as viteExpress from 'vite-express';
 
 // Route imports
 import healthRouter from '../routes/health';
-import adminRouter from './routes/admin';
-import agentsRouter from './routes/agents';
-import mcpRouter from './routes/mcp';
-import activityRouter from './routes/activity';
-import consolidatedRouter from './routes/consolidated';
+// import adminRouter from './routes/admin';
+// import agentsRouter from './routes/agents';
+// import mcpRouter from './routes/mcp';
+// import activityRouter from './routes/activity';
+// import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
-import configRouter from './routes/config';
-import hotReloadRouter from './routes/hotReload';
+// import configRouter from './routes/config';
+// import hotReloadRouter from './routes/hotReload';
 import sitemapRouter from './routes/sitemap';
+import authRouter from './routes/auth';
+import AdminAuthManager from './auth/adminAuth';
 
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
-import { authenticateToken, optionalAuth } from './middleware/auth';
+import { optionalAuth } from './middleware/auth';
 import { securityHeaders } from './middleware/security';
 
 const debug = Debug('app:webui:server');
@@ -43,6 +47,7 @@ export class WebUIServer {
   private server: any;
   private port: number;
   private readonly frontendDistPath: string;
+  private viteServer?: vite.ViteDevServer;
 
   constructor(port: number = 3000) {
     this.port = port;
@@ -51,12 +56,15 @@ export class WebUIServer {
     if (!existsSync(this.frontendDistPath)) {
       debug('Frontend dist directory not found at %s', this.frontendDistPath);
     }
-    this.setupMiddleware();
+  }
+
+  private async initialize(): Promise<void> {
+    await this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
   }
 
-  private setupMiddleware(): void {
+  private async setupMiddleware(): Promise<void> {
     // Security middleware
     this.app.use(securityHeaders);
     this.app.use(cors({
@@ -99,43 +107,90 @@ export class WebUIServer {
 
     // Audit logging for all requests
     this.app.use(auditMiddleware);
-    
-    // Serve static files for the WebUI
-    this.app.use('/admin', express.static(this.frontendDistPath));
-    this.app.use('/webui', express.static(this.frontendDistPath));
+
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    if (isDevelopment) {
+      debug('Using Vite dev server middleware');
+      try {
+        this.viteServer = await vite.createServer({
+          server: { middlewareMode: true },
+          appType: 'custom',
+          root: join(process.cwd(), 'webui', 'client'),
+        });
+        debug('Vite server created successfully');
+        this.app.use(this.viteServer.middlewares);
+        debug('Vite middlewares added to Express app');
+      } catch (error) {
+        debug('Failed to create Vite server:', error);
+        throw error;
+      }
+    } else {
+      // Serve static files for the WebUI in production
+      this.app.use('/admin', express.static(this.frontendDistPath));
+      this.app.use('/dashboard', express.static(this.frontendDistPath));
+      this.app.use('/webui', express.static(this.frontendDistPath));
+      this.app.use(express.static(this.frontendDistPath));
+    }
     
     debug('Middleware setup completed');
   }
 
   private setupRoutes(): void {
-    // Health check (no auth required)
+    // Initialize admin auth on startup
+    AdminAuthManager.getInstance();
+
+    // Add a route for the root path to serve the web page
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (!isDevelopment) {
+      // In production, serve the frontend at root
+      this.app.get('/', (req, res) => {
+        const indexPath = join(this.frontendDistPath, 'index.html');
+        if (existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(500).send('Frontend app build not found');
+        }
+      });
+    }
+
+    // Health check (no auth required) - mounted at root for health endpoints
     this.app.use('/', healthRouter);
-    
+
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
     
+    // Auth routes
+    this.app.use('/api/auth', authRouter);
+
     // Public API routes (optional auth)
-    this.app.use('/api/health', optionalAuth, healthRouter);
-    
+    // this.app.use('/api/health', optionalAuth, healthRouter);
+
     // Protected API routes (authentication required)
-    this.app.use('/api/admin', authenticateToken, adminRouter);
-    this.app.use('/api/agents', authenticateToken, agentsRouter);
-    this.app.use('/api/mcp', authenticateToken, mcpRouter);
-    this.app.use('/api/activity', authenticateToken, activityRouter);
-    this.app.use('/api/webui', authenticateToken, consolidatedRouter);
-    this.app.use('/api/dashboard', authenticateToken, dashboardRouter);
-    this.app.use('/api/config', authenticateToken, configRouter);
-    this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
-    
-    // WebUI application routes (serve React app)
-    this.app.get('/admin/*', (req, res) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'));
-    });
-    
-    this.app.get('/webui/*', (req, res) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'));
-    });
-    
+    // this.app.use('/api/admin', authenticateToken, adminRouter);
+    // this.app.use('/api/agents', authenticateToken, agentsRouter);
+    // this.app.use('/api/mcp', authenticateToken, mcpRouter);
+    // this.app.use('/api/activity', authenticateToken, activityRouter);
+    // this.app.use('/api/webui', authenticateToken, consolidatedRouter);
+    this.app.use('/dashboard', optionalAuth, dashboardRouter);
+    // this.app.use('/api/config', authenticateToken, configRouter);
+    // this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
+
+    if (!isDevelopment) {
+      // WebUI application routes (serve React app) - only in production
+      this.app.get(['/admin', '/admin/*'], (req, res) => {
+        res.sendFile(join(this.frontendDistPath, 'index.html'));
+      });
+
+      this.app.get(['/dashboard', '/dashboard/*'], (req, res) => {
+        res.sendFile(join(this.frontendDistPath, 'index.html'));
+      });
+
+      this.app.get('/webui/*', (req, res) => {
+        res.sendFile(join(this.frontendDistPath, 'index.html'));
+      });
+    }
+
     // API documentation
     this.app.get('/api', (req, res) => {
       res.json({
@@ -148,21 +203,40 @@ export class WebUIServer {
           mcp: '/api/mcp',
           activity: '/api/activity',
           webui: '/api/webui',
-          dashboard: '/api/dashboard',
+          dashboard: '/dashboard',
           config: '/api/config',
           hotReload: '/api/hot-reload'
         },
         documentation: '/api/docs'
       });
     });
-    
-    // Catch-all for undefined routes
-    this.app.use('*', (req, res) => {
-      res.status(404).json({
-        error: 'Not Found',
-        message: `Route ${req.originalUrl} not found`,
-        timestamp: new Date().toISOString()
-      });
+
+    // Catch-all for undefined routes - serve React app for all non-API routes
+    this.app.get('*', (req, res, next) => {
+      const path = req.path;
+      if (path.match(/^\/(api|health|sitemap)/)) {
+        res.status(404).json({
+          error: 'Not Found',
+          message: `Route ${req.originalUrl} not found`,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        if (isDevelopment) {
+          // In development, Vite middleware should handle everything.
+          // If we get here, it means Vite didn't find a file.
+          // This is expected for client-side routing, so we let it fall through
+          // to the Vite middleware which will serve index.html.
+          next();
+        } else {
+          // In production, serve the built index.html
+          const indexPath = join(this.frontendDistPath, 'index.html');
+          if (existsSync(indexPath)) {
+            res.sendFile(indexPath);
+          } else {
+            res.status(500).send('React app build not found');
+          }
+        }
+      }
     });
     
     debug('Routes setup completed');
@@ -170,7 +244,7 @@ export class WebUIServer {
 
   private setupErrorHandling(): void {
     // Global error handler
-    this.app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    this.app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
       debug('Global error handler:', error);
       
       // Don't log client errors
@@ -196,6 +270,8 @@ export class WebUIServer {
   }
 
   public async start(): Promise<void> {
+    await this.initialize();
+
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(this.port, () => {
@@ -207,7 +283,7 @@ export class WebUIServer {
           console.log(`   Health Check:    http://localhost:${this.port}/health`);
           resolve();
         });
-        
+
         this.server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
             console.error(`❌ Port ${this.port} is already in use`);
@@ -225,21 +301,32 @@ export class WebUIServer {
   }
 
   public async stop(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.server) {
-        resolve();
-        return;
-      }
-
-      this.server.close((error: any) => {
-        if (error) {
-          debug('Error stopping WebUI server:', error);
-          reject(error);
-        } else {
-          debug('WebUI server stopped');
-          resolve();
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Close Vite server if it exists
+        if (this.viteServer) {
+          await this.viteServer.close();
+          debug('Vite server stopped');
         }
-      });
+
+        if (!this.server) {
+          resolve();
+          return;
+        }
+
+        this.server.close((error: any) => {
+          if (error) {
+            debug('Error stopping WebUI server:', error);
+            reject(error);
+          } else {
+            debug('WebUI server stopped');
+            resolve();
+          }
+        });
+      } catch (error) {
+        debug('Error during server shutdown:', error);
+        reject(error);
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import { BotConfigurationManager, BotConfig } from '@config/BotConfigurationManager';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import Debug from 'debug';
 import { EventEmitter } from 'events';

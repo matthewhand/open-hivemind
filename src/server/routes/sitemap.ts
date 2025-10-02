@@ -15,7 +15,7 @@ interface SitemapUrl {
 
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
+  // const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 
   return [

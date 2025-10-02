@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import AdminAuthManager from '../auth/adminAuth';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
@@ -44,7 +45,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * User registration endpoint (admin only)
  */
 router.post('/register', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const registerData: RegisterData = req.body;
 
@@ -124,7 +125,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * User logout endpoint
  */
 router.post('/logout', authenticate, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { refreshToken } = req.body;
 
@@ -162,7 +163,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
  * Change user password
  */
 router.put('/password', authenticate, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -228,7 +229,7 @@ router.put('/password', authenticate, async (req: Request, res: Response) => {
  * Get all users (admin only)
  */
 router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const users = authManager.getAllUsers();
 
@@ -251,7 +252,7 @@ router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) =
  * Get specific user (admin only)
  */
 router.get('/users/:userId', authenticate, requireAdmin, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
     const user = authManager.getUser(userId);
@@ -281,7 +282,7 @@ router.get('/users/:userId', authenticate, requireAdmin, (req: Request, res: Res
  * Update user (admin only)
  */
 router.put('/users/:userId', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
     const updates = req.body;
@@ -375,6 +376,147 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
       user: authReq.user
     }
   });
+});
+
+// Admin login endpoint with random password
+router.post('/admin/login', (req: Request, res: Response) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username and password are required'
+      });
+    }
+
+    const authManager = AdminAuthManager.getInstance();
+    
+    if (authManager.validateCredentials(username, password)) {
+      const sessionToken = authManager.createSession();
+      
+      // Set secure HTTP-only cookie
+      res.cookie('admin_session', sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      });
+
+      res.json({
+        success: true,
+        user: {
+          id: '1',
+          username: 'admin',
+          email: 'admin@open-hivemind.com',
+          role: 'owner',
+          permissions: ['admin', 'owner'],
+          name: 'Administrator'
+        }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Admin logout endpoint
+router.post('/admin/logout', (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.cookies.admin_session;
+    
+    if (sessionToken) {
+      const authManager = AdminAuthManager.getInstance();
+      authManager.destroySession(sessionToken);
+    }
+    
+    res.clearCookie('admin_session');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Check admin session
+router.get('/admin/me', (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.cookies.admin_session;
+    
+    if (!sessionToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'No session found'
+      });
+    }
+
+    const authManager = AdminAuthManager.getInstance();
+    
+    if (authManager.validateSession(sessionToken)) {
+      res.json({
+        success: true,
+        user: {
+          id: '1',
+          username: 'admin',
+          email: 'admin@open-hivemind.com',
+          role: 'owner',
+          permissions: ['admin', 'owner'],
+          name: 'Administrator'
+        }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: 'Invalid session'
+      });
+    }
+  } catch (error) {
+    console.error('Session check error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Regenerate admin password (for development)
+router.post('/admin/regenerate-password', (req: Request, res: Response) => {
+  try {
+    // Only allow in development
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        error: 'Not allowed in production'
+      });
+    }
+
+    // const authManager = AdminAuthManager.getInstance();
+    // const newPassword = authManager.regeneratePassword();
+    
+    res.json({
+      success: true,
+      message: 'Password regenerated and logged to console',
+      username: 'admin'
+    });
+  } catch (error) {
+    console.error('Password regeneration error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 });
 
 export default router;

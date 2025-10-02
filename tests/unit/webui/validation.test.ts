@@ -26,6 +26,11 @@ app.use('/webui', validationRouter);
 jest.mock('@config/BotConfigurationManager');
 const mockBotConfigurationManager = BotConfigurationManager as jest.MockedClass<typeof BotConfigurationManager>;
 
+// Mock the dynamic import used in the route handler
+jest.doMock('../../config/BotConfigurationManager.js', () => ({
+  BotConfigurationManager: mockBotConfigurationManager
+}));
+
 describe('Validation API Routes', () => {
   let mockManager: jest.Mocked<BotConfigurationManager>;
 

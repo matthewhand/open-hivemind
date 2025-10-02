@@ -187,7 +187,7 @@ export class AuthMiddleware {
            debug(`Optional auth: authenticated user ${user.username}`);
          }
       }
-    } catch (error) {
+    } catch {
       // Silently ignore auth errors for optional auth
       debug('Optional auth failed, continuing without authentication');
     }
@@ -198,7 +198,6 @@ export class AuthMiddleware {
 
 // Create middleware functions that get fresh AuthManager instance
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const authManager = AuthManager.getInstance();
   const middleware = new AuthMiddleware();
   return middleware.authenticate(req, res, next);
 };

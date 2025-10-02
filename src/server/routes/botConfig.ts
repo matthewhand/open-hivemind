@@ -3,12 +3,12 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
-import { BotConfigurationManager, BotConfig } from '../../config/BotConfigurationManager';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import { DatabaseManager } from '../../database/DatabaseManager';
+// import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
-import { validateBotConfigCreation, validateBotConfigUpdate, sanitizeBotConfig } from '../middleware/formValidation';
+import { validateBotConfigCreation, sanitizeBotConfig } from '../middleware/formValidation';
 import { BotConfigService } from '../services/BotConfigService';
 
 const debug = Debug('app:BotConfigRoutes');
@@ -16,7 +16,7 @@ const router = Router();
 const botConfigManager = BotConfigurationManager.getInstance();
 const secureConfigManager = SecureConfigManager.getInstance();
 const userConfigStore = UserConfigStore.getInstance();
-const dbManager = DatabaseManager.getInstance();
+// const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();
 
 // Apply authentication and audit middleware
@@ -27,7 +27,7 @@ router.use(authenticate, auditMiddleware);
  * Get all bot configurations with full details
  */
 router.get('/', async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const bots = botConfigManager.getAllBots();
     const warnings = botConfigManager.getWarnings();
@@ -70,7 +70,7 @@ router.get('/', async (req: Request, res: Response) => {
  * Get a specific bot configuration
  */
 router.get('/:botId', async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const bot = botConfigManager.getBot(botId);
@@ -145,7 +145,7 @@ router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, asy
  * Update an existing bot configuration (admin only)
  */
 router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const updates = req.body;
@@ -252,7 +252,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
  * Get bot configuration templates
  */
 router.get('/templates', async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+  // const authReq = req as AuthMiddlewareRequest;
   const templates = {
     discord_openai: {
       name: 'Discord + OpenAI Bot',

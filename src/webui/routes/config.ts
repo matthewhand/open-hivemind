@@ -44,7 +44,8 @@ router.get('/api/config', (req, res) => {
       }
     };
     res.json(config);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error retrieving configuration:', error);
     res.status(500).json({ error: 'Failed to retrieve configuration' });
   }
 });
@@ -62,7 +63,8 @@ router.get('/api/config/sources', (req, res) => {
       timestamp: new Date().toISOString()
     };
     res.json({ sources, active });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error retrieving configuration sources:', error);
     res.status(500).json({ error: 'Failed to retrieve configuration sources' });
   }
 });
@@ -77,7 +79,8 @@ router.post('/api/config/reload', (req, res) => {
     } else {
       res.status(500).json({ error: 'Failed to reload configuration' });
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error reloading configuration:', error);
     res.status(500).json({ error: 'Failed to reload configuration' });
   }
 });
@@ -107,7 +110,8 @@ router.get('/api/config/validate', (req, res) => {
       errors,
       warnings: []
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error validating configuration:', error);
     res.status(500).json({ error: 'Failed to validate configuration' });
   }
 });
@@ -127,7 +131,8 @@ router.post('/api/config/backup', (req, res) => {
         botCount: BotConfigurationManager.getInstance().getAllBots().length
       }
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error creating configuration backup:', error);
     res.status(500).json({ error: 'Failed to create configuration backup' });
   }
 });
@@ -150,7 +155,8 @@ router.post('/api/config/restore', (req, res) => {
       restored: backupId,
       message: 'Configuration restored successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error restoring configuration:', error);
     res.status(500).json({ error: 'Failed to restore configuration' });
   }
 });
@@ -186,7 +192,8 @@ router.get('/api/openapi', (req, res) => {
       }
     };
     res.json(openapiSpec);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error retrieving OpenAPI specification:', error);
     res.status(500).json({ error: 'Failed to retrieve OpenAPI specification' });
   }
 });

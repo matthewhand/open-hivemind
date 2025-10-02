@@ -57,7 +57,7 @@ export class SlackConfigurationLoader {
 
     try {
       // Try to load from config file first
-      this.loadFromConfigFile(instances, mode);
+      this.loadFromConfigFile();
 
       // Fallback to environment variables for single-bot legacy setup
       if (instances.length === 0 && process.env.SLACK_BOT_TOKEN) {
@@ -87,7 +87,7 @@ export class SlackConfigurationLoader {
   /**
    * Load configuration from config files (legacy support)
    */
-  private static loadFromConfigFile(instances: SlackBotInstance[], mode: 'socket' | 'rtm'): void {
+  private static loadFromConfigFile(): void {
     try {
       // This would load from config/slack.json or similar files
       // For now, we'll keep this as a placeholder for future config file support

@@ -12,6 +12,8 @@ const treeKill = require('tree-kill');
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const PID_FILE = path.join(PROJECT_ROOT, '.dev-backend.pid');
 const DEFAULT_PORT = Number(process.env.PORT || 3028);
+const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.VITE_PORT || 5173);
+const FRONTEND_DIR = path.join(PROJECT_ROOT, 'webui', 'client');
 
 const COLORS = {
   info: '\u001b[0;34m',
@@ -22,6 +24,7 @@ const COLORS = {
 };
 
 let activeChild = null;
+let frontendChild = null;
 let shuttingDown = false;
 
 const log = {
@@ -110,23 +113,34 @@ async function cleanupProcesses({ silent = false } = {}) {
     if (!silent) {
       log.info('No backend processes recorded.');
     }
-    return;
+  } else {
+    const { backendPid } = pidInfo;
+
+    if (!silent) {
+      log.info(`Stopping backend process (pid ${backendPid})...`);
+    }
+
+    if (processExists(backendPid)) {
+      await killProcessTree(backendPid);
+    }
+
+    removePidFile();
+
+    if (!silent) {
+      log.success('Backend cleanup complete.');
+    }
   }
 
-  const { backendPid } = pidInfo;
-
-  if (!silent) {
-    log.info(`Stopping backend process (pid ${backendPid})...`);
-  }
-
-  if (processExists(backendPid)) {
-    await killProcessTree(backendPid);
-  }
-
-  removePidFile();
-
-  if (!silent) {
-    log.success('Cleanup complete.');
+  // Also ensure the frontend port is released to avoid orphaned Vite instances
+  try {
+    await ensurePortAvailable(FRONTEND_PORT);
+    if (!silent) {
+      log.success(`Frontend cleanup complete (port ${FRONTEND_PORT}).`);
+    }
+  } catch (error) {
+    if (!silent) {
+      log.warning(`Frontend cleanup encountered an issue: ${error.message}`);
+    }
   }
 }
 
@@ -209,29 +223,39 @@ async function startBackend() {
   activeChild = child;
   writePidFile({ backendPid: child.pid, startedAt: Date.now() });
 
-  child.on('error', (err) => {
-    log.error(`Backend process failed: ${err.message}`);
-    removePidFile();
-    process.exit(1);
-  });
+  const exitPromise = new Promise((resolve, reject) => {
+    child.on('error', (err) => {
+      log.error(`Backend process failed: ${err.message}`);
+      removePidFile();
+      if (!shuttingDown) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
 
-  child.on('exit', (code, signal) => {
-    removePidFile();
-    if (shuttingDown) {
-      return;
-    }
+    child.on('exit', (code, signal) => {
+      removePidFile();
+      activeChild = null;
+      if (shuttingDown) {
+        resolve();
+        return;
+      }
 
-    if (signal) {
-      log.warning(`Backend exited due to signal ${signal}.`);
-      process.exit(1);
-    }
+      if (signal) {
+        log.warning(`Backend exited due to signal ${signal}.`);
+        reject(new Error(`Backend exited due to signal ${signal}`));
+        return;
+      }
 
-    if (code !== 0) {
-      log.error(`Backend exited with code ${code}.`);
-      process.exit(code || 1);
-    }
+      if (code !== 0) {
+        log.error(`Backend exited with code ${code}.`);
+        reject(new Error(`Backend exited with code ${code}`));
+        return;
+      }
 
-    process.exit(0);
+      resolve();
+    });
   });
 
   try {
@@ -242,7 +266,72 @@ async function startBackend() {
     log.warning(`Backend did not bind to port ${DEFAULT_PORT} within 30s. Check logs for details.`);
   }
 
-  return new Promise(() => {});
+  return exitPromise;
+}
+
+async function startFrontend() {
+  log.info('Starting frontend development server...');
+  await ensurePortAvailable(FRONTEND_PORT);
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(npmBinary(), ['run', 'dev'], {
+      cwd: FRONTEND_DIR,
+      env: {
+        ...process.env,
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        VITE_PORT: String(FRONTEND_PORT),
+      },
+      stdio: 'inherit',
+    });
+
+    frontendChild = child;
+
+    child.on('error', (err) => {
+      log.error(`Frontend process failed: ${err.message}`);
+      if (!shuttingDown) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+
+    child.on('exit', (code, signal) => {
+      frontendChild = null;
+      if (shuttingDown) {
+        resolve();
+        return;
+      }
+
+      if (signal) {
+        log.warning(`Frontend exited due to signal ${signal}.`);
+        reject(new Error(`Frontend exited due to signal ${signal}`));
+        return;
+      }
+
+      if (code !== 0) {
+        log.error(`Frontend exited with code ${code}.`);
+        reject(new Error(`Frontend exited with code ${code}`));
+        return;
+      }
+
+      resolve();
+    });
+
+    waitForPort(FRONTEND_PORT, '127.0.0.1', 30000)
+      .then(() => {
+        log.success(`Frontend server started on http://localhost:${FRONTEND_PORT}`);
+      })
+      .catch((error) => {
+        log.warning(`Frontend did not bind to port ${FRONTEND_PORT} within 30s. Check logs for details.`);
+      });
+  });
+}
+
+async function startFullStack() {
+  const backendPromise = startBackend();
+  const frontendPromise = startFrontend();
+
+  await Promise.all([backendPromise, frontendPromise]);
 }
 
 async function showStatus() {
@@ -261,6 +350,13 @@ async function showStatus() {
   } else {
     log.info(`Port ${DEFAULT_PORT} is free.`);
   }
+
+  const frontendPortUsed = await isPortInUse(FRONTEND_PORT);
+  if (frontendPortUsed) {
+    log.info(`Port ${FRONTEND_PORT} (frontend) appears to be in use.`);
+  } else {
+    log.info(`Port ${FRONTEND_PORT} (frontend) is free.`);
+  }
 }
 
 async function shutdown() {
@@ -270,6 +366,10 @@ async function shutdown() {
 
   shuttingDown = true;
   log.info('Shutting down development services...');
+
+  if (frontendChild && processExists(frontendChild.pid)) {
+    await killProcessTree(frontendChild.pid);
+  }
 
   if (activeChild && processExists(activeChild.pid)) {
     await killProcessTree(activeChild.pid);
@@ -289,12 +389,15 @@ async function main() {
   try {
     switch (command) {
       case 'dev':
+        await startBackend();
+        break;
       case 'backend':
         await startBackend();
         break;
       case 'clean':
         await cleanupProcesses();
         await ensurePortAvailable(DEFAULT_PORT);
+        await ensurePortAvailable(FRONTEND_PORT);
         break;
       case 'status':
         await showStatus();

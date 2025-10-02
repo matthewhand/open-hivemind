@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { BotManager, CreateBotRequest } from '../../managers/BotManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { AuthMiddlewareRequest } from '../../auth/types';
+// import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logBotAction } from '../middleware/audit';
 
@@ -17,7 +17,6 @@ router.use(authenticate, auditMiddleware);
  * Get all bot instances
  */
 router.get('/', authenticate, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const bots = await botManager.getAllBots();
 
@@ -40,7 +39,6 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  * Get a specific bot instance
  */
 router.get('/:botId', authenticate, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const bot = await botManager.getBot(botId);
@@ -70,7 +68,6 @@ router.get('/:botId', authenticate, async (req: Request, res: Response) => {
  * Create a new bot instance (admin only)
  */
 router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const createRequest: CreateBotRequest = req.body;
 
@@ -109,7 +106,6 @@ router.post('/', requireAdmin, async (req: AuditedRequest, res: Response) => {
  * Clone an existing bot instance (admin only)
  */
 router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const { newName } = req.body;
@@ -142,7 +138,6 @@ router.post('/:botId/clone', authenticate, requireAdmin, async (req: Request, re
  * Update an existing bot instance (admin only)
  */
 router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
     const updates = req.body;
@@ -177,7 +172,6 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
  * Delete a bot instance (admin only)
  */
 router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -217,7 +211,6 @@ router.delete('/:botId', requireAdmin, async (req: AuditedRequest, res: Response
  * Start a bot instance (admin only)
  */
 router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -248,7 +241,6 @@ router.post('/:botId/start', authenticate, requireAdmin, async (req: Request, re
  * Stop a bot instance (admin only)
  */
 router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
 
@@ -279,7 +271,6 @@ router.post('/:botId/stop', authenticate, requireAdmin, async (req: Request, res
  * Get bot configuration templates
  */
 router.get('/templates', authenticate, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
   const templates = {
     discord: {
       name: 'Discord Bot',

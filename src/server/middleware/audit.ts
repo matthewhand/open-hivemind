@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';

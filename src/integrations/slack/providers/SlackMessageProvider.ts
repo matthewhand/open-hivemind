@@ -16,7 +16,7 @@ export class SlackMessageProvider implements IMessageProvider {
     return await this.slackService.sendMessageToChannel(channelId, message, senderName);
   }
 
-  public async getMessages(channelId: string, limit: number = 10): Promise<IMessage[]> {
+  public async getMessages(channelId: string, _limit: number = 10): Promise<IMessage[]> {
     if (!channelId) {
       return [];
     }

@@ -161,8 +161,8 @@ router.get('/env-status', async (req, res) => {
 
     logAdminAction(req as any, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
     res.json({ success: true, data: envStatus });
-  } catch (error) {
-    debug('Error getting environment status:', error);
+  } catch (_error) {
+    debug('Error getting environment status:', _error);
     res.status(500).json({ 
       success: false, 
       error: 'Failed to get environment status' 
@@ -298,7 +298,7 @@ router.get('/health', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       health.checks.botManager.botsLoaded = bots.length;
-    } catch (error) {
+    } catch {
       health.checks.botManager.status = 'error';
     }
 

@@ -55,30 +55,6 @@ interface ActivitySummary {
   timeRangeEnd: string;
 }
 
-// Helper function to build WHERE clause for filtering
-const buildWhereClause = (filter: ActivityFilter): { clause: string; params: any[] } => {
-  const conditions: string[] = [];
-  const params: any[] = [];
-  
-  if (filter.startDate) {
-    conditions.push('timestamp >= ?');
-    params.push(filter.startDate);
-  }
-  
-  if (filter.endDate) {
-    conditions.push('timestamp <= ?');
-    params.push(filter.endDate);
-  }
-  
-  if (filter.messageProvider) {
-    conditions.push('provider = ?');
-    params.push(filter.messageProvider);
-  }
-  
-  const clause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  return { clause, params };
-};
-
 // GET /api/activity/messages - Get filtered message activity
 router.get('/messages', async (req, res) => {
   try {
@@ -98,7 +74,7 @@ router.get('/messages', async (req, res) => {
     }
 
     // Build query with filters
-    const { clause, params } = buildWhereClause(filter);
+    // const { clause, params } = _buildWhereClause(filter);
     
     // Mock query - in real implementation, this would query the actual database
     // For now, we'll simulate the response structure
@@ -335,11 +311,11 @@ router.post('/log', async (req, res) => {
       messageProvider,
       llmProvider,
       messageType,
-      contentLength,
-      processingTime,
+      // contentLength,
+      // processingTime,
       status,
-      errorMessage,
-      mcpToolsUsed
+      // errorMessage,
+      // mcpToolsUsed
     } = req.body;
 
     const dbManager = DatabaseManager.getInstance();

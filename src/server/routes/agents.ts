@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import Debug from 'debug';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
+// import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+// import { DatabaseManager } from '../../database/DatabaseManager';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 
@@ -31,26 +31,26 @@ interface Persona {
   systemPrompt: string;
 }
 
-interface MCPServer {
-  name: string;
-  url: string;
-  apiKey?: string;
-  connected: boolean;
-  tools?: string[];
-}
+// interface MCPServer {
+//   name: string;
+//   url: string;
+//   apiKey?: string;
+//   connected: boolean;
+//   tools?: string[];
+// }
 
 // Agent Configuration Management
 const AGENTS_CONFIG_FILE = join(process.cwd(), 'data', 'agents.json');
 const PERSONAS_CONFIG_FILE = join(process.cwd(), 'data', 'personas.json');
-const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
+// const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 
 // Ensure data directory exists
 const ensureDataDir = async () => {
   const dataDir = join(process.cwd(), 'data');
   try {
     await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    debug('Error creating data directory:', error);
+  } catch (_error) {
+    debug('Error creating data directory:', _error);
   }
 };
 
@@ -59,7 +59,7 @@ const loadJsonConfig = async <T>(filePath: string, defaultValue: T): Promise<T> 
   try {
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     debug(`Config file ${filePath} not found, using defaults`);
     return defaultValue;
   }
@@ -196,8 +196,8 @@ router.delete('/:id', async (req, res) => {
     
     debug(`Deleted agent: ${id}`);
     res.json({ success: true });
-  } catch (error) {
-    debug('Error deleting agent:', error);
+  } catch (_error) {
+    debug('Error deleting agent:', _error);
     res.status(500).json({ error: 'Failed to delete agent' });
   }
 });

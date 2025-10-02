@@ -333,19 +333,110 @@ const messageConfig = convict({
     env: 'MESSAGE_STRIP_BOT_ID'
   },
   MESSAGE_USERNAME_OVERRIDE: {
-    doc: 'Override username for bot messages',
-    format: String,
-    default: 'MadgwickAI',
-    env: 'MESSAGE_USERNAME_OVERRIDE'
-  },
-
-  // Channel routing
-  MESSAGE_CHANNEL_ROUTER_ENABLED: {
-    doc: 'Enable ChannelRouter-based outbound channel selection',
-    format: Boolean,
-    default: false,
-    env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
-  },
+      doc: 'Override username for bot messages',
+      format: String,
+      default: 'MadgwickAI',
+      env: 'MESSAGE_USERNAME_OVERRIDE'
+    },
+ 
+    MESSAGE_FOLLOW_UP_ENABLED: {
+      doc: 'Enable follow-up message handling',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_FOLLOW_UP_ENABLED'
+    },
+ 
+    MESSAGE_LLM_CHAT: {
+      doc: 'Enable LLM chat responses',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_LLM_CHAT'
+    },
+ 
+    MESSAGE_LLM_COMPLETE_SENTENCE: {
+      doc: 'Enable LLM sentence completion',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_LLM_COMPLETE_SENTENCE'
+    },
+ 
+    MESSAGE_LLM_SUMMARISE: {
+      doc: 'Enable LLM message summarization',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_LLM_SUMMARISE'
+    },
+ 
+    MESSAGE_COMMAND_SLASH: {
+      doc: 'Enable slash command processing',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_COMMAND_SLASH'
+    },
+ 
+    MESSAGE_WEBHOOK_ENABLED: {
+      doc: 'Enable webhook message handling',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_WEBHOOK_ENABLED'
+    },
+ 
+    MESSAGE_MENTION_BONUS: {
+      doc: 'Bonus score for mentions',
+      format: Number,
+      default: 1.0,
+      env: 'MESSAGE_MENTION_BONUS'
+    },
+ 
+    MESSAGE_FILTER_BY_USER: {
+      doc: 'Filter messages by specific users',
+      format: String,
+      default: '',
+      env: 'MESSAGE_FILTER_BY_USER'
+    },
+ 
+    MESSAGE_HISTORY_LIMIT: {
+      doc: 'Maximum message history to keep',
+      format: 'int',
+      default: 100,
+      env: 'MESSAGE_HISTORY_LIMIT'
+    },
+ 
+    MESSAGE_DECAY_RATE: {
+      doc: 'Message decay rate for scoring',
+      format: Number,
+      default: 0.5,
+      env: 'MESSAGE_DECAY_RATE'
+    },
+ 
+    MESSAGE_CALM_WINDOW: {
+      doc: 'Calm period window in ms',
+      format: 'int',
+      default: 60000,
+      env: 'MESSAGE_CALM_WINDOW'
+    },
+ 
+    PLATFORM: {
+      doc: 'Platform identifier',
+      format: String,
+      default: 'discord',
+      env: 'PLATFORM'
+    },
+ 
+    NAME: {
+      doc: 'Application name',
+      format: String,
+      default: 'Hivemind',
+      env: 'NAME'
+    },
+ 
+    // Channel routing
+    MESSAGE_CHANNEL_ROUTER_ENABLED: {
+      doc: 'Enable ChannelRouter-based outbound channel selection',
+      format: Boolean,
+      default: false,
+      env: 'MESSAGE_CHANNEL_ROUTER_ENABLED'
+    },
   CHANNEL_BONUSES: {
     doc: 'Channel bonuses map (CSV "id:bonus,..." or JSON object). Range [0.0,2.0]. Default 1.0 when missing.',
     format: 'channel-bonuses',

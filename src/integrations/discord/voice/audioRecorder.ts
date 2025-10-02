@@ -1,13 +1,9 @@
 import { VoiceConnection, EndBehaviorType } from '@discordjs/voice';
-import { User } from 'discord.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
 import Debug from 'debug';
 
 const debug = Debug('app:discord:recorder');
-const pipelineAsync = promisify(pipeline);
 
 export class AudioRecorder {
   private connection: VoiceConnection;

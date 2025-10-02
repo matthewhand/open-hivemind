@@ -34,7 +34,7 @@ export class SlackEventBus implements ISlackEventBus {
         req.rawBody = buf.toString('utf8');
       }
     });
-    const jsonWithRaw = (express as any).json({
+    (express as any).json({
       verify: (req: any, _res: Response, buf: Buffer) => {
         req.rawBody = buf.toString('utf8');
       }

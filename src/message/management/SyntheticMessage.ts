@@ -49,19 +49,6 @@ export class SyntheticMessage extends IMessage {
    */
   public metadata?: any;
 
-  /**
-   * Tool call ID, not used in synthetic messages.
-   * @type {string}
-   * @optional
-   */
-  public tool_call_id?: string;
-
-  /**
-   * Tool calls array, not used in synthetic messages.
-   * @type {any[]}
-   * @optional
-   */
-  public tool_calls?: any[];
 
   /**
    * Unique identifier for this synthetic message.
@@ -251,7 +238,7 @@ export class SyntheticMessage extends IMessage {
    * @param {string} userId - The user ID to check for
    * @returns {boolean} Always returns false for synthetic messages
    */
-  mentionsUsers(userId: string): boolean {
+  mentionsUsers(_userId: string): boolean {
     return false;
   }
 

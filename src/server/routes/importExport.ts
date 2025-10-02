@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
 import { requireAdmin, authenticate } from '../../auth/middleware';
-import { body, query, param } from 'express-validator';
+import { body, param } from 'express-validator';
 import { validationResult } from 'express-validator';
 import { AuthMiddlewareRequest } from '../../auth/types';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const multer = require('multer');
 import path from 'path';
 import fs from 'fs/promises';
@@ -229,8 +229,7 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
  */
 router.post('/export', requireAdmin, validateExportOptions, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const createdBy = authReq.user?.username || 'unknown';
+    const createdBy = (req as any).user?.username || 'unknown';
     
     const result = await importExportService.exportConfigurations(
       req.body.configIds,
@@ -285,8 +284,7 @@ router.post('/import',
         });
       }
 
-      const authReq = req as any;
-      const importedBy = authReq.user?.username || 'unknown';
+      const importedBy = (req as any).user?.username || 'unknown';
       
       const result = await importExportService.importConfigurations(
         (req as any).file.path,
@@ -333,8 +331,7 @@ router.post('/import',
  */
 router.post('/backup', requireAdmin, validateBackupCreation, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
-    const authReq = req as any;
-    const createdBy = authReq.user?.username || 'unknown';
+    const createdBy = (req as any).user?.username || 'unknown';
     
     const result = await importExportService.createBackup(
       req.body.name,
@@ -407,8 +404,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
 router.post('/backups/:backupId/restore', requireAdmin, validateBackupRestore, handleValidationErrors, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const { backupId } = req.params;
-    const authReq = req as any;
-    const restoredBy = authReq.user?.username || 'unknown';
+    const restoredBy = (req as any).user?.username || 'unknown';
     
     // Get backup metadata
     const backups = await importExportService.listBackups();

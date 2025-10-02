@@ -103,7 +103,7 @@ router.get('/api/cloud-providers', (req, res) => {
 // Add cloud provider
 router.post('/api/cloud-providers', (req, res) => {
   try {
-    const { name, type, region, _credentials } = req.body;
+    const { name, type, region } = req.body;
 
     if (!name || !type || !region) {
       return res.status(400).json({
@@ -130,7 +130,7 @@ router.post('/api/cloud-providers', (req, res) => {
     });
   } catch (error) {
     debug('Add cloud provider API error:', error);
-    res.status(500).json({
+    res.status(50).json({
       success: false,
       message: 'Failed to add cloud provider',
       error: error instanceof Error ? error.message : 'Unknown error'

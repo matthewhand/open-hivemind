@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';
+// import path from 'path';
 import { MCPService } from '../../mcp/MCPService';
 import { webUIStorage } from '../../storage/webUIStorage';
-import { getRelevantEnvVars, checkBotEnvOverrides } from '../../utils/envUtils';
+import { getRelevantEnvVars } from '../../utils/envUtils';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import Debug from 'debug';
 import agentsRouter from './agents';

@@ -314,9 +314,9 @@ export class TelegramService implements IMessengerService {
       getChannelUsers: () => [],
       getGuildOrWorkspaceId: () => null,
       isReplyToBot: () => false,
-      mentionsUsers: (userId: string) => false,
+      mentionsUsers: (_userId: string) => false,
       isFromBot: () => msg.from.is_bot || false,
-      setText: async (newText: string) => {
+      setText: async (_newText: string) => {
         throw new Error('Cannot edit messages in Telegram');
       }
     };
@@ -347,7 +347,7 @@ export class TelegramService implements IMessengerService {
     }
 
     try {
-      const result = await (this.bot.sendMessage?.(channelId, message, {
+      await (this.bot.sendMessage?.(channelId, message, {
         parse_mode: 'HTML',
         disable_web_page_preview: true,
         reply_to_message_id: threadId ? parseInt(threadId) : undefined
@@ -404,9 +404,9 @@ export class TelegramService implements IMessengerService {
       getChannelUsers: () => [],
       getGuildOrWorkspaceId: () => null,
       isReplyToBot: () => false,
-      mentionsUsers: (userId: string) => false,
+      mentionsUsers: (_userId: string) => false,
       isFromBot: () => msg.metadata?.isBot || false,
-      setText: async (newText: string) => {
+      setText: async (_newText: string) => {
         throw new Error('Cannot edit historical messages');
       }
     };
@@ -446,7 +446,7 @@ export class TelegramService implements IMessengerService {
 
   supportsChannelPrioritization = false;
 
-  scoreChannel(channelId: string, metadata?: Record<string, any>): number {
+  scoreChannel(_channelId: string, _metadata?: Record<string, any>): number {
     return 0;
   }
 

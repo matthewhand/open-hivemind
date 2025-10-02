@@ -38,11 +38,13 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import * as vite from 'vite';
+import { getWebUIServer } from '@src/server/server';
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
         path.join(process.cwd(), 'dist/client/dist'),
-        path.join(process.cwd(), 'src/client/dist'),
+        path.join(process.cwd(), 'webui/client/dist'),
     ];
 
     for (const candidate of candidates) {
@@ -59,6 +61,21 @@ const resolveFrontendDistPath = (): string => {
 
 const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
+const spaIndexPath = path.join(frontendDistPath, 'index.html');
+
+const getIndexPath = (): string | null => {
+    if (fs.existsSync(spaIndexPath)) {
+        return spaIndexPath;
+    }
+    const devIndexPath = path.join(process.cwd(), 'webui/client/index.html');
+    if (fs.existsSync(devIndexPath)) {
+        return devIndexPath;
+    }
+    return null;
+};
+
+// Vite server instance for development
+let viteServer: vite.ViteDevServer | null = null;
 
 if (!fs.existsSync(frontendDistPath)) {
     console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
@@ -121,12 +138,31 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
     next();
 });
+
+// Vite development server middleware
+async function setupViteServer() {
+    if (process.env.NODE_ENV === 'development') {
+        console.log('[DEBUG] Using Vite dev server middleware');
+        viteServer = await vite.createServer({
+            server: { middlewareMode: true },
+            appType: 'custom',
+            root: path.join(process.cwd(), 'webui', 'client'),
+        });
+        app.use(viteServer.middlewares);
+        console.log('[DEBUG] Vite middlewares added to Express app');
+    }
+}
+
 app.use(healthRoute);
 
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
-    console.log('[DEBUG] Root route hit - issuing redirect to loading portal');
-    res.redirect(302, '/loading-enhanced.html');
+    console.log('[DEBUG] Root route hit - serving React app');
+    const indexPath = getIndexPath();
+    if (indexPath) {
+        return res.sendFile(indexPath);
+    }
+    res.status(500).send('React app build not found');
 });
 
 // Serve static files from public directory
@@ -152,7 +188,11 @@ app.use('/uber', (req: Request, res: Response) => {
 // Monitor route alias (formerly /webui for some monitoring pages)
 app.use('/monitor', express.static(frontendDistPath));
 app.use('/monitor/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
+    const indexPath = getIndexPath();
+    if (indexPath) {
+        return res.sendFile(indexPath);
+    }
+    res.status(500).send('Monitor UI build not found');
 });
 
 // API routes - MUST come before static file serving
@@ -179,8 +219,12 @@ app.use('/webui/*', (req: Request, res: Response) => {
 
 // Admin UI (unified dashboard)
 app.use('/admin', express.static(frontendDistPath));
-app.use('/admin/*', (req: Request, res: Response) => {
-    res.status(404).json({ error: 'Admin route not found' });
+app.get(['/admin', '/admin/*'], (req: Request, res: Response) => {
+    const indexPath = getIndexPath();
+    if (indexPath) {
+        return res.sendFile(indexPath);
+    }
+    res.status(500).send('Admin UI build not found');
 });
 
 // Redirects
@@ -211,8 +255,8 @@ app.get('*', (req: Request, res: Response) => {
 
     // Serve SPA index for designated client prefixes
     if (spaClientRoutePrefixes.some(prefix => requestPath === prefix || requestPath.startsWith(prefix + '/'))) {
-        const indexPath = path.join(frontendDistPath, 'index.html');
-        if (fs.existsSync(indexPath)) {
+        const indexPath = getIndexPath();
+        if (indexPath) {
             return res.sendFile(indexPath);
         }
         return res.status(500).send('SPA index missing');
@@ -249,6 +293,13 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+    // Setup Vite server for development
+    await setupViteServer();
+
+    // Initialize WebUI server and mount it on the main app
+    const webuiApp = getWebUIServer().getApp();
+    app.use(webuiApp);
+
     const llmProviders = getLlmProvider();
     console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 
@@ -315,9 +366,13 @@ async function main() {
     }
 }
 
-main().catch((error) => {
-    console.error('[DEBUG] Unexpected error in main execution:', error);
-    process.exit(1);
-});
-
+// Export the app for testing purposes
 export default app;
+
+// Start the server only if the file is run directly
+if (require.main === module) {
+    main().catch((error) => {
+        console.error('[DEBUG] Unexpected error in main execution:', error);
+        process.exit(1);
+    });
+}
