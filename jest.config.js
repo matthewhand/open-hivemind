@@ -1,15 +1,24 @@
-const unitIntegrationProject = {
-  displayName: 'unit-integration',
-  roots: ['<rootDir>/tests', '<rootDir>/src/client'],
+// Server-side tests (API, routes, backend logic) - Node.js environment
+const serverSideProject = {
+  displayName: 'server-side',
+  roots: ['<rootDir>/tests'],
   preset: 'ts-jest',
-  // Use jsdom so React Testing Library can render components
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   transform: {
     '^.+\\.tsx?$': 'babel-jest',
     '^.+\\.jsx?$': 'babel-jest',
     '^.+\\.js$': 'babel-jest'
   },
   testRegex: '(\\.|/)(test|integration\\.test)\\.[tj]sx?$',
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/tests/e2e/',
+    'tests/integrations/.*\\.real\\.test\\.[tj]s$',
+    // Exclude client-side test directories
+    '<rootDir>/tests/__mocks__/',
+    '<rootDir>/webui/'
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
@@ -28,14 +37,50 @@ const unitIntegrationProject = {
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
     'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/tests/__mocks__/discord.js.ts',
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.backend.ts'],
+  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|vite|@vite)'],
+};
+
+// Client-side tests (React components, UI logic) - JSDOM environment
+const clientSideProject = {
+  displayName: 'client-side',
+  roots: ['<rootDir>/webui/client'],
+  preset: 'ts-jest',
+  // Use jsdom so React Testing Library can render components
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: '<rootDir>/webui/client/tsconfig.test.json',
+    }],
+    '^.+\\.(js|jsx)$': 'babel-jest',
+  },
+  testRegex: '(\\.|/)(test|spec)\\.[tj]sx?$',
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
-    '/tests/e2e/',
-    'tests/integrations/.*\\.real\\.test\\.[tj]s$'
+    '/build/',
   ],
-  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob)'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: {
+    // Client-specific aliases
+    '^@/(.*)$': '<rootDir>/webui/client/src/$1',
+    '^@components/(.*)$': '<rootDir>/webui/client/src/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/webui/client/src/hooks/$1',
+    '^@utils/(.*)$': '<rootDir>/webui/client/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/webui/client/src/services/$1',
+    '^@store/(.*)$': '<rootDir>/webui/client/src/store/$1',
+    '^@types/(.*)$': '<rootDir>/webui/client/src/types/$1',
+    '^@assets/(.*)$': '<rootDir>/webui/client/src/assets/$1',
+    '^@styles/(.*)$': '<rootDir>/webui/client/src/styles/$1',
+    // Handle CSS imports
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Handle image imports
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/webui/client/__mocks__/fileMock.js',
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.frontend.tsx'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-dnd|react-dnd-html5-backend|@react-dnd|dnd-core)/)',
+  ],
 };
 
 const realIntegrationProject = {
@@ -63,18 +108,38 @@ const realIntegrationProject = {
 // Fast client-only project (no backend heavy tests). Activated when JEST_FRONTEND_ONLY=1
 const clientOnlyProject = {
   displayName: 'client-ui-fast',
-  roots: ['<rootDir>/src/client/src'],
+  roots: ['<rootDir>/webui/client/src'],
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.tsx?$': 'babel-jest',
-    '^.+\\.jsx?$': 'babel-jest'
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: '<rootDir>/webui/client/tsconfig.test.json',
+    }],
+    '^.+\\.(js|jsx)$': 'babel-jest',
   },
-  testRegex: '(\\.|/)(test)\\.[tj]sx?$',
+  testRegex: '(\\.|/)(test|spec)\\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  moduleNameMapper: unitIntegrationProject.moduleNameMapper,
-  setupFilesAfterEnv: unitIntegrationProject.setupFilesAfterEnv,
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  moduleNameMapper: {
+    // Client-specific aliases
+    '^@/(.*)$': '<rootDir>/webui/client/src/$1',
+    '^@components/(.*)$': '<rootDir>/webui/client/src/components/$1',
+    '^@hooks/(.*)$': '<rootDir>/webui/client/src/hooks/$1',
+    '^@utils/(.*)$': '<rootDir>/webui/client/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/webui/client/src/services/$1',
+    '^@store/(.*)$': '<rootDir>/webui/client/src/store/$1',
+    '^@types/(.*)$': '<rootDir>/webui/client/src/types/$1',
+    '^@assets/(.*)$': '<rootDir>/webui/client/src/assets/$1',
+    '^@styles/(.*)$': '<rootDir>/webui/client/src/styles/$1',
+    // Handle CSS imports
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Handle image imports
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/webui/client/__mocks__/fileMock.js',
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.tsx'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-dnd|react-dnd-html5-backend|@react-dnd|dnd-core)/)',
+  ],
 };
 
 // Optional single test isolation to prevent discovery of all files when running one test.
@@ -90,7 +155,7 @@ if (process.env.ONLY_TEST_PATH && process.env.JEST_FRONTEND_ONLY === '1') {
   console.log(`[jest] ONLY_TEST_PATH enabled -> running: ${normalized}`);
 }
 
-let projects = [unitIntegrationProject];
+let projects = [serverSideProject, clientSideProject];
 if (process.env.JEST_FRONTEND_ONLY === '1') {
   projects = [clientOnlyProject];
 }
@@ -115,4 +180,8 @@ module.exports = {
     },
   },
   projects,
+  // Add test environment setup
+  testEnvironmentOptions: {
+    url: 'http://localhost'
+  }
 };

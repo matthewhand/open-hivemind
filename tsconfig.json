@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "CommonJS",
+    "target": "ES2022",
+    "module": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "rootDir": "./",
     "baseUrl": "./",
@@ -33,7 +33,7 @@
   "exclude": [
     "tests/**/*",
     "node_modules",
-    "src/client/**/*"
+    "webui/client/**/*"
   ],
   "files": [
     "src/types/express.d.ts",

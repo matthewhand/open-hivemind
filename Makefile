@@ -41,10 +41,10 @@ start-dev: clean
 	@echo "This replaces ALL the redundant dev commands"
 	@echo "(Using ts-node + tsconfig-paths for live TypeScript + path aliases)"
 	@export PORT?=3028; \
-	if [ ! -f src/client/dist/index.html ]; then \
+	if [ ! -f webui/client/dist/index.html ]; then \
 	  echo "⚠️  Frontend build missing (src/client/dist/index.html)"; \
 	  echo "🏗️  Building frontend..."; \
-	  (cd src/client && ../../node_modules/.bin/vite build) || { echo "❌ Frontend build failed"; exit 1; }; \
+	  (cd webui/client && ../../node_modules/.bin/vite build) || { echo "❌ Frontend build failed"; exit 1; }; \
 	else \
 	  echo "✅ Frontend build present"; \
 	fi; \
@@ -61,15 +61,15 @@ start-dev-hmr: clean
 	@echo "Backend: http://localhost:3028  |  Frontend (HMR): http://localhost:5173"
 	@echo "Press Ctrl+C to stop both."
 	@export PORT?=3028; \
-	if [ ! -d src/client/node_modules ]; then \
+	if [ ! -d webui/client/node_modules ]; then \
 	  echo "📦 Installing frontend dependencies (first run)..."; \
-	  (cd src/client && npm install --no-audit --no-fund || true); \
+	  (cd webui/client && npm install --no-audit --no-fund || true); \
 	fi; \
-	if [ ! -f src/client/dist/index.html ]; then \
+	if [ ! -f webui/client/dist/index.html ]; then \
 	  echo "(Optional) You can also run a production build later via make build"; \
 	fi; \
 	( NODE_ENV=development PORT=$$PORT nodemon --quiet --exec "./node_modules/.bin/ts-node -r tsconfig-paths/register src/index.ts" & echo $$! > .backend.pid ); \
-	( cd src/client && ../../node_modules/.bin/vite --port 5173 --host & echo $$! > ../../.vite.pid ); \
+	( cd webui/client && ../../node_modules/.bin/vite --port 5173 --host & echo $$! > ../../.vite.pid ); \
 	trap 'echo "\n🛑 Stopping dev services"; kill $$(cat .backend.pid .vite.pid 2>/dev/null) 2>/dev/null || true; rm -f .backend.pid .vite.pid' INT TERM; \
 	wait
 
@@ -77,11 +77,11 @@ build:
 	@echo "🔨 Building Application"
 	@echo "======================"
 	@echo "Frontend build..."
-	@cd src/client && ../../node_modules/.bin/vite build
+	@cd webui/client && ../../node_modules/.bin/vite build
 	@echo "Backend build..."
 	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && node node_modules/.bin/tsc
 	@echo "Copying frontend to dist..."
-	@mkdir -p dist/client && cp -r src/client/dist dist/client/
+	@mkdir -p dist/client && cp -r webui/client/dist dist/client/
 
 test-app:
 	@echo "🧪 Running Application Tests"

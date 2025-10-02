@@ -11,7 +11,7 @@
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
       "@src/*": ["src/*"],
-      "@client/*": ["src/client/*"],
+      "@client/*": ["webui/client/*"],
       "@server/*": ["src/server/*"],
       "@tests/*": ["tests/*"],
       "testUtils": ["./tests/testUtils"]
