@@ -1,6 +1,7 @@
 import convict from 'convict';
 import Debug from 'debug';
-
+import { isValidUrl } from '../common/urlUtils';
+import { SecureConfigManager } from './SecureConfigManager';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -14,6 +15,32 @@ const schema = convict({
         format: ['production', 'development', 'test'],
         default: 'development',
         env: 'NODE_ENV',
+    },
+    VITE_API_BASE_URL: {
+        doc: 'API base URL for Vite frontend',
+        format: (val: any) => {
+          if (typeof val !== 'string') {
+            throw new Error('Value must be a string');
+          }
+          if (!isValidUrl(val)) {
+            throw new Error('Value must be a valid URL');
+          }
+        },
+        default: 'http://localhost:3000/api',
+        env: 'VITE_API_BASE_URL',
+    },
+    PLAYWRIGHT_BASE_URL: {
+        doc: 'Base URL for Playwright E2E tests',
+        format: (val: any) => {
+          if (typeof val !== 'string') {
+            throw new Error('Value must be a string');
+          }
+          if (!isValidUrl(val)) {
+            throw new Error('Value must be a valid URL');
+          }
+        },
+        default: 'http://localhost:3000',
+        env: 'PLAYWRIGHT_BASE_URL',
     }
 });
 
@@ -42,6 +69,22 @@ export class ConfigurationManager {
      */
     private constructor() {
         schema.validate({ allowed: 'strict' });
+        
+        const secureManager = SecureConfigManager.getInstance();
+        const env = process.env.NODE_ENV || 'default';
+        const fileConfig = secureManager.getDecryptedMainConfig(env);
+        if (fileConfig) {
+          schema.load(fileConfig);
+          schema.validate({ allowed: 'strict' });
+        }
+        
+        // Validate schema after loading environment variables
+        schema.validate({ allowed: 'strict' });
+        
+        // Access all configuration values to trigger env var loading
+        const configValues = schema.getProperties();
+        
+        this.configs['environment'] = schema;
         debug('ConfigurationManager initialized in development environment');
     }
 

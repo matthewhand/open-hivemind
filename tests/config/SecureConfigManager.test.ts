@@ -15,7 +15,7 @@ describe('SecureConfigManager', () => {
         fs.rmSync(testConfigDir, { recursive: true, force: true });
       }
     } catch (error) {
-      console.log('Warning: Could not clean up test directory, continuing anyway:', error.message);
+      console.log('Warning: Could not clean up test directory, continuing anyway:', (error as Error).message);
       // Continue with test even if cleanup fails
     }
 
@@ -24,7 +24,7 @@ describe('SecureConfigManager', () => {
       fs.mkdirSync(testConfigDir, { recursive: true });
       console.log('Directories created');
     } catch (error) {
-      console.log('Warning: Could not create test directory:', error.message);
+      console.log('Warning: Could not create test directory:', (error as Error).message);
     }
 
     // Reset the singleton instance to ensure clean state
@@ -36,7 +36,7 @@ describe('SecureConfigManager', () => {
         fs.unlinkSync(keyPath);
       }
     } catch (error) {
-      console.log('Warning: Could not clear encryption key:', error.message);
+      console.log('Warning: Could not clear encryption key:', (error as Error).message);
     }
     console.log('Singleton reset and encryption key cleared');
 
@@ -307,5 +307,80 @@ describe('SecureConfigManager', () => {
       // Restore original function
       require('fs').promises.writeFile = originalWriteFile;
     });
+  });
+});
+
+describe('Main Configuration Encryption', () => {
+  const mainConfigDir = path.join(process.cwd(), 'config');
+  const testEnv = 'test';
+  const testConfigPath = path.join(mainConfigDir, `${testEnv}.json`);
+  const testEncPath = path.join(mainConfigDir, `${testEnv}.json.enc`);
+
+  beforeEach(() => {
+    // Clean up test files
+    [testConfigPath, testEncPath].forEach(file => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+    });
+  });
+
+  afterEach(() => {
+    [testConfigPath, testEncPath].forEach(file => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+    });
+  });
+
+  test('should encrypt and decrypt main configuration file', async () => {
+    const testConfig = {
+      NODE_ENV: 'test',
+      VITE_API_BASE_URL: 'http://localhost:3000/api',
+      PLAYWRIGHT_BASE_URL: 'http://localhost:3000'
+    };
+
+    // Write plain config
+    fs.writeFileSync(testConfigPath, JSON.stringify(testConfig));
+
+    const secureManager = SecureConfigManager.getInstance();
+    const decrypted = secureManager.getDecryptedMainConfig(testEnv);
+    expect(decrypted).toEqual(testConfig);
+
+    // Now encrypt it
+    const encryptedContent = secureManager.encrypt(JSON.stringify(testConfig));
+    fs.writeFileSync(testEncPath, encryptedContent);
+
+    // Delete plain file
+    fs.unlinkSync(testConfigPath);
+
+    // Verify decryption from encrypted file
+    const decryptedFromEnc = secureManager.getDecryptedMainConfig(testEnv);
+    expect(decryptedFromEnc).toEqual(testConfig);
+
+    // Verify fallback to plain if encrypted fails
+    fs.writeFileSync(testEncPath, 'invalid'); // Corrupt encrypted file
+    const fallbackDecrypted = secureManager.getDecryptedMainConfig(testEnv);
+    expect(fallbackDecrypted).toBeNull(); // Should return null on failure, but since plain doesn't exist, null
+  });
+
+  test('should handle non-existent main config files', () => {
+    const secureManager = SecureConfigManager.getInstance();
+    const result = secureManager.getDecryptedMainConfig('nonexistent');
+    expect(result).toBeNull();
+  });
+
+  test('should handle corrupted encrypted main config', async () => {
+    // Create corrupted encrypted file
+    const secureManager = SecureConfigManager.getInstance();
+    const corruptedEnc = {
+      iv: 'invalidiv',
+      authTag: 'invalidauth',
+      data: 'invaliddata'
+    };
+    fs.writeFileSync(testEncPath, JSON.stringify(corruptedEnc));
+
+    const result = secureManager.getDecryptedMainConfig(testEnv);
+    expect(result).toBeNull();
   });
 });

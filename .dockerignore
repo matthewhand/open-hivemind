@@ -136,3 +136,7 @@ Thumbs.db
 /srv
 /tmp
 /var
+
+# Test results
+playwright-report/
+test-results/

@@ -32,10 +32,13 @@ interface PerformanceMetricsResponse {
   activeConnections: number;
 }
 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const baseUrl = rawBaseUrl?.replace(/\/$/, '') ?? '';
+
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+    baseUrl,
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth?.token;
