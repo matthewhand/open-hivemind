@@ -3,11 +3,11 @@ import * as fs from 'fs';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const DiscordMgr = require('@integrations/discord/DiscordService');
-const SlackMgr = require('@integrations/slack/SlackService');
+const DiscordMgr = require('../../integrations/discord/DiscordService');
+const SlackMgr = require('../../integrations/slack/SlackService');
 const MattermostMgr = (() => {
   try {
-    return require('@integrations/mattermost/MattermostService');
+    return require('../../integrations/mattermost/MattermostService');
   } catch (_e) {
     return null;
   }

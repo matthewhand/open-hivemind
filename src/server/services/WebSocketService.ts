@@ -1,9 +1,9 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import os from 'os';
 import Debug from 'debug';
-import ApiMonitorService, { EndpointStatus } from '@src/services/ApiMonitorService';
+import ApiMonitorService, { EndpointStatus } from '../../services/ApiMonitorService';
 
 const debug = Debug('app:WebSocketService');
 

@@ -4,7 +4,7 @@ import { requireAdmin, authenticate } from '../../auth/middleware';
 import { body, query, param } from 'express-validator';
 import { validationResult } from 'express-validator';
 import { AuthMiddlewareRequest } from '../../auth/types';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const multer = require('multer');
 import path from 'path';
 import fs from 'fs/promises';

@@ -6,6 +6,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
 import AdminPage from '../pages/Admin';
+import BotManagementPage from '../pages/Admin/BotManagementPage';
 import UberLayout from '../layouts/UberLayout';
 
 const Login = lazy(() => import('../components/Login'));
@@ -70,6 +71,14 @@ const AppRouter: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+        <Route
+            path="/admin/bots"
+            element={
+              <ProtectedRoute>
+                <BotManagementPage />
               </ProtectedRoute>
             }
           />

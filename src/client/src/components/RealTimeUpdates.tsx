@@ -65,6 +65,18 @@ interface RealTimeUpdatesContextType {
 
 const RealTimeUpdatesContext = createContext<RealTimeUpdatesContextType | null>(null);
 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const normalizedBase = rawBaseUrl?.replace(/\/$/, '') ?? '';
+
+const buildWebSocketUrl = (path: string): string => {
+  if (normalizedBase) {
+    const wsOrigin = normalizedBase.replace(/^http/i, (match) => (match.toLowerCase() === 'https' ? 'wss' : 'ws'));
+    return `${wsOrigin}${path}`;
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${protocol}://${window.location.host}${path}`;
+};
+
 interface RealTimeUpdatesProviderProps {
   children: ReactNode;
 }
@@ -116,7 +128,7 @@ export const RealTimeUpdatesProvider: React.FC<RealTimeUpdatesProviderProps> = (
 
     const connectWebSocket = () => {
       // Simulate WebSocket connection for real-time updates
-      const ws = new WebSocket('ws://localhost:3000/ws');
+      const ws = new WebSocket(buildWebSocketUrl('/ws'));
 
       ws.onopen = () => {
         setIsConnected(true);

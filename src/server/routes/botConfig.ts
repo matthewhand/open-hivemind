@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, requireAdmin } from '../../auth/middleware';
+import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
@@ -184,14 +184,72 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       });
     }
 
+    const dbManager = DatabaseManager.getInstance();
+    if (!dbManager.isConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const diff = JSON.stringify({
+      old: existingBot,
+      new: { ...existingBot, ...updates },
+    });
+
+    const approvalRequestId = await dbManager.createApprovalRequest({
+      resourceType: 'BotConfiguration',
+      resourceId: botId, // Use bot name as resource ID
+      changeType: 'UPDATE',
+      requestedBy: req.user.username,
+      diff,
+    });
+
+    res.json({
+      success: true,
+      message: 'Bot configuration update requires approval.',
+      approvalRequestId,
+    });
+  } catch (error: any) {
+    debug('Error updating bot configuration:', error);
+    logConfigChange(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot configuration: ${error.message}`);
+    res.status(400).json({
+      error: 'Failed to update bot configuration',
+      message: error.message || 'An error occurred while updating bot configuration'
+    });
+  }
+});
+
+router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, res: Response) => {
+  const { botId } = req.params;
+  const { approvalId } = req.body;
+
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    if (!dbManager.isConnected()) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    const approvalRequest = await dbManager.getApprovalRequest(approvalId);
+    if (!approvalRequest || approvalRequest.status !== 'approved' || approvalRequest.resourceId !== parseInt(botId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or not approved approval request for this bot configuration.',
+      });
+    }
+
+    const diff = JSON.parse(approvalRequest.diff);
+    const updates = diff.new;
+
     // Update user overrides
     userConfigStore.setBotOverride(botId, {
-      messageProvider: updates.messageProvider || existingBot.messageProvider,
-      llmProvider: updates.llmProvider || existingBot.llmProvider,
-      persona: updates.persona !== undefined ? updates.persona : existingBot.persona,
-      systemInstruction: updates.systemInstruction !== undefined ? updates.systemInstruction : existingBot.systemInstruction,
-      mcpServers: updates.mcpServers !== undefined ? updates.mcpServers : existingBot.mcpServers,
-      mcpGuard: updates.mcpGuard !== undefined ? updates.mcpGuard : existingBot.mcpGuard
+      messageProvider: updates.messageProvider,
+      llmProvider: updates.llmProvider,
+      persona: updates.persona,
+      systemInstruction: updates.systemInstruction,
+      mcpServers: updates.mcpServers,
+      mcpGuard: updates.mcpGuard
     });
 
     // Update secure config if sensitive data changed
@@ -201,11 +259,11 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
         name: botId,
         type: 'bot',
         data: {
-          discord: updates.discord || existingBot.discord,
-          slack: updates.slack || existingBot.slack,
-          openai: updates.openai || existingBot.openai,
-          flowise: updates.flowise || existingBot.flowise,
-          openwebui: updates.openwebui || existingBot.openwebui
+          discord: updates.discord,
+          slack: updates.slack,
+          openai: updates.openai,
+          flowise: updates.flowise,
+          openwebui: updates.openwebui
         },
         createdAt: new Date().toISOString()
       });
@@ -225,7 +283,7 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
     }
 
     logConfigChange(req, 'UPDATE', botId, 'success', 'Bot configuration updated successfully', {
-      oldValue: existingBot,
+      oldValue: diff.old,
       newValue: updatedBot
     });
 
@@ -235,11 +293,11 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       message: 'Bot configuration updated successfully'
     });
   } catch (error: any) {
-    debug('Error updating bot configuration:', error);
-    logConfigChange(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot configuration: ${error.message}`);
+    debug('Error applying bot configuration update:', error);
+    logConfigChange(req, 'UPDATE', botId, 'failure', `Failed to apply bot configuration update: ${error.message}`);
     res.status(400).json({
-      error: 'Failed to update bot configuration',
-      message: error.message || 'An error occurred while updating bot configuration'
+      error: 'Failed to apply bot configuration update',
+      message: error.message || 'An error occurred while applying bot configuration update'
     });
   }
 });
