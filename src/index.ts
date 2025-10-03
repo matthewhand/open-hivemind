@@ -30,6 +30,7 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
@@ -76,6 +77,17 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+if (process.env.NODE_ENV === 'development') {
+    app.use(
+        '/uber',
+        createProxyMiddleware({
+            target: 'http://localhost:5173',
+            changeOrigin: true,
+            ws: true,
+        }),
+    );
+}
 
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
