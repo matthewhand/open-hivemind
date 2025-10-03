@@ -64,7 +64,7 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route
+        <Route
             path="/admin/bots"
             element={
               <ProtectedRoute>

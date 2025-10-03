@@ -4,7 +4,9 @@ const router = Router();
 
 router.get('/api/openapi', (req, res) => {
   const format = String(req.query.format || 'json').toLowerCase();
-  const spec = buildSpec();
+  const host = req.get('host') ?? 'localhost';
+  const baseUrl = `${req.protocol}://${host}`;
+  const spec = buildSpec(baseUrl);
 
   if (format === 'yaml' || format === 'yml') {
     res.type('text/yaml').send(toYaml(spec));
@@ -14,7 +16,7 @@ router.get('/api/openapi', (req, res) => {
   res.json(spec);
 });
 
-function buildSpec() {
+function buildSpec(baseUrl: string) {
   return {
     openapi: '3.0.3',
     info: {
@@ -24,8 +26,8 @@ function buildSpec() {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: 'Local development server',
+        url: baseUrl,
+        description: 'Current server',
       },
     ],
     paths: {

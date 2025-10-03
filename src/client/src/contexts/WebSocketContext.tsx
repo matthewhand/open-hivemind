@@ -21,7 +21,8 @@ interface WebSocketContextType {
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -34,7 +35,8 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const connect = () => {
     if (socket?.connected) return;
 
-    const newSocket = io(`${API_BASE_URL}`, {
+    const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
+    const newSocket = io(connectionTarget, {
       path: '/webui/socket.io',
       transports: ['websocket', 'polling']
     });

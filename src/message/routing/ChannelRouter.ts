@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig';
+import messageConfig from '../../config/messageConfig';
 
 const debug = Debug('app:ChannelRouter');
 

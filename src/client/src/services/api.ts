@@ -1,4 +1,12 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
+
+const buildUrl = (endpoint: string): string => {
+  if (!API_BASE_URL) {
+    return endpoint;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
 
 export interface FieldMetadata {
   source: 'env' | 'user' | 'default';
@@ -135,7 +143,7 @@ export interface ActivityResponse {
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = buildUrl(endpoint);
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -265,7 +273,7 @@ class ApiService {
   }
 
   async exportConfig(): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/webui/api/config/export`, {
+    const response = await fetch(buildUrl('/webui/api/config/export'), {
       method: 'GET',
       headers: {
         'Accept': 'application/json',

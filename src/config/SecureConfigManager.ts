@@ -39,6 +39,7 @@ export class SecureConfigManager {
   private readonly backupDir: string;
   private readonly encryptionKey: Buffer;
   private readonly algorithm = 'aes-256-gcm';
+  private readonly mainConfigDir: string;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -49,6 +50,7 @@ export class SecureConfigManager {
 
     // Generate or load encryption key
     this.encryptionKey = this.getOrCreateEncryptionKey();
+    this.mainConfigDir = path.join(process.cwd(), 'config');
   }
 
   public static getInstance(): SecureConfigManager {
@@ -274,7 +276,7 @@ export class SecureConfigManager {
   /**
    * Encrypt data using AES-256-GCM
    */
-  private encrypt(data: string): string {
+  public encrypt(data: string): string {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
 
@@ -294,7 +296,7 @@ export class SecureConfigManager {
   /**
    * Decrypt data using AES-256-GCM
    */
-  private decrypt(encryptedData: string): string {
+  public decrypt(encryptedData: string): string {
     const { iv, authTag, data } = JSON.parse(encryptedData);
 
     const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, Buffer.from(iv, 'hex'));
@@ -356,5 +358,28 @@ export class SecureConfigManager {
     const { checksum, ...dataWithoutChecksum } = data;
     const calculatedChecksum = this.calculateChecksum(dataWithoutChecksum);
     return checksum === calculatedChecksum;
+  }
+  public getDecryptedMainConfig(env: string): any | null {
+    const encPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+    if (fs.existsSync(encPath)) {
+      const encrypted = fs.readFileSync(encPath, 'utf8');
+      try {
+        const decrypted = this.decrypt(encrypted);
+        return JSON.parse(decrypted);
+      } catch (error) {
+        debug(`Failed to decrypt main config ${env}:`, error);
+        return null;
+      }
+    }
+    const jsonPath = path.join(this.mainConfigDir, `${env}.json`);
+    if (fs.existsSync(jsonPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      } catch (error) {
+        debug(`Failed to parse main config ${env}:`, error);
+        return null;
+      }
+    }
+    return null;
   }
 }

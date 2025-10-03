@@ -99,10 +99,14 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
+<<<<<<< HEAD
+dist
+=======
 dist/*
 !dist/.gitkeep
 !dist/config/environments/.gitkeep
 dist/config/environments/*
+>>>>>>> automerge-to-main
 dist/config/environments/.env.backup
 
 # Gatsby files
@@ -159,3 +163,8 @@ logs/
 coverage/
 # Serena tool cache
 .serena/
+# Test results
+playwright-report/
+test-results/
+
+config/
