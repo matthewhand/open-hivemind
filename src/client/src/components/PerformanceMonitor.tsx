@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
+=======
+import React from 'react';
+>>>>>>> automerge-to-main
 import {
   Alert,
   Box,
@@ -9,6 +13,7 @@ import {
   Grid,
   Stack,
   Typography,
+<<<<<<< HEAD
   Switch,
   FormControlLabel,
   useTheme,
@@ -29,6 +34,13 @@ import {
 } from 'recharts';
 import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';
 import { useThemeEngine } from '../themes/useThemeEngine';
+=======
+} from '@mui/material';
+import { Refresh as RefreshIcon } from '@mui/icons-material';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { SerializedError } from '@reduxjs/toolkit';
+import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';
+>>>>>>> automerge-to-main
 import LoadingSpinner from './LoadingSpinner';
 
 const defaultMetrics = {
@@ -63,6 +75,7 @@ const toErrorMessage = (error: unknown): string => {
   return 'Unexpected error while fetching performance metrics';
 };
 
+<<<<<<< HEAD
 interface ChartDataPoint {
   timestamp: string;
   cpuUsage: number;
@@ -76,6 +89,9 @@ const PerformanceMonitor: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(currentTheme === 'dark');
 
+=======
+const PerformanceMonitor: React.FC = () => {
+>>>>>>> automerge-to-main
   const {
     data,
     error,
@@ -87,6 +103,7 @@ const PerformanceMonitor: React.FC = () => {
   const metrics = data ?? defaultMetrics;
   const errorMessage = error ? toErrorMessage(error) : null;
 
+<<<<<<< HEAD
   // Update chart data when new metrics arrive
   useEffect(() => {
     const newDataPoint: ChartDataPoint = {
@@ -113,6 +130,8 @@ const PerformanceMonitor: React.FC = () => {
     setCurrentTheme(newTheme);
   };
 
+=======
+>>>>>>> automerge-to-main
   if (isLoading && !data) {
     return <LoadingSpinner message="Loading performance data..." />;
   }
@@ -127,6 +146,7 @@ const PerformanceMonitor: React.FC = () => {
   const uptimeHours = Math.floor(uptimeSeconds / 3600);
   const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
 
+<<<<<<< HEAD
   // Alert thresholds
   const alerts = [];
   if (cpuUsage > 80) {
@@ -180,6 +200,11 @@ const PerformanceMonitor: React.FC = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+=======
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+>>>>>>> automerge-to-main
         <Box>
           <Typography variant="h4" gutterBottom>
             Performance Monitor
@@ -188,6 +213,7 @@ const PerformanceMonitor: React.FC = () => {
             Real-time metrics for Open-Hivemind services
           </Typography>
         </Box>
+<<<<<<< HEAD
         <Box display="flex" alignItems="center" gap={2}>
           <FormControlLabel
             control={
@@ -210,6 +236,16 @@ const PerformanceMonitor: React.FC = () => {
             Refresh
           </Button>
         </Box>
+=======
+        <Button
+          variant="outlined"
+          startIcon={isFetching ? <CircularProgress size={18} /> : <RefreshIcon />}
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          Refresh
+        </Button>
+>>>>>>> automerge-to-main
       </Box>
 
       {errorMessage && (
@@ -217,6 +253,7 @@ const PerformanceMonitor: React.FC = () => {
           {errorMessage}
         </Alert>
       )}
+<<<<<<< HEAD
       {alerts.map((a, idx) => (
         <Alert
           key={`metric-alert-${idx}`}
@@ -321,11 +358,53 @@ const PerformanceMonitor: React.FC = () => {
                   </AreaChart>
                 </ResponsiveContainer>
               </Box>
+=======
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <Card elevation={1}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Resource Utilisation
+              </Typography>
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                <Typography variant="body1">
+                  CPU Usage: {cpuUsage.toFixed(1)}%
+                </Typography>
+                <Typography variant="body1">
+                  Memory Usage: {memoryUsage.toFixed(1)}%
+                </Typography>
+                <Typography variant="body1">
+                  Active Connections: {activeConnections}
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card elevation={1}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Latency & Reliability
+              </Typography>
+              <Stack spacing={1.5} sx={{ mt: 1 }}>
+                <Typography variant="body1">
+                  Response Time: {responseTime.toFixed(1)} ms
+                </Typography>
+                <Typography variant="body1">
+                  Error Rate: {errorRate.toFixed(2)}%
+                </Typography>
+                <Typography variant="body1">
+                  Uptime: {uptimeHours}h {uptimeMinutes}m
+                </Typography>
+              </Stack>
+>>>>>>> automerge-to-main
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
+<<<<<<< HEAD
       {/* Additional charts for response time and error rate */}
       <Grid container spacing={3} sx={{ mt: 1 }}>
         <Grid item xs={12} md={6}>
@@ -375,6 +454,16 @@ const PerformanceMonitor: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+=======
+      {isFetching && (
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 3 }}>
+          <CircularProgress size={20} />
+          <Typography variant="body2" color="text.secondary">
+            Updating metrics...
+          </Typography>
+        </Stack>
+      )}
+>>>>>>> automerge-to-main
     </Box>
   );
 };

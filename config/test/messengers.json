@@ -137,6 +137,44 @@
         "name": "test-bot",
         "token": "test-token",
         "signingSecret": "test-secret"
+<<<<<<< HEAD
+=======
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
+>>>>>>> automerge-to-main
       }
     ],
     "mode": "socket"

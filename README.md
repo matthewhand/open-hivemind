@@ -78,7 +78,11 @@ npm run build
 # Run all tests
 npm test
 
+<<<<<<< HEAD
 # Production start (serves frontend from /uber)
+=======
+
+>>>>>>> automerge-to-main
 npm start
 ```
 

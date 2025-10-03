@@ -15,8 +15,13 @@ import * as path from 'path';
 // Optional channel routing feature flag and router
 import messageConfig from '../../config/messageConfig';
 // ChannelRouter exports functions, not a class
+<<<<<<< HEAD
 import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
 import WebSocketService from '../../server/services/WebSocketService';
+=======
+import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import WebSocketService from '@src/server/services/WebSocketService';
+>>>>>>> automerge-to-main
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};

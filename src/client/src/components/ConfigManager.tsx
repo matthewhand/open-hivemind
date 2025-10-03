@@ -13,6 +13,7 @@ import {
   Chip,
   IconButton,
   Tooltip,
+<<<<<<< HEAD
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,13 +24,18 @@ import {
   MenuItem,
   InputAdornment,
   Snackbar,
+=======
+>>>>>>> automerge-to-main
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Refresh as RefreshIcon,
+<<<<<<< HEAD
   Delete as DeleteIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
+=======
+>>>>>>> automerge-to-main
 } from '@mui/icons-material';
 import { useAppSelector } from '../store/hooks';
 import {
@@ -43,6 +49,7 @@ const ConfigManager: React.FC = () => {
   const configError = useAppSelector(selectConfigError);
   const [selectedEnv, setSelectedEnv] = useState<string>('development');
   const [hasChanges, setHasChanges] = useState(false);
+<<<<<<< HEAD
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEnvironment, setFilterEnvironment] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -139,6 +146,34 @@ const ConfigManager: React.FC = () => {
     return matchesSearch && matchesEnvironment && matchesStatus;
   });
 
+=======
+
+  // Mock configuration data for demonstration
+  const mockConfigs = [
+    { id: 'dev', name: 'Development', environment: 'development', isActive: true },
+    { id: 'staging', name: 'Staging', environment: 'staging', isActive: false },
+    { id: 'prod', name: 'Production', environment: 'production', isActive: false },
+  ];
+
+  const [editingConfig, setEditingConfig] = useState(mockConfigs[0]);
+
+  const handleSaveConfig = () => {
+    try {
+      // Simulate saving configuration
+      console.log('Saving configuration:', editingConfig);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+    }
+  };
+
+  const handleEnvironmentChange = (env: string) => {
+    setSelectedEnv(env);
+    const config = mockConfigs.find(c => c.environment === env) || mockConfigs[0];
+    setEditingConfig(config);
+  };
+
+>>>>>>> automerge-to-main
   if (config.isLoading) {
     return <LoadingSpinner message="Loading configurations..." />;
   }
@@ -167,6 +202,7 @@ const ConfigManager: React.FC = () => {
                   </IconButton>
                 </Tooltip>
               </Box>
+<<<<<<< HEAD
 
               <Box sx={{ mb: 2 }}>
                 <TextField
@@ -219,6 +255,10 @@ const ConfigManager: React.FC = () => {
               </Grid>
               
               {filteredConfigs.map((config) => (
+=======
+              
+              {mockConfigs.map((config) => (
+>>>>>>> automerge-to-main
                 <Box
                   key={config.id}
                   onClick={() => handleEnvironmentChange(config.environment)}
@@ -238,9 +278,12 @@ const ConfigManager: React.FC = () => {
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Box>
                       <Typography variant="body1">{config.name}</Typography>
+<<<<<<< HEAD
                       <Typography variant="caption" color="text.secondary">
                         Last Modified: {config.lastModified.toLocaleString()}
                       </Typography>
+=======
+>>>>>>> automerge-to-main
                       <Box display="flex" gap={1} mt={1}>
                         <Chip
                           label={config.environment}
@@ -256,6 +299,7 @@ const ConfigManager: React.FC = () => {
                         )}
                       </Box>
                     </Box>
+<<<<<<< HEAD
                     <Tooltip title="Delete configuration">
                       <IconButton onClick={(e) => { e.stopPropagation(); handleDeleteConfig(config); }} color="error">
                         <DeleteIcon />
@@ -279,6 +323,11 @@ const ConfigManager: React.FC = () => {
                   <Button onClick={confirmDeleteConfig} color="error">Delete</Button>
                 </DialogActions>
               </Dialog>
+=======
+                  </Box>
+                </Box>
+              ))}
+>>>>>>> automerge-to-main
             </CardContent>
           </Card>
         </Grid>
@@ -314,6 +363,7 @@ const ConfigManager: React.FC = () => {
                       fullWidth
                       label="Configuration Name"
                       value={editingConfig.name || ''}
+<<<<<<< HEAD
                       error={!!validationErrors.name}
                       helperText={validationErrors.name}
                       onChange={(e) => {
@@ -322,6 +372,11 @@ const ConfigManager: React.FC = () => {
                         if (validationErrors.name) {
                           setValidationErrors(prev => ({ ...prev, name: '' }));
                         }
+=======
+                      onChange={(e) => {
+                        setEditingConfig({ ...editingConfig, name: e.target.value });
+                        setHasChanges(true);
+>>>>>>> automerge-to-main
                       }}
                     />
                   </Grid>
@@ -330,6 +385,7 @@ const ConfigManager: React.FC = () => {
                       fullWidth
                       label="Environment"
                       value={editingConfig.environment || 'development'}
+<<<<<<< HEAD
                       error={!!validationErrors.environment}
                       helperText={validationErrors.environment}
                       onChange={(e) => {
@@ -338,6 +394,11 @@ const ConfigManager: React.FC = () => {
                         if (validationErrors.environment) {
                           setValidationErrors(prev => ({ ...prev, environment: '' }));
                         }
+=======
+                      onChange={(e) => {
+                        setEditingConfig({ ...editingConfig, environment: e.target.value });
+                        setHasChanges(true);
+>>>>>>> automerge-to-main
                       }}
                     />
                   </Grid>
@@ -369,6 +430,7 @@ const ConfigManager: React.FC = () => {
           )}
         </Grid>
       </Grid>
+<<<<<<< HEAD
 
       <Snackbar
         open={snackbar.open}
@@ -385,6 +447,8 @@ const ConfigManager: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+=======
+>>>>>>> automerge-to-main
     </Box>
   );
 };

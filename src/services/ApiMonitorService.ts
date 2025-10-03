@@ -67,6 +67,8 @@ export class ApiMonitorService extends EventEmitter {
 
   private constructor() {
     super();
+    // Increase max listeners for monitoring service
+    this.setMaxListeners(20);
   }
 
   public static getInstance(): ApiMonitorService {

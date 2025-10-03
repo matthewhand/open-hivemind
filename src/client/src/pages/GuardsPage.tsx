@@ -89,7 +89,11 @@ const GuardsPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
+<<<<<<< HEAD
       const response = await fetch('/api/uber/guards', {
+=======
+      const response = await fetch('/api/guards', {
+>>>>>>> automerge-to-main
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

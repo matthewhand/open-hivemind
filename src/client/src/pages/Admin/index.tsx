@@ -15,7 +15,7 @@ import {
   Edit as EditIcon,
   Monitor as MonitorIcon,
 } from '@mui/icons-material';
-import BotManager from '../../components/BotManager';
+import EnhancedBotManager from '../../components/Admin/EnhancedBotManager';
 import PersonaManager from '../../components/PersonaManager';
 import MCPServerManager from '../../components/MCPServerManager';
 import ConfigurationEditor from '../../components/ConfigurationEditor';
@@ -111,7 +111,7 @@ const AdminPage: React.FC = () => {
     {
       label: 'Bots',
       icon: <PeopleIcon />,
-      component: <BotManager onBotSelect={handleBotSelect} />,
+      component: <EnhancedBotManager onBotSelect={handleBotSelect} />,
     },
     {
       label: 'Personas',

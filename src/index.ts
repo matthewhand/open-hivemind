@@ -3,6 +3,7 @@ const express = require('express');
 // Import Express types for TypeScript
 import { Request, Response, NextFunction } from 'express';
 const debug = require('debug');
+<<<<<<< HEAD
 const messengerProviderModule = require('./message/management/getMessengerProvider');
 const messageHandlerModule = require('./message/handlers/messageHandler');
 const debugEnvVarsModule = require('./config/debugEnvVars');
@@ -30,6 +31,56 @@ const { createServer } = require('http');
 const getLlmProviderModule = require('@llm/getLlmProvider');
 const idleResponseManagerModule = require('@message/management/IdleResponseManager');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+
+const resolveFrontendDistPath = (): string => {
+    const candidates = [
+        path.join(process.cwd(), 'dist/client/dist'),
+        path.join(process.cwd(), 'src/client/dist'),
+    ];
+
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    return candidates[candidates.length - 1];
+};
+
+const frontendDistPath = resolveFrontendDistPath();
+const frontendAssetsPath = path.join(frontendDistPath, 'assets');
+
+if (!fs.existsSync(frontendDistPath)) {
+    console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
+}
+=======
+const messengerProviderModule = require('@message/management/getMessengerProvider');
+const messageHandlerModule = require('@message/handlers/messageHandler');
+const debugEnvVarsModule = require('@config/debugEnvVars');
+const messageConfigModule = require('@config/messageConfig');
+const webhookConfigModule = require('@config/webhookConfig');
+const healthRouteModule = require('./routes/health');
+const webhookServiceModule = require('@webhook/webhookService');
+import swarmRouter from '@src/admin/swarmRoutes';
+import dashboardRouter from '@src/server/routes/dashboard';
+import configRouter from '@src/server/routes/config';
+import botsRouter from '@src/server/routes/bots';
+import botConfigRouter from '@src/server/routes/botConfig';
+import validationRouter from '@src/server/routes/validation';
+import hotReloadRouter from '@src/server/routes/hotReload';
+import ciRouter from '@src/server/routes/ci';
+import enterpriseRouter from '@src/server/routes/enterprise';
+import secureConfigRouter from '@src/server/routes/secureConfig';
+import authRouter from '@src/server/routes/auth';
+import adminApiRouter from '@src/server/routes/admin';
+import openapiRouter from '@src/server/routes/openapi';
+import WebSocketService from '@src/server/services/WebSocketService';
+import path from 'path';
+import fs from 'fs';
+import { createServer } from 'http';
+import { getLlmProvider } from '@llm/getLlmProvider';
+import { IdleResponseManager } from '@message/management/IdleResponseManager';
+>>>>>>> automerge-to-main
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
@@ -135,6 +186,7 @@ app.get('/', (req: Request, res: Response) => {
     }
 });
 
+<<<<<<< HEAD
 // Admin UI (demo)
 app.use('/api/admin', adminApiRouterModule.default);
 app.use('/api/swarm', swarmRouterModule.default);
@@ -143,6 +195,8 @@ app.use('/admin', (req: Request, res: Response) => {
     res.sendFile(adminPath);
 });
 
+=======
+>>>>>>> automerge-to-main
 // Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -152,11 +206,14 @@ app.use(express.static(frontendDistPath));
 // Global assets static for root-relative asset paths
 app.use('/assets', express.static(frontendAssetsPath));
 
+<<<<<<< HEAD
 // Uber UI (unified dashboard)
 app.use('/uber', express.static(frontendDistPath));
 app.use('/uber/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
+=======
+>>>>>>> automerge-to-main
 
 // Legacy /webui support
 app.use('/webui', express.static(frontendDistPath));
@@ -182,6 +239,7 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // });
 
 // API routes under /api/uber
+<<<<<<< HEAD
 // import uberRouter from './routes/uberRouter';
 // app.use('/api/uber', uberRouter);
 
@@ -215,6 +273,27 @@ app.use('/realtime-dashboard', (req: Request, res: Response) => {
 
 // Fix admin router naming
 app.use('/api/admin', adminApiRouterModule.default);
+
+=======
+import uberRouter from './routes/uberRouter';
+app.use('/api/uber', uberRouter);
+
+// Keep old API routes for compatibility
+// app.use('/api/admin', adminRouter);
+app.use('/api/swarm', swarmRouter);
+app.use('/dashboard', dashboardRouter);
+app.use('/webui', configRouter);
+app.use('/webui', botsRouter);
+app.use('/webui', botConfigRouter);
+app.use('/webui', validationRouter);
+app.use('/webui', hotReloadRouter);
+app.use('/webui', ciRouter);
+app.use('/webui', enterpriseRouter);
+app.use('/webui', secureConfigRouter);
+app.use('/webui', authRouter);
+app.use('/webui', adminApiRouter);
+app.use('/webui', openapiRouter);
+>>>>>>> automerge-to-main
 
 
 async function startBot(messengerService: any) {
