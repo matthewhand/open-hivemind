@@ -634,8 +634,8 @@ export class DatabaseManager {
       const result = await this.db.run(`
         INSERT INTO bot_configurations (
           name, messageProvider, llmProvider, persona, systemInstruction,
-          mcpServers, mcpGuard, discordConfig, slackConfig, mattermostConfig,
-          openaiConfig, flowiseConfig, openwebuiConfig, openswarmConfig,
+          mcpServers, mcpGuard, discord, slack, mattermost,
+          openai, flowise, openwebui, openswarm,
           isActive, createdAt, updatedAt, createdBy, updatedBy
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
@@ -905,9 +905,9 @@ export class DatabaseManager {
       const result = await this.db.run(`
         INSERT INTO bot_configuration_versions (
           botConfigurationId, version, name, messageProvider, llmProvider,
-          persona, systemInstruction, mcpServers, mcpGuard, discordConfig,
-          slackConfig, mattermostConfig, openaiConfig, flowiseConfig,
-          openwebuiConfig, openswarmConfig, isActive, createdAt, createdBy, changeLog
+          persona, systemInstruction, mcpServers, mcpGuard, discord,
+          slack, mattermost, openai, flowise,
+          openwebui, openswarm, isActive, createdAt, createdBy, changeLog
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         version.botConfigurationId,

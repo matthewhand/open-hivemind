@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, requireAdmin } from '../../auth/middleware';
+import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';

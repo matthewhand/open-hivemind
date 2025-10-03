@@ -11,18 +11,24 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
-<<<<<<< HEAD
-    "noImplicitAny": false,
-    "downlevelIteration": true,
+  "downlevelIteration": true,
+    "jsx": "react",
+    "baseUrl": "./",
     "paths": {
+      "@command/*": ["src/command/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@llm/*": ["src/llm/*"],
+      "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
+      "@integrations/*": ["src/integrations/*"],
+      "@types/*": ["src/types/*"],
       "@src/*": ["src/*"],
+      "@client/*": ["src/client/*"],
+      "@server/*": ["src/server/*"],
       "@tests/*": ["tests/*"],
       "testUtils": ["./tests/testUtils"]
     }
-=======
-    "downlevelIteration": true,
-    "jsx": "react"
->>>>>>> automerge-to-main
   },
   "include": [
     "src/**/*"

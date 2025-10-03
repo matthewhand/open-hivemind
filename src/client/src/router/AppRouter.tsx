@@ -5,10 +5,7 @@ import { CircularProgress, Box } from '@mui/material';
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
 import AdminPage from '../pages/Admin';
-<<<<<<< HEAD
-=======
 import BotManagementPage from '../pages/Admin/BotManagementPage';
->>>>>>> automerge-to-main
 import UberLayout from '../layouts/UberLayout';
 
 const Login = lazy(() => import('../components/Login'));
@@ -67,9 +64,7 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
-<<<<<<< HEAD
-=======
-          <Route
+        <Route
             path="/admin/bots"
             element={
               <ProtectedRoute>
@@ -77,7 +72,6 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
->>>>>>> automerge-to-main
           <Route path="/login" element={<Login />} />
 
           {/* Uber routes */}

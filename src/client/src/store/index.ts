@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-export * from './store';
-=======
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { apiSlice } from './slices/apiSlice';
@@ -86,4 +83,3 @@ initializeApp();
 export type RootState = ReturnType<typeof rootReducer>;
 export type AppStore = ReturnType<typeof setupStore>;
 export type AppDispatch = AppStore['dispatch'];
->>>>>>> automerge-to-main

@@ -1,66 +1,19 @@
 require('dotenv/config');
+require('module-alias/register');
 const express = require('express');
 // Import Express types for TypeScript
 import { Request, Response, NextFunction } from 'express';
 const debug = require('debug');
-<<<<<<< HEAD
-const messengerProviderModule = require('./message/management/getMessengerProvider');
-const messageHandlerModule = require('./message/handlers/messageHandler');
-const debugEnvVarsModule = require('./config/debugEnvVars');
-const messageConfigModule = require('./config/messageConfig');
-const webhookConfigModule = require('./config/webhookConfig');
-const healthRouteModule = require('./server/routes/health');
-const webhookServiceModule = require('./webhook/webhookService');
-const swarmRouterModule = require('./admin/swarmRoutes');
-const dashboardRouterModule = require('./server/routes/dashboard');
-const configRouterModule = require('./server/routes/config');
-const botsRouterModule = require('./server/routes/bots');
-const botConfigRouterModule = require('./server/routes/botConfig');
-const validationRouterModule = require('./server/routes/validation');
-const hotReloadRouterModule = require('./server/routes/hotReload');
-const ciRouterModule = require('./server/routes/ci');
-const enterpriseRouterModule = require('./server/routes/enterprise');
-const secureConfigRouterModule = require('./server/routes/secureConfig');
-const authRouterModule = require('./server/routes/auth');
-const adminApiRouterModule = require('./server/routes/admin');
-const openapiRouterModule = require('./server/routes/openapi');
-const WebSocketServiceModule = require('./server/services/WebSocketService');
-const path = require('path');
-const fs = require('fs');
-const { createServer } = require('http');
-const getLlmProviderModule = require('@llm/getLlmProvider');
-const idleResponseManagerModule = require('@message/management/IdleResponseManager');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
-const resolveFrontendDistPath = (): string => {
-    const candidates = [
-        path.join(process.cwd(), 'dist/client/dist'),
-        path.join(process.cwd(), 'src/client/dist'),
-    ];
-
-    for (const candidate of candidates) {
-        if (fs.existsSync(candidate)) {
-            return candidate;
-        }
-    }
-
-    return candidates[candidates.length - 1];
-};
-
-const frontendDistPath = resolveFrontendDistPath();
-const frontendAssetsPath = path.join(frontendDistPath, 'assets');
-
-if (!fs.existsSync(frontendDistPath)) {
-    console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
-}
-=======
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
-const healthRouteModule = require('./routes/health');
+const healthRouteModule = require('./server/routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+const WebSocketServiceModule = require('@src/server/services/WebSocketService');
+const getLlmProviderModule = require('@llm/getLlmProvider');
+const idleResponseManagerModule = require('@message/management/IdleResponseManager');
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
 import configRouter from '@src/server/routes/config';
@@ -80,7 +33,6 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
->>>>>>> automerge-to-main
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
@@ -186,17 +138,6 @@ app.get('/', (req: Request, res: Response) => {
     }
 });
 
-<<<<<<< HEAD
-// Admin UI (demo)
-app.use('/api/admin', adminApiRouterModule.default);
-app.use('/api/swarm', swarmRouterModule.default);
-app.use('/admin', (req: Request, res: Response) => {
-    const adminPath = path.join(__dirname, '../public/admin/index.html');
-    res.sendFile(adminPath);
-});
-
-=======
->>>>>>> automerge-to-main
 // Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -206,14 +147,6 @@ app.use(express.static(frontendDistPath));
 // Global assets static for root-relative asset paths
 app.use('/assets', express.static(frontendAssetsPath));
 
-<<<<<<< HEAD
-// Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
-=======
->>>>>>> automerge-to-main
 
 // Legacy /webui support
 app.use('/webui', express.static(frontendDistPath));
@@ -239,42 +172,6 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // });
 
 // API routes under /api/uber
-<<<<<<< HEAD
-// import uberRouter from './routes/uberRouter';
-// app.use('/api/uber', uberRouter);
-
-// Keep old API routes for compatibility
-// app.use('/api/admin', adminRouter);
-app.use('/api/swarm', swarmRouterModule.default);
-app.use('/dashboard', dashboardRouterModule.default);
-app.use('/webui', configRouterModule.default);
-app.use('/webui', botsRouterModule.default);
-app.use('/webui', botConfigRouterModule.default);
-app.use('/webui', validationRouterModule.default);
-app.use('/webui', hotReloadRouterModule.default);
-app.use('/webui', ciRouterModule.default);
-app.use('/webui', enterpriseRouterModule.default);
-app.use('/webui', secureConfigRouterModule.default);
-app.use('/webui', authRouterModule.default);
-app.use('/webui', adminApiRouterModule.default);
-app.use('/webui', openapiRouterModule.default);
-
-// Serve React dashboard
-app.use('/react-dashboard', (req: Request, res: Response) => {
-    const dashboardPath = path.join(__dirname, '../public/react-dashboard.html');
-    res.sendFile(dashboardPath);
-});
-
-// Serve Real-time dashboard
-app.use('/realtime-dashboard', (req: Request, res: Response) => {
-    const dashboardPath = path.join(__dirname, '../public/realtime-dashboard.html');
-    res.sendFile(dashboardPath);
-});
-
-// Fix admin router naming
-app.use('/api/admin', adminApiRouterModule.default);
-
-=======
 import uberRouter from './routes/uberRouter';
 app.use('/api/uber', uberRouter);
 
@@ -293,7 +190,6 @@ app.use('/webui', secureConfigRouter);
 app.use('/webui', authRouter);
 app.use('/webui', adminApiRouter);
 app.use('/webui', openapiRouter);
->>>>>>> automerge-to-main
 
 
 async function startBot(messengerService: any) {

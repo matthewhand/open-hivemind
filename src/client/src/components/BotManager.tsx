@@ -36,11 +36,8 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   SelectAll as SelectAllIcon,
-<<<<<<< HEAD
-=======
-  PlayArrow as PlayIcon,
+PlayArrow as PlayIcon,
   Stop as StopIcon,
->>>>>>> automerge-to-main
   CheckCircle as OnlineIcon,
   Error as ErrorIcon,
   HourglassEmpty as StartingIcon,
@@ -289,11 +286,7 @@ const BotManager: React.FC = () => {
       try {
         await deleteBot(name).unwrap();
         successCount++;
-<<<<<<< HEAD
-      } catch {
-=======
       } catch (err) {
->>>>>>> automerge-to-main
         pushToast(`Failed to delete ${name}`, 'error');
       }
     }
@@ -315,11 +308,7 @@ const BotManager: React.FC = () => {
       try {
         await cloneBot({ name, newName: newNameComputed }).unwrap();
         successCount++;
-<<<<<<< HEAD
-      } catch {
-=======
       } catch (err) {
->>>>>>> automerge-to-main
         pushToast(`Failed to clone ${name}`, 'error');
       }
     }
@@ -675,11 +664,8 @@ const BotManager: React.FC = () => {
                           openCloneDialog(bot.name);
                         }}
                         color="primary"
-<<<<<<< HEAD
-=======
                         disabled={mutationInFlight}
                         aria-label={`clone ${bot.name}`}
->>>>>>> automerge-to-main
                       >
                         <CloneIcon fontSize="small" />
                       </IconButton>
@@ -694,11 +680,8 @@ const BotManager: React.FC = () => {
                           openDeleteDialog(bot.name);
                         }}
                         color="error"
-<<<<<<< HEAD
-=======
                         disabled={mutationInFlight}
                         aria-label={`delete ${bot.name}`}
->>>>>>> automerge-to-main
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
@@ -733,55 +716,6 @@ const BotManager: React.FC = () => {
             onChange={(e) => setBotName(e.target.value)}
             sx={{ mb: 2 }}
           />
-<<<<<<< HEAD
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Message Provider</InputLabel>
-            <Select
-              label="Message Provider"
-              value={messageProvider}
-              onChange={(e) => setMessageProvider(e.target.value)}
-            >
-              <MenuItem value="discord">Discord</MenuItem>
-              <MenuItem value="slack">Slack</MenuItem>
-              <MenuItem value="mattermost">Mattermost</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>LLM Provider</InputLabel>
-            <Select
-              label="LLM Provider"
-              value={llmProvider}
-              onChange={(e) => setLlmProvider(e.target.value)}
-            >
-              <MenuItem value="openai">OpenAI</MenuItem>
-              <MenuItem value="flowise">Flowise</MenuItem>
-              <MenuItem value="openwebui">OpenWebUI</MenuItem>
-            </Select>
-          </FormControl>
-          {messageProvider === 'discord' && (
-            <TextField
-              margin="dense"
-              label="Discord Token"
-              fullWidth
-              variant="outlined"
-              type="password"
-              value={discordToken}
-              onChange={(e) => setDiscordToken(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-          )}
-          {llmProvider === 'openai' && (
-            <TextField
-              margin="dense"
-              label="OpenAI API Key"
-              fullWidth
-              variant="outlined"
-              type="password"
-              value={openaiApiKey}
-              onChange={(e) => setOpenaiApiKey(e.target.value)}
-            />
-          )}
-=======
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Message Provider</InputLabel>
@@ -834,7 +768,6 @@ const BotManager: React.FC = () => {
                 sx={{ mb: 2 }}
               />
             )}
->>>>>>> automerge-to-main
         </DialogContent>
         <DialogActions>
           <Button
@@ -845,17 +778,12 @@ const BotManager: React.FC = () => {
           >
             Cancel
           </Button>
-<<<<<<< HEAD
-          <Button onClick={handleCreateBot} variant="contained" disabled={isCreating}>
-            Create
-=======
           <Button
             onClick={handleCreateBot}
             variant="contained"
             disabled={isCreating}
           >
             {isCreating ? 'Creating...' : 'Create'}
->>>>>>> automerge-to-main
           </Button>
         </DialogActions>
       </Dialog>
@@ -872,13 +800,8 @@ const BotManager: React.FC = () => {
       >
         <DialogTitle>Clone Bot</DialogTitle>
         <DialogContent>
-<<<<<<< HEAD
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Cloning bot: <strong>{selectedBot?.name}</strong>
-=======
           <Typography variant="body2" sx={{ mb: 2 }} noWrap>
             Clone bot "{selectedBot?.name}" with a new name:
->>>>>>> automerge-to-main
           </Typography>
           <TextField
             autoFocus
@@ -899,17 +822,12 @@ const BotManager: React.FC = () => {
           >
             Cancel
           </Button>
-<<<<<<< HEAD
-          <Button onClick={handleCloneBot} variant="contained" disabled={isCloning}>
-            Clone
-=======
           <Button
             onClick={handleCloneBot}
             variant="contained"
             disabled={isCloning}
           >
             {isCloning ? 'Cloning...' : 'Clone'}
->>>>>>> automerge-to-main
           </Button>
         </DialogActions>
       </Dialog>
@@ -917,36 +835,12 @@ const BotManager: React.FC = () => {
       {/* Delete Bot Dialog */}
       <Dialog
         open={deleteDialogOpen}
-<<<<<<< HEAD
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          resetForm();
-        }}
-=======
         onClose={() => setDeleteDialogOpen(false)}
->>>>>>> automerge-to-main
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>Delete Bot</DialogTitle>
         <DialogContent>
-<<<<<<< HEAD
-          <Typography variant="body2">
-            Are you sure you want to delete <strong>{selectedBot?.name}</strong>? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setDeleteDialogOpen(false);
-              resetForm();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteBot} variant="contained" color="error" disabled={isDeleting}>
-            Delete
-=======
           <Typography>
             Are you sure you want to delete bot "{selectedBot?.name}"?
           </Typography>
@@ -963,47 +857,10 @@ const BotManager: React.FC = () => {
             disabled={isDeleting}
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
->>>>>>> automerge-to-main
           </Button>
         </DialogActions>
       </Dialog>
 
-<<<<<<< HEAD
-      {/* Bulk Delete Dialog */}
-      <Dialog
-        open={bulkDeleteDialogOpen}
-        onClose={() => {
-          setBulkDeleteDialogOpen(false);
-          clearSelection();
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Delete Selected Bots</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Are you sure you want to delete <strong>{selectedBots.size}</strong> bot(s)? This action cannot be undone.
-          </Typography>
-          <Box component="ul" sx={{ pl: 3, mt: 1, mb: 0, maxHeight: 200, overflow: 'auto' }}>
-            {Array.from(selectedBots).map(name => (
-              <Typography component="li" key={name} variant="body2">
-                {name}
-              </Typography>
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setBulkDeleteDialogOpen(false);
-              clearSelection();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleBulkDelete} variant="contained" color="error" disabled={isDeleting}>
-            Delete {selectedBots.size} Bot(s)
-=======
       {/* Bulk Delete Confirmation */}
       <Dialog
         open={bulkDeleteDialogOpen}
@@ -1036,7 +893,6 @@ const BotManager: React.FC = () => {
             disabled={mutationInFlight}
           >
             {mutationInFlight ? 'Deleting...' : 'Delete'}
->>>>>>> automerge-to-main
           </Button>
         </DialogActions>
       </Dialog>
@@ -1044,69 +900,6 @@ const BotManager: React.FC = () => {
       {/* Bulk Clone Dialog */}
       <Dialog
         open={bulkCloneDialogOpen}
-<<<<<<< HEAD
-        onClose={() => {
-          setBulkCloneDialogOpen(false);
-          clearSelection();
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Clone Selected Bots</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Cloning <strong>{selectedBots.size}</strong> bot(s). Configure naming pattern:
-          </Typography>
-          <Stack spacing={2}>
-            <TextField
-              label="Prefix (optional)"
-              fullWidth
-              variant="outlined"
-              value={bulkClonePrefix}
-              onChange={(e) => setBulkClonePrefix(e.target.value)}
-              placeholder="e.g., test_"
-            />
-            <TextField
-              label="Suffix (optional)"
-              fullWidth
-              variant="outlined"
-              value={bulkCloneSuffix}
-              onChange={(e) => setBulkCloneSuffix(e.target.value)}
-              placeholder="e.g., _copy"
-            />
-            <FormControlLabel
-              control={<Checkbox
-                checked={bulkClonePrefix === '' && bulkCloneSuffix === '_copy'}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setBulkClonePrefix('');
-                    setBulkCloneSuffix('_copy');
-                  } else {
-                    setBulkClonePrefix('');
-                    setBulkCloneSuffix('');
-                  }
-                }}
-              />}
-              label="Use default suffix (_copy)"
-            />
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Preview:
-              </Typography>
-              <Box component="ul" sx={{ pl: 3, mt: 0.5, mb: 0, maxHeight: 140, overflow: 'auto' }}>
-                {Array.from(selectedBots).slice(0, 6).map(name => {
-                  const previewName = `${bulkClonePrefix}${name}${bulkCloneSuffix}`.trim();
-                  return (
-                    <Typography component="li" key={name} variant="body2">
-                      {name} → {previewName}
-                    </Typography>
-                  );
-                })}
-                {selectedBots.size > 6 && (
-                  <Typography component="li" variant="body2" color="text.secondary">
-                    ...and {selectedBots.size - 6} more
-                  </Typography>
-=======
         onClose={() => setBulkCloneDialogOpen(false)}
         maxWidth="sm"
         fullWidth
@@ -1159,25 +952,12 @@ const BotManager: React.FC = () => {
                       ...and {selectedBots.size - 6} more
                     </Typography>
                   </li>
->>>>>>> automerge-to-main
                 )}
               </Box>
             </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
-<<<<<<< HEAD
-          <Button
-            onClick={() => {
-              setBulkCloneDialogOpen(false);
-              clearSelection();
-            }}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleBulkClone} variant="contained" disabled={isCloning}>
-            Clone {selectedBots.size} Bot(s)
-=======
           <Button onClick={() => setBulkCloneDialogOpen(false)}>Cancel</Button>
           <Button
             onClick={handleBulkClone}
@@ -1185,26 +965,10 @@ const BotManager: React.FC = () => {
             disabled={mutationInFlight}
           >
             {mutationInFlight ? 'Cloning...' : 'Clone'}
->>>>>>> automerge-to-main
           </Button>
         </DialogActions>
       </Dialog>
 
-<<<<<<< HEAD
-      {/* Toast notifications */}
-      <Snackbar
-        open={!!activeToast}
-        autoHideDuration={activeToast?.persist ? null : 6000}
-        onClose={handleToastClose}
-      >
-        <Alert
-          onClose={handleToastClose}
-          severity={activeToast?.severity || 'info'}
-          sx={{ width: '100%' }}
-        >
-          {activeToast?.message}
-        </Alert>
-=======
       {/* Toast Snackbar */}
       <Snackbar
         open={!!activeToast}
@@ -1222,7 +986,6 @@ const BotManager: React.FC = () => {
             {activeToast.message}
           </Alert>
         )}
->>>>>>> automerge-to-main
       </Snackbar>
     </Box>
   );
