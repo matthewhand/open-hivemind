@@ -189,7 +189,7 @@ const performanceSlice = createSlice({
 
 // Helper function to check performance budget
 function checkPerformanceBudget(state: PerformanceState, metric: PerformanceMetric) {
-  const { performanceBudget, alerts } = state;
+  const { performanceBudget } = state;
   
   // Check response time budget
   if (metric.category === 'response_time' && metric.value > performanceBudget.maxResponseTime) {

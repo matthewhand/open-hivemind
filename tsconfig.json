@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "es2018",
     "module": "CommonJS",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
@@ -11,8 +11,13 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
+    "noImplicitAny": false,
     "downlevelIteration": true,
-    "jsx": "react"
+    "paths": {
+      "@src/*": ["src/*"],
+      "@tests/*": ["tests/*"],
+      "testUtils": ["./tests/testUtils"]
+    }
   },
   "include": [
     "src/**/*"

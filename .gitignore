@@ -154,3 +154,5 @@ coverage/
 # Test results
 playwright-report/
 test-results/
+
+config/

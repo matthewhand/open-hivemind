@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, Typography, Slider, Chip, Tooltip } from '@mui/material';
+import { Box, Typography, Slider, Chip, Tooltip } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -11,18 +11,18 @@ interface CSS3DNetworkProps {
   autoRotate?: boolean;
 }
 
-interface BotNode {
-  id: string;
-  name: string;
-  status: 'active' | 'connecting' | 'error';
-  position: { x: number; y: number; z: number };
-  connections: string[];
-  metrics: {
-    responseTime: number;
-    memoryUsage: number;
-    cpuUsage: number;
-  };
-}
+// interface BotNode {
+//   id: string;
+//   name: string;
+//   status: 'active' | 'connecting' | 'error';
+//   position: { x: number; y: number; z: number };
+//   connections: string[];
+//   metrics: {
+//     responseTime: number;
+//     memoryUsage: number;
+//     cpuUsage: number;
+//   };
+// }
 
 interface Connection {
   from: string;

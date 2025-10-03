@@ -165,6 +165,9 @@ interface PWAContextType {
   getNetworkQuality: () => 'excellent' | 'good' | 'poor' | 'offline';
 }
 
+// Create PWA Context
+const PWAContext = createContext<PWAContextType | undefined>(undefined);
+
 // Mock service worker implementation for demonstration
 class MockServiceWorker {
   private status: ServiceWorkerStatus = {
@@ -647,7 +650,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
 
         {/* Network Status */}
         <Grid container spacing={2} mb={3}>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
                 <Box textAlign="center">
@@ -662,7 +665,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
                 <Box textAlign="center">
@@ -677,7 +680,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
                 <Box textAlign="center">
@@ -701,7 +704,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
               Installation & Updates
             </Typography>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Chip
                     label={isInstalled ? 'Installed' : 'Not Installed'}
@@ -719,7 +722,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
                   )}
                 </Box>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Chip
                     label={metrics.updateStatus.replace('-', ' ').toUpperCase()}
@@ -786,7 +789,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
               PWA Configuration
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -797,7 +800,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
                   label="Offline Support"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -808,7 +811,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
                   label="Background Sync"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -819,7 +822,7 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
                   label="Push Notifications"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid xs={12} sm={6}>
                 <FormControlLabel
                   control={
                     <Switch

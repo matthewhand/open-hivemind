@@ -1,36 +1,35 @@
 require('dotenv/config');
-require('module-alias/register');
 const express = require('express');
 // Import Express types for TypeScript
 import { Request, Response, NextFunction } from 'express';
 const debug = require('debug');
-const messengerProviderModule = require('@message/management/getMessengerProvider');
-const messageHandlerModule = require('@message/handlers/messageHandler');
-const debugEnvVarsModule = require('@config/debugEnvVars');
-const messageConfigModule = require('@config/messageConfig');
-const webhookConfigModule = require('@config/webhookConfig');
-const healthRouteModule = require('./routes/health');
-const webhookServiceModule = require('@webhook/webhookService');
-import swarmRouter from '@src/admin/swarmRoutes';
-import dashboardRouter from '@src/server/routes/dashboard';
-import configRouter from '@src/server/routes/config';
-import botsRouter from '@src/server/routes/bots';
-import botConfigRouter from '@src/server/routes/botConfig';
-import validationRouter from '@src/server/routes/validation';
-import hotReloadRouter from '@src/server/routes/hotReload';
-import ciRouter from '@src/server/routes/ci';
-import enterpriseRouter from '@src/server/routes/enterprise';
-import secureConfigRouter from '@src/server/routes/secureConfig';
-import authRouter from '@src/server/routes/auth';
-import adminApiRouter from '@src/server/routes/admin';
-import openapiRouter from '@src/server/routes/openapi';
-import WebSocketService from '@src/server/services/WebSocketService';
-import path from 'path';
-import fs from 'fs';
-import { createServer } from 'http';
-import { getLlmProvider } from '@llm/getLlmProvider';
-import { IdleResponseManager } from '@message/management/IdleResponseManager';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+const messengerProviderModule = require('./message/management/getMessengerProvider');
+const messageHandlerModule = require('./message/handlers/messageHandler');
+const debugEnvVarsModule = require('./config/debugEnvVars');
+const messageConfigModule = require('./config/messageConfig');
+const webhookConfigModule = require('./config/webhookConfig');
+const healthRouteModule = require('./server/routes/health');
+const webhookServiceModule = require('./webhook/webhookService');
+const swarmRouterModule = require('./admin/swarmRoutes');
+const dashboardRouterModule = require('./server/routes/dashboard');
+const configRouterModule = require('./server/routes/config');
+const botsRouterModule = require('./server/routes/bots');
+const botConfigRouterModule = require('./server/routes/botConfig');
+const validationRouterModule = require('./server/routes/validation');
+const hotReloadRouterModule = require('./server/routes/hotReload');
+const ciRouterModule = require('./server/routes/ci');
+const enterpriseRouterModule = require('./server/routes/enterprise');
+const secureConfigRouterModule = require('./server/routes/secureConfig');
+const authRouterModule = require('./server/routes/auth');
+const adminApiRouterModule = require('./server/routes/admin');
+const openapiRouterModule = require('./server/routes/openapi');
+const WebSocketServiceModule = require('./server/services/WebSocketService');
+const path = require('path');
+const fs = require('fs');
+const { createServer } = require('http');
+const getLlmProviderModule = require('@llm/getLlmProvider');
+const idleResponseManagerModule = require('@message/management/IdleResponseManager');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
@@ -78,16 +77,6 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.NODE_ENV === 'development') {
-    app.use(
-        '/uber',
-        createProxyMiddleware({
-            target: 'http://localhost:5173',
-            changeOrigin: true,
-            ws: true,
-        }),
-    );
-}
 
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -146,6 +135,14 @@ app.get('/', (req: Request, res: Response) => {
     }
 });
 
+// Admin UI (demo)
+app.use('/api/admin', adminApiRouterModule.default);
+app.use('/api/swarm', swarmRouterModule.default);
+app.use('/admin', (req: Request, res: Response) => {
+    const adminPath = path.join(__dirname, '../public/admin/index.html');
+    res.sendFile(adminPath);
+});
+
 // Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -190,19 +187,34 @@ app.use('/admin/*', (req: Request, res: Response) => {
 
 // Keep old API routes for compatibility
 // app.use('/api/admin', adminRouter);
-app.use('/api/swarm', swarmRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/webui', configRouter);
-app.use('/webui', botsRouter);
-app.use('/webui', botConfigRouter);
-app.use('/webui', validationRouter);
-app.use('/webui', hotReloadRouter);
-app.use('/webui', ciRouter);
-app.use('/webui', enterpriseRouter);
-app.use('/webui', secureConfigRouter);
-app.use('/webui', authRouter);
-app.use('/webui', adminApiRouter);
-app.use('/webui', openapiRouter);
+app.use('/api/swarm', swarmRouterModule.default);
+app.use('/dashboard', dashboardRouterModule.default);
+app.use('/webui', configRouterModule.default);
+app.use('/webui', botsRouterModule.default);
+app.use('/webui', botConfigRouterModule.default);
+app.use('/webui', validationRouterModule.default);
+app.use('/webui', hotReloadRouterModule.default);
+app.use('/webui', ciRouterModule.default);
+app.use('/webui', enterpriseRouterModule.default);
+app.use('/webui', secureConfigRouterModule.default);
+app.use('/webui', authRouterModule.default);
+app.use('/webui', adminApiRouterModule.default);
+app.use('/webui', openapiRouterModule.default);
+
+// Serve React dashboard
+app.use('/react-dashboard', (req: Request, res: Response) => {
+    const dashboardPath = path.join(__dirname, '../public/react-dashboard.html');
+    res.sendFile(dashboardPath);
+});
+
+// Serve Real-time dashboard
+app.use('/realtime-dashboard', (req: Request, res: Response) => {
+    const dashboardPath = path.join(__dirname, '../public/realtime-dashboard.html');
+    res.sendFile(dashboardPath);
+});
+
+// Fix admin router naming
+app.use('/api/admin', adminApiRouterModule.default);
 
 
 async function startBot(messengerService: any) {
@@ -217,7 +229,7 @@ async function startBot(messengerService: any) {
         indexLog('[DEBUG] Setting up message handler...');
         
         // Initialize idle response manager
-        const idleResponseManager = IdleResponseManager.getInstance();
+        const idleResponseManager = idleResponseManagerModule.IdleResponseManager.getInstance();
         idleResponseManager.initialize();
         
         messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
@@ -232,8 +244,8 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-    const llmProviders = getLlmProvider();
-    console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
+    const llmProviders = getLlmProviderModule.getLlmProvider();
+    console.log('LLM Providers in use:', llmProviders.map((p: any) => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
     const messageProviders = (typeof rawMessageProviders === 'string'
@@ -264,14 +276,14 @@ async function main() {
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
-        const port = process.env.PORT || 5005;
+        const port = process.env.PORT || 3028;
         const server = createServer(app);
 
         // Initialize WebSocket service
-        const wsService = WebSocketService.getInstance();
+        const wsService = WebSocketServiceModule.default.getInstance();
         wsService.initialize(server);
 
-        server.on('error', (err) => {
+        server.on('error', (err: Error) => {
             console.error('[DEBUG] Server error:', err);
         });
 

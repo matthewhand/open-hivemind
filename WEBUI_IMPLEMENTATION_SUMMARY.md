@@ -154,3 +154,38 @@ The foundation is now **EXCEPTIONALLY STRONG** for Phase 2+ features:
 ## 🎉 **READY FOR PRODUCTION!**
 
 The WebUI Configuration System is **COMPLETE** and **PRODUCTION-READY** with advanced real-time capabilities that provide an exceptional user experience for managing Open-Hivemind bot configurations.
+
+---
+
+# Screensaver / Idle Overlay
+
+A reusable screensaver overlay leverages the existing `LoadingSpinner` component to provide a low-distracting idle state after user inactivity.
+
+## Behavior
+- Activates after a configurable period of no user input (mouse, keyboard, touch, scroll, or when the tab becomes visible again).
+- Displays a dark overlay and a single floating loading spinner with no text (prevents burn-in on displays).
+- Spinner repositions smoothly every few seconds to mitigate screen burn and keep the UI feeling alive.
+- Any user interaction immediately hides the overlay.
+
+## Configuration
+Environment variables (in `.env` for the web UI build) control the feature:
+- `REACT_APP_SCREENSAVER_ENABLED` (default: enabled unless explicitly set to `false`)
+- `REACT_APP_SCREENSAVER_TIMEOUT_MS` (default: `300000` = 5 minutes)
+
+Example `.env` additions:
+```
+REACT_APP_SCREENSAVER_ENABLED=true
+REACT_APP_SCREENSAVER_TIMEOUT_MS=420000
+```
+
+## Implementation Notes
+- Hook: `useInactivity` (`webui/src/hooks/useInactivity.ts`) centralizes idle detection.
+- Component: `Screensaver` (`webui/src/components/Screensaver.tsx`) renders the overlay.
+- Integrated in `App.tsx` just under the router so it covers all routes.
+- Overlay uses `position: fixed` + high z-index (2000) and suppresses pointer events to underlying UI.
+
+## Extensibility Ideas
+- Show rotating tips or metrics instead of (or in addition to) the spinner.
+- Add accessibility toggle to disable for users relying on constant visual context.
+- Fade-in/out animation and optional dimming rather than full overlay.
+- Respect system reduced motion preference to disable movement.
