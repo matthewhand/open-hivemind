@@ -1,213 +1,248 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenHiveMind - Loading Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <title>Open-Hivemind Dashboard</title>
+    <meta name="description" content="Unified dashboard for Open-Hivemind multi-agent system">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.24/dist/full.min.css" rel="stylesheet" type="text/css" />
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: #e6e6e6;
-            min-height: 100vh;
-        }
-        .card {
-            background: rgba(30, 30, 46, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .stat-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-        .loading-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #4f46e5;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background-color: #374151;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            width: 0%;
-            transition: width 0.5s ease;
+        .theme-controller {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100">
-    <div class="container mx-auto px-4 py-12">
-        <div class="flex flex-col items-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-                OpenHiveMind Dashboard Loading...
-            </h1>
-            <p class="text-lg text-gray-400 text-center max-w-2xl">
-                Initializing system components and preparing your dashboard experience
-            </p>
+<body class="bg-base-100 min-h-screen">
+    <!-- Theme Controller -->
+    <div class="theme-controller dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+            </svg>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <!-- Stats will be populated by JavaScript -->
-        </div>
-
-        <div class="card p-8 mb-12">
-            <div class="text-center">
-                <div class="loading-spinner"></div>
-                <div class="progress-bar">
-                    <div class="progress-bar-fill" id="progressBar"></div>
-                </div>
-                <p class="text-xl mt-4" id="statusText">Loading dashboard components...</p>
-                <p class="text-lg mt-2 text-blue-400" id="countdownText">Redirecting in <span id="countdown">10</span> seconds</p>
-            </div>
-        </div>
-
-        <div class="text-center">
-            <button id="redirectButton" class="btn btn-primary btn-lg mr-4" onclick="redirectToDashboard()">
-                Go to Dashboard Now
-            </button>
-            <button class="btn btn-secondary btn-lg" onclick="window.location.href='/admin'">
-                Go to Admin Panel
-            </button>
-        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="light" aria-label="Light"/></li>
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dark" aria-label="Dark"/></li>
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cupcake" aria-label="Cupcake"/></li>
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cyberpunk" aria-label="Cyberpunk"/></li>
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="synthwave" aria-label="Synthwave"/></li>
+            <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dracula" aria-label="Dracula"/></li>
+        </ul>
     </div>
 
-    <script>
-        // Function to fetch real stats data from API
-        async function fetchStats() {
-            try {
-                const response = await fetch('/webui/api/health/detailed');
-                if (!response.ok) throw new Error('Failed to fetch stats');
-                const data = await response.json();
-                const metrics = data.metrics;
-                const uptime = data.uptime;
-
-                // Calculate uptime percentage (assuming 24/7 operation)
-                const uptimePercent = uptime > 86400 ? '99.9%' : ((uptime / 86400) * 100).toFixed(1) + '%';
-
-                // Format uptime change
-                const uptimeHours = Math.floor(uptime / 3600);
-                const uptimeChange = uptimeHours > 24 ? `Running for ${Math.floor(uptimeHours / 24)} days` : `Running for ${uptimeHours} hours`;
-
-                const activeBots = metrics.botMetrics ? metrics.botMetrics.activeBots : 0;
-                const messagesProcessed = metrics.botMetrics ? metrics.botMetrics.messagesProcessed : 0;
-                const avgResponseTime = metrics.responseTime ? Math.round(metrics.responseTime.avg) + 'ms' : 'N/A';
-
-                return [
-                    { label: 'Active Bots', value: activeBots.toString(), icon: '🤖', change: 'Active now' },
-                    { label: 'Messages Processed', value: messagesProcessed.toLocaleString(), icon: '💬', change: 'Total processed' },
-                    { label: 'Uptime', value: uptimePercent, icon: '⏱️', change: uptimeChange },
-                    { label: 'Avg. Response Time', value: avgResponseTime, icon: '⚡', change: 'Current average' }
-                ];
-            } catch (error) {
-                console.error('Error fetching stats:', error);
-                return [
-                    { label: 'Active Bots', value: 'Error', icon: '❌', change: 'Failed to load' },
-                    { label: 'Messages Processed', value: 'Error', icon: '❌', change: 'Failed to load' },
-                    { label: 'Uptime', value: 'Error', icon: '❌', change: 'Failed to load' },
-                    { label: 'Avg. Response Time', value: 'Error', icon: '❌', change: 'Failed to load' }
-                ];
-            }
-        }
-
-        // Populate stats cards with loading state initially
-        const statsContainer = document.querySelector('.grid.grid-cols-1');
-        const loadingStats = [
-            { label: 'Active Bots', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
-            { label: 'Messages Processed', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
-            { label: 'Uptime', value: 'Loading...', icon: '⏳', change: 'Fetching data' },
-            { label: 'Avg. Response Time', value: 'Loading...', icon: '⏳', change: 'Fetching data' }
-        ];
-
-        function populateStats(statsData) {
-            statsContainer.innerHTML = '';
-            statsData.forEach(stat => {
-                const statCard = document.createElement('div');
-                statCard.className = 'stat-card card p-6 shadow-xl hover:shadow-2xl transition-all duration-300';
-                statCard.innerHTML = `
-                    <div class="text-center">
-                        <div class="text-4xl mb-2">${stat.icon}</div>
-                        <h3 class="text-2xl font-bold mb-2">${stat.value}</h3>
-                        <p class="text-gray-400 mb-1">${stat.label}</p>
-                        <p class="text-sm text-green-400">${stat.change}</p>
+    <!-- Hero Section -->
+    <div class="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
+        <div class="hero-content text-center">
+            <div class="max-w-4xl">
+                <!-- Logo and Title -->
+                <div class="avatar placeholder mb-6">
+                    <div class="bg-neutral text-neutral-content rounded-full w-20">
+                        <span class="text-3xl">🤖</span>
                     </div>
-                `;
-                statsContainer.appendChild(statCard);
+                </div>
+                
+                <h1 class="text-5xl font-bold text-white mb-4">
+                    Open-Hivemind Dashboard
+                </h1>
+                <p class="text-xl text-white/80 mb-8">
+                    Multi-Agent System Control Center - Orchestrating intelligent conversations across platforms
+                </p>
+
+                <!-- Real-time Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="stats shadow bg-base-100/90 backdrop-blur">
+                        <div class="stat">
+                            <div class="stat-figure text-primary">
+                                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                    <span class="loading loading-ring loading-sm" id="systemStatusLoader"></span>
+                                    <span class="hidden" id="systemStatusIcon">🟢</span>
+                                </div>
+                            </div>
+                            <div class="stat-title">System Status</div>
+                            <div class="stat-value text-primary" id="systemStatus">Loading...</div>
+                            <div class="stat-desc" id="systemStatusDesc">Checking health...</div>
+                        </div>
+                    </div>
+
+                    <div class="stats shadow bg-base-100/90 backdrop-blur">
+                        <div class="stat">
+                            <div class="stat-figure text-secondary">
+                                <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                                    <span class="loading loading-ring loading-sm" id="activeBotsLoader"></span>
+                                    <span class="hidden text-secondary-content text-sm" id="activeBotsIcon">🤖</span>
+                                </div>
+                            </div>
+                            <div class="stat-title">Active Bots</div>
+                            <div class="stat-value text-secondary" id="activeBots">0</div>
+                            <div class="stat-desc">Connected agents</div>
+                        </div>
+                    </div>
+
+                    <div class="stats shadow bg-base-100/90 backdrop-blur">
+                        <div class="stat">
+                            <div class="stat-figure text-accent">
+                                <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                                    <span class="loading loading-ring loading-sm" id="uptimeLoader"></span>
+                                    <span class="hidden text-accent-content text-sm" id="uptimeIcon">⏱️</span>
+                                </div>
+                            </div>
+                            <div class="stat-title">Uptime</div>
+                            <div class="stat-value text-accent" id="uptime">--</div>
+                            <div class="stat-desc">System running time</div>
+                        </div>
+                    </div>
+
+                    <div class="stats shadow bg-base-100/90 backdrop-blur">
+                        <div class="stat">
+                            <div class="stat-figure text-info">
+                                <div class="w-8 h-8 rounded-full bg-info flex items-center justify-center">
+                                    <span class="loading loading-ring loading-sm" id="messageCountLoader"></span>
+                                    <span class="hidden text-info-content text-sm" id="messageCountIcon">💬</span>
+                                </div>
+                            </div>
+                            <div class="stat-title">Messages</div>
+                            <div class="stat-value text-info" id="messageCount">0</div>
+                            <div class="stat-desc">Total processed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card bg-base-100/90 backdrop-blur shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title">
+                                <div class="badge badge-primary">🌐</div>
+                                Web UI
+                            </h2>
+                            <p>Access the main user interface for bot management, monitoring, and real-time interactions.</p>
+                            <div class="card-actions justify-end">
+                                <a href="/webui" class="btn btn-primary">Open WebUI</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-100/90 backdrop-blur shadow-xl">
+                        <div class="card-body">
+                            <h2 class="card-title">
+                                <div class="badge badge-secondary">⚙️</div>
+                                Admin Panel
+                            </h2>
+                            <p>Advanced configuration controls for system management, MCP servers, and deployment.</p>
+                            <div class="card-actions justify-end">
+                                <a href="/admin" class="btn btn-secondary">Open Admin</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="text-white/60 text-sm">
+                    <div class="divider divider-neutral"></div>
+                    <p class="mb-2">Open-Hivemind Multi-Agent System | Version 1.0.0</p>
+                    <p>API endpoints: <code class="bg-base-100/20 px-2 py-1 rounded">/dashboard/api/status</code></p>
+                </div>
+            </div>
+        </div>
+    </div></body>
+
+    <script>
+        // Theme controller
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeControllers = document.querySelectorAll('.theme-controller');
+            themeControllers.forEach(controller => {
+                controller.addEventListener('change', function() {
+                    if (this.type === 'radio' && this.checked) {
+                        document.documentElement.setAttribute('data-theme', this.value);
+                        localStorage.setItem('theme', this.value);
+                    }
+                });
             });
-        }
 
-        // Initial loading state
-        populateStats(loadingStats);
-
-        // Fetch and update stats
-        fetchStats().then(statsData => {
-            populateStats(statsData);
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const themeRadio = document.querySelector(`input[value="${savedTheme}"]`);
+            if (themeRadio) themeRadio.checked = true;
         });
 
-        // Simulate loading progress
-        let progress = 0;
-        const progressBar = document.getElementById('progressBar');
-        const statusText = document.getElementById('statusText');
-        const countdownText = document.getElementById('countdownText');
-        const countdownElement = document.getElementById('countdown');
-        const redirectButton = document.getElementById('redirectButton');
+        // Enhanced dashboard status fetching with DaisyUI elements
+        async function fetchDashboardStatus() {
+            const hideLoaders = () => {
+                ['systemStatusLoader', 'activeBotsLoader', 'uptimeLoader', 'messageCountLoader'].forEach(id => {
+                    const loader = document.getElementById(id);
+                    const icon = document.getElementById(id.replace('Loader', 'Icon'));
+                    if (loader) loader.classList.add('hidden');
+                    if (icon) icon.classList.remove('hidden');
+                });
+            };
 
-        const statuses = [
-            "Initializing core services...",
-            "Connecting to message providers...",
-            "Loading configuration data...",
-            "Preparing dashboard components...",
-            "Finalizing setup..."
-        ];
-
-        let statusIndex = 0;
-        const progressInterval = setInterval(() => {
-            progress += Math.random() * 10;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(progressInterval);
+            try {
+                const response = await fetch('/dashboard/api/status');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Update system status with DaisyUI styling
+                const systemStatusEl = document.getElementById('systemStatus');
+                const systemStatusDesc = document.getElementById('systemStatusDesc');
+                if (data.bots && data.bots.length > 0) {
+                    systemStatusEl.textContent = 'Online';
+                    systemStatusDesc.textContent = 'All systems operational';
+                } else {
+                    systemStatusEl.textContent = 'Standby';
+                    systemStatusDesc.textContent = 'Waiting for connections';
+                }
+                
+                // Update active bots
+                const activeBotsEl = document.getElementById('activeBots');
+                const activeBots = data.bots ? data.bots.filter(bot => bot.status === 'active').length : 0;
+                activeBotsEl.textContent = activeBots;
+                
+                // Update uptime
+                const uptimeEl = document.getElementById('uptime');
+                if (data.uptime) {
+                    const hours = Math.floor(data.uptime / 3600);
+                    const minutes = Math.floor((data.uptime % 3600) / 60);
+                    uptimeEl.textContent = `${hours}h ${minutes}m`;
+                } else {
+                    uptimeEl.textContent = '--';
+                }
+                
+                // Update message count
+                const messageCountEl = document.getElementById('messageCount');
+                const totalMessages = data.bots ? data.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) : 0;
+                messageCountEl.textContent = totalMessages.toLocaleString();
+                
+                hideLoaders();
+                
+            } catch (error) {
+                console.error('Error fetching dashboard status:', error);
+                
+                // Error state with DaisyUI styling
+                document.getElementById('systemStatus').textContent = 'Offline';
+                document.getElementById('systemStatusDesc').textContent = 'Connection failed';
+                document.getElementById('activeBots').textContent = '--';
+                document.getElementById('uptime').textContent = '--';
+                document.getElementById('messageCount').textContent = '--';
+                
+                hideLoaders();
             }
-            progressBar.style.width = `${progress}%`;
-
-            if (statusIndex < statuses.length) {
-                statusText.textContent = statuses[statusIndex];
-                statusIndex++;
-            }
-        }, 500);
-
-        // Countdown and redirect logic
-        let countdown = 10;
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                redirectToDashboard();
-            }
-        }, 1000);
-
-        function redirectToDashboard() {
-            clearInterval(countdownInterval);
-            window.location.href = '/webui';
         }
+        
+        // Initial fetch
+        fetchDashboardStatus();
+        
+        // Refresh every 30 seconds
+        setInterval(fetchDashboardStatus, 30000);
     </script>
 </body>
 </html>

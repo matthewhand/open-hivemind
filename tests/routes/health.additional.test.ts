@@ -14,11 +14,11 @@ describe('Health Route Additional Tests', () => {
   });
 
   describe('GET /health additional tests', () => {
-    it('should respond with text/html content type', async () => {
+    it('should respond with JSON content type', async () => {
       const response = await request(app).get('/health');
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
-      expect(response.headers['content-type']).toContain('text/html');
+      expect(response.body).toHaveProperty('status');
+      expect(response.headers['content-type']).toContain('application/json');
     });
 
     it('should handle requests with custom headers', async () => {
@@ -26,45 +26,45 @@ describe('Health Route Additional Tests', () => {
         .get('/health')
         .set('X-Custom-Header', 'test-value')
         .set('Authorization', 'Bearer test-token');
-      
+
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
+      expect(response.body).toHaveProperty('status');
     });
 
     it('should handle requests with query parameters', async () => {
       const response = await request(app)
         .get('/health')
         .query({ test: 'value', another: 'param' });
-      
+
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
+      expect(response.body).toHaveProperty('status');
     });
 
     it('should handle requests with different Accept headers', async () => {
       const response = await request(app)
         .get('/health')
         .set('Accept', 'text/plain');
-      
+
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
+      expect(response.body).toHaveProperty('status');
     });
 
     it('should handle requests with different content types', async () => {
       const response = await request(app)
         .get('/health')
         .set('Content-Type', 'application/json');
-      
+
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
+      expect(response.body).toHaveProperty('status');
     });
 
     it('should handle very fast successive requests', async () => {
       const requests = Array(20).fill(null).map(() => request(app).get('/health'));
       const responses = await Promise.all(requests);
-      
+
       responses.forEach(response => {
         expect(response.status).toBe(200);
-        expect(response.text).toBe('OK');
+        expect(response.body).toHaveProperty('status');
       });
     });
 
@@ -72,8 +72,8 @@ describe('Health Route Additional Tests', () => {
       for (let i = 0; i < 10; i++) {
         const response = await request(app).get('/health');
         expect(response.status).toBe(200);
-        expect(response.text).toBe('OK');
-        expect(response.headers['content-type']).toMatch(/text/);
+        expect(response.body).toHaveProperty('status');
+        expect(response.headers['content-type']).toMatch(/json/);
       }
     });
 
@@ -81,9 +81,9 @@ describe('Health Route Additional Tests', () => {
       const response = await request(app)
         .get('/health')
         .set('X-Large-Header', 'A'.repeat(5000));
-      
+
       expect(response.status).toBe(200);
-      expect(response.text).toBe('OK');
+      expect(response.body).toHaveProperty('status');
     });
   });
 });

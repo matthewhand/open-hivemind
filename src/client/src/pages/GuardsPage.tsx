@@ -3,11 +3,6 @@ import {
   Box,
   Typography,
   Paper,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   TextField,
   Button,
   Alert,
@@ -17,6 +12,10 @@ import {
   IconButton,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { setGuardsConfig } from '../store/slices/configSlice';
+import { Radio } from '../components/DaisyUI';
 
 interface GuardsConfig {
   type: 'owner' | 'users' | 'disabled';
@@ -25,6 +24,9 @@ interface GuardsConfig {
 }
 
 const GuardsPage: React.FC = () => {
+  const dispatch = useDispatch();
+  const guardsConfig = useSelector((state: RootState) => state.config.guards) as GuardsConfig;
+
   const [formData, setFormData] = useState<GuardsConfig>({
     type: 'disabled',
     allowedUsers: [],
@@ -33,24 +35,12 @@ const GuardsPage: React.FC = () => {
   const [newUser, setNewUser] = useState('');
   const [newIP, setNewIP] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load current guards configuration on mount
-    const loadGuardsConfig = async () => {
-      try {
-        const response = await fetch('/api/uber/guards');
-        if (response.ok) {
-          const config = await response.json();
-          setFormData(config);
-        }
-      } catch (error) {
-        console.error('Failed to load guards config:', error);
-        setSnackbar({ open: true, message: 'Failed to load guards configuration', severity: 'error' });
-      }
-    };
-    loadGuardsConfig();
-  }, []);
+    if (guardsConfig) {
+      setFormData(guardsConfig);
+    }
+  }, [guardsConfig]);
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -95,7 +85,7 @@ const GuardsPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-    const response = await fetch('/api/uber/guards', {
+      const response = await fetch('/api/uber/guards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,32 +118,34 @@ const GuardsPage: React.FC = () => {
       </Typography>
 
       <Paper sx={{ p: 3 }}>
-        <FormControl component="fieldset" sx={{ width: '100%' }}>
-          <FormLabel component="legend" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Guard Type
-          </FormLabel>
-          <RadioGroup
-            value={formData.type}
-            onChange={handleTypeChange}
-            sx={{ mb: 3 }}
-          >
-            <FormControlLabel
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text font-bold">Guard Type</span>
+          </label>
+          <div className="space-y-2 mb-6">
+            <Radio
+              name="guard-type"
               value="disabled"
-              control={<Radio />}
+              checked={formData.type === 'disabled'}
+              onChange={handleTypeChange}
               label="Disabled - No restrictions (anyone can use MCP tools)"
             />
-            <FormControlLabel
+            <Radio
+              name="guard-type"
               value="owner"
-              control={<Radio />}
+              checked={formData.type === 'owner'}
+              onChange={handleTypeChange}
               label="Owner Only - Only the server/forum owner can use MCP tools"
             />
-            <FormControlLabel
+            <Radio
+              name="guard-type"
               value="users"
-              control={<Radio />}
+              checked={formData.type === 'users'}
+              onChange={handleTypeChange}
               label="Specific Users - Only listed users can use MCP tools"
             />
-          </RadioGroup>
-        </FormControl>
+          </div>
+        </div>
 
         {formData.type === 'users' && (
           <Box sx={{ mb: 3 }}>

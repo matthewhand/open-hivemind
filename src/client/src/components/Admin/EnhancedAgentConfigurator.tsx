@@ -6,43 +6,28 @@ import {
   Typography,
   Grid,
   Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Chip,
   Switch,
   FormControlLabel,
   Alert,
   CircularProgress,
-  Fab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Autocomplete,
-  Checkbox,
-  FormGroup,
   Paper,
-  Divider,
   IconButton,
   Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
-  PlayArrow as StartIcon,
-  Stop as StopIcon,
   Refresh as RefreshIcon,
   Settings as SettingsIcon,
   Security as SecurityIcon,
-  Code as CodeIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { green, red, orange, grey } from '@mui/material/colors';
+import { Modal, Pagination } from '../DaisyUI';
+import AgentForm from './AgentForm';
 
 interface Agent {
   id: string;
@@ -93,24 +78,8 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
-
-  // Form state for new/editing agent
-  const [agentForm, setAgentForm] = useState<Partial<Agent>>({
-    name: '',
-    messageProvider: '',
-    llmProvider: '',
-    persona: 'default',
-    systemInstruction: '',
-    mcpServers: [],
-    mcpGuard: {
-      enabled: false,
-      type: 'owner',
-      allowedUserIds: []
-    },
-    isActive: true
-  });
-
-  const [guardUserInput, setGuardUserInput] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(12); // Show 12 agents per page (3x4 grid)
 
   useEffect(() => {
     fetchData();
@@ -148,41 +117,16 @@ const EnhancedAgentConfigurator: React.FC = () => {
 
   const handleCreateAgent = () => {
     setEditingAgent(null);
-    setAgentForm({
-      name: '',
-      messageProvider: '',
-      llmProvider: '',
-      persona: 'default',
-      systemInstruction: '',
-      mcpServers: [],
-      mcpGuard: {
-        enabled: false,
-        type: 'owner',
-        allowedUserIds: []
-      },
-      isActive: true
-    });
-    setGuardUserInput('');
     setOpenCreateDialog(true);
   };
 
   const handleEditAgent = (agent: Agent) => {
     setEditingAgent(agent);
-    setAgentForm(agent);
-    setGuardUserInput(agent.mcpGuard.allowedUserIds.join(', '));
     setOpenCreateDialog(true);
   };
 
-  const handleSaveAgent = async () => {
+  const handleSaveAgent = async (agentData: Partial<Agent>) => {
     try {
-      const agentData = {
-        ...agentForm,
-        mcpGuard: {
-          ...agentForm.mcpGuard!,
-          allowedUserIds: guardUserInput.split(',').map(id => id.trim()).filter(id => id)
-        }
-      };
-
       if (editingAgent) {
         // Update existing agent
         const response = await fetch(`/api/admin/agents/${editingAgent.id}`, {
@@ -256,11 +200,16 @@ const EnhancedAgentConfigurator: React.FC = () => {
     return { status: 'inactive', color: grey[500], icon: <CancelIcon /> };
   };
 
-  const isFormValid = () => {
-    return agentForm.name && 
-           agentForm.messageProvider && 
-           agentForm.llmProvider;
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
+
+  // Calculate pagination
+  const totalAgents = agents.length;
+  const totalPages = Math.ceil(totalAgents / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedAgents = agents.slice(startIndex, endIndex);
 
   if (loading) {
     return (
@@ -301,12 +250,12 @@ const EnhancedAgentConfigurator: React.FC = () => {
       )}
 
       <Grid container spacing={3}>
-        {agents.map((agent) => {
+        {paginatedAgents.map((agent) => {
           const status = getAgentStatus(agent);
           return (
             <Grid item xs={12} md={6} lg={4} key={agent.id}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   height: '100%',
                   border: `2px solid ${status.color}`,
                   position: 'relative'
@@ -331,12 +280,12 @@ const EnhancedAgentConfigurator: React.FC = () => {
                       Message Provider
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Chip 
-                        label={agent.messageProvider || 'Not Set'} 
+                      <Chip
+                        label={agent.messageProvider || 'Not Set'}
                         size="small"
                         color={agent.messageProvider ? 'primary' : 'default'}
                       />
-                      {agent.envOverrides && Object.keys(agent.envOverrides).some(key => 
+                      {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
                         key.toLowerCase().includes(agent.messageProvider?.toLowerCase() || '')
                       ) && (
                         <Tooltip title="Environment variable override active">
@@ -351,12 +300,12 @@ const EnhancedAgentConfigurator: React.FC = () => {
                       LLM Provider
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Chip 
-                        label={agent.llmProvider || 'Not Set'} 
+                      <Chip
+                        label={agent.llmProvider || 'Not Set'}
                         size="small"
                         color={agent.llmProvider ? 'secondary' : 'default'}
                       />
-                      {agent.envOverrides && Object.keys(agent.envOverrides).some(key => 
+                      {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
                         key.toLowerCase().includes(agent.llmProvider?.toLowerCase() || '')
                       ) && (
                         <Tooltip title="Environment variable override active">
@@ -372,8 +321,8 @@ const EnhancedAgentConfigurator: React.FC = () => {
                       <Typography variant="subtitle2" color="text.secondary">
                         Persona
                       </Typography>
-                      <Chip 
-                        label={personas.find(p => p.key === agent.persona)?.name || agent.persona} 
+                      <Chip
+                        label={personas.find(p => p.key === agent.persona)?.name || agent.persona}
                         size="small"
                         variant="outlined"
                       />
@@ -390,17 +339,17 @@ const EnhancedAgentConfigurator: React.FC = () => {
                         {agent.mcpServers.slice(0, 3).map((serverName) => {
                           const server = mcpServers.find(s => s.name === serverName);
                           return (
-                            <Chip 
+                            <Chip
                               key={serverName}
-                              label={serverName} 
+                              label={serverName}
                               size="small"
                               color={server?.connected ? 'success' : 'default'}
                             />
                           );
                         })}
                         {agent.mcpServers.length > 3 && (
-                          <Chip 
-                            label={`+${agent.mcpServers.length - 3} more`} 
+                          <Chip
+                            label={`+${agent.mcpServers.length - 3} more`}
                             size="small"
                             variant="outlined"
                           />
@@ -443,15 +392,15 @@ const EnhancedAgentConfigurator: React.FC = () => {
                       label="Active"
                     />
                     <Box display="flex" gap={1}>
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         onClick={() => handleEditAgent(agent)}
                         color="primary"
                       >
                         <SettingsIcon />
                       </IconButton>
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         onClick={() => handleDeleteAgent(agent.id)}
                         color="error"
                       >
@@ -466,223 +415,36 @@ const EnhancedAgentConfigurator: React.FC = () => {
         })}
       </Grid>
 
-      {/* Create/Edit Agent Dialog */}
-      <Dialog 
-        open={openCreateDialog} 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={totalAgents}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            style="standard"
+          />
+        </Box>
+      )}
+
+      {/* Create/Edit Agent Modal */}
+      <Modal
+        isOpen={openCreateDialog}
         onClose={() => setOpenCreateDialog(false)}
-        maxWidth="md"
-        fullWidth
+        title={editingAgent ? 'Edit Agent' : 'Create New Agent'}
+        size="xl"
       >
-        <DialogTitle>
-          {editingAgent ? 'Edit Agent' : 'Create New Agent'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Grid container spacing={3}>
-              {/* Basic Information */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Basic Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Agent Name"
-                  value={agentForm.name || ''}
-                  onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })}
-                  required
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Message Provider</InputLabel>
-                  <Select
-                    value={agentForm.messageProvider || ''}
-                    label="Message Provider"
-                    onChange={(e) => setAgentForm({ ...agentForm, messageProvider: e.target.value })}
-                  >
-                    {messageProviders.map((provider) => (
-                      <MenuItem key={provider.id} value={provider.id}>
-                        {provider.name} - {provider.description}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>LLM Provider</InputLabel>
-                  <Select
-                    value={agentForm.llmProvider || ''}
-                    label="LLM Provider"
-                    onChange={(e) => setAgentForm({ ...agentForm, llmProvider: e.target.value })}
-                  >
-                    {llmProviders.map((provider) => (
-                      <MenuItem key={provider.id} value={provider.id}>
-                        {provider.name} - {provider.description}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Persona</InputLabel>
-                  <Select
-                    value={agentForm.persona || 'default'}
-                    label="Persona"
-                    onChange={(e) => setAgentForm({ ...agentForm, persona: e.target.value })}
-                  >
-                    {personas.map((persona) => (
-                      <MenuItem key={persona.key} value={persona.key}>
-                        {persona.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* System Instruction */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Custom System Instruction (optional)"
-                  value={agentForm.systemInstruction || ''}
-                  onChange={(e) => setAgentForm({ ...agentForm, systemInstruction: e.target.value })}
-                  helperText="Override or extend the persona's system prompt"
-                />
-              </Grid>
-
-              {/* MCP Configuration */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  MCP Configuration
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Autocomplete
-                  multiple
-                  options={mcpServers.map(s => s.name)}
-                  value={agentForm.mcpServers || []}
-                  onChange={(_, newValue) => setAgentForm({ ...agentForm, mcpServers: newValue })}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="MCP Servers"
-                      helperText="Select MCP servers to make available to this agent"
-                    />
-                  )}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => {
-                      const server = mcpServers.find(s => s.name === option);
-                      return (
-                        <Chip
-                          {...getTagProps({ index })}
-                          key={option}
-                          label={option}
-                          color={server?.connected ? 'primary' : 'default'}
-                        />
-                      );
-                    })
-                  }
-                />
-              </Grid>
-
-              {/* MCP Guard */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  MCP Tool Guard
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={agentForm.mcpGuard?.enabled || false}
-                      onChange={(e) => setAgentForm({
-                        ...agentForm,
-                        mcpGuard: { ...agentForm.mcpGuard!, enabled: e.target.checked }
-                      })}
-                    />
-                  }
-                  label="Enable MCP Tool Guard"
-                />
-              </Grid>
-
-              {agentForm.mcpGuard?.enabled && (
-                <>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Guard Type</InputLabel>
-                      <Select
-                        value={agentForm.mcpGuard.type}
-                        label="Guard Type"
-                        onChange={(e) => setAgentForm({
-                          ...agentForm,
-                          mcpGuard: { ...agentForm.mcpGuard, type: e.target.value as 'owner' | 'custom' }
-                        })}
-                      >
-                        <MenuItem value="owner">Message Server Owner Only</MenuItem>
-                        <MenuItem value="custom">Custom User List</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  {agentForm.mcpGuard.type === 'custom' && (
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Allowed User IDs"
-                        value={guardUserInput}
-                        onChange={(e) => setGuardUserInput(e.target.value)}
-                        helperText="Comma-separated list of user IDs allowed to use MCP tools"
-                        placeholder="user1, user2, user3"
-                      />
-                    </Grid>
-                  )}
-                </>
-              )}
-
-              {/* Active Toggle */}
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={agentForm.isActive || false}
-                      onChange={(e) => setAgentForm({ ...agentForm, isActive: e.target.checked })}
-                    />
-                  }
-                  label="Activate agent immediately"
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCreateDialog(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveAgent} 
-            variant="contained"
-            disabled={!isFormValid()}
-          >
-            {editingAgent ? 'Update' : 'Create'} Agent
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <AgentForm
+          agent={editingAgent}
+          messageProviders={messageProviders}
+          llmProviders={llmProviders}
+          personas={personas}
+          mcpServers={mcpServers}
+          onSubmit={handleSaveAgent}
+          onCancel={() => setOpenCreateDialog(false)}
+        />
+      </Modal>
     </Box>
   );
 };

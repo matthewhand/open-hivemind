@@ -22,14 +22,15 @@ describe('Health Route', () => {
             expect(response.status).toBe(200);
         });
 
-        it('should return "OK" as response text', async () => {
+        it('should return health status as JSON', async () => {
             const response = await request(app).get('/health');
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
+            expect(response.body).toHaveProperty('timestamp');
         });
 
         it('should have correct content type', async () => {
             const response = await request(app).get('/health');
-            expect(response.headers['content-type']).toMatch(/text/);
+            expect(response.headers['content-type']).toMatch(/json/);
         });
 
         it('should respond quickly', async () => {
@@ -45,7 +46,7 @@ describe('Health Route', () => {
             
             responses.forEach(response => {
                 expect(response.status).toBe(200);
-                expect(response.text).toBe('OK');
+                expect(response.body).toHaveProperty('status');
             });
         });
 
@@ -112,7 +113,7 @@ describe('Health Route', () => {
         it('should ignore query parameters', async () => {
             const response = await request(app).get('/health?param=value');
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
 
         it('should ignore request headers', async () => {
@@ -122,7 +123,7 @@ describe('Health Route', () => {
                 .set('Custom-Header', 'value');
             
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
 
         it('should handle requests with different Accept headers', async () => {
@@ -131,7 +132,7 @@ describe('Health Route', () => {
                 .set('Accept', 'application/json');
             
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
 
         it('should handle requests with User-Agent headers', async () => {
@@ -140,7 +141,7 @@ describe('Health Route', () => {
                 .set('User-Agent', 'HealthCheck/1.0');
             
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
     });
 
@@ -153,27 +154,27 @@ describe('Health Route', () => {
 
             responses.forEach(response => {
                 expect(response.status).toBe(200);
-                expect(response.text).toBe('OK');
+                expect(response.body).toHaveProperty('status');
             });
 
-            // All responses should be identical
+            // All responses should have same status but timestamps may differ
             const firstResponse = responses[0];
             responses.slice(1).forEach(response => {
                 expect(response.status).toBe(firstResponse.status);
-                expect(response.text).toBe(firstResponse.text);
+                expect(response.body.status).toBe(firstResponse.body.status);
             });
         });
 
         it('should maintain response format over time', async () => {
             const response1 = await request(app).get('/health');
-            
+
             // Simulate some delay
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             const response2 = await request(app).get('/health');
-            
+
             expect(response1.status).toBe(response2.status);
-            expect(response1.text).toBe(response2.text);
+            expect(response1.body.status).toBe(response2.body.status);
         });
     });
 
@@ -191,13 +192,13 @@ describe('Health Route', () => {
                 .set('Large-Header', largeHeaderValue);
             
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
 
         it('should handle requests with special characters in query', async () => {
             const response = await request(app).get('/health?test=hello%20world&special=!@#$%^&*()');
             expect(response.status).toBe(200);
-            expect(response.text).toBe('OK');
+            expect(response.body).toHaveProperty('status');
         });
     });
 
@@ -205,7 +206,7 @@ describe('Health Route', () => {
         it('should work with runRoute helper for GET requests', async () => {
             const { res } = await runRoute(app as any, 'get', '/health');
             expect(res.statusCode).toBe(200);
-            expect(res.text).toBe('OK');
+            expect(res.body).toHaveProperty('status');
         });
 
         it('should work with runRoute helper for error cases', async () => {
@@ -232,7 +233,7 @@ describe('Health Route', () => {
             expect(duration).toBeLessThan(5000); // Should complete 50 requests in under 5 seconds
             responses.forEach(response => {
                 expect(response.status).toBe(200);
-                expect(response.text).toBe('OK');
+                expect(response.body).toHaveProperty('status');
             });
         });
 

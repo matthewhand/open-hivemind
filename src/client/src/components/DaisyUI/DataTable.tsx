@@ -337,41 +337,68 @@ const DataTable = <T extends Record<string, any>>({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-base-content/60">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} entries
           </div>
-          
+
           <div className="join">
+            {/* First page button */}
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(1)}
+              aria-label="First page"
+            >
+              ❮❮
+            </button>
+
+            {/* Previous page button */}
             <button
               className="join-item btn btn-sm"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(currentPage - 1)}
+              aria-label="Previous page"
             >
               ❮
             </button>
-            
+
+            {/* Page number buttons */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const page = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
               if (page > totalPages) return null;
-              
+
               return (
                 <button
                   key={page}
                   className={`join-item btn btn-sm ${currentPage === page ? 'btn-active' : ''}`}
                   onClick={() => setCurrentPage(page)}
+                  aria-label={`Page ${page}`}
+                  aria-current={currentPage === page ? 'page' : undefined}
                 >
                   {page}
                 </button>
               );
             })}
-            
+
+            {/* Next page button */}
             <button
               className="join-item btn btn-sm"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(currentPage + 1)}
+              aria-label="Next page"
             >
               ❯
+            </button>
+
+            {/* Last page button */}
+            <button
+              className="join-item btn btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(totalPages)}
+              aria-label="Last page"
+            >
+              ❯❯
             </button>
           </div>
         </div>

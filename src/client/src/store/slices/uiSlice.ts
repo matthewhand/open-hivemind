@@ -37,6 +37,12 @@ export interface UIState {
     duration: number;
     position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
   }>;
+  alerts: Array<{
+    id: string;
+    message: string;
+    status: 'info' | 'success' | 'warning' | 'error';
+    icon?: React.ReactNode;
+  }>;
   loadingStates: Record<string, boolean>;
   breadcrumbs: Array<{
     label: string;
@@ -75,6 +81,7 @@ const initialState: UIState = {
   },
   modals: [],
   toasts: [],
+  alerts: [],
   loadingStates: {},
   breadcrumbs: [],
   activeSection: 'dashboard',
@@ -174,7 +181,24 @@ const uiSlice = createSlice({
     clearAllToasts: (state) => {
       state.toasts = [];
     },
-    
+
+    // Alert management
+    showAlert: (state, action: PayloadAction<Omit<UIState['alerts'][0], 'id'>>) => {
+      const alert = {
+        ...action.payload,
+        id: Date.now().toString(),
+      };
+      state.alerts.push(alert);
+    },
+
+    dismissAlert: (state, action: PayloadAction<string>) => {
+      state.alerts = state.alerts.filter(alert => alert.id !== action.payload);
+    },
+
+    clearAllAlerts: (state) => {
+      state.alerts = [];
+    },
+
     // Loading states
     setLoading: (state, action: PayloadAction<{ key: string; isLoading: boolean }>) => {
       state.loadingStates[action.payload.key] = action.payload.isLoading;
@@ -378,6 +402,9 @@ export const {
   showToast,
   dismissToast,
   clearAllToasts,
+  showAlert,
+  dismissAlert,
+  clearAllAlerts,
   setLoading,
   clearLoading,
   clearAllLoading,
@@ -431,6 +458,7 @@ export const selectIsDesktop = (state: { ui: UIState }) => state.ui.isDesktop;
 export const selectViewport = (state: { ui: UIState }) => state.ui.viewport;
 export const selectModals = (state: { ui: UIState }) => state.ui.modals;
 export const selectToasts = (state: { ui: UIState }) => state.ui.toasts;
+export const selectAlerts = (state: { ui: UIState }) => state.ui.alerts;
 export const selectLoadingStates = (state: { ui: UIState }) => state.ui.loadingStates;
 export const selectBreadcrumbs = (state: { ui: UIState }) => state.ui.breadcrumbs;
 export const selectActiveSection = (state: { ui: UIState }) => state.ui.activeSection;

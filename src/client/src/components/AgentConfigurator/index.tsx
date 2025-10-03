@@ -1,8 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, CircularProgress, Grid, Stack, Typography } from '@mui/material';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
 import {
   useApplyHotReloadChangeMutation,
   useGetConfigQuery,
@@ -15,6 +11,7 @@ import { getMCPServers } from '../../services/agentService';
 import AgentConfigCard from './AgentConfigCard';
 import type { BotUIState, GuardInputState, GuardState } from './types';
 import type { ProviderInfo } from '../../services/providerService';
+import { LoadingSpinner } from '../DaisyUI';
 
 interface AgentConfiguratorProps {
   title?: string;
@@ -120,7 +117,6 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [availableMcpServers, setAvailableMcpServers] = useState<string[]>([]);
   const [mcpError, setMcpError] = useState<string | null>(null);
-  const [apiMenuAnchor, setApiMenuAnchor] = useState<null | HTMLElement>(null);
 
   const { personas, loading: personasLoading } = usePersonas();
   const {
@@ -202,19 +198,15 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   if (isLoading) {
     return (
-      <Box display="flex" alignItems="center" justifyContent="center" minHeight={240}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress />
-          <Typography variant="body2" color="text.secondary">
-            Loading agent configuration…
-          </Typography>
-        </Stack>
-      </Box>
+      <div className="flex items-center justify-center min-h-[240px]">
+        <LoadingSpinner />
+        <p className="text-base-content/70">Loading agent configuration…</p>
+      </div>
     );
   }
 
   if (configError) {
-    return <Alert severity="error">Failed to load configuration</Alert>;
+    return <div className="alert alert-error">Failed to load configuration</div>;
   }
 
   function handleSelectionChange<K extends keyof BotUIState>(
@@ -346,84 +338,81 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   };
 
   const openApiSpec = (format: 'json' | 'yaml') => {
-    setApiMenuAnchor(null);
     window.open(`/webui/api/openapi?format=${format}`, '_blank', 'noopener');
   };
 
   return (
-    <Box>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2} mb={3}>
-        <Box>
-          <Typography variant="h4" component="h2" gutterBottom>
-            {title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields defined via environment variables are locked and displayed for reference.
-          </Typography>
-        </Box>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={isFetching ? <CircularProgress size={16} /> : <RefreshIcon />}
-            onClick={handleRefresh}
-            disabled={isFetching}
-          >
+    <div>
+      <div className="hero bg-base-200 py-8">
+        <div className="hero-content text-center">
+          <div className="max-w-md">
+            <h1 className="text-4xl font-bold">{title}</h1>
+            <p className="py-6">
+              Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields defined via environment variables are locked and displayed for reference.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <div className="flex justify-end items-center gap-2 mb-4">
+          <button className={`btn btn-outline ${isFetching ? 'loading' : ''}`} onClick={handleRefresh} disabled={isFetching}>
             {isFetching ? 'Refreshing…' : 'Refresh status'}
-          </Button>
-          <Button
-            variant="text"
-            sx={{ ml: 1 }}
-            onClick={(event) => setApiMenuAnchor(event.currentTarget)}
-          >
-            API Spec
-          </Button>
-          <Menu
-            anchorEl={apiMenuAnchor}
-            open={Boolean(apiMenuAnchor)}
-            onClose={() => setApiMenuAnchor(null)}
-          >
-            <MenuItem onClick={() => openApiSpec('json')}>Download JSON</MenuItem>
-            <MenuItem onClick={() => openApiSpec('yaml')}>Download YAML</MenuItem>
-          </Menu>
-        </Box>
-      </Stack>
+          </button>
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn">API Spec</label>
+            <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+              <li><a onClick={() => openApiSpec('json')}>Download JSON</a></li>
+              <li><a onClick={() => openApiSpec('yaml')}>Download YAML</a></li>
+            </ul>
+          </div>
+        </div>
 
-      {feedback && (
-        <Alert severity={feedback.type} sx={{ mb: 3 }} onClose={() => setFeedback(null)}>
-          {feedback.message}
-        </Alert>
-      )}
+        {feedback && (
+          <div className={`alert alert-${feedback.type} shadow-lg mb-4`}>
+            <div>
+              <span>{feedback.message}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setFeedback(null)}>✕</button>
+            </div>
+          </div>
+        )}
 
-      {providersError && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          {providersError}
-        </Alert>
-      )}
+        {providersError && (
+          <div className="alert alert-warning shadow-lg mb-4">
+            <div>
+              <span>{providersError}</span>
+            </div>
+          </div>
+        )}
 
-      {mcpError && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          {mcpError}
-        </Alert>
-      )}
+        {mcpError && (
+          <div className="alert alert-warning shadow-lg mb-4">
+            <div>
+              <span>{mcpError}</span>
+            </div>
+          </div>
+        )}
 
-      {statusError && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          Unable to load live status updates right now. Try refreshing in a moment.
-        </Alert>
-      )}
+        {statusError && (
+          <div className="alert alert-warning shadow-lg mb-4">
+            <div>
+              <span>Unable to load live status updates right now. Try refreshing in a moment.</span>
+            </div>
+          </div>
+        )}
 
-      {bots.length === 0 ? (
-        <Alert severity="info">No agents detected. Create a bot configuration to get started.</Alert>
-      ) : (
-        <Grid container spacing={3}>
-          {bots.map(bot => {
-            const uiState = selectionState[bot.name];
-            const status = statusByName.get(bot.name);
-            const metadata = bot.metadata || {};
+        {bots.length === 0 ? (
+          <div className="alert alert-info">No agents detected. Create a bot configuration to get started.</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {bots.map(bot => {
+              const uiState = selectionState[bot.name];
+              const status = statusByName.get(bot.name);
+              const metadata = bot.metadata || {};
 
-            return (
-              <Grid item xs={12} lg={6} key={bot.name}>
+              return (
                 <AgentConfigCard
+                  key={bot.name}
                   bot={bot}
                   metadata={metadata}
                   uiState={uiState}
@@ -446,12 +435,12 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
                   onGuardUsersChange={handleGuardUsersChange}
                   onGuardUsersBlur={handleGuardUsersBlur}
                 />
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
-    </Box>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

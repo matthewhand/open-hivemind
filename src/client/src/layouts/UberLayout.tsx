@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import {
   Box,
   Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Typography,
   useMediaQuery,
   useTheme,
-  IconButton,
   AppBar,
   Toolbar,
 } from '@mui/material';
+import { Button } from '../components/DaisyUI';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
@@ -23,9 +18,15 @@ import {
   Security as GuardsIcon,
   Monitor as MonitorIcon,
   GetApp as ExportIcon,
+  Settings as SettingsIcon,
+  Map as SitemapIcon,
+  Palette as ShowcaseIcon,
 } from '@mui/icons-material';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Alert, Menu } from '../components/DaisyUI';
+import { useSelector, useDispatch } from 'react-redux';
+import { dismissAlert, selectAlerts } from '../store/slices/uiSlice';
 
 const drawerWidth = 240;
 
@@ -35,6 +36,8 @@ const UberLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
+  const dispatch = useDispatch();
+  const alerts = useSelector(selectAlerts);
 
   const hasRole = (role: string) => {
     return user?.role === role || user?.permissions?.includes(role);
@@ -78,9 +81,39 @@ const UberLayout: React.FC = () => {
       visible: true,
     },
     {
+      text: 'Activity',
+      icon: <MonitorIcon />,
+      path: '/uber/activity',
+      visible: true,
+    },
+    {
       text: 'Export',
       icon: <ExportIcon />,
       path: '/uber/export',
+      visible: true,
+    },
+    {
+      text: 'Settings',
+      icon: <SettingsIcon />,
+      path: '/uber/settings',
+      visible: true,
+    },
+    {
+      text: 'Static Pages',
+      icon: <ShowcaseIcon />,
+      path: '/uber/static',
+      visible: true,
+    },
+    {
+      text: 'Sitemap',
+      icon: <SitemapIcon />,
+      path: '/uber/sitemap',
+      visible: true,
+    },
+    {
+      text: 'DaisyUI Showcase',
+      icon: <ShowcaseIcon />,
+      path: '/uber/showcase',
       visible: true,
     },
   ];
@@ -88,6 +121,17 @@ const UberLayout: React.FC = () => {
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
+  // Convert navigation items to Menu format
+  const menuItems = navigationItems
+    .filter(item => item.visible)
+    .map(item => ({
+      id: item.text.toLowerCase().replace(/\s+/g, '-'),
+      label: item.text,
+      icon: item.icon,
+      href: item.path,
+      active: location.pathname === item.path,
+    }));
 
   const drawer = (
     <Box>
@@ -99,32 +143,17 @@ const UberLayout: React.FC = () => {
           Uber Dashboard
         </Typography>
       </Box>
-      <List>
-        {navigationItems
-          .filter(item => item.visible)
-          .map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton
-                component={Link}
-                to={item.path}
-                selected={location.pathname === item.path}
-                sx={{
-                  '&.Mui-selected': {
-                    backgroundColor: theme.palette.action.selected,
-                    '&:hover': {
-                      backgroundColor: theme.palette.action.selected,
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-      </List>
+      <Menu
+        items={menuItems}
+        variant="sidebar"
+        compact
+        onItemClick={(item) => {
+          // Handle navigation programmatically
+          if (item.href) {
+            window.location.href = item.href;
+          }
+        }}
+      />
     </Box>
   );
 
@@ -140,15 +169,15 @@ const UberLayout: React.FC = () => {
           }}
         >
           <Toolbar>
-            <IconButton
-              color="inherit"
+            <Button
+              variant="ghost"
+              size="sm"
               aria-label="open drawer"
-              edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'none' } }}
+              className="mr-2 md:hidden text-white"
             >
               <MenuIcon />
-            </IconButton>
+            </Button>
             <Typography variant="h6" noWrap component="div">
               Uber Dashboard
             </Typography>
@@ -190,6 +219,17 @@ const UberLayout: React.FC = () => {
           mt: { xs: '64px', md: 0 }, // Account for AppBar on mobile
         }}
       >
+        {/* Alerts */}
+        {alerts.map((alert) => (
+          <Alert
+            key={alert.id}
+            status={alert.status}
+            message={alert.message}
+            icon={alert.icon}
+            onClose={() => dispatch(dismissAlert(alert.id))}
+          />
+        ))}
+        
         <Outlet />
       </Box>
     </Box>

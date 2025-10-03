@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import { Box } from '@mui/material';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
@@ -13,11 +14,20 @@ const Login = lazy(() => import('../components/Login'));
 // Uber pages
 const OverviewPage = lazy(() => import('../pages/OverviewPage'));
 const BotsPage = lazy(() => import('../pages/BotsPage'));
+const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
+const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
 const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
+const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
+const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
 const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
+const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 const ExportPage = lazy(() => import('../pages/ExportPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
+const SitemapPage = lazy(() => import('../pages/SitemapPage'));
+const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
 
 interface LoadingFallbackProps {
   message?: string;
@@ -32,7 +42,7 @@ const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...
     flexDirection="column"
     gap={2}
   >
-    <CircularProgress size={48} />
+    <LoadingSpinner size="lg" />
     <Box component="span" sx={{ color: 'text.secondary' }}>
       {message}
     </Box>
@@ -78,8 +88,15 @@ const AppRouter: React.FC = () => {
           <Route path="/uber" element={<UberLayout />}>
             <Route index element={<Navigate to="/uber/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
+            
+            {/* Bot Management Routes */}
             <Route path="bots" element={<BotsPage />} />
+            <Route path="bots/create" element={<BotCreatePage />} />
+            <Route path="bots/templates" element={<BotTemplatesPage />} />
+            
             <Route path="personas" element={<PersonasPage />} />
+            
+            {/* MCP Routes */}
             <Route
               path="mcp"
               element={
@@ -89,6 +106,23 @@ const AppRouter: React.FC = () => {
               }
             />
             <Route
+              path="mcp/servers"
+              element={
+                <ProtectedRoute>
+                  <MCPServersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="mcp/tools"
+              element={
+                <ProtectedRoute>
+                  <MCPToolsPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="guards"
               element={
                 <ProtectedRoute>
@@ -96,8 +130,16 @@ const AppRouter: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            
+            {/* Monitoring Routes */}
             <Route path="monitoring" element={<MonitoringPage />} />
+            <Route path="activity" element={<ActivityPage />} />
+            
             <Route path="export" element={<ExportPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="static" element={<StaticPagesPage />} />
+            <Route path="sitemap" element={<SitemapPage />} />
+            <Route path="showcase" element={<DaisyUIShowcase />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

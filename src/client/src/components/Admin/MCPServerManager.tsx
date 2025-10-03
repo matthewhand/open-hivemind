@@ -6,17 +6,9 @@ import {
   ListItem, 
   ListItemText, 
   Paper, 
-  Button, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  IconButton,
+  Button as MuiButton, 
   Snackbar,
-  Alert,
-  Chip,
-  Card,
+  Card as MuiCard,
   CardContent,
   Grid,
   Collapse,
@@ -51,6 +43,7 @@ import {
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { green, red, orange } from '@mui/material/colors';
+import { ModalForm, Button, Card, Badge, Alert, SkeletonCard } from '../DaisyUI';
 
 interface MCPServer {
   name: string;
@@ -83,11 +76,7 @@ const MCPServerManager: React.FC = () => {
   const [toolTestArgs, setToolTestArgs] = useState<string>('{}');
   const [currentTab, setCurrentTab] = useState(0);
   
-  const [newServer, setNewServer] = useState({ 
-    name: '', 
-    url: '', 
-    apiKey: '' 
-  });
+
   
   const [snackbar, setSnackbar] = useState({ 
     open: false, 
@@ -114,7 +103,6 @@ const MCPServerManager: React.FC = () => {
   }, []);
 
   const handleOpenDialog = () => {
-    setNewServer({ name: '', serverUrl: '', apiKey: '' });
     setOpenDialog(true);
   };
 
@@ -122,12 +110,18 @@ const MCPServerManager: React.FC = () => {
     setOpenDialog(false);
   };
 
-  const handleConnectServer = async () => {
+  const handleFormSubmit = async (data: Record<string, string | number | boolean>) => {
+    const serverData = {
+      name: data.name as string,
+      serverUrl: data.serverUrl as string,
+      apiKey: data.apiKey as string || ''
+    };
+
     try {
       const response = await fetch('/api/admin/mcp/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newServer)
+        body: JSON.stringify(serverData)
       });
       
       if (!response.ok) throw new Error('Failed to add server');
@@ -135,7 +129,7 @@ const MCPServerManager: React.FC = () => {
       setSnackbar({ open: true, message: 'MCP server added successfully', severity: 'success' });
       handleCloseDialog();
       fetchServers();
-    } catch (error) {
+    } catch {
       setSnackbar({ open: true, message: 'Error adding MCP server', severity: 'error' });
     }
   };
@@ -316,15 +310,16 @@ const MCPServerManager: React.FC = () => {
                                       {tool.description}
                                     </Typography>
                                   </Box>
-                                  <IconButton
-                                    size="small"
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
                                     onClick={() => {
                                       setSelectedTool({ ...tool, serverName: server.name });
                                       setOpenToolDialog(true);
                                     }}
                                   >
                                     <PlayIcon />
-                                  </IconButton>
+                                  </Button>
                                 </Box>
                               </CardContent>
                             </Card>
@@ -415,15 +410,16 @@ const MCPServerManager: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => {
                           setSelectedTool(tool);
                           setOpenToolDialog(true);
                         }}
                       >
                         <PlayIcon />
-                      </IconButton>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -464,8 +460,49 @@ const MCPServerManager: React.FC = () => {
       </Tabs>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" sx={{ py: 4 }}>
-          <Typography>Loading MCP servers...</Typography>
+        <Box>
+          {currentTab === 0 ? (
+            <Grid container spacing={2}>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Grid item xs={12} md={6} key={index}>
+                  <div className="card bg-base-100 shadow-xl">
+                    <div className="card-body">
+                      <div className="skeleton h-6 w-3/4 mb-2"></div>
+                      <div className="skeleton h-4 w-full mb-4"></div>
+                      <div className="skeleton h-4 w-1/2 mb-4"></div>
+                      <div className="flex gap-2">
+                        <div className="skeleton h-8 w-20"></div>
+                        <div className="skeleton h-8 w-24"></div>
+                      </div>
+                    </div>
+                  </div>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><div className="skeleton h-4 w-24"></div></TableCell>
+                    <TableCell><div className="skeleton h-4 w-32"></div></TableCell>
+                    <TableCell><div className="skeleton h-4 w-20"></div></TableCell>
+                    <TableCell><div className="skeleton h-4 w-16"></div></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><div className="skeleton h-4 w-28"></div></TableCell>
+                      <TableCell><div className="skeleton h-4 w-40"></div></TableCell>
+                      <TableCell><div className="skeleton h-4 w-16"></div></TableCell>
+                      <TableCell><div className="skeleton h-8 w-8 rounded"></div></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       ) : error ? (
         <Typography color="error">{error}</Typography>
@@ -477,49 +514,40 @@ const MCPServerManager: React.FC = () => {
       )}
       
       {/* Add Server Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Add MCP Server</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Server Name"
-            fullWidth
-            value={newServer.name}
-            onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
-            sx={{ mt: 1 }}
-            helperText="Unique identifier for this MCP server"
-          />
-          <TextField
-            margin="dense"
-            label="Server URL"
-            fullWidth
-            value={newServer.url}
-            onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
-            sx={{ mt: 2 }}
-            helperText="e.g., stdio://path/to/server or http://localhost:3000"
-          />
-          <TextField
-            margin="dense"
-            label="API Key (optional)"
-            fullWidth
-            value={newServer.apiKey}
-            onChange={(e) => setNewServer({ ...newServer, apiKey: e.target.value })}
-            sx={{ mt: 2 }}
-            helperText="Authentication key if required by the server"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button 
-            onClick={handleConnectServer} 
-            variant="contained"
-            disabled={!newServer.name || !newServer.url}
-          >
-            Add Server
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ModalForm
+        isOpen={openDialog}
+        onClose={handleCloseDialog}
+        title="Add MCP Server"
+        onSubmit={handleFormSubmit}
+        submitText="Add Server"
+        size="md"
+        fields={[
+          {
+            name: 'name',
+            label: 'Server Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter server name',
+            helperText: 'Unique identifier for this MCP server'
+          },
+          {
+            name: 'serverUrl',
+            label: 'Server URL',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., stdio://path/to/server or http://localhost:3000',
+            helperText: 'MCP server connection URL'
+          },
+          {
+            name: 'apiKey',
+            label: 'API Key (optional)',
+            type: 'text',
+            required: false,
+            placeholder: 'Enter API key if required',
+            helperText: 'Authentication key if required by the server'
+          }
+        ]}
+      />
 
       {/* Tool Test Dialog */}
       <Dialog open={openToolDialog} onClose={() => setOpenToolDialog(false)} maxWidth="md" fullWidth>

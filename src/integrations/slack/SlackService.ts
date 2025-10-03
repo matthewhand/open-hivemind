@@ -1,6 +1,7 @@
 import { Application } from 'express';
 import express from 'express';
 import Debug from 'debug';
+import retry from 'async-retry';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { IMessage } from '@message/interfaces/IMessage';
 import { SlackBotManager } from './SlackBotManager';
@@ -15,6 +16,7 @@ import { KnownBlock } from '@slack/web-api';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import slackConfig from '@config/slackConfig';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,6 +30,15 @@ const debug = Debug('app:SlackService:verbose');
 import { SlackMessageIO, ISlackMessageIO } from './modules/ISlackMessageIO';
 import { SlackEventBus, ISlackEventBus } from './modules/ISlackEventBus';
 import { SlackBotFacade, ISlackBotFacade } from './modules/ISlackBotFacade';
+
+// Metrics and retry configuration
+const metrics = MetricsCollector.getInstance();
+const RETRY_CONFIG = {
+  retries: 3,
+  minTimeout: 1000,
+  maxTimeout: 5000,
+  factor: 2,
+};
 
 /**
  * SlackService implementation supporting multi-instance configuration
@@ -397,36 +408,27 @@ export class SlackService implements IMessengerService {
             return 'Sorry, I\'m having trouble processing your request right now.';
           }
           
-          let llmResponse: string;
-          try {
-            const cfg = this.botConfigs.get(botName) as any;
-            const llm = cfg?.llm;
-            if (llm && (llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
-              const { generateChatCompletionDirect } = require('@integrations/openwebui/directClient');
-              llmResponse = await generateChatCompletionDirect(
-                {
-                  apiUrl: llm.apiUrl,
-                  authHeader: llm.authHeader,
-                  model: llm.model,
-                },
-                userMessage,
-                formattedHistory,
-                (llm.systemPrompt || metadataWithMessages?.systemPrompt || '')
-              );
-            } else {
-              llmResponse = await llmProviders[0].generateChatCompletion(
+          let llmResponse: string | null = null;
+          for (const provider of llmProviders) {
+            try {
+              llmResponse = await provider.generateChatCompletion(
                 userMessage,
                 formattedHistory,
                 metadataWithMessages
               );
+              if (llmResponse) {
+                debug(`[${botName}] LLM response from ${provider.constructor.name}`);
+                break; // Exit loop on success
+              }
+            } catch (error) {
+              debug(`[${botName}] LLM provider ${provider.constructor.name} failed: ${error}`);
+              // Try the next provider
             }
-          } catch (e) {
-            debug(`[${botName}] LLM call failed, falling back: ${e}`);
-            llmResponse = await llmProviders[0].generateChatCompletion(
-              userMessage,
-              formattedHistory,
-              metadataWithMessages
-            );
+          }
+
+          if (!llmResponse) {
+            debug(`[${botName}] All LLM providers failed.`);
+            return 'Sorry, I am currently unable to process your request. Please try again later.';
           }
           debug(`[${botName}] LLM Response:`, llmResponse);
           
@@ -468,7 +470,44 @@ export class SlackService implements IMessengerService {
       senderName,
       threadId,
     });
-    return this.messageIO.sendMessageToChannel(channelId, text, senderName, threadId, blocks);
+
+    const startTime = Date.now();
+    let attemptCount = 0;
+
+    try {
+      const result = await retry(async (bail, attempt) => {
+        attemptCount = attempt;
+        debug(`Attempting to send message (attempt ${attempt})`);
+
+        try {
+          const result = await this.messageIO.sendMessageToChannel(channelId, text, senderName, threadId, blocks);
+          metrics.incrementMessages();
+          return result;
+        } catch (error: any) {
+          debug(`Send message attempt ${attempt} failed: ${error.message}`);
+
+          // Don't retry on certain errors
+          if (error.message?.includes('channel_not_found') ||
+              error.message?.includes('not_in_channel') ||
+              error.message?.includes('missing_scope')) {
+            bail(error);
+            return '';
+          }
+
+          throw error;
+        }
+      }, RETRY_CONFIG);
+
+      const duration = Date.now() - startTime;
+      metrics.recordResponseTime(duration);
+      debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
+      return result;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      metrics.incrementErrors();
+      debug(`Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`);
+      throw error;
+    }
   }
 
   public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
@@ -485,7 +524,43 @@ export class SlackService implements IMessengerService {
 
   public async fetchMessages(channelId: string, limit: number = 10, botName?: string): Promise<IMessage[]> {
     debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
-    return this.messageIO.fetchMessages(channelId, limit, botName);
+
+    const startTime = Date.now();
+    let attemptCount = 0;
+
+    try {
+      const result = await retry(async (bail, attempt) => {
+        attemptCount = attempt;
+        debug(`Attempting to fetch messages (attempt ${attempt})`);
+
+        try {
+          const result = await this.messageIO.fetchMessages(channelId, limit, botName);
+          return result;
+        } catch (error: any) {
+          debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
+
+          // Don't retry on certain errors
+          if (error.message?.includes('channel_not_found') ||
+              error.message?.includes('not_in_channel') ||
+              error.message?.includes('missing_scope')) {
+            bail(error);
+            return [];
+          }
+
+          throw error;
+        }
+      }, RETRY_CONFIG);
+
+      const duration = Date.now() - startTime;
+      metrics.recordResponseTime(duration);
+      debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
+      return result;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      metrics.incrementErrors();
+      debug(`Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`);
+      return []; // Return empty array on failure
+    }
   }
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
@@ -684,6 +759,27 @@ export class SlackService implements IMessengerService {
     if (!channelId) throw new Error('channelId required');
     const name = botName || Array.from(this.botManagers.keys())[0];
     return this.sendMessageToChannel(channelId, text, name);
+  }
+
+  /**
+   * Get structured metrics for the SlackService
+   */
+  public getMetrics(): any {
+    const botMetrics: Record<string, any> = {};
+    for (const [botName, botManager] of this.botManagers) {
+      botMetrics[botName] = {
+        connected: botManager ? true : false,
+        lastActivity: this.lastSentEventTs.get(botName) || null,
+        joinTime: this.joinTs.get(botName) || null,
+      };
+    }
+
+    return {
+      service: 'slack',
+      botCount: this.botManagers.size,
+      bots: botMetrics,
+      globalMetrics: metrics.getMetrics(),
+    };
   }
 
 }

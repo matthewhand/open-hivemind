@@ -25,7 +25,7 @@ import {
   Tab,
   DatePicker,
   LocalizationProvider,
-  Pagination,
+  Pagination as MuiPagination,
   Box as MuiBox,
   Tooltip,
   IconButton
@@ -54,6 +54,7 @@ import {
   Assessment as AssessmentIcon
 } from '@mui/icons-material';
 import { format, subDays, subHours } from 'date-fns';
+import { Pagination } from '../DaisyUI';
 
 interface ActivityFilter {
   agentId?: string;
@@ -496,9 +497,11 @@ const ActivityMonitor: React.FC = () => {
           {pagination.totalPages > 1 && (
             <Box display="flex" justifyContent="center" sx={{ mt: 2 }}>
               <Pagination
-                count={pagination.totalPages}
-                page={pagination.page}
-                onChange={(_, page) => handlePageChange(page)}
+                currentPage={pagination.page}
+                totalItems={pagination.totalItems}
+                pageSize={filter.limit || 100}
+                onPageChange={handlePageChange}
+                style="standard"
               />
             </Box>
           )}

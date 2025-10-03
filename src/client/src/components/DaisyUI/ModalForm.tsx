@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Input from './Input';
 
 interface FormField {
   name: string;
@@ -231,9 +232,9 @@ const ModalForm: React.FC<ModalFormProps> = ({
         
       default:
         return (
-          <input
+          <Input
             type={field.type}
-            className={`input input-bordered w-full ${hasError ? 'input-error' : ''}`}
+            variant={hasError ? 'error' : undefined}
             placeholder={field.placeholder}
             value={formData[field.name] || ''}
             onChange={(e) => handleInputChange(field.name, e.target.value)}

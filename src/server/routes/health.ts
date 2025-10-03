@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import AdvancedMonitor from '../../monitoring/AdvancedMonitor';
+import { DiscordService } from '@integrations/discord/DiscordService';
+import { SlackService } from '@integrations/slack/SlackService';
 import Debug from 'debug';
 
 const debug = Debug('app:healthRoutes');
@@ -14,12 +16,35 @@ router.get('/health', (req, res) => {
   try {
     const healthStatus = monitor.getHealthStatus();
 
+    // Get Discord and Slack service health
+    let discordHealth = null;
+    let slackHealth = null;
+    
+    try {
+      const discordService = DiscordService.getInstance();
+      discordHealth = discordService.getHealthStatus();
+    } catch (e) {
+      debug('Could not get Discord health status:', e);
+    }
+    
+    try {
+      const slackService = SlackService.getInstance();
+      slackHealth = slackService.getMetrics();
+    } catch (e) {
+      debug('Could not get Slack health status:', e);
+    }
+
     const response = {
       status: healthStatus.overall === 'healthy' ? 'ok' : 'error',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development'
+      version: process.env.npm_package_version || '1.0',
+      environment: process.env.NODE_ENV || 'development',
+      services: {
+        discord: discordHealth,
+        slack: slackHealth,
+        core: healthStatus.services
+      }
     };
 
     const statusCode = healthStatus.overall === 'healthy' ? 200 :

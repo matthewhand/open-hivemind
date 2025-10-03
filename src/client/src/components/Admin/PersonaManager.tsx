@@ -1,84 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
   List, 
   ListItem, 
-  ListItemText, 
-  Paper, 
-  Button, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  TextField, 
-  IconButton,
-  Snackbar,
-  Alert
+  ListItemText
 } from '@mui/material';
+import { Modal, ToastNotification, Checkbox, Button, Card, Form } from '../DaisyUI';
 import { 
-  usePersonas, 
+  getPersonas, 
   createPersona, 
   updatePersona, 
-  deletePersona 
+  deletePersona,
+  type Persona 
 } from '../../services/agentService';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 
 const PersonaManager: React.FC = () => {
-  const { personas, loading, error, refetch } = usePersonas();
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingPersona, setEditingPersona] = useState<any>(null);
-  const [personaForm, setPersonaForm] = useState({ name: '', systemPrompt: '' });
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning' | 'info'>('success');
+  const [selectedPersonas, setSelectedPersonas] = useState<Set<string>>(new Set());
 
-  const handleOpenDialog = (persona?: any) => {
-    if (persona) {
-      setEditingPersona(persona);
-      setPersonaForm({ name: persona.name, systemPrompt: persona.systemPrompt });
-    } else {
-      setEditingPersona(null);
-      setPersonaForm({ name: '', systemPrompt: '' });
+  const loadPersonas = async () => {
+    try {
+      setLoading(true);
+      const personaList = await getPersonas();
+      setPersonas(personaList);
+      setError(null);
+    } catch {
+      setError('Failed to load personas');
+    } finally {
+      setLoading(false);
     }
-    setOpenDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
+  useEffect(() => {
+    loadPersonas();
+  }, []);
+
+  const handleOpenModal = (persona?: Persona) => {
+    setEditingPersona(persona || null);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
     setEditingPersona(null);
   };
 
-  const handleSavePersona = async () => {
+  const handleFormSubmit = async (data: Record<string, string | number | boolean>) => {
+    const name = data.name as string;
+    const systemPrompt = data.systemPrompt as string;
+    
     try {
       if (editingPersona) {
-        await updatePersona(editingPersona.key, personaForm);
-        setSnackbar({ open: true, message: 'Persona updated successfully', severity: 'success' });
+        await updatePersona(editingPersona.key, { name, systemPrompt });
+        setToastMessage('Persona updated successfully');
+        setToastType('success');
       } else {
-        // For new personas, we would need to generate a key
-        // In a real implementation, this would be handled by the backend
-        await createPersona(personaForm);
-        setSnackbar({ open: true, message: 'Persona created successfully', severity: 'success' });
+        await createPersona({ name, systemPrompt });
+        setToastMessage('Persona created successfully');
+        setToastType('success');
       }
-      handleCloseDialog();
-      refetch();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Error saving persona', severity: 'error' });
+      handleCloseModal();
+      loadPersonas();
+    } catch {
+      setToastMessage('Error saving persona');
+      setToastType('error');
     }
   };
 
   const handleDeletePersona = async (key: string) => {
     try {
       await deletePersona(key);
-      setSnackbar({ open: true, message: 'Persona deleted successfully', severity: 'success' });
-      refetch();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Error deleting persona', severity: 'error' });
+      setToastMessage('Persona deleted successfully');
+      setToastType('success');
+      loadPersonas();
+    } catch {
+      setToastMessage('Error deleting persona');
+      setToastType('error');
     }
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+  const handleToggleSelect = (key: string) => {
+    setSelectedPersonas(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPersonas.size === personas.length) {
+      setSelectedPersonas(new Set());
+    } else {
+      setSelectedPersonas(new Set(personas.map(p => p.key)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    try {
+      await Promise.all(Array.from(selectedPersonas).map(key => deletePersona(key)));
+      setToastMessage('Selected personas deleted successfully');
+      setToastType('success');
+      setSelectedPersonas(new Set());
+      loadPersonas();
+    } catch {
+      setToastMessage('Error deleting selected personas');
+      setToastType('error');
+    }
   };
 
   if (loading) {
@@ -90,13 +132,32 @@ const PersonaManager: React.FC = () => {
   }
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Card title="Personas" className="p-4">
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h6">Personas</Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />} 
-          onClick={() => handleOpenDialog()}
+        <Box display="flex" alignItems="center">
+          <Checkbox
+            checked={personas.length > 0 && selectedPersonas.size === personas.length}
+            indeterminate={selectedPersonas.size > 0 && selectedPersonas.size < personas.length}
+            onChange={handleSelectAll}
+            label="Select All"
+            size="sm"
+          />
+          {selectedPersonas.size > 0 && (
+            <Button
+              variant="secondary"
+              style="outline"
+              icon={<DeleteSweepIcon />}
+              onClick={handleDeleteSelected}
+              className="ml-2"
+            >
+              Delete Selected ({selectedPersonas.size})
+            </Button>
+          )}
+        </Box>
+        <Button
+          variant="primary"
+          icon={<AddIcon />}
+          onClick={() => handleOpenModal()}
         >
           Add Persona
         </Button>
@@ -104,63 +165,79 @@ const PersonaManager: React.FC = () => {
       
       <List>
         {personas.map((persona) => (
-          <ListItem 
-            key={persona.key} 
+          <ListItem
+            key={persona.key}
             secondaryAction={
-              <Box>
-                <IconButton edge="end" onClick={() => handleOpenDialog(persona)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton edge="end" onClick={() => handleDeletePersona(persona.key)}>
-                  <DeleteIcon />
-                </IconButton>
+              <Box className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<EditIcon />}
+                  onClick={() => handleOpenModal(persona)}
+                  className="btn-square"
+                >
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<DeleteIcon />}
+                  onClick={() => handleDeletePersona(persona.key)}
+                  className="btn-square text-error hover:bg-error hover:text-error-content"
+                >
+                </Button>
               </Box>
             }
           >
-            <ListItemText primary={persona.name} secondary={persona.systemPrompt} />
+            <Box display="flex" alignItems="center">
+              <Checkbox
+                checked={selectedPersonas.has(persona.key)}
+                onChange={() => handleToggleSelect(persona.key)}
+                size="sm"
+              />
+              <ListItemText primary={persona.name} secondary={persona.systemPrompt} sx={{ ml: 2 }} />
+            </Box>
           </ListItem>
         ))}
       </List>
       
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          {editingPersona ? 'Edit Persona' : 'Create New Persona'}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Persona Name"
-            fullWidth
-            value={personaForm.name}
-            onChange={(e) => setPersonaForm({ ...personaForm, name: e.target.value })}
-            sx={{ mt: 1 }}
-          />
-          <TextField
-            margin="dense"
-            label="System Prompt"
-            fullWidth
-            multiline
-            rows={4}
-            value={personaForm.systemPrompt}
-            onChange={(e) => setPersonaForm({ ...personaForm, systemPrompt: e.target.value })}
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSavePersona} variant="contained">
-            {editingPersona ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Modal
+        isOpen={openModal}
+        onClose={handleCloseModal}
+        title={editingPersona ? 'Edit Persona' : 'Create New Persona'}
+      >
+        <Form
+          onSubmit={handleFormSubmit}
+          initialData={editingPersona || { name: '', systemPrompt: '' }}
+          fields={[
+            {
+              name: 'name',
+              label: 'Persona Name',
+              type: 'text',
+              required: true,
+              placeholder: 'Enter persona name',
+            },
+            {
+              name: 'systemPrompt',
+              label: 'System Prompt',
+              type: 'textarea',
+              required: true,
+              placeholder: 'Enter system prompt for this persona',
+            },
+          ]}
+          submitText={editingPersona ? 'Update' : 'Create'}
+          onCancel={handleCloseModal}
+          showCancel
+        />
+      </Modal>
       
-      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Paper>
+      {toastMessage && (
+        <ToastNotification
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setToastMessage('')}
+        />
+      )}
+    </Card>
   );
 };
 

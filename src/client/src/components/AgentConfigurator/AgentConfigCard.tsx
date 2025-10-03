@@ -1,28 +1,4 @@
 import React from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
-import {
-  Cancel as CancelIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
 import type { AgentConfigCardProps } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
@@ -58,189 +34,200 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   const selectedLlmInfo = uiState?.llmProvider ? llmProviderInfo[uiState.llmProvider] : undefined;
 
   return (
-    <Card variant="outlined" sx={{ height: '100%' }}>
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} mb={2}>
-          <Box>
-            <Typography
-              variant="h6"
-              sx={{
-                textDecoration: fullyConfigured ? 'none' : 'line-through',
-                color: fullyConfigured ? 'text.primary' : 'text.disabled',
-                transition: 'color 0.2s ease',
-              }}
-            >
+    <div className="card bg-base-100 shadow-xl border border-base-300 h-full">
+      <div className="card-body">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className={`card-title ${fullyConfigured ? 'text-primary' : 'text-base-content/50 line-through'}`}>
               {bot.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            </h2>
+            <p className="text-sm text-base-content/70">
               {uiState?.messageProvider || 'No message provider selected'} · {uiState?.llmProvider || 'No LLM selected'}
-            </Typography>
-          </Box>
-          {pending && <CircularProgress size={20} />}
-        </Stack>
+            </p>
+          </div>
+          {pending && <span className="loading loading-spinner loading-md"></span>}
+        </div>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <FieldSelect
-              label="Message Provider"
-              value={uiState?.messageProvider || ''}
-              options={messageProviderOptions}
-              metadata={metadata.messageProvider}
-              disabled={pending || providersLoading}
-              helperContent={renderProviderHelper(selectedMessageInfo)}
-              onChange={(event: SelectChangeEvent<string>) => onSelectionChange(bot, 'messageProvider', event.target.value)}
-            />
-            <StatusLine
-              label="Messenger"
-              configured={messageConfigured}
-              detail={messageConfigured ? uiState?.messageProvider || '' : 'Awaiting credentials'}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FieldSelect
-              label="LLM Provider"
-              value={uiState?.llmProvider || ''}
-              options={llmProviderOptions}
-              metadata={metadata.llmProvider}
-              disabled={pending || providersLoading}
-              helperContent={renderProviderHelper(selectedLlmInfo)}
-              onChange={(event: SelectChangeEvent<string>) => onSelectionChange(bot, 'llmProvider', event.target.value)}
-            />
-            <StatusLine
-              label="LLM"
-              configured={llmConfigured}
-              detail={llmConfigured ? uiState?.llmProvider || '' : 'Awaiting credentials'}
-            />
-          </Grid>
+        {/* Provider Configuration Section */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Provider Configuration</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="Message Provider"
+                  value={uiState?.messageProvider || ''}
+                  options={messageProviderOptions}
+                  metadata={metadata.messageProvider}
+                  disabled={pending || providersLoading}
+                  helperContent={renderProviderHelper(selectedMessageInfo)}
+                  onChange={(value) => onSelectionChange(bot, 'messageProvider', value)}
+                />
+                <StatusLine
+                  label="Messenger"
+                  configured={messageConfigured}
+                  detail={messageConfigured ? uiState?.messageProvider || '' : 'Awaiting credentials'}
+                />
+              </div>
+              <div className="form-control">
+                <FieldSelect
+                  label="LLM Provider"
+                  value={uiState?.llmProvider || ''}
+                  options={llmProviderOptions}
+                  metadata={metadata.llmProvider}
+                  disabled={pending || providersLoading}
+                  helperContent={renderProviderHelper(selectedLlmInfo)}
+                  onChange={(value) => onSelectionChange(bot, 'llmProvider', value)}
+                />
+                <StatusLine
+                  label="LLM"
+                  configured={llmConfigured}
+                  detail={llmConfigured ? uiState?.llmProvider || '' : 'Awaiting credentials'}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <Grid item xs={12} sm={6}>
-            <FieldSelect
-              label="Persona"
-              value={uiState?.persona || ''}
-              options={personaOptions}
-              metadata={metadata.persona}
-              disabled={pending || personasLoading}
-              allowEmpty
-              onChange={(event: SelectChangeEvent<string>) => onSelectionChange(bot, 'persona', event.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl
-              fullWidth
-              disabled={metadata.systemInstruction?.locked || pending}
-              sx={{ opacity: metadata.systemInstruction?.locked ? 0.6 : 1 }}
-            >
-              <TextField
-                label="System Instruction"
-                value={uiState?.systemInstruction || ''}
-                onChange={(event) => onSelectionChange(bot, 'systemInstruction', event.target.value, false)}
-                onBlur={() => onSystemInstructionBlur(bot)}
-                multiline
-                minRows={3}
-                InputProps={{
-                  readOnly: metadata.systemInstruction?.locked,
-                }}
-              />
-              <FieldHelper metadata={metadata.systemInstruction} />
-            </FormControl>
-          </Grid>
+        {/* Persona & Instructions Section */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Persona & Instructions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="Persona"
+                  value={uiState?.persona || ''}
+                  options={personaOptions}
+                  metadata={metadata.persona}
+                  disabled={pending || personasLoading}
+                  allowEmpty
+                  onChange={(value) => onSelectionChange(bot, 'persona', value)}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">System Instruction</span>
+                </label>
+                <textarea
+                  className={`textarea textarea-bordered ${metadata.systemInstruction?.locked ? 'textarea-disabled opacity-60' : ''}`}
+                  placeholder="System instruction..."
+                  value={uiState?.systemInstruction || ''}
+                  onChange={(e) => onSelectionChange(bot, 'systemInstruction', e.target.value, false)}
+                  onBlur={() => onSystemInstructionBlur(bot)}
+                  disabled={metadata.systemInstruction?.locked || pending}
+                  readOnly={metadata.systemInstruction?.locked}
+                  rows={3}
+                />
+                <FieldHelper metadata={metadata.systemInstruction} />
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <Grid item xs={12}>
-            <FormControl
-              fullWidth
-              disabled={metadata.mcpServers?.locked || pending}
-              sx={{ opacity: metadata.mcpServers?.locked ? 0.6 : 1 }}
-            >
-              <InputLabel>MCP Servers</InputLabel>
-              <Select
-                label="MCP Servers"
+        {/* MCP Configuration Section */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title text-lg">MCP Configuration</h3>
+            
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">MCP Servers</span>
+              </label>
+              <select
+                className={`select select-bordered ${metadata.mcpServers?.locked ? 'select-disabled opacity-60' : ''}`}
                 multiple
                 value={uiState?.mcpServers || []}
-                onChange={(event) => onSelectionChange(bot, 'mcpServers', event.target.value as string[])}
-                renderValue={(selected) => (selected as string[]).join(', ')}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions, option => option.value);
+                  onSelectionChange(bot, 'mcpServers', values);
+                }}
+                disabled={metadata.mcpServers?.locked || pending}
               >
                 {availableMcpServers.map(server => (
-                  <MenuItem key={server} value={server}>
+                  <option key={server} value={server}>
                     {server}
-                  </MenuItem>
+                  </option>
                 ))}
-              </Select>
+              </select>
               <FieldHelper metadata={metadata.mcpServers} fallback="Select connected MCP servers" />
-            </FormControl>
-          </Grid>
+            </div>
 
-          <Grid item xs={12}>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2">MCP Tool Guard</Typography>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={uiState?.mcpGuard.enabled || false}
-                    onChange={(_, checked) => onGuardToggle(bot, checked)}
-                    disabled={metadata.mcpGuard?.locked || pending}
-                  />
-                }
-                label={uiState?.mcpGuard.enabled ? 'Enabled' : 'Disabled'}
-              />
-            </Box>
-            <FieldHelper metadata={metadata.mcpGuard} fallback="Restrict who can trigger MCP tools" />
-          </Grid>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">MCP Tool Guard</span>
+                <input
+                  type="checkbox"
+                  className={`toggle ${uiState?.mcpGuard.enabled ? 'toggle-primary' : ''}`}
+                  checked={uiState?.mcpGuard.enabled || false}
+                  onChange={(e) => onGuardToggle(bot, e.target.checked)}
+                  disabled={metadata.mcpGuard?.locked || pending}
+                />
+              </label>
+              <FieldHelper metadata={metadata.mcpGuard} fallback="Restrict who can trigger MCP tools" />
+            </div>
 
-          {uiState?.mcpGuard.enabled && (
-            <>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth disabled={metadata.mcpGuard?.locked || pending}>
-                  <InputLabel>Guard Type</InputLabel>
-                  <Select
-                    label="Guard Type"
+            {uiState?.mcpGuard.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Guard Type</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
                     value={uiState.mcpGuard.type}
-                    onChange={(event) => onGuardTypeChange(bot, event.target.value as GuardState['type'])}
+                    onChange={(e) => onGuardTypeChange(bot, e.target.value as GuardState['type'])}
+                    disabled={metadata.mcpGuard?.locked || pending}
                   >
                     {guardOptions.map(option => (
-                      <MenuItem key={option.value} value={option.value}>
+                      <option key={option.value} value={option.value}>
                         {option.label}
-                      </MenuItem>
+                      </option>
                     ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              {uiState.mcpGuard.type === 'custom' && (
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth disabled={metadata.mcpGuard?.locked || pending}>
-                    <TextField
-                      label="Allowed User IDs"
-                      value={guardInput}
+                  </select>
+                </div>
+                {uiState.mcpGuard.type === 'custom' && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Allowed User IDs</span>
+                    </label>
+                    <input
+                      type="text"
                       placeholder="user1, user2"
-                      onChange={(event) => onGuardUsersChange(bot, event.target.value)}
+                      className="input input-bordered"
+                      value={guardInput}
+                      onChange={(e) => onGuardUsersChange(bot, e.target.value)}
                       onBlur={() => onGuardUsersBlur(bot)}
+                      disabled={metadata.mcpGuard?.locked || pending}
                     />
-                    <FormHelperText>Comma-separated list of user IDs permitted to invoke MCP tools.</FormHelperText>
-                  </FormControl>
-                </Grid>
-              )}
-            </>
-          )}
-        </Grid>
+                    <label className="label">
+                      <span className="label-text-alt">Comma-separated list of user IDs permitted to invoke MCP tools.</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
-        <Divider sx={{ my: 2 }} />
-
-        <Stack direction="row" alignItems="center" spacing={1}>
+        {/* Status Section */}
+        <div className="divider"></div>
+        
+        <div className="flex items-center gap-2 flex-wrap">
           {connection.icon}
-          <Typography
-            variant="body2"
-            color={connection.color === 'success' ? 'success.main' : connection.color === 'error' ? 'error.main' : 'text.secondary'}
-          >
+          <span className={`text-sm ${connection.color === 'success' ? 'text-success' : connection.color === 'error' ? 'text-error' : 'text-base-content/70'}`}>
             Connection: {connection.label}
-          </Typography>
+          </span>
           {typeof status?.messageCount === 'number' && (
-            <Chip size="small" label={`Messages: ${status.messageCount}`} variant="outlined" />
+            <div className="badge badge-outline">Messages: {status.messageCount}</div>
           )}
           {typeof status?.errorCount === 'number' && status.errorCount > 0 && (
-            <Chip size="small" color="error" label={`Errors: ${status.errorCount}`} />
+            <div className="badge badge-error">Errors: {status.errorCount}</div>
           )}
-        </Stack>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -251,64 +238,106 @@ interface FieldSelectProps {
   metadata?: FieldMetadata;
   disabled?: boolean;
   allowEmpty?: boolean;
-  onChange: (event: SelectChangeEvent<string>) => void;
+  onChange: (value: string) => void;
   helperContent?: React.ReactNode;
 }
 
-const FieldSelect: React.FC<FieldSelectProps> = ({ label, value, options, metadata, disabled, allowEmpty, onChange, helperContent }) => (
-  <FormControl
-    fullWidth
-    disabled={disabled || metadata?.locked}
-    size="small"
-    sx={{ mb: 1, opacity: metadata?.locked ? 0.6 : 1 }}
-  >
-    <InputLabel>{label}</InputLabel>
-    <Select label={label} value={value} onChange={onChange}>
-      {allowEmpty && <MenuItem value="">(None)</MenuItem>}
+const FieldSelect: React.FC<FieldSelectProps> = ({ 
+  label, 
+  value, 
+  options, 
+  metadata, 
+  disabled, 
+  allowEmpty, 
+  onChange, 
+  helperContent 
+}) => (
+  <div className="form-control">
+    <label className="label">
+      <span className="label-text">{label}</span>
+    </label>
+    <select
+      className={`select select-bordered ${metadata?.locked ? 'select-disabled opacity-60' : ''}`}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled || metadata?.locked}
+    >
+      {allowEmpty && <option value="">(None)</option>}
       {options.map(option => (
-        <MenuItem key={option.value} value={option.value}>
+        <option key={option.value} value={option.value}>
           {option.label}
-        </MenuItem>
+        </option>
       ))}
-    </Select>
+    </select>
     <FieldHelper metadata={metadata} />
     {helperContent}
-  </FormControl>
+  </div>
 );
 
 const FieldHelper: React.FC<{ metadata?: FieldMetadata; fallback?: string }> = ({ metadata, fallback }) => {
   if (!metadata) {
-    return fallback ? <FormHelperText>{fallback}</FormHelperText> : null;
+    return fallback ? <label className="label"><span className="label-text-alt">{fallback}</span></label> : null;
   }
 
   if (metadata.locked && metadata.envVar) {
-    return <FormHelperText sx={{ color: 'text.secondary' }}>Defined via environment variable {metadata.envVar}</FormHelperText>;
+    return (
+      <label className="label">
+        <span className="label-text-alt text-base-content/70">
+          Defined via environment variable {metadata.envVar}
+        </span>
+      </label>
+    );
   }
 
   if (metadata.source === 'user') {
-    return <FormHelperText sx={{ color: 'text.secondary' }}>Stored override persisted from WebUI</FormHelperText>;
+    return (
+      <label className="label">
+        <span className="label-text-alt text-base-content/70">
+          Stored override persisted from WebUI
+        </span>
+      </label>
+    );
   }
 
-  return fallback ? <FormHelperText>{fallback}</FormHelperText> : null;
+  return fallback ? <label className="label"><span className="label-text-alt">{fallback}</span></label> : null;
 };
 
-const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({ label, configured, detail }) => (
-  <Stack direction="row" spacing={1} alignItems="center" mt={1}>
-    {configured ? <CheckCircleIcon color="success" fontSize="small" /> : <CancelIcon color="error" fontSize="small" />}
-    <Typography variant="body2" color={configured ? 'success.main' : 'error.main'}>
+const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({ 
+  label, 
+  configured, 
+  detail 
+}) => (
+  <div className="flex items-center gap-2 mt-1">
+    <div className={`w-2 h-2 rounded-full ${configured ? 'bg-success' : 'bg-error'}`}></div>
+    <span className={`text-xs ${configured ? 'text-success' : 'text-error'}`}>
       {label}: {detail}
-    </Typography>
-  </Stack>
+    </span>
+  </div>
 );
 
-const connectionStatusLabel = (connected?: boolean, statusText?: string): { icon: React.ReactNode; color: 'success' | 'default' | 'error'; label: string } => {
+const connectionStatusLabel = (
+  connected?: boolean, 
+  statusText?: string
+): { icon: React.ReactNode; color: 'success' | 'default' | 'error'; label: string } => {
   if (connected === true) {
-    return { icon: <CheckCircleIcon color="success" fontSize="small" />, color: 'success', label: statusText || 'Connected' };
+    return { 
+      icon: <div className="w-2 h-2 rounded-full bg-success"></div>, 
+      color: 'success', 
+      label: statusText || 'Connected' 
+    };
   }
   if (connected === false) {
-    return { icon: <CancelIcon color="error" fontSize="small" />, color: 'error', label: statusText || 'Disconnected' };
+    return { 
+      icon: <div className="w-2 h-2 rounded-full bg-error"></div>, 
+      color: 'error', 
+      label: statusText || 'Disconnected' 
+    };
   }
-  return { icon: <CancelIcon color="disabled" fontSize="small" />, color: 'default', label: statusText || 'Unknown' };
+  return { 
+    icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>, 
+    color: 'default', 
+    label: statusText || 'Unknown' 
+  };
 };
 
 const renderProviderHelper = (info?: ProviderInfo) => {
@@ -319,14 +348,25 @@ const renderProviderHelper = (info?: ProviderInfo) => {
   }
 
   return (
-    <FormHelperText sx={{ display: 'flex', flexDirection: 'column' }}>
-      {info.helpText}
-      {info.docsUrl && (
-        <a href={info.docsUrl} target="_blank" rel="noopener noreferrer">
-          Provider setup guide
-        </a>
+    <div className="mt-1">
+      {info.helpText && (
+        <label className="label">
+          <span className="label-text-alt">{info.helpText}</span>
+        </label>
       )}
-    </FormHelperText>
+      {info.docsUrl && (
+        <label className="label">
+          <a 
+            href={info.docsUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="label-text-alt link link-primary"
+          >
+            Provider setup guide
+          </a>
+        </label>
+      )}
+    </div>
   );
 };
 
