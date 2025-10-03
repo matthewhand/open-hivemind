@@ -17,9 +17,6 @@ import {
   IconButton,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { setGuardsConfig } from '../store/slices/configSlice';
 
 interface GuardsConfig {
   type: 'owner' | 'users' | 'disabled';
@@ -28,9 +25,6 @@ interface GuardsConfig {
 }
 
 const GuardsPage: React.FC = () => {
-  const dispatch = useDispatch();
-  const guardsConfig = useSelector((state: RootState) => state.config.guards) as GuardsConfig;
-
   const [formData, setFormData] = useState<GuardsConfig>({
     type: 'disabled',
     allowedUsers: [],
@@ -39,12 +33,24 @@ const GuardsPage: React.FC = () => {
   const [newUser, setNewUser] = useState('');
   const [newIP, setNewIP] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (guardsConfig) {
-      setFormData(guardsConfig);
-    }
-  }, [guardsConfig]);
+    // Load current guards configuration on mount
+    const loadGuardsConfig = async () => {
+      try {
+        const response = await fetch('/api/uber/guards');
+        if (response.ok) {
+          const config = await response.json();
+          setFormData(config);
+        }
+      } catch (error) {
+        console.error('Failed to load guards config:', error);
+        setSnackbar({ open: true, message: 'Failed to load guards configuration', severity: 'error' });
+      }
+    };
+    loadGuardsConfig();
+  }, []);
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -89,7 +95,7 @@ const GuardsPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/uber/guards', {
+    const response = await fetch('/api/uber/guards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

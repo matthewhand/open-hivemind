@@ -61,7 +61,7 @@ export class HotReloadManager {
           const watcher = fs.watch(configPath, { recursive: true }, (eventType, filename) => {
             if (filename && (filename.endsWith('.json') || filename.endsWith('.js'))) {
               debug(`Configuration file changed: ${filename}`);
-              this.handleFileChange();
+              this.handleFileChange(eventType, filename);
             }
           });
           this.configWatchers.set(configPath, watcher);
@@ -72,7 +72,7 @@ export class HotReloadManager {
     });
   }
 
-  private handleFileChange(): void {
+  private handleFileChange(eventType: string, filename: string): void {
     // Debounce file changes to avoid multiple reloads
     setTimeout(() => {
       this.detectConfigurationChanges();
@@ -81,6 +81,12 @@ export class HotReloadManager {
 
   private detectConfigurationChanges(): void {
     try {
+      const manager = BotConfigurationManager.getInstance();
+      const currentBots = manager.getAllBots();
+
+      // Compare with previous state and detect changes
+      // This is a simplified implementation - in production you'd want more sophisticated diffing
+
       debug('Configuration changes detected, triggering hot reload check');
       // For now, just log the detection - full auto-reload would be implemented here
 

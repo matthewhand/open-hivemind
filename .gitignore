@@ -86,6 +86,8 @@ web_modules/
 .env.production.local
 .env.local
 .env.*
+!.env.example
+!.env.template
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -97,7 +99,14 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
+<<<<<<< HEAD
 dist
+=======
+dist/*
+!dist/.gitkeep
+!dist/config/environments/.gitkeep
+dist/config/environments/*
+>>>>>>> automerge-to-main
 dist/config/environments/.env.backup
 
 # Gatsby files
@@ -133,6 +142,9 @@ dist/config/environments/.env.backup
 
 # yarn v2
 *.bak
+*.backup
+*.old
+*.orig
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
@@ -151,3 +163,8 @@ logs/
 coverage/
 # Serena tool cache
 .serena/
+# Test results
+playwright-report/
+test-results/
+
+config/

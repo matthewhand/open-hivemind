@@ -11,6 +11,8 @@ import {
   Button,
   Alert,
   Divider,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import {
@@ -117,13 +119,36 @@ const Settings: React.FC = () => {
             onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
             size="small"
             sx={{ minWidth: 200 }}
+            aria-label="Theme preset selection"
           >
             {themeOptions.map(option => (
-              <MenuItem key={option.value} value={option.value}>
+              <MenuItem
+                key={option.value}
+                value={option.value}
+                aria-label={`Theme option ${option.label}`}
+              >
                 {option.label}
               </MenuItem>
             ))}
           </Select>
+          <Box mt={2} display="flex" alignItems="center" gap={2} aria-label="Theme preview">
+            <Box
+              sx={(theme) => ({
+                width: 72,
+                height: 40,
+                borderRadius: 1,
+                bgcolor: theme.palette.background.default,
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: 1,
+              })}
+              role="img"
+              aria-label={`Current theme preview (${ui.theme})`}
+            />
+            <Typography variant="caption" color="text.secondary">
+              Live preview of current theme. High Contrast maximizes legibility. Auto follows system preference.
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
 
@@ -171,38 +196,56 @@ const Settings: React.FC = () => {
             Accessibility
           </Typography>
           
-          <FormControlLabel
-            control={
-              <Switch
-                checked={!ui.animationsEnabled}
-                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Reduced Motion"
-          />
+          <Box mb={1.5}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={!ui.animationsEnabled}
+                  onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Toggle reduced motion preference' }}
+                />
+              }
+              label="Reduced Motion"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 6 }}>
+              Minimizes interface animations to reduce motion fatigue and improve focus.
+            </Typography>
+          </Box>
           
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.showTooltips}
-                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Show Tooltips"
-          />
+          <Box mb={1.5}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={ui.showTooltips}
+                  onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Toggle tooltips visibility' }}
+                />
+              }
+              label="Show Tooltips"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 6 }}>
+              Provides contextual help on hover/focus. Disable for a cleaner interface.
+            </Typography>
+          </Box>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={ui.showKeyboardShortcuts}
-                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
-                color="primary"
-              />
-            }
-            label="Keyboard Shortcuts Overlay"
-          />
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={ui.showKeyboardShortcuts}
+                  onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
+                  color="primary"
+                  inputProps={{ 'aria-label': 'Toggle keyboard shortcuts overlay' }}
+                />
+              }
+              label="Keyboard Shortcuts Overlay"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 6 }}>
+              Shows an on-demand reference panel to improve efficiency for power users.
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
 

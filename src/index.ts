@@ -9,8 +9,11 @@ const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
-const healthRouteModule = require('./routes/health');
+const healthRouteModule = require('./server/routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
+const WebSocketServiceModule = require('@src/server/services/WebSocketService');
+const getLlmProviderModule = require('@llm/getLlmProvider');
+const idleResponseManagerModule = require('@message/management/IdleResponseManager');
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
 import configRouter from '@src/server/routes/config';
@@ -76,6 +79,7 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -143,11 +147,6 @@ app.use(express.static(frontendDistPath));
 // Global assets static for root-relative asset paths
 app.use('/assets', express.static(frontendAssetsPath));
 
-// Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
 
 // Legacy /webui support
 app.use('/webui', express.static(frontendDistPath));
@@ -173,8 +172,8 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // });
 
 // API routes under /api/uber
-// import uberRouter from './routes/uberRouter';
-// app.use('/api/uber', uberRouter);
+import uberRouter from './routes/uberRouter';
+app.use('/api/uber', uberRouter);
 
 // Keep old API routes for compatibility
 // app.use('/api/admin', adminRouter);
@@ -205,7 +204,7 @@ async function startBot(messengerService: any) {
         indexLog('[DEBUG] Setting up message handler...');
         
         // Initialize idle response manager
-        const idleResponseManager = IdleResponseManager.getInstance();
+        const idleResponseManager = idleResponseManagerModule.IdleResponseManager.getInstance();
         idleResponseManager.initialize();
         
         messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
@@ -220,8 +219,8 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-    const llmProviders = getLlmProvider();
-    console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
+    const llmProviders = getLlmProviderModule.getLlmProvider();
+    console.log('LLM Providers in use:', llmProviders.map((p: any) => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
 
     const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
     const messageProviders = (typeof rawMessageProviders === 'string'
@@ -252,14 +251,14 @@ async function main() {
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
-        const port = process.env.PORT || 5005;
+        const port = process.env.PORT || 3028;
         const server = createServer(app);
 
         // Initialize WebSocket service
-        const wsService = WebSocketService.getInstance();
+        const wsService = WebSocketServiceModule.default.getInstance();
         wsService.initialize(server);
 
-        server.on('error', (err) => {
+        server.on('error', (err: Error) => {
             console.error('[DEBUG] Server error:', err);
         });
 

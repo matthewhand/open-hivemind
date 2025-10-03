@@ -2,9 +2,10 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationVersionService } from './ConfigurationVersionService';
+import { SecureConfigManager } from '../../config/SecureConfigManager';
 import Debug from 'debug';
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { createReadStream, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
@@ -229,6 +230,198 @@ export class ConfigurationImportExportService {
       return {
         success: false,
         error: (error as any).message
+      };
+    }
+  }
+  
+  /**
+   * Export main configuration file (default.json, development.json, etc.)
+   */
+  async exportMainConfig(
+    env: string,
+    options: ExportOptions,
+    fileName?: string,
+    createdBy?: string
+ ): Promise<ExportResult> {
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const baseFileName = fileName || `${env}-config-${timestamp}`;
+      let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
+      
+      // Get main configuration from SecureConfigManager
+      const secureManager = SecureConfigManager.getInstance();
+      const config = secureManager.getDecryptedMainConfig(env);
+      
+      if (!config) {
+        return {
+          success: false,
+          error: `Main configuration for environment ${env} not found`
+        };
+      }
+      
+      // Prepare export data
+      const exportData: any = {
+        metadata: {
+          id: this.generateExportId(),
+          name: baseFileName,
+          createdAt: new Date(),
+          createdBy,
+          format: options.format,
+          encrypted: !!options.encrypt,
+          compressed: !!options.compress,
+          env
+        },
+        config
+      };
+      
+      // Convert to requested format
+      let data: string | Buffer;
+      switch (options.format) {
+        case 'json':
+          data = JSON.stringify(exportData, null, 2);
+          break;
+        case 'yaml':
+          data = this.convertToYAML(exportData);
+          break;
+        case 'csv':
+          data = this.convertToCSV(exportData);
+          break;
+        default:
+          throw new Error(`Unsupported export format: ${options.format}`);
+      }
+      
+      // Encrypt if requested
+      if (options.encrypt) {
+        if (!options.encryptionKey) {
+          throw new Error('Encryption key is required for encrypted export');
+        }
+        data = await this.encryptData(data, options.encryptionKey);
+        filePath += '.enc';
+      }
+      
+      // Compress if requested
+      if (options.compress) {
+        data = await this.compressData(data);
+        filePath += '.gz';
+      }
+      
+      // Write to file
+      await fs.writeFile(filePath, data);
+      
+      // Calculate checksum
+      const checksum = this.calculateChecksum(data);
+      
+      debug(`Exported main configuration for ${env} to ${filePath}`);
+      
+      return {
+        success: true,
+        filePath,
+        size: Buffer.byteLength(data),
+        checksum
+      };
+    } catch (error) {
+      debug('Error exporting main configuration:', error);
+      return {
+        success: false,
+        error: (error as any).message
+      };
+    }
+  }
+  
+ /**
+   * Import main configuration file (default.json, development.json, etc.)
+   */
+  async importMainConfig(
+    filePath: string,
+    options: ImportOptions,
+    importedBy?: string
+  ): Promise<ImportResult> {
+    try {
+      // Read file
+      let data: Buffer | string = await fs.readFile(filePath);
+      
+      // Determine environment from filename
+      const fileName = basename(filePath);
+      const envMatch = fileName.match(/(default|development|production|test)/);
+      const env = envMatch ? envMatch[1] : 'default';
+      
+      // Decompress if needed
+      if (filePath.endsWith('.gz')) {
+        data = await this.decompressData(data);
+      }
+      
+      // Decrypt if needed
+      if (filePath.endsWith('.enc')) {
+        const strData = data.toString('utf8');
+        try {
+          const parsedEncrypted = JSON.parse(strData);
+          if (parsedEncrypted.iv && parsedEncrypted.authTag && parsedEncrypted.data) {
+            // Handle SecureConfigManager encrypted format
+            const secureManager = SecureConfigManager.getInstance();
+            const decryptedStr = secureManager.decrypt(strData);
+            const importData = JSON.parse(decryptedStr);
+            
+            // Extract the config and save it using SecureConfigManager
+            const configToSave = importData.config || importData;
+            const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
+            const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
+            await fs.writeFile(configPath, encryptedConfig);
+            
+            return {
+              success: true,
+              importedCount: 1,
+              warnings: [`Main configuration for ${env} imported and encrypted`]
+            };
+          }
+        } catch (parseError) {
+          // Not Secure format, fall back to own decryption
+        }
+        
+        if (!options.decryptionKey) {
+          throw new Error('Decryption key is required for encrypted import');
+        }
+        data = await this.decryptData(data, options.decryptionKey as string);
+      }
+      
+      // Parse data based on format
+      let importData: any;
+      const format = this.detectFormat(filePath);
+      
+      switch (format) {
+        case 'json':
+          importData = JSON.parse(data.toString());
+          break;
+        case 'yaml':
+          importData = this.parseYAML(data.toString());
+          break;
+        case 'csv':
+          importData = this.parseCSV(data.toString());
+          break;
+        default:
+          throw new Error(`Unsupported import format: ${format}`);
+      }
+      
+      // Validate import data structure
+      const configToSave = importData.config || importData;
+      
+      // Save using SecureConfigManager
+      const secureManager = SecureConfigManager.getInstance();
+      const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
+      const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
+      await fs.writeFile(configPath, encryptedConfig);
+      
+      debug(`Imported main configuration for ${env} from ${filePath}`);
+      
+      return {
+        success: true,
+        importedCount: 1,
+        warnings: [`Main configuration for ${env} imported and encrypted`]
+      };
+    } catch (error) {
+      debug('Error importing main configuration:', error);
+      return {
+        success: false,
+        errors: [(error as any).message]
       };
     }
   }

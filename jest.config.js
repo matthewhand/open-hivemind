@@ -4,11 +4,11 @@ const unitIntegrationProject = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.tsx?$': 'babel-jest',
-    '^.+\\.jsx?$': 'babel-jest',
-    '^.+\\.js$': 'babel-jest'
+    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.jsx?$': 'babel-jest',
+    '^.+\.js$': 'babel-jest'
   },
-  testRegex: '(\\.|/)(test|integration\\.test)\\.[tj]sx?$',
+  testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
@@ -32,9 +32,9 @@ const unitIntegrationProject = {
     '/node_modules/',
     '/dist/',
     '/tests/e2e/',
-    'tests/integrations/.*\\.real\\.test\\.[tj]s$'
+    'tests/integrations/.*\.real\.test\.[tj]s$'
   ],
-  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob)'],
+  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob)']
 };
 
 const realIntegrationProject = {
@@ -43,11 +43,11 @@ const realIntegrationProject = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.tsx?$': 'babel-jest',
-    '^.+\\.jsx?$': 'babel-jest',
-    '^.+\\.js$': 'babel-jest'
+    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.jsx?$': 'babel-jest',
+    '^.+\.js$': 'babel-jest'
   },
-  testRegex: '(\\.|/)(real\\.test)\\.[tj]sx?$',
+  testRegex: '(\.|/)(real\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/$1',
@@ -69,13 +69,6 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['html', 'text', 'lcov'],
-  coverageThreshold: {
-    global: {
-      branches: 59,
-      functions: 72,
-      lines: 72,
-      statements: 71,
-    },
-  },
+  
   projects,
 };

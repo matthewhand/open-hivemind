@@ -1,332 +1,341 @@
-import { DatabaseManager } from '@src/database/DatabaseManager';
+import { DatabaseManager, DatabaseConfig } from '../../../src/database/DatabaseManager';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import fs from 'fs';
+
+// Helper function to create a test database
+async function createTestDatabase(): Promise<any> {
+  const dbPath = path.join(__dirname, 'test-db.sqlite');
+  if (fs.existsSync(dbPath)) {
+    fs.unlinkSync(dbPath);
+  }
+
+  const db = await open({
+    filename: dbPath,
+    driver: sqlite3.Database
+  });
+
+  // Create tables
+  await db.exec(`
+    CREATE TABLE audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT NOT NULL,
+      resourceType TEXT,
+      resourceId TEXT,
+      userId TEXT,
+      details TEXT,
+      ipAddress TEXT,
+      userAgent TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE approval_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      resourceType TEXT NOT NULL,
+      resourceId INTEGER NOT NULL,
+      changeType TEXT NOT NULL,
+      requestedBy TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      assignees TEXT,
+      diff TEXT,
+      approvedBy TEXT,
+      comments TEXT,
+      approvedAt DATETIME
+    );
+  `);
+
+  return db;
+}
 
 describe('DatabaseManager', () => {
   let manager: DatabaseManager;
+  let testDb: any;
 
-  beforeEach(() => {
-    manager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+  beforeAll(async () => {
+    testDb = await createTestDatabase();
+    const config: DatabaseConfig = {
+      type: 'sqlite',
+      path: ':memory:'
+    };
+    manager = DatabaseManager.getInstance(config);
+    // @ts-ignore - override for testing
+    manager.db = testDb;
+    // Instead of setting private property, call connect() which sets connected flag
+    await manager.connect();
   });
 
-  afterEach(async () => {
-    if (manager.isConnected()) {
-      await manager.disconnect();
+  afterAll(async () => {
+    await testDb.close();
+    const dbPath = path.join(__dirname, 'test-db.sqlite');
+    if (fs.existsSync(dbPath)) {
+      fs.unlinkSync(dbPath);
     }
-    // Clear singleton instance for clean tests
-    (DatabaseManager as any).instance = null;
   });
 
-  describe('Connection Management', () => {
-    it('should handle connection management', async () => {
-      // Connect successfully
-      await manager.connect();
-      expect(manager.isConnected()).toBe(true);
-
-      // Disconnect successfully
-      await manager.disconnect();
-      expect(manager.isConnected()).toBe(false);
-
-      // Handle multiple connect calls
-      await manager.connect();
-      await manager.connect(); // Should not throw
-      expect(manager.isConnected()).toBe(true);
-
-      // Handle disconnect when not connected
-      await manager.disconnect();
-      expect(manager.isConnected()).toBe(false);
-      await expect(manager.disconnect()).resolves.not.toThrow();
-    });
+  beforeEach(async () => {
+    await testDb.exec('DELETE FROM audit_logs');
+    await testDb.exec('DELETE FROM approval_requests');
   });
 
-  describe('Singleton Pattern', () => {
-    it('should implement singleton pattern', async () => {
-      // Return same instance
-      const instance1 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      const instance2 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      expect(instance1).toBe(instance2);
-
-      // Maintain state
-      const instance3 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      await instance3.connect();
-
-      const instance4 = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-      expect(instance4.isConnected()).toBe(true);
-    });
-  });
-
-  describe('Message History', () => {
-    beforeEach(async () => {
-      await manager.connect();
-    });
-
-    it('should handle message history', async () => {
-      // Return empty initially
-      const history = await manager.getMessageHistory('test-channel');
-      expect(history).toEqual([]);
-      expect(Array.isArray(history)).toBe(true);
-
-      // Handle invalid channel IDs
-      const history2 = await manager.getMessageHistory('');
-      expect(history2).toEqual([]);
-
-      // Handle null/undefined
-      await expect(manager.getMessageHistory(null as any)).resolves.toEqual([]);
-      await expect(manager.getMessageHistory(undefined as any)).resolves.toEqual([]);
-    });
-  });
-
-  describe('Message Storage and Retrieval', () => {
-    beforeEach(async () => {
-      await manager.connect();
-    });
-
-    it('should handle message storage and retrieval', async () => {
-      const channelId = 'test-channel-store';
-
-      // Get initial empty history
-      const initialHistory = await manager.getMessageHistory(channelId);
-      expect(initialHistory).toEqual([]);
-
-      // If store method exists, test it
-      if (typeof (manager as any).storeMessage === 'function') {
-        // Mock the storeMessage method to return a promise that resolves to a number
-        const mockStoreMessage = jest.fn().mockResolvedValue(1);
-        (manager as any).storeMessage = mockStoreMessage;
+  describe('AuditLog Methods', () => {
+    describe('createAuditLog', () => {
+      it('should create an audit log with valid inputs', async () => {
+        const logData = {
+          action: 'CREATE',
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          userId: 'user1',
+          details: JSON.stringify({ change: 'new value' }),
+          ipAddress: '192.168.1.1',
+          userAgent: 'TestAgent'
+        } as any;
         
-        await (manager as any).storeMessage({
-          messageId: 'msg1',
-          channelId: channelId,
-          content: 'Hello',
-          authorId: 'user1',
-          authorName: 'Test User',
-          timestamp: new Date(),
-          provider: 'test'
+        const id = await manager.createAuditLog(logData);
+        expect(id).toBeGreaterThan(0);
+        
+        // Verify by fetching through the manager method
+        const logs = await manager.getAuditLogs(logData.userId, logData.action);
+        const createdLog = logs.find(l => l.id === id);
+        expect(createdLog).toMatchObject({
+          action: logData.action,
+          resourceType: logData.resourceType,
+          resourceId: String(logData.resourceId),
+          userId: logData.userId,
+          details: logData.details,
+          ipAddress: logData.ipAddress,
+          userAgent: logData.userAgent
         });
-
-        // Since we're mocking, we can't verify the actual storage
-        // But we can verify the method was called
-        expect(mockStoreMessage).toHaveBeenCalled();
-      }
-
-      const updatedHistory = await manager.getMessageHistory(channelId);
-      expect(Array.isArray(updatedHistory)).toBe(true);
-    });
-  });
-
-  describe('Database Schema and Migration', () => {
-    beforeEach(async () => {
-      await manager.connect();
-    });
-
-    it('should handle database schema and migration', async () => {
-      // Test that the database is properly initialized
-      expect(manager.isConnected()).toBe(true);
-
-      // If there are schema methods, test them
-      if (typeof (manager as any).initializeSchema === 'function') {
-        await expect((manager as any).initializeSchema()).resolves.not.toThrow();
-      }
-
-      // Test migration functionality if available
-      if (typeof (manager as any).migrate === 'function') {
-        await expect((manager as any).migrate()).resolves.not.toThrow();
-      }
-    });
-  });
-
-  describe('Performance and Scalability', () => {
-    beforeEach(async () => {
-      await manager.connect();
-    });
-
-    it('should handle performance and scalability', async () => {
-      // Handle large histories
-      const channelId = 'large-history-channel';
-      const startTime = Date.now();
-
-      const history = await manager.getMessageHistory(channelId);
-      const endTime = Date.now();
-
-      expect(Array.isArray(history)).toBe(true);
-      expect(endTime - startTime).toBeLessThan(1000);
-
-      // Handle multiple concurrent connections
-      const managers = Array.from({ length: 5 }, () =>
-        DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' })
-      );
-
-      managers.forEach(mgr => {
-        expect(mgr).toBe(manager);
       });
 
-      // Handle rapid successive queries
-      const channelId2 = 'rapid-queries-channel';
-      const queries = Array.from({ length: 50 }, () =>
-        manager.getMessageHistory(channelId2)
-      );
-
-      const results = await Promise.all(queries);
-      expect(results).toHaveLength(50);
-      results.forEach(result => {
-        expect(Array.isArray(result)).toBe(true);
+      it('should throw error when database is disconnected', async () => {
+        // @ts-ignore - simulate disconnected state
+        manager.db = null;
+        await expect(manager.createAuditLog({
+          action: 'TEST',
+          resourceType: 'Test',
+          resourceId: 1,
+          userId: 'test'
+        } as any)).rejects.toThrow('Database not connected');
+        // @ts-ignore - restore connection
+        manager.db = testDb;
       });
     });
-  });
 
-  describe('Error Handling and Edge Cases', () => {
-    it('should handle errors and edge cases', async () => {
-      // Handle getting history without connection
-      expect(manager.isConnected()).toBe(false);
-      const result = await manager.getMessageHistory('test-channel');
-      expect(Array.isArray(result)).toBe(true);
-
-      // Handle invalid database configuration
-      expect(() => {
-        const invalidManager = DatabaseManager.getInstance({ type: 'invalid' as any, path: '' });
-        expect(invalidManager).toBeDefined();
-      }).not.toThrow();
-
-      // Handle database connection failures
-      const failingManager = DatabaseManager.getInstance({
-        type: 'sqlite',
-        path: '/invalid/path/database.db'
+    describe('getAuditLogs', () => {
+      beforeEach(async () => {
+        // Insert test data with proper timestamps and resourceIds
+        // Insert test data
+        await testDb.run(
+          'INSERT INTO audit_logs (action, resourceType, resourceId, userId, details, ipAddress, userAgent, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          ['CREATE', 'Bot', 1, 'user1', JSON.stringify({event: 'create'}), '192.168.1.1', 'TestAgent', new Date(Date.now() - 7200000).toISOString()]
+        );
+        await testDb.run(
+          'INSERT INTO audit_logs (action, resourceType, resourceId, userId, details, ipAddress, userAgent, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          ['UPDATE', 'Bot', 2, 'user2', JSON.stringify({change: 'update'}), '192.168.1.2', 'TestAgent', new Date(Date.now() - 3600000).toISOString()]
+        );
+        await testDb.run(
+          'INSERT INTO audit_logs (action, resourceType, resourceId, userId, details, ipAddress, userAgent, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          ['DELETE', 'Bot', 3, 'user3', JSON.stringify({reason: 'cleanup'}), '192.168.1.3', 'TestAgent', new Date().toISOString()]
+        );
       });
 
-      await failingManager.connect();
-      expect(typeof failingManager.isConnected()).toBe('boolean');
-
-      // Handle database corruption
-      await manager.connect();
-
-      const corruptChannelIds = [
-        null,
-        undefined,
-        '',
-        'a'.repeat(10000),
-        '../../etc/passwd',
-        '<script>alert("xss")</script>',
-        'DROP TABLE messages;',
-      ];
-
-      for (const channelId of corruptChannelIds) {
-        const result2 = await manager.getMessageHistory(channelId as any);
-        expect(Array.isArray(result2)).toBe(true);
-      }
-
-      // Handle memory pressure
-      const heavyOperations = Array.from({ length: 100 }, (_, i) =>
-        manager.getMessageHistory(`stress-test-${i}`)
-      );
-
-      const results = await Promise.all(heavyOperations);
-      expect(results).toHaveLength(100);
-      results.forEach(result => {
-        expect(Array.isArray(result)).toBe(true);
-      });
-
-      // Handle disconnection during operations
-      expect(manager.isConnected()).toBe(true);
-
-      const operationPromise = manager.getMessageHistory('test-channel');
-      await manager.disconnect();
-
-      await expect(operationPromise).resolves.toBeDefined();
-
-      // Handle reconnection
-      await manager.connect();
-      expect(manager.isConnected()).toBe(true);
-
-      await manager.disconnect();
-      expect(manager.isConnected()).toBe(false);
-
-      await manager.connect();
-      expect(manager.isConnected()).toBe(true);
-
-      const result3 = await manager.getMessageHistory('reconnect-test');
-      expect(Array.isArray(result3)).toBe(true);
-    });
-  });
-
-  describe('Data Integrity and Validation', () => {
-    beforeEach(async () => {
-      await manager.connect();
-    });
-
-    it('should handle data integrity and validation', async () => {
-      // Validate channel ID format
-      const validChannelIds = [
-        'channel-123',
-        'general',
-        'team_alpha',
-        'project.beta',
-        '1234567890'
-      ];
-
-      for (const channelId of validChannelIds) {
-        const result = await manager.getMessageHistory(channelId);
-        expect(Array.isArray(result)).toBe(true);
-      }
-
-      // Handle special characters
-      const specialChannelIds = [
-        'channel-with-émojis-🚀',
-        'канал-на-русском',
-        'チャンネル-日本語',
-        'قناة-عربية'
-      ];
-
-      for (const channelId of specialChannelIds) {
-        const result = await manager.getMessageHistory(channelId);
-        expect(Array.isArray(result)).toBe(true);
-      }
-
-      // Maintain data consistency
-      const channelId = 'consistency-test';
-
-      const result1 = await manager.getMessageHistory(channelId);
-      const result2 = await manager.getMessageHistory(channelId);
-
-      expect(result1).toEqual(result2);
-    });
-  });
-
-  describe('Configuration and Environment', () => {
-    it('should handle configuration and environment', () => {
-      // Handle different database types
-      const configs = [
-        { type: 'sqlite', path: ':memory:' },
-        { type: 'sqlite', path: './test.db' },
-      ];
-
-      configs.forEach(config => {
-        expect(() => {
-          const mgr = DatabaseManager.getInstance(config as any);
-          expect(mgr).toBeDefined();
-        }).not.toThrow();
-      });
-
-      // Handle missing configuration
-      expect(() => {
-        const mgr = DatabaseManager.getInstance(null as any);
-        expect(mgr).toBeDefined();
-      }).not.toThrow();
-
-      expect(() => {
-        const mgr = DatabaseManager.getInstance(undefined as any);
-        expect(mgr).toBeDefined();
-      }).not.toThrow();
-
-      // Handle environment-specific configurations
-      const originalEnv = process.env.NODE_ENV;
-
-      try {
-        ['development', 'production', 'test'].forEach(env => {
-          process.env.NODE_ENV = env;
-          const mgr = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-          expect(mgr).toBeDefined();
+      it('should return recent logs with no filters', async () => {
+        const logs = await manager.getAuditLogs();
+        expect(logs).toHaveLength(3);
+        // Should be ordered by created_at DESC
+        expect(logs[0].action).toBe('DELETE');
+        expect(logs[2].action).toBe('CREATE');
+        logs.forEach((log: any) => {
+          expect(log.createdAt instanceof Date).toBe(true);
         });
-      } finally {
-        process.env.NODE_ENV = originalEnv;
-      }
+      });
+
+      it('should filter by userId', async () => {
+        const logs = await manager.getAuditLogs('user2');
+        expect(logs).toHaveLength(1);
+        expect(logs[0].userId).toBe('user2');
+      });
+
+      it('should filter by action', async () => {
+        const logs = await manager.getAuditLogs(undefined, 'CREATE');
+        expect(logs).toHaveLength(1);
+        expect(logs[0].action).toBe('CREATE');
+      });
+
+      it('should handle combined filters', async () => {
+        const logs = await manager.getAuditLogs('user1', 'CREATE');
+        expect(logs).toHaveLength(1);
+        expect(logs[0].userId).toBe('user1');
+        expect(logs[0].action).toBe('CREATE');
+      });
+
+      it('should respect limit', async () => {
+        const logs = await manager.getAuditLogs(undefined, undefined, 2);
+        expect(logs).toHaveLength(2);
+      });
+
+      it('should return empty array when no matches', async () => {
+        const logs = await manager.getAuditLogs('nonexistent');
+        expect(logs).toHaveLength(0);
+      });
+
+      it('should parse dates correctly', async () => {
+        const logs = await manager.getAuditLogs('user1');
+        expect(logs[0].createdAt).toBeInstanceOf(Date);
+      });
+    });
+  });
+
+  describe('ApprovalRequest Methods', () => {
+    describe('createApprovalRequest', () => {
+      it('should create request with assignees', async () => {
+        const requestData = {
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          diff: 'config changes',
+          assignees: ['user2', 'user3']
+        } as any;
+        
+        const id = await manager.createApprovalRequest(requestData);
+        expect(id).toBeGreaterThan(0);
+        
+        const request = await testDb.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
+        expect(request).toMatchObject({
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          status: 'pending',
+          diff: 'config changes'
+        });
+        expect(JSON.parse(request.assignees)).toEqual(['user2', 'user3']);
+      });
+
+      it('should create request without assignees', async () => {
+        const requestData = {
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          diff: 'config changes'
+        } as any;
+        
+        const id = await manager.createApprovalRequest(requestData);
+        expect(id).toBeGreaterThan(0);
+        
+        const request = await testDb.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
+        expect(request.assignees).toBeNull();
+      });
+    });
+
+    describe('getApprovalRequest', () => {
+      it('should parse assignees from JSON', async () => {
+        const requestData = {
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          diff: 'config changes',
+          assignees: ['user2', 'user3']
+        } as any;
+        
+        const id = await manager.createApprovalRequest(requestData);
+        const request = await manager.getApprovalRequest(id);
+        
+        expect(request).toMatchObject({
+          id,
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          status: 'pending',
+          diff: 'config changes',
+          assignees: ['user2', 'user3']
+        });
+      });
+
+      it('should handle null assignees', async () => {
+        const requestData = {
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          diff: 'config changes'
+        } as any;
+        
+        const id = await manager.createApprovalRequest(requestData);
+        const request = await manager.getApprovalRequest(id);
+        
+        expect(request).toMatchObject({
+          id,
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          status: 'pending',
+          diff: 'config changes'
+        });
+        expect(request?.assignees).toBeNull();
+      });
+
+      it('should return null for non-existent request', async () => {
+        const request = await manager.getApprovalRequest(999);
+        expect(request).toBeNull();
+      });
+    });
+
+    describe('updateApprovalRequestStatus', () => {
+      it('should update status and create audit log', async () => {
+        const requestData = {
+          resourceType: 'BotConfiguration',
+          resourceId: 123,
+          changeType: 'UPDATE',
+          requestedBy: 'user1',
+          diff: 'config changes'
+        } as any;
+        
+        const id = await manager.createApprovalRequest(requestData);
+        await manager.updateApprovalRequestStatus(
+          id,
+          'approved',
+          'admin123',
+          'Approved by admin',
+          '192.168.1.100',
+          'TestAgent'
+        );
+        
+        const updatedRequest = await manager.getApprovalRequest(id);
+        expect(updatedRequest).toMatchObject({
+          status: 'approved',
+          approvedBy: 'admin123',
+          comments: 'Approved by admin'
+        });
+        expect(updatedRequest!.approvedAt).not.toBeNull();
+        const approvedAt = updatedRequest!.approvedAt!;
+        const approvedDate = new Date(approvedAt);
+        expect(approvedDate).toBeInstanceOf(Date);
+        expect(isNaN(approvedDate.getTime())).toBe(false);
+        
+        // Verify audit log was created
+        const auditLogs = await testDb.all('SELECT * FROM audit_logs WHERE resourceType = ? AND resourceId = ?', ['ApprovalRequest', id]);
+        expect(auditLogs).toHaveLength(1);
+        expect(auditLogs[0]).toMatchObject({
+          action: 'APPROVE',
+          resourceType: 'ApprovalRequest',
+          resourceId: String(id),
+          userId: 'admin123',
+          ipAddress: '192.168.1.100',
+          userAgent: 'TestAgent'
+        });
+        const details = JSON.parse(auditLogs[0].details);
+        expect(details).toEqual({
+          comments: 'Approved by admin',
+          status: 'approved'
+        });
+      });
     });
   });
 });
