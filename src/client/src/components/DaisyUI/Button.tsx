@@ -1,6 +1,6 @@
 import React from 'react';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color' | 'style'> {
   /** The content to display inside the button */
   children: React.ReactNode;
   /** Color variant of the button */
@@ -8,7 +8,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Size of the button */
   size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Style variant - solid or outline */
-  style?: 'solid' | 'outline';
+  buttonStyle?: 'solid' | 'outline';
   /** Whether the button is in a loading state */
   loading?: boolean;
   /** Optional icon to display before the content */
@@ -25,7 +25,7 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
-  style = 'solid',
+  buttonStyle = 'solid',
   loading = false,
   disabled = false,
   icon,
@@ -36,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const getVariantClass = () => {
-    if (style === 'outline') {
+    if (buttonStyle === 'outline') {
       return `btn-outline btn-${variant}`;
     }
     return `btn-${variant}`;

@@ -12,7 +12,7 @@ export type SelectOptionGroup = {
   options: SelectOption[];
 };
 
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   options?: SelectOption[];
   optionGroups?: SelectOptionGroup[];
   size?: 'xs' | 'sm' | 'md' | 'lg';

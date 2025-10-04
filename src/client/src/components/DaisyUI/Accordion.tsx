@@ -47,7 +47,7 @@ const Accordion: React.FC<AccordionProps> = ({
       });
     } else {
       setOpenItems(prev => {
-        const newSet = new Set();
+        const newSet: Set<string> = new Set();
         if (!isOpen) {
           newSet.add(itemId);
         }

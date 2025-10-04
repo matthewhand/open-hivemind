@@ -46,6 +46,23 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
+// Legacy Loading component (alias for LoadingSpinner with different interface)
+interface LoadingProps {
+  type?: 'spinner' | 'dots' | 'ring' | 'ball' | 'bars' | 'infinity';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  color?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'info' | 'success' | 'warning' | 'error';
+  className?: string;
+}
+
+export const Loading: React.FC<LoadingProps> = ({
+  type = 'spinner',
+  size = 'md',
+  color = 'primary',
+  className = ''
+}) => {
+  return <LoadingSpinner variant={type} size={size} color={color} className={className} />;
+};
+
 // Progress Component
 interface ProgressProps {
   value?: number;
@@ -338,6 +355,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
 };
 
 export default {
+  Loading,
   LoadingSpinner,
   Progress,
   SkeletonText,

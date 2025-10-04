@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Badge, Loading, Alert } from './index';
+import { Badge, LoadingSpinner, Alert } from './index';
 
 interface ModelOption {
   id: string;
@@ -252,7 +252,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
           <span className="label-text font-medium">{label}</span>
           {isLoading && (
             <span className="label-text-alt">
-              <Loading type="spinner" size="xs" />
+              <LoadingSpinner size="xs" />
             </span>
           )}
         </label>
@@ -277,7 +277,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
           {/* Loading indicator */}
           {isValidating && (
             <div className="btn btn-ghost btn-square">
-              <Loading type="spinner" size="sm" />
+              <LoadingSpinner size="sm" />
             </div>
           )}
 
@@ -291,7 +291,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
               title="Refresh model list"
             >
               {isLoading ? (
-                <Loading type="spinner" size="sm" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
