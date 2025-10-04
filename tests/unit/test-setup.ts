@@ -21,23 +21,58 @@ app.post('/webui/api/auth/login', (req, res) => {
   const { username, password } = req.body;
   const clientIP = req.get('X-Forwarded-For') || req.ip || req.connection.remoteAddress || '127.0.0.1';
   
-  // Mock localhost bypass logic - matches test expectations
-  if (username === 'admin' && (clientIP === '127.0.0.1' || clientIP === '::1')) {
-    res.json({ 
-      success: true, 
-      bypassInfo: {
-        isLocalBypass: true,
-        adminPasswordSet: false
-      },
-      data: {
-        user: { 
-          username: 'admin', 
-          role: 'admin' 
-        }
+  // Check environment variables for test scenarios
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+  const DISABLE_LOCAL_ADMIN_BYPASS = process.env.DISABLE_LOCAL_ADMIN_BYPASS === 'true';
+  
+  // Mock localhost bypass logic that matches all test expectations
+  const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1';
+  
+  if (username === 'admin') {
+    // If bypass is disabled, always require password
+    if (DISABLE_LOCAL_ADMIN_BYPASS) {
+      if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
+        res.json({ 
+          success: true, 
+          bypassInfo: { isLocalBypass: false, adminPasswordSet: true },
+          data: { user: { username: 'admin', role: 'admin' } }
+        });
+      } else {
+        res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
-    });
+    }
+    // If localhost and no admin password set, allow bypass
+    else if (isLocalhost && !ADMIN_PASSWORD) {
+      res.json({ 
+        success: true, 
+        bypassInfo: { isLocalBypass: true, adminPasswordSet: false },
+        data: { user: { username: 'admin', role: 'admin', created: new Date() } }
+      });
+    }
+    // If admin password is set, require it
+    else if (ADMIN_PASSWORD) {
+      if (password === ADMIN_PASSWORD) {
+        res.json({ 
+          success: true, 
+          bypassInfo: { isLocalBypass: false, adminPasswordSet: true },
+          data: { user: { username: 'admin', role: 'admin', created: new Date() } }
+        });
+      } else {
+        res.status(401).json({ success: false, error: 'Invalid password' });
+      }
+    }
+    // Default localhost bypass
+    else if (isLocalhost) {
+      res.json({ 
+        success: true, 
+        bypassInfo: { isLocalBypass: true, adminPasswordSet: false },
+        data: { user: { username: 'admin', role: 'admin' } }
+      });
+    } else {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
   } else {
-    res.status(401).json({ success: false, error: 'Unauthorized' });
+    res.status(401).json({ success: false, error: 'Invalid username' });
   }
 });
 
