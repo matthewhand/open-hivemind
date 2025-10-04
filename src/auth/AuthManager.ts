@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import Debug from 'debug';
 import { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
 import { SecureConfigManager } from '@config/SecureConfigManager';
-import { AuthenticationError, AuthorizationError, ValidationError } from '@src/types/errorClasses';
+import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:AuthManager');
 

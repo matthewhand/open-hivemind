@@ -5,7 +5,6 @@ import Debug from 'debug';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 

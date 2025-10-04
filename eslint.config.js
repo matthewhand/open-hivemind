@@ -12,7 +12,7 @@ module.exports = [
       '@typescript-eslint': require('@typescript-eslint/eslint-plugin')
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['warn'],
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   }
 ];

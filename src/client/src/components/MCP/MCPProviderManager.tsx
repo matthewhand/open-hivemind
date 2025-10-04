@@ -225,12 +225,12 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'running': return <FaPlay className=\"w-3 h-3\" />;
-      case 'stopped': return <FaStop className=\"w-3 h-3\" />;
-      case 'error': return <FaExclamationTriangle className=\"w-3 h-3\" />;
+      case 'running': return <FaPlay className="w-3 h-3" />;
+      case 'stopped': return <FaStop className="w-3 h-3" />;
+      case 'error': return <FaExclamationTriangle className="w-3 h-3" />;
       case 'starting':
-      case 'stopping': return <FaCog className=\"w-3 h-3 animate-spin\" />;
-      default: return <FaCog className=\"w-3 h-3\" />;
+      case 'stopping': return <FaCog className="w-3 h-3 animate-spin" />;
+      default: return <FaCog className="w-3 h-3" />;
     }
   };
 
@@ -239,69 +239,69 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     const statusColor = getStatusColor(provider.status?.status || 'stopped');
 
     return (
-      <Card key={provider.id} className=\"bg-base-100 shadow-lg mb-4\">
-        <Card.Body className=\"p-6\">
-          <div className=\"flex justify-between items-start mb-4\">
-            <div className=\"flex-1\">
-              <div className=\"flex items-center gap-2 mb-2\">
-                <h3 className=\"card-title text-lg\">{provider.name}</h3>
-                <Badge color={statusColor} size=\"sm\">
+      <Card key={provider.id} className="bg-base-100 shadow-lg mb-4">
+        <Card.Body className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="card-title text-lg">{provider.name}</h3>
+                <Badge color={statusColor} size="sm">
                   {getStatusIcon(provider.status?.status || 'stopped')}
-                  <span className=\"ml-1\">{provider.status?.status || 'stopped'}</span>
+                  <span className="ml-1">{provider.status?.status || 'stopped'}</span>
                 </Badge>
-                <Badge variant=\"outline\" size=\"sm\">
+                <Badge variant="outline" size="sm">
                   {provider.type}
                 </Badge>
-                {provider.enabled && <Badge color=\"success\" size=\"sm\">Enabled</Badge>}
+                {provider.enabled && <Badge color="success" size="sm">Enabled</Badge>}
               </div>
 
               {provider.description && (
-                <p className=\"text-sm text-base-content/70 mb-3\">{provider.description}</p>
+                <p className="text-sm text-base-content/70 mb-3">{provider.description}</p>
               )}
 
-              <div className=\"flex flex-wrap gap-2 mb-3\">
-                <div className=\"flex items-center gap-1 text-xs text-base-content/60\">
-                  <FaTerminal className=\"w-3 h-3\" />
+              <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex items-center gap-1 text-xs text-base-content/60">
+                  <FaTerminal className="w-3 h-3" />
                   <span>{provider.command}</span>
                   {provider.args && (
-                    <span className=\"text-base-content/40\">{Array.isArray(provider.args) ? provider.args.join(' ') : provider.args}</span>
+                    <span className="text-base-content/40">{Array.isArray(provider.args) ? provider.args.join(' ') : provider.args}</span>
                   )}
                 </div>
 
                 {provider.status?.processId && (
-                  <div className=\"flex items-center gap-1 text-xs text-base-content/60\">
-                    <FaCog className=\"w-3 h-3\" />
+                  <div className="flex items-center gap-1 text-xs text-base-content/60">
+                    <FaCog className="w-3 h-3" />
                     <span>PID: {provider.status.processId}</span>
                   </div>
                 )}
 
                 {provider.status?.uptime !== undefined && (
-                  <div className=\"flex items-center gap-1 text-xs text-base-content/60\">
-                    <FaClock className=\"w-3 h-3\" />
+                  <div className="flex items-center gap-1 text-xs text-base-content/60">
+                    <FaClock className="w-3 h-3" />
                     <span>Uptime: {Math.floor(provider.status.uptime / 60)}m</span>
                   </div>
                 )}
               </div>
 
               {testResult && (
-                <div className=\"mb-3\">
-                  <div className=\"flex items-center gap-2 mb-1\">
-                    <span className=\"text-sm font-medium\">Last Test:</span>
-                    <Badge color={testResult.success ? 'success' : 'error'} size=\"sm\">
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium">Last Test:</span>
+                    <Badge color={testResult.success ? 'success' : 'error'} size="sm">
                       {testResult.success ? 'Success' : 'Failed'}
                     </Badge>
-                    <span className=\"text-xs text-base-content/60\">
+                    <span className="text-xs text-base-content/60">
                       {testResult.duration}ms
                     </span>
                   </div>
                   {testResult.error && (
-                    <Alert status=\"error\" className=\"text-xs py-2 px-3\">
-                      <FaExclamationTriangle className=\"w-3 h-3\" />
+                    <Alert status="error" className="text-xs py-2 px-3">
+                      <FaExclamationTriangle className="w-3 h-3" />
                       <span>{testResult.error}</span>
                     </Alert>
                   )}
                   {testResult.version && (
-                    <div className=\"text-xs text-base-content/60 mt-1\">
+                    <div className="text-xs text-base-content/60 mt-1">
                       Version: {testResult.version}
                     </div>
                   )}
@@ -309,63 +309,63 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
               )}
             </div>
 
-            <div className=\"flex flex-col gap-2 ml-4\">
+            <div className="flex flex-col gap-2 ml-4">
               <Button
-                size=\"sm\"
-                color=\"primary\"
+                size="sm"
+                color="primary"
                 onClick={() => handleEditProvider(provider)}
               >
-                <FaCog className=\"w-3 h-3\" />
+                <FaCog className="w-3 h-3" />
               </Button>
 
               {provider.status?.status === 'running' ? (
                 <Button
-                  size=\"sm\"
-                  color=\"error\"
+                  size="sm"
+                  color="error"
                   onClick={() => handleStopProvider(provider.id)}
                   disabled={provider.isStopping}
                 >
                   {provider.isStopping ? (
-                    <FaCog className=\"w-3 h-3 animate-spin\" />
+                    <FaCog className="w-3 h-3 animate-spin" />
                   ) : (
-                    <FaStop className=\"w-3 h-3\" />
+                    <FaStop className="w-3 h-3" />
                   )}
                 </Button>
               ) : (
                 <Button
-                  size=\"sm\"
-                  color=\"success\"
+                  size="sm"
+                  color="success"
                   onClick={() => handleStartProvider(provider.id)}
                   disabled={provider.isStarting}
                 >
                   {provider.isStarting ? (
-                    <FaCog className=\"w-3 h-3 animate-spin\" />
+                    <FaCog className="w-3 h-3 animate-spin" />
                   ) : (
-                    <FaPlay className=\"w-3 h-3\" />
+                    <FaPlay className="w-3 h-3" />
                   )}
                 </Button>
               )}
 
               <Button
-                size=\"sm\"
-                variant=\"outline\"
+                size="sm"
+                variant="outline"
                 onClick={() => handleTestProvider(provider.id)}
                 disabled={provider.isTesting}
               >
                 {provider.isTesting ? (
-                  <FaCog className=\"w-3 h-3 animate-spin\" />
+                  <FaCog className="w-3 h-3 animate-spin" />
                 ) : (
-                  <FaTest className=\"w-3 h-3\" />
+                  <FaTest className="w-3 h-3" />
                 )}
               </Button>
 
               <Button
-                size=\"sm\"
-                color=\"error\"
-                variant=\"outline\"
+                size="sm"
+                color="error"
+                variant="outline"
                 onClick={() => handleDeleteProvider(provider.id)}
               >
-                <FaTrash className=\"w-3 h-3\" />
+                <FaTrash className="w-3 h-3" />
               </Button>
             </div>
           </div>
@@ -376,30 +376,30 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
   const renderTemplates = () => {
     return (
-      <div className=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates.map(template => (
-          <Card key={template.id} className=\"bg-base-100 shadow-lg hover:shadow-xl transition-shadow\">
-            <Card.Body className=\"p-4\">
-              <div className=\"flex items-center gap-2 mb-2\">
-                <h4 className=\"font-medium\">{template.name}</h4>
-                <Badge variant=\"outline\" size=\"sm\">{template.type}</Badge>
+          <Card key={template.id} className="bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
+            <Card.Body className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="font-medium">{template.name}</h4>
+                <Badge variant="outline" size="sm">{template.type}</Badge>
               </div>
 
-              <p className=\"text-sm text-base-content/70 mb-3\">{template.description}</p>
+              <p className="text-sm text-base-content/70 mb-3">{template.description}</p>
 
-              <div className=\"text-xs text-base-content/60 mb-3\">
-                <div className=\"mb-1\">Category: {template.category}</div>
+              <div className="text-xs text-base-content/60 mb-3">
+                <div className="mb-1">Category: {template.category}</div>
                 <div>Command: {template.command} {template.args.join(' ')}</div>
               </div>
 
               {template.envVars.length > 0 && (
-                <div className=\"mb-3\">
-                  <div className=\"text-xs font-medium mb-1\">Environment Variables:</div>
-                  <div className=\"text-xs text-base-content/60\">
+                <div className="mb-3">
+                  <div className="text-xs font-medium mb-1">Environment Variables:</div>
+                  <div className="text-xs text-base-content/60">
                     {template.envVars.map(envVar => (
-                      <div key={envVar.name} className=\"flex items-center gap-1\">
+                      <div key={envVar.name} className="flex items-center gap-1">
                         <span>{envVar.name}</span>
-                        {envVar.required && <span className=\"text-error\">*</span>}
+                        {envVar.required && <span className="text-error">*</span>}
                       </div>
                     ))}
                   </div>
@@ -407,16 +407,16 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
               )}
 
               <Button
-                size=\"sm\"
-                color=\"primary\"
-                className=\"w-full\"
+                size="sm"
+                color="primary"
+                className="w-full"
                 onClick={() => {
                   const provider = manager.createFromTemplate(template.id, {});
                   // TODO: Open edit modal with template
                   alert(`Created provider from template: ${template.name}`);
                 }}
               >
-                <FaPlus className=\"w-3 h-3 mr-1\" />
+                <FaPlus className="w-3 h-3 mr-1" />
                 Use Template
               </Button>
             </Card.Body>
@@ -430,75 +430,75 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
   return (
     <div className={`p-6 ${className}`}>
-      <div className=\"mb-6\">
-        <div className=\"flex justify-between items-center mb-4\">
-          <h2 className=\"text-2xl font-bold\">MCP Providers</h2>
-          <div className=\"flex gap-2\">
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">MCP Providers</h2>
+          <div className="flex gap-2">
             <Button
-              size=\"sm\"
-              variant=\"outline\"
+              size="sm"
+              variant="outline"
               onClick={handleExportProviders}
             >
-              <FaDownload className=\"w-3 h-3 mr-1\" />
+              <FaDownload className="w-3 h-3 mr-1" />
               Export
             </Button>
 
-            <label className=\"btn btn-sm btn-outline\">
-              <FaUpload className=\"w-3 h-3 mr-1\" />
+            <label className="btn btn-sm btn-outline">
+              <FaUpload className="w-3 h-3 mr-1" />
               Import
               <input
-                type=\"file\"
-                accept=\".json\"
+                type="file"
+                accept=".json"
                 onChange={handleImportProviders}
-                className=\"hidden\"
+                className="hidden"
               />
             </label>
 
             <Button
-              size=\"sm\"
-              color=\"primary\"
+              size="sm"
+              color="primary"
               onClick={handleCreateProvider}
             >
-              <FaPlus className=\"w-3 h-3 mr-1\" />
+              <FaPlus className="w-3 h-3 mr-1" />
               Add Provider
             </Button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className=\"grid grid-cols-2 md:grid-cols-5 gap-4 mb-6\">
-          <Card className=\"bg-base-100\">
-            <Card.Body className=\"p-4 text-center\">
-              <div className=\"text-2xl font-bold\">{stats.totalProviders}</div>
-              <div className=\"text-sm text-base-content/60\">Total</div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <Card className="bg-base-100">
+            <Card.Body className="p-4 text-center">
+              <div className="text-2xl font-bold">{stats.totalProviders}</div>
+              <div className="text-sm text-base-content/60">Total</div>
             </Card.Body>
           </Card>
 
-          <Card className=\"bg-base-100\">
-            <Card.Body className=\"p-4 text-center\">
-              <div className=\"text-2xl font-bold text-success\">{stats.runningProviders}</div>
-              <div className=\"text-sm text-base-content/60\">Running</div>
+          <Card className="bg-base-100">
+            <Card.Body className="p-4 text-center">
+              <div className="text-2xl font-bold text-success">{stats.runningProviders}</div>
+              <div className="text-sm text-base-content/60">Running</div>
             </Card.Body>
           </Card>
 
-          <Card className=\"bg-base-100\">
-            <Card.Body className=\"p-4 text-center\">
-              <div className=\"text-2xl font-bold text-neutral\">{stats.stoppedProviders}</div>
-              <div className=\"text-sm text-base-content/60\">Stopped</div>
+          <Card className="bg-base-100">
+            <Card.Body className="p-4 text-center">
+              <div className="text-2xl font-bold text-neutral">{stats.stoppedProviders}</div>
+              <div className="text-sm text-base-content/60">Stopped</div>
             </Card.Body>
           </Card>
 
-          <Card className=\"bg-base-100\">
-            <Card.Body className=\"p-4 text-center\">
-              <div className=\"text-2xl font-bold text-error\">{stats.errorProviders}</div>
-              <div className=\"text-sm text-base-content/60\">Errors</div>
+          <Card className="bg-base-100">
+            <Card.Body className="p-4 text-center">
+              <div className="text-2xl font-bold text-error">{stats.errorProviders}</div>
+              <div className="text-sm text-base-content/60">Errors</div>
             </Card.Body>
           </Card>
 
-          <Card className=\"bg-base-100\">
-            <Card.Body className=\"p-4 text-center\">
-              <div className=\"text-2xl font-bold\">{Math.floor(stats.averageUptime / 60)}m</div>
-              <div className=\"text-sm text-base-content/60\">Avg Uptime</div>
+          <Card className="bg-base-100">
+            <Card.Body className="p-4 text-center">
+              <div className="text-2xl font-bold">{Math.floor(stats.averageUptime / 60)}m</div>
+              <div className="text-sm text-base-content/60">Avg Uptime</div>
             </Card.Body>
           </Card>
         </div>
@@ -506,17 +506,17 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List>
-            <Tabs.Tab value=\"providers\">Providers ({providers.length})</Tabs.Tab>
-            <Tabs.Tab value=\"templates\">Templates ({templates.length})</Tabs.Tab>
+            <Tabs.Tab value="providers">Providers ({providers.length})</Tabs.Tab>
+            <Tabs.Tab value="templates">Templates ({templates.length})</Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Content value=\"providers\">
+          <Tabs.Content value="providers">
             {providers.length === 0 ? (
-              <Card className=\"bg-base-100\">
-                <Card.Body className=\"p-8 text-center\">
-                  <div className=\"text-base-content/60 mb-4\">No MCP providers configured yet</div>
-                  <Button color=\"primary\" onClick={handleCreateProvider}>
-                    <FaPlus className=\"w-3 h-3 mr-1\" />
+              <Card className="bg-base-100">
+                <Card.Body className="p-8 text-center">
+                  <div className="text-base-content/60 mb-4">No MCP providers configured yet</div>
+                  <Button color="primary" onClick={handleCreateProvider}>
+                    <FaPlus className="w-3 h-3 mr-1" />
                     Add Your First Provider
                   </Button>
                 </Card.Body>
@@ -526,7 +526,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
             )}
           </Tabs.Content>
 
-          <Tabs.Content value=\"templates\">
+          <Tabs.Content value="templates">
             {renderTemplates()}
           </Tabs.Content>
         </Tabs>
@@ -534,16 +534,16 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       {/* Create Provider Modal */}
       <Modal open={isCreateModalOpen} onClickBackdrop={() => setIsCreateModalOpen(false)}>
-        <Modal.Header className=\"font-bold\">Create MCP Provider</Modal.Header>
+        <Modal.Header className="font-bold">Create MCP Provider</Modal.Header>
         <Modal.Body>
           <p>Select a template to start with or create a custom provider.</p>
           {/* TODO: Implement provider creation form */}
         </Modal.Body>
         <Modal.Actions>
-          <Button variant=\"outline\" onClick={() => setIsCreateModalOpen(false)}>
+          <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
             Cancel
           </Button>
-          <Button color=\"primary\" onClick={() => setIsCreateModalOpen(false)}>
+          <Button color="primary" onClick={() => setIsCreateModalOpen(false)}>
             Create Provider
           </Button>
         </Modal.Actions>
@@ -551,7 +551,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       {/* Edit Provider Modal */}
       <Modal open={isEditModalOpen} onClickBackdrop={() => setIsEditModalOpen(false)}>
-        <Modal.Header className=\"font-bold\">Edit MCP Provider</Modal.Header>
+        <Modal.Header className="font-bold">Edit MCP Provider</Modal.Header>
         <Modal.Body>
           {selectedProvider && (
             <div>
@@ -561,10 +561,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           )}
         </Modal.Body>
         <Modal.Actions>
-          <Button variant=\"outline\" onClick={() => setIsEditModalOpen(false)}>
+          <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
             Cancel
           </Button>
-          <Button color=\"primary\" onClick={() => setIsEditModalOpen(false)}>
+          <Button color="primary" onClick={() => setIsEditModalOpen(false)}>
             Save Changes
           </Button>
         </Modal.Actions>

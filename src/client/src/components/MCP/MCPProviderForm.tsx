@@ -269,23 +269,23 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
   };
 
   return (
-    <div className=\"max-w-4xl mx-auto p-6\">
-      <Card className=\"bg-base-100 shadow-lg\">
-        <Card.Body className=\"p-8\">
-          <Card.Title className=\"text-2xl mb-6\">
+    <div className="max-w-4xl mx-auto p-6">
+      <Card className="bg-base-100 shadow-lg">
+        <Card.Body className="p-8">
+          <Card.Title className="text-2xl mb-6">
             {provider ? 'Edit MCP Provider' : 'Create MCP Provider'}
           </Card.Title>
 
           {/* Template Selection */}
           {templates.length > 0 && !provider && (
-            <div className=\"mb-6\">
+            <div className="mb-6">
               <FormLabel>Start from Template (Optional)</FormLabel>
               <Select
-                className=\"w-full\"
+                className="w-full"
                 value={selectedTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value)}
               >
-                <option value=\"\">Select a template...</option>
+                <option value="">Select a template...</option>
                 {templates.map(template => (
                   <option key={template.id} value={template.id}>
                     {template.name} ({template.type}) - {template.description}
@@ -295,41 +295,41 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className=\"space-y-6\">
-            <div className=\"grid grid-cols-1 md:grid-cols-2 gap-6\">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Provider Name *</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Provider Name *</span>
                 </FormLabel>
                 <Input
-                  type=\"text\"
-                  placeholder=\"e.g., File System Access, Web Scraper\"
+                  type="text"
+                  placeholder="e.g., File System Access, Web Scraper"
                   value={formData.name || ''}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className=\"w-full\"
+                  className="w-full"
                   required
                 />
-                <label className=\"label\">
-                  <span className=\"label-text-alt text-base-content/60\">A descriptive name for this MCP provider</span>
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">A descriptive name for this MCP provider</span>
                 </label>
               </div>
 
               {/* Type */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Provider Type *</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Provider Type *</span>
                 </FormLabel>
                 <Select
-                  className=\"w-full\"
+                  className="w-full"
                   value={formData.type || 'desktop'}
                   onChange={(e) => handleInputChange('type', e.target.value as 'desktop' | 'cloud')}
                 >
-                  <option value=\"desktop\">Desktop - Local MCP server</option>
-                  <option value=\"cloud\">Cloud - Remote MCP server</option>
+                  <option value="desktop">Desktop - Local MCP server</option>
+                  <option value="cloud">Cloud - Remote MCP server</option>
                 </Select>
-                <label className=\"label\">
-                  <span className=\"label-text-alt text-base-content/60\">
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
                     Desktop: runs locally | Cloud: connects to remote service
                   </span>
                 </label>
@@ -337,53 +337,53 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             </div>
 
             {/* Description */}
-            <div className=\"form-control\">
-              <FormLabel className=\"label\">
-                <span className=\"label-text font-medium\">Description</span>
+            <div className="form-control">
+              <FormLabel className="label">
+                <span className="label-text font-medium">Description</span>
               </FormLabel>
               <Textarea
-                placeholder=\"Optional description of what this MCP provider does\"
+                placeholder="Optional description of what this MCP provider does"
                 value={formData.description || ''}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                className=\"w-full h-24\"
+                className="w-full h-24"
               />
             </div>
 
-            <div className=\"grid grid-cols-1 md:grid-cols-2 gap-6\">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Command */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Command *</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Command *</span>
                 </FormLabel>
                 <Input
-                  type=\"text\"
-                  placeholder=\"e.g., npx, python, node, ./my-server\"
+                  type="text"
+                  placeholder="e.g., npx, python, node, ./my-server"
                   value={formData.command || ''}
                   onChange={(e) => handleInputChange('command', e.target.value)}
-                  className=\"w-full\"
+                  className="w-full"
                   required
                 />
-                <label className=\"label\">
-                  <span className=\"label-text-alt text-base-content/60\">
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
                     Use: npx package-name, python -m module, ./relative-path, or /absolute/path
                   </span>
                 </label>
               </div>
 
               {/* Arguments */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Arguments</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Arguments</span>
                 </FormLabel>
                 <Input
-                  type=\"text\"
-                  placeholder='e.g., --port 3000 or [\"--port\", \"3000\"]'
+                  type="text"
+                  placeholder='e.g., --port 3000 or ["--port", "3000"]'
                   value={formData.args || ''}
                   onChange={(e) => handleInputChange('args', e.target.value)}
-                  className=\"w-full\"
+                  className="w-full"
                 />
-                <label className=\"label\">
-                  <span className=\"label-text-alt text-base-content/60\">
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">
                     Space-separated or JSON array format
                   </span>
                 </label>
@@ -391,104 +391,104 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             </div>
 
             {/* Environment Variables */}
-            <div className=\"form-control\">
-              <FormLabel className=\"label\">
-                <span className=\"label-text font-medium\">Environment Variables</span>
+            <div className="form-control">
+              <FormLabel className="label">
+                <span className="label-text font-medium">Environment Variables</span>
               </FormLabel>
-              <div className=\"space-y-3\">
+              <div className="space-y-3">
                 {envVars.map((envVar, index) => (
-                  <div key={index} className=\"flex gap-2\">
+                  <div key={index} className="flex gap-2">
                     <Input
-                      type=\"text\"
-                      placeholder=\"Variable name\"
+                      type="text"
+                      placeholder="Variable name"
                       value={envVar.key}
                       onChange={(e) => handleEnvVarChange(index, 'key', e.target.value)}
-                      className=\"flex-1\"
+                      className="flex-1"
                     />
-                    <div className=\"relative flex-1\">
+                    <div className="relative flex-1">
                       <Input
                         type={envVar.showValue ? 'text' : 'password'}
-                        placeholder=\"Variable value\"
+                        placeholder="Variable value"
                         value={envVar.value}
                         onChange={(e) => handleEnvVarChange(index, 'value', e.target.value)}
-                        className=\"w-full pr-10\"
+                        className="w-full pr-10"
                       />
                       <Button
-                        type=\"button\"
-                        size=\"sm\"
-                        variant=\"ghost\"
-                        className=\"absolute right-1 top-1 h-8 w-8\"
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="absolute right-1 top-1 h-8 w-8"
                         onClick={() => toggleEnvVarVisibility(index)}
                       >
-                        {envVar.showValue ? <FaEyeSlash className=\"w-3 h-3\" /> : <FaEye className=\"w-3 h-3\" />}
+                        {envVar.showValue ? <FaEyeSlash className="w-3 h-3" /> : <FaEye className="w-3 h-3" />}
                       </Button>
                     </div>
                     <Button
-                      type=\"button\"
-                      size=\"sm\"
-                      color=\"error\"
-                      variant=\"outline\"
+                      type="button"
+                      size="sm"
+                      color="error"
+                      variant="outline"
                       onClick={() => removeEnvVar(index)}
                     >
-                      <FaTrash className=\"w-3 h-3\" />
+                      <FaTrash className="w-3 h-3" />
                     </Button>
                   </div>
                 ))}
                 <Button
-                  type=\"button\"
-                  size=\"sm\"
-                  variant=\"outline\"
+                  type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={addEnvVar}
-                  className=\"w-full\"
+                  className="w-full"
                 >
-                  <FaPlus className=\"w-3 h-3 mr-1\" />
+                  <FaPlus className="w-3 h-3 mr-1" />
                   Add Environment Variable
                 </Button>
               </div>
             </div>
 
-            <div className=\"grid grid-cols-1 md:grid-cols-2 gap-6\">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Timeout */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Timeout (seconds)</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Timeout (seconds)</span>
                 </FormLabel>
                 <Input
-                  type=\"number\"
-                  placeholder=\"30\"
+                  type="number"
+                  placeholder="30"
                   value={formData.timeout || ''}
                   onChange={(e) => handleInputChange('timeout', parseInt(e.target.value) || 30)}
-                  min=\"5\"
-                  max=\"300\"
-                  className=\"w-full\"
+                  min="5"
+                  max="300"
+                  className="w-full"
                 />
-                <label className=\"label\">
-                  <span className=\"label-text-alt text-base-content/60\">Maximum time to wait for startup</span>
+                <label className="label">
+                  <span className="label-text-alt text-base-content/60">Maximum time to wait for startup</span>
                 </label>
               </div>
 
               {/* Auto Restart */}
-              <div className=\"form-control\">
-                <FormLabel className=\"label\">
-                  <span className=\"label-text font-medium\">Auto Restart</span>
+              <div className="form-control">
+                <FormLabel className="label">
+                  <span className="label-text font-medium">Auto Restart</span>
                 </FormLabel>
-                <div className=\"flex items-center gap-3 mt-3\">
+                <div className="flex items-center gap-3 mt-3">
                   <Toggle
                     checked={formData.autoRestart || false}
                     onChange={(e) => handleInputChange('autoRestart', e.target.checked)}
                   />
-                  <span className=\"text-sm\">Automatically restart if the provider crashes</span>
+                  <span className="text-sm">Automatically restart if the provider crashes</span>
                 </div>
               </div>
             </div>
 
             {/* Health Check */}
-            <div className=\"form-control\">
-              <FormLabel className=\"label\">
-                <span className=\"label-text font-medium\">Health Check Configuration</span>
+            <div className="form-control">
+              <FormLabel className="label">
+                <span className="label-text font-medium">Health Check Configuration</span>
               </FormLabel>
-              <div className=\"bg-base-200 rounded-lg p-4 space-y-4\">
-                <div className=\"flex items-center gap-3\">
+              <div className="bg-base-200 rounded-lg p-4 space-y-4">
+                <div className="flex items-center gap-3">
                   <Toggle
                     checked={formData.healthCheck?.enabled || false}
                     onChange={(e) => handleInputChange('healthCheck', {
@@ -496,41 +496,41 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                       enabled: e.target.checked
                     })}
                   />
-                  <span className=\"text-sm font-medium\">Enable Health Check</span>
+                  <span className="text-sm font-medium">Enable Health Check</span>
                 </div>
 
                 {formData.healthCheck?.enabled && (
-                  <div className=\"grid grid-cols-1 md:grid-cols-2 gap-4 ml-6\">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
                     <div>
-                      <label className=\"label\">
-                        <span className=\"label-text text-sm\">Check Interval (seconds)</span>
+                      <label className="label">
+                        <span className="label-text text-sm">Check Interval (seconds)</span>
                       </label>
                       <Input
-                        type=\"number\"
+                        type="number"
                         value={formData.healthCheck.interval || 60}
                         onChange={(e) => handleInputChange('healthCheck', {
                           ...formData.healthCheck,
                           interval: parseInt(e.target.value) || 60
                         })}
-                        min=\"10\"
-                        max=\"3600\"
-                        className=\"w-full\"
+                        min="10"
+                        max="3600"
+                        className="w-full"
                       />
                     </div>
                     <div>
-                      <label className=\"label\">
-                        <span className=\"label-text text-sm\">Timeout (seconds)</span>
+                      <label className="label">
+                        <span className="label-text text-sm">Timeout (seconds)</span>
                       </label>
                       <Input
-                        type=\"number\"
+                        type="number"
                         value={formData.healthCheck.timeout || 10}
                         onChange={(e) => handleInputChange('healthCheck', {
                           ...formData.healthCheck,
                           timeout: parseInt(e.target.value) || 10
                         })}
-                        min=\"1\"
-                        max=\"60\"
-                        className=\"w-full\"
+                        min="1"
+                        max="60"
+                        className="w-full"
                       />
                     </div>
                   </div>
@@ -539,23 +539,23 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             </div>
 
             {/* Enabled */}
-            <div className=\"form-control\">
-              <div className=\"flex items-center gap-3\">
+            <div className="form-control">
+              <div className="flex items-center gap-3">
                 <Toggle
                   checked={formData.enabled || false}
                   onChange={(e) => handleInputChange('enabled', e.target.checked)}
                 />
-                <span className=\"text-sm font-medium\">Enable this provider for use with bots</span>
+                <span className="text-sm font-medium">Enable this provider for use with bots</span>
               </div>
             </div>
 
             {/* Validation Messages */}
             {validation.errors.length > 0 && (
-              <Alert status=\"error\" className=\"mb-4\">
-                <FaExclamationTriangle className=\"w-4 h-4\" />
+              <Alert status="error" className="mb-4">
+                <FaExclamationTriangle className="w-4 h-4" />
                 <div>
-                  <p className=\"font-medium mb-1\">Please fix the following errors:</p>
-                  <ul className=\"list-disc list-inside text-sm space-y-1\">
+                  <p className="font-medium mb-1">Please fix the following errors:</p>
+                  <ul className="list-disc list-inside text-sm space-y-1">
                     {validation.errors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -565,11 +565,11 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             )}
 
             {validation.warnings.length > 0 && (
-              <Alert status=\"warning\" className=\"mb-4\">
-                <FaInfoCircle className=\"w-4 h-4\" />
+              <Alert status="warning" className="mb-4">
+                <FaInfoCircle className="w-4 h-4" />
                 <div>
-                  <p className=\"font-medium mb-1\">Warnings:</p>
-                  <ul className=\"list-disc list-inside text-sm space-y-1\">
+                  <p className="font-medium mb-1">Warnings:</p>
+                  <ul className="list-disc list-inside text-sm space-y-1">
                     {validation.warnings.map((warning, index) => (
                       <li key={index}>{warning}</li>
                     ))}
@@ -579,11 +579,11 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             )}
 
             {validation.suggestions.length > 0 && (
-              <Alert status=\"info\" className=\"mb-4\">
-                <FaInfoCircle className=\"w-4 h-4\" />
+              <Alert status="info" className="mb-4">
+                <FaInfoCircle className="w-4 h-4" />
                 <div>
-                  <p className=\"font-medium mb-1\">Suggestions:</p>
-                  <ul className=\"list-disc list-inside text-sm space-y-1\">
+                  <p className="font-medium mb-1">Suggestions:</p>
+                  <ul className="list-disc list-inside text-sm space-y-1">
                     {validation.suggestions.map((suggestion, index) => (
                       <li key={index}>{suggestion}</li>
                     ))}
@@ -593,21 +593,21 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             )}
 
             {/* Form Actions */}
-            <div className=\"flex justify-end gap-4 pt-6 border-t border-base-300\">
+            <div className="flex justify-end gap-4 pt-6 border-t border-base-300">
               <Button
-                type=\"button\"
-                variant=\"outline\"
+                type="button"
+                variant="outline"
                 onClick={onCancel}
               >
                 Cancel
               </Button>
               <Button
-                type=\"submit\"
-                color=\"primary\"
+                type="submit"
+                color="primary"
                 disabled={!validation.isValid || isLoading}
               >
                 {isLoading ? (
-                  <span className=\"loading loading-spinner loading-sm\"></span>
+                  <span className="loading loading-spinner loading-sm"></span>
                 ) : null}
                 {provider ? 'Save Changes' : 'Create Provider'}
               </Button>
