@@ -147,4 +147,5 @@ const useBots = () => {
   };
 };
 
+export { useBots };
 export default useBots;
