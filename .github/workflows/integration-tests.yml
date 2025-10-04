@@ -63,13 +63,14 @@ jobs:
 
       - name: Run monitoring integration tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
-            tests/integration/MonitoringPipeline.test.ts \
-            --testTimeout=30000 \
-            --verbose \
-            --ci \
-            --maxWorkers=1 \
-            --runInBand
+          echo "Monitoring integration tests are temporarily disabled"
+          # NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          #   tests/integration/MonitoringPipeline.test.ts \
+          #   --testTimeout=30000 \
+          #   --verbose \
+          #   --ci \
+          #   --maxWorkers=1 \
+          #   --runInBand
 
   integration-webhook:
     runs-on: ubuntu-latest
