@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:collectSlashCommands');
 
@@ -34,8 +35,16 @@ export function collectSlashCommands(commandsPath: string): object[] {
                 debug('No data found in command file: ' + file);
             }
         }
-    } catch (error: any) {
-        debug('Error collecting slash commands: ' + (error instanceof Error ? error.message : String(error)));
+    } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const classification = ErrorUtils.classifyError(hivemindError);
+
+        debug('Error collecting slash commands: ' + ErrorUtils.getMessage(hivemindError));
+
+        // Log with appropriate level
+        if (classification.logLevel === 'error') {
+            console.error('Discord collect slash commands error:', hivemindError);
+        }
     }
     return commands;
 }

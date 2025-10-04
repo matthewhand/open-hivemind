@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:generateResponse');
 
@@ -13,8 +14,17 @@ export async function generateResponse(transcript: string): Promise<string> {
     const response = `AI-generated response for: ${transcript}`;
     debug('Generated response: ' + response);
     return response;
-  } catch (error: any) {
-    debug('Error generating response: ' + (error instanceof Error ? error.message : String(error)));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error generating response: ' + ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord generate response error:', hivemindError);
+    }
+
     return 'Sorry, an error occurred while generating a response.';
   }
 }

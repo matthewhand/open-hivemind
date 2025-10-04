@@ -5,6 +5,7 @@ import { KnownBlock } from '@slack/web-api';
 import { SlackBotManager } from './SlackBotManager';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import messageConfig from '@src/config/messageConfig';
+import { ValidationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:SlackWelcomeHandler');
 
@@ -26,7 +27,7 @@ export class SlackWelcomeHandler {
   constructor(botManager: SlackBotManager) {
     if (!botManager) {
       debug('Error: SlackBotManager instance required');
-      throw new Error('SlackBotManager instance required');
+      throw new ValidationError('SlackBotManager instance required', 'SLACK_BOT_MANAGER_REQUIRED');
     }
     this.botManager = botManager;
     debug('SlackWelcomeHandler initialized');
@@ -44,7 +45,7 @@ export class SlackWelcomeHandler {
     debug('Entering sendBotWelcomeMessage', { channel });
     if (!channel) {
       debug('Error: Channel ID required');
-      throw new Error('Channel ID required');
+      throw new ValidationError('Channel ID required', 'SLACK_CHANNEL_ID_REQUIRED');
     }
 
     const botInfo = this.botManager.getAllBots()[0];

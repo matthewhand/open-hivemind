@@ -1,5 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import ApiMonitorService from '../services/ApiMonitorService';
+import { MetricsCollector } from '../monitoring/MetricsCollector';
+import { ErrorLogger } from '../utils/errorLogger';
+import { globalRecoveryManager } from '../utils/errorRecovery';
 import os from 'os';
 import process from 'process';
 
@@ -13,14 +16,22 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Detailed health check with system metrics
+// Detailed health check with system metrics and error analysis
 router.get('/health/detailed', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+  const metrics = MetricsCollector.getInstance().getMetrics();
+  const errorLogger = ErrorLogger.getInstance();
+  const errorStats = errorLogger.getErrorStats();
+  const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
+  const recoveryStats = globalRecoveryManager.getAllStats();
+
+  // Calculate overall health status
+  const healthStatus = calculateHealthStatus(memoryUsage, recentErrors, metrics);
 
   const healthData = {
-    status: 'healthy',
+    status: healthStatus.status,
     timestamp: new Date().toISOString(),
     uptime: uptime,
     memory: {
@@ -40,6 +51,25 @@ router.get('/health/detailed', (req, res) => {
       hostname: os.hostname(),
       loadAverage: os.loadavg(),
       nodeVersion: process.version,
+    },
+    errors: {
+      total: metrics.errors,
+      recent: recentErrors,
+      rate: calculateErrorRate(recentErrors, 60), // errors per minute
+      byType: errorStats,
+      health: healthStatus.errorHealth
+    },
+    recovery: {
+      circuitBreakers: Object.keys(recoveryStats).length,
+      activeFallbacks: Object.values(recoveryStats).reduce((sum, stats) => sum + stats.fallbacks, 0),
+      stats: recoveryStats
+    },
+    performance: {
+      messagesProcessed: metrics.messagesProcessed,
+      averageResponseTime: metrics.responseTime.length > 0
+        ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
+        : 0,
+      llmUsage: metrics.llmTokenUsage
     }
   };
 
@@ -351,5 +381,270 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   return next(err);
 });
+
+// Error-specific health endpoints
+router.get('/health/errors', (req, res) => {
+  const errorLogger = ErrorLogger.getInstance();
+  const errorStats = errorLogger.getErrorStats();
+  const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
+  const metrics = MetricsCollector.getInstance().getMetrics();
+
+  const errorHealthData = {
+    timestamp: new Date().toISOString(),
+    errors: {
+      total: metrics.errors,
+      recent: recentErrors,
+      rate: calculateErrorRate(recentErrors, 60),
+      byType: errorStats,
+      trends: {
+        lastMinute: errorLogger.getRecentErrorCount(60000),
+        last5Minutes: errorLogger.getRecentErrorCount(300000),
+        last15Minutes: errorLogger.getRecentErrorCount(900000)
+      }
+    },
+    health: {
+      status: getErrorHealthStatus(recentErrors),
+      recommendations: getErrorRecommendations(errorStats, recentErrors)
+    }
+  };
+
+  res.json(errorHealthData);
+});
+
+// Recovery system health endpoint
+router.get('/health/recovery', (req, res) => {
+  const recoveryStats = globalRecoveryManager.getAllStats();
+  const errorLogger = ErrorLogger.getInstance();
+
+  const recoveryHealthData = {
+    timestamp: new Date().toISOString(),
+    circuitBreakers: Object.entries(recoveryStats).map(([key, stats]) => ({
+      operation: key,
+      state: stats.circuitBreaker.state,
+      failureCount: stats.circuitBreaker.failureCount,
+      successCount: stats.circuitBreaker.successCount,
+      fallbacks: stats.fallbacks
+    })),
+    health: {
+      status: getRecoveryHealthStatus(recoveryStats),
+      recommendations: getRecoveryRecommendations(recoveryStats)
+    },
+    errorLogger: {
+      config: errorLogger.getConfig(),
+      stats: errorLogger.getErrorStats()
+    }
+  };
+
+  res.json(recoveryHealthData);
+});
+
+// Error patterns and anomalies endpoint
+router.get('/health/errors/patterns', (req, res) => {
+  const errorLogger = ErrorLogger.getInstance();
+  const errorStats = errorLogger.getErrorStats();
+  const recentErrors = errorLogger.getRecentErrorCount(60000);
+
+  const patternsData = {
+    timestamp: new Date().toISOString(),
+    patterns: {
+      errorTypes: Object.entries(errorStats)
+        .sort(([,a], [,b]) => b - a)
+        .map(([type, count]) => ({ type, count, percentage: (count / Object.values(errorStats).reduce((a, b) => a + b, 0)) * 100 })),
+      spikes: detectErrorSpikes(errorStats),
+      correlations: detectErrorCorrelations(errorStats),
+      anomalies: detectErrorAnomalies(recentErrors, errorStats)
+    },
+    recommendations: generatePatternRecommendations(errorStats, recentErrors)
+  };
+
+  res.json(patternsData);
+});
+
+// Helper functions for health calculations
+function calculateHealthStatus(memoryUsage: NodeJS.MemoryUsage, recentErrors: number, metrics: any) {
+  const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+  const errorRate = calculateErrorRate(recentErrors, 60);
+  
+  let status = 'healthy';
+  let errorHealth = 'good';
+  
+  // Check memory usage
+  if (memoryUsagePercent > 90) {
+    status = 'unhealthy';
+  } else if (memoryUsagePercent > 80) {
+    status = 'degraded';
+  }
+  
+  // Check error rate
+  if (errorRate > 10) {
+    status = 'unhealthy';
+    errorHealth = 'critical';
+  } else if (errorRate > 5) {
+    status = status === 'healthy' ? 'degraded' : status;
+    errorHealth = 'poor';
+  } else if (errorRate > 1) {
+    errorHealth = 'fair';
+  }
+  
+  // Check uptime
+  if (metrics.uptime < 60000) { // Less than 1 minute
+    status = status === 'healthy' ? 'degraded' : status;
+  }
+  
+  return { status, errorHealth };
+}
+
+function calculateErrorRate(errorCount: number, timeWindowSeconds: number): number {
+  return Math.round((errorCount / timeWindowSeconds) * 100) / 100; // errors per second
+}
+
+function getErrorHealthStatus(recentErrors: number): 'good' | 'fair' | 'poor' | 'critical' {
+  if (recentErrors === 0) return 'good';
+  if (recentErrors <= 2) return 'fair';
+  if (recentErrors <= 5) return 'poor';
+  return 'critical';
+}
+
+function getErrorRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
+  const recommendations: string[] = [];
+  
+  if (recentErrors > 5) {
+    recommendations.push('High error rate detected. Check system logs and consider scaling resources.');
+  }
+  
+  const networkErrors = errorStats['network'] || 0;
+  if (networkErrors > 0) {
+    recommendations.push('Network errors detected. Check external service connectivity.');
+  }
+  
+  const dbErrors = errorStats['database'] || 0;
+  if (dbErrors > 0) {
+    recommendations.push('Database errors detected. Verify database connection and performance.');
+  }
+  
+  const authErrors = (errorStats['authentication'] || 0) + (errorStats['authorization'] || 0);
+  if (authErrors > 2) {
+    recommendations.push('Authentication/authorization errors detected. Check user credentials and permissions.');
+  }
+  
+  return recommendations;
+}
+
+function getRecoveryHealthStatus(recoveryStats: Record<string, any>): 'healthy' | 'degraded' | 'unhealthy' {
+  const circuitBreakers = Object.values(recoveryStats);
+  const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open').length;
+  
+  if (openCircuitBreakers > 0) return 'unhealthy';
+  if (circuitBreakers.some(cb => cb.circuitBreaker.failureCount > 3)) return 'degraded';
+  return 'healthy';
+}
+
+function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[] {
+  const recommendations: string[] = [];
+  const circuitBreakers = Object.values(recoveryStats);
+  
+  const openCircuitBreakers = circuitBreakers.filter(cb => cb.circuitBreaker.state === 'open');
+  if (openCircuitBreakers.length > 0) {
+    recommendations.push(`${openCircuitBreakers.length} circuit breaker(s) are open. Check underlying services.`);
+  }
+  
+  const highFailureCircuits = circuitBreakers.filter(cb => cb.circuitBreaker.failureCount > 3);
+  if (highFailureCircuits.length > 0) {
+    recommendations.push(`${highFailureCircuits.length} circuit breaker(s) have high failure rates.`);
+  }
+  
+  const operationsWithoutFallbacks = Object.entries(recoveryStats)
+    .filter(([, stats]) => stats.fallbacks === 0)
+    .length;
+  
+  if (operationsWithoutFallbacks > 0) {
+    recommendations.push(`${operationsWithoutFallbacks} operation(s) lack fallback mechanisms.`);
+  }
+  
+  return recommendations;
+}
+
+function detectErrorSpikes(errorStats: Record<string, number>): Array<{type: string, count: number, severity: 'low' | 'medium' | 'high'}> {
+  const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
+  const threshold = totalErrors * 0.3; // 30% threshold for spikes
+  
+  return Object.entries(errorStats)
+    .filter(([, count]) => count > threshold)
+    .map(([type, count]) => ({
+      type,
+      count,
+      severity: count > threshold * 2 ? 'high' : count > threshold ? 'medium' : 'low'
+    }));
+}
+
+function detectErrorCorrelations(errorStats: Record<string, number>): Array<{pattern: string, description: string}> {
+  const correlations: Array<{pattern: string, description: string}> = [];
+  
+  // Check for network + timeout correlation
+  if ((errorStats['network'] || 0) > 0 && (errorStats['timeout'] || 0) > 0) {
+    correlations.push({
+      pattern: 'network_timeout',
+      description: 'Network and timeout errors occurring together'
+    });
+  }
+  
+  // Check for auth + authorization correlation
+  if ((errorStats['authentication'] || 0) > 0 && (errorStats['authorization'] || 0) > 0) {
+    correlations.push({
+      pattern: 'auth_chain',
+      description: 'Authentication and authorization errors occurring together'
+    });
+  }
+  
+  return correlations;
+}
+
+function detectErrorAnomalies(recentErrors: number, errorStats: Record<string, number>): Array<{type: string, anomaly: string}> {
+  const anomalies: Array<{type: string, anomaly: string}> = [];
+  
+  // Check for unusual error types
+  const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
+  if (totalErrors > 0) {
+    Object.entries(errorStats).forEach(([type, count]) => {
+      const percentage = (count / totalErrors) * 100;
+      if (percentage > 50 && type !== 'unknown') {
+        anomalies.push({
+          type,
+          anomaly: `Dominant error type (${percentage.toFixed(1)}% of all errors)`
+        });
+      }
+    });
+  }
+  
+  // Check for sudden error bursts
+  if (recentErrors > 10) {
+    anomalies.push({
+      type: 'burst',
+      anomaly: `High error frequency: ${recentErrors} errors in last minute`
+    });
+  }
+  
+  return anomalies;
+}
+
+function generatePatternRecommendations(errorStats: Record<string, number>, recentErrors: number): string[] {
+  const recommendations: string[] = [];
+  
+  if (recentErrors > 10) {
+    recommendations.push('Implement rate limiting and circuit breakers to prevent cascading failures.');
+  }
+  
+  const validationErrors = errorStats['validation'] || 0;
+  if (validationErrors > 3) {
+    recommendations.push('Review input validation logic and provide better error messages to users.');
+  }
+  
+  const configErrors = errorStats['configuration'] || 0;
+  if (configErrors > 0) {
+    recommendations.push('Review configuration management and implement configuration validation.');
+  }
+  
+  return recommendations;
+}
 
 export default router;

@@ -178,7 +178,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     try {
       const result = await botInfo.webClient.conversations.history({ channel: channelId, limit });
       const messages = (result.messages || []).map(msg =>
-        new SlackMessage(msg.text || '', channelId, msg)
+        new SlackMessage(msg.text || '', channelId, msg as any)
       );
       debug(`Fetched ${messages.length} messages from channel ${channelId}`);
       return messages;

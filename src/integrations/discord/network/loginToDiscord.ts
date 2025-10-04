@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Client } from 'discord.js';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:loginToDiscord');
 
@@ -17,15 +18,35 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
     if (!token) {
         const errorMessage = 'DISCORD_BOT_TOKEN is not defined.';
         debug(errorMessage);
-        throw new Error(errorMessage);
+        throw ErrorUtils.createError(
+            errorMessage,
+            'ValidationError' as any,
+            'DISCORD_TOKEN_NOT_PROVIDED',
+            400
+        );
     }
     try {
         const result = await client.login(token);
         debug('Successfully logged in to Discord.');
         return result;
-    } catch (error: any) {
-        const errorMessage = 'Failed to log in to Discord: ' + (error instanceof Error ? error.message : String(error));
+    } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const classification = ErrorUtils.classifyError(hivemindError);
+
+        const errorMessage = 'Failed to log in to Discord: ' + ErrorUtils.getMessage(hivemindError);
         debug(errorMessage);
-        throw new Error(errorMessage);
+
+        // Log with appropriate level
+        if (classification.logLevel === 'error') {
+            console.error('Discord login error:', hivemindError);
+        }
+
+        throw ErrorUtils.createError(
+            errorMessage,
+            classification.type,
+            'DISCORD_LOGIN_ERROR',
+            ErrorUtils.getStatusCode(hivemindError),
+            { originalError: error }
+        );
     }
 }

@@ -1,5 +1,30 @@
 import { IMessage } from '@message/interfaces/IMessage';
 
+// Define proper Slack message interfaces
+interface SlackUser {
+  id: string;
+  username?: string;
+  name?: string;
+}
+
+interface SlackMessageData {
+  user?: string | SlackUser;
+  user_id?: string;
+  message?: {
+    user?: string;
+    ts?: string;
+    subtype?: string;
+  };
+  username?: string;
+  ts?: string;
+  message_ts?: string;
+  event_ts?: string;
+  subtype?: string;
+  bot_id?: string;
+  thread_ts?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Slack-specific implementation of the IMessage interface with minimal real parsing.
  *
@@ -13,7 +38,7 @@ import { IMessage } from '@message/interfaces/IMessage';
 export default class SlackMessage extends IMessage {
   public content: string;
   public channelId: string;
-  public data: any;
+  public data: SlackMessageData;
   public role: string;
 
   private authorId: string;
@@ -23,7 +48,7 @@ export default class SlackMessage extends IMessage {
   private mentions: string[];
   private timestamp: Date;
 
-  constructor(content: string, channelId: string, data: any = {}) {
+  constructor(content: string, channelId: string, data: SlackMessageData = {}) {
     super(data, 'user');
     this.content = content ?? '';
     this.channelId = channelId ?? '';
@@ -99,22 +124,28 @@ export default class SlackMessage extends IMessage {
 
   // Helpers
 
-  private resolveAuthorId(data: any): string {
+  private resolveAuthorId(data: SlackMessageData): string {
     // event.user or payload.user.id or message.user
-    return data?.user?.id || data?.user || data?.message?.user || data?.user_id || '';
+    if (data?.user && typeof data.user === 'object' && 'id' in data.user) {
+      return data.user.id;
+    }
+    return (typeof data?.user === 'string' ? data.user : '') || data?.message?.user || data?.user_id || '';
   }
 
-  private resolveAuthorName(data: any): string | undefined {
+  private resolveAuthorName(data: SlackMessageData): string | undefined {
     // payload.user.username or user.name from richer events
-    return data?.user?.username || data?.user?.name || data?.username;
+    if (data?.user && typeof data.user === 'object') {
+      return data.user.username || data.user.name;
+    }
+    return data?.username;
   }
 
-  private resolveMessageId(data: any): string | undefined {
+  private resolveMessageId(data: SlackMessageData): string | undefined {
     // Slack ts (e.g., "1712345678.000200")
     return data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
   }
 
-  private resolveIsBot(data: any): boolean {
+  private resolveIsBot(data: SlackMessageData): boolean {
     // subtype bot_message, presence of bot_id, or explicit flag
     if (data?.subtype === 'bot_message') return true;
     if (data?.bot_id) return true;
@@ -134,7 +165,7 @@ export default class SlackMessage extends IMessage {
     return Array.from(ids);
   }
 
-  private resolveTimestamp(data: any): Date | undefined {
+  private resolveTimestamp(data: SlackMessageData): Date | undefined {
     const ts = data?.ts || data?.message_ts || data?.event_ts || data?.message?.ts;
     if (!ts || typeof ts !== 'string') return;
     // Slack ts "seconds.millis"

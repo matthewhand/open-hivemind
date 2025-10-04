@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:discord:stt');
 
@@ -18,8 +19,23 @@ export async function transcribeAudio(audioPath: string): Promise<string> {
 
     debug(`Transcribed: ${transcription.text}`);
     return transcription.text;
-  } catch (error: any) {
-    debug(`STT error: ${error.message}`);
-    throw error;
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug(`STT error: ${ErrorUtils.getMessage(hivemindError)}`);
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord STT error:', hivemindError);
+    }
+
+    throw ErrorUtils.createError(
+        `Speech-to-text failed: ${ErrorUtils.getMessage(hivemindError)}`,
+        classification.type,
+        'DISCORD_STT_ERROR',
+        ErrorUtils.getStatusCode(hivemindError),
+        { originalError: error }
+    );
   }
 }

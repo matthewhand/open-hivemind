@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { RateLimitError } from '../../types/errorClasses';
 import Debug from 'debug';
 
 const debug = Debug('app:securityMiddleware');
@@ -148,12 +149,14 @@ export function apiRateLimit(req: Request, res: Response, next: NextFunction): v
   // Check if limit exceeded
   if (clientData.requests.length >= maxRequests) {
     debug('Rate limit exceeded for IP:', clientIP);
-    res.status(429).json({
-      error: 'Too many requests',
-      message: 'Rate limit exceeded. Please try again later.',
-      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
-    });
-    return;
+    const retryAfter = Math.ceil((clientData.resetTime - now) / 1000);
+    throw new RateLimitError(
+      'Rate limit exceeded. Please try again later.',
+      retryAfter,
+      maxRequests,
+      0,
+      new Date(clientData.resetTime)
+    );
   }
 
   // Add current request

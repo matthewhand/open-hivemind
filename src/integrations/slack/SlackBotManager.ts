@@ -4,6 +4,12 @@ import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
 import SlackMessage from './SlackMessage';
 import { IMessage } from '@message/interfaces/IMessage';
+import {
+  BaseHivemindError,
+  NetworkError,
+  ApiError
+} from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SlackBotManager');
 
@@ -58,9 +64,15 @@ export class SlackBotManager {
         botInfo.botUserId = authTest.user_id;
         botInfo.botUserName = authTest.user;
         debug(`Bot authenticated: ${botInfo.botUserName} (${botInfo.botUserId})`);
-      } catch (error) {
-        debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${error}`);
-        throw error;
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error) as any;
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`, {
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity
+        });
+        throw hivemindError;
       }
     }
     await this.startListening();
@@ -110,7 +122,7 @@ export class SlackBotManager {
 
         debug(`Primary bot received channel message: ${event.text}`);
         if (this.messageHandler) {
-          const slackMessage = new SlackMessage(event.text, event.channel, event);
+          const slackMessage = new SlackMessage(event.text, event.channel, event as any);
           const history = this.includeHistory ? await this.fetchMessagesForBot(primaryBot, event.channel, 10) : [];
           await this.messageHandler(slackMessage, history, primaryBot.config);
         } else {
@@ -122,9 +134,30 @@ export class SlackBotManager {
         debug('Starting primary socket client');
         await primaryBot.socketClient.start();
         debug('Primary socket client started for channels');
-      } catch (error) {
-        debug('Failed to start primary socket client:', error);
-        throw error;
+      } catch (error: unknown) {
+        if (error instanceof BaseHivemindError) {
+          debug('Failed to start primary socket client:', {
+            error: error.message,
+            errorCode: error.code,
+            errorType: error.constructor.name,
+            severity: error.severity
+          });
+          throw error;
+        } else {
+          const networkError = new NetworkError(
+            `Failed to start primary socket client: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            undefined,
+            undefined,
+            { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
+          );
+          debug('Failed to start primary socket client:', {
+            error: networkError.message,
+            errorCode: networkError.code,
+            errorType: networkError.constructor.name,
+            severity: networkError.severity
+          });
+          throw networkError;
+        }
       }
     }
 
@@ -169,7 +202,7 @@ export class SlackBotManager {
 
           debug(`${botInfo.botUserName} received: ${event.text}`);
           if (this.messageHandler) {
-            const slackMessage = new SlackMessage(event.text, event.channel, event);
+            const slackMessage = new SlackMessage(event.text, event.channel, event as any);
             await this.messageHandler(slackMessage, [], botInfo.config);
           }
         });
@@ -179,9 +212,30 @@ export class SlackBotManager {
             debug(`Starting socket client for ${botInfo.botUserName}`);
             await botInfo.socketClient.start();
             debug(`Listener started for ${botInfo.botUserName}`);
-          } catch (error) {
-            debug(`Failed to start socket client for ${botInfo.botUserName}:`, error);
-            throw error;
+          } catch (error: unknown) {
+            if (error instanceof BaseHivemindError) {
+              debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
+                error: error.message,
+                errorCode: error.code,
+                errorType: error.constructor.name,
+                severity: error.severity
+              });
+              throw error;
+            } else {
+              const networkError = new NetworkError(
+                `Failed to start socket client for ${botInfo.botUserName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                undefined,
+                undefined,
+                { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
+              );
+              debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
+                error: networkError.message,
+                errorCode: networkError.code,
+                errorType: networkError.constructor.name,
+                severity: networkError.severity
+              });
+              throw networkError;
+            }
           }
         }
       } else if (this.mode === 'rtm' && botInfo.rtmClient) {
@@ -189,9 +243,16 @@ export class SlackBotManager {
           debug(`Starting RTM client for ${botInfo.botUserName}`);
           await botInfo.rtmClient.start();
           debug(`RTM client started for ${botInfo.botUserName}`);
-        } catch (error) {
-          debug(`Failed to start RTM client for ${botInfo.botUserName}:`, error);
-          throw error;
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
+          const errorInfo = ErrorUtils.classifyError(hivemindError);
+          debug(`Failed to start RTM client for ${botInfo.botUserName}:`, {
+            error: hivemindError.message,
+            errorCode: hivemindError.code,
+            errorType: errorInfo.type,
+            severity: errorInfo.severity
+          });
+          throw hivemindError;
         }
       }
     }
@@ -200,7 +261,7 @@ export class SlackBotManager {
   private async fetchMessagesForBot(botInfo: SlackBotInfo, channel: string, limit = 10): Promise<IMessage[]> {
     debug('Entering fetchMessagesForBot');
     const result = await botInfo.webClient.conversations.history({ channel, limit });
-    return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg));
+    return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg as any));
   }
 
   public getBotByName(name: string): SlackBotInfo | undefined {

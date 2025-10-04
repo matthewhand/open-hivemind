@@ -46,6 +46,23 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
+// Legacy Loading component (alias for LoadingSpinner with different interface)
+interface LoadingProps {
+  type?: 'spinner' | 'dots' | 'ring' | 'ball' | 'bars' | 'infinity';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  color?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'info' | 'success' | 'warning' | 'error';
+  className?: string;
+}
+
+export const Loading: React.FC<LoadingProps> = ({
+  type = 'spinner',
+  size = 'md',
+  color = 'primary',
+  className = ''
+}) => {
+  return <LoadingSpinner variant={type} size={size} color={color} className={className} />;
+};
+
 // Progress Component
 interface ProgressProps {
   value?: number;
@@ -136,9 +153,9 @@ export const SkeletonText: React.FC<SkeletonProps & {
   );
 };
 
-export const SkeletonCard: React.FC<SkeletonProps> = ({ 
+export const LoadingSkeletonCard: React.FC<SkeletonProps> = ({
   animate = true,
-  className = '' 
+  className = ''
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -306,8 +323,8 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   return (
     <div className={`w-full ${className}`}>
       <ul className={`steps w-full ${steps ? 'steps-vertical lg:steps-horizontal' : ''}`}>
-        {(steps || Array.from({ length: totalSteps }, (_, i) => ({ label: `Step ${i + 1}` }))).map((step, index) => (
-          <li 
+        {(steps || Array.from({ length: totalSteps }, (_, i) => ({ label: `Step ${i + 1}`, description: undefined }))).map((step, index) => (
+          <li
             key={index}
             className={`step ${index < currentStep ? getVariantClass() : ''} ${
               index === currentStep - 1 ? 'step-primary' : ''
@@ -316,8 +333,8 @@ export const StepProgress: React.FC<StepProgressProps> = ({
           >
             <div className="text-left">
               <div className="font-medium">{step.label}</div>
-              {'description' in step && step.description && (
-                <div className="text-sm text-base-content/60">{String(step.description)}</div>
+              {step.description && (
+                <div className="text-sm text-base-content/60">{step.description}</div>
               )}
             </div>
           </li>
@@ -338,10 +355,11 @@ export const StepProgress: React.FC<StepProgressProps> = ({
 };
 
 export default {
+  Loading,
   LoadingSpinner,
   Progress,
   SkeletonText,
-  SkeletonCard,
+  LoadingSkeletonCard,
   SkeletonAvatar,
   SkeletonTable,
   SkeletonStats,

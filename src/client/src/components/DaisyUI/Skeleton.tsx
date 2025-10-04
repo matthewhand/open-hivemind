@@ -167,5 +167,4 @@ export const SkeletonList: React.FC<SkeletonListProps> = ({
   </div>
 );
 
-export { SkeletonCard, SkeletonList };
 export default Skeleton;

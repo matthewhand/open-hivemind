@@ -2,6 +2,7 @@ import { Router } from 'express';
 import AdvancedMonitor from '../../monitoring/AdvancedMonitor';
 import { DiscordService } from '@integrations/discord/DiscordService';
 import { SlackService } from '@integrations/slack/SlackService';
+import { createErrorResponse } from '../../utils/errorResponse';
 import Debug from 'debug';
 
 const debug = Debug('app:healthRoutes');
@@ -53,11 +54,8 @@ router.get('/health', (req, res) => {
     res.status(statusCode).json(response);
   } catch (error) {
     debug('Health check error:', error);
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: 'Health check failed'
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -91,11 +89,8 @@ router.get('/health/detailed', (req, res) => {
     res.status(statusCode).json(response);
   } catch (error) {
     debug('Detailed health check error:', error);
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: 'Detailed health check failed'
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -113,10 +108,8 @@ router.get('/health/metrics', (req, res) => {
     });
   } catch (error) {
     debug('Metrics endpoint error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve metrics',
-      timestamp: new Date().toISOString()
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -134,10 +127,8 @@ router.get('/health/alerts', (req, res) => {
     });
   } catch (error) {
     debug('Alerts endpoint error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve alerts',
-      timestamp: new Date().toISOString()
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -162,10 +153,8 @@ router.post('/health/alerts/:alertId/resolve', (req, res) => {
     }
   } catch (error) {
     debug('Resolve alert endpoint error:', error);
-    res.status(500).json({
-      error: 'Failed to resolve alert',
-      timestamp: new Date().toISOString()
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -194,11 +183,8 @@ router.get('/health/ready', (req, res) => {
     }
   } catch (error) {
     debug('Readiness probe error:', error);
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      message: 'Readiness check failed'
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -214,11 +200,8 @@ router.get('/health/live', (req, res) => {
     });
   } catch (error) {
     debug('Liveness probe error:', error);
-    res.status(503).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      message: 'Liveness check failed'
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -260,7 +243,8 @@ router.get('/health/metrics/prometheus', (req, res) => {
     res.send(prometheusOutput);
   } catch (error) {
     debug('Prometheus metrics endpoint error:', error);
-    res.status(500).send('# Error generating Prometheus metrics\n');
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -275,10 +259,8 @@ router.post('/health/cleanup', (req, res) => {
     });
   } catch (error) {
     debug('Cleanup endpoint error:', error);
-    res.status(500).json({
-      error: 'Cleanup failed',
-      timestamp: new Date().toISOString()
-    });
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 

@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from '../voice/voiceCommandHandler';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 export const joinVoiceCommand = new SlashCommandBuilder()
   .setName('join')
@@ -26,8 +27,16 @@ export async function handleJoinVoice(interaction: any): Promise<void> {
   try {
     const connection = await connectToVoiceChannel(interaction.client, voiceChannel.id);
     await interaction.reply(`Joined ${voiceChannel.name}!`);
-  } catch (error: any) {
-    await interaction.reply(`Failed to join voice channel: ${error.message}`);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord join voice channel error:', hivemindError);
+    }
+
+    await interaction.reply(`Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`);
   }
 }
 
@@ -55,7 +64,15 @@ export async function handleStartListening(interaction: any): Promise<void> {
     const handler = new VoiceCommandHandler(connection);
     handler.startListening();
     await interaction.reply('Now listening for voice commands!');
-  } catch (error: any) {
-    await interaction.reply(`Failed to start listening: ${error.message}`);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord start listening error:', hivemindError);
+    }
+
+    await interaction.reply(`Failed to start listening: ${ErrorUtils.getMessage(hivemindError)}`);
   }
 }

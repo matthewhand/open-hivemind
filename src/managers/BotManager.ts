@@ -1,4 +1,5 @@
-import { BotConfigurationManager, BotConfig } from '@config/BotConfigurationManager';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { BotConfig } from '@src/types/config';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import Debug from 'debug';
 import { EventEmitter } from 'events';
@@ -9,6 +10,7 @@ import { MCPConfig } from '../mcp/MCPService';
 import { MCPGuardConfig } from '../mcp/MCPGuard';
 import { webUIStorage } from '../storage/webUIStorage';
 import { checkBotEnvOverrides } from '../utils/envUtils';
+import { HivemindError, ErrorUtils, AppError } from '../types/errors';
 
 const debug = Debug('app:BotManager');
 
@@ -20,7 +22,7 @@ export interface BotInstance {
   isActive: boolean;
   createdAt: string;
   lastModified: string;
-  config: any;
+  config: Record<string, unknown>;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: MCPConfig[];
@@ -97,13 +99,18 @@ export class BotManager extends EventEmitter {
         const data = fs.readFileSync(this.botsFilePath, 'utf8');
         const bots = JSON.parse(data);
         this.customBots.clear();
-        Object.entries(bots).forEach(([id, bot]: [string, any]) => {
-          this.customBots.set(id, bot);
+        Object.entries(bots).forEach(([id, bot]: [string, unknown]) => {
+          // Type guard to ensure the unknown value matches BotInstance interface
+          if (this.isValidBotInstance(bot)) {
+            this.customBots.set(id, bot);
+          } else {
+            debug(`Invalid bot instance found for ID ${id}, skipping`);
+          }
         });
         debug(`Loaded ${this.customBots.size} custom bots`);
       }
-    } catch (error) {
-      debug('Error loading custom bots:', error);
+    } catch (error: HivemindError) {
+      debug('Error loading custom bots:', ErrorUtils.getMessage(error));
     }
   }
 
@@ -120,9 +127,9 @@ export class BotManager extends EventEmitter {
       const bots = Object.fromEntries(this.customBots);
       fs.writeFileSync(this.botsFilePath, JSON.stringify(bots, null, 2));
       debug(`Saved ${this.customBots.size} custom bots`);
-    } catch (error) {
-      debug('Error saving custom bots:', error);
-      throw new Error('Failed to save custom bots');
+    } catch (error: HivemindError) {
+      debug('Error saving custom bots:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError('Failed to save custom bots', 'configuration');
     }
   }
 
@@ -162,9 +169,9 @@ export class BotManager extends EventEmitter {
 
       debug(`Retrieved ${botInstances.length} bot instances`);
       return botInstances;
-    } catch (error) {
-      debug('Error getting all bots:', error);
-      throw new Error('Failed to retrieve bot instances');
+    } catch (error: HivemindError) {
+      debug('Error getting all bots:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError('Failed to retrieve bot instances', 'configuration');
     }
   }
 
@@ -191,9 +198,9 @@ export class BotManager extends EventEmitter {
       }
 
       return bot || null;
-    } catch (error) {
-      debug('Error getting bot:', error);
-      throw new Error('Failed to retrieve bot instance');
+    } catch (error: HivemindError) {
+      debug('Error getting bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
     }
   }
 
@@ -236,10 +243,36 @@ export class BotManager extends EventEmitter {
       this.emit('botCreated', botInstance);
 
       return botInstance;
-    } catch (error: any) {
-      debug('Error creating bot:', error);
-      throw new Error(`Failed to create bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error creating bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
+  }
+
+  /**
+   * Type guard to validate BotInstance
+   */
+  private isValidBotInstance(obj: unknown): obj is BotInstance {
+    if (!obj || typeof obj !== 'object') {
+      return false;
+    }
+
+    const bot = obj as Record<string, unknown>;
+
+    return (
+      typeof bot.id === 'string' &&
+      typeof bot.name === 'string' &&
+      typeof bot.messageProvider === 'string' &&
+      typeof bot.llmProvider === 'string' &&
+      typeof bot.isActive === 'boolean' &&
+      typeof bot.createdAt === 'string' &&
+      typeof bot.lastModified === 'string' &&
+      typeof bot.config === 'object' &&
+      bot.config !== null
+    );
   }
 
   /**
@@ -255,9 +288,9 @@ export class BotManager extends EventEmitter {
       // Create clone request
       const cloneRequest: CreateBotRequest = {
         name: newName,
-        messageProvider: sourceBot.messageProvider as any,
-        llmProvider: sourceBot.llmProvider as any,
-        config: sourceBot.config,
+        messageProvider: sourceBot.messageProvider as 'discord' | 'slack' | 'mattermost',
+        llmProvider: sourceBot.llmProvider as 'openai' | 'flowise' | 'openwebui',
+        config: sourceBot.config as CreateBotRequest['config'],
         persona: sourceBot.persona,
         systemInstruction: sourceBot.systemInstruction,
         mcpServers: sourceBot.mcpServers,
@@ -272,9 +305,12 @@ export class BotManager extends EventEmitter {
       this.emit('botCloned', { sourceBot, clonedBot });
 
       return clonedBot;
-    } catch (error: any) {
-      debug('Error cloning bot:', error);
-      throw new Error(`Failed to clone bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error cloning bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to clone bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
   }
 
@@ -319,9 +355,12 @@ export class BotManager extends EventEmitter {
       this.emit('botUpdated', updatedBot);
 
       return updatedBot;
-    } catch (error: any) {
-      debug('Error updating bot:', error);
-      throw new Error(`Failed to update bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error updating bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to update bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
   }
 
@@ -347,9 +386,12 @@ export class BotManager extends EventEmitter {
       this.emit('botDeleted', bot);
 
       return true;
-    } catch (error: any) {
-      debug('Error deleting bot:', error);
-      throw new Error(`Failed to delete bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error deleting bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to delete bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
   }
 
@@ -376,9 +418,12 @@ export class BotManager extends EventEmitter {
       this.emit('botStarted', updatedBot);
 
       return true;
-    } catch (error: any) {
-      debug('Error starting bot:', error);
-      throw new Error(`Failed to start bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error starting bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
   }
 
@@ -399,28 +444,30 @@ export class BotManager extends EventEmitter {
 
       // Implement actual bot shutdown logic
       // Stop any active connections or services associated with this bot
-      if ((bot as any).services && Array.isArray((bot as any).services)) {
-        for (const service of (bot as any).services) {
+      const botWithServices = bot as BotInstance & { services?: Array<{ stop?: () => Promise<void> }> };
+      if (botWithServices.services && Array.isArray(botWithServices.services)) {
+        for (const service of botWithServices.services) {
           if (service && typeof service.stop === 'function') {
             try {
               await service.stop();
               debug(`Stopped service for bot: ${bot.name} (${botId})`);
-            } catch (serviceError) {
-              debug(`Error stopping service for bot ${bot.name}:`, serviceError);
+            } catch (serviceError: HivemindError) {
+              debug(`Error stopping service for bot ${bot.name}:`, ErrorUtils.getMessage(serviceError));
             }
           }
         }
       }
 
       // Close any active connections
-      if ((bot as any).connections && Array.isArray((bot as any).connections)) {
-        for (const connection of (bot as any).connections) {
+      const botWithConnections = bot as BotInstance & { connections?: Array<{ close?: () => Promise<void> }> };
+      if (botWithConnections.connections && Array.isArray(botWithConnections.connections)) {
+        for (const connection of botWithConnections.connections) {
           if (connection && typeof connection.close === 'function') {
             try {
               await connection.close();
               debug(`Closed connection for bot: ${bot.name} (${botId})`);
-            } catch (connectionError) {
-              debug(`Error closing connection for bot ${bot.name}:`, connectionError);
+            } catch (connectionError: HivemindError) {
+              debug(`Error closing connection for bot ${bot.name}:`, ErrorUtils.getMessage(connectionError));
             }
           }
         }
@@ -432,9 +479,12 @@ export class BotManager extends EventEmitter {
       this.emit('botStopped', updatedBot);
 
       return true;
-    } catch (error: any) {
-      debug('Error stopping bot:', error);
-      throw new Error(`Failed to stop bot: ${error.message}`);
+    } catch (error: HivemindError) {
+      debug('Error stopping bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
     }
   }
 
@@ -460,50 +510,62 @@ export class BotManager extends EventEmitter {
   /**
    * Validate bot configuration
    */
-  private validateBotConfig(config: any): void {
+  private validateBotConfig(config: Record<string, unknown>): void {
     // Validate message provider specific config
-    if (config.discord) {
-      if (!config.discord.token) {
+    if (config.discord && typeof config.discord === 'object') {
+      const discordConfig = config.discord as Record<string, unknown>;
+      if (!discordConfig.token || typeof discordConfig.token !== 'string') {
         throw new Error('Discord bot token is required');
       }
     }
 
-    if (config.slack) {
-      if (!config.slack.botToken) {
+    if (config.slack && typeof config.slack === 'object') {
+      const slackConfig = config.slack as Record<string, unknown>;
+      if (!slackConfig.botToken || typeof slackConfig.botToken !== 'string') {
         throw new Error('Slack bot token is required');
       }
-      if (!config.slack.signingSecret) {
+      if (!slackConfig.signingSecret || typeof slackConfig.signingSecret !== 'string') {
         throw new Error('Slack signing secret is required');
       }
     }
 
-    if (config.mattermost) {
-      if (!config.mattermost.serverUrl) {
+    if (config.mattermost && typeof config.mattermost === 'object') {
+      const mattermostConfig = config.mattermost as Record<string, unknown>;
+      if (!mattermostConfig.serverUrl || typeof mattermostConfig.serverUrl !== 'string') {
         throw new Error('Mattermost server URL is required');
       }
-      if (!config.mattermost.token) {
+      if (!mattermostConfig.token || typeof mattermostConfig.token !== 'string') {
         throw new Error('Mattermost token is required');
       }
     }
 
     // Validate LLM provider specific config
-    if (config.openai && !config.openai.apiKey) {
-      throw new Error('OpenAI API key is required');
+    if (config.openai && typeof config.openai === 'object') {
+      const openaiConfig = config.openai as Record<string, unknown>;
+      if (!openaiConfig.apiKey || typeof openaiConfig.apiKey !== 'string') {
+        throw new Error('OpenAI API key is required');
+      }
     }
 
-    if (config.flowise && !config.flowise.apiKey) {
-      throw new Error('Flowise API key is required');
+    if (config.flowise && typeof config.flowise === 'object') {
+      const flowiseConfig = config.flowise as Record<string, unknown>;
+      if (!flowiseConfig.apiKey || typeof flowiseConfig.apiKey !== 'string') {
+        throw new Error('Flowise API key is required');
+      }
     }
 
-    if (config.openwebui && !config.openwebui.apiKey) {
-      throw new Error('OpenWebUI API key is required');
+    if (config.openwebui && typeof config.openwebui === 'object') {
+      const openwebuiConfig = config.openwebui as Record<string, unknown>;
+      if (!openwebuiConfig.apiKey || typeof openwebuiConfig.apiKey !== 'string') {
+        throw new Error('OpenWebUI API key is required');
+      }
     }
   }
 
   /**
    * Store sensitive configuration securely
    */
-  private async storeSecureConfig(botId: string, config: any): Promise<void> {
+  private async storeSecureConfig(botId: string, config: Record<string, unknown>): Promise<void> {
     const secureConfigId = `bot_${botId}`;
     const secureData = {
       ...config,
@@ -516,39 +578,68 @@ export class BotManager extends EventEmitter {
       type: 'bot',
       data: secureData,
       createdAt: new Date().toISOString()
-    } as any);
+    } as Parameters<typeof this.secureConfigManager.storeConfig>[0]);
   }
 
   /**
    * Sanitize configuration by removing sensitive data
    */
-  private sanitizeConfig(config: any): any {
+  private sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...config };
 
-    // Remove sensitive fields
-    if (sanitized.discord?.token) {
-      sanitized.discord.token = '***';
+    // Remove sensitive fields with proper type checking
+    if (sanitized.discord && typeof sanitized.discord === 'object') {
+      const discordConfig = { ...sanitized.discord } as Record<string, unknown>;
+      if (discordConfig.token) {
+        discordConfig.token = '***';
+      }
+      sanitized.discord = discordConfig;
     }
-    if (sanitized.slack?.botToken) {
-      sanitized.slack.botToken = '***';
+
+    if (sanitized.slack && typeof sanitized.slack === 'object') {
+      const slackConfig = { ...sanitized.slack } as Record<string, unknown>;
+      if (slackConfig.botToken) {
+        slackConfig.botToken = '***';
+      }
+      if (slackConfig.signingSecret) {
+        slackConfig.signingSecret = '***';
+      }
+      if (slackConfig.appToken) {
+        slackConfig.appToken = '***';
+      }
+      sanitized.slack = slackConfig;
     }
-    if (sanitized.slack?.signingSecret) {
-      sanitized.slack.signingSecret = '***';
+
+    if (sanitized.mattermost && typeof sanitized.mattermost === 'object') {
+      const mattermostConfig = { ...sanitized.mattermost } as Record<string, unknown>;
+      if (mattermostConfig.token) {
+        mattermostConfig.token = '***';
+      }
+      sanitized.mattermost = mattermostConfig;
     }
-    if (sanitized.slack?.appToken) {
-      sanitized.slack.appToken = '***';
+
+    if (sanitized.openai && typeof sanitized.openai === 'object') {
+      const openaiConfig = { ...sanitized.openai } as Record<string, unknown>;
+      if (openaiConfig.apiKey) {
+        openaiConfig.apiKey = '***';
+      }
+      sanitized.openai = openaiConfig;
     }
-    if (sanitized.mattermost?.token) {
-      sanitized.mattermost.token = '***';
+
+    if (sanitized.flowise && typeof sanitized.flowise === 'object') {
+      const flowiseConfig = { ...sanitized.flowise } as Record<string, unknown>;
+      if (flowiseConfig.apiKey) {
+        flowiseConfig.apiKey = '***';
+      }
+      sanitized.flowise = flowiseConfig;
     }
-    if (sanitized.openai?.apiKey) {
-      sanitized.openai.apiKey = '***';
-    }
-    if (sanitized.flowise?.apiKey) {
-      sanitized.flowise.apiKey = '***';
-    }
-    if (sanitized.openwebui?.apiKey) {
-      sanitized.openwebui.apiKey = '***';
+
+    if (sanitized.openwebui && typeof sanitized.openwebui === 'object') {
+      const openwebuiConfig = { ...sanitized.openwebui } as Record<string, unknown>;
+      if (openwebuiConfig.apiKey) {
+        openwebuiConfig.apiKey = '***';
+      }
+      sanitized.openwebui = openwebuiConfig;
     }
 
     return sanitized;
@@ -562,7 +653,7 @@ export class BotManager extends EventEmitter {
       debug('Starting all configured bots...');
       
       const allBots = await Promise.resolve(this.getAllBots());
-      const startPromises = allBots.map(async (bot: any) => {
+      const startPromises = allBots.map(async (bot: BotInstance) => {
         try {
           if (bot.isActive) {
             await this.startBotById(bot.id);
@@ -570,8 +661,8 @@ export class BotManager extends EventEmitter {
           } else {
             debug(`Skipping inactive bot: ${bot.name}`);
           }
-        } catch (error) {
-          debug(`Failed to start bot ${bot.name}:`, error);
+        } catch (error: HivemindError) {
+          debug(`Failed to start bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
       });
@@ -583,8 +674,8 @@ export class BotManager extends EventEmitter {
       
       this.emit('allBotsStarted', { total: allBots.length, running: runningBots });
       
-    } catch (error) {
-      debug('Error starting all bots:', error);
+    } catch (error: HivemindError) {
+      debug('Error starting all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -601,8 +692,8 @@ export class BotManager extends EventEmitter {
         try {
           await this.stopBotById(bot.id);
           debug(`Stopped bot: ${bot.name}`);
-        } catch (error) {
-          debug(`Failed to stop bot ${bot.name}:`, error);
+        } catch (error: HivemindError) {
+          debug(`Failed to stop bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
       });
@@ -612,8 +703,8 @@ export class BotManager extends EventEmitter {
       debug('All bots stopped');
       this.emit('allBotsStopped');
       
-    } catch (error) {
-      debug('Error stopping all bots:', error);
+    } catch (error: HivemindError) {
+      debug('Error stopping all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -644,8 +735,8 @@ export class BotManager extends EventEmitter {
       debug(`Bot ${bot.name} started successfully`);
       this.emit('botStarted', { botId, name: bot.name });
       
-    } catch (error) {
-      debug(`Failed to start bot ${botId}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Failed to start bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
       throw error;
     }
@@ -677,8 +768,8 @@ export class BotManager extends EventEmitter {
       debug(`Bot ${bot.name} stopped successfully`);
       this.emit('botStopped', { botId, name: bot.name });
       
-    } catch (error) {
-      debug(`Failed to stop bot ${botId}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Failed to stop bot ${botId}:`, ErrorUtils.getMessage(error));
       this.emit('botError', { botId, error });
       throw error;
     }
@@ -701,8 +792,8 @@ export class BotManager extends EventEmitter {
       debug(`Bot ${botId} restarted successfully`);
       this.emit('botRestarted', { botId });
       
-    } catch (error) {
-      debug(`Failed to restart bot ${botId}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Failed to restart bot ${botId}:`, ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -717,22 +808,22 @@ export class BotManager extends EventEmitter {
       
       switch (bot.messageProvider.toLowerCase()) {
         case 'discord':
-          await this.initializeDiscordBot(bot, secureConfig?.data);
+          await this.initializeDiscordBot(bot, secureConfig?.data || {});
           break;
         case 'slack':
-          await this.initializeSlackBot(bot, secureConfig?.data);
+          await this.initializeSlackBot(bot, secureConfig?.data || {});
           break;
         case 'mattermost':
-          await this.initializeMattermostBot(bot, secureConfig?.data);
+          await this.initializeMattermostBot(bot, secureConfig?.data || {});
           break;
         case 'telegram':
-          await this.initializeTelegramBot(bot, secureConfig?.data);
+          await this.initializeTelegramBot(bot, secureConfig?.data || {});
           break;
         default:
           throw new Error(`Unsupported message provider: ${bot.messageProvider}`);
       }
-    } catch (error) {
-      debug(`Error initializing bot provider for ${bot.name}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Error initializing bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -758,8 +849,8 @@ export class BotManager extends EventEmitter {
         default:
           debug(`Unknown message provider for shutdown: ${bot.messageProvider}`);
       }
-    } catch (error) {
-      debug(`Error shutting down bot provider for ${bot.name}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Error shutting down bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -767,25 +858,27 @@ export class BotManager extends EventEmitter {
   /**
    * Initialize Discord bot
    */
-  private async initializeDiscordBot(bot: BotInstance, secureConfig: any): Promise<void> {
+  private async initializeDiscordBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
     debug(`Initializing Discord bot: ${bot.name}`);
-    
-    if (!secureConfig?.discord?.token) {
+
+    const discordConfig = secureConfig?.discord as Record<string, unknown>;
+    if (!discordConfig?.token || typeof discordConfig.token !== 'string') {
       throw new Error('Discord token not found in secure configuration');
     }
 
     // Here you would initialize the Discord service with the bot's configuration
     // This is a placeholder - actual implementation would use DiscordService
-    debug(`Discord bot ${bot.name} initialized with token: ${secureConfig.discord.token.substring(0, 10)}...`);
+    debug(`Discord bot ${bot.name} initialized with token: ${discordConfig.token.substring(0, 10)}...`);
   }
 
   /**
    * Initialize Slack bot
    */
-  private async initializeSlackBot(bot: BotInstance, secureConfig: any): Promise<void> {
+  private async initializeSlackBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
     debug(`Initializing Slack bot: ${bot.name}`);
-    
-    if (!secureConfig?.slack?.botToken) {
+
+    const slackConfig = secureConfig?.slack as Record<string, unknown>;
+    if (!slackConfig?.botToken || typeof slackConfig.botToken !== 'string') {
       throw new Error('Slack bot token not found in secure configuration');
     }
 
@@ -796,10 +889,11 @@ export class BotManager extends EventEmitter {
   /**
    * Initialize Mattermost bot
    */
-  private async initializeMattermostBot(bot: BotInstance, secureConfig: any): Promise<void> {
+  private async initializeMattermostBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
     debug(`Initializing Mattermost bot: ${bot.name}`);
-    
-    if (!secureConfig?.mattermost?.token) {
+
+    const mattermostConfig = secureConfig?.mattermost as Record<string, unknown>;
+    if (!mattermostConfig?.token || typeof mattermostConfig.token !== 'string') {
       throw new Error('Mattermost token not found in secure configuration');
     }
 
@@ -810,10 +904,11 @@ export class BotManager extends EventEmitter {
   /**
    * Initialize Telegram bot
    */
-  private async initializeTelegramBot(bot: BotInstance, secureConfig: any): Promise<void> {
+  private async initializeTelegramBot(bot: BotInstance, secureConfig: Record<string, unknown>): Promise<void> {
     debug(`Initializing Telegram bot: ${bot.name}`);
-    
-    if (!secureConfig?.telegram?.token) {
+
+    const telegramConfig = secureConfig?.telegram as Record<string, unknown>;
+    if (!telegramConfig?.token || typeof telegramConfig.token !== 'string') {
       throw new Error('Telegram token not found in secure configuration');
     }
 
@@ -939,9 +1034,9 @@ export class BotManager extends EventEmitter {
             issues.push('Bot health check failed');
           }
         }
-      } catch (error) {
+      } catch (error: HivemindError) {
         status = 'unhealthy';
-        issues.push(`Health check error: ${error}`);
+        issues.push(`Health check error: ${ErrorUtils.getMessage(error)}`);
       }
 
       return {
@@ -982,29 +1077,35 @@ export class BotManager extends EventEmitter {
         default:
           return true; // Unknown provider, assume healthy
       }
-    } catch (error) {
-      debug(`Health check failed for bot ${bot.name}:`, error);
+    } catch (error: HivemindError) {
+      debug(`Health check failed for bot ${bot.name}:`, ErrorUtils.getMessage(error));
       return false;
     }
   }
 
-  private async checkDiscordBotHealth(bot: BotInstance, config: any): Promise<boolean> {
+  private async checkDiscordBotHealth(bot: BotInstance, config: Record<string, unknown>): Promise<boolean> {
     // Discord-specific health check
-    return config?.discord?.token ? true : false;
+    const discordConfig = config?.discord as Record<string, unknown>;
+    return !!(discordConfig?.token && typeof discordConfig.token === 'string');
   }
 
-  private async checkSlackBotHealth(bot: BotInstance, config: any): Promise<boolean> {
+  private async checkSlackBotHealth(bot: BotInstance, config: Record<string, unknown>): Promise<boolean> {
     // Slack-specific health check
-    return config?.slack?.botToken ? true : false;
+    const slackConfig = config?.slack as Record<string, unknown>;
+    return !!(slackConfig?.botToken && typeof slackConfig.botToken === 'string');
   }
 
-  private async checkMattermostBotHealth(bot: BotInstance, config: any): Promise<boolean> {
+  private async checkMattermostBotHealth(bot: BotInstance, config: Record<string, unknown>): Promise<boolean> {
     // Mattermost-specific health check
-    return config?.mattermost?.token && config?.mattermost?.serverUrl ? true : false;
+    const mattermostConfig = config?.mattermost as Record<string, unknown>;
+    const hasToken = !!(mattermostConfig?.token && typeof mattermostConfig.token === 'string');
+    const hasServerUrl = !!(mattermostConfig?.serverUrl && typeof mattermostConfig.serverUrl === 'string');
+    return hasToken && hasServerUrl;
   }
 
-  private async checkTelegramBotHealth(bot: BotInstance, config: any): Promise<boolean> {
+  private async checkTelegramBotHealth(bot: BotInstance, config: Record<string, unknown>): Promise<boolean> {
     // Telegram-specific health check
-    return config?.telegram?.token ? true : false;
+    const telegramConfig = config?.telegram as Record<string, unknown>;
+    return !!(telegramConfig?.token && typeof telegramConfig.token === 'string');
   }
 }

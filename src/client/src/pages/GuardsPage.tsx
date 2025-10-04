@@ -14,7 +14,6 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { setGuardsConfig } from '../store/slices/configSlice';
 import { Radio } from '../components/DaisyUI';
 
 interface GuardsConfig {
@@ -97,7 +96,7 @@ const GuardsPage: React.FC = () => {
         throw new Error('Failed to save guards configuration');
       }
 
-      dispatch(setGuardsConfig(formData));
+      // dispatch(setGuardsConfig(formData)); // TODO: Implement guards config state management
       setSnackbar({ open: true, message: 'Guards configuration saved successfully', severity: 'success' });
     } catch (error) {
       setSnackbar({

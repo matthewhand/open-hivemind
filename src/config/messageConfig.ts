@@ -314,6 +314,84 @@ const messageConfig = convict({
     default: false,
     env: 'MESSAGE_LLM_FOLLOW_UP'
   },
+  MESSAGE_FOLLOW_UP_ENABLED: {
+    doc: 'Enable message follow-up functionality',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_FOLLOW_UP_ENABLED'
+  },
+  MESSAGE_LLM_CHAT: {
+    doc: 'Enable LLM chat functionality',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_LLM_CHAT'
+  },
+  MESSAGE_LLM_COMPLETE_SENTENCE: {
+    doc: 'Enable LLM sentence completion',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_LLM_COMPLETE_SENTENCE'
+  },
+  MESSAGE_LLM_SUMMARISE: {
+    doc: 'Enable LLM summarization',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_LLM_SUMMARISE'
+  },
+  MESSAGE_COMMAND_SLASH: {
+    doc: 'Enable slash command processing',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_COMMAND_SLASH'
+  },
+  MESSAGE_WEBHOOK_ENABLED: {
+    doc: 'Enable webhook functionality',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_WEBHOOK_ENABLED'
+  },
+  MESSAGE_MENTION_BONUS: {
+    doc: 'Bonus for mentions',
+    format: Number,
+    default: 0.1,
+    env: 'MESSAGE_MENTION_BONUS'
+  },
+  MESSAGE_FILTER_BY_USER: {
+    doc: 'Filter messages by user',
+    format: String,
+    default: '',
+    env: 'MESSAGE_FILTER_BY_USER'
+  },
+  MESSAGE_HISTORY_LIMIT: {
+    doc: 'Limit for message history',
+    format: 'int',
+    default: 10,
+    env: 'MESSAGE_HISTORY_LIMIT'
+  },
+  MESSAGE_DECAY_RATE: {
+    doc: 'Decay rate for message processing',
+    format: Number,
+    default: 0.001,
+    env: 'MESSAGE_DECAY_RATE'
+  },
+  MESSAGE_CALM_WINDOW: {
+    doc: 'Calm window for message processing (ms)',
+    format: 'int',
+    default: 300000,
+    env: 'MESSAGE_CALM_WINDOW'
+  },
+  PLATFORM: {
+    doc: 'Platform identifier',
+    format: String,
+    default: 'discord',
+    env: 'PLATFORM'
+  },
+  NAME: {
+    doc: 'Application name',
+    format: String,
+    default: 'Open-Hivemind',
+    env: 'NAME'
+  },
   BOT_ID: {
     doc: 'Bot identifier',
     format: String,

@@ -1,10 +1,28 @@
 import { Server } from 'http';
-import app from '../src/index';
+import express from 'express';
+import { WebSocketService } from '../src/server/services/WebSocketService';
+import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
 
 let server: Server;
 
 beforeAll((done) => {
+  // Create a minimal Express app for tests that don't require the full application
+ const app = express();
   const port = 3028;
+  
+  // Mock services to prevent interval timers from starting
+  const wsService = WebSocketService.getInstance();
+  // Override the initialize method to prevent setInterval from being called
+  wsService.initialize = jest.fn();
+
+  // Mock setupEventHandlers on the prototype before instantiation to prevent setInterval
+  const originalSetupEventHandlers = RealTimeValidationService.prototype.setupEventHandlers;
+  RealTimeValidationService.prototype.setupEventHandlers = jest.fn();
+
+  const validationService = RealTimeValidationService.getInstance();
+  // Restore the original method after instantiation
+  RealTimeValidationService.prototype.setupEventHandlers = originalSetupEventHandlers;
+  
   server = app.listen(port, () => {
     console.log(`Test server running on port ${port}`);
     done();

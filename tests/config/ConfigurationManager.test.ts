@@ -6,6 +6,7 @@ jest.mock('debug', () => {
 });
 
 import { ConfigurationManager } from '../../src/config/ConfigurationManager';
+import { ValidationError } from '../../src/types/errorClasses';
 
 
 describe('ConfigurationManager', () => {
@@ -57,13 +58,13 @@ describe('ConfigurationManager', () => {
         expect(result).toBeNull();
       });
 
-      it('should throw TypeError for non-string config name', () => {
-        expect(() => configManager.getConfig(null as any)).toThrow(TypeError);
-        expect(() => configManager.getConfig(undefined as any)).toThrow(TypeError);
-        expect(() => configManager.getConfig(123 as any)).toThrow(TypeError);
-        expect(() => configManager.getConfig({} as any)).toThrow(TypeError);
-        expect(() => configManager.getConfig([] as any)).toThrow(TypeError);
-        expect(() => configManager.getConfig(true as any)).toThrow(TypeError);
+      it('should throw ValidationError for non-string config name', () => {
+        expect(() => configManager.getConfig(null as any)).toThrow(ValidationError);
+        expect(() => configManager.getConfig(undefined as any)).toThrow(ValidationError);
+        expect(() => configManager.getConfig(123 as any)).toThrow(ValidationError);
+        expect(() => configManager.getConfig({} as any)).toThrow(ValidationError);
+        expect(() => configManager.getConfig([] as any)).toThrow(ValidationError);
+        expect(() => configManager.getConfig(true as any)).toThrow(ValidationError);
       });
 
       it('should handle empty string config name', () => {
@@ -146,28 +147,28 @@ describe('ConfigurationManager', () => {
       });
 
       describe('Parameter validation', () => {
-        it('should throw TypeError for invalid integration parameter', () => {
-          expect(() => configManager.setSession(null as any, testChannel, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(undefined as any, testChannel, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(123 as any, testChannel, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession({} as any, testChannel, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession([] as any, testChannel, testSession)).toThrow(TypeError);
+        it('should throw ValidationError for invalid integration parameter', () => {
+          expect(() => configManager.setSession(null as any, testChannel, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(undefined as any, testChannel, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(123 as any, testChannel, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession({} as any, testChannel, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession([] as any, testChannel, testSession)).toThrow(ValidationError);
         });
 
-        it('should throw TypeError for invalid channelId parameter', () => {
-          expect(() => configManager.setSession(testIntegration, null as any, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, undefined as any, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, 123 as any, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, {} as any, testSession)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, [] as any, testSession)).toThrow(TypeError);
+        it('should throw ValidationError for invalid channelId parameter', () => {
+          expect(() => configManager.setSession(testIntegration, null as any, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, undefined as any, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, 123 as any, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, {} as any, testSession)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, [] as any, testSession)).toThrow(ValidationError);
         });
 
-        it('should throw TypeError for invalid sessionId parameter', () => {
-          expect(() => configManager.setSession(testIntegration, testChannel, null as any)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, testChannel, undefined as any)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, testChannel, 123 as any)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, testChannel, {} as any)).toThrow(TypeError);
-          expect(() => configManager.setSession(testIntegration, testChannel, [] as any)).toThrow(TypeError);
+        it('should throw ValidationError for invalid sessionId parameter', () => {
+          expect(() => configManager.setSession(testIntegration, testChannel, null as any)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, testChannel, undefined as any)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, testChannel, 123 as any)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, testChannel, {} as any)).toThrow(ValidationError);
+          expect(() => configManager.setSession(testIntegration, testChannel, [] as any)).toThrow(ValidationError);
         });
 
         it('should accept empty strings as valid parameters', () => {

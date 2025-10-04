@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   // Core UI Components
   Accordion,
@@ -17,30 +17,35 @@ import {
   Timeline,
   ToastNotification,
   VisualFeedback,
-  
+
   // Navigation Components
   DrawerNavigation,
   MobileDrawer,
   NavbarWithSearch,
   HamburgerMenu,
   Drawer,
-  
+
   // Form & Input Components
   FileUpload,
   Dropdown,
   RangeSlider,
-  
+
   // Utility Components
   Kbd,
   Tooltip,
   ProgressBar,
   Countdown,
   Mockup,
-  
+
   // Advanced Components
   AdvancedThemeSwitcher,
   DashboardWidgetSystem,
-  SettingsPage
+  SettingsPage,
+  ModelAutocomplete,
+
+  // Component Tracking
+  DaisyUIComponentTracker,
+  trackDaisyUIComponent
 } from '../components/DaisyUI';
 
 const DaisyUIShowcase: React.FC = () => {
@@ -49,6 +54,33 @@ const DaisyUIShowcase: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
   const [rangeValue, setRangeValue] = useState(50);
+  const [showTracker, setShowTracker] = useState(false);
+  const [openaiModel, setOpenaiModel] = useState('gpt-4');
+  const [ollamaModel, setOllamaModel] = useState('llama2');
+
+  // Track component usage when tabs are switched
+  useEffect(() => {
+    trackDaisyUIComponent('tabs', '/pages/DaisyUIShowcase.tsx', 'Navigation between component categories');
+  }, [selectedTab]);
+
+  // Track page load
+  useEffect(() => {
+    trackDaisyUIComponent('page', '/pages/DaisyUIShowcase.tsx', 'DaisyUI component showcase page loaded');
+  }, []);
+
+  // Track modal usage
+  useEffect(() => {
+    if (modalOpen) {
+      trackDaisyUIComponent('modal', '/pages/DaisyUIShowcase.tsx', 'Demo modal for DaisyUI showcase');
+    }
+  }, [modalOpen]);
+
+  // Track toast notifications
+  useEffect(() => {
+    if (toastMessage) {
+      trackDaisyUIComponent('toast', '/pages/DaisyUIShowcase.tsx', 'Success notification demonstration');
+    }
+  }, [toastMessage]);
   
   // Sample data for components
   const sampleBots = [
@@ -109,11 +141,17 @@ const DaisyUIShowcase: React.FC = () => {
         >
           Utilities
         </a>
-        <a 
+        <a
           className={`tab ${selectedTab === 'advanced' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('advanced')}
         >
           Advanced
+        </a>
+        <a
+          className={`tab ${selectedTab === 'tracking' ? 'tab-active' : ''}`}
+          onClick={() => setSelectedTab('tracking')}
+        >
+          📊 Tracking
         </a>
       </div>
 
@@ -127,7 +165,7 @@ const DaisyUIShowcase: React.FC = () => {
             {/* Stats Cards */}
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Stats Cards</h3>
-              <StatsCards 
+              <StatsCards
                 stats={[
                   { title: 'Total Bots', value: '3', icon: '🤖', trend: '+12%' },
                   { title: 'Messages Today', value: '1,234', icon: '💬', trend: '+5%' },
@@ -135,6 +173,7 @@ const DaisyUIShowcase: React.FC = () => {
                   { title: 'Uptime', value: '99.9%', icon: '⚡', trend: '0%' }
                 ]}
               />
+              {trackDaisyUIComponent('stats', '/pages/DaisyUIShowcase.tsx', 'Statistics cards displaying bot metrics')}
             </section>
 
             {/* Avatars */}
@@ -198,7 +237,7 @@ const DaisyUIShowcase: React.FC = () => {
             {/* Data Table */}
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Data Table</h3>
-              <DataTable 
+              <DataTable
                 data={sampleBots}
                 columns={[
                   { key: 'name', header: 'Bot Name' },
@@ -209,6 +248,7 @@ const DaisyUIShowcase: React.FC = () => {
                 ]}
                 className="w-full"
               />
+              {trackDaisyUIComponent('datatable', '/pages/DaisyUIShowcase.tsx', 'Bot management data table')}
             </section>
 
             {/* Loading States */}
@@ -240,10 +280,11 @@ const DaisyUIShowcase: React.FC = () => {
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Chat Component</h3>
               <div className="max-w-md mx-auto">
-                <Chat 
+                <Chat
                   messages={chatMessages}
                   onSendMessage={(message) => console.log('Sent:', message)}
                 />
+                {trackDaisyUIComponent('chat', '/pages/DaisyUIShowcase.tsx', 'AI chat interface demonstration')}
               </div>
             </section>
 
@@ -324,7 +365,7 @@ const DaisyUIShowcase: React.FC = () => {
             {/* Navbar */}
             <section className="mb-8">
               <h3 className="text-xl font-semibold mb-4">Navbar with Search</h3>
-              <NavbarWithSearch 
+              <NavbarWithSearch
                 title="Open Hivemind"
                 onSearch={(query) => console.log('Search:', query)}
                 rightActions={
@@ -334,6 +375,7 @@ const DaisyUIShowcase: React.FC = () => {
                   </div>
                 }
               />
+              {trackDaisyUIComponent('navbar', '/pages/DaisyUIShowcase.tsx', 'Navigation bar with search functionality')}
             </section>
 
             {/* Hamburger Menu */}
@@ -471,6 +513,47 @@ const DaisyUIShowcase: React.FC = () => {
                 trigger={<Button variant="primary">Add Bot</Button>}
               />
             </section>
+
+            {/* Model Autocomplete */}
+            <section className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Model Autocomplete</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="card bg-base-200 p-4">
+                  <h4 className="font-semibold mb-2">OpenAI Models</h4>
+                  <ModelAutocomplete
+                    value={openaiModel}
+                    onChange={setOpenaiModel}
+                    providerType="openai"
+                    placeholder="Enter OpenAI API key to load models..."
+                    label="OpenAI Model Selection"
+                    apiKey=""
+                  />
+                </div>
+
+                <div className="card bg-base-200 p-4">
+                  <h4 className="font-semibold mb-2">Ollama Models</h4>
+                  <ModelAutocomplete
+                    value={ollamaModel}
+                    onChange={setOllamaModel}
+                    providerType="ollama"
+                    placeholder="Enter Ollama endpoint to load models..."
+                    label="Ollama Model Selection"
+                    baseUrl="http://localhost:11434"
+                  />
+                </div>
+              </div>
+
+              <div className="alert alert-info mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                  <h3 className="font-bold">Dynamic Model Loading</h3>
+                  <div className="text-sm">Enter API keys to dynamically load available models. Features include autocomplete, validation warnings, and support for third-party providers with custom endpoints.</div>
+                </div>
+              </div>
+            </section>
+            {trackDaisyUIComponent('model-autocomplete', '/pages/DaisyUIShowcase.tsx', 'Dynamic model selection with autocomplete and validation')}
           </div>
         )}
 
@@ -693,6 +776,112 @@ const DaisyUIShowcase: React.FC = () => {
                 onSettingsChange={(settings) => console.log('Settings changed:', settings)}
               />
             </section>
+          </div>
+        )}
+
+        {/* Component Tracking Tab */}
+        {selectedTab === 'tracking' && (
+          <div className="space-y-8">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Component Usage Tracking</h2>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowTracker(!showTracker)}
+                >
+                  {showTracker ? 'Hide Dashboard' : 'Show Dashboard'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Data
+                </Button>
+              </div>
+            </div>
+
+            <div className="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div>
+                <h3 className="font-bold">Component Usage Tracking</h3>
+                <div className="text-sm">This dashboard tracks which DaisyUI components have been used throughout the application, including their location and purpose. Use this to identify unused components and track implementation progress.</div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="stat bg-base-200 rounded-lg">
+                <div className="stat-title">Total Components</div>
+                <div className="stat-value text-primary">30+</div>
+                <div className="stat-desc">Available in DaisyUI</div>
+              </div>
+              <div className="stat bg-base-200 rounded-lg">
+                <div className="stat-title">Showcase Uses</div>
+                <div className="stat-value text-success">20</div>
+                <div className="stat-desc">In this showcase</div>
+              </div>
+              <div className="stat bg-base-200 rounded-lg">
+                <div className="stat-title">Categories</div>
+                <div className="stat-value text-info">5</div>
+                <div className="stat-desc">Component types</div>
+              </div>
+              <div className="stat bg-base-200 rounded-lg">
+                <div className="stat-title">Real-time</div>
+                <div className="stat-value text-secondary">✓</div>
+                <div className="stat-desc">Tracking active</div>
+              </div>
+            </div>
+
+            {/* Component Tracker Dashboard */}
+            {showTracker && (
+              <div className="mb-8">
+                <DaisyUIComponentTracker
+                  isOpen={showTracker}
+                  onClose={() => setShowTracker(false)}
+                />
+              </div>
+            )}
+
+            {/* Usage Instructions */}
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="card-title">How to Use Component Tracking</h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-lg mb-2">📊 Tracking Overview</h4>
+                    <p className="text-sm text-base-content/80">
+                      The component tracker automatically monitors which DaisyUI components are used throughout your application.
+                      It tracks the component name, file location, and usage purpose to provide comprehensive analytics.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-lg mb-2">🔍 Key Features</h4>
+                    <ul className="list-disc list-inside text-sm text-base-content/80 space-y-1">
+                      <li><strong>Real-time Statistics:</strong> Live updates of component usage as you navigate</li>
+                      <li><strong>Categorized Tracking:</strong> Components organized by type (Core, Navigation, Forms, etc.)</li>
+                      <li><strong>Usage Analytics:</strong> Track how often each component is used</li>
+                      <li><strong>File Location:</strong> See exactly where each component is implemented</li>
+                      <li><strong>Purpose Documentation:</strong> Understand why each component was chosen</li>
+                      <li><strong>Unused Components:</strong> Identify components that haven't been used yet</li>
+                      <li><strong>Export Data:</strong> Download usage statistics for external analysis</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-lg mb-2">💡 Best Practices</h4>
+                    <ul className="list-disc list-inside text-sm text-base-content/80 space-y-1">
+                      <li>Use descriptive purposes when tracking components to maintain clear documentation</li>
+                      <li>Regularly check the unused components to discover new DaisyUI features</li>
+                      <li>Export tracking data to share component usage reports with your team</li>
+                      <li>Use the suggestions tab to find opportunities for UI enhancement</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

@@ -2,384 +2,444 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-  Select,
-  MenuItem,
+  Grid,
+  TextField,
+  IconButton,
+  Tooltip,
   FormControl,
   InputLabel,
-  Button,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
+  Search as SearchIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  AccessTime as TimeIcon,
+  OpenInNew as OpenInNewIcon,
   Refresh as RefreshIcon,
-  Timeline as TimelineIcon,
   Message as MessageIcon,
   Error as ErrorIcon,
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import { apiService } from '../services/api';
+import { Card, Button, Badge, Chip, LoadingSpinner } from '../components/DaisyUI';
 
-interface ActivityEvent {
+export interface ActivityEvent {
   id: string;
   timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
+  type: 'message' | 'command' | 'error' | 'system' | 'api_call';
+  severity: 'info' | 'warning' | 'error' | 'success';
+  source: string;
+  user?: string;
+  message: string;
+  details?: any;
 }
 
-interface ActivityMetrics {
-  totalMessages: number;
-  successRate: number;
-  averageResponseTime: number;
-  errorCount: number;
+export interface ActivityStats {
+  totalEvents: number;
+  eventsToday: number;
+  errorRate: number;
+  avgResponseTime: number;
+  topSources: { name: string; count: number }[];
 }
 
-const ActivityMonitor: React.FC = () => {
+interface ActivityMonitorProps {
+  showPopoutButton?: boolean;
+  compact?: boolean;
+  autoRefresh?: boolean;
+}
+
+const ActivityMonitor: React.FC<ActivityMonitorProps> = ({
+  showPopoutButton = false,
+  compact = false,
+  autoRefresh = true
+}) => {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
-  const [metrics, setMetrics] = useState<ActivityMetrics>({
-    totalMessages: 0,
-    successRate: 0,
-    averageResponseTime: 0,
-    errorCount: 0,
-  });
+  const [filteredEvents, setFilteredEvents] = useState<ActivityEvent[]>([]);
+  const [stats, setStats] = useState<ActivityStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedBot, setSelectedBot] = useState<string>('all');
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<string>('1h');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  const timeRanges = [
-    { value: '15m', label: 'Last 15 minutes' },
-    { value: '1h', label: 'Last hour' },
-    { value: '6h', label: 'Last 6 hours' },
-    { value: '24h', label: 'Last 24 hours' },
-    { value: '7d', label: 'Last 7 days' },
-  ];
-
-  const fetchActivity = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const params: Record<string, string> = {};
-      if (selectedBot !== 'all') params.bot = selectedBot;
-      if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
-
-      // Calculate time range
-      const now = new Date();
-      const from = new Date();
-      switch (timeRange) {
-        case '15m':
-          from.setMinutes(now.getMinutes() - 15);
-          break;
-        case '1h':
-          from.setHours(now.getHours() - 1);
-          break;
-        case '6h':
-          from.setHours(now.getHours() - 6);
-          break;
-        case '24h':
-          from.setHours(now.getHours() - 24);
-          break;
-        case '7d':
-          from.setDate(now.getDate() - 7);
-          break;
-        default:
-          from.setHours(now.getHours() - 1);
+  // Mock data generator
+  const generateMockData = () => {
+    const mockEvents: ActivityEvent[] = [
+      {
+        id: '1',
+        timestamp: new Date().toISOString(),
+        type: 'message',
+        severity: 'info',
+        source: 'Discord Bot #1',
+        user: 'user123',
+        message: 'Message processed successfully',
+        details: { channel: 'general', responseTime: 245 }
+      },
+      {
+        id: '2',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        type: 'command',
+        severity: 'success',
+        source: 'Telegram Bot',
+        user: 'admin',
+        message: 'Status command executed',
+        details: { executionTime: 120 }
+      },
+      {
+        id: '3',
+        timestamp: new Date(Date.now() - 600000).toISOString(),
+        type: 'error',
+        severity: 'error',
+        source: 'API Gateway',
+        message: 'Rate limit exceeded',
+        details: { endpoint: '/api/v1/messages', limit: 100 }
+      },
+      {
+        id: '4',
+        timestamp: new Date(Date.now() - 900000).toISOString(),
+        type: 'system',
+        severity: 'warning',
+        source: 'System Monitor',
+        message: 'High memory usage detected',
+        details: { usage: '87%', threshold: '80%' }
+      },
+      {
+        id: '5',
+        timestamp: new Date(Date.now() - 1200000).toISOString(),
+        type: 'api_call',
+        severity: 'info',
+        source: 'LLM Service',
+        user: 'bot456',
+        message: 'OpenAI API call completed',
+        details: { model: 'gpt-4', tokens: 150, cost: '$0.003' }
       }
+    ];
 
-      params.from = from.toISOString();
-      params.to = now.toISOString();
+    const mockStats: ActivityStats = {
+      totalEvents: 1247,
+      eventsToday: 89,
+      errorRate: 2.3,
+      avgResponseTime: 285,
+      topSources: [
+        { name: 'Discord Bot #1', count: 342 },
+        { name: 'Telegram Bot', count: 287 },
+        { name: 'API Gateway', count: 198 },
+        { name: 'LLM Service', count: 156 }
+      ]
+    };
 
-      const response = await apiService.getActivity(params);
+    return { events: mockEvents, stats: mockStats };
+  };
 
-      setEvents(response.events || []);
-
-      // Calculate metrics
-      const totalMessages = response.events.length;
-      const successCount = response.events.filter(e => e.status === 'success').length;
-      const errorCount = response.events.filter(e => e.status === 'error').length;
-      const totalProcessingTime = response.events.reduce((sum, e) => sum + (e.processingTime || 0), 0);
-      const averageResponseTime = totalMessages > 0 ? totalProcessingTime / totalMessages : 0;
-
-      setMetrics({
-        totalMessages,
-        successRate: totalMessages > 0 ? (successCount / totalMessages) * 100 : 0,
-        averageResponseTime,
-        errorCount,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch activity data');
-    } finally {
+  // Load data
+  const loadData = () => {
+    setLoading(true);
+    setTimeout(() => {
+      const { events: mockEvents, stats: mockStats } = generateMockData();
+      setEvents(mockEvents);
+      setStats(mockStats);
+      setLastRefresh(new Date());
       setLoading(false);
-    }
+    }, 500);
   };
 
+  // Auto-refresh
   useEffect(() => {
-    fetchActivity();
+    loadData();
 
-    // Set up polling for real-time updates
-    const interval = setInterval(fetchActivity, 30000); // Update every 30 seconds
+    if (autoRefresh) {
+      const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh]);
 
-    return () => clearInterval(interval);
-  }, [selectedBot, selectedProvider, timeRange]);
+  // Filter events
+  useEffect(() => {
+    let filtered = events;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'success';
-      case 'error':
-        return 'error';
-      case 'timeout':
-        return 'warning';
-      default:
-        return 'default';
+    if (searchTerm) {
+      filtered = filtered.filter(event =>
+        event.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.user?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(event => event.type === typeFilter);
+    }
+
+    if (severityFilter !== 'all') {
+      filtered = filtered.filter(event => event.severity === severityFilter);
+    }
+
+    setFilteredEvents(filtered);
+  }, [events, searchTerm, typeFilter, severityFilter]);
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      case 'success': return 'success';
+      default: return 'info';
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <MessageIcon />;
-      case 'error':
-        return <ErrorIcon />;
-      case 'timeout':
-        return <TimelineIcon />;
-      default:
-        return <MessageIcon />;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'message': return '💬';
+      case 'command': return '⚡';
+      case 'error': return '❌';
+      case 'system': return '⚙️';
+      case 'api_call': return '🔌';
+      default: return '📄';
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString();
   };
 
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(1)}s`;
+  const openPopout = () => {
+    const popoutWindow = window.open(
+      '/activity',
+      'activity-monitor',
+      'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+    );
+    if (popoutWindow) {
+      popoutWindow.focus();
+    }
   };
 
-  if (loading && events.length === 0) {
+  if (compact) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Activity Monitor</h3>
+          <div className="flex gap-2">
+            <Tooltip title="Refresh">
+              <IconButton onClick={loadData} size="small">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+            {showPopoutButton && (
+              <Tooltip title="Open in new window">
+                <IconButton onClick={openPopout} size="small">
+                  <OpenInNewIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center p-8">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {filteredEvents.slice(0, 5).map((event) => (
+              <div key={event.id} className="bg-base-100 rounded-lg p-3 border border-base-300">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">{getTypeIcon(event.type)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Chip size="sm" color={getSeverityColor(event.severity)}>
+                        {event.severity}
+                      </Chip>
+                      <span className="text-xs text-base-content/60">
+                        {formatTimestamp(event.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium truncate">{event.message}</p>
+                    <p className="text-xs text-base-content/60">
+                      {event.source} {event.user && `• ${event.user}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
-          <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Activity Monitor
-        </Typography>
-        <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchActivity}
-            disabled={loading}
-          >
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Activity Monitor</h2>
+          <p className="text-base-content/60">
+            Last updated: {lastRefresh.toLocaleTimeString()}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={loadData} variant="outline" size="sm">
+            <RefreshIcon className="w-4 h-4 mr-2" />
             Refresh
           </Button>
-        </Box>
-      </Box>
+          {showPopoutButton && (
+            <Button onClick={openPopout} variant="primary" size="sm">
+              <OpenInNewIcon className="w-4 h-4 mr-2" />
+              Popout
+            </Button>
+          )}
+        </div>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <div className="stat">
+              <div className="stat-title">Total Events</div>
+              <div className="stat-value text-2xl">{stats.totalEvents.toLocaleString()}</div>
+              <div className="stat-desc">All time activity</div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="stat">
+              <div className="stat-title">Events Today</div>
+              <div className="stat-value text-2xl text-success">{stats.eventsToday}</div>
+              <div className="stat-desc flex items-center">
+                <TrendingUpIcon className="w-4 h-4 mr-1" />
+                12% from yesterday
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="stat">
+              <div className="stat-title">Error Rate</div>
+              <div className="stat-value text-2xl text-error">{stats.errorRate}%</div>
+              <div className="stat-desc flex items-center">
+                <TrendingDownIcon className="w-4 h-4 mr-1" />
+                Down from last week
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="stat">
+              <div className="stat-title">Avg Response</div>
+              <div className="stat-value text-2xl">{stats.avgResponseTime}ms</div>
+              <div className="stat-desc flex items-center">
+                <TimeIcon className="w-4 h-4 mr-1" />
+                Good performance
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
 
-      {/* Metrics Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2, mb: 3 }}>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Total Messages
-            </Typography>
-            <Typography variant="h4">
-              {metrics.totalMessages}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Success Rate
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {metrics.successRate.toFixed(1)}%
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Avg Response Time
-            </Typography>
-            <Typography variant="h4">
-              {formatDuration(metrics.averageResponseTime)}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Errors
-            </Typography>
-            <Typography variant="h4" color="error.main">
-              {metrics.errorCount}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
       {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Filters
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Bot</InputLabel>
+      <Card className="mb-6">
+        <div className="card-body">
+          <h3 className="card-title">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <TextField
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon className="w-4 h-4 mr-2 text-base-content/60" />
+                ),
+              }}
+              className="w-full"
+            />
+
+            <FormControl className="w-full">
+              <InputLabel>Event Type</InputLabel>
               <Select
-                value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
-                label="Bot"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                label="Event Type"
               >
-                <MenuItem value="all">All Bots</MenuItem>
-                <MenuItem value="Bot1">Bot 1</MenuItem>
-                <MenuItem value="Bot2">Bot 2</MenuItem>
-                <MenuItem value="Bot3">Bot 3</MenuItem>
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="message">Messages</MenuItem>
+                <MenuItem value="command">Commands</MenuItem>
+                <MenuItem value="error">Errors</MenuItem>
+                <MenuItem value="system">System</MenuItem>
+                <MenuItem value="api_call">API Calls</MenuItem>
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Provider</InputLabel>
+            <FormControl className="w-full">
+              <InputLabel>Severity</InputLabel>
               <Select
-                value={selectedProvider}
-                onChange={(e) => setSelectedProvider(e.target.value)}
-                label="Provider"
+                value={severityFilter}
+                onChange={(e) => setSeverityFilter(e.target.value)}
+                label="Severity"
               >
-                <MenuItem value="all">All Providers</MenuItem>
-                <MenuItem value="discord">Discord</MenuItem>
-                <MenuItem value="slack">Slack</MenuItem>
-                <MenuItem value="mattermost">Mattermost</MenuItem>
+                <MenuItem value="all">All Severities</MenuItem>
+                <MenuItem value="info">Info</MenuItem>
+                <MenuItem value="success">Success</MenuItem>
+                <MenuItem value="warning">Warning</MenuItem>
+                <MenuItem value="error">Error</MenuItem>
               </Select>
             </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                label="Time Range"
-              >
-                {timeRanges.map((range) => (
-                  <MenuItem key={range.value} value={range.value}>
-                    {range.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </CardContent>
+          </div>
+        </div>
       </Card>
 
-      {/* Activity Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Time</TableCell>
-              <TableCell>Bot</TableCell>
-              <TableCell>Provider</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Response Time</TableCell>
-              <TableCell>Content Length</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {events.length > 0 ? (
-              events.map((event) => (
-                <TableRow key={event.id} hover>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {formatTime(event.timestamp)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
-                      {event.botName}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={event.provider}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {getStatusIcon(event.messageType)}
-                      <Typography variant="body2">
-                        {event.messageType}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={event.status}
-                      color={getStatusColor(event.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {event.processingTime ? formatDuration(event.processingTime) : '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">
-                      {event.contentLength} chars
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography variant="body2" color="text.secondary">
-                    No activity data available
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+      {/* Events List */}
+      <Card>
+        <div className="card-body">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="card-title">
+              Activity Log
+              <Badge color="neutral" className="ml-2">
+                {filteredEvents.length}
+              </Badge>
+            </h3>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {filteredEvents.map((event) => (
+                <div key={event.id} className="bg-base-200 rounded-lg p-4">
+                  <div className="flex items-start gap-4">
+                    <span className="text-2xl">{getTypeIcon(event.type)}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Chip color={getSeverityColor(event.severity)}>
+                          {event.severity.toUpperCase()}
+                        </Chip>
+                        <span className="text-sm text-base-content/60">
+                          {formatTimestamp(event.timestamp)}
+                        </span>
+                      </div>
+                      <h4 className="font-semibold mb-1">{event.message}</h4>
+                      <p className="text-sm text-base-content/80 mb-2">
+                        <strong>Source:</strong> {event.source}
+                        {event.user && <span> • <strong>User:</strong> {event.user}</span>}
+                      </p>
+                      {event.details && (
+                        <details className="text-sm">
+                          <summary className="cursor-pointer text-primary">View Details</summary>
+                          <pre className="mt-2 p-2 bg-base-300 rounded text-xs overflow-x-auto">
+                            {JSON.stringify(event.details, null, 2)}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
   );
 };
 

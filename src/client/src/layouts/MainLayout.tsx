@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
-import { MobileDrawer, defaultMobileNavItems } from '../components/DaisyUI';
+import { MobileDrawer } from '../components/DaisyUI';
 
 const drawerWidth = 240;
 
@@ -12,7 +12,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navItems = [
-    { label: 'WebUI', to: '/webui' },
+    { label: 'Dashboard', to: '/dashboard' },
     { label: 'Admin', to: '/admin' },
   ];
 
@@ -20,7 +20,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <>
       {/* Mobile Drawer - Hidden on lg screens and up */}
       <div className="lg:hidden">
-        <MobileDrawer navItems={defaultMobileNavItems}>
+        <MobileDrawer navItems={navItems}>
           <Box component="main" sx={{ p: 2 }}>
             {children}
           </Box>

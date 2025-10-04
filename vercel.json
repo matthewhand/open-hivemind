@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "name": "open-hivemind",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "regions": ["iad1"],
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "github": {
+    "enabled": true,
+    "autoAlias": false,
+    "silent": true
+  },
+  "git": {
+    "ignore": [
+      {
+        "type": "pull-request"
+      }
+    ],
+    "deploymentHook": {
+      "enabled": false
+    }
+  },
+  "deployments": {
+    "preview": {
+      "github": {
+        "enabled": false
+      }
+    },
+    "production": {
+      "github": {
+        "enabled": true,
+        "autoAlias": true
+      }
+    }
+  }
+}

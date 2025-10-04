@@ -3,6 +3,7 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
 import UserConfigStore from '@config/UserConfigStore';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const router = Router();
 
@@ -56,17 +57,25 @@ router.get('/api/config', (req, res) => {
       legacyMode: manager.isLegacyMode(),
       environment: process.env.NODE_ENV || 'development'
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config API error:', err.message);
-    console.error('Config API error stack:', err.stack);
-    // For test environment, return more detailed error
-    if (process.env.NODE_ENV === 'test') {
-      res.status(500).json({ error: 'Failed to get configuration', details: err.message, stack: err.stack });
-    } else {
-      res.status(500).json({ error: 'Failed to get configuration', details: err.message });
-    }
- }
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config API error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+      stack: process.env.NODE_ENV === 'test' ? hivemindError.stack : undefined
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_API_ERROR',
+      timestamp: new Date().toISOString(),
+      ...(process.env.NODE_ENV === 'test' && { stack: hivemindError.stack })
+    });
+  }
 });
 
 // Get configuration sources (env vars vs config files)
@@ -156,10 +165,22 @@ router.get('/api/config/sources', (req, res) => {
       configFiles,
       overrides
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config sources API error:', err.message);
-    res.status(500).json({ error: 'Failed to get configuration sources', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config sources API error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_SOURCES_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -176,11 +197,23 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
       message: 'Configuration reloaded successfully',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config reload error:', err.message);
-    logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${err.message}`);
-    res.status(500).json({ error: 'Failed to reload configuration', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config reload error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_RELOAD_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -201,10 +234,22 @@ router.post('/api/cache/clear', (req: AuditedRequest, res) => {
       message: 'Cache cleared successfully',
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Cache clear error:', err.message);
-    res.status(500).json({ error: 'Failed to clear cache', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Cache clear error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CACHE_CLEAR_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -231,10 +276,22 @@ router.get('/api/config/export', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
     res.send(jsonContent);
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config export error:', err.message);
-    res.status(500).json({ error: 'Failed to export configuration', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config export error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_EXPORT_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -266,10 +323,22 @@ router.get('/api/config/validate', (req, res) => {
       valid: errors.length === 0,
       errors
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config validation error:', err.message);
-    res.status(500).json({ error: 'Failed to validate configuration', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config validation error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_VALIDATION_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -290,10 +359,22 @@ router.post('/api/config/backup', (req: AuditedRequest, res) => {
       timestamp: new Date().toISOString(),
       message: 'Configuration backup created successfully'
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config backup error:', err.message);
-    res.status(500).json({ error: 'Failed to create configuration backup', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config backup error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_BACKUP_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -314,10 +395,22 @@ router.post('/api/config/restore', (req: AuditedRequest, res) => {
       restored: backupId,
       message: 'Configuration restored successfully'
     });
-  } catch (error) {
-    const err = error as Error;
-    console.error('Config restore error:', err.message);
-    res.status(500).json({ error: 'Failed to restore configuration', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('Config restore error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_RESTORE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -392,10 +485,22 @@ router.get('/api/openapi', (req, res) => {
       }
     };
     res.json(openapiSpec);
-  } catch (error) {
-    const err = error as Error;
-    console.error('OpenAPI generation error:', err.message);
-    res.status(500).json({ error: 'Failed to generate OpenAPI specification', details: err.message });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    console.error('OpenAPI generation error:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'OPENAPI_GENERATION_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

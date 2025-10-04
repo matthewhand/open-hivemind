@@ -155,3 +155,6 @@ coverage/
 playwright-report/
 test-results/archive/
 *.archive
+
+.claude/
+.qwen/

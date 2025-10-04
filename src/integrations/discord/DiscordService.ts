@@ -5,6 +5,12 @@ import DiscordMessage from './DiscordMessage';
 import { IMessage } from '../../message/interfaces/IMessage';
 import { IMessengerService } from '../../message/interfaces/IMessengerService';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import {
+  ValidationError,
+  ConfigurationError,
+  NetworkError,
+  RateLimitError
+} from '../../types/errorClasses';
 import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceCommandHandler } from './voice/voiceCommandHandler';
 // import { VoiceChannelManager } from './voice/voiceChannelManager';
@@ -15,8 +21,8 @@ import * as path from 'path';
 // Optional channel routing feature flag and router
 import messageConfig from '../../config/messageConfig';
 // ChannelRouter exports functions, not a class
-import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import WebSocketService from '@src/server/services/WebSocketService';
+import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
+import WebSocketService from '../../server/services/WebSocketService';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -133,7 +139,11 @@ export const Discord = {
         
         tokens.forEach((token, index) => {
           if (!token) {
-            throw new Error(`Empty token at position ${index + 1}`);
+            throw new ValidationError(
+              `Empty token at position ${index + 1}`,
+              'DISCORD_EMPTY_TOKEN',
+              { position: index + 1 }
+            );
           }
           
           const client = new Client({ intents: Discord.DiscordService.intents });
@@ -165,7 +175,11 @@ export const Discord = {
           if (config.discord && config.discord.instances) {
             config.discord.instances.forEach((instance: any, index: number) => {
               if (!instance.token) {
-                throw new Error(`Empty token at position ${index + 1} in config file`);
+                throw new ValidationError(
+                  `Empty token at position ${index + 1} in config file`,
+                  'DISCORD_EMPTY_TOKEN_CONFIG',
+                  { position: index + 1, configPath }
+                );
               }
               
               const client = new Client({ intents: Discord.DiscordService.intents });
@@ -186,15 +200,30 @@ export const Discord = {
         }
       }
 
-      throw new Error('No Discord bot tokens provided in configuration');
+      throw new ConfigurationError(
+        'No Discord bot tokens provided in configuration',
+        'DISCORD_NO_TOKENS_CONFIGURED'
+      );
     }
 
     public static getInstance(): DiscordService {
       if (!Discord.DiscordService.instance) {
         try {
           Discord.DiscordService.instance = new Discord.DiscordService();
-        } catch (error: any) {
-          throw new Error(`Failed to create DiscordService instance: ${error.message}`);
+        } catch (error: unknown) {
+          if (error instanceof ValidationError || error instanceof ConfigurationError) {
+            console.error('Discord service instance creation error:', error);
+            throw error;
+          }
+
+          const networkError = new NetworkError(
+            `Failed to create DiscordService instance: ${error instanceof Error ? error.message : String(error)}`,
+            { status: 500, data: 'DISCORD_SERVICE_INIT_ERROR' } as any,
+            { url: 'service-initialization', originalError: error } as any
+          );
+
+          console.error('Discord service instance creation network error:', networkError);
+          throw networkError;
         }
       }
       return Discord.DiscordService.instance;
@@ -216,7 +245,10 @@ export const Discord = {
       });
       
       if (hasEmptyToken) {
-        throw new Error('Cannot initialize DiscordService: One or more bot tokens are empty');
+        throw new ValidationError(
+          'Cannot initialize DiscordService: One or more bot tokens are empty',
+          'DISCORD_EMPTY_TOKENS_INIT'
+        );
       }
   
       const loginPromises = this.bots.map((bot) => {
@@ -284,7 +316,7 @@ export const Discord = {
       const token = botConfig?.discord?.token || botConfig?.token;
       const name = botConfig?.name || `Bot${this.bots.length + 1}`;
       if (!token) {
-        throw new Error('Discord addBot requires a token');
+        throw new ValidationError('Discord addBot requires a token', 'DISCORD_ADDBOT_MISSING_TOKEN');
       }
 
       const client = new Client({ intents: Discord.DiscordService.intents });
@@ -338,16 +370,16 @@ export const Discord = {
     public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
       // Input validation for security
       if (!channelId || typeof channelId !== 'string') {
-        throw new Error('Invalid channel ID provided');
+        throw new ValidationError('Invalid channel ID provided', 'DISCORD_INVALID_CHANNEL_ID');
       }
 
       if (!text || typeof text !== 'string') {
-        throw new Error('Invalid message text provided');
+        throw new ValidationError('Invalid message text provided', 'DISCORD_INVALID_MESSAGE_TEXT');
       }
 
       // Security: Limit message length to prevent abuse
       if (text.length > 2000) {
-        throw new Error('Message text exceeds maximum length of 2000 characters');
+        throw new ValidationError('Message text exceeds maximum length of 2000 characters', 'DISCORD_MESSAGE_TOO_LONG');
       }
 
       // Security: Basic content filtering (can be enhanced)
@@ -361,17 +393,17 @@ export const Discord = {
 
       for (const pattern of suspiciousPatterns) {
         if (pattern.test(text)) {
-          throw new Error('Message contains potentially malicious content');
+          throw new ValidationError('Message contains potentially malicious content', 'DISCORD_MALICIOUS_CONTENT');
         }
       }
 
       if (this.bots.length === 0) {
-        throw new Error('No Discord bot instances available');
+        throw new ConfigurationError('No Discord bot instances available', 'DISCORD_NO_BOTS_AVAILABLE');
       }
 
       // Rate limiting check
       if (!this.checkRateLimit(channelId)) {
-        throw new Error('Rate limit exceeded. Please wait before sending more messages.');
+        throw new RateLimitError('Rate limit exceeded. Please wait before sending more messages.', 60);
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
@@ -407,14 +439,14 @@ export const Discord = {
         log(`Sending to channel ${selectedChannelId} as ${senderName}`);
         const channel = await botInfo.client.channels.fetch(selectedChannelId);
         if (!channel || !channel.isTextBased()) {
-          throw new Error(`Channel ${selectedChannelId} is not text-based or was not found`);
+          throw new ValidationError(`Channel ${selectedChannelId} is not text-based or was not found`, 'DISCORD_INVALID_CHANNEL');
         }
 
         let message;
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
           if (!thread || !thread.isThread()) {
-            throw new Error(`Thread ${threadId} is not a valid thread or was not found`);
+            throw new ValidationError(`Thread ${threadId} is not a valid thread or was not found`, 'DISCORD_INVALID_THREAD');
           }
           message = await thread.send(text);
         } else {
@@ -436,15 +468,37 @@ export const Discord = {
           });
         } catch {}
         return message.id;
-      } catch (error: any) {
-        log(`Error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error?.message ?? error}`);
+      } catch (error: unknown) {
+        if (error instanceof ValidationError) {
+          log(`Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`);
+          console.error('Discord send message validation error:', error);
+          try {
+            WebSocketService.getInstance().recordAlert({
+              level: 'error',
+              title: 'Discord sendMessage validation failed',
+              message: error.message,
+              botName: botInfo.botUserName,
+              metadata: { channelId: selectedChannelId, errorType: 'ValidationError' }
+            });
+          } catch {}
+          return '';
+        }
+
+        const networkError = new NetworkError(
+          `Failed to send message to channel ${selectedChannelId}: ${error instanceof Error ? error.message : String(error)}`,
+          { status: 500, data: 'DISCORD_SEND_MESSAGE_ERROR' } as any,
+          { url: selectedChannelId, originalError: error } as any
+        );
+
+        log(`Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`);
+        console.error('Discord send message network error:', networkError);
         try {
           WebSocketService.getInstance().recordAlert({
             level: 'error',
             title: 'Discord sendMessage failed',
-            message: String(error?.message ?? error),
+            message: networkError.message,
             botName: botInfo.botUserName,
-            metadata: { channelId: selectedChannelId }
+            metadata: { channelId: selectedChannelId, errorType: 'NetworkError' }
           });
         } catch {}
         return '';
@@ -471,8 +525,27 @@ export const Discord = {
         const arr = Array.from(messages.values());
         // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
         return arr.slice(0, limit);
-      } catch (error: any) {
-        log(`Failed to fetch messages from ${channelId}: ${error?.message ?? error}`);
+      } catch (error: unknown) {
+        const networkError = new NetworkError(
+          `Failed to fetch messages from ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
+          { status: 500, data: 'DISCORD_FETCH_MESSAGES_ERROR' } as any,
+          { url: channelId, originalError: error } as any
+        );
+
+        log(`Network error fetching messages from ${channelId}: ${networkError.message}`);
+        console.error('Discord fetch messages network error:', networkError);
+
+        // Record alert if needed
+        try {
+          WebSocketService.getInstance().recordAlert({
+            level: 'error',
+            title: 'Discord fetch messages failed',
+            message: networkError.message,
+            botName: botInfo.botUserName,
+            metadata: { channelId, errorType: 'NetworkError' }
+          });
+        } catch {}
+
         return [];
       }
     }
@@ -590,7 +663,7 @@ export const Discord = {
     }
 
     public async leaveVoiceChannel(channelId: string): Promise<void> {
-      if (!this.voiceManager) throw new Error('Voice manager not initialized');
+      if (!this.voiceManager) throw new ConfigurationError('Voice manager not initialized', 'DISCORD_VOICE_MANAGER_NOT_INIT');
       this.voiceManager.leaveChannel(channelId);
       log(`Left voice channel ${channelId}`);
     }

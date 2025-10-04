@@ -1,0 +1,58 @@
+// Provider-specific configuration types - separate from core bot types
+// This allows for a pluggable architecture where providers can define their own configs
+
+export interface ProviderConfigSchema {
+  type: 'message' | 'llm';
+  providerType: string;
+  displayName: string;
+  description: string;
+  icon: string;
+  color: string;
+  fields: ProviderConfigField[];
+  defaultConfig?: Record<string, any>;
+}
+
+export interface ProviderConfigField {
+  name: string;
+  label: string;
+  type: 'text' | 'password' | 'number' | 'url' | 'json' | 'select' | 'multiselect' | 'boolean' | 'textarea' | 'model-autocomplete';
+  required: boolean;
+  description?: string;
+  placeholder?: string;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    custom?: (value: any) => string | null;
+  };
+  options?: Array<{ label: string; value: any }>;
+  defaultValue?: any;
+  group?: string;
+  // Additional props for custom field types
+  component?: React.ComponentType<any>;
+  componentProps?: Record<string, any>;
+}
+
+export interface ProviderConfigFormProps {
+  providerType: string;
+  schema: ProviderConfigSchema;
+  initialConfig?: Record<string, any>;
+  onConfigChange: (config: Record<string, any>) => void;
+  onTestConnection?: (config: Record<string, any>) => Promise<boolean>;
+  onAvatarLoad?: (config: Record<string, any>) => Promise<string | null>;
+}
+
+export interface ProviderConfigModalProps {
+  isOpen: boolean;
+  providerType: 'message' | 'llm';
+  initialProvider?: string;
+  initialConfig?: Record<string, any>;
+  onClose: () => void;
+  onSave: (providerType: string, config: Record<string, any>) => void;
+}
+
+// Avatar retrieval service interface
+export interface AvatarService {
+  loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null>;
+  getSupportedProviders(): string[];
+}

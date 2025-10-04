@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Message } from 'discord.js';
 import { TextChannel, DMChannel } from "discord.js";
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendFollowUp');
 
@@ -28,14 +29,35 @@ export const sendFollowUp = async (
 ): Promise<void> => {
   try {
     if (!message || !followUpText) {
-      throw new Error('Invalid message or follow-up text provided');
+      throw ErrorUtils.createError(
+        'Invalid message or follow-up text provided',
+        'ValidationError' as any,
+        'DISCORD_INVALID_FOLLOWUP_PARAMS',
+        400,
+        { hasMessage: !!message, hasFollowUpText: !!followUpText }
+      );
     }
     debug('Sending follow-up message to channel: ' + message.channel.id);
 if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
     await message.channel.send(followUpText);
     debug('Follow-up message sent successfully');
-  } catch (error: any) {
-    debug('Error sending follow-up message: ' + error.message);
-    throw error;
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error sending follow-up message: ' + ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord send follow-up error:', hivemindError);
+    }
+
+    throw ErrorUtils.createError(
+        `Failed to send follow-up: ${ErrorUtils.getMessage(hivemindError)}`,
+        classification.type,
+        'DISCORD_SEND_FOLLOWUP_ERROR',
+        ErrorUtils.getStatusCode(hivemindError),
+        { originalError: error }
+    );
   }
 };

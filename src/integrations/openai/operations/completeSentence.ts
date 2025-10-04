@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { OpenAiService } from '@src/integrations/openai/OpenAiService';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:completeSentence');
 
@@ -19,15 +20,24 @@ export async function completeSentence(
         const response = await client.generateChatCompletion(content, []);
 
         // Ensure response is valid and trim any extra whitespace
-        const trimmedResponse = response?.trim();
+        const trimmedResponse = response?.text?.trim();
         if (trimmedResponse) {
             return trimmedResponse;
         } else {
             debug('Empty or invalid response received.');
             return ''; // Return an empty string if no valid response
         }
-    } catch (error: any) {
-        debug('Error completing sentence:', error);
+    } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const classification = ErrorUtils.classifyError(hivemindError);
+        
+        debug('Error completing sentence:', ErrorUtils.getMessage(hivemindError));
+        
+        // Log with appropriate level
+        if (classification.logLevel === 'error') {
+            console.error('OpenAI sentence completion error:', hivemindError);
+        }
+        
         return ''; // Return an empty string in case of failure
     }
 }

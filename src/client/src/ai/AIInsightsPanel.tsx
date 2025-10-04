@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Info as InfoIcon,

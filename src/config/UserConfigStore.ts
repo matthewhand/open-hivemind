@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:UserConfigStore');
 
@@ -54,8 +55,16 @@ export class UserConfigStore {
       const raw = fs.readFileSync(this.filePath, 'utf8');
       this.cache = JSON.parse(raw) as StoreShape;
       return this.cache;
-    } catch (error) {
-      debug('Failed to load bot overrides, falling back to empty store:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Failed to load bot overrides, falling back to empty store:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        filePath: this.filePath
+      });
       this.cache = {};
       return this.cache;
     }
@@ -65,9 +74,23 @@ export class UserConfigStore {
     this.cache = data;
     try {
       fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (error) {
-      debug('Failed to persist bot overrides:', error);
-      throw error;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Failed to persist bot overrides:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        filePath: this.filePath
+      });
+      throw ErrorUtils.createError(
+        `Failed to persist bot overrides: ${hivemindError.message}`,
+        'error' as any,
+        'USER_CONFIG_PERSIST_FAILED',
+        500,
+        { originalError: hivemindError, filePath: this.filePath }
+      );
     }
   }
 

@@ -10,7 +10,7 @@ export { default as Card } from './Card';
 export { default as Carousel } from './Carousel';
 export { default as Chat } from './Chat';
 export { default as DataTable } from './DataTable';
-export { default as Loading } from './Loading';
+export { default as Loading, LoadingSpinner } from './Loading';
 export { default as Skeleton, SkeletonCard, SkeletonList } from './Skeleton';
 export { default as Modal } from './Modal';
 export { default as ModalForm } from './ModalForm';
@@ -30,6 +30,7 @@ export { default as Menu } from './Menu';
 
 // Form & Input Components
 export { default as Checkbox } from './Checkbox';
+export { default as Chip } from './Chip';
 export { default as FileUpload } from './FileUpload';
 export { default as Dropdown } from './Dropdown';
 export { default as RangeSlider } from './RangeSlider';
@@ -38,6 +39,7 @@ export { default as Input } from './Input';
 export { default as Radio } from './Radio';
 export { default as Rating } from './Rating';
 export { default as Select } from './Select';
+export { default as Textarea } from './Textarea';
 
 // Utility Components
 export { default as Kbd } from './Kbd';
@@ -53,3 +55,10 @@ export { default as SettingsPage } from './SettingsPage';
 
 // Navigation Components
 export { default as Pagination } from './Pagination';
+
+// Component Tracking
+// export { default as DaisyUIComponentTracker } from './DaisyUIComponentTracker';
+// export { trackDaisyUIComponent, daisyUITracker } from '../utils/DaisyUIComponentTracker';
+
+// Advanced Components
+export { default as ModelAutocomplete } from './ModelAutocomplete';

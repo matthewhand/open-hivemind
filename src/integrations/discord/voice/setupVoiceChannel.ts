@@ -1,5 +1,6 @@
 import { Client, VoiceChannel, ChannelType, GuildChannel } from 'discord.js';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:setupVoiceChannel');
 
@@ -32,8 +33,17 @@ export async function setupVoiceChannel(client: Client, channelId: string): Prom
 
     debug('Voice channel setup complete.');
     return voiceChannel;
-  } catch (error: any) {
-    debug('Error setting up voice channel: ' + error.message);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error setting up voice channel: ' + ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord setup voice channel error:', hivemindError);
+    }
+
     return null;
   }
 }

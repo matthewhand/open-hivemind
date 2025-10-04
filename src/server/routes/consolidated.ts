@@ -316,9 +316,11 @@ router.get('/health', async (req, res) => {
     res.json({ success: true, data: health });
   } catch (error) {
     debug('Error getting health status:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to get health status' 
+    const { createErrorResponse } = await import('../../utils/errorResponse');
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json({
+      success: false,
+      ...errorResponse
     });
   }
 });

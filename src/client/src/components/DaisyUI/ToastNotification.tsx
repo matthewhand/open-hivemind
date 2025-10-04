@@ -106,6 +106,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
             key={toast.id}
             toast={toast}
             onRemove={removeToast}
+            position={position}
           />
         ))}
       </div>
@@ -116,9 +117,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 interface ToastItemProps {
   toast: Toast;
   onRemove: (id: string) => void;
+  position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
 }
 
-const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
+const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
@@ -318,5 +320,22 @@ export const NotificationCenter: React.FC = () => {
     </div>
   );
 };
+
+// Main ToastNotification component that wraps ToastProvider
+const ToastNotification = ToastProvider as typeof ToastProvider & {
+  useToast: typeof useToast;
+  useSuccessToast: typeof useSuccessToast;
+  useErrorToast: typeof useErrorToast;
+  useWarningToast: typeof useWarningToast;
+  useInfoToast: typeof useInfoToast;
+  Notifications: typeof NotificationCenter;
+};
+
+ToastNotification.useToast = useToast;
+ToastNotification.useSuccessToast = useSuccessToast;
+ToastNotification.useErrorToast = useErrorToast;
+ToastNotification.useWarningToast = useWarningToast;
+ToastNotification.useInfoToast = useInfoToast;
+ToastNotification.Notifications = NotificationCenter;
 
 export default ToastNotification;

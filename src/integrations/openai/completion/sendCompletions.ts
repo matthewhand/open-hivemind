@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import Debug from 'debug';
 import openaiConfig from '@config/openaiConfig';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendCompletions');
 
@@ -20,8 +21,23 @@ export async function sendCompletion(): Promise<void> {
         }
 
         debug('Completion generated:', response.choices[0].text.trim());
-    } catch (error: any) {
-        debug('Error generating completion:', error.message);
-        throw error;
+    } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const classification = ErrorUtils.classifyError(hivemindError);
+        
+        debug('Error generating completion:', ErrorUtils.getMessage(hivemindError));
+        
+        // Log with appropriate level
+        if (classification.logLevel === 'error') {
+            console.error('OpenAI completion error:', hivemindError);
+        }
+        
+        throw ErrorUtils.createError(
+            `Failed to generate completion: ${ErrorUtils.getMessage(hivemindError)}`,
+            classification.type,
+            'OPENAI_COMPLETION_ERROR',
+            ErrorUtils.getStatusCode(hivemindError),
+            { originalError: error }
+        );
     }
 }

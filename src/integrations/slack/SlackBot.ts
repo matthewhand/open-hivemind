@@ -2,6 +2,7 @@ import { WebClient } from '@slack/web-api';
 import { SocketModeClient } from '@slack/socket-mode';
 import { RTMClient } from '@slack/rtm-api';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 const debug = Debug('app:SlackBot');
 
 export interface ISlackBotOptions {
@@ -41,9 +42,16 @@ export class SlackBot {
       this.botUserId = authTest.user_id;
       this.botUserName = authTest.user;
       debug(`Authenticated as: ${this.botUserName} (ID: ${this.botUserId})`);
-    } catch (error) {
-      debug(`Authentication failed: ${error}`);
-      throw error;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Authentication failed:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      throw hivemindError;
     }
   }
 
@@ -51,8 +59,16 @@ export class SlackBot {
     try {
       await this.webClient.conversations.join({ channel });
       debug(`Joined channel: ${channel}`);
-    } catch (error) {
-      debug(`Failed to join channel ${channel}: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to join channel ${channel}:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        channel
+      });
     }
   }
 
@@ -60,8 +76,16 @@ export class SlackBot {
     try {
       await this.webClient.chat.postMessage({ channel, text });
       debug(`Message sent to channel: ${channel}`);
-    } catch (error) {
-      debug(`Failed to send message: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to send message:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        channel
+      });
     }
   }
 }
