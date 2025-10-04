@@ -329,7 +329,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{suggestion.name}</span>
                       {suggestion.provider && (
-                        <Badge variant="ghost" size="xs">{suggestion.provider}</Badge>
+                        <Badge variant="neutral" size="small">{suggestion.provider}</Badge>
                       )}
                     </div>
                     {suggestion.description && (

@@ -333,8 +333,8 @@ export const StepProgress: React.FC<StepProgressProps> = ({
           >
             <div className="text-left">
               <div className="font-medium">{step.label}</div>
-              {'description' in step && step.description && (
-                <div className="text-sm text-base-content/60">{String(step.description)}</div>
+              {step.description && (
+                <div className="text-sm text-base-content/60">{step.description}</div>
               )}
             </div>
           </li>
