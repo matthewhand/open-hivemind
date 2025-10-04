@@ -13,7 +13,7 @@
     "build": "npx rimraf dist && cp -r config dist/ && node node_modules/.bin/tsc",
     "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
     "build:full": "npm run build:frontend && npm run build",
-    "start": "node --max-old-space-size=256 -r tsconfig-paths/register dist/src/index.js",
+    "start": "NODE_ENV=production node --max-old-space-size=256 dist/src/index.js",
     "dev:frontend": "cd src/client && ../../node_modules/.bin/vite --port 3028 --host",
     "dev": "./dev-start.sh dev",
     "dev:clean": "./dev-start.sh clean",
