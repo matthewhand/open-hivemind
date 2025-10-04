@@ -179,7 +179,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       return testResult;
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       const endTime = new Date();
       const testResult: MCPProviderTestResult = {
@@ -243,7 +243,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       debug(`MCP provider started: ${provider.name} (${id})`);
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       this.statuses.set(id, {
         id,
@@ -329,11 +329,11 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     const suggestions: string[] = [];
 
     // Required fields
-    if (!config.name || config.name.trim().length < 2) {
+    if (!config.name || (config.name as string).trim().length < 2) {
       errors.push('Provider name is required and must be at least 2 characters');
     }
 
-    if (!config.command || config.command.trim().length === 0) {
+    if (!config.command || (config.command as string).trim().length === 0) {
       errors.push('Command is required');
     }
 
@@ -343,7 +343,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
     // Command validation
     if (config.command) {
-      const command = config.command.trim();
+      const command = (config.command as string).trim();
       const validCommandPatterns = [
         /^[a-zA-Z0-9\-_]+$/,
         /^\.\/[a-zA-Z0-9\-_\/.]+$/,
@@ -366,7 +366,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         JSON.parse(config.args);
       } catch {
         // If not valid JSON, it's treated as space-separated
-        if (config.args.trim().length === 0) {
+        if ((config.args as string).trim().length === 0) {
           warnings.push('Arguments field is empty');
         }
       }
@@ -395,7 +395,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     }
 
     // Suggestions
-    if (config.type === 'desktop' && (!config.args || config.args.trim().length === 0)) {
+    if (config.type === 'desktop' && (!config.args || (config.args as string | string[] as string).trim().length === 0)) {
       suggestions.push('Consider adding arguments like "--port 3000" for local MCP servers');
     }
 
@@ -429,7 +429,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       debug(`Imported ${providers.length} MCP providers`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to import MCP providers:', {
         error: hivemindError.message,
@@ -607,7 +607,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       const timeout = provider.timeout || 30;
       const args = this.parseArgs(provider.args || '');
 
-      const process = spawn(provider.command, args, {
+      const mcpProcess = spawn(provider.command, args, {
         env: { ...process.env, ...provider.env },
         stdio: ['pipe', 'pipe', 'pipe'],
         timeout: timeout * 1000
@@ -616,15 +616,15 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       let output = '';
       let errorOutput = '';
 
-      process.stdout?.on('data', (data) => {
+      mcpProcess.stdout?.on('data', (data: any) => {
         output += data.toString();
       });
 
-      process.stderr?.on('data', (data) => {
+      mcpProcess.stderr?.on('data', (data: any) => {
         errorOutput += data.toString();
       });
 
-      process.on('close', (code) => {
+      mcpProcess.on('close', (code: any) => {
         if (code === 0) {
           // Try to extract version and capabilities from output
           const version = this.extractVersion(output);
@@ -644,7 +644,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         }
       });
 
-      process.on('configuration', (error) => {
+      mcpProcess.on('configuration', (error: any) => {
         resolve({
           success: false,
           error: error.message
@@ -653,8 +653,8 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       // Kill process after timeout
       setTimeout(() => {
-        if (process && !process.killed) {
-          process.kill();
+        if (mcpProcess && !mcpProcess.killed) {
+          mcpProcess.kill();
           resolve({
             success: false,
             error: `Process timed out after ${timeout} seconds`
@@ -667,7 +667,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
   private async startProviderProcess(provider: MCPProviderConfig): Promise<ChildProcess> {
     const args = this.parseArgs(provider.args || '');
 
-    const process = spawn(provider.command, args, {
+    const providerProcess = spawn(provider.command, args, {
       env: { ...process.env, ...provider.env },
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false
@@ -676,15 +676,15 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     return new Promise((resolve, reject) => {
       const timeout = provider.timeout || 30;
 
-      process.on('spawn', () => {
-        resolve(process);
+      providerProcess.on('spawn', () => {
+        resolve(providerProcess);
       });
 
-      process.on('configuration', (error) => {
+      providerProcess.on('configuration', (error: any) => {
         reject(error);
       });
 
-      process.on('close', (code) => {
+      providerProcess.on('close', (code: any) => {
         if (code !== 0) {
           reject(new Error(`MCP process exited with code ${code}`));
         }
@@ -692,8 +692,8 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       // Timeout handling
       setTimeout(() => {
-        if (process && !process.killed) {
-          process.kill();
+        if (providerProcess && !providerProcess.killed) {
+          providerProcess.kill();
           reject(new Error(`MCP process failed to start within ${timeout} seconds`));
         }
       }, timeout * 1000);
@@ -705,7 +705,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       return args;
     }
 
-    if (!args || args.trim().length === 0) {
+    if (!args || (args as string).trim().length === 0) {
       return [];
     }
 
@@ -714,7 +714,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       return JSON.parse(args);
     } catch {
       // Parse as space-separated arguments
-      return args.trim().split(/\s+/);
+      return (args as string).trim().split(/\s+/);
     }
   }
 
@@ -809,14 +809,14 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         }
       } else {
         // Update uptime
-        if (status.uptime !== undefined) {
+        if (status.uptime !== undefined && provider.healthCheck?.interval) {
           status.uptime += provider.healthCheck.interval;
         }
         status.lastCheck = new Date();
         status.error = undefined;
       }
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Health check failed for MCP provider ${providerId}:`, {
         error: hivemindError.message,

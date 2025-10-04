@@ -67,7 +67,7 @@ export class HotReloadManager {
           });
           this.configWatchers.set(configPath, watcher);
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error) as any as any;
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
           const errorInfo = ErrorUtils.classifyError(hivemindError);
           debug(`Failed to watch config path ${configPath}:`, {
             error: hivemindError.message,
