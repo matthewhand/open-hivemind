@@ -296,12 +296,12 @@ export class UsageTracker {
       const errorEvents = todayEvents.filter(e => e.type === 'error');
 
       metrics.performanceMetrics.averageLoadTime = performanceEvents
-        .filter(e => e.action === 'page_load' && e.value)
-        .reduce((sum, e) => sum + (e.value || 0), 0) / Math.max(1, performanceEvents.length);
+        .filter(e => e.action === 'page_load' && e.value !== undefined)
+        .reduce((sum, e) => sum + e.value!, 0) / Math.max(1, performanceEvents.length);
 
       metrics.performanceMetrics.apiResponseTime = apiEvents
-        .filter(e => e.value)
-        .reduce((sum, e) => sum + e.value, 0) / Math.max(1, apiEvents.length);
+        .filter(e => e.value !== undefined)
+        .reduce((sum, e) => sum + e.value!, 0) / Math.max(1, apiEvents.length);
 
       metrics.performanceMetrics.errorRate = todayEvents.length > 0
         ? (errorEvents.length / todayEvents.length) * 100
@@ -440,12 +440,12 @@ export class UsageTracker {
       const errorEvents = events.filter(e => e.type === 'error');
 
       metrics.performanceMetrics.averageLoadTime = performanceEvents
-        .filter(e => e.action === 'page_load' && e.value)
-        .reduce((sum, e) => sum + (e.value || 0), 0) / Math.max(1, performanceEvents.length);
+        .filter(e => e.action === 'page_load' && e.value !== undefined)
+        .reduce((sum, e) => sum + e.value!, 0) / Math.max(1, performanceEvents.length);
 
       metrics.performanceMetrics.apiResponseTime = apiEvents
-        .filter(e => e.value)
-        .reduce((sum, e) => sum + e.value, 0) / Math.max(1, apiEvents.length);
+        .filter(e => e.value !== undefined)
+        .reduce((sum, e) => sum + e.value!, 0) / Math.max(1, apiEvents.length);
 
       metrics.performanceMetrics.errorRate = events.length > 0
         ? (errorEvents.length / events.length) * 100
@@ -478,7 +478,7 @@ export class UsageTracker {
         });
       }
       if (filter.since) {
-        activities = activities.filter(a => a.firstSeen >= filter.since);
+        activities = activities.filter(a => a.firstSeen >= filter.since!);
       }
     }
 

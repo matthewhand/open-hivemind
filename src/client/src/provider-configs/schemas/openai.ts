@@ -1,5 +1,4 @@
 import { ProviderConfigSchema } from '../types';
-import { ModelAutocomplete } from '../../components/DaisyUI';
 
 export const openAIProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -49,13 +48,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       description: 'Select or enter the GPT model to use. Models are automatically fetched from your API.',
       placeholder: 'gpt-4-turbo-preview, gpt-4, gpt-3.5-turbo...',
       defaultValue: 'gpt-4',
-      component: ModelAutocomplete,
-      componentProps: {
-        providerType: 'openai',
-        placeholder: 'Enter model name or select from available models...',
-        label: 'Model Selection'
-      },
-      group: 'Model Configuration'
+            group: 'Model Configuration'
     },
     {
       name: 'maxTokens',

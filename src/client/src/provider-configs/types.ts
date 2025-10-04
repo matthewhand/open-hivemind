@@ -2,7 +2,7 @@
 // This allows for a pluggable architecture where providers can define their own configs
 
 export interface ProviderConfigSchema {
-  type: 'message' | 'llm';
+  type: 'message' | 'llm' | 'mcp';
   providerType: string;
   displayName: string;
   description: string;
@@ -15,22 +15,26 @@ export interface ProviderConfigSchema {
 export interface ProviderConfigField {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'url' | 'json' | 'select' | 'multiselect' | 'boolean' | 'textarea' | 'model-autocomplete';
+  type: 'text' | 'password' | 'number' | 'url' | 'json' | 'select' | 'multiselect' | 'boolean' | 'textarea' | 'model-autocomplete' | 'keyvalue' | 'checkbox';
   required: boolean;
   description?: string;
   placeholder?: string;
   validation?: {
     min?: number;
     max?: number;
+    minLength?: number;
+    maxLength?: number;
+    maxItems?: number;
     pattern?: string;
     custom?: (value: any) => string | null;
   };
-  options?: Array<{ label: string; value: any }>;
+  options?: Array<{ label: string; value: any; description?: string }>;
   defaultValue?: any;
   group?: string;
   // Additional props for custom field types
   component?: React.ComponentType<any>;
   componentProps?: Record<string, any>;
+  dependsOn?: string | { field: string; value: any }; // Field dependency
 }
 
 export interface ProviderConfigFormProps {
@@ -55,4 +59,17 @@ export interface ProviderConfigModalProps {
 export interface AvatarService {
   loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null>;
   getSupportedProviders(): string[];
+}
+
+// Provider schema interface for MCP providers
+export interface ProviderSchema {
+  type: 'message' | 'llm' | 'mcp';
+  providerType: string;
+  displayName: string;
+  description: string;
+  icon: string;
+  color: string;
+  fields: ProviderConfigField[];
+  defaultConfig?: Record<string, any>;
+  examples?: Array<Record<string, any>>;
 }

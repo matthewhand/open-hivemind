@@ -80,10 +80,7 @@ export class MonitoringService {
       this.config.alerts.config
     );
 
-    this.metricsCollector = new MetricsCollector(
-      this.config.metrics.historySize,
-      this.config.metrics.interval
-    );
+    this.metricsCollector = MetricsCollector.getInstance();
 
     // Add notification channels
     this.config.alerts.channels.forEach(channel => {

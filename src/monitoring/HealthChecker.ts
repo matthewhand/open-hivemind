@@ -232,7 +232,7 @@ export class HealthChecker {
     }
 
     // Check for degraded performance
-    if (healthCheck.memory.percentage > 90 || healthCheck.metrics.diskUsage > 90) {
+    if (healthCheck.memory.percentage > 90 || (healthCheck.metrics.diskUsage && healthCheck.metrics.diskUsage > 90)) {
       return 'degraded';
     }
 

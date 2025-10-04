@@ -389,10 +389,10 @@ export class AnalyticsCollector extends EventEmitter {
         events = events.filter(e => e.userId === filter.userId);
       }
       if (filter.since) {
-        events = events.filter(e => e.timestamp >= filter.since);
+        events = events.filter(e => e.timestamp >= filter.since!);
       }
       if (filter.until) {
-        events = events.filter(e => e.timestamp <= filter.until);
+        events = events.filter(e => e.timestamp <= filter.until!);
       }
     }
 
@@ -415,10 +415,10 @@ export class AnalyticsCollector extends EventEmitter {
         sessions = sessions.filter(s => (filter.active && !s.endTime) || (!filter.active && s.endTime));
       }
       if (filter.since) {
-        sessions = sessions.filter(s => s.startTime >= filter.since);
+        sessions = sessions.filter(s => s.startTime >= filter.since!);
       }
       if (filter.until) {
-        sessions = sessions.filter(s => s.startTime <= filter.until);
+        sessions = sessions.filter(s => s.startTime <= filter.until!);
       }
     }
 
@@ -496,8 +496,8 @@ export class AnalyticsCollector extends EventEmitter {
       .reduce((sum, e) => sum + (e.value || 0), 0) / Math.max(1, performanceEvents.length);
 
     const averageApiResponse = apiEvents
-      .filter(e => e.value)
-      .reduce((sum, e) => sum + e.value, 0) / Math.max(1, apiEvents.length);
+      .filter(e => e.value !== undefined)
+      .reduce((sum, e) => sum + e.value!, 0) / Math.max(1, apiEvents.length);
 
     const errorRate = events.length > 0 ? (errorEvents.length / events.length) * 100 : 0;
 
@@ -534,8 +534,8 @@ export class AnalyticsCollector extends EventEmitter {
     console.log('📊 Analytics data reset');
   }
 
-  public getEventStream(eventTypes?: AnalyticsEvent['type'][]): EventEmitter {
-    const stream = new EventEmitter();
+  public getEventStream(eventTypes?: AnalyticsEvent['type'][]): EventEmitter & { stop: () => void } {
+    const stream = new EventEmitter() as EventEmitter & { stop: () => void };
 
     const eventHandler = (event: AnalyticsEvent) => {
       if (!eventTypes || eventTypes.includes(event.type)) {

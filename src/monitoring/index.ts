@@ -4,12 +4,22 @@ export { MetricsCollector } from './MetricsCollector';
 export { MonitoringService } from './MonitoringService';
 
 export type {
-  HealthCheckResult,
+  HealthCheckResult
+} from './HealthChecker';
+
+export type {
   AlertConfig,
   Alert,
-  NotificationChannel,
+  NotificationChannel
+} from './AlertManager';
+
+export type {
+  Metrics,
   MetricData,
   MetricDefinition,
-  PerformanceMetrics,
+  PerformanceMetrics
+} from './MetricsCollector';
+
+export type {
   MonitoringConfig
-} from './HealthChecker';
+} from './MonitoringService';

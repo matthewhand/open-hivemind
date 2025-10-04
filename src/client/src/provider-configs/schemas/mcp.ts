@@ -8,7 +8,8 @@ import { ProviderSchema } from '../types';
  */
 export const mcpProviderSchema: ProviderSchema = {
   type: 'mcp',
-  name: 'MCP Provider',
+  providerType: 'mcp',
+  displayName: 'MCP Provider',
   description: 'Model Context Protocol server for external tools and data sources',
   icon: '🔗',
   color: '#3B82F6',
@@ -138,68 +139,6 @@ export const mcpProviderSchema: ProviderSchema = {
       defaultValue: true
     }
   ],
-  validation: {
-    custom: [
-      {
-        name: 'validateCommand',
-        message: 'Command must be a valid executable name or absolute path',
-        validator: (value: string, formData: any) => {
-          if (!value || typeof value !== 'string') return false;
-          const trimmed = value.trim();
-          if (!trimmed) return false;
-
-          // Allow common executable names and absolute paths
-          const validPatterns = [
-            /^[a-zA-Z0-9\\-_]+$/, // Simple executable names like 'node', 'python'
-            /^\.\/[a-zA-Z0-9\\-_\\/.]+$/, // Relative paths like './my-server'
-            /^\/[a-zA-Z0-9\\-_\\/.]+$/, // Absolute paths like '/usr/bin/node'
-            /^[a-zA-Z]:\\[a-zA-Z0-9\\-_\\/.\\]+$/, // Windows paths like 'C:\\Program Files\\node.exe'
-            /^npx [a-zA-Z0-9@/.\\-]+$/, // npx commands
-            /^npm run [a-zA-Z0-9\\-_]+$/, // npm scripts
-            /^yarn [a-zA-Z0-9\\-_]+$/, // yarn commands
-            /^python(3)? -m [a-zA-Z0-9._\\-]+$/ // Python modules
-          ];
-
-          return validPatterns.some(pattern => pattern.test(trimmed));
-        }
-      },
-      {
-        name: 'validateArgs',
-        message: 'Arguments must be valid (space-separated or JSON array format)',
-        validator: (value: string, formData: any) => {
-          if (!value) return true; // Optional field
-          try {
-            // Try to parse as JSON array first
-            JSON.parse(value);
-            return true;
-          } catch {
-            // If not JSON, treat as space-separated arguments
-            return typeof value === 'string' && value.trim().length > 0;
-          }
-        }
-      },
-      {
-        name: 'validateCloudConfig',
-        message: 'Cloud providers typically require API keys or connection URLs',
-        validator: (value: any, formData: any) => {
-          if (formData.type === 'cloud') {
-            const envVars = formData.envVars || {};
-            const hasConnectionConfig = Object.keys(envVars).some(key =>
-              key.toLowerCase().includes('url') ||
-              key.toLowerCase().includes('endpoint') ||
-              key.toLowerCase().includes('key') ||
-              key.toLowerCase().includes('token')
-            );
-            if (!hasConnectionConfig) {
-              console.warn('Cloud MCP provider recommended to have connection configuration');
-            }
-          }
-          return true; // Warning only, not error
-        },
-        isWarning: true
-      }
-    ]
-  },
   examples: [
     {
       name: 'File System MCP',
@@ -255,22 +194,5 @@ export const mcpProviderSchema: ProviderSchema = {
       },
       enabled: false
     }
-  ],
-  documentation: {
-    overview: 'MCP (Model Context Protocol) providers enable bots to connect to external tools and data sources through a standardized protocol. MCP servers can provide file system access, database queries, web scraping, and many other capabilities.',
-    setup: [
-      'Choose between Desktop (local) or Cloud (remote) provider type',
-      'Specify the command and arguments to start the MCP server',
-      'Configure any required environment variables (API keys, database URLs, etc.)',
-      'Test the connection to ensure the MCP server starts successfully',
-      'Enable the provider for use with your bots'
-    ],
-    troubleshooting: [
-      'Ensure the MCP server command is accessible from the system PATH',
-      'Check that all required environment variables are configured',
-      'Verify network connectivity for cloud-based MCP providers',
-      'Review MCP server logs for startup issues',
-      'Consider increasing timeout for slow-starting MCP servers'
-    ]
-  }
+  ]
 };
