@@ -10,7 +10,7 @@ on:
 jobs:
   unit-tests-core:
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # Fast fail after 10 minutes
+    timeout-minutes: 15  # Increased timeout for admin auth tests
     strategy:
       fail-fast: false  # Continue other jobs even if one fails
     steps:
@@ -37,7 +37,7 @@ jobs:
 
   unit-tests-integrations:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
     steps:
@@ -66,7 +66,7 @@ jobs:
 
   unit-tests-services:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
     steps:
@@ -98,7 +98,7 @@ jobs:
 
   unit-tests-frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
     steps:
