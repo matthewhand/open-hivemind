@@ -270,3 +270,9 @@ export const BUILTIN_PERSONAS: Persona[] = [
     updatedAt: new Date().toISOString()
   }
 ];
+
+export interface PersonaModalState {
+  isOpen: boolean;
+  persona?: Persona;
+  mode: 'create' | 'edit';
+}
