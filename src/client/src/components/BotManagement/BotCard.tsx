@@ -10,7 +10,7 @@ import {
 import { Button, Badge } from '../DaisyUI';
 import {
   Play as PlayIcon,
-  Stop as StopIcon,
+  Square as StopIcon,
   Settings as SettingsIcon,
   Copy as CloneIcon,
   Trash2 as DeleteIcon,
