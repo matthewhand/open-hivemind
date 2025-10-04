@@ -29,11 +29,7 @@ jobs:
       - name: Run core unit tests
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
-            tests/unit/config/ \
-            tests/unit/database/ \
-            tests/unit/routes/ \
-            tests/unit/server/ \
-            tests/unit/monitoring/ \
+            tests/unit/ \
             --testTimeout=10000 \
             --verbose \
             --ci \
@@ -89,10 +85,39 @@ jobs:
       - name: Run service unit tests
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+            tests/config/ \
             tests/services/ \
             tests/utils/ \
             tests/auth/ \
             tests/commands/ \
+            tests/common/ \
+            --testTimeout=10000 \
+            --verbose \
+            --ci \
+            --maxWorkers=2
+
+  unit-tests-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend unit tests
+        run: |
+          cd src/client && NODE_ENV=test ../../node_modules/.bin/jest \
+            src/ \
             --testTimeout=10000 \
             --verbose \
             --ci \

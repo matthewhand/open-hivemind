@@ -34,7 +34,7 @@ jobs:
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
             tests/api/ \
             tests/routes/ \
-            tests/integration/routes/ \
+            tests/integration/ \
             --testTimeout=15000 \
             --verbose \
             --ci \
