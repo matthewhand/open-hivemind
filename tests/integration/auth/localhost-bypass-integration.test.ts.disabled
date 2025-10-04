@@ -6,7 +6,7 @@
  */
 
 import request from 'supertest';
-import { app } from '../../../src/server';
+import { app } from '../../../src/index';
 
 describe('Localhost Admin Bypass - Integration Tests', () => {
   let accessToken: string;

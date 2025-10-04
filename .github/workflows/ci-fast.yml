@@ -57,7 +57,7 @@ jobs:
       - name: Run quick smoke tests
         run: |
           # Quick smoke test to make sure basic imports work
-          node -e "
+          NODE_ENV=production node -e "
             try {
               require('./dist/src/index.js');
               console.log('✅ Build successful - basic imports work');

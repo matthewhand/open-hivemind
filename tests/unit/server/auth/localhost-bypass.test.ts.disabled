@@ -10,7 +10,7 @@
 
 import request from 'supertest';
 import { Express } from 'express';
-import { AuthManager } from '../../../auth/AuthManager';
+import { AuthManager } from '@src/auth/AuthManager';
 import { app } from '../../test-setup';
 
 describe('Localhost Admin Authentication Bypass', () => {

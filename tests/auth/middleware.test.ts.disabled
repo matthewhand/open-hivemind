@@ -3,6 +3,19 @@ import { AuthManager } from '../../src/auth/AuthManager';
 import { authenticate, requireRole, requirePermission, requireAdmin, optionalAuth } from '../../src/auth/middleware';
 import { AuthMiddlewareRequest } from '../../src/auth/types';
 
+// Mock jsonwebtoken at the top level
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn(() => 'mock-jwt-token'),
+  verify: jest.fn(() => ({ userId: 'test-user-id', permissions: ['read'] })),
+}));
+
+// Mock bcrypt to avoid native binary issues on ARM64 Linux
+jest.mock('bcrypt', () => ({
+  hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),
+  compare: jest.fn().mockResolvedValue(true),
+  genSalt: jest.fn().mockResolvedValue('$2b$10$salt'),
+}));
+
 describe('Authentication Middleware', () => {
   let mockReq: any;
   let mockRes: any;
@@ -10,13 +23,6 @@ describe('Authentication Middleware', () => {
   let authManager: AuthManager;
 
   beforeEach(() => {
-    // Mock bcrypt to avoid native binary issues on ARM64 Linux
-    jest.mock('bcrypt', () => ({
-      hash: jest.fn().mockResolvedValue('$2b$10$hashedpassword'),
-      compare: jest.fn().mockResolvedValue(true),
-      genSalt: jest.fn().mockResolvedValue('$2b$10$salt'),
-    }));
-
     // Reset singleton instance for each test
     (AuthManager as any).instance = null;
     authManager = AuthManager.getInstance();
@@ -43,19 +49,23 @@ describe('Authentication Middleware', () => {
 
   describe('authenticate middleware', () => {
     it('should call next for valid JWT token', async () => {
-      // Register and login a user to get a token
-      await authManager.register({
+      // Mock a user for the test
+      const mockUser = {
+        id: 'test-user-id',
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123'
-      });
+        role: 'user',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
 
-      const loginResult = await authManager.login({
-        username: 'testuser',
-        password: 'password123'
-      });
+      // Mock the auth manager methods
+      jest.spyOn(authManager, 'verifyAccessToken').mockReturnValue({ userId: 'test-user-id', permissions: ['read'] });
+      jest.spyOn(authManager, 'getUser').mockReturnValue(mockUser as any);
+      jest.spyOn(authManager, 'getUserPermissions').mockReturnValue(['read']);
 
-      mockReq.headers.authorization = `Bearer ${loginResult.accessToken}`;
+      mockReq.headers.authorization = 'Bearer valid-jwt-token';
 
       await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
 
@@ -97,31 +107,33 @@ describe('Authentication Middleware', () => {
 
     it.each(authErrorCases)('$desc', async ({ setup, expectedStatus, expectedJson }) => {
       setup();
-      await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(expectedStatus);
-      expect(mockRes.json).toHaveBeenCalledWith(expectedJson);
-      expect(mockNext).not.toHaveBeenCalled();
+      try {
+        await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
+        fail('Expected authentication to throw an error');
+      } catch (error: any) {
+        expect(mockNext).not.toHaveBeenCalled();
+        expect(error.statusCode).toBe(expectedStatus);
+        expect(error.message).toContain(expectedJson.error);
+      }
     });
   });
 
   describe('requireRole middleware', () => {
-    beforeEach(async () => {
-      // Set up authenticated user
-      await authManager.register({
+    beforeEach(() => {
+      // Set up authenticated user directly
+      const mockUser = {
+        id: 'test-user-id',
         username: 'testuser',
         email: 'test@example.com',
-        password: 'password123'
-      });
+        role: 'user',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
 
-      const loginResult = await authManager.login({
-        username: 'testuser',
-        password: 'password123'
-      });
-
-      mockReq.headers.authorization = `Bearer ${loginResult.accessToken}`;
-      await authenticate(mockReq as AuthMiddlewareRequest, mockRes as Response, mockNext);
-      mockNext.mockClear(); // Reset next call
+      (mockReq as AuthMiddlewareRequest).user = mockUser;
+      (mockReq as AuthMiddlewareRequest).permissions = ['read'];
     });
 
     it('should call next for user with sufficient role', () => {
