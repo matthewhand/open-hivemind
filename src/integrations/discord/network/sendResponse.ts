@@ -50,7 +50,8 @@ export const sendResponse = async (
 
     const networkError = new NetworkError(
       `Failed to send response: ${error instanceof Error ? error.message : String(error)}`,
-      'DISCORD_SEND_RESPONSE_ERROR',
+      undefined,
+      undefined,
       { originalError: error }
     );
 

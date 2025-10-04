@@ -32,7 +32,7 @@ export const sendResponse = async (
     if (!message || !responseText) {
       throw ErrorUtils.createError(
         'Invalid message or response text provided',
-        'ValidationError',
+        'ValidationError' as any,
         'DISCORD_INVALID_RESPONSE_PARAMS',
         400,
         { hasMessage: !!message, hasResponseText: !!responseText }

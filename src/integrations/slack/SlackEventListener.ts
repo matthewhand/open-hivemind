@@ -28,7 +28,7 @@ export class SlackEventListener {
         if (!llmProvider.length) {
           throw ErrorUtils.createError(
             'No LLM providers available',
-            'ConfigurationError',
+            'configuration' as any,
             'SLACK_NO_LLM_PROVIDERS',
             500
           );
@@ -64,7 +64,7 @@ export class SlackEventListener {
         }
       }
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Error handling event:`, {
         error: hivemindError.message,

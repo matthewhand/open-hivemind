@@ -21,8 +21,8 @@ import * as path from 'path';
 // Optional channel routing feature flag and router
 import messageConfig from '../../config/messageConfig';
 // ChannelRouter exports functions, not a class
-import { pickBestChannel, computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
-import WebSocketService from '@src/server/services/WebSocketService';
+import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
+import WebSocketService from '../../server/services/WebSocketService';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -218,8 +218,8 @@ export const Discord = {
 
           const networkError = new NetworkError(
             `Failed to create DiscordService instance: ${error instanceof Error ? error.message : String(error)}`,
-            'DISCORD_SERVICE_INIT_ERROR',
-            { originalError: error }
+            { status: 500, data: 'DISCORD_SERVICE_INIT_ERROR' } as any,
+            { url: 'service-initialization', originalError: error } as any
           );
 
           console.error('Discord service instance creation network error:', networkError);
@@ -403,7 +403,7 @@ export const Discord = {
 
       // Rate limiting check
       if (!this.checkRateLimit(channelId)) {
-        throw new RateLimitError('Rate limit exceeded. Please wait before sending more messages.', 'DISCORD_RATE_LIMIT_EXCEEDED');
+        throw new RateLimitError('Rate limit exceeded. Please wait before sending more messages.', 60);
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
@@ -486,8 +486,8 @@ export const Discord = {
 
         const networkError = new NetworkError(
           `Failed to send message to channel ${selectedChannelId}: ${error instanceof Error ? error.message : String(error)}`,
-          'DISCORD_SEND_MESSAGE_ERROR',
-          { originalError: error }
+          { status: 500, data: 'DISCORD_SEND_MESSAGE_ERROR' } as any,
+          { url: selectedChannelId, originalError: error } as any
         );
 
         log(`Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`);
@@ -528,8 +528,8 @@ export const Discord = {
       } catch (error: unknown) {
         const networkError = new NetworkError(
           `Failed to fetch messages from ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
-          'DISCORD_FETCH_MESSAGES_ERROR',
-          { originalError: error }
+          { status: 500, data: 'DISCORD_FETCH_MESSAGES_ERROR' } as any,
+          { url: channelId, originalError: error } as any
         );
 
         log(`Network error fetching messages from ${channelId}: ${networkError.message}`);

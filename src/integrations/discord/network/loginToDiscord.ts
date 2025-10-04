@@ -20,7 +20,7 @@ export async function loginToDiscord(client: Client, token: string): Promise<str
         debug(errorMessage);
         throw ErrorUtils.createError(
             errorMessage,
-            'ValidationError',
+            'ValidationError' as any,
             'DISCORD_TOKEN_NOT_PROVIDED',
             400
         );

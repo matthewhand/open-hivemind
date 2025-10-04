@@ -43,7 +43,7 @@ export class SlackBot {
       this.botUserName = authTest.user;
       debug(`Authenticated as: ${this.botUserName} (ID: ${this.botUserId})`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Authentication failed:`, {
         error: hivemindError.message,
@@ -60,7 +60,7 @@ export class SlackBot {
       await this.webClient.conversations.join({ channel });
       debug(`Joined channel: ${channel}`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to join channel ${channel}:`, {
         error: hivemindError.message,
@@ -77,7 +77,7 @@ export class SlackBot {
       await this.webClient.chat.postMessage({ channel, text });
       debug(`Message sent to channel: ${channel}`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to send message:`, {
         error: hivemindError.message,

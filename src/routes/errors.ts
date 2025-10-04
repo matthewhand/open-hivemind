@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { errorLogger } from '../utils/errorLogger';
-import { BaseHivemindError } from '../types/errorClasses';
+import { ErrorFactory } from '../types/errorClasses';
 
 const router = Router();
 
@@ -34,34 +34,27 @@ router.post('/frontend', async (req: Request, res: Response) => {
     }
 
     // Create a structured error object
-    const frontendError: BaseHivemindError = {
-      name: errorReport.name || 'FrontendError',
-      message: errorReport.message,
-      stack: errorReport.stack,
-      status: errorReport.status || 500,
-      code: errorReport.code || 'FRONTEND_ERROR',
-      details: {
-        ...errorReport.details,
-        componentStack: errorReport.componentStack,
-        userAgent: errorReport.userAgent,
-        url: errorReport.url,
-        localStorage: errorReport.localStorage,
-        sessionStorage: errorReport.sessionStorage,
-        performance: errorReport.performance,
-        source: 'frontend'
-      },
-      correlationId: errorReport.correlationId,
-      severity: errorReport.severity || 'high',
-      timestamp: errorReport.timestamp || new Date().toISOString()
-    };
+    const frontendError = ErrorFactory.createError(new Error(errorReport.message), {
+      source: 'frontend',
+      componentStack: errorReport.componentStack,
+      userAgent: errorReport.userAgent,
+      url: errorReport.url,
+      localStorage: errorReport.localStorage,
+      sessionStorage: errorReport.sessionStorage,
+      performance: errorReport.performance,
+      ...errorReport.details
+    });
 
     // Log the frontend error
     await errorLogger.logError(frontendError, {
-      context: 'frontend_error_report',
-      additionalData: {
-        userAgent: errorReport.userAgent,
-        url: errorReport.url,
-        componentStack: errorReport.componentStack
+      correlationId: errorReport.correlationId,
+      path: errorReport.url || '/unknown',
+      method: 'POST',
+      userAgent: errorReport.userAgent,
+      body: {
+        source: 'frontend',
+        componentStack: errorReport.componentStack,
+        performance: errorReport.performance
       }
     });
 
@@ -77,8 +70,10 @@ router.post('/frontend', async (req: Request, res: Response) => {
 
     // Log the processing error
     await errorLogger.logError(error as Error, {
-      context: 'frontend_error_processing',
-      correlationId: req.headers['x-correlation-id'] as string
+      correlationId: req.headers['x-correlation-id'] as string || 'unknown',
+      path: req.path,
+      method: req.method,
+      userAgent: req.headers['user-agent']
     });
 
     res.status(500).json({

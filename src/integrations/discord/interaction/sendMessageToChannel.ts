@@ -28,7 +28,8 @@ export async function sendMessageToChannel(client: Client, channelId: string, me
     } catch (error: unknown) {
         const networkError = new NetworkError(
             `Failed to send message to channel ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
-            'DISCORD_SEND_MESSAGE_ERROR',
+            undefined,
+            undefined,
             { originalError: error }
         );
 

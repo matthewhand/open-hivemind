@@ -77,7 +77,7 @@ export class SlackMessageHandler {
       );
 
       if (sentTs) {
-        lastSentEventTs.set(botName, eventTs);
+        lastSentEventTs.set(botName, eventTs || '');
         debug(`[${botName}] Response sent successfully, lastSentEventTs updated to: ${eventTs}`);
       }
 

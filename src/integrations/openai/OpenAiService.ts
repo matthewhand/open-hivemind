@@ -18,7 +18,8 @@ import {
   OpenHivemindChatResponse,
   OpenAIError
 } from '@src/types/openai';
-import { ConfigurationError } from '@src/types/errorClasses';
+import { ConfigurationError, BaseHivemindError } from '@src/types/errorClasses';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
 
 const debug = Debug('app:OpenAiService');
 
@@ -368,7 +369,7 @@ export class OpenAiService {
   /**
    * Classify errors as rate-limit, transient, or fatal
    */
-  private classifyError(error: HivemindError): 'rate-limit' | 'transient' | 'fatal' {
+  private classifyError(error: HivemindError | BaseHivemindError): 'rate-limit' | 'transient' | 'fatal' {
     const statusCode = ErrorUtils.getStatusCode(error);
     const errorCode = ErrorUtils.getCode(error);
 

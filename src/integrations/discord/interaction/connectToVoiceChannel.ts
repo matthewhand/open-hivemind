@@ -11,7 +11,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
     if (!channel?.isVoiceBased()) {
       throw ErrorUtils.createError(
         `Channel ${channelId} is not a voice channel`,
-        'ValidationError',
+        'ValidationError' as any,
         'DISCORD_INVALID_VOICE_CHANNEL',
         400,
         { channelId }
@@ -38,7 +38,7 @@ export async function connectToVoiceChannel(client: Client, channelId: string): 
       setTimeout(() => {
         const timeoutError = ErrorUtils.createError(
           'Voice connection timeout',
-          'TimeoutError',
+          'TimeoutError' as any,
           'DISCORD_VOICE_CONNECTION_TIMEOUT',
           408,
           { channelId }

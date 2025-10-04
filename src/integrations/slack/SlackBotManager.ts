@@ -9,6 +9,7 @@ import {
   NetworkError,
   ApiError
 } from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SlackBotManager');
 
@@ -64,7 +65,7 @@ export class SlackBotManager {
         botInfo.botUserName = authTest.user;
         debug(`Bot authenticated: ${botInfo.botUserName} (${botInfo.botUserId})`);
       } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error);
+        const hivemindError = ErrorUtils.toHivemindError(error) as any;
         const errorInfo = ErrorUtils.classifyError(hivemindError);
         debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`, {
           errorCode: hivemindError.code,
@@ -121,7 +122,7 @@ export class SlackBotManager {
 
         debug(`Primary bot received channel message: ${event.text}`);
         if (this.messageHandler) {
-          const slackMessage = new SlackMessage(event.text, event.channel, event);
+          const slackMessage = new SlackMessage(event.text, event.channel, event as any);
           const history = this.includeHistory ? await this.fetchMessagesForBot(primaryBot, event.channel, 10) : [];
           await this.messageHandler(slackMessage, history, primaryBot.config);
         } else {
@@ -137,7 +138,7 @@ export class SlackBotManager {
         if (error instanceof BaseHivemindError) {
           debug('Failed to start primary socket client:', {
             error: error.message,
-            errorCode: error.errorCode,
+            errorCode: error.code,
             errorType: error.constructor.name,
             severity: error.severity
           });
@@ -145,11 +146,13 @@ export class SlackBotManager {
         } else {
           const networkError = new NetworkError(
             `Failed to start primary socket client: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            'SLACK_SOCKET_START_ERROR'
+            undefined,
+            undefined,
+            { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
           );
           debug('Failed to start primary socket client:', {
             error: networkError.message,
-            errorCode: networkError.errorCode,
+            errorCode: networkError.code,
             errorType: networkError.constructor.name,
             severity: networkError.severity
           });
@@ -199,7 +202,7 @@ export class SlackBotManager {
 
           debug(`${botInfo.botUserName} received: ${event.text}`);
           if (this.messageHandler) {
-            const slackMessage = new SlackMessage(event.text, event.channel, event);
+            const slackMessage = new SlackMessage(event.text, event.channel, event as any);
             await this.messageHandler(slackMessage, [], botInfo.config);
           }
         });
@@ -213,7 +216,7 @@ export class SlackBotManager {
             if (error instanceof BaseHivemindError) {
               debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
                 error: error.message,
-                errorCode: error.errorCode,
+                errorCode: error.code,
                 errorType: error.constructor.name,
                 severity: error.severity
               });
@@ -221,11 +224,13 @@ export class SlackBotManager {
             } else {
               const networkError = new NetworkError(
                 `Failed to start socket client for ${botInfo.botUserName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                'SLACK_SOCKET_START_ERROR'
+                undefined,
+                undefined,
+                { originalError: error, errorCode: 'SLACK_SOCKET_START_ERROR' }
               );
               debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
                 error: networkError.message,
-                errorCode: networkError.errorCode,
+                errorCode: networkError.code,
                 errorType: networkError.constructor.name,
                 severity: networkError.severity
               });
@@ -239,7 +244,7 @@ export class SlackBotManager {
           await botInfo.rtmClient.start();
           debug(`RTM client started for ${botInfo.botUserName}`);
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error);
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
           const errorInfo = ErrorUtils.classifyError(hivemindError);
           debug(`Failed to start RTM client for ${botInfo.botUserName}:`, {
             error: hivemindError.message,
@@ -256,7 +261,7 @@ export class SlackBotManager {
   private async fetchMessagesForBot(botInfo: SlackBotInfo, channel: string, limit = 10): Promise<IMessage[]> {
     debug('Entering fetchMessagesForBot');
     const result = await botInfo.webClient.conversations.history({ channel, limit });
-    return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg));
+    return (result.messages || []).map(msg => new SlackMessage(msg.text || '', channel, msg as any));
   }
 
   public getBotByName(name: string): SlackBotInfo | undefined {

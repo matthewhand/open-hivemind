@@ -31,7 +31,7 @@ export const sendFollowUp = async (
     if (!message || !followUpText) {
       throw ErrorUtils.createError(
         'Invalid message or follow-up text provided',
-        'ValidationError',
+        'ValidationError' as any,
         'DISCORD_INVALID_FOLLOWUP_PARAMS',
         400,
         { hasMessage: !!message, hasFollowUpText: !!followUpText }

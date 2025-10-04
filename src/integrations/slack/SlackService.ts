@@ -24,6 +24,7 @@ import {
   ValidationError,
   ApiError
 } from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -292,6 +293,8 @@ export class SlackService implements IMessengerService {
         throw new ConfigurationError(
           `Failed to create SlackService instance: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'SLACK_SERVICE_INIT_ERROR',
+          undefined,
+          undefined,
           { originalError: error }
         );
       }
@@ -306,7 +309,7 @@ export class SlackService implements IMessengerService {
       debug('Express app not set; call setApp() before initialize()');
       throw ErrorUtils.createError(
         'Express app not configured',
-        'ConfigurationError',
+        'configuration' as any,
         'SLACK_APP_NOT_CONFIGURED_INIT',
         500
       );

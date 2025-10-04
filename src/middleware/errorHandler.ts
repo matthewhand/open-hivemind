@@ -278,14 +278,12 @@ function emitErrorEvent(
   statusCode: number
 ): void {
   // Emit to any monitoring systems or event emitters
-  if (process.emit) {
-    (process as any).emit('hivemind:error', {
-      error: error.toJSON(),
-      context,
-      statusCode,
-      timestamp: new Date().toISOString()
-    });
-  }
+  (process as any).emit('hivemind:error', {
+    error: error.toJSON(),
+    context,
+    statusCode,
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Input, Button, Toggle, Alert, Divider } from '../../../client/src/components/DaisyUI';
+import { Card, Input, Button, Alert, Checkbox } from '../../../client/src/components/DaisyUI';
 import { useSuccessToast, useErrorToast } from '../../../client/src/components/DaisyUI/ToastNotification';
 
 interface DiscordConfig {
@@ -122,14 +122,14 @@ const DiscordConfiguration: React.FC = () => {
     }
   };
 
-  const updateConfig = (path: string, value: any) => {
+  const updateConfig = (path: string, value: unknown) => {
     setConfig(prev => {
       const keys = path.split('.');
       const newConfig = { ...prev };
-      let current: any = newConfig;
+      let current: Record<string, unknown> = newConfig as Record<string, unknown>;
 
       for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
+        current = current[keys[i]] as Record<string, unknown>;
       }
 
       current[keys[keys.length - 1]] = value;
@@ -140,8 +140,8 @@ const DiscordConfiguration: React.FC = () => {
   return (
     <div className="space-y-6">
       <Card className="bg-base-100 shadow-xl">
-        <Card.Body className="p-6">
-          <Card.Title className="text-2xl font-bold mb-4">
+        <div className="card-body p-6">
+          <div className="text-2xl font-bold mb-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-[#5865F2] rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@ const DiscordConfiguration: React.FC = () => {
               </div>
               Discord Integration
             </div>
-          </Card.Title>
+          </div>
 
           {/* Basic Configuration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -212,7 +212,7 @@ const DiscordConfiguration: React.FC = () => {
             </div>
           </div>
 
-          <Divider className="my-6">Bot Status & Activity</Divider>
+          <div className="divider my-6">Bot Status & Activity</div>
 
           {/* Status Configuration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -263,16 +263,17 @@ const DiscordConfiguration: React.FC = () => {
             </div>
           </div>
 
-          <Divider className="my-6">Features</Divider>
+          <div className="divider my-6">Features</div>
 
           {/* Features Configuration */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium">🎤 Voice Support</span>
-                <Toggle
+                <Checkbox
                   checked={config.features.voiceSupport}
-                  onChange={(checked) => updateConfig('features.voiceSupport', checked)}
+                  onChange={(e) => updateConfig('features.voiceSupport', e.target.checked)}
+                  className="checkbox-primary"
                 />
               </label>
               <label className="label">
@@ -283,9 +284,10 @@ const DiscordConfiguration: React.FC = () => {
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium">📝 Message Logging</span>
-                <Toggle
+                <Checkbox
                   checked={config.features.messageLogging}
-                  onChange={(checked) => updateConfig('features.messageLogging', checked)}
+                  onChange={(e) => updateConfig('features.messageLogging', e.target.checked)}
+                  className="checkbox-primary"
                 />
               </label>
               <label className="label">
@@ -296,9 +298,10 @@ const DiscordConfiguration: React.FC = () => {
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium">🛡️ Auto Moderation</span>
-                <Toggle
+                <Checkbox
                   checked={config.features.autoModeration}
-                  onChange={(checked) => updateConfig('features.autoModeration', checked)}
+                  onChange={(e) => updateConfig('features.autoModeration', e.target.checked)}
+                  className="checkbox-primary"
                 />
               </label>
               <label className="label">
@@ -309,9 +312,10 @@ const DiscordConfiguration: React.FC = () => {
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text font-medium">📊 Analytics</span>
-                <Toggle
+                <Checkbox
                   checked={config.features.analytics}
-                  onChange={(checked) => updateConfig('features.analytics', checked)}
+                  onChange={(e) => updateConfig('features.analytics', e.target.checked)}
+                  className="checkbox-primary"
                 />
               </label>
               <label className="label">
@@ -322,9 +326,9 @@ const DiscordConfiguration: React.FC = () => {
 
           {/* Test Result */}
           {testResult && (
-            <Alert className={`mb-6 ${testResult.success ? 'alert-success' : 'alert-error'}`}>
+            <div className={`mb-6 alert ${testResult.success ? 'alert-success' : 'alert-error'}`}>
               <div className="flex items-center gap-3">
-                {testResult.success ? '✅' : '❌'}
+                <span>{testResult.success ? '✅' : '❌'}</span>
                 <div>
                   <div className="font-medium">
                     {testResult.success ? 'Connection Successful' : 'Connection Failed'}
@@ -332,13 +336,13 @@ const DiscordConfiguration: React.FC = () => {
                   <div className="text-sm opacity-80">{testResult.message}</div>
                 </div>
               </div>
-            </Alert>
+            </div>
           )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
             <Button
-              color="primary"
+              variant="primary"
               onClick={saveConfig}
               loading={loading}
               disabled={!config.botToken || !config.clientId}
@@ -347,7 +351,7 @@ const DiscordConfiguration: React.FC = () => {
             </Button>
 
             <Button
-              color="secondary"
+              variant="secondary"
               onClick={testConnection}
               loading={testing}
               disabled={!config.botToken || !config.clientId}
@@ -356,13 +360,13 @@ const DiscordConfiguration: React.FC = () => {
             </Button>
 
             <Button
-              color="ghost"
+              variant="ghost"
               onClick={loadConfig}
             >
               Reset
             </Button>
           </div>
-        </Card.Body>
+        </div>
       </Card>
     </div>
   );

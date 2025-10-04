@@ -10,6 +10,7 @@ import {
   ApiError,
   TimeoutError
 } from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:openAiProvider');
 
@@ -209,22 +210,34 @@ export const openAiProvider: ILlmProvider = {
           if (errorMsgLower.includes('connection') || errorMsgLower.includes('econnrefused')) {
             hivemindError = new NetworkError(
               `OpenAI connection failed: ${errorMsg}`,
-              'OPENAI_CONNECTION_ERROR'
+              undefined,
+              undefined,
+              { code: 'OPENAI_CONNECTION_ERROR' }
             );
           } else if (errorMsgLower.includes('timed out')) {
             hivemindError = new TimeoutError(
               `OpenAI request timed out: ${errorMsg}`,
-              'OPENAI_TIMEOUT_ERROR'
+              30000,
+              'chat_completion',
+              { code: 'OPENAI_TIMEOUT_ERROR' }
             );
           } else if (errorMsgLower.includes('api') || errorMsgLower.includes('unauthorized') || errorMsgLower.includes('forbidden')) {
             hivemindError = new ApiError(
               `OpenAI API error: ${errorMsg}`,
-              'OPENAI_API_ERROR'
+              'openai',
+              undefined,
+              undefined,
+              undefined,
+              { code: 'OPENAI_API_ERROR' }
             );
           } else {
             hivemindError = new ApiError(
               `OpenAI error: ${errorMsg}`,
-              'OPENAI_GENERIC_ERROR'
+              'openai',
+              undefined,
+              undefined,
+              undefined,
+              { code: 'OPENAI_GENERIC_ERROR' }
             );
           }
         }
@@ -323,22 +336,34 @@ export const openAiProvider: ILlmProvider = {
           if (errorMsgLower.includes('connection') || errorMsgLower.includes('econnrefused')) {
             hivemindError = new NetworkError(
               `OpenAI connection failed: ${errorMsg}`,
-              'OPENAI_CONNECTION_ERROR'
+              undefined,
+              undefined,
+              { code: 'OPENAI_CONNECTION_ERROR' }
             );
           } else if (errorMsgLower.includes('timed out')) {
             hivemindError = new TimeoutError(
               `OpenAI request timed out: ${errorMsg}`,
-              'OPENAI_TIMEOUT_ERROR'
+              30000,
+              'chat_completion',
+              { code: 'OPENAI_TIMEOUT_ERROR' }
             );
           } else if (errorMsgLower.includes('api') || errorMsgLower.includes('unauthorized') || errorMsgLower.includes('forbidden')) {
             hivemindError = new ApiError(
               `OpenAI API error: ${errorMsg}`,
-              'OPENAI_API_ERROR'
+              'openai',
+              undefined,
+              undefined,
+              undefined,
+              { code: 'OPENAI_API_ERROR' }
             );
           } else {
             hivemindError = new ApiError(
               `OpenAI error: ${errorMsg}`,
-              'OPENAI_GENERIC_ERROR'
+              'openai',
+              undefined,
+              undefined,
+              undefined,
+              { code: 'OPENAI_GENERIC_ERROR' }
             );
           }
         }

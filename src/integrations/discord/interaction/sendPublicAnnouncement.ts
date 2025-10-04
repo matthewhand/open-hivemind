@@ -8,12 +8,12 @@ const discordSvc = DiscordService.getInstance();
 const debug = Debug('app:sendPublicAnnouncement');
 
 export async function sendPublicAnnouncement(channelId: string, announcement: { title?: string; description?: string; color?: string }): Promise<void> {
-  const client = discordSvc.client;
+  const client = discordSvc.getClient();
 
   const embed = new EmbedBuilder()
     .setTitle(announcement.title || '📢 Public Announcement')
     .setDescription(announcement.description || 'No description provided')
-    .setColor(announcement.color || '#0099ff')
+    .setColor((announcement.color || '#0099ff') as any)
     .setTimestamp();
 
   try {
@@ -21,7 +21,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
     if (!(channel instanceof TextChannel || channel instanceof DMChannel)) {
       throw ErrorUtils.createError(
         'Unsupported channel type.',
-        'ValidationError',
+        'ValidationError' as any,
         'DISCORD_UNSUPPORTED_CHANNEL_TYPE',
         400,
         { channelId, channelType: channel?.type }
@@ -30,7 +30,7 @@ export async function sendPublicAnnouncement(channelId: string, announcement: { 
     if (channel instanceof PartialGroupDMChannel) {
       throw ErrorUtils.createError(
         'Cannot send messages to PartialGroupDMChannel.',
-        'ValidationError',
+        'ValidationError' as any,
         'DISCORD_CANNOT_SEND_TO_PARTIAL_GROUP_DM',
         400,
         { channelId }

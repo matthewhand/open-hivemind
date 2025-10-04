@@ -85,7 +85,7 @@ export class AudioRecorder {
       if (!chunks || chunks.length === 0) {
         throw ErrorUtils.createError(
           `No recording found for user ${userId}`,
-          'ValidationError',
+          'ValidationError' as any,
           'DISCORD_AUDIO_RECORDER_NO_RECORDING',
           404,
           { userId }
