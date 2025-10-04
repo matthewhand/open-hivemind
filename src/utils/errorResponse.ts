@@ -185,10 +185,13 @@ export class ErrorResponseBuilder {
         return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
       case 'NETWORK_ERROR':
         // Check if it's a client or server error
-        if (error.details?.response?.status) {
-          const status = Number(error.details.response.status);
-          if (status >= 400 && status < 600) {
-            return status;
+        if (error.details && typeof error.details === 'object' && 'response' in error.details) {
+          const response = (error.details as any).response;
+          if (response && typeof response === 'object' && 'status' in response) {
+            const status = Number(response.status);
+            if (status >= 400 && status < 600) {
+              return status;
+            }
           }
         }
         return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
@@ -232,7 +235,7 @@ export class SuccessResponseBuilder<T = any> {
     this.response.meta = {
       ...this.response.meta,
       ...meta
-    };
+    } as StandardSuccessResponse<T>['meta'];
     return this;
   }
 

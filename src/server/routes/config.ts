@@ -58,7 +58,7 @@ router.get('/api/config', (req, res) => {
       environment: process.env.NODE_ENV || 'development'
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config API error:', {
@@ -166,7 +166,7 @@ router.get('/api/config/sources', (req, res) => {
       overrides
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config sources API error:', {
@@ -198,7 +198,7 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config reload error:', {
@@ -235,7 +235,7 @@ router.post('/api/cache/clear', (req: AuditedRequest, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Cache clear error:', {
@@ -277,7 +277,7 @@ router.get('/api/config/export', (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
     res.send(jsonContent);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config export error:', {
@@ -324,7 +324,7 @@ router.get('/api/config/validate', (req, res) => {
       errors
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config validation error:', {
@@ -360,7 +360,7 @@ router.post('/api/config/backup', (req: AuditedRequest, res) => {
       message: 'Configuration backup created successfully'
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config backup error:', {
@@ -396,7 +396,7 @@ router.post('/api/config/restore', (req: AuditedRequest, res) => {
       message: 'Configuration restored successfully'
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('Config restore error:', {
@@ -486,7 +486,7 @@ router.get('/api/openapi', (req, res) => {
     };
     res.json(openapiSpec);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     console.error('OpenAPI generation error:', {

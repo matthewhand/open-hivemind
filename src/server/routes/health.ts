@@ -54,8 +54,8 @@ router.get('/health', (req, res) => {
     res.status(statusCode).json(response);
   } catch (error) {
     debug('Health check error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 503).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -89,8 +89,8 @@ router.get('/health/detailed', (req, res) => {
     res.status(statusCode).json(response);
   } catch (error) {
     debug('Detailed health check error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 503).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -108,8 +108,8 @@ router.get('/health/metrics', (req, res) => {
     });
   } catch (error) {
     debug('Metrics endpoint error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 500).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -127,8 +127,8 @@ router.get('/health/alerts', (req, res) => {
     });
   } catch (error) {
     debug('Alerts endpoint error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 500).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -153,8 +153,8 @@ router.post('/health/alerts/:alertId/resolve', (req, res) => {
     }
   } catch (error) {
     debug('Resolve alert endpoint error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 500).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -183,8 +183,8 @@ router.get('/health/ready', (req, res) => {
     }
   } catch (error) {
     debug('Readiness probe error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 503).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -200,8 +200,8 @@ router.get('/health/live', (req, res) => {
     });
   } catch (error) {
     debug('Liveness probe error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 503).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 503).json(errorResponse);
   }
 });
 
@@ -243,8 +243,8 @@ router.get('/health/metrics/prometheus', (req, res) => {
     res.send(prometheusOutput);
   } catch (error) {
     debug('Prometheus metrics endpoint error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 500).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 
@@ -259,8 +259,8 @@ router.post('/health/cleanup', (req, res) => {
     });
   } catch (error) {
     debug('Cleanup endpoint error:', error);
-    const errorResponse = createErrorResponse(error as Error, req);
-    res.status(errorResponse.statusCode || 500).json(errorResponse);
+    const errorResponse = createErrorResponse(error as Error, req.path);
+    res.status(errorResponse.getStatusCode() || 500).json(errorResponse);
   }
 });
 

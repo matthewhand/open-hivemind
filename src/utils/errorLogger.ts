@@ -6,7 +6,7 @@
  */
 
 import Debug from 'debug';
-import { BaseHivemindError } from '../types/errorClasses';
+import { BaseHivemindError, NetworkError } from '../types/errorClasses';
 import { HivemindError, ErrorUtils } from '../types/errors';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 
@@ -153,7 +153,7 @@ export class ErrorLogger {
     // Check for error patterns
     this.checkErrorPatterns(error, context);
 
-    this.debug(`Error logged: ${error.name} - ${error.message}`, {
+    this.debug(`Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`, {
       correlationId: context.correlationId,
       level: logLevel
     });
@@ -321,7 +321,7 @@ export class ErrorLogger {
     if (!this.config.enableStructured) return;
 
     // Emit structured log for monitoring systems
-    if (process.emit) {
+    if ((process as any).emit) {
       (process as any).emit('hivemind:log', {
         type: 'error',
         level,
@@ -374,7 +374,7 @@ export class ErrorLogger {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
       
       // Emit alert for monitoring
-      if (process.emit) {
+      if ((process as any).emit) {
         (process as any).emit('hivemind:alert', {
           type: 'error_spike',
           errorType,
@@ -391,8 +391,8 @@ export class ErrorLogger {
 
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
-      
-      if (process.emit) {
+
+      if ((process as any).emit) {
         (process as any).emit('hivemind:alert', {
           type: 'high_error_rate',
           count: recentErrors,
@@ -428,8 +428,17 @@ export class ErrorLogger {
       .sort((a, b) => b[1] - a[1]) // Sort by timestamp descending
       .slice(0, limit)
       .map(([correlationId, timestamp]) => ({
-        error: new BaseHivemindError('Recent error', 500, 'RECENT_ERROR'),
-        context: { correlationId },
+        error: {
+          name: 'RecentError',
+          message: 'Recent error',
+          code: 'RECENT_ERROR',
+          type: 'recent'
+        } as HivemindError,
+        context: {
+          correlationId,
+          path: '',
+          method: ''
+        } as ErrorContext,
         timestamp
       }));
   }

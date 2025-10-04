@@ -23,6 +23,11 @@
     "silent": true
   },
   "git": {
+    "ignore": [
+      {
+        "type": "pull-request"
+      }
+    ],
     "deploymentHook": {
       "enabled": false
     }

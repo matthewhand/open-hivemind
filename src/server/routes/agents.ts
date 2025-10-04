@@ -51,7 +51,7 @@ const ensureDataDir = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     debug('Error creating data directory:', hivemindError.message);
   }
 };
@@ -62,7 +62,7 @@ const loadJsonConfig = async <T>(filePath: string, defaultValue: T): Promise<T> 
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     debug(`Config file ${filePath} not found, using defaults:`, hivemindError.message);
     return defaultValue;
   }
@@ -132,16 +132,16 @@ router.get('/', async (req, res) => {
 
     res.json({ agents: agentsWithEnvInfo });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error fetching agents:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENTS_FETCH_ERROR',
@@ -167,16 +167,16 @@ router.post('/', async (req, res) => {
     debug(`Created new agent: ${newAgent.name}`);
     res.json({ agent: newAgent });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error creating agent:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_CREATE_ERROR',
@@ -204,16 +204,16 @@ router.put('/:id', async (req, res) => {
     debug(`Updated agent: ${agents[agentIndex].name}`);
     res.json({ agent: agents[agentIndex] });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error updating agent:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_UPDATE_ERROR',
@@ -239,16 +239,16 @@ router.delete('/:id', async (req, res) => {
     debug(`Deleted agent: ${id}`);
     res.json({ success: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error deleting agent:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'AGENT_DELETE_ERROR',
@@ -280,16 +280,16 @@ router.get('/personas', async (req, res) => {
     
     res.json({ personas });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error fetching personas:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONAS_FETCH_ERROR',
@@ -323,16 +323,16 @@ router.post('/personas', async (req, res) => {
     debug(`Created new persona: ${name}`);
     res.json({ persona: newPersona });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error creating persona:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_CREATE_ERROR',
@@ -360,16 +360,16 @@ router.put('/personas/:key', async (req, res) => {
     debug(`Updated persona: ${name}`);
     res.json({ persona: personas[personaIndex] });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error updating persona:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_UPDATE_ERROR',
@@ -399,16 +399,16 @@ router.delete('/personas/:key', async (req, res) => {
     debug(`Deleted persona: ${key}`);
     res.json({ success: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
-    
+
     debug('Error deleting persona:', {
       message: hivemindError.message,
       code: hivemindError.code,
       type: errorInfo.type,
       severity: errorInfo.severity
     });
-    
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'PERSONA_DELETE_ERROR',

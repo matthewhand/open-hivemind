@@ -254,12 +254,11 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
   if (!errors.isEmpty()) {
     const hivemindError = ErrorUtils.toHivemindError(
       new Error('Validation failed'),
-      'VALIDATION_ERROR',
       'Request validation failed',
-      { validationErrors: errors.array() }
-    );
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Validation middleware');
+    console.error('Validation error:', hivemindError);
 
     return res.status(400).json({
       success: false,
@@ -305,11 +304,11 @@ router.get('/api/validation', authenticate, async (req: AuthMiddlewareRequest, r
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to validate configuration'
-    );
+      'Failed to validate configuration',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Configuration validation endpoint');
+    console.error('Error in', 'Configuration validation endpoint');
 
     res.status(500).json({
       error: hivemindError.message,
@@ -409,11 +408,11 @@ router.get('/api/validation/schema', authenticate, (_req: AuthMiddlewareRequest,
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation schema'
-    );
+      'Failed to get validation schema',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Validation schema endpoint');
+    console.error('Error in', 'Validation schema endpoint');
 
     res
       .status(500)
@@ -441,11 +440,11 @@ router.get('/api/validation/rules', authenticate, async (req: AuthMiddlewareRequ
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation rules'
-    );
+      'Failed to get validation rules',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Get validation rules endpoint');
+    console.error('Error in', 'Get validation rules endpoint');
 
     res.status(500).json({
       success: false,
@@ -479,13 +478,13 @@ router.get('/api/validation/rules/:ruleId', authenticate, param('ruleId').trim()
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation rule'
-    );
+      'Failed to get validation rule',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Get validation rule endpoint');
+    console.error('Error in', 'Get validation rule endpoint');
 
-    res.status(50).json({
+    res.status(500).json({
       success: false,
       error: hivemindError.message,
       code: hivemindError.code,
@@ -532,11 +531,11 @@ router.post('/api/validation/rules', requireAdmin, validateRuleCreation, handleV
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to create validation rule'
-    );
+      'Failed to create validation rule',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Create validation rule endpoint');
+    console.error('Error in', 'Create validation rule endpoint');
 
     res.status(500).json({
       success: false,
@@ -570,11 +569,11 @@ router.delete('/api/validation/rules/:ruleId', requireAdmin, param('ruleId').tri
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to delete validation rule'
-    );
+      'Failed to delete validation rule',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Delete validation rule endpoint');
+    console.error('Error in', 'Delete validation rule endpoint');
 
     res.status(500).json({
       success: false,
@@ -600,11 +599,11 @@ router.get('/api/validation/profiles', authenticate, async (req: AuthMiddlewareR
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation profiles'
-    );
+      'Failed to get validation profiles',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Get validation profiles endpoint');
+    console.error('Error in', 'Get validation profiles endpoint');
 
     res.status(500).json({
       success: false,
@@ -638,11 +637,11 @@ router.get('/api/validation/profiles/:profileId', authenticate, param('profileId
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation profile'
-    );
+      'Failed to get validation profile',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Get validation profile endpoint');
+    console.error('Error in', 'Get validation profile endpoint');
 
     res.status(500).json({
       success: false,
@@ -700,11 +699,11 @@ router.post('/api/validation/profiles', requireAdmin, validateProfileCreation, h
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to create validation profile'
-    );
+      'Failed to create validation profile',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Create validation profile endpoint');
+    console.error('Error in', 'Create validation profile endpoint');
 
     res.status(500).json({
       success: false,
@@ -738,11 +737,11 @@ router.delete('/api/validation/profiles/:profileId', requireAdmin, param('profil
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to delete validation profile'
-    );
+      'Failed to delete validation profile',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Delete validation profile endpoint');
+    console.error('Error in', 'Delete validation profile endpoint');
 
     res.status(500).json({
       success: false,
@@ -803,11 +802,11 @@ router.post('/api/validation/validate-data', authenticate, validateConfiguration
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to validate configuration data'
-    );
+      'Failed to validate configuration data',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Validate configuration data endpoint');
+    console.error('Error in', 'Validate configuration data endpoint');
 
     res.status(500).json({
       success: false,
@@ -840,11 +839,11 @@ router.post('/api/validation/subscribe', authenticate, validateSubscription, han
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to subscribe to validation'
-    );
+      'Failed to subscribe to validation',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Subscribe to validation endpoint');
+    console.error('Error in', 'Subscribe to validation endpoint');
 
     res.status(500).json({
       success: false,
@@ -884,11 +883,11 @@ router.delete('/api/validation/unsubscribe/:configId/:clientId', authenticate,
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
         error,
-        'VALIDATION_ERROR',
-        'Failed to unsubscribe from validation'
-      );
+        'Failed to unsubscribe from validation',
+        'VALIDATION_ERROR'
+      ) as any;
 
-      ErrorUtils.logError(hivemindError, 'Unsubscribe from validation endpoint');
+      console.error('Error in', 'Unsubscribe from validation endpoint');
 
       res.status(500).json({
         success: false,
@@ -923,11 +922,11 @@ router.get('/api/validation/history', authenticate,
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
         error,
-        'VALIDATION_ERROR',
-        'Failed to get validation history'
-      );
+        'Failed to get validation history',
+        'VALIDATION_ERROR'
+      ) as any;
 
-      ErrorUtils.logError(hivemindError, 'Get validation history endpoint');
+      console.error('Error in', 'Get validation history endpoint');
 
       res.status(500).json({
         success: false,
@@ -954,11 +953,11 @@ router.get('/api/validation/statistics', authenticate, async (req: AuthMiddlewar
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(
       error,
-      'VALIDATION_ERROR',
-      'Failed to get validation statistics'
-    );
+      'Failed to get validation statistics',
+      'VALIDATION_ERROR'
+    ) as any;
 
-    ErrorUtils.logError(hivemindError, 'Get validation statistics endpoint');
+    console.error('Error in', 'Get validation statistics endpoint');
 
     res.status(500).json({
       success: false,

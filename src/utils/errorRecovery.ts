@@ -331,8 +331,9 @@ export class FallbackManager {
         strategy: 'primary'
       };
     } catch (primaryError) {
-      debug(`Primary operation failed: ${primaryError.message}`);
-      
+      const error = primaryError instanceof Error ? primaryError : new Error(String(primaryError));
+      debug(`Primary operation failed: ${error.message}`);
+
       // Try fallbacks in order
       for (let i = 0; i < fallbacks.length; i++) {
         try {
@@ -348,14 +349,15 @@ export class FallbackManager {
             strategy: `fallback_${i + 1}`
           };
         } catch (fallbackError) {
-          debug(`Fallback ${i + 1} failed: ${fallbackError.message}`);
+          const fallbackErr = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
+          debug(`Fallback ${i + 1} failed: ${fallbackErr.message}`);
         }
       }
 
       // All fallbacks failed
       return {
         success: false,
-        error: primaryError instanceof Error ? primaryError : new Error(String(primaryError)),
+        error,
         attempts: 1 + fallbacks.length,
         totalDuration: Date.now() - startTime,
         strategy: 'failed'
@@ -483,7 +485,7 @@ export class AdaptiveRecoveryManager {
   /**
    * Get or create retry handler
    */
-  private getRetryHandler(operationKey: string, config: Partial<RetryConfig>): RetryHandler {
+  public getRetryHandler(operationKey: string, config: Partial<RetryConfig> = {}): RetryHandler {
     if (!this.retryHandlers.has(operationKey)) {
       const mergedConfig = { ...this.defaultRetryConfig, ...config };
       this.retryHandlers.set(operationKey, new RetryHandler(mergedConfig));
@@ -494,7 +496,7 @@ export class AdaptiveRecoveryManager {
   /**
    * Get or create circuit breaker
    */
-  private getCircuitBreaker(operationKey: string, config: Partial<CircuitBreakerConfig>): CircuitBreaker {
+  public getCircuitBreaker(operationKey: string, config: Partial<CircuitBreakerConfig> = {}): CircuitBreaker {
     if (!this.circuitBreakers.has(operationKey)) {
       const mergedConfig = { ...this.defaultCircuitBreakerConfig, ...config };
       this.circuitBreakers.set(operationKey, new CircuitBreaker(mergedConfig));
@@ -505,7 +507,7 @@ export class AdaptiveRecoveryManager {
   /**
    * Get or create fallback manager
    */
-  private getFallbackManager(operationKey: string): FallbackManager {
+  public getFallbackManager(operationKey: string): FallbackManager {
     if (!this.fallbackManagers.has(operationKey)) {
       this.fallbackManagers.set(operationKey, new FallbackManager());
     }
