@@ -1,4 +1,4 @@
-import { ProviderSchema } from '../types';
+import { ProviderConfigSchema } from '../types';
 
 /**
  * MCP (Model Context Protocol) Provider Configuration Schema
@@ -6,7 +6,7 @@ import { ProviderSchema } from '../types';
  * This schema supports both 'desktop' and 'cloud' MCP servers with flexible
  * command configuration and environment variable management.
  */
-export const mcpProviderSchema: ProviderSchema = {
+export const mcpProviderSchema: ProviderConfigSchema = {
   type: 'mcp',
   providerType: 'mcp',
   displayName: 'MCP Provider',
@@ -139,60 +139,15 @@ export const mcpProviderSchema: ProviderSchema = {
       defaultValue: true
     }
   ],
-  examples: [
-    {
-      name: 'File System MCP',
-      type: 'desktop',
-      description: 'Local file system access for reading and writing files',
-      command: 'npx',
-      args: '@modelcontextprotocol/server-filesystem',
-      envVars: {
-        'FILESYSTEM_ROOT': '/tmp/mcp-files'
-      },
-      enabled: false
-    },
-    {
-      name: 'Web Scraper MCP',
-      type: 'desktop',
-      description: 'Fetch and extract content from web pages',
-      command: 'npx',
-      args: '@modelcontextprotocol/server-web-scraper',
-      envVars: {},
-      enabled: false
-    },
-    {
-      name: 'GitHub MCP',
-      type: 'cloud',
-      description: 'Access GitHub repositories and issues',
-      command: 'npx',
-      args: '@modelcontextprotocol/server-github',
-      envVars: {
-        'GITHUB_TOKEN': 'your_github_token_here'
-      },
-      enabled: false
-    },
-    {
-      name: 'PostgreSQL MCP',
-      type: 'desktop',
-      description: 'Query PostgreSQL databases',
-      command: 'npx',
-      args: '@modelcontextprotocol/server-postgres',
-      envVars: {
-        'POSTGRES_CONNECTION_STRING': 'postgresql://user:password@localhost:5432/dbname'
-      },
-      enabled: false
-    },
-    {
-      name: 'Custom MCP Server',
-      type: 'desktop',
-      description: 'Custom Python MCP server',
-      command: 'python',
-      args: '-m my_custom_mcp_server',
-      envVars: {
-        'MY_API_KEY': 'your_api_key_here',
-        'DEBUG': 'true'
-      },
-      enabled: false
-    }
-  ]
+  defaultConfig: {
+    name: 'MCP Server',
+    type: 'desktop',
+    command: 'npx',
+    args: '',
+    timeout: 30,
+    autoRestart: true,
+    healthCheckEnabled: true,
+    healthCheckInterval: 60,
+    enabled: true
+  }
 };

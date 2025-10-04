@@ -48,28 +48,48 @@ export interface ProviderConfigFormProps {
 
 export interface ProviderConfigModalProps {
   isOpen: boolean;
-  providerType: 'message' | 'llm';
-  initialProvider?: string;
-  initialConfig?: Record<string, any>;
   onClose: () => void;
-  onSave: (providerType: string, config: Record<string, any>) => void;
-}
-
-// Avatar retrieval service interface
-export interface AvatarService {
-  loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null>;
-  getSupportedProviders(): string[];
-}
-
-// Provider schema interface for MCP providers
-export interface ProviderSchema {
-  type: 'message' | 'llm' | 'mcp';
   providerType: string;
-  displayName: string;
-  description: string;
-  icon: string;
-  color: string;
-  fields: ProviderConfigField[];
-  defaultConfig?: Record<string, any>;
-  examples?: Array<Record<string, any>>;
+  schema: ProviderConfigSchema;
+  initialConfig?: Record<string, any>;
+  onSave: (config: Record<string, any>) => void;
+  onTestConnection?: (config: Record<string, any>) => Promise<boolean>;
+  title?: string;
 }
+
+export interface ProviderSchema {
+  type: 'mcp';
+  name: string;
+  description: string;
+  version: string;
+  servers: MCPServerDefinition[];
+}
+
+export interface MCPServerDefinition {
+  name: string;
+  description: string;
+  url?: string;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+
+// Avatar service interface
+export class AvatarService {
+  static async loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null> {
+    try {
+      // Mock implementation - in real app would fetch from provider APIs
+      if (providerType === 'slack' && config.teamId) {
+        return `https://api.slack.com/avatars/${config.teamId}`;
+      }
+      if (providerType === 'discord' && config.guildId) {
+        return `https://cdn.discordapp.com/icons/${config.guildId}`;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to load avatar:', error);
+      return null;
+    }
+  }
+}
+
