@@ -27,6 +27,11 @@ const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
 const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
+
+// Monitoring Dashboard pages
+const MonitoringDashboard = lazy(() => import('../pages/MonitoringDashboard'));
+const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
+const SystemManagement = lazy(() => import('../pages/SystemManagement'));
 const ExportPage = lazy(() => import('../pages/ExportPage'));
 const SystemSettings = lazy(() => import('../pages/SystemSettings'));
 const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
@@ -124,6 +129,11 @@ const AppRouter: React.FC = () => {
             {/* Monitoring Routes */}
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="activity" element={<ActivityPage />} />
+
+            {/* New Monitoring Dashboard Routes */}
+            <Route path="monitoring-dashboard" element={<MonitoringDashboard />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+            <Route path="system-management" element={<SystemManagement />} />
 
             <Route path="export" element={<ExportPage />} />
             <Route path="settings" element={<SystemSettings />} />

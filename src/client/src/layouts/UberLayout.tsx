@@ -23,6 +23,8 @@ import {
   Map as SitemapIcon,
   Palette as ShowcaseIcon,
   Assessment as ActivityIcon,
+  Analytics as AnalyticsIcon,
+  AdminPanelSettings as SystemManagementIcon,
 } from '@mui/icons-material';
 import { useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -80,6 +82,24 @@ const UberLayout: React.FC = () => {
       text: 'Monitoring',
       icon: <MonitorIcon />,
       path: '/admin/monitoring',
+      visible: true,
+    },
+    {
+      text: 'Monitoring Dashboard',
+      icon: <MonitorIcon />,
+      path: '/admin/monitoring-dashboard',
+      visible: true,
+    },
+    {
+      text: 'Analytics',
+      icon: <AnalyticsIcon />,
+      path: '/admin/analytics',
+      visible: true,
+    },
+    {
+      text: 'System Management',
+      icon: <SystemManagementIcon />,
+      path: '/admin/system-management',
       visible: true,
     },
     {
