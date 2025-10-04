@@ -67,11 +67,11 @@ export class HotReloadManager {
           });
           this.configWatchers.set(configPath, watcher);
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error);
+          const hivemindError = ErrorUtils.toHivemindError(error) as any as any;
           const errorInfo = ErrorUtils.classifyError(hivemindError);
           debug(`Failed to watch config path ${configPath}:`, {
             error: hivemindError.message,
-            errorCode: hivemindError.code,
+            errorCode: (hivemindError as any).code,
             errorType: errorInfo.type,
             severity: errorInfo.severity,
             configPath
@@ -100,11 +100,11 @@ export class HotReloadManager {
       // For now, just log the detection - full auto-reload would be implemented here
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error detecting configuration changes:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: (hivemindError as any).code,
         errorType: errorInfo.type,
         severity: errorInfo.severity
       });
@@ -185,11 +185,11 @@ export class HotReloadManager {
       }
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error applying configuration change:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: (hivemindError as any).code,
         errorType: errorInfo.type,
         severity: errorInfo.severity
       });
@@ -256,7 +256,7 @@ export class HotReloadManager {
       };
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Validation error:', {
         error: hivemindError.message,
@@ -292,7 +292,7 @@ export class HotReloadManager {
 
       return snapshotId;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error creating rollback snapshot:', {
         error: hivemindError.message,
@@ -341,7 +341,7 @@ export class HotReloadManager {
       };
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error applying configuration changes:', {
         error: hivemindError.message,
@@ -406,7 +406,7 @@ export class HotReloadManager {
 
       return true;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Error applying changes to bot '${botName}':`, {
         error: hivemindError.message,
@@ -438,7 +438,7 @@ export class HotReloadManager {
       debug(`Successfully rolled back to snapshot '${snapshotId}'`);
       return true;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error during rollback:', {
         error: hivemindError.message,
@@ -466,7 +466,7 @@ export class HotReloadManager {
         watcher.close();
         debug(`Closed file watcher for ${path}`);
       } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error);
+        const hivemindError = ErrorUtils.toHivemindError(error) as any;
         const errorInfo = ErrorUtils.classifyError(hivemindError);
         debug(`Error closing file watcher for ${path}:`, {
           error: hivemindError.message,

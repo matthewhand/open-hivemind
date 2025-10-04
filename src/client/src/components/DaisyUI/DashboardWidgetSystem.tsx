@@ -220,8 +220,8 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
             <div className="flex-1">
               <progress
                 className={`progress w-full ${
-                  value > 80 ? 'progress-error' :
-                  value > 60 ? 'progress-warning' : 'progress-success'
+                  Number(value) > 80 ? 'progress-error' :
+                  Number(value) > 60 ? 'progress-warning' : 'progress-success'
                 }`}
                 value={Number(value)}
                 max="100"

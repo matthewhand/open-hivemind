@@ -323,8 +323,8 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   return (
     <div className={`w-full ${className}`}>
       <ul className={`steps w-full ${steps ? 'steps-vertical lg:steps-horizontal' : ''}`}>
-        {(steps || Array.from({ length: totalSteps }, (_, i) => ({ label: `Step ${i + 1}` }))).map((step, index) => (
-          <li 
+        {(steps || Array.from({ length: totalSteps }, (_, i) => ({ label: `Step ${i + 1}`, description: undefined }))).map((step, index) => (
+          <li
             key={index}
             className={`step ${index < currentStep ? getVariantClass() : ''} ${
               index === currentStep - 1 ? 'step-primary' : ''
