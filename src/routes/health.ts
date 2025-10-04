@@ -69,7 +69,7 @@ router.get('/health/detailed', (req, res) => {
       averageResponseTime: metrics.responseTime.length > 0
         ? metrics.responseTime.reduce((a, b) => a + b, 0) / metrics.responseTime.length
         : 0,
-      llmTokenUsage: metrics.llmTokenUsage
+      llmUsage: metrics.llmTokenUsage
     }
   };
 

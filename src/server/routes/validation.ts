@@ -302,20 +302,18 @@ router.get('/api/validation', authenticate, async (req: AuthMiddlewareRequest, r
       timestamp: new Date().toISOString()
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(
-      error,
-      'Failed to validate configuration',
-      'VALIDATION_ERROR'
-    ) as any;
+    console.error('Error in Configuration validation endpoint:', error);
 
-    console.error('Error in', 'Configuration validation endpoint');
+    // Always use the standardized error message
+    const errorMessage = 'Failed to validate configuration';
+    const originalMessage = error instanceof Error ? error.message : 'Unknown error';
 
     res.status(500).json({
-      error: hivemindError.message,
-      code: hivemindError.code,
+      error: errorMessage,
+      code: 'VALIDATION_ERROR',
       isValid: false,
       warnings: [],
-      errors: [hivemindError.message],
+      errors: [errorMessage],
       recommendations: [],
       botValidation: [],
       environmentValidation: {
@@ -323,7 +321,7 @@ router.get('/api/validation', authenticate, async (req: AuthMiddlewareRequest, r
         errors: ['Internal validation error'],
         warnings: []
       },
-      timestamp: hivemindError.timestamp
+      timestamp: new Date().toISOString()
     });
   }
 });
