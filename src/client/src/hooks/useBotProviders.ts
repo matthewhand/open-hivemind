@@ -233,4 +233,5 @@ const useBotProviders = () => {
   };
 };
 
+export { useBotProviders };
 export default useBotProviders;
