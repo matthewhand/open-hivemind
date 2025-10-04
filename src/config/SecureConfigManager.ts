@@ -69,7 +69,7 @@ export class SecureConfigManager {
     if (!config.id || config.id.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration ID is required',
-        'ValidationError',
+        'ValidationError' as any,
         'SECURE_CONFIG_ID_REQUIRED',
         400
       );
@@ -77,7 +77,7 @@ export class SecureConfigManager {
     if (!config.name || config.name.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration name is required',
-        'ValidationError',
+        'ValidationError' as any,
         'SECURE_CONFIG_NAME_REQUIRED',
         400
       );
@@ -108,7 +108,7 @@ export class SecureConfigManager {
       const fileExists = fs.existsSync(filePath);
       debug(`File exists after write: ${fileExists}`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to store configuration ${config.id}:`, {
         error: hivemindError.message,
@@ -144,7 +144,7 @@ export class SecureConfigManager {
       if (!this.verifyChecksum(config)) {
         throw ErrorUtils.createError(
           'Configuration integrity check failed',
-          'IntegrityError',
+          'IntegrityError' as any,
           'SECURE_CONFIG_INTEGRITY_FAILED',
           500
         );
@@ -152,7 +152,7 @@ export class SecureConfigManager {
 
       return config;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to retrieve configuration ${id}:`, {
         error: hivemindError.message,
@@ -174,7 +174,7 @@ export class SecureConfigManager {
         .filter(file => file.endsWith('.enc'))
         .map(file => file.replace('.enc', ''));
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to list configurations:', {
         error: hivemindError.message,
@@ -196,7 +196,7 @@ export class SecureConfigManager {
       debug(`Configuration ${id} deleted`);
       return true;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to delete configuration ${id}:`, {
         error: hivemindError.message,
@@ -251,7 +251,7 @@ export class SecureConfigManager {
       debug(`Backup ${backupId} created with ${configs.length} configurations`);
       return backupId;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
@@ -278,7 +278,7 @@ export class SecureConfigManager {
       if (!fs.existsSync(backupPath)) {
         throw ErrorUtils.createError(
           `Backup ${backupId} not found`,
-          'NotFoundError',
+          'NotFoundError' as any,
           'SECURE_CONFIG_BACKUP_NOT_FOUND',
           404
         );
@@ -292,7 +292,7 @@ export class SecureConfigManager {
       if (!this.verifyChecksum(fullBackupData.metadata)) {
         throw ErrorUtils.createError(
           'Backup integrity check failed',
-          'IntegrityError',
+          'IntegrityError' as any,
           'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
           500
         );
@@ -307,7 +307,7 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
@@ -344,7 +344,7 @@ export class SecureConfigManager {
               backups.push(backupData.metadata);
             }
           } catch (error: unknown) {
-            const hivemindError = ErrorUtils.toHivemindError(error);
+            const hivemindError = ErrorUtils.toHivemindError(error) as any;
             const errorInfo = ErrorUtils.classifyError(hivemindError);
             debug(`Failed to read backup ${file}:`, {
               error: hivemindError.message,
@@ -359,7 +359,7 @@ export class SecureConfigManager {
 
       return backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to list backups:', {
         error: hivemindError.message,

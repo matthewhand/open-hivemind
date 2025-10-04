@@ -56,7 +56,7 @@ export class UserConfigStore {
       this.cache = JSON.parse(raw) as StoreShape;
       return this.cache;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to load bot overrides, falling back to empty store:', {
         error: hivemindError.message,
@@ -75,7 +75,7 @@ export class UserConfigStore {
     try {
       fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to persist bot overrides:', {
         error: hivemindError.message,
@@ -85,9 +85,10 @@ export class UserConfigStore {
         filePath: this.filePath
       });
       throw ErrorUtils.createError(
-        'USER_CONFIG_PERSIST_FAILED',
         `Failed to persist bot overrides: ${hivemindError.message}`,
-        'error',
+        'error' as any,
+        'USER_CONFIG_PERSIST_FAILED',
+        500,
         { originalError: hivemindError, filePath: this.filePath }
       );
     }
