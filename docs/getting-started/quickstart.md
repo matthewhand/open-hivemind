@@ -1,43 +1,54 @@
 # 🚀 Open-Hivemind Quickstart
 
-## 5-Minute Bot Deployment
+Navigation: [Docs Index](../README.md) | [Setup Guide](setup-guide.md) | [WebUI Dashboard](../webui/dashboard-overview.md)
 
-### 🎯 What You'll Build
-A multi-platform AI bot that responds intelligently across Discord, Slack, and Mattermost simultaneously.
 
-### ⚡ Prerequisites
-- Node.js 18+
-- Discord/Slack bot tokens
-- 5 minutes of your time
+Pick the path that fits your workflow. Pinokio is the fastest way to get a
+local swarm online; manual Node.js and Docker options follow for advanced use.
 
-### 🚀 Lightning Setup
+## Option A – Pinokio (Recommended)
+1. Install [Pinokio](https://pinokio.co/) and add the repository using the
+   bundled `pinokio.js` manifest.
+2. Click **Install dependencies** to run `npm install` via the managed
+   `install.js` helper.
+3. Copy `.env.sample` to `.env` in the Pinokio workspace and add your Discord,
+   Slack, Mattermost, and LLM credentials.
+4. Hit **Start**. Pinokio runs `npm run dev`, serving the API + WebUI on
+   `http://localhost:5005`.
+5. Choose **Open WebUI** to finish configuring personas, MCP servers, and tool
+   guards from the browser.
 
+## Option B – Docker (Official Image)
 ```bash
-# 1. Clone & Install (30 seconds)
-git clone https://github.com/your-org/open-hivemind
+# pull the published image
+docker pull matthewhand/open-hivemind:latest
+
+# run with your environment file
+docker run --rm \
+  --env-file .env \
+  -p 3000:3000 \
+  matthewhand/open-hivemind:latest
+```
+Prefer Compose? Update `docker-compose.yml` to use the same image instead of
+building locally, then run `docker-compose up -d`.
+
+## Option C – Manual Node.js Runtime (Git Clone)
+```bash
+# Clone & install
+git clone https://github.com/matthewhand/open-hivemind.git
 cd open-hivemind
+cp .env.sample .env
 npm install
 
-# 2. Configure (2 minutes)
-cp .env.example .env
-# Edit .env with your bot tokens
-
-# 3. Launch (30 seconds)
-npm start
+# Launch the dev server
+npm run dev  # serves API + WebUI on port 5005
 ```
+We do not publish an npm package; cloning the repository is the supported path.
+Use `npm run build` followed by `npm start` for production.
 
-### 🎉 Success!
-Your bot is now live across all platforms. Send a message mentioning your bot to see the magic!
-
-### 🔥 What Just Happened?
-- **Multi-Agent Architecture**: One codebase, multiple bot instances
-- **Cross-Platform Sync**: Messages flow between Discord, Slack, Mattermost
-- **AI-Powered Responses**: OpenAI/Flowise integration out of the box
-- **Real-Time Monitoring**: WebUI dashboard at http://localhost:3020
-
-### 🚀 Next Steps
-- [Platform Setup Guide](../platforms/) - Configure Discord, Slack, Mattermost
-- [Multi-Bot Configuration](../configuration/multi-bot-setup.md) - Scale to multiple agents
-- [WebUI Dashboard](../webui/dashboard-overview.md) - Monitor and manage your bots
-
-**Welcome to the future of conversational AI!** 🤖✨
+## Next Steps
+- Configure multi-bot deployments in
+  [`configuration/multi-bot-setup.md`](../configuration/multi-bot-setup.md).
+- Learn how overrides merge in
+  [`configuration/overview.md`](../configuration/overview.md).
+- Explore WebUI capabilities in [`webui/dashboard-overview.md`](../webui/dashboard-overview.md).

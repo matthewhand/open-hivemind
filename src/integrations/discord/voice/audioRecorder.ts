@@ -5,6 +5,7 @@ import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:discord:recorder');
 const pipelineAsync = promisify(pipeline);
@@ -79,18 +80,44 @@ export class AudioRecorder {
   }
 
   async saveRecording(userId: string, outputPath: string): Promise<string> {
-    const chunks = this.recordings.get(userId);
-    if (!chunks || chunks.length === 0) {
-      throw new Error(`No recording found for user ${userId}`);
-    }
+    try {
+      const chunks = this.recordings.get(userId);
+      if (!chunks || chunks.length === 0) {
+        throw ErrorUtils.createError(
+          `No recording found for user ${userId}`,
+          'ValidationError',
+          'DISCORD_AUDIO_RECORDER_NO_RECORDING',
+          404,
+          { userId }
+        );
+      }
 
-    const buffer = Buffer.concat(chunks);
-    const filePath = path.join(outputPath, `recording_${userId}_${Date.now()}.pcm`);
-    
-    await fs.promises.writeFile(filePath, buffer);
-    debug(`Saved recording to ${filePath}`);
-    
-    return filePath;
+      const buffer = Buffer.concat(chunks);
+      const filePath = path.join(outputPath, `recording_${userId}_${Date.now()}.pcm`);
+
+      await fs.promises.writeFile(filePath, buffer);
+      debug(`Saved recording to ${filePath}`);
+
+      return filePath;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const classification = ErrorUtils.classifyError(hivemindError);
+
+      debug(`Audio recorder save error: ${ErrorUtils.getMessage(hivemindError)}`);
+
+      // Log with appropriate level
+      if (classification.logLevel === 'error') {
+          console.error('Discord audio recorder save error:', hivemindError);
+      }
+
+      throw ErrorUtils.createError(
+          `Failed to save audio recording: ${ErrorUtils.getMessage(hivemindError)}`,
+          classification.type,
+          'DISCORD_AUDIO_RECORDER_SAVE_ERROR',
+          ErrorUtils.getStatusCode(hivemindError),
+          { originalError: error, userId }
+      );
+    }
   }
 
   getRecordingDuration(userId: string): number {

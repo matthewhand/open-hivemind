@@ -8,8 +8,12 @@ import DashboardPage from '../pages/Dashboard';
 import AdminPage from '../pages/Admin';
 import BotManagementPage from '../pages/Admin/BotManagementPage';
 import UberLayout from '../layouts/UberLayout';
+import LoadingPage from '../pages/LoadingPage';
 
 const Login = lazy(() => import('../components/Login'));
+
+// Standalone pages
+const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
 
 // Uber pages
 const OverviewPage = lazy(() => import('../pages/OverviewPage'));
@@ -24,7 +28,8 @@ const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 const ExportPage = lazy(() => import('../pages/ExportPage'));
-const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const SystemSettings = lazy(() => import('../pages/SystemSettings'));
+const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
@@ -64,38 +69,23 @@ const AppRouter: React.FC = () => {
     <MainLayout>
       <Suspense fallback={<LoadingFallback message="Loading page..." />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/uber" replace />} />
-          <Route path="/webui" element={<DashboardPage />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            }
-          />
-        <Route
-            path="/admin/bots"
-            element={
-              <ProtectedRoute>
-                <BotManagementPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<LoadingPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/activity" element={<StandaloneActivity />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Uber routes */}
-          <Route path="/uber" element={<UberLayout />}>
-            <Route index element={<Navigate to="/uber/overview" replace />} />
+          {/* Admin routes (unified interface) */}
+          <Route path="/admin" element={<UberLayout />}>
+            <Route index element={<Navigate to="/admin/overview" replace />} />
             <Route path="overview" element={<OverviewPage />} />
-            
+
             {/* Bot Management Routes */}
             <Route path="bots" element={<BotsPage />} />
             <Route path="bots/create" element={<BotCreatePage />} />
             <Route path="bots/templates" element={<BotTemplatesPage />} />
-            
+
             <Route path="personas" element={<PersonasPage />} />
-            
+
             {/* MCP Routes */}
             <Route
               path="mcp"
@@ -121,7 +111,7 @@ const AppRouter: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            
+
             <Route
               path="guards"
               element={
@@ -130,13 +120,21 @@ const AppRouter: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            
+
             {/* Monitoring Routes */}
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="activity" element={<ActivityPage />} />
-            
+
             <Route path="export" element={<ExportPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<SystemSettings />} />
+            <Route
+              path="configuration"
+              element={
+                <ProtectedRoute>
+                  <BotConfigurationPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="static" element={<StaticPagesPage />} />
             <Route path="sitemap" element={<SitemapPage />} />
             <Route path="showcase" element={<DaisyUIShowcase />} />

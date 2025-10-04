@@ -1,126 +1,83 @@
-# 📚 Open-Hivemind Documentation
+# Open-Hivemind Documentation Hub
 
-## 🚀 The Ultimate Multi-Platform Bot Framework
+Welcome to the home for all Open-Hivemind guides. This folder captures how the
+multi-agent architecture works, how to configure it, and how to extend it across
+platforms and LLM providers.
 
-Welcome to the most comprehensive documentation for the world's most advanced conversational AI framework.
+## Feature Highlights
+- **Solo & Swarm modes** – switch between single-token deployments and
+  auto-numbered multi-instance swarms by editing `DISCORD_BOT_TOKEN` or the
+  `BOTS_*` configuration schema.
+- **Persona & system instructions** – manage voice, tone, and behaviour through
+  `config/personas/`, system prompts, or the WebUI persona editor.
+- **Model Context Protocol integration** – connect one or more MCP servers,
+  discover tools automatically, and control who can execute them.
+- **Tool usage guards** – restrict MCP tool access to channel owners or curated
+  allowlists, configurable per agent.
+- **Unified voice with shared context** – responses are emitted as
+  `*AgentName*: message`, backed by a per-channel cache of the last 10 messages
+  that all instances read from.
+- **WebUI dashboard** – configure providers, tokens, personas, MCP servers, and
+  overrides with real-time status panels that respect environment-variable
+  ownership.
+- **Platform reach** – production-ready Discord support, Slack Socket Mode
+  integration, and experimental Mattermost REST connectivity.
 
-### 🎯 Quick Navigation
+## Quick Navigation
+- **Getting Started**
+  - [`getting-started/setup-guide.md`](getting-started/setup-guide.md) – prepare
+    environment variables and run your first instance.
+  - [`getting-started/quickstart.md`](getting-started/quickstart.md) – CLI-focused
+    walk-through for new operators.
+- **Architecture & Agents**
+  - [`architecture/layered-overview.md`](architecture/layered-overview.md) –
+    system layers, context sharing, and response orchestration.
+  - [`architecture/overview.md`](architecture/overview.md) – sequence diagrams
+    and platform integration touchpoints.
+  - [`architecture/agents.md`](architecture/agents.md) – hive-mind persona and
+    coordination model.
+- **Configuration**
+  - [`configuration/overview.md`](configuration/overview.md) – config sources,
+    environment overrides, personas, and MCP guardrails.
+  - [`configuration/multi-bot-setup.md`](configuration/multi-bot-setup.md) –
+    Discord swarm specifics and migration notes.
+  - [`configuration/multi-instance-setup.md`](configuration/multi-instance-setup.md)
+    – BotConfigurationManager and `BOTS_*` schema reference.
+  - [`configuration/channel-routing.md`](configuration/channel-routing.md) –
+    mapping agent voices to channels.
+  - [`configuration/provider-cheatsheet.md`](configuration/provider-cheatsheet.md)
+    – OpenAI, Flowise, OpenWebUI, and OpenSwarm configuration flags.
+  - [`configuration/dynamic-model-fetching.md`](configuration/dynamic-model-fetching.md)
+    – runtime model selection strategies.
+  - [`configuration/idle-response.md`](configuration/idle-response.md) –
+    low-traffic engagement tuning.
+- **Platforms & WebUI**
+  - [`platforms/README.md`](platforms/README.md) – Discord, Slack, and
+    Mattermost integration notes.
+  - [`webui/dashboard-overview.md`](webui/dashboard-overview.md) – WebUI
+    dashboards, overrides, and persona management.
+- **Monitoring & Operations**
+  - [`monitoring/overview.md`](monitoring/overview.md) – health metrics and
+    alerting concepts.
+  - [`monitoring/api.md`](monitoring/api.md) – REST endpoints powering the
+    dashboards.
+  - [`operations/dev-startup.md`](operations/dev-startup.md) – dev server
+    orchestration (API + WebUI).
+  - [`operations/docker-images.md`](operations/docker-images.md) – container
+    workflows.
+  - [`operations/real-integration-tests.md`](operations/real-integration-tests.md)
+    – live provider and platform checks.
 
-#### 🚀 **Getting Started**
-- [⚡ 5-Minute Quickstart](getting-started/quickstart.md) - Deploy your first bot
-- [📦 Installation Guide](getting-started/installation.md) - Detailed setup
-- [🤖 Your First Bot](getting-started/first-bot.md) - Step-by-step tutorial
-- [🔧 Troubleshooting](getting-started/troubleshooting.md) - Common issues
+## Additional References
+- [`PACKAGE.md`](../PACKAGE.md) – exhaustive capability matrix for every
+  integration.
+- [`reference/todo.md`](reference/todo.md) – roadmap priorities (WebUI
+  improvements, real-time monitoring, dynamic configuration, multi-environment
+  rollouts).
+- [`reference/user-guide.md`](reference/user-guide.md) – end-user walkthroughs
+  for day-to-day bot usage.
+- [`reference/development.md`](reference/development.md) – engineering guide
+  for extending the project.
 
-#### 🏗️ **Architecture**
-- [🧠 System Overview](architecture/overview.md) - Revolutionary design
-- [🤖 Multi-Agent System](architecture/multi-agent.md) - Hivemind concept
-- [📡 Message Flow](architecture/message-flow.md) - Data pipeline
-- [🔌 Platform Integration](architecture/platform-integration.md) - Cross-platform magic
-
-#### 🤖 **Platform Guides**
-- [💬 Discord](platforms/discord/) - Voice, slash commands, permissions
-- [💼 Slack](platforms/slack/) - Workspaces, socket mode, blocks
-- [🏢 Mattermost](platforms/mattermost/) - Server setup, API integration
-
-#### 🧠 **AI Providers**
-- [🤖 OpenAI](llm-providers/openai/) - GPT models, rate limits
-- [🌊 Flowise](llm-providers/flowise/) - Chatflows, knowledge bases
-- [🏠 OpenWebUI](llm-providers/openwebui/) - Local deployment
-
-#### ⚙️ **Configuration**
-- [🔧 Environment Setup](configuration/environment-variables.md)
-- [🤖 Multi-Bot Configuration](configuration/multi-bot-setup.md)
-- [🛣️ Channel Routing](configuration/channel-routing.md)
-- [🔒 Security Best Practices](configuration/security-best-practices.md)
-
-#### 🎨 **WebUI Dashboard**
-- [📊 Dashboard Overview](webui/dashboard-overview.md)
-- [🤖 Bot Management](webui/bot-management.md)
-- [📈 Real-Time Monitoring](webui/real-time-monitoring.md)
-- [⚙️ Configuration Editor](webui/configuration-editor.md)
-
-### 🎪 **Showcase**
-
-#### 🏆 **Success Stories**
-- **Enterprise Deployments**: Fortune 500 companies using Open-Hivemind
-- **Community Highlights**: Amazing bots built by our community
-- **Performance Benchmarks**: Industry-leading metrics
-
-#### 🎬 **Demos & Tutorials**
-- **Video Walkthroughs**: Step-by-step visual guides
-- **Interactive Examples**: Try features in your browser
-- **Live Deployments**: See real bots in action
-
-#### 🏅 **Why Open-Hivemind?**
-- **vs Other Frameworks**: Feature comparison matrix
-- **Migration Guides**: Switch from other platforms
-- **Technical Advantages**: What makes us unique
-
-### 🔧 **For Developers**
-
-#### 📖 **Reference**
-- [🔌 API Documentation](reference/api-reference.md)
-- [⚙️ Configuration Schema](reference/configuration-schema.md)
-- [📝 Message Formats](reference/message-formats.md)
-- [❌ Error Codes](reference/error-codes.md)
-
-#### 🛠️ **Development**
-- [🤝 Contributing Guide](development/contributing.md)
-- [🧪 Testing Framework](development/testing-guide.md)
-- [🔌 Plugin Development](development/plugin-development.md)
-- [🏗️ Architecture Deep-Dive](development/architecture-deep-dive.md)
-
-#### 🚀 **Deployment**
-- [🐳 Docker Deployment](deployment/docker.md)
-- [☸️ Kubernetes](deployment/kubernetes.md)
-- [☁️ Cloud Providers](deployment/cloud-providers.md)
-- [📈 Scaling Strategies](deployment/scaling-strategies.md)
-
-### 🎯 **Use Cases**
-
-#### 🏢 **Enterprise**
-- [🎧 Customer Support](use-cases/customer-support.md)
-- [👥 Community Management](use-cases/community-management.md)
-- [🏭 Process Automation](use-cases/enterprise-automation.md)
-
-#### 🎓 **Education**
-- [📚 Educational Bots](use-cases/educational-bots.md)
-- [🤖 AI Tutoring Systems](use-cases/ai-tutoring.md)
-- [📊 Learning Analytics](use-cases/learning-analytics.md)
-
-### 🌟 **What Makes Open-Hivemind Special?**
-
-#### 🧠 **Revolutionary Architecture**
-- **Multi-Agent Hivemind**: Collective intelligence across platforms
-- **Unified Consciousness**: One brain, multiple bodies
-- **Cross-Platform Sync**: Seamless message flow everywhere
-
-#### 🚀 **Enterprise-Grade Features**
-- **99.9% Uptime**: Battle-tested reliability
-- **Infinite Scalability**: From 1 to 1,000,000 users
-- **Security First**: Bank-level protection built-in
-
-#### 👨‍💻 **Developer Experience**
-- **5-Minute Setup**: From zero to bot in minutes
-- **Visual Configuration**: No-code bot building
-- **Real-Time Monitoring**: See everything happening live
-
-#### 🎯 **Performance Metrics**
-- **10,000+ messages/second** processing capability
-- **<50ms response time** average latency
-- **99.99% message delivery** success rate
-
----
-
-## 🚀 Ready to Build the Future?
-
-**[Start with our 5-minute quickstart →](getting-started/quickstart.md)**
-
-**Open-Hivemind: Where individual bots become collective intelligence** 🧠✨
-
----
-
-*Documentation last updated: $(date)*
-*Framework version: 2.0.0*
-*Community size: 10,000+ developers*
+If a topic is missing or needs clarification, open an issue or submit a PR—this
+repository thrives on collaborative documentation.

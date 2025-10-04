@@ -3,9 +3,30 @@ import fs from 'fs';
 import util from 'util';
 import path from 'path';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:convertOpusToWav');
 const execPromise = util.promisify(exec);
+
+// Check if ffmpeg is available
+let ffmpegAvailable: boolean | null = null;
+
+async function checkFfmpegAvailable(): Promise<boolean> {
+    if (ffmpegAvailable !== null) {
+        return ffmpegAvailable;
+    }
+
+    try {
+        await execPromise('ffmpeg -version');
+        ffmpegAvailable = true;
+        debug('FFmpeg is available');
+        return true;
+    } catch (error) {
+        ffmpegAvailable = false;
+        debug('FFmpeg is not available:', error instanceof Error ? error.message : 'Unknown error');
+        return false;
+    }
+}
 
 /**
  * Converts an Opus audio file to WAV using ffmpeg.
@@ -16,6 +37,22 @@ const execPromise = util.promisify(exec);
  */
 export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): Promise<string> {
     try {
+        // Check if ffmpeg is available
+        const isFfmpegAvailable = await checkFfmpegAvailable();
+        if (!isFfmpegAvailable) {
+            throw ErrorUtils.createError(
+                'FFmpeg is not available. Voice features require FFmpeg to be installed. ' +
+                'Build with INCLUDE_FFMPEG=true or set LOW_MEMORY_MODE=false to enable voice processing.',
+                'configuration',
+                'DISCORD_FFMPEG_UNAVAILABLE',
+                503,
+                {
+                    feature: 'voice_processing',
+                    suggestion: 'Enable FFmpeg in Docker build or install FFmpeg manually'
+                }
+            );
+        }
+
         const inputPath = path.join(outputDir, 'input.opus');
         const outputPath = path.join(outputDir, 'output.wav');
 
@@ -35,6 +72,23 @@ export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): P
         return outputPath;
     } catch (error: any) {
         debug('Error converting Opus to WAV:', error.message);
-        throw error;
+
+        // If it's already a HivemindError, rethrow it
+        if (error instanceof HivemindError) {
+            throw error;
+        }
+
+        // Otherwise wrap it in a HivemindError
+        throw ErrorUtils.createError(
+            `Failed to convert Opus to WAV: ${error.message}`,
+            'processing',
+            'DISCORD_OPUS_CONVERSION_FAILED',
+            500,
+            {
+                originalError: error.message,
+                inputBufferLength: opusBuffer.length,
+                outputDir
+            }
+        );
     }
 }

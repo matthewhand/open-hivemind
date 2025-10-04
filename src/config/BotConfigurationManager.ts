@@ -3,6 +3,23 @@ import Debug from 'debug';
 import path from 'path';
 import fs from 'fs';
 import UserConfigStore, { BotOverride } from './UserConfigStore';
+import {
+  BotConfig,
+  MessageProvider,
+  LlmProvider,
+  McpServerConfig,
+  McpGuardConfig,
+  DiscordConfig,
+  SlackConfig,
+  MattermostConfig,
+  OpenAIConfig,
+  FlowiseConfig,
+  OpenWebUIConfig,
+  OpenSwarmConfig,
+  ConfigurationValidationResult,
+  isBotConfig
+} from '@src/types/config';
+import { ConfigurationError, ValidationError } from '../types/errorClasses';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -229,53 +246,7 @@ const botSchema = {
   }
 };
 
-export interface BotConfig {
-  name: string;
-  messageProvider: string;
-  llmProvider: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: any[];
-  mcpGuard?: any;
-  discord?: {
-    token: string;
-    clientId?: string;
-    guildId?: string;
-    channelId?: string;
-    voiceChannelId?: string;
-  };
-  slack?: {
-    botToken: string;
-    appToken?: string;
-    signingSecret: string;
-    joinChannels?: string;
-    defaultChannelId?: string;
-    mode?: 'socket' | 'rtm';
-  };
-  mattermost?: {
-    serverUrl: string;
-    token: string;
-    channel?: string;
-  };
-  openai?: {
-    apiKey: string;
-    model?: string;
-    baseUrl?: string;
-  };
-  flowise?: {
-    apiKey: string;
-    apiBaseUrl?: string;
-  };
-  openwebui?: {
-    apiKey: string;
-    apiUrl?: string;
-  };
-  openswarm?: {
-    baseUrl?: string;
-    apiKey?: string;
-    team?: string;
-  };
-}
+// BotConfig interface is now imported from @src/types/config
 
 export class BotConfigurationManager {
   private static instance: BotConfigurationManager;
@@ -351,9 +322,23 @@ export class BotConfigurationManager {
       if (value !== undefined) {
         try {
           botConfig.set(configKey, value);
-        } catch (error) {
-          debug(`Warning: Invalid value for ${envVar}: ${error}`);
-          this.warnings.push(`Invalid value for ${envVar}: ${error}`);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            debug(`Warning: Invalid value for ${envVar}:`, {
+              error: error.message,
+              envVar
+            });
+            this.warnings.push(`Invalid value for ${envVar}: ${error.message}`);
+          } else {
+            const configError = new ConfigurationError(
+              `Invalid configuration value for ${envVar}`,
+              envVar,
+              'string',
+              typeof error
+            );
+            debug(`Warning: Invalid value for ${envVar}:`, configError.toJSON());
+            this.warnings.push(`Invalid value for ${envVar}: ${configError.message}`);
+          }
         }
       }
     }
@@ -372,12 +357,12 @@ export class BotConfigurationManager {
     // Build the bot configuration object
     const config: BotConfig = {
       name: botName,
-      messageProvider: botConfig.get('MESSAGE_PROVIDER'),
-      llmProvider: botConfig.get('LLM_PROVIDER'),
-      persona: botConfig.get('PERSONA') || 'default',
-      systemInstruction: botConfig.get('SYSTEM_INSTRUCTION'),
-      mcpServers: botConfig.get('MCP_SERVERS') || [],
-      mcpGuard: botConfig.get('MCP_GUARD') || { enabled: false, type: 'owner' }
+      messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
+      llmProvider: botConfig.get('LLM_PROVIDER') as LlmProvider,
+      persona: botConfig.get('PERSONA') as string || 'default',
+      systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
+      mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
+      mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' }
     };
     
     // Add Discord configuration if token is provided
@@ -466,7 +451,7 @@ export class BotConfigurationManager {
           ? { ...(overrideValue as Record<string, unknown>) }
           : overrideValue;
 
-      (config as any)[field] = clonedValue;
+      (config as Record<string, unknown>)[field] = clonedValue;
     };
 
     assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
@@ -501,7 +486,7 @@ export class BotConfigurationManager {
         const config: BotConfig = {
           name: botName,
           messageProvider: 'discord',
-          llmProvider: this.detectLegacyLlmProvider(),
+          llmProvider: this.detectLegacyLlmProvider() as LlmProvider,
           discord: {
             token,
             clientId: process.env.DISCORD_CLIENT_ID,
@@ -592,48 +577,55 @@ export class BotConfigurationManager {
   /**
    * Validate configuration
    */
-  public validateConfiguration(config: any): { isValid: boolean; errors: string[] } {
+  public validateConfiguration(config: unknown): ConfigurationValidationResult {
     const errors: string[] = [];
     
-    if (!config.name) {
+    const configObj = config as Record<string, unknown>;
+    
+    if (!configObj.name) {
       errors.push('Bot name is required');
     }
     
-    if (!config.discord && !config.slack && !config.mattermost) {
+    if (!configObj.discord && !configObj.slack && !configObj.mattermost) {
       errors.push('At least one platform configuration is required');
     }
     
-    if (config.discord && !config.discord.botToken) {
+    const discordConfig = configObj.discord as Record<string, unknown>;
+    if (discordConfig && !discordConfig.botToken) {
       errors.push('Discord bot token is required');
     }
     
-    if (config.slack && !config.slack.botToken) {
+    const slackConfig = configObj.slack as Record<string, unknown>;
+    if (slackConfig && !slackConfig.botToken) {
       errors.push('Slack bot token is required');
     }
     
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
+      warnings: []
     };
   }
 
   /**
    * Merge configurations
    */
-  public mergeConfigurations(base: any, override: any): any {
+  public mergeConfigurations(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
     return { ...base, ...override };
   }
 
   /**
    * Sanitize configuration
    */
-  public sanitizeConfiguration(config: any): any {
+  public sanitizeConfiguration(config: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...config };
-    if (sanitized.discord?.botToken) {
-      sanitized.discord.botToken = 'secret-***';
+    const discordConfig = sanitized.discord as Record<string, unknown>;
+    if (discordConfig?.botToken) {
+      discordConfig.botToken = 'secret-***';
     }
-    if (sanitized.slack?.botToken) {
-      sanitized.slack.botToken = 'secret-***';
+    const slackConfig = sanitized.slack as Record<string, unknown>;
+    if (slackConfig?.botToken) {
+      slackConfig.botToken = 'secret-***';
     }
     return sanitized;
   }

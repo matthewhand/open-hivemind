@@ -12,17 +12,24 @@ import openaiConfig from '@config/openaiConfig';
 import llmConfig from '@config/llmConfig';
 import { listModels } from './operations/listModels';
 import { IMessage } from '@src/message/interfaces/IMessage';
+import {
+  OpenAIChatCompletionResponse,
+  OpenAIModelsListResponse,
+  OpenHivemindChatResponse,
+  OpenAIError
+} from '@src/types/openai';
+import { ConfigurationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
-  throw new Error('Invalid OpenAI configuration: expected an object with a get method.');
+  throw new ConfigurationError('Invalid OpenAI configuration: expected an object with a get method.', 'OPENAI_CONFIG_VALIDATION_ERROR');
 }
 
 // Guard: Validate llmConfig object
 if (!llmConfig || typeof llmConfig.get !== 'function') {
-  throw new Error('Invalid LLM configuration: expected an object with a get method.');
+  throw new ConfigurationError('Invalid LLM configuration: expected an object with a get method.', 'LLM_CONFIG_VALIDATION_ERROR');
 }
 
 export class OpenAiService {
@@ -116,7 +123,7 @@ export class OpenAiService {
    * @param systemMessageContent - A system-level message to initialize the chat context.
    * @param maxTokens - Maximum number of tokens for the response (default: 150).
    * @param temperature - Controls randomness in the response (default: 0.7).
-   * @returns {Promise<any>} The generated chat completion response object.
+   * @returns {Promise<OpenHivemindChatResponse>} The generated chat completion response object.
    */
   public async generateChatCompletion(
     message: string,
@@ -124,7 +131,7 @@ export class OpenAiService {
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
     temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
-  ): Promise<any> {
+  ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatCompletion called');
     debug('[DEBUG] Input parameters:', { message, systemMessageContent, maxTokens, temperature });
     debug('[DEBUG] History messages count:', historyMessages.length);
@@ -294,9 +301,10 @@ export class OpenAiService {
         text: content,
         context_variables: { active_agent_name: activeAgentName }
       };
-    } catch (error: any) {
-      debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: error.message });
-      throw new Error(`Failed to generate chat completion: ${error.message}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug('[DEBUG] Error generating chat completion:', { message, historyMessages, error: ErrorUtils.getMessage(hivemindError) });
+      throw hivemindError;
     }
   }
 
@@ -309,7 +317,7 @@ export class OpenAiService {
     systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
     maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
     temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
-  ): Promise<any> {
+  ): Promise<OpenHivemindChatResponse> {
     debug('[DEBUG] generateChatResponse called');
     return this.generateChatCompletion(message, historyMessages, systemMessageContent, maxTokens, temperature);
   }
@@ -317,15 +325,16 @@ export class OpenAiService {
   /**
    * Lists available OpenAI models by invoking the OpenAI API.
    */
-  public async listModels(): Promise<any> {
+  public async listModels(): Promise<OpenAIModelsListResponse> {
     debug('[DEBUG] listModels called');
     try {
       const models = await listModels(this.openai);
       debug('[DEBUG] Models retrieved:', models);
       return models;
-    } catch (error: any) {
-      debug('[DEBUG] Error listing models:', error.message);
-      throw error;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug('[DEBUG] Error listing models:', ErrorUtils.getMessage(hivemindError));
+      throw hivemindError;
     }
   }
 
@@ -336,11 +345,12 @@ export class OpenAiService {
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error: any) {
-        const errorType = this.classifyError(error);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorType = this.classifyError(hivemindError);
         
         if (errorType === 'fatal' || attempt === this.maxRetries) {
-          throw error;
+          throw hivemindError;
         }
         
         if (errorType === 'rate-limit' || errorType === 'transient') {
@@ -348,7 +358,7 @@ export class OpenAiService {
           debug(`[DEBUG] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          throw error;
+          throw hivemindError;
         }
       }
     }
@@ -358,10 +368,13 @@ export class OpenAiService {
   /**
    * Classify errors as rate-limit, transient, or fatal
    */
-  private classifyError(error: any): 'rate-limit' | 'transient' | 'fatal' {
-    if (error?.status === 429) return 'rate-limit';
-    if (error?.status >= 500 && error?.status < 600) return 'transient';
-    if (error?.code === 'ECONNRESET' || error?.code === 'ETIMEDOUT') return 'transient';
+  private classifyError(error: HivemindError): 'rate-limit' | 'transient' | 'fatal' {
+    const statusCode = ErrorUtils.getStatusCode(error);
+    const errorCode = ErrorUtils.getCode(error);
+
+    if (statusCode === 429) return 'rate-limit';
+    if (statusCode && statusCode >= 500 && statusCode < 600) return 'transient';
+    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') return 'transient';
     return 'fatal';
   }
 

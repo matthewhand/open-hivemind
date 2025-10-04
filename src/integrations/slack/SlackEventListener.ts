@@ -3,6 +3,7 @@ import { SlackService } from './SlackService';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { extractSlackMetadata } from './slackMetadata';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SlackEventListener');
 
@@ -24,7 +25,14 @@ export class SlackEventListener {
       if (event && event.type === 'message' && !event.bot_id) {
         const metadata = process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
         const llmProvider = getLlmProvider();
-        if (!llmProvider.length) throw new Error('No LLM providers available');
+        if (!llmProvider.length) {
+          throw ErrorUtils.createError(
+            'No LLM providers available',
+            'ConfigurationError',
+            'SLACK_NO_LLM_PROVIDERS',
+            500
+          );
+        }
         const response = await llmProvider[0].generateChatCompletion(event.text, [], metadata);
         
         // Use the first available bot for backward compatibility
@@ -55,9 +63,17 @@ export class SlackEventListener {
           }
         }
       }
-    } catch (error) {
-      debug(`Error handling event: ${error}`);
-      throw error;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Error handling event:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        eventType: event?.type
+      });
+      throw hivemindError;
     }
   }
 }

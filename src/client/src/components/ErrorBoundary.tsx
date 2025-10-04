@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import type { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ReactNode } from 'react';
+import type { ErrorInfo } from 'react';
 import {
   Box,
   Card,
@@ -26,72 +26,210 @@ import {
   Home as HomeIcon,
 } from '@mui/icons-material';
 
+// Types for our error handling system
+interface BaseHivemindError {
+  name: string;
+  message: string;
+  stack?: string;
+  status?: number;
+  code?: string;
+  details?: Record<string, any>;
+  correlationId?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  timestamp?: string;
+  recoveryStrategy?: {
+    type: 'retry' | 'fallback' | 'circuitBreaker';
+    attempts?: number;
+    maxAttempts?: number;
+    nextRetry?: number;
+    fallbackUsed?: boolean;
+  };
+}
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onError?: (error: BaseHivemindError, errorInfo: ErrorInfo) => void;
   showDetails?: boolean;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  error: BaseHivemindError | null;
   errorInfo: ErrorInfo | null;
   showErrorDetails: boolean;
   showReportDialog: boolean;
+  isRecovering: boolean;
+  recoveryAttempts: number;
 }
 
 class ErrorBoundary extends Component<Props, State> {
+  private correlationId: string;
+  private recoveryTimer: NodeJS.Timeout | null = null;
+
   constructor(props: Props) {
     super(props);
+    this.correlationId = this.generateCorrelationId();
     this.state = {
       hasError: false,
       error: null,
       errorInfo: null,
       showErrorDetails: false,
       showReportDialog: false,
+      isRecovering: false,
+      recoveryAttempts: 0,
     };
   }
+
+  private generateCorrelationId = (): string => {
+    return `frontend-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  private normalizeError = (error: Error): BaseHivemindError => {
+    // Check if it's already a HivemindError
+    if ('code' in error && 'severity' in error) {
+      return error as BaseHivemindError;
+    }
+
+    // Normalize to our error format
+    const normalizedError: BaseHivemindError = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      correlationId: this.correlationId,
+      timestamp: new Date().toISOString(),
+      severity: this.getErrorSeverity(error),
+    };
+
+    // Add specific error types
+    if (error.name === 'ChunkLoadError') {
+      normalizedError.code = 'CHUNK_LOAD_ERROR';
+      normalizedError.severity = 'medium';
+    } else if (error.message.includes('network') || error.message.includes('fetch')) {
+      normalizedError.code = 'NETWORK_ERROR';
+      normalizedError.severity = 'medium';
+    } else if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+      normalizedError.code = 'AUTHORIZATION_ERROR';
+      normalizedError.severity = 'high';
+    } else {
+      normalizedError.code = 'UNKNOWN_ERROR';
+      normalizedError.severity = 'high';
+    }
+
+    return normalizedError;
+  };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return {
       hasError: true,
-      error,
+      // We'll normalize the error in componentDidCatch
+      error: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const normalizedError = this.normalizeError(error);
+    
+    console.error('ErrorBoundary caught an error:', normalizedError, errorInfo);
 
     this.setState({
-      error,
+      error: normalizedError,
       errorInfo,
     });
 
     // Call the onError callback if provided
     if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+      this.props.onError(normalizedError, errorInfo);
     }
 
-    // Report error to monitoring service (if available)
-    this.reportError(error, errorInfo);
+    // Report error to monitoring service
+    this.reportError(normalizedError, errorInfo);
+
+    // Attempt recovery if possible
+    this.attemptRecovery(normalizedError);
   }
 
-  private reportError = (error: Error, errorInfo: ErrorInfo) => {
-    // In a real application, you would send this to your error reporting service
+  private reportError = (error: BaseHivemindError, errorInfo: ErrorInfo) => {
+    // Create comprehensive error report
     const errorReport = {
-      message: error.message,
-      stack: error.stack,
+      ...error,
       componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       url: window.location.href,
+      localStorage: this.getSafeLocalStorage(),
+      sessionStorage: this.getSafeSessionStorage(),
+      performance: this.getPerformanceMetrics(),
     };
 
     console.error('Error Report:', errorReport);
 
-    // Example: Send to error reporting service
+    // Send to backend error logging endpoint
+    this.sendErrorToBackend(errorReport);
+
+    // Also send to error reporting service if available
     // errorReportingService.captureException(error, { extra: errorReport });
+  };
+
+  private sendErrorToBackend = async (errorReport: any) => {
+    try {
+      await fetch('/api/errors/frontend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Correlation-ID': errorReport.correlationId,
+        },
+        body: JSON.stringify(errorReport),
+      });
+    } catch (reportingError) {
+      console.error('Failed to report error to backend:', reportingError);
+    }
+  };
+
+  private getSafeLocalStorage = (): Record<string, string> => {
+    try {
+      const safeData: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && !key.includes('password') && !key.includes('token')) {
+          safeData[key] = localStorage.getItem(key) || '';
+        }
+      }
+      return safeData;
+    } catch {
+      return {};
+    }
+  };
+
+  private getSafeSessionStorage = (): Record<string, string> => {
+    try {
+      const safeData: Record<string, string> = {};
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && !key.includes('password') && !key.includes('token')) {
+          safeData[key] = sessionStorage.getItem(key) || '';
+        }
+      }
+      return safeData;
+    } catch {
+      return {};
+    }
+  };
+
+  private getPerformanceMetrics = () => {
+    try {
+      if ('performance' in window && 'getEntriesByType' in performance) {
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        return {
+          loadTime: navigation.loadEventEnd - navigation.loadEventStart,
+          domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+          firstPaint: performance.getEntriesByType('paint')[0]?.startTime,
+          firstContentfulPaint: performance.getEntriesByType('paint')[1]?.startTime,
+        };
+      }
+    } catch {
+      return {};
+    }
+    return {};
   };
 
   private handleReset = () => {
@@ -100,6 +238,8 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
       showErrorDetails: false,
+      isRecovering: false,
+      recoveryAttempts: 0,
     });
   };
 
@@ -125,33 +265,50 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({ showReportDialog: false });
   };
 
-  private getErrorSeverity = (error: Error): 'error' | 'warning' | 'info' => {
+  private getErrorSeverity = (error: Error | BaseHivemindError): 'error' | 'warning' | 'info' => {
     if (error.name === 'ChunkLoadError') return 'warning';
     if (error.message.includes('network') || error.message.includes('fetch')) return 'warning';
+    if (error.message.includes('permission') || error.message.includes('unauthorized')) return 'error';
+    if (error.name.includes('Auth') || error.name.includes('Token')) return 'error';
     return 'error';
   };
 
-  private getErrorTitle = (error: Error): string => {
+  private getErrorTitle = (error: BaseHivemindError): string => {
     if (error.name === 'ChunkLoadError') return 'Application Update Available';
     if (error.message.includes('network') || error.message.includes('fetch')) return 'Connection Error';
+    if (error.message.includes('permission') || error.message.includes('unauthorized')) return 'Access Denied';
+    if (error.name.includes('Auth') || error.name.includes('Token')) return 'Authentication Required';
     return 'Something went wrong';
   };
 
-  private getErrorMessage = (error: Error): string => {
+  private getErrorMessage = (error: BaseHivemindError): string => {
     if (error.name === 'ChunkLoadError') {
       return 'A new version of the application is available. Please refresh to get the latest features and bug fixes.';
     }
     if (error.message.includes('network') || error.message.includes('fetch')) {
       return 'Unable to connect to the server. Please check your internet connection and try again.';
     }
+    if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+      return 'You do not have permission to access this resource. Please contact your administrator.';
+    }
+    if (error.name.includes('Auth') || error.name.includes('Token')) {
+      return 'Your session has expired or is invalid. Please log in again.';
+    }
     return 'An unexpected error occurred. Our team has been notified and is working to fix the issue.';
   };
 
-  private getRecoveryActions = (error: Error) => {
+  private getRecoveryActions = (error: BaseHivemindError) => {
     const actions = [];
 
     if (error.name === 'ChunkLoadError') {
       actions.push({ label: 'Refresh Page', action: this.handleReload, primary: true });
+    } else if (error.message.includes('network') || error.message.includes('fetch')) {
+      actions.push({ label: 'Retry Connection', action: this.handleReload, primary: true });
+      actions.push({ label: 'Go Home', action: this.handleGoHome });
+    } else if (error.message.includes('permission') || error.message.includes('unauthorized') ||
+               error.name.includes('Auth') || error.name.includes('Token')) {
+      actions.push({ label: 'Log In', action: this.handleGoHome, primary: true });
+      actions.push({ label: 'Go Home', action: this.handleGoHome });
     } else {
       actions.push({ label: 'Try Again', action: this.handleReset, primary: true });
       actions.push({ label: 'Go Home', action: this.handleGoHome });
@@ -160,6 +317,35 @@ class ErrorBoundary extends Component<Props, State> {
 
     return actions;
   };
+
+  private attemptRecovery = (error: BaseHivemindError) => {
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      // For network errors, attempt automatic retry after a delay
+      this.setState({ isRecovering: true });
+      
+      if (this.recoveryTimer) {
+        clearTimeout(this.recoveryTimer);
+      }
+      
+      this.recoveryTimer = setTimeout(() => {
+        this.setState(prevState => ({
+          isRecovering: false,
+          recoveryAttempts: prevState.recoveryAttempts + 1
+        }));
+        
+        // Only reload if we're still showing the error
+        if (this.state.hasError) {
+          this.handleReload();
+        }
+      }, 5000); // Retry after 5 seconds
+    }
+  };
+
+  componentWillUnmount() {
+    if (this.recoveryTimer) {
+      clearTimeout(this.recoveryTimer);
+    }
+  }
 
   render() {
     if (this.state.hasError && this.state.error) {
@@ -207,6 +393,12 @@ class ErrorBoundary extends Component<Props, State> {
               <Alert severity={severity} sx={{ mb: 3 }}>
                 {message}
               </Alert>
+
+              {this.state.isRecovering && (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Attempting to recover automatically... ({this.state.recoveryAttempts} attempts)
+                </Alert>
+              )}
 
               <Box display="flex" flexDirection="column" gap={2} mb={3}>
                 {actions.map((action, index) => (
@@ -275,6 +467,27 @@ class ErrorBoundary extends Component<Props, State> {
                         </CardContent>
                       </Card>
                     )}
+
+                    {this.state.error.correlationId && (
+                      <Card variant="outlined" sx={{ mb: 2 }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Correlation ID
+                          </Typography>
+                          <Typography variant="body2" component="pre" sx={{
+                            whiteSpace: 'pre-wrap',
+                            fontSize: '0.75rem',
+                            bgcolor: 'grey.100',
+                            p: 1,
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            maxHeight: 10,
+                          }}>
+                            {this.state.error.correlationId}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    )}
                   </Collapse>
 
                   <Button
@@ -325,6 +538,12 @@ class ErrorBoundary extends Component<Props, State> {
                   <ListItemText
                     primary="Application state"
                     secondary="Current page and user context"
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="Correlation ID"
+                    secondary={`ID: ${this.state.error.correlationId}`}
                   />
                 </ListItem>
               </List>

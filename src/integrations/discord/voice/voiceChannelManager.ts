@@ -4,6 +4,7 @@ import { connectToVoiceChannel } from '../interaction/connectToVoiceChannel';
 import { VoiceCommandHandler } from './voiceCommandHandler';
 import { VoiceActivityDetection } from './voiceActivityDetection';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:discord:voiceManager');
 
@@ -18,29 +19,49 @@ export class VoiceChannelManager {
   }
 
   async joinChannel(channelId: string, autoListen = true): Promise<VoiceConnection> {
-    if (this.connections.has(channelId)) {
-      return this.connections.get(channelId)!;
+    try {
+      if (this.connections.has(channelId)) {
+        return this.connections.get(channelId)!;
+      }
+
+      const connection = await connectToVoiceChannel(this.client, channelId);
+      this.connections.set(channelId, connection);
+
+      if (autoListen) {
+        const handler = new VoiceCommandHandler(connection);
+        const vad = new VoiceActivityDetection(connection);
+        
+        this.handlers.set(channelId, handler);
+        this.vadSystems.set(channelId, vad);
+        
+        handler.startListening();
+        debug(`Joined channel ${channelId} with voice command listening enabled`);
+      }
+
+      connection.on(VoiceConnectionStatus.Disconnected, () => {
+        this.cleanup(channelId);
+      });
+
+      return connection;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const classification = ErrorUtils.classifyError(hivemindError);
+
+      debug(`Voice channel manager join error: ${ErrorUtils.getMessage(hivemindError)}`);
+
+      // Log with appropriate level
+      if (classification.logLevel === 'error') {
+          console.error('Discord voice channel manager join error:', hivemindError);
+      }
+
+      throw ErrorUtils.createError(
+          `Failed to join voice channel: ${ErrorUtils.getMessage(hivemindError)}`,
+          classification.type,
+          'DISCORD_VOICE_CHANNEL_MANAGER_JOIN_ERROR',
+          ErrorUtils.getStatusCode(hivemindError),
+          { originalError: error, channelId }
+      );
     }
-
-    const connection = await connectToVoiceChannel(this.client, channelId);
-    this.connections.set(channelId, connection);
-
-    if (autoListen) {
-      const handler = new VoiceCommandHandler(connection);
-      const vad = new VoiceActivityDetection(connection);
-      
-      this.handlers.set(channelId, handler);
-      this.vadSystems.set(channelId, vad);
-      
-      handler.startListening();
-      debug(`Joined channel ${channelId} with voice command listening enabled`);
-    }
-
-    connection.on(VoiceConnectionStatus.Disconnected, () => {
-      this.cleanup(channelId);
-    });
-
-    return connection;
   }
 
   leaveChannel(channelId: string): void {

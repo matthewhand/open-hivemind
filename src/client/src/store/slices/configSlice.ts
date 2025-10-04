@@ -114,6 +114,10 @@ const configSlice = createSlice({
     setLastUpdated: (state) => {
       state.lastUpdated = new Date().toISOString();
     },
+    setGuardsConfig: (state, action: PayloadAction<Record<string, unknown>>) => {
+      state.overrides = { ...state.overrides, ...action.payload };
+      state.lastUpdated = new Date().toISOString();
+    },
   },
 });
 
@@ -134,6 +138,7 @@ export const {
   clearValidationErrors,
   clearValidationWarnings,
   setLastUpdated,
+  setGuardsConfig,
 } = configSlice.actions;
 
 export default configSlice.reducer;

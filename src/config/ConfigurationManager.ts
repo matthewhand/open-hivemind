@@ -2,6 +2,7 @@ import convict from 'convict';
 import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
+import { ValidationError, ConfigurationError } from '../types/errorClasses';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -20,10 +21,22 @@ const schema = convict({
         doc: 'API base URL for Vite frontend',
         format: (val: any) => {
           if (typeof val !== 'string') {
-            throw new Error('Value must be a string');
+            throw new ValidationError(
+              'Value must be a string',
+              'VITE_API_BASE_URL',
+              val,
+              'string',
+              ['Must be a valid string']
+            );
           }
           if (!isValidUrl(val)) {
-            throw new Error('Value must be a valid URL');
+            throw new ValidationError(
+              'Value must be a valid URL',
+              'VITE_API_BASE_URL',
+              val,
+              'valid URL',
+              ['Must be a properly formatted URL']
+            );
           }
         },
         default: 'http://localhost:3000/api',
@@ -33,10 +46,22 @@ const schema = convict({
         doc: 'Base URL for Playwright E2E tests',
         format: (val: any) => {
           if (typeof val !== 'string') {
-            throw new Error('Value must be a string');
+            throw new ValidationError(
+              'Value must be a string',
+              'PLAYWRIGHT_BASE_URL',
+              val,
+              'string',
+              ['Must be a valid string']
+            );
           }
           if (!isValidUrl(val)) {
-            throw new Error('Value must be a valid URL');
+            throw new ValidationError(
+              'Value must be a valid URL',
+              'PLAYWRIGHT_BASE_URL',
+              val,
+              'valid URL',
+              ['Must be a properly formatted URL']
+            );
           }
         },
         default: 'http://localhost:3000',
@@ -114,7 +139,13 @@ export class ConfigurationManager {
      */
     public getConfig(configName: string): convict.Config<any> | null {
         if (typeof configName !== 'string') {
-            throw new TypeError('configName must be a string');
+            throw new ValidationError(
+                'configName must be a string',
+                'configName',
+                configName,
+                'string',
+                ['Must be a valid string']
+            );
         }
         const config = this.configs[configName];
         if (config) {
@@ -137,13 +168,31 @@ export class ConfigurationManager {
      */
     public setSession(integration: string, channelId: string, sessionId: string) {
         if (typeof integration !== 'string') {
-            throw new TypeError('integration must be a string');
+            throw new ValidationError(
+                'integration must be a string',
+                'integration',
+                integration,
+                'string',
+                ['Must be a valid string']
+            );
         }
         if (typeof channelId !== 'string') {
-            throw new TypeError('channelId must be a string');
+            throw new ValidationError(
+                'channelId must be a string',
+                'channelId',
+                channelId,
+                'string',
+                ['Must be a valid string']
+            );
         }
         if (typeof sessionId !== 'string') {
-            throw new TypeError('sessionId must be a string');
+            throw new ValidationError(
+                'sessionId must be a string',
+                'sessionId',
+                sessionId,
+                'string',
+                ['Must be a valid string']
+            );
         }
         if (!this.sessionStore[integration]) {
             this.sessionStore[integration] = {};

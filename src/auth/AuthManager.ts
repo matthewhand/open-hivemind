@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import Debug from 'debug';
 import { User, UserRole, AuthToken, LoginCredentials, RegisterData } from './types';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import { AuthenticationError, AuthorizationError, ValidationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:AuthManager');
 
@@ -134,19 +135,19 @@ export class AuthManager {
   public async register(data: RegisterData): Promise<User> {
     // Validate password strength
     if (!data.password || data.password.length < 6) {
-      throw new Error('Password must be at least 6 characters long');
+      throw new ValidationError('Password must be at least 6 characters long', 'PASSWORD_TOO_SHORT');
     }
     
     // Check if user already exists by username
     const existingUserByUsername = Array.from(this.users.values()).find(u => u.username === data.username);
     if (existingUserByUsername) {
-      throw new Error('User already exists');
+      throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
     
     // Check if user already exists by email
     const existingUserByEmail = Array.from(this.users.values()).find(u => u.email === data.email);
     if (existingUserByEmail) {
-      throw new Error('User already exists');
+      throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
     const user: User = {
@@ -175,12 +176,12 @@ export class AuthManager {
     );
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
     const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash!);
     if (!isValidPassword) {
-      throw new Error('Invalid credentials');
+      throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
     // Update last login

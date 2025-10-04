@@ -1,5 +1,6 @@
 import Debug from "debug";
 import { TextChannel } from 'discord.js';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendMessageToChannel');
 
@@ -25,7 +26,15 @@ export async function sendMessageToChannel(
   try {
     await channel.send(content);
     debug('Message sent to channel ' + channel.id);
-  } catch (error: any) {
-    debug('Error sending message to channel: ' + (error instanceof Error ? error.message : String(error)));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error sending message to channel: ' + ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord send message to channel error:', hivemindError);
+    }
   }
 }

@@ -269,7 +269,7 @@ async function main() {
 
     const httpEnabled = process.env.HTTP_ENABLED !== 'false';
     if (httpEnabled) {
-        const port = parseInt(process.env.PORT || '5005', 10);
+        const port = parseInt(process.env.PORT || '3028', 10);
         const server = createServer(app);
 
         // Initialize WebSocket service

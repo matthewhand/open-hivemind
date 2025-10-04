@@ -4,6 +4,7 @@ import { SlackBotManager } from './SlackBotManager';
 import SlackMessage from './SlackMessage';
 import { IMessage } from '@message/interfaces/IMessage';
 import { KnownBlock } from '@slack/web-api';
+import { ConfigurationError, ValidationError, NetworkError } from '@src/types/errorClasses';
 
 const debug = Debug('app:SlackMessageProcessor');
 
@@ -24,7 +25,10 @@ export class SlackMessageProcessor {
 
   constructor(botManager: SlackBotManager) {
     if (!botManager) {
-      throw new Error('SlackBotManager instance required');
+      throw new ConfigurationError(
+        'SlackBotManager instance required',
+        'SLACK_BOT_MANAGER_REQUIRED'
+      );
     }
     this.botManager = botManager;
   }
@@ -32,18 +36,24 @@ export class SlackMessageProcessor {
   async enrichSlackMessage(message: SlackMessage): Promise<SlackMessage> {
     if (!message || !message.getChannelId()) {
       debug('Error: Invalid message or missing channelId');
-      throw new Error('Message and channelId required');
+      throw new ValidationError(
+        'Message and channelId required',
+        'SLACK_MESSAGE_VALIDATION_FAILED'
+      );
     }
 
     const botInfo = this.botManager.getAllBots()[0];
     if (!botInfo) {
       debug('Error: Bot information not found');
-      throw new Error('Bot information not found');
+      throw new ConfigurationError(
+        'Bot information not found',
+        'SLACK_BOT_INFO_NOT_FOUND'
+      );
     }
     const channelId = message.getChannelId();
     let userId = message.getAuthorId();
     if ((userId === 'unknown' || !userId) && message.data.user) {
-      userId = message.data.user;
+      userId = typeof message.data.user === 'string' ? message.data.user : message.data.user.id;
     }
     debug(`User ID from message: ${userId}`);
     const threadTs = message.data.thread_ts;
@@ -57,7 +67,12 @@ export class SlackMessageProcessor {
       const channelInfoResp = await botInfo.webClient.conversations.info({ channel: channelId });
       if (!channelInfoResp.ok) {
         debug(`Failed to fetch channel info: ${channelInfoResp.error}`);
-        throw new Error(`Channel info fetch failed: ${channelInfoResp.error}`);
+        throw ErrorUtils.createError(
+          `Channel info fetch failed: ${channelInfoResp.error}`,
+          'IntegrationError',
+          'SLACK_CHANNEL_INFO_FETCH_FAILED',
+          500
+        );
       }
       const channelInfo = {
         channelId,
@@ -97,8 +112,16 @@ export class SlackMessageProcessor {
         } else {
           debug(`Invalid userId, skipping users.info call: ${userId}`);
         }
-      } catch (error) {
-        debug(`Failed to fetch user info for userId ${userId}: ${error}`);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Failed to fetch user info for userId ${userId}:`, {
+          error: hivemindError.message,
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity,
+          userId
+        });
       }
 
       let channelContent = message.data.channelContent ? { ...message.data.channelContent } : undefined;
@@ -129,12 +152,19 @@ export class SlackMessageProcessor {
                       });
                       channelContent.content = contentResponse.data || 'No content available';
                       debug(`Fetched content from url_private: ${channelContent.content.substring(0, 50)}...`);
-                    } catch (fetchError) {
-                      debug(`Failed to fetch content from url_private: ${fetchError}`);
+                    } catch (fetchError: unknown) {
+                      const hivemindError = ErrorUtils.toHivemindError(fetchError);
+                      const errorInfo = ErrorUtils.classifyError(hivemindError);
+                      debug(`Failed to fetch content from url_private:`, {
+                        error: hivemindError.message,
+                        errorCode: hivemindError.code,
+                        errorType: errorInfo.type,
+                        severity: errorInfo.severity
+                      });
                       channelContent.content = 'No content available';
                     }
                   }
-                } else if (contentInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfo.file.filetype || '')) {
+                } else if (contentInfo.file && ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfo.filetype || '')) {
                   const fileResponse = await axios.get(contentInfo.file.url_private!, {
                     headers: { 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer',
@@ -148,10 +178,20 @@ export class SlackMessageProcessor {
                   };
                   debug(`Binary content base64-encoded: ${channelContent.content.substring(0, 50)}...`);
                 } else {
-                  throw new Error(`Unsupported file type: ${contentInfo.file?.filetype || 'unknown'}`);
+                  throw ErrorUtils.createError(
+                    `Unsupported file type: ${contentInfo.file?.filetype || 'unknown'}`,
+                    'ValidationError',
+                    'SLACK_UNSUPPORTED_FILE_TYPE',
+                    400
+                  );
                 }
               } else {
-                throw new Error(contentInfo.error || 'Unknown error fetching channel content');
+                throw ErrorUtils.createError(
+                  contentInfo.error || 'Unknown error fetching channel content',
+                  'IntegrationError',
+                  'SLACK_CHANNEL_CONTENT_FETCH_FAILED',
+                  500
+                );
               }
               debug(`Channel content retrieved: ${channelContent.content.substring(0, 50)}...`);
             } else {
@@ -162,8 +202,16 @@ export class SlackMessageProcessor {
             debug(`No content found in files.list for channel: ${channelId}`);
             channelContent = { content: '', info: null };
           }
-        } catch (error) {
-          debug(`Failed to retrieve channel content: ${error}`);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          const errorInfo = ErrorUtils.classifyError(hivemindError);
+          debug(`Failed to retrieve channel content:`, {
+            error: hivemindError.message,
+            errorCode: hivemindError.code,
+            errorType: errorInfo.type,
+            severity: errorInfo.severity,
+            channelId
+          });
           channelContent = { content: '', info: null };
         }
       } else {
@@ -202,9 +250,21 @@ export class SlackMessageProcessor {
       };
       debug(`Enriched message data: ${JSON.stringify(message.data, null, 2).substring(0, 200)}...`);
       return message;
-    } catch (error) {
-      debug(`Failed to enrich message: ${error}`);
-      throw new Error(`Message enrichment failed: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to enrich message:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      throw ErrorUtils.createError(
+        `Message enrichment failed: ${hivemindError.message}`,
+        errorInfo.type,
+        'SLACK_MESSAGE_ENRICHMENT_FAILED',
+        500
+      );
     }
   }
 
@@ -212,7 +272,12 @@ export class SlackMessageProcessor {
     debug('Entering constructPayload', { text: message.getText(), channel: message.getChannelId() });
     if (!message) {
       debug('Error: Message required');
-      throw new Error('Message required');
+      throw ErrorUtils.createError(
+        'Message required',
+        'ValidationError',
+        'SLACK_MESSAGE_REQUIRED',
+        400
+      );
     }
 
     const currentTs = `${Math.floor(Date.now() / 1000)}.2345`;
@@ -327,8 +392,15 @@ export class SlackMessageProcessor {
 
       debug(`Final processed text: ${finalText.substring(0, 50) + (finalText.length > 50 ? '...' : '')}`);
       return { text: finalText, blocks };
-    } catch (error) {
-      debug(`Error processing response: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Error processing response:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return { text: 'Error processing response' };
     }
   }
@@ -341,8 +413,17 @@ export class SlackMessageProcessor {
       const participants = [...new Set(replies.messages?.map(m => m.user).filter(Boolean) as string[])];
       debug(`Thread participants: ${participants.length} users`);
       return participants;
-    } catch (error) {
-      debug(`Failed to get thread participants: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to get thread participants:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        channelId,
+        threadTs
+      });
       return [];
     }
   }
@@ -355,8 +436,17 @@ export class SlackMessageProcessor {
       const count = replies.messages?.length || 0;
       debug(`Thread message count: ${count}`);
       return count;
-    } catch (error) {
-      debug(`Failed to get thread message count: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to get thread message count:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        channelId,
+        threadTs
+      });
       return 0;
     }
   }

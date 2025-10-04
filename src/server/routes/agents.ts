@@ -4,6 +4,7 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -49,8 +50,9 @@ const ensureDataDir = async () => {
   const dataDir = join(process.cwd(), 'data');
   try {
     await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    debug('Error creating data directory:', error);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error creating data directory:', hivemindError.message);
   }
 };
 
@@ -59,8 +61,9 @@ const loadJsonConfig = async <T>(filePath: string, defaultValue: T): Promise<T> 
   try {
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
-  } catch (error) {
-    debug(`Config file ${filePath} not found, using defaults`);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug(`Config file ${filePath} not found, using defaults:`, hivemindError.message);
     return defaultValue;
   }
 };
@@ -128,9 +131,22 @@ router.get('/', async (req, res) => {
     }));
 
     res.json({ agents: agentsWithEnvInfo });
-  } catch (error) {
-    debug('Error fetching agents:', error);
-    res.status(500).json({ error: 'Failed to fetch agents' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error fetching agents:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'AGENTS_FETCH_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -150,9 +166,22 @@ router.post('/', async (req, res) => {
     
     debug(`Created new agent: ${newAgent.name}`);
     res.json({ agent: newAgent });
-  } catch (error) {
-    debug('Error creating agent:', error);
-    res.status(500).json({ error: 'Failed to create agent' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error creating agent:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'AGENT_CREATE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -174,9 +203,22 @@ router.put('/:id', async (req, res) => {
     
     debug(`Updated agent: ${agents[agentIndex].name}`);
     res.json({ agent: agents[agentIndex] });
-  } catch (error) {
-    debug('Error updating agent:', error);
-    res.status(500).json({ error: 'Failed to update agent' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error updating agent:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'AGENT_UPDATE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -196,9 +238,22 @@ router.delete('/:id', async (req, res) => {
     
     debug(`Deleted agent: ${id}`);
     res.json({ success: true });
-  } catch (error) {
-    debug('Error deleting agent:', error);
-    res.status(500).json({ error: 'Failed to delete agent' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error deleting agent:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'AGENT_DELETE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -224,9 +279,22 @@ router.get('/personas', async (req, res) => {
     ]);
     
     res.json({ personas });
-  } catch (error) {
-    debug('Error fetching personas:', error);
-    res.status(500).json({ error: 'Failed to fetch personas' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error fetching personas:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'PERSONAS_FETCH_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -254,9 +322,22 @@ router.post('/personas', async (req, res) => {
     
     debug(`Created new persona: ${name}`);
     res.json({ persona: newPersona });
-  } catch (error) {
-    debug('Error creating persona:', error);
-    res.status(500).json({ error: 'Failed to create persona' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error creating persona:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'PERSONA_CREATE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -278,9 +359,22 @@ router.put('/personas/:key', async (req, res) => {
     
     debug(`Updated persona: ${name}`);
     res.json({ persona: personas[personaIndex] });
-  } catch (error) {
-    debug('Error updating persona:', error);
-    res.status(500).json({ error: 'Failed to update persona' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error updating persona:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'PERSONA_UPDATE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -304,9 +398,22 @@ router.delete('/personas/:key', async (req, res) => {
     
     debug(`Deleted persona: ${key}`);
     res.json({ success: true });
-  } catch (error) {
-    debug('Error deleting persona:', error);
-    res.status(500).json({ error: 'Failed to delete persona' });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error deleting persona:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity
+    });
+    
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'PERSONA_DELETE_ERROR',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SecureConfigManager');
 
@@ -66,10 +67,20 @@ export class SecureConfigManager {
   public async storeConfig(config: Omit<SecureConfig, 'updatedAt' | 'checksum'>): Promise<void> {
     // Validate configuration
     if (!config.id || config.id.trim() === '') {
-      throw new Error('Configuration ID is required');
+      throw ErrorUtils.createError(
+        'Configuration ID is required',
+        'ValidationError',
+        'SECURE_CONFIG_ID_REQUIRED',
+        400
+      );
     }
     if (!config.name || config.name.trim() === '') {
-      throw new Error('Configuration name is required');
+      throw ErrorUtils.createError(
+        'Configuration name is required',
+        'ValidationError',
+        'SECURE_CONFIG_NAME_REQUIRED',
+        400
+      );
     }
     
     try {
@@ -96,9 +107,21 @@ export class SecureConfigManager {
       // Verify file was created
       const fileExists = fs.existsSync(filePath);
       debug(`File exists after write: ${fileExists}`);
-    } catch (error) {
-      debug(`Failed to store configuration ${config.id}:`, error);
-      throw new Error(`Failed to store configuration: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to store configuration ${config.id}:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      throw ErrorUtils.createError(
+        `Failed to store configuration: ${hivemindError.message}`,
+        errorInfo.type,
+        'SECURE_CONFIG_STORE_FAILED',
+        500
+      );
     }
   }
 
@@ -119,12 +142,24 @@ export class SecureConfigManager {
 
       // Verify integrity
       if (!this.verifyChecksum(config)) {
-        throw new Error('Configuration integrity check failed');
+        throw ErrorUtils.createError(
+          'Configuration integrity check failed',
+          'IntegrityError',
+          'SECURE_CONFIG_INTEGRITY_FAILED',
+          500
+        );
       }
 
       return config;
-    } catch (error) {
-      debug(`Failed to retrieve configuration ${id}:`, error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to retrieve configuration ${id}:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return null;
     }
   }
@@ -138,8 +173,15 @@ export class SecureConfigManager {
       return files
         .filter(file => file.endsWith('.enc'))
         .map(file => file.replace('.enc', ''));
-    } catch (error) {
-      debug('Failed to list configurations:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Failed to list configurations:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return [];
     }
   }
@@ -153,8 +195,15 @@ export class SecureConfigManager {
       await fs.promises.unlink(filePath);
       debug(`Configuration ${id} deleted`);
       return true;
-    } catch (error) {
-      debug(`Failed to delete configuration ${id}:`, error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to delete configuration ${id}:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return false;
     }
   }
@@ -201,9 +250,21 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} created with ${configs.length} configurations`);
       return backupId;
-    } catch (error) {
-      debug('Failed to create backup:', error);
-      throw new Error(`Backup creation failed: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Failed to create backup:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      throw ErrorUtils.createError(
+        `Backup creation failed: ${hivemindError.message}`,
+        errorInfo.type,
+        'SECURE_CONFIG_BACKUP_CREATE_FAILED',
+        500
+      );
     }
   }
 
@@ -215,7 +276,12 @@ export class SecureConfigManager {
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
 
       if (!fs.existsSync(backupPath)) {
-        throw new Error(`Backup ${backupId} not found`);
+        throw ErrorUtils.createError(
+          `Backup ${backupId} not found`,
+          'NotFoundError',
+          'SECURE_CONFIG_BACKUP_NOT_FOUND',
+          404
+        );
       }
 
       const encryptedBackup = await fs.promises.readFile(backupPath, 'utf8');
@@ -224,7 +290,12 @@ export class SecureConfigManager {
 
       // Verify backup integrity
       if (!this.verifyChecksum(fullBackupData.metadata)) {
-        throw new Error('Backup integrity check failed');
+        throw ErrorUtils.createError(
+          'Backup integrity check failed',
+          'IntegrityError',
+          'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
+          500
+        );
       }
 
       const { metadata, data } = fullBackupData;
@@ -235,9 +306,21 @@ export class SecureConfigManager {
       }
 
       debug(`Backup ${backupId} restored successfully`);
-    } catch (error) {
-      debug(`Failed to restore backup ${backupId}:`, error);
-      throw new Error(`Backup restoration failed: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Failed to restore backup ${backupId}:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      throw ErrorUtils.createError(
+        `Backup restoration failed: ${hivemindError.message}`,
+        errorInfo.type,
+        'SECURE_CONFIG_BACKUP_RESTORE_FAILED',
+        500
+      );
     }
   }
 
@@ -260,15 +343,30 @@ export class SecureConfigManager {
             if (this.verifyChecksum(backupData.metadata)) {
               backups.push(backupData.metadata);
             }
-          } catch (error) {
-            debug(`Failed to read backup ${file}:`, error);
+          } catch (error: unknown) {
+            const hivemindError = ErrorUtils.toHivemindError(error);
+            const errorInfo = ErrorUtils.classifyError(hivemindError);
+            debug(`Failed to read backup ${file}:`, {
+              error: hivemindError.message,
+              errorCode: hivemindError.code,
+              errorType: errorInfo.type,
+              severity: errorInfo.severity,
+              file
+            });
           }
         }
       }
 
       return backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    } catch (error) {
-      debug('Failed to list backups:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Failed to list backups:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return [];
     }
   }

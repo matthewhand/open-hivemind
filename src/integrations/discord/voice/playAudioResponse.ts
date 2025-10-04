@@ -4,6 +4,7 @@ import { DiscordGatewayAdapterCreator } from '@discordjs/voice'; // Fix: Added m
 import discordConfig from '@config/discordConfig';
 import path from 'path';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:playAudioResponse');
 
@@ -61,9 +62,26 @@ export async function playAudioResponse(client: Client, guildMember: GuildMember
  connection.destroy();
  throw error;
  });
- } catch (error: any) {
- debug('Failed to play audio response: ' + error.message);
- debug(error.stack); // Improvement: log stack trace for better debugging
- throw error;
+ } catch (error: unknown) {
+ const hivemindError = ErrorUtils.toHivemindError(error);
+ const classification = ErrorUtils.classifyError(hivemindError);
+
+ debug('Failed to play audio response: ' + ErrorUtils.getMessage(hivemindError));
+
+ // Log with appropriate level including stack trace if available
+ if (classification.logLevel === 'error') {
+     console.error('Discord play audio response error:', hivemindError);
+     if (error instanceof Error && error.stack) {
+         console.error('Stack trace:', error.stack);
+     }
+ }
+
+ throw ErrorUtils.createError(
+     `Failed to play audio response: ${ErrorUtils.getMessage(hivemindError)}`,
+     classification.type,
+     'DISCORD_AUDIO_PLAYBACK_ERROR',
+     ErrorUtils.getStatusCode(hivemindError),
+     { originalError: error }
+ );
  }
 }

@@ -7,6 +7,7 @@ import openaiConfig from '@config/openaiConfig';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:discord:voiceCommands');
 
@@ -34,8 +35,16 @@ export class VoiceCommandHandler {
       }
 
       fs.unlinkSync(wavPath);
-    } catch (error: any) {
-      debug(`Voice processing error: ${error.message}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const classification = ErrorUtils.classifyError(hivemindError);
+
+      debug(`Voice processing error: ${ErrorUtils.getMessage(hivemindError)}`);
+
+      // Log with appropriate level
+      if (classification.logLevel === 'error') {
+          console.error('Discord voice processing error:', hivemindError);
+      }
     }
   }
 
@@ -77,8 +86,9 @@ export class VoiceCommandHandler {
           if (fs.existsSync(tempPath)) {
             fs.unlinkSync(tempPath);
           }
-        } catch (error) {
-          debug(`Failed to delete temporary file: ${error}`);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          debug(`Failed to delete temporary file: ${ErrorUtils.getMessage(hivemindError)}`);
         }
       });
       
@@ -88,21 +98,31 @@ export class VoiceCommandHandler {
           if (fs.existsSync(tempPath)) {
             fs.unlinkSync(tempPath);
           }
-        } catch (error) {
-          debug(`Failed to delete temporary file on error: ${error}`);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          debug(`Failed to delete temporary file on error: ${ErrorUtils.getMessage(hivemindError)}`);
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Clean up temp file if it was created
       try {
         if (fs.existsSync(tempPath)) {
           fs.unlinkSync(tempPath);
         }
-      } catch (cleanupError) {
-        debug(`Failed to delete temporary file during cleanup: ${cleanupError}`);
+      } catch (cleanupError: unknown) {
+        const hivemindCleanupError = ErrorUtils.toHivemindError(cleanupError);
+        debug(`Failed to delete temporary file during cleanup: ${ErrorUtils.getMessage(hivemindCleanupError)}`);
       }
       
-      debug(`TTS error: ${error.message}`);
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const classification = ErrorUtils.classifyError(hivemindError);
+
+      debug(`TTS error: ${ErrorUtils.getMessage(hivemindError)}`);
+
+      // Log with appropriate level
+      if (classification.logLevel === 'error') {
+          console.error('Discord TTS error:', hivemindError);
+      }
     }
   }
 

@@ -67,7 +67,7 @@ start_backend() {
     
     # Start the backend with nodemon for hot reload
     print_status "Starting backend with hot reload on port 3028..."
-    NODE_ENV=development nodemon --exec "./node_modules/.bin/ts-node src/index.ts" &
+    NODE_ENV=development nodemon --exec "./node_modules/.bin/ts-node -r tsconfig-paths/register src/index.ts" &
     BACKEND_PID=$!
     
     # Wait for backend to start

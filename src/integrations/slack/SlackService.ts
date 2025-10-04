@@ -17,6 +17,14 @@ import { getLlmProvider } from '@src/llm/getLlmProvider';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import slackConfig from '@config/slackConfig';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import {
+  BaseHivemindError,
+  ConfigurationError,
+  NetworkError,
+  ValidationError,
+  ApiError
+} from '@src/types/errorClasses';
+import { createErrorResponse } from '@src/utils/errorResponse';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -162,7 +170,10 @@ export class SlackService implements IMessengerService {
     const botName = botConfig.name;
     this.initializeBotInstance(botConfig);
     if (!this.app) {
-      throw new Error('Express app not configured');
+      throw new ConfigurationError(
+        'Express app not configured',
+        'SLACK_APP_NOT_CONFIGURED'
+      );
     }
     // Register routes and start bot
     const signatureVerifier = this.signatureVerifiers.get(botName)!;
@@ -247,8 +258,19 @@ export class SlackService implements IMessengerService {
 
       // Do not throw an error if no legacy config is found, as this might be intentional.
       // The service will just have no bots.
-    } catch (error: any) {
-      debug(`Legacy configuration loading failed: ${error.message || error}`);
+    } catch (error: unknown) {
+      if (error instanceof BaseHivemindError) {
+        debug(`Legacy configuration loading failed: ${error.message}`);
+        console.error('Slack legacy configuration loading error:', error);
+      } else {
+        const configError = new ConfigurationError(
+          `Failed to load legacy configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'SLACK_LEGACY_CONFIG_ERROR'
+        );
+        debug(`Legacy configuration loading failed: ${configError.message}`);
+        console.error('Slack legacy configuration loading error:', configError);
+      }
+
       // Do not re-throw, allow service to initialize without legacy bots if file is malformed.
     }
   }
@@ -259,9 +281,19 @@ export class SlackService implements IMessengerService {
       try {
         debug('Creating new SlackService instance');
         SlackService.instance = new SlackService();
-      } catch (error: any) {
+      } catch (error: unknown) {
         debug('Failed to create SlackService instance:', error);
-        throw new Error(`Failed to create SlackService instance: ${error.message}`);
+        console.error('Slack service instance creation error:', error);
+
+        if (error instanceof BaseHivemindError) {
+          throw error;
+        }
+
+        throw new ConfigurationError(
+          `Failed to create SlackService instance: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'SLACK_SERVICE_INIT_ERROR',
+          { originalError: error }
+        );
       }
     }
     debug('Returning SlackService instance');
@@ -272,7 +304,12 @@ export class SlackService implements IMessengerService {
     debug('Entering initialize');
     if (!this.app) {
       debug('Express app not set; call setApp() before initialize()');
-      throw new Error('Express app not configured');
+      throw ErrorUtils.createError(
+        'Express app not configured',
+        'ConfigurationError',
+        'SLACK_APP_NOT_CONFIGURED_INIT',
+        500
+      );
     }
 
     debug(`Initializing ${this.botManagers.size} Slack bot managers...`);

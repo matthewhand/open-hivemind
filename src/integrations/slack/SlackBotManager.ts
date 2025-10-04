@@ -4,6 +4,11 @@ import { WebClient } from '@slack/web-api';
 import Debug from 'debug';
 import SlackMessage from './SlackMessage';
 import { IMessage } from '@message/interfaces/IMessage';
+import {
+  BaseHivemindError,
+  NetworkError,
+  ApiError
+} from '@src/types/errorClasses';
 
 const debug = Debug('app:SlackBotManager');
 
@@ -58,9 +63,15 @@ export class SlackBotManager {
         botInfo.botUserId = authTest.user_id;
         botInfo.botUserName = authTest.user;
         debug(`Bot authenticated: ${botInfo.botUserName} (${botInfo.botUserId})`);
-      } catch (error) {
-        debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${error}`);
-        throw error;
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`, {
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity
+        });
+        throw hivemindError;
       }
     }
     await this.startListening();
@@ -122,9 +133,28 @@ export class SlackBotManager {
         debug('Starting primary socket client');
         await primaryBot.socketClient.start();
         debug('Primary socket client started for channels');
-      } catch (error) {
-        debug('Failed to start primary socket client:', error);
-        throw error;
+      } catch (error: unknown) {
+        if (error instanceof BaseHivemindError) {
+          debug('Failed to start primary socket client:', {
+            error: error.message,
+            errorCode: error.errorCode,
+            errorType: error.constructor.name,
+            severity: error.severity
+          });
+          throw error;
+        } else {
+          const networkError = new NetworkError(
+            `Failed to start primary socket client: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            'SLACK_SOCKET_START_ERROR'
+          );
+          debug('Failed to start primary socket client:', {
+            error: networkError.message,
+            errorCode: networkError.errorCode,
+            errorType: networkError.constructor.name,
+            severity: networkError.severity
+          });
+          throw networkError;
+        }
       }
     }
 
@@ -179,9 +209,28 @@ export class SlackBotManager {
             debug(`Starting socket client for ${botInfo.botUserName}`);
             await botInfo.socketClient.start();
             debug(`Listener started for ${botInfo.botUserName}`);
-          } catch (error) {
-            debug(`Failed to start socket client for ${botInfo.botUserName}:`, error);
-            throw error;
+          } catch (error: unknown) {
+            if (error instanceof BaseHivemindError) {
+              debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
+                error: error.message,
+                errorCode: error.errorCode,
+                errorType: error.constructor.name,
+                severity: error.severity
+              });
+              throw error;
+            } else {
+              const networkError = new NetworkError(
+                `Failed to start socket client for ${botInfo.botUserName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                'SLACK_SOCKET_START_ERROR'
+              );
+              debug(`Failed to start socket client for ${botInfo.botUserName}:`, {
+                error: networkError.message,
+                errorCode: networkError.errorCode,
+                errorType: networkError.constructor.name,
+                severity: networkError.severity
+              });
+              throw networkError;
+            }
           }
         }
       } else if (this.mode === 'rtm' && botInfo.rtmClient) {
@@ -189,9 +238,16 @@ export class SlackBotManager {
           debug(`Starting RTM client for ${botInfo.botUserName}`);
           await botInfo.rtmClient.start();
           debug(`RTM client started for ${botInfo.botUserName}`);
-        } catch (error) {
-          debug(`Failed to start RTM client for ${botInfo.botUserName}:`, error);
-          throw error;
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          const errorInfo = ErrorUtils.classifyError(hivemindError);
+          debug(`Failed to start RTM client for ${botInfo.botUserName}:`, {
+            error: hivemindError.message,
+            errorCode: hivemindError.code,
+            errorType: errorInfo.type,
+            severity: errorInfo.severity
+          });
+          throw hivemindError;
         }
       }
     }

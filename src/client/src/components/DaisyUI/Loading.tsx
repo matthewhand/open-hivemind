@@ -136,9 +136,9 @@ export const SkeletonText: React.FC<SkeletonProps & {
   );
 };
 
-export const SkeletonCard: React.FC<SkeletonProps> = ({ 
+export const LoadingSkeletonCard: React.FC<SkeletonProps> = ({
   animate = true,
-  className = '' 
+  className = ''
 }) => {
   const animateClass = animate ? 'animate-pulse' : '';
 
@@ -341,7 +341,7 @@ export default {
   LoadingSpinner,
   Progress,
   SkeletonText,
-  SkeletonCard,
+  LoadingSkeletonCard,
   SkeletonAvatar,
   SkeletonTable,
   SkeletonStats,

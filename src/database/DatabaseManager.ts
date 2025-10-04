@@ -3,6 +3,7 @@ import { open, Database } from 'sqlite';
 import Debug from 'debug';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { DatabaseError, ConfigurationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:DatabaseManager');
 
@@ -219,19 +220,22 @@ export class DatabaseManager {
         await this.createIndexes();
         await this.migrate();
       } else {
-        throw new Error(`Database type ${this.config.type} not yet implemented`);
+        throw new ConfigurationError(`Database type ${this.config.type} not yet implemented`, 'DATABASE_TYPE_NOT_SUPPORTED');
       }
       
       this.connected = true;
       debug('Database connected successfully');
     } catch (error) {
       debug('Database connection failed:', error);
-      throw new Error(`Failed to connect to database: ${error}`);
+      if (error instanceof DatabaseError) {
+        throw error;
+      }
+      throw new DatabaseError(`Failed to connect to database: ${error instanceof Error ? error.message : 'Unknown error'}`, 'DATABASE_CONNECTION_FAILED');
     }
   }
 
   private async createTables(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
 
     // Messages table
     await this.db.exec(`

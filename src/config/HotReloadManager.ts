@@ -1,6 +1,7 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
 import UserConfigStore, { BotOverride } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
@@ -65,8 +66,16 @@ export class HotReloadManager {
             }
           });
           this.configWatchers.set(configPath, watcher);
-        } catch (error) {
-          debug(`Failed to watch config path ${configPath}:`, error);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          const errorInfo = ErrorUtils.classifyError(hivemindError);
+          debug(`Failed to watch config path ${configPath}:`, {
+            error: hivemindError.message,
+            errorCode: hivemindError.code,
+            errorType: errorInfo.type,
+            severity: errorInfo.severity,
+            configPath
+          });
         }
       }
     });
@@ -90,8 +99,15 @@ export class HotReloadManager {
       debug('Configuration changes detected, triggering hot reload check');
       // For now, just log the detection - full auto-reload would be implemented here
 
-    } catch (error) {
-      debug('Error detecting configuration changes:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Error detecting configuration changes:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
     }
   }
 
@@ -168,14 +184,21 @@ export class HotReloadManager {
         return result;
       }
 
-    } catch (error) {
-      debug('Error applying configuration change:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Error applying configuration change:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return {
         success: false,
         message: 'Unexpected error during configuration change',
         affectedBots: [],
         warnings: [],
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [hivemindError.message]
       };
     } finally {
       this.isReloading = false;
@@ -232,8 +255,16 @@ export class HotReloadManager {
         errors
       };
 
-    } catch (error) {
-      errors.push(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Validation error:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
+      errors.push(`Validation error: ${hivemindError.message}`);
       return { valid: false, affectedBots, warnings, errors };
     }
   }
@@ -260,8 +291,15 @@ export class HotReloadManager {
       }
 
       return snapshotId;
-    } catch (error) {
-      debug('Error creating rollback snapshot:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Error creating rollback snapshot:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return null;
     }
   }
@@ -302,13 +340,21 @@ export class HotReloadManager {
         errors
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Error applying configuration changes:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       return {
         success: false,
         message: 'Failed to apply configuration changes',
         affectedBots: [],
         warnings: [],
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [hivemindError.message]
       };
     }
   }
@@ -359,8 +405,16 @@ export class HotReloadManager {
       }
 
       return true;
-    } catch (error) {
-      debug(`Error applying changes to bot '${botName}':`, error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Error applying changes to bot '${botName}':`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        botName
+      });
       return false;
     }
   }
@@ -383,8 +437,16 @@ export class HotReloadManager {
 
       debug(`Successfully rolled back to snapshot '${snapshotId}'`);
       return true;
-    } catch (error) {
-      debug('Error during rollback:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug('Error during rollback:', {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity,
+        snapshotId
+      });
       return false;
     }
   }
@@ -403,8 +465,16 @@ export class HotReloadManager {
       try {
         watcher.close();
         debug(`Closed file watcher for ${path}`);
-      } catch (error) {
-        debug(`Error closing file watcher for ${path}:`, error);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Error closing file watcher for ${path}:`, {
+          error: hivemindError.message,
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity,
+          path
+        });
       }
     });
     this.configWatchers.clear();

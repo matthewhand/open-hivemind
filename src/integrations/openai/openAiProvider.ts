@@ -3,6 +3,13 @@ import { IMessage } from '@message/interfaces/IMessage';
 import { OpenAI } from 'openai';
 import openaiConfig from '@config/openaiConfig';
 import Debug from 'debug';
+import {
+  BaseHivemindError,
+  ConfigurationError,
+  NetworkError,
+  ApiError,
+  TimeoutError
+} from '@src/types/errorClasses';
 
 const debug = Debug('app:openAiProvider');
 
@@ -127,7 +134,7 @@ export const openAiProvider: ILlmProvider = {
 
     if (!apiKey) {
       debug('No API key found in config or environment');
-      throw new Error('OpenAI API key is missing');
+      throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
     }
     debug('Loaded config:', {
       apiKey: apiKey.slice(0, 4) + '...',
@@ -190,30 +197,58 @@ export const openAiProvider: ILlmProvider = {
         debug('Generated content:', content);
         return content;
 
-      } catch (error: any) {
-        debug(`Attempt ${attempt} failed:`, error);
-
-        if (error instanceof Error) {
-          const errorMsg = error.message.toLowerCase();
-
-          if (attempt < MAX_RETRIES) {
-            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
-            debug(`Retrying in ${delayMs}ms...`);
-            await delay(delayMs);
-            continue;
+      } catch (error: unknown) {
+        let hivemindError: BaseHivemindError;
+        
+        if (error instanceof BaseHivemindError) {
+          hivemindError = error;
+        } else {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          const errorMsgLower = errorMsg.toLowerCase();
+          
+          if (errorMsgLower.includes('connection') || errorMsgLower.includes('econnrefused')) {
+            hivemindError = new NetworkError(
+              `OpenAI connection failed: ${errorMsg}`,
+              'OPENAI_CONNECTION_ERROR'
+            );
+          } else if (errorMsgLower.includes('timed out')) {
+            hivemindError = new TimeoutError(
+              `OpenAI request timed out: ${errorMsg}`,
+              'OPENAI_TIMEOUT_ERROR'
+            );
+          } else if (errorMsgLower.includes('api') || errorMsgLower.includes('unauthorized') || errorMsgLower.includes('forbidden')) {
+            hivemindError = new ApiError(
+              `OpenAI API error: ${errorMsg}`,
+              'OPENAI_API_ERROR'
+            );
+          } else {
+            hivemindError = new ApiError(
+              `OpenAI error: ${errorMsg}`,
+              'OPENAI_GENERIC_ERROR'
+            );
           }
+        }
+        
+        debug(`Attempt ${attempt} failed:`, hivemindError);
 
-          debug('Max retries reached');
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            return 'Unable to connect to the service, please try again later.';
-          }
-          if (errorMsg.includes('timed out')) {
-            return 'Request took too long, please try again.';
-          }
-          throw new Error(`Chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
+        if (attempt < MAX_RETRIES) {
+          const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
+          debug(`Retrying in ${delayMs}ms...`);
+          await delay(delayMs);
+          continue;
         }
 
-        throw new Error(`Chat completion failed: ${String(error)}`);
+        debug('Max retries reached');
+        const errorMsg = hivemindError.message.toLowerCase();
+        
+        if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+          return 'Unable to connect to the service, please try again later.';
+        }
+        if (errorMsg.includes('timed out')) {
+          return 'Request took too long, please try again.';
+        }
+        
+        throw hivemindError;
       }
     }
 
@@ -233,7 +268,7 @@ export const openAiProvider: ILlmProvider = {
 
     if (!apiKey) {
       debug('No API key found in config or environment');
-      throw new Error('OpenAI API key is missing');
+      throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
     }
     debug('Loaded config:', {
       apiKey: apiKey.slice(0, 4) + '...',
@@ -276,30 +311,58 @@ export const openAiProvider: ILlmProvider = {
         debug('Generated text:', text);
         return text;
 
-      } catch (error: any) {
-        debug(`Attempt ${attempt} failed:`, error);
-
-        if (error instanceof Error) {
-          const errorMsg = error.message.toLowerCase();
-
-          if (attempt < MAX_RETRIES) {
-            const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
-            debug(`Retrying in ${delayMs}ms...`);
-            await delay(delayMs);
-            continue;
+      } catch (error: unknown) {
+        let hivemindError: BaseHivemindError;
+        
+        if (error instanceof BaseHivemindError) {
+          hivemindError = error;
+        } else {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          const errorMsgLower = errorMsg.toLowerCase();
+          
+          if (errorMsgLower.includes('connection') || errorMsgLower.includes('econnrefused')) {
+            hivemindError = new NetworkError(
+              `OpenAI connection failed: ${errorMsg}`,
+              'OPENAI_CONNECTION_ERROR'
+            );
+          } else if (errorMsgLower.includes('timed out')) {
+            hivemindError = new TimeoutError(
+              `OpenAI request timed out: ${errorMsg}`,
+              'OPENAI_TIMEOUT_ERROR'
+            );
+          } else if (errorMsgLower.includes('api') || errorMsgLower.includes('unauthorized') || errorMsgLower.includes('forbidden')) {
+            hivemindError = new ApiError(
+              `OpenAI API error: ${errorMsg}`,
+              'OPENAI_API_ERROR'
+            );
+          } else {
+            hivemindError = new ApiError(
+              `OpenAI error: ${errorMsg}`,
+              'OPENAI_GENERIC_ERROR'
+            );
           }
+        }
+        
+        debug(`Attempt ${attempt} failed:`, hivemindError);
 
-          debug('Max retries reached');
-          if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
-            return 'Unable to connect to the service, please try again later.';
-          }
-          if (errorMsg.includes('timed out')) {
-            return 'Request took too long, please try again.';
-          }
-          throw new Error(`Non-chat completion failed after ${MAX_RETRIES} attempts: ${error.message}`);
+        if (attempt < MAX_RETRIES) {
+          const delayMs = RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1);
+          debug(`Retrying in ${delayMs}ms...`);
+          await delay(delayMs);
+          continue;
         }
 
-        throw new Error(`Non-chat completion failed: ${String(error)}`);
+        debug('Max retries reached');
+        const errorMsg = hivemindError.message.toLowerCase();
+        
+        if (errorMsg.includes('connection') || errorMsg.includes('econnrefused')) {
+          return 'Unable to connect to the service, please try again later.';
+        }
+        if (errorMsg.includes('timed out')) {
+          return 'Request took too long, please try again.';
+        }
+        
+        throw hivemindError;
       }
     }
 

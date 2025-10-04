@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Message } from 'discord.js';
 import { TextChannel, DMChannel } from "discord.js";
+import { ValidationError, NetworkError } from '@src/types/errorClasses';
 
 const debug = Debug('app:sendResponse');
 
@@ -28,14 +29,33 @@ export const sendResponse = async (
 ): Promise<void> => {
   try {
     if (!message || !responseText) {
-      throw new Error('Invalid message or response text provided');
+      throw new ValidationError(
+        'Invalid message or response text provided',
+        'DISCORD_INVALID_RESPONSE_PARAMS',
+        { hasMessage: !!message, hasResponseText: !!responseText }
+      );
     }
     debug('Sending response message to channel: ' + message.channel.id);
-if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
+    if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) {
+      throw new ValidationError("Unsupported channel type for send method.", 'DISCORD_UNSUPPORTED_CHANNEL_TYPE');
+    }
     await message.channel.send(responseText);
     debug('Response message sent successfully');
-  } catch (error: any) {
-    debug('Error sending response message: ' + error.message);
-    throw error;
+  } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      debug('Validation error sending response message: ' + error.message);
+      console.error('Discord send response validation error:', error);
+      throw error;
+    }
+
+    const networkError = new NetworkError(
+      `Failed to send response: ${error instanceof Error ? error.message : String(error)}`,
+      'DISCORD_SEND_RESPONSE_ERROR',
+      { originalError: error }
+    );
+
+    debug('Network error sending response message: ' + networkError.message);
+    console.error('Discord send response network error:', networkError);
+    throw networkError;
   }
 };

@@ -4,6 +4,7 @@ import slackConfig from '@src/config/slackConfig';
 import { SlackService } from './SlackService';
 import SlackMessage from './SlackMessage';
 import { KnownBlock } from '@slack/web-api';
+import { ConfigurationError } from '@src/types/errorClasses';
 
 const debug = Debug('app:SlackEventProcessor');
 
@@ -15,7 +16,10 @@ export class SlackEventProcessor {
   constructor(slackService: SlackService) {
     if (!slackService) {
       debug('Error: SlackService instance required');
-      throw new Error('SlackService instance required');
+      throw new ConfigurationError(
+        'SlackService instance required',
+        'SLACK_SERVICE_REQUIRED'
+      );
     }
     this.slackService = slackService;
     debug('SlackEventProcessor initialized');
@@ -107,8 +111,15 @@ export class SlackEventProcessor {
 
       debug('Unhandled request type');
       res.status(400).send('Bad Request');
-    } catch (error) {
-      debug(`Error handling action request: ${error}`);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+      debug(`Error handling action request:`, {
+        error: hivemindError.message,
+        errorCode: hivemindError.code,
+        errorType: errorInfo.type,
+        severity: errorInfo.severity
+      });
       res.status(400).send('Bad Request');
     }
   }
@@ -173,8 +184,16 @@ export class SlackEventProcessor {
             debug(`Sent DM help message with buttons to user ${userId}`);
           }
         }
-      } catch (error) {
-        debug(`Error sending help DM to user ${userId}: ${error}`);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Error sending help DM to user ${userId}:`, {
+          error: hivemindError.message,
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity,
+          userId
+        });
       }
     });
   }
@@ -195,8 +214,16 @@ export class SlackEventProcessor {
       try {
         const authTest = await botInfo.webClient.auth.test();
         debug(`Bot ${botId} auth test: ${JSON.stringify(authTest)}`);
-      } catch (error) {
-        debug(`Error running auth test for bot ${botId}: ${error}`);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Error running auth test for bot ${botId}:`, {
+          error: hivemindError.message,
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity,
+          botId
+        });
       }
       try {
         const channelsResponse = await botInfo.webClient.conversations.list({ types: 'public_channel,private_channel' });
@@ -205,8 +232,16 @@ export class SlackEventProcessor {
         } else {
           debug(`Bot ${botId} failed to retrieve channels list: ${channelsResponse.error}`);
         }
-      } catch (error) {
-        debug(`Error retrieving channels for bot ${botId}: ${error}`);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        const errorInfo = ErrorUtils.classifyError(hivemindError);
+        debug(`Error retrieving channels for bot ${botId}:`, {
+          error: hivemindError.message,
+          errorCode: hivemindError.code,
+          errorType: errorInfo.type,
+          severity: errorInfo.severity,
+          botId
+        });
       }
     }
   }

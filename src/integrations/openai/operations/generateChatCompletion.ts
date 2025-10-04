@@ -2,6 +2,7 @@ import { IMessage } from '@src/message/interfaces/IMessage';
 import Debug from 'debug';
 import axios from 'axios';
 import openaiConfig from '@config/openaiConfig';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:OpenAiService');
 
@@ -78,9 +79,31 @@ export async function generateChatCompletion(
     options.setBusy(false);
 
     return response.data.choices[0]?.message.content || null;
-  } catch (error: any) {
-    debug('Error:', error.message);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+    
+    debug('Error:', ErrorUtils.getMessage(hivemindError));
+    
+    // Log with appropriate level based on classification
+    switch (classification.logLevel) {
+      case 'error':
+        console.error('OpenAI chat completion error:', hivemindError);
+        break;
+      case 'warn':
+        console.warn('OpenAI chat completion warning:', hivemindError);
+        break;
+      default:
+        debug('OpenAI chat completion info:', hivemindError);
+    }
+    
     options.setBusy(false);
-    throw new Error(`Failed: ${error.message}`);
+    throw ErrorUtils.createError(
+      `OpenAI chat completion failed: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'OPENAI_COMPLETION_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error }
+    );
   }
 }

@@ -1,5 +1,6 @@
 import Debug from "debug";
 import { Client, Message, TextChannel } from 'discord.js';
+import { NetworkError } from '@src/types/errorClasses';
 
 const debug = Debug('app:sendMessageToChannel');
 
@@ -24,7 +25,16 @@ export async function sendMessageToChannel(client: Client, channelId: string, me
         const sentMessage = await channel.send(messageContent);
         debug('Message sent to channel ID ' + channelId + ': ' + messageContent);
         return sentMessage;
-    } catch (error: any) {
-        debug('Error sending message to channel ID ' + channelId + ': ' + error.message);
+    } catch (error: unknown) {
+        const networkError = new NetworkError(
+            `Failed to send message to channel ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
+            'DISCORD_SEND_MESSAGE_ERROR',
+            { originalError: error }
+        );
+
+        debug('Network error sending message to channel ID ' + channelId + ': ' + networkError.message);
+        console.error('Discord send message to channel network error:', networkError);
+        // Note: This function previously didn't throw on error, just logged it
+        // Maintaining that behavior for backward compatibility
     }
 }

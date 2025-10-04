@@ -77,16 +77,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Build and push Docker image
+      - name: Build and push full Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:${{ github.sha }},${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:latest
+          tags: |
+            ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:${{ github.sha }}
+            ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            INCLUDE_PYTHON_TOOLS=true
+            INCLUDE_NODE_TOOLS=true
+            INCLUDE_FFMPEG=true
+
+      - name: Build and push slim Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:${{ github.sha }}-slim
+            ${{ secrets.DOCKER_IO_USERNAME }}/open-hivemind:slim
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          build-args: |
+            INCLUDE_PYTHON_TOOLS=false
+            INCLUDE_NODE_TOOLS=false
+            INCLUDE_FFMPEG=false
 
       - name: Move cache
         run: |

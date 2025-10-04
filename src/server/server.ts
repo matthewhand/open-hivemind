@@ -4,8 +4,18 @@ import Debug from 'debug';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+// Error handling imports
+import { HivemindError, ErrorUtils } from '../types/errors';
+import {
+  correlationMiddleware,
+  globalErrorHandler,
+  setupGlobalErrorHandlers,
+  setupGracefulShutdown
+} from '../middleware/errorHandler';
+
 // Route imports
 import healthRouter from '../routes/health';
+import errorsRouter from '../routes/errors';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import mcpRouter from './routes/mcp';
@@ -57,19 +67,22 @@ export class WebUIServer {
   }
 
   private setupMiddleware(): void {
+    // Correlation ID middleware (must be first)
+    this.app.use(correlationMiddleware);
+
     // Security middleware
     this.app.use(securityHeaders);
     this.app.use(cors({
       origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
       credentials: true
     }));
-    
+
     // Rate limiting (basic implementation)
     this.app.use('/api', (req, res, next) => {
       // Basic rate limiting middleware
       next();
     });
-    
+
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -116,7 +129,8 @@ export class WebUIServer {
     
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
-    
+    this.app.use('/api/errors', optionalAuth, errorsRouter);
+
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
@@ -169,29 +183,15 @@ export class WebUIServer {
   }
 
   private setupErrorHandling(): void {
-    // Global error handler
-    this.app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      debug('Global error handler:', error);
-      
-      // Don't log client errors
-      if (error.status && error.status < 500) {
-        res.status(error.status).json({
-          error: error.message || 'Client Error',
-          timestamp: new Date().toISOString()
-        });
-        return;
-      }
-      
-      // Log server errors
-      console.error('Server Error:', error);
-      
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-        timestamp: new Date().toISOString()
-      });
-    });
-    
+    // Global error handler middleware
+    this.app.use(globalErrorHandler);
+
+    // Setup global error handlers for uncaught exceptions and unhandled rejections
+    setupGlobalErrorHandlers();
+
+    // Setup graceful shutdown handlers
+    setupGracefulShutdown();
+
     debug('Error handling setup completed');
   }
 

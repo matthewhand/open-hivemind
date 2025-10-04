@@ -2,6 +2,7 @@ import Debug from "debug";
 import { Message } from 'discord.js';
 import { TextChannel, DMChannel } from "discord.js";
 import { splitMessage } from '@src/message/helpers/processing/splitMessage';
+import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendResponse');
 
@@ -29,7 +30,13 @@ export const sendResponse = async (
 ): Promise<void> => {
   try {
     if (!message || !responseText) {
-      throw new Error('Invalid message or response text provided');
+      throw ErrorUtils.createError(
+        'Invalid message or response text provided',
+        'ValidationError',
+        'DISCORD_INVALID_RESPONSE_PARAMS',
+        400,
+        { hasMessage: !!message, hasResponseText: !!responseText }
+      );
     }
 
     const responseParts = splitMessage(responseText);
@@ -38,8 +45,23 @@ if (!(message.channel instanceof TextChannel || message.channel instanceof DMCha
       await message.channel.send(part);
     }
     debug('Response message sent successfully: ' + responseText);
-  } catch (error: any) {
-    debug('Error sending response message: ' + error.message);
-    throw error;
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error sending response message: ' + ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+        console.error('Discord send response error:', hivemindError);
+    }
+
+    throw ErrorUtils.createError(
+        `Failed to send response: ${ErrorUtils.getMessage(hivemindError)}`,
+        classification.type,
+        'DISCORD_SEND_RESPONSE_ERROR',
+        ErrorUtils.getStatusCode(hivemindError),
+        { originalError: error }
+    );
   }
 };
