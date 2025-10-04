@@ -227,3 +227,46 @@ export const DEFAULT_PERSONA: Persona = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString()
 };
+
+export const BUILTIN_PERSONAS: Persona[] = [
+  DEFAULT_PERSONA,
+  {
+    id: 'customer_service',
+    name: 'Customer Service Agent',
+    description: 'Professional and empathetic customer service representative',
+    systemPrompt: 'You are a customer service agent. Be polite, empathetic, and helpful.',
+    traits: [
+      { name: 'Tone', value: 'Professional', weight: 1 },
+      { name: 'Style', value: 'Empathetic', weight: 1 }
+    ],
+    category: PersonaCategory.PROFESSIONAL,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'technical_support',
+    name: 'Technical Support Specialist',
+    description: 'Knowledgeable technical support expert',
+    systemPrompt: 'You are a technical support specialist. Provide clear, step-by-step assistance.',
+    traits: [
+      { name: 'Tone', value: 'Analytical', weight: 1 },
+      { name: 'Style', value: 'Technical', weight: 1 }
+    ],
+    category: PersonaCategory.TECHNICAL,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'creative_writer',
+    name: 'Creative Writer',
+    description: 'Imaginative and artistic content creator',
+    systemPrompt: 'You are a creative writer. Use vivid language and engaging storytelling.',
+    traits: [
+      { name: 'Tone', value: 'Creative', weight: 1 },
+      { name: 'Style', value: 'Artistic', weight: 1 }
+    ],
+    category: PersonaCategory.CREATIVE,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
