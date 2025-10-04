@@ -150,6 +150,11 @@
         "name": "test-bot",
         "token": "test-token",
         "signingSecret": "test-secret"
+      },
+      {
+        "name": "test-bot",
+        "token": "test-token",
+        "signingSecret": "test-secret"
       }
     ],
     "mode": "socket"

@@ -6,5 +6,23 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split large vendor libraries
+          react: ['react', 'react-dom'],
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          router: ['react-router-dom'],
+          charts: ['recharts'],
+          daisyui: ['daisyui', '@tailwindcss/typography']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@reduxjs/toolkit', 'react-router-dom', 'recharts']
   }
 })
