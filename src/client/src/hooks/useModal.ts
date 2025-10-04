@@ -72,4 +72,5 @@ const useModal = () => {
   };
 };
 
+export { useModal };
 export default useModal;

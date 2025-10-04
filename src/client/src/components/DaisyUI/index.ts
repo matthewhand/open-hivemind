@@ -57,8 +57,7 @@ export { default as SettingsPage } from './SettingsPage';
 export { default as Pagination } from './Pagination';
 
 // Component Tracking
-// export { default as DaisyUIComponentTracker } from './DaisyUIComponentTracker';
-// export { trackDaisyUIComponent, daisyUITracker } from '../utils/DaisyUIComponentTracker';
+export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
 // Advanced Components
 export { default as ModelAutocomplete } from './ModelAutocomplete';

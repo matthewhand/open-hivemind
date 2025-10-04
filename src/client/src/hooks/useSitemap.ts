@@ -146,4 +146,5 @@ export const useSitemap = (): UseSitemapReturn => {
   };
 };
 
+export { useSitemap };
 export default useSitemap;

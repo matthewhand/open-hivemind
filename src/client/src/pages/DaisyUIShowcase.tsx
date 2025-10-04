@@ -44,7 +44,6 @@ import {
   ModelAutocomplete,
 
   // Component Tracking
-  DaisyUIComponentTracker,
   trackDaisyUIComponent
 } from '../components/DaisyUI';
 

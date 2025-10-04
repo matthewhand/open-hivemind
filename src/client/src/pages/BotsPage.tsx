@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '../components/DaisyUI';
 import {
   Plus as AddIcon,
-  LibraryBooks as TemplatesIcon,
+  BookOpen as TemplatesIcon,
   Settings as ConfigIcon
 } from 'lucide-react';
 import { useBots } from '../hooks/useBots';
