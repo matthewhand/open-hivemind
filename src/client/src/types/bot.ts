@@ -137,3 +137,93 @@ export interface CreateBotRequest {
   personaId?: string;
   config: Record<string, any>;
 }
+
+export const MESSAGE_PROVIDER_CONFIGS = {
+  slack: {
+    type: MessageProviderType.SLACK,
+    displayName: 'Slack',
+    description: 'Connect to Slack workspaces',
+    icon: '💬',
+    fields: []
+  },
+  discord: {
+    type: MessageProviderType.DISCORD,
+    displayName: 'Discord',
+    description: 'Connect to Discord servers',
+    icon: '🎮',
+    fields: []
+  },
+  telegram: {
+    type: MessageProviderType.TELEGRAM,
+    displayName: 'Telegram',
+    description: 'Connect to Telegram groups',
+    icon: '✈️',
+    fields: []
+  },
+  webhook: {
+    type: MessageProviderType.WEBHOOK,
+    displayName: 'Webhook',
+    description: 'Generic webhook integration',
+    icon: '🔗',
+    fields: []
+  },
+  mattermost: {
+    type: MessageProviderType.MATTERMOST,
+    displayName: 'Mattermost',
+    description: 'Connect to Mattermost instances',
+    icon: '💻',
+    fields: []
+  }
+};
+
+export const LLM_PROVIDER_CONFIGS = {
+  openai: {
+    type: LLMProviderType.OPENAI,
+    displayName: 'OpenAI',
+    description: 'GPT models from OpenAI',
+    icon: '🤖',
+    fields: []
+  },
+  anthropic: {
+    type: LLMProviderType.ANTHROPIC,
+    displayName: 'Anthropic',
+    description: 'Claude models from Anthropic',
+    icon: '🧠',
+    fields: []
+  },
+  ollama: {
+    type: LLMProviderType.OLLAMA,
+    displayName: 'Ollama',
+    description: 'Local models via Ollama',
+    icon: '🦙',
+    fields: []
+  },
+  huggingface: {
+    type: LLMProviderType.HUGGINGFACE,
+    displayName: 'Hugging Face',
+    description: 'Models from Hugging Face',
+    icon: '🤗',
+    fields: []
+  },
+  local: {
+    type: LLMProviderType.LOCAL,
+    displayName: 'Local',
+    description: 'Custom local models',
+    icon: '🏠',
+    fields: []
+  }
+};
+
+export const DEFAULT_PERSONA: Persona = {
+  id: 'default',
+  name: 'Helpful Assistant',
+  description: 'A friendly and helpful AI assistant',
+  systemPrompt: 'You are a helpful assistant. Be polite, professional, and provide accurate information.',
+  traits: [
+    { name: 'Tone', value: 'Friendly', weight: 1 },
+    { name: 'Style', value: 'Professional', weight: 1 }
+  ],
+  category: PersonaCategory.PROFESSIONAL,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+};
