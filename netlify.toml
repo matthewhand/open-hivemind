@@ -1,6 +1,6 @@
 [build]
-  publish = "dist/public"
-  command = "npm run build:full"
+  publish = "src/client/dist"
+  command = "npm run build:frontend"
 
 [build.environment]
   NODE_VERSION = "20"
