@@ -45,7 +45,6 @@
     "src/client/**/*"
   ],
   "files": [
-    "src/types/express.d.ts",
     "src/global.d.ts"
   ]
 }
