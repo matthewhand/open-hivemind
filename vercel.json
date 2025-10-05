@@ -1,7 +1,7 @@
 {
   "version": 2,
   "name": "open-hivemind",
-  "buildCommand": "npm run build:full",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": null,
@@ -11,6 +11,17 @@
       "NODE_ENV": "production"
     }
   },
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
   "github": {
     "enabled": true,
     "autoAlias": false,
