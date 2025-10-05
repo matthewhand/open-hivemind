@@ -4,6 +4,12 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+import React from 'react';
+import { configure } from '@testing-library/react';
+
+// Configure testing library
+configure({ testIdAttribute: 'data-testid' });
+
 // Polyfill TextEncoder/TextDecoder for react-router
 if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
   const { TextEncoder, TextDecoder } = require('util');
