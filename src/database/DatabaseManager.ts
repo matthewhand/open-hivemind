@@ -182,26 +182,58 @@ export interface Anomaly {
 }
 
 export class DatabaseManager {
-  private static instance: DatabaseManager;
-  private config: DatabaseConfig;
+  private static instance: DatabaseManager | null = null;
+  private config?: DatabaseConfig;
+  private configured = false;
   private connected = false;
   private db: Database | null = null;
 
-  private constructor(config: DatabaseConfig) {
-    this.config = config;
+  private constructor(config?: DatabaseConfig) {
+    if (config) {
+      this.configure(config);
+    }
   }
 
   static getInstance(config?: DatabaseConfig): DatabaseManager {
-    if (!DatabaseManager.instance && config) {
+    if (!DatabaseManager.instance) {
       DatabaseManager.instance = new DatabaseManager(config);
+    } else if (config) {
+      DatabaseManager.instance.configure(config);
     }
     return DatabaseManager.instance;
+  }
+
+  configure(config: DatabaseConfig): void {
+    this.config = config;
+    this.configured = true;
+  }
+
+  isConfigured(): boolean {
+    return this.configured;
+  }
+
+  private ensureConnected(): void {
+    if (!this.configured) {
+      throw new ConfigurationError(
+        'Database is not configured. Persistence features are currently disabled.',
+        'database'
+      );
+    }
+
+    if (!this.db || !this.connected) {
+      throw new DatabaseError('Database not connected', 'DATABASE_NOT_CONNECTED');
+    }
   }
 
   async connect(): Promise<void> {
     try {
       debug('Connecting to database...');
-      
+
+      if (!this.config) {
+        debug('Database configuration not provided; database features are disabled.');
+        return;
+      }
+
       if (this.config.type === 'sqlite') {
         const dbPath = this.config.path || 'data/hivemind.db';
         
@@ -222,7 +254,7 @@ export class DatabaseManager {
       } else {
         throw new ConfigurationError(`Database type ${this.config.type} not yet implemented`, 'DATABASE_TYPE_NOT_SUPPORTED');
       }
-      
+
       this.connected = true;
       debug('Database connected successfully');
     } catch (error) {
@@ -238,7 +270,7 @@ export class DatabaseManager {
     if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
 
     // Messages table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         messageId TEXT NOT NULL,
@@ -254,7 +286,7 @@ export class DatabaseManager {
     `);
 
     // Conversation summaries table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS conversation_summaries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelId TEXT NOT NULL,
@@ -268,7 +300,7 @@ export class DatabaseManager {
     `);
 
     // Bot metrics table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_metrics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botName TEXT NOT NULL,
@@ -284,7 +316,7 @@ export class DatabaseManager {
     `);
 
     // Bot sessions table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sessionId TEXT UNIQUE NOT NULL,
@@ -300,7 +332,7 @@ export class DatabaseManager {
     `);
 
     // Bot configurations table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configurations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -326,7 +358,7 @@ export class DatabaseManager {
     `);
 
     // Bot configuration versions table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
@@ -354,7 +386,7 @@ export class DatabaseManager {
     `);
 
     // Bot configuration audit table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_audit (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
@@ -370,7 +402,7 @@ export class DatabaseManager {
     `);
 
     // Tenants table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS tenants (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -387,7 +419,7 @@ export class DatabaseManager {
     `);
 
     // Roles table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -403,7 +435,7 @@ export class DatabaseManager {
     `);
 
     // Users table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -420,7 +452,7 @@ export class DatabaseManager {
     `);
 
     // Audits table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS audits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -441,7 +473,7 @@ export class DatabaseManager {
     `);
 
     // Anomalies table
-    await this.db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS anomalies (
         id TEXT PRIMARY KEY,
         timestamp DATETIME NOT NULL,
@@ -466,25 +498,25 @@ export class DatabaseManager {
   private async createIndexes(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`);
 
     // Bot configuration indexes
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
 
     // Anomalies indexes
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
 
     debug('Database indexes created');
   }
@@ -494,35 +526,35 @@ export class DatabaseManager {
 
     try {
       // Add tenantId columns to existing tables
-      await this.db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
-      await this.db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
-      await this.db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
-      await this.db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
-      await this.db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
-      await this.db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
 
       // Add RBAC enhancements to roles table
-      await this.db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
-      await this.db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
-      await this.db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-      await this.db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-      await this.db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
 
       // Add foreign keys if possible (SQLite limited, but for new DB ok)
       // Note: Foreign keys added only if table recreated; for existing, manual migration needed
 
       // Add indexes for tenantId
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
-      await this.db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
 
       debug('Database migration completed');
     } catch (error) {
@@ -562,7 +594,7 @@ export class DatabaseManager {
 
     try {
       const timestamp = new Date();
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `, [
@@ -595,7 +627,7 @@ export class DatabaseManager {
       // Ensure timestamp is a Date object
       const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp || Date.now());
       
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, metadata)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `, [
@@ -626,7 +658,7 @@ export class DatabaseManager {
     }
 
     try {
-      const rows = await this.db.all(`
+      const rows = await this.db!.all(`
         SELECT * FROM messages 
         WHERE channelId = ? 
         ORDER BY timestamp DESC 
@@ -659,12 +691,10 @@ export class DatabaseManager {
   }
 
   async storeConversationSummary(summary: ConversationSummary): Promise<number> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO conversation_summaries (channelId, summary, messageCount, startTimestamp, endTimestamp, provider)
         VALUES (?, ?, ?, ?, ?, ?)
       `, [
@@ -686,12 +716,10 @@ export class DatabaseManager {
   }
 
   async updateBotMetrics(metrics: BotMetrics): Promise<void> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      await this.db.run(`
+      await this.db!.run(`
         INSERT OR REPLACE INTO bot_metrics (
           botName, messagesSent, messagesReceived, conversationsHandled,
           averageResponseTime, lastActivity, provider, updated_at
@@ -714,9 +742,7 @@ export class DatabaseManager {
   }
 
   async getBotMetrics(botName?: string): Promise<BotMetrics[]> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
       let query = `SELECT * FROM bot_metrics`;
@@ -729,7 +755,7 @@ export class DatabaseManager {
 
       query += ` ORDER BY updated_at DESC`;
 
-      const rows = await this.db.all(query, params);
+      const rows = await this.db!.all(query, params);
 
       return rows.map(row => ({
         id: row.id,
@@ -753,16 +779,14 @@ export class DatabaseManager {
     totalAuthors: number;
     providers: { [key: string]: number };
   }> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
       const [totalMessages, totalChannels, totalAuthors, providerStats] = await Promise.all([
-        this.db.get('SELECT COUNT(*) as count FROM messages'),
-        this.db.get('SELECT COUNT(DISTINCT channelId) as count FROM messages'),
-        this.db.get('SELECT COUNT(DISTINCT authorId) as count FROM messages'),
-        this.db.all('SELECT provider, COUNT(*) as count FROM messages GROUP BY provider')
+        this.db!.get('SELECT COUNT(*) as count FROM messages'),
+        this.db!.get('SELECT COUNT(DISTINCT channelId) as count FROM messages'),
+        this.db!.get('SELECT COUNT(DISTINCT authorId) as count FROM messages'),
+        this.db!.all('SELECT provider, COUNT(*) as count FROM messages GROUP BY provider')
       ]);
 
       const providers: { [key: string]: number } = {};
@@ -784,12 +808,10 @@ export class DatabaseManager {
 
   // Bot Configuration methods
   async createBotConfiguration(config: BotConfiguration): Promise<number> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO bot_configurations (
           name, messageProvider, llmProvider, persona, systemInstruction,
           mcpServers, mcpGuard, discordConfig, slackConfig, mattermostConfig,
@@ -827,12 +849,10 @@ export class DatabaseManager {
   }
 
   async getBotConfiguration(id: number): Promise<BotConfiguration | null> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const row = await this.db.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
+      const row = await this.db!.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
 
       if (!row) return null;
 
@@ -865,12 +885,10 @@ export class DatabaseManager {
   }
 
   async getBotConfigurationByName(name: string): Promise<BotConfiguration | null> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const row = await this.db.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
+      const row = await this.db!.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
 
       if (!row) return null;
 
@@ -903,12 +921,10 @@ export class DatabaseManager {
   }
 
   async getAllBotConfigurations(): Promise<BotConfiguration[]> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const rows = await this.db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
+      const rows = await this.db!.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
       return rows.map(row => ({
         id: row.id,
@@ -939,9 +955,7 @@ export class DatabaseManager {
   }
 
   async updateBotConfiguration(id: number, config: Partial<BotConfiguration>): Promise<void> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
       const updateFields = [];
@@ -1022,7 +1036,7 @@ export class DatabaseManager {
 
       values.push(id);
 
-      await this.db.run(
+      await this.db!.run(
         `UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`,
         values
       );
@@ -1035,12 +1049,10 @@ export class DatabaseManager {
   }
 
   async deleteBotConfiguration(id: number): Promise<boolean> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const result = await this.db.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
+      const result = await this.db!.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
       const deleted = (result.changes ?? 0) > 0;
 
       if (deleted) {
@@ -1055,12 +1067,10 @@ export class DatabaseManager {
   }
 
   async createBotConfigurationVersion(version: BotConfigurationVersion): Promise<number> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO bot_configuration_versions (
           botConfigurationId, version, name, messageProvider, llmProvider,
           persona, systemInstruction, mcpServers, mcpGuard, discordConfig,
@@ -1099,12 +1109,10 @@ export class DatabaseManager {
   }
 
   async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const rows = await this.db.all(
+      const rows = await this.db!.all(
         'SELECT * FROM bot_configuration_versions WHERE botConfigurationId = ? ORDER BY version DESC',
         [botConfigurationId]
       );
@@ -1139,12 +1147,10 @@ export class DatabaseManager {
   }
 
   async createBotConfigurationAudit(audit: BotConfigurationAudit): Promise<number> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const result = await this.db.run(`
+      const result = await this.db!.run(`
         INSERT INTO bot_configuration_audit (
           botConfigurationId, action, oldValues, newValues, performedBy,
           performedAt, ipAddress, userAgent
@@ -1169,12 +1175,10 @@ export class DatabaseManager {
   }
 
   async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {
-    if (!this.db || !this.connected) {
-      throw new Error('Database not connected');
-    }
+    this.ensureConnected();
 
     try {
-      const rows = await this.db.all(
+      const rows = await this.db!.all(
         'SELECT * FROM bot_configuration_audit WHERE botConfigurationId = ? ORDER BY performedAt DESC',
         [botConfigurationId]
       );
@@ -1203,7 +1207,7 @@ export class DatabaseManager {
     }
 
     try {
-      await this.db.run(`
+      await this.db!.run(`
         INSERT OR REPLACE INTO anomalies (
           id, timestamp, metric, value, expectedMean, standardDeviation,
           zScore, threshold, severity, explanation, resolved, tenantId
@@ -1246,7 +1250,7 @@ export class DatabaseManager {
 
       query += ` ORDER BY timestamp DESC`;
 
-      const rows = await this.db.all(query, params);
+      const rows = await this.db!.all(query, params);
 
       return rows.map(row => ({
         id: row.id,
@@ -1284,7 +1288,7 @@ export class DatabaseManager {
 
       query += ` ORDER BY timestamp DESC`;
 
-      const rows = await this.db.all(query, params);
+      const rows = await this.db!.all(query, params);
 
       return rows.map(row => ({
         id: row.id,
@@ -1320,7 +1324,7 @@ export class DatabaseManager {
         params.push(tenantId);
       }
 
-      const result = await this.db.run(query, params);
+      const result = await this.db!.run(query, params);
 
       return (result.changes ?? 0) > 0;
     } catch (error) {

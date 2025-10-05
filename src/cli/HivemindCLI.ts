@@ -397,7 +397,12 @@ export class HivemindCLI {
     } else {
       console.log(chalk.blue('System Status:'));
       console.log(`Active bots: ${chalk.green(bots.length)}`);
-      console.log(`Database: ${this.dbManager.isConnected() ? chalk.green('Connected') : chalk.red('Disconnected')}`);
+      const databaseStatus = !this.dbManager.isConfigured()
+        ? chalk.yellow('Not configured')
+        : this.dbManager.isConnected()
+          ? chalk.green('Connected')
+          : chalk.red('Disconnected');
+      console.log(`Database: ${databaseStatus}`);
       console.log(`Server: ${chalk.green('Running')}`); // This would be dynamic
     }
   }
@@ -407,12 +412,18 @@ export class HivemindCLI {
     
     const config = { type: 'sqlite' as const, path };
     const dbManager = DatabaseManager.getInstance(config);
-    
+    this.dbManager = dbManager;
+
     await dbManager.connect();
     console.log(chalk.green('✓ Database initialized successfully'));
   }
 
   private async showDatabaseStats(): Promise<void> {
+    if (!this.dbManager.isConfigured()) {
+      console.error(chalk.yellow('Database is not configured; statistics are unavailable.'));
+      return;
+    }
+
     if (!this.dbManager.isConnected()) {
       console.error(chalk.red('Database not connected'));
       return;
