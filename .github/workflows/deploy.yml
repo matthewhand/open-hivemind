@@ -61,23 +61,16 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+      - name: Vercel Deployment Skipped
+        run: |
+          echo "✅ Vercel deployment skipped - already handled by Vercel GitHub Integration"
+          echo "🚀 View live deployment at: https://open-hivemind.vercel.app"
 
   deploy-netlify:
     needs: ci
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: nwtgck/actions-netlify@v2.0
-        with:
-          publish-dir: './dist/public'
-          production-branch: main
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Netlify Deployment Skipped (Requires Configuration)
+        run: |
+          echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
+          echo "📝 To enable: Add secrets to GitHub repository settings"
