@@ -40,6 +40,7 @@ const createMockResponse = () => {
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
   res.setHeader = jest.fn().mockReturnValue(res);
+  res.getHeader = jest.fn().mockReturnValue(undefined);
   return res;
 };
 
@@ -380,25 +381,28 @@ describe('Error Handling System', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Validation failed',
-        message: 'Validation failed',
-        code: 'VALIDATION_ERROR',
-        correlationId: 'unknown',
-        timestamp: expect.any(String),
-        details: {
-          field: 'email',
-          expected: undefined,
-          suggestions: undefined,
-          value: undefined
-        },
-        recovery: {
-          canRecover: false,
-          maxRetries: undefined,
-          retryDelay: undefined,
-          steps: [
-            "Check input data format",
-            "Validate required fields"
-          ]
+        success: false,
+        error: {
+          message: 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          status: 400,
+          correlationId: 'unknown',
+          timestamp: expect.any(String),
+          details: {
+            field: 'email',
+            expected: undefined,
+            suggestions: undefined,
+            value: undefined
+          },
+          recovery: {
+            canRecover: false,
+            maxRetries: undefined,
+            retryDelay: undefined,
+            steps: [
+              "Check input data format",
+              "Validate required fields"
+            ]
+          }
         }
       });
     });
@@ -412,24 +416,28 @@ describe('Error Handling System', () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Generic error',
-        code: 'API_ERROR',
-        correlationId: 'unknown',
-        timestamp: expect.any(String),
-        details: {
-          service: 'unknown',
-          endpoint: undefined,
-          retryAfter: undefined
-        },
-        recovery: {
-          canRecover: true,
-          maxRetries: 3,
-          retryDelay: 2000,
-          steps: [
-            "Check unknown service status",
-            "Verify API endpoint availability",
-            "Retry with exponential backoff"
-          ]
+        success: false,
+        error: {
+          message: 'Generic error',
+          code: 'API_ERROR',
+          status: 500,
+          correlationId: 'unknown',
+          timestamp: expect.any(String),
+          details: {
+            service: 'unknown',
+            endpoint: undefined,
+            retryAfter: undefined
+          },
+          recovery: {
+            canRecover: true,
+            maxRetries: 3,
+            retryDelay: 2000,
+            steps: [
+              "Check unknown service status",
+              "Verify API endpoint availability",
+              "Retry with exponential backoff"
+            ]
+          }
         }
       });
     });
@@ -446,7 +454,7 @@ describe('Error Handling System', () => {
       await errorHandler(error, req, res, next);
 
       const response = (res.json as jest.Mock).mock.calls[0][0];
-      expect(response.correlationId).toBe('request-correlation-id');
+      expect(response.error.correlationId).toBe('request-correlation-id');
     });
 
     test('should log error through middleware', async () => {

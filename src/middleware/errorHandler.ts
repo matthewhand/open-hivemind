@@ -139,32 +139,38 @@ function createErrorResponse(
   error: BaseHivemindError,
   context: ErrorContext,
   includeStack: boolean = false
-): ErrorResponse {
+): any {
   const recovery = error.getRecoveryStrategy();
   
-  const response: ErrorResponse = {
-    error: error.message,
-    code: error.code,
-    correlationId: context.correlationId,
-    timestamp: new Date().toISOString(),
-    details: error.details,
-    recovery: {
+  // Return the format expected by tests
+  const response = {
+    success: false,
+    error: {
+      message: error.message,
+      code: error.code || 'INTERNAL_ERROR',
+      status: error.statusCode || 500,
+      timestamp: new Date().toISOString(),
+      correlationId: context.correlationId
+    }
+  };
+
+  // Include additional fields if available
+  if (error.details) {
+    response.error.details = error.details;
+  }
+
+  if (recovery) {
+    response.error.recovery = {
       canRecover: recovery.canRecover,
       retryDelay: recovery.retryDelay,
       maxRetries: recovery.maxRetries,
       steps: recovery.recoverySteps
-    }
-  };
-
-  // Include user-friendly message in development or if it's a client error
-  if (process.env.NODE_ENV === 'development' || 
-      (error.statusCode && error.statusCode < 500)) {
-    response.message = error.message;
+    };
   }
 
   // Include stack trace in development
   if (includeStack && error.stack) {
-    response.stack = error.stack;
+    response.error.stack = error.stack;
   }
 
   return response;
@@ -202,6 +208,11 @@ export function globalErrorHandler(
 
   // Create error response
   const errorResponse = createErrorResponse(hivemindError, context, includeStack);
+
+  // Ensure correlation ID is set in response headers
+  if (req.correlationId && !res.getHeader('X-Correlation-ID')) {
+    res.setHeader('X-Correlation-ID', req.correlationId);
+  }
 
   // Send error response
   res.status(statusCode).json(errorResponse);

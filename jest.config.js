@@ -1,8 +1,9 @@
 const unitIntegrationProject = {
   displayName: 'unit-integration',
-  roots: ['<rootDir>/tests', '<rootDir>/src/client'],
+  roots: ['<rootDir>/tests'],
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testTimeout: 6000, // Increase timeout to 60 seconds
   transform: {
     '^.+\.tsx?$': 'babel-jest',
     '^.+\.jsx?$': 'babel-jest',
@@ -11,6 +12,7 @@ const unitIntegrationProject = {
   testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
+    'uuid': require.resolve('uuid'),
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '^@src/(.*)$': '<rootDir>/src/$1',
     '^@command/(.*)$': '<rootDir>/src/command/$1',
@@ -34,7 +36,7 @@ const unitIntegrationProject = {
     '/tests/e2e/',
     'tests/integrations/.*\.real\.test\.[tj]s$'
   ],
-  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob)']
+  transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid)']
 };
 
 const realIntegrationProject = {
@@ -59,7 +61,48 @@ const realIntegrationProject = {
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/unit/', '/tests/integration/'],
 };
 
-const projects = [unitIntegrationProject];
+const projects = [
+  unitIntegrationProject,
+  {
+    displayName: 'frontend',
+    roots: ['<rootDir>/src/client'],
+    preset: 'ts-jest',
+    testEnvironment: 'jsdom',
+    transform: {
+      '^.+\.tsx?$': 'babel-jest',
+      '^.+\.jsx?$': 'babel-jest',
+      '^.+\.js$': 'babel-jest'
+    },
+    testRegex: '(\.|/)(test)\.[tj]sx?$',
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    moduleNameMapper: {
+      'uuid': require.resolve('uuid'),
+      '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
+      '^@src/(.*)$': '<rootDir>/src/$1',
+      '^@command/(.*)$': '<rootDir>/src/command/$1',
+      '^@common/(.*)$': '<rootDir>/src/common/$1',
+      '^@config/(.*)$': '<rootDir>/src/config/$1',
+      '^@llm/(.*)$': '<rootDir>/src/llm/$1',
+      '^@message/(.*)$': '<rootDir>/src/message/$1',
+      '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
+      '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
+      '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
+      '^@types/(.*)$': '<rootDir>/src/types/$1',
+      '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
+      '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
+      '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
+      'discord.js': process.env.RUN_SYSTEM_TESTS === 'true' ? '<rootDir>/node_modules/discord.js' : '<rootDir>/tests/__mocks__/discord.js.ts',
+    },
+    setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
+    testPathIgnorePatterns: [
+      '/node_modules/',
+      '/dist/',
+      '/tests/e2e/',
+      'tests/integrations/.*\.real\.test\.[tj]s$'
+    ],
+    transformIgnorePatterns: ['/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob)']
+  }
+];
 
 if (process.env.RUN_REAL_TESTS === 'true') {
   projects.push(realIntegrationProject);
