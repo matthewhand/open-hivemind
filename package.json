@@ -182,6 +182,7 @@
     "@types/uuidv4": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
+    "@vercel/node": "^5.3.24",
     "@vitejs/plugin-react": "^5.0.0",
     "babel-jest": "^29.7.0",
     "chai": "^5.1.1",

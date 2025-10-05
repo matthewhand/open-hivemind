@@ -1,4 +1,16 @@
 {
   "version": 2,
-  "outputDirectory": "public"
+  "buildCommand": "npm run build && npm run build:frontend",
+  "outputDirectory": "public",
+  "functions": {
+    "api/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
 }
