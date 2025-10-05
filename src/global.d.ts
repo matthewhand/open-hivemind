@@ -57,7 +57,6 @@ declare module 'debug' {
 
 declare namespace Debug {
   const debug: import('debug').Debugger;
-  interface Debugger extends import('debug').Debugger {}
 }
 
 declare module 'winston' {
