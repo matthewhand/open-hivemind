@@ -451,7 +451,7 @@ router.get('/health/errors/patterns', (req, res) => {
         .sort(([,a]: [string, any], [,b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           const totalCount = Object.values(errorStats).reduce((sum: number, val: any) => sum + (val as number), 0);
-          return { type, count: count as number, percentage: ((count as number) / totalCount) * 100 };
+          return { type, count: count as number, percentage: ((count as number) / (totalCount as number)) * 100 };
         }),
       spikes: detectErrorSpikes(errorStats),
       correlations: detectErrorCorrelations(errorStats),

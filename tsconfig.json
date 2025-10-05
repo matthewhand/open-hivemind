@@ -22,6 +22,8 @@
     "noImplicitThis": false,
     "downlevelIteration": true,
     "jsx": "react",
+    "forceConsistentCasingInFileNames": false,
+    "isolatedModules": false,
     "paths": {
       "@command/*": ["src/command/*"],
       "@common/*": ["src/common/*"],
