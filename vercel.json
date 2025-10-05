@@ -11,17 +11,6 @@
       "NODE_ENV": "production"
     }
   },
-  "functions": {
-    "api/index.js": {
-      "runtime": "@vercel/node"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index"
-    }
-  ],
   "github": {
     "enabled": true,
     "autoAlias": false,
