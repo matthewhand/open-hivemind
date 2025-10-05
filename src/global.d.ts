@@ -5,7 +5,7 @@ declare module 'convict' {
     validate: (value: any) => void;
   }
 
-  interface Config {
+  interface Config<T = any> {
     get<K extends string>(key: K): any;
     set<K extends string>(key: K, value: any): void;
     has(key: string): boolean;
@@ -18,16 +18,20 @@ declare module 'convict' {
     env: string;
   }
 
-  function config(schema: any): Config;
+  interface ConvictFunction {
+    <T = any>(schema: any): Config<T>;
+    addFormat: (format: Format) => void;
+  }
+  const config: ConvictFunction;
   export = config;
 }
 
 declare namespace convict {
   function addFormat(format: any): void;
-  interface Schema {
+  interface Schema<T = any> {
     [key: string]: any;
   }
-  interface Config {
+  interface Config<T = any> {
     get<K extends string>(key: K): any;
     set<K extends string>(key: K, value: any): void;
     has(key: string): boolean;
@@ -42,7 +46,7 @@ declare namespace convict {
     coerce: (value: any) => any;
     validate: (value: any) => void;
   }
-  function config(schema: any): Config;
+  function config<T = any>(schema: any): Config<T>;
 }
 
 declare module 'debug' {
@@ -57,6 +61,7 @@ declare module 'debug' {
 
 declare namespace Debug {
   const debug: import('debug').Debugger;
+  export { Debugger };
 }
 
 declare module 'winston' {
