@@ -3,7 +3,7 @@ const unitIntegrationProject = {
   roots: ['<rootDir>/tests'],
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testTimeout: 6000, // Increase timeout to 60 seconds
+  // testTimeout handled in setup files to avoid CLI conflicts
   transform: {
     '^.+\.tsx?$': 'babel-jest',
     '^.+\.jsx?$': 'babel-jest',
