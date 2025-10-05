@@ -5,25 +5,9 @@
   "outputDirectory": "dist/public",
   "installCommand": "npm ci",
   "framework": null,
-  "regions": ["iad1"],
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
   "github": {
     "enabled": true,
     "autoAlias": false,
     "silent": true
-  },
-  "git": {
-    "ignore": [
-      {
-        "type": "pull-request"
-      }
-    ],
-    "deploymentHook": {
-      "enabled": false
-    }
   }
 }
