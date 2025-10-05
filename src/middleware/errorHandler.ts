@@ -139,38 +139,32 @@ function createErrorResponse(
   error: BaseHivemindError,
   context: ErrorContext,
   includeStack: boolean = false
-): any {
+): ErrorResponse {
   const recovery = error.getRecoveryStrategy();
   
-  // Return the format expected by tests
-  const response: any = {
-    success: false,
-    error: {
-      message: error.message,
-      code: error.code || 'INTERNAL_ERROR',
-      status: error.statusCode || 500,
-      timestamp: new Date().toISOString(),
-      correlationId: context.correlationId
-    }
+  const response: ErrorResponse = {
+    error: error.name,
+    code: error.code || 'INTERNAL_ERROR',
+    message: error.message,
+    correlationId: context.correlationId,
+    timestamp: new Date().toISOString(),
   };
 
-  // Include additional fields if available
   if (error.details) {
-    response.error.details = error.details;
+    response.details = error.details;
   }
 
   if (recovery) {
-    response.error.recovery = {
+    response.recovery = {
       canRecover: recovery.canRecover,
       retryDelay: recovery.retryDelay,
       maxRetries: recovery.maxRetries,
-      steps: recovery.recoverySteps
+      steps: recovery.recoverySteps,
     };
   }
 
-  // Include stack trace in development
   if (includeStack && error.stack) {
-    response.error.stack = error.stack;
+    response.stack = error.stack;
   }
 
   return response;

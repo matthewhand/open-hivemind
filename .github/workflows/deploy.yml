@@ -50,6 +50,7 @@ jobs:
   deploy-fly:
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -60,6 +61,7 @@ jobs:
   deploy-vercel:
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Vercel Deployment Skipped
         run: |
@@ -69,6 +71,7 @@ jobs:
   deploy-netlify:
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Netlify Deployment Skipped (Requires Configuration)
         run: |

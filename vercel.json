@@ -1,16 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm run build && npm run build:frontend",
   "outputDirectory": "public",
-  "functions": {
-    "api/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/index"
+      "destination": "/index.html"
     }
   ]
 }
