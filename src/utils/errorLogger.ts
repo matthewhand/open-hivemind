@@ -432,7 +432,7 @@ export class ErrorLogger {
       low: Math.floor(totalErrors * 0.2)
     };
 
-    const byDate = {};
+    const byDate: { [key: string]: number } = {};
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);

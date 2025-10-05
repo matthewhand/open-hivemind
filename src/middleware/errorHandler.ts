@@ -143,7 +143,7 @@ function createErrorResponse(
   const recovery = error.getRecoveryStrategy();
   
   // Return the format expected by tests
-  const response = {
+  const response: any = {
     success: false,
     error: {
       message: error.message,

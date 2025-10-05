@@ -448,8 +448,11 @@ router.get('/health/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([,a], [,b]) => b - a)
-        .map(([type, count]) => ({ type, count, percentage: (count / Object.values(errorStats).reduce((a, b) => a + b, 0)) * 100 })),
+        .sort(([,a]: [string, any], [,b]: [string, any]) => (b as number) - (a as number))
+        .map(([type, count]) => {
+          const totalCount = Object.values(errorStats).reduce((sum: number, val: any) => sum + (val as number), 0);
+          return { type, count: count as number, percentage: ((count as number) / totalCount) * 100 };
+        }),
       spikes: detectErrorSpikes(errorStats),
       correlations: detectErrorCorrelations(errorStats),
       anomalies: detectErrorAnomalies(recentErrors, errorStats)
