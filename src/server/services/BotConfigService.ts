@@ -1,5 +1,6 @@
 import { DatabaseManager, BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from '../../database/DatabaseManager';
 import { ConfigurationValidator, BotConfig } from './ConfigurationValidator';
+import { ConfigurationError } from '../../types/errorClasses';
 import Debug from 'debug';
 
 const debug = Debug('app:BotConfigService');
@@ -79,6 +80,15 @@ export class BotConfigService {
     this.configValidator = new ConfigurationValidator();
   }
 
+  private ensureDatabaseEnabled(action: string): void {
+    if (!this.dbManager.isConfigured()) {
+      throw new ConfigurationError(
+        `Database is not configured. Unable to ${action}.`,
+        'database'
+      );
+    }
+  }
+
   public static getInstance(): BotConfigService {
     if (!BotConfigService.instance) {
       BotConfigService.instance = new BotConfigService();
@@ -94,6 +104,8 @@ export class BotConfigService {
     createdBy?: string
   ): Promise<BotConfigResponse> {
     try {
+      this.ensureDatabaseEnabled('create bot configurations');
+
       // Validate configuration
       const validationResult = this.configValidator.validateBotConfig(configData);
       if (!validationResult.isValid) {
@@ -162,6 +174,8 @@ export class BotConfigService {
    */
   async getBotConfig(id: number): Promise<BotConfigResponse | null> {
     try {
+      this.ensureDatabaseEnabled('retrieve bot configurations');
+
       const config = await this.dbManager.getBotConfiguration(id);
       if (!config) {
         return null;
@@ -183,6 +197,8 @@ export class BotConfigService {
    */
   async getBotConfigByName(name: string): Promise<BotConfigResponse | null> {
     try {
+      this.ensureDatabaseEnabled('retrieve bot configurations');
+
       const config = await this.dbManager.getBotConfigurationByName(name);
       if (!config) {
         return null;
@@ -204,6 +220,8 @@ export class BotConfigService {
    */
   async getAllBotConfigs(): Promise<BotConfigResponse[]> {
     try {
+      this.ensureDatabaseEnabled('list bot configurations');
+
       const configs = await this.dbManager.getAllBotConfigurations();
       const configsWithDetails = await Promise.all(
         configs.map(async (config) => ({
@@ -229,6 +247,8 @@ export class BotConfigService {
     updatedBy?: string
   ): Promise<BotConfigResponse> {
     try {
+      this.ensureDatabaseEnabled('update bot configurations');
+
       // Get existing configuration
       const existingConfig = await this.dbManager.getBotConfiguration(id);
       if (!existingConfig) {
@@ -323,6 +343,8 @@ export class BotConfigService {
    */
   async deleteBotConfig(id: number, deletedBy?: string): Promise<boolean> {
     try {
+      this.ensureDatabaseEnabled('delete bot configurations');
+
       // Get existing configuration for audit log
       const existingConfig = await this.dbManager.getBotConfiguration(id);
       if (!existingConfig) {
@@ -357,6 +379,8 @@ export class BotConfigService {
    */
   async activateBotConfig(id: number, activatedBy?: string): Promise<BotConfigResponse> {
     try {
+      this.ensureDatabaseEnabled('activate bot configurations');
+
       await this.dbManager.updateBotConfiguration(id, {
         isActive: true,
         updatedAt: new Date(),
@@ -389,6 +413,8 @@ export class BotConfigService {
    */
   async deactivateBotConfig(id: number, deactivatedBy?: string): Promise<BotConfigResponse> {
     try {
+      this.ensureDatabaseEnabled('deactivate bot configurations');
+
       await this.dbManager.updateBotConfiguration(id, {
         isActive: false,
         updatedAt: new Date(),
@@ -425,6 +451,8 @@ export class BotConfigService {
     createdBy?: string
   ): Promise<BotConfigurationVersion> {
     try {
+      this.ensureDatabaseEnabled('version bot configurations');
+
       // Get current configuration
       const currentConfig = await this.dbManager.getBotConfiguration(botConfigurationId);
       if (!currentConfig) {
@@ -482,6 +510,8 @@ export class BotConfigService {
     byLlmProvider: { [key: string]: number };
   }> {
     try {
+      this.ensureDatabaseEnabled('retrieve bot configuration statistics');
+
       const configs = await this.dbManager.getAllBotConfigurations();
 
       const stats = {

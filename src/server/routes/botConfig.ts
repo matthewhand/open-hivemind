@@ -8,6 +8,7 @@ import { BotConfig } from '../../types/config';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { ConfigurationError } from '../../types/errorClasses';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { validateBotConfigCreation, validateBotConfigUpdate, sanitizeBotConfig } from '../middleware/formValidation';
 import { BotConfigService } from '../services/BotConfigService';
@@ -132,6 +133,14 @@ router.post('/', requireAdmin, validateBotConfigCreation, sanitizeBotConfig, asy
       message: 'Bot configuration created successfully'
     });
   } catch (error: any) {
+    if (error instanceof ConfigurationError) {
+      debug('Database not configured for bot configuration creation');
+      logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', error.message);
+      return res.status(503).json({
+        error: 'Database not configured',
+        message: error.message
+      });
+    }
     debug('Error creating bot configuration:', error);
     logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', `Failed to create bot configuration: ${error.message}`);
     res.status(400).json({
@@ -213,6 +222,14 @@ router.put('/:botId', requireAdmin, async (req: AuditedRequest, res: Response) =
       // approvalRequestId,
     });
   } catch (error: any) {
+    if (error instanceof ConfigurationError) {
+      debug('Database not configured for bot configuration update');
+      logConfigChange(req, 'UPDATE', req.params.botId, 'failure', error.message);
+      return res.status(503).json({
+        error: 'Database not configured',
+        message: error.message
+      });
+    }
     debug('Error updating bot configuration:', error);
     logConfigChange(req, 'UPDATE', req.params.botId, 'failure', `Failed to update bot configuration: ${error.message}`);
     res.status(400).json({
