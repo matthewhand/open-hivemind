@@ -1,4 +1,4 @@
-const getDatabaseManager = () => require('../../../src/database/DatabaseManager').DatabaseManager as typeof import('../../../src/database/DatabaseManager').DatabaseManager;
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 describe('DatabaseManager optional configuration handling', () => {
   afterEach(() => {
@@ -6,7 +6,6 @@ describe('DatabaseManager optional configuration handling', () => {
   });
 
   it('provides a singleton instance even when configuration is absent', async () => {
-    const DatabaseManager = getDatabaseManager();
     const manager = DatabaseManager.getInstance();
 
     expect(manager).toBeDefined();
@@ -18,7 +17,6 @@ describe('DatabaseManager optional configuration handling', () => {
   });
 
   it('allows deferred configuration and connection', async () => {
-    const DatabaseManager = getDatabaseManager();
     const manager = DatabaseManager.getInstance();
     expect(manager.isConfigured()).toBe(false);
 

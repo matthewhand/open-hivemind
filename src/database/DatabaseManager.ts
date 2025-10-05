@@ -214,9 +214,9 @@ export class DatabaseManager {
 
   private ensureConnected(): void {
     if (!this.configured) {
-      throw new ConfigurationError(
+      throw new DatabaseError(
         'Database is not configured. Persistence features are currently disabled.',
-        'database'
+        'DATABASE_NOT_CONFIGURED'
       );
     }
 
