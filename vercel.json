@@ -1,6 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:frontend",
-  "outputDirectory": "src/client/dist",
-  "installCommand": "npm ci"
+  "outputDirectory": "public"
 }
