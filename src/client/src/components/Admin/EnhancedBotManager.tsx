@@ -55,7 +55,8 @@ import {
   FileCopy as CopyIcon
 } from '@mui/icons-material';
 import { green, red, orange, grey } from '@mui/material/colors';
-import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
+import { botDataProvider } from '../../services/botDataProvider';
+import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 
 interface EnhancedBotManagerProps {
   onBotSelect?: (bot: Bot) => void;

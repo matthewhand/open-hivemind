@@ -10,7 +10,7 @@ export * from './schemas/webhook';
 export * from './schemas/mcp';
 
 // Registry of all available provider schemas
-import { ProviderConfigSchema } from './types';
+import type { ProviderConfigSchema } from './types';
 import { discordProviderSchema } from './schemas/discord';
 import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';

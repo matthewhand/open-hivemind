@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import {
+import { DEFAULT_PERSONA } from '../../types/bot';
+import type {
   BotInstance,
   MessageProvider,
   LLMProvider,
   BotStatus,
-  Persona,
-  DEFAULT_PERSONA
+  Persona
 } from '../../types/bot';
 import { Button, Badge } from '../DaisyUI';
 import {

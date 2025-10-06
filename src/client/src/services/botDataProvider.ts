@@ -1,4 +1,4 @@
-import { Bot, CreateBotRequest } from '../types/bot';
+import type { Bot, CreateBotRequest } from '../types/bot';
 
 // Mock data for development
 const mockBots: Bot[] = [];

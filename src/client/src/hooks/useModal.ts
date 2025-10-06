@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ProviderModalState, MessageProvider, LLMProvider } from '../types/bot';
+import type { ProviderModalState, MessageProvider, LLMProvider } from '../types/bot';
 
 const useModal = () => {
   const [modalState, setModalState] = useState<ProviderModalState>({

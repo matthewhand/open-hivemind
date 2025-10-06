@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 
 interface FieldError {
   [fieldName: string]: string;

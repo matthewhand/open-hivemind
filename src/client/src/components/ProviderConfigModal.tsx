@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProviderConfigModalProps } from '../provider-configs/types';
+import type { ProviderConfigModalProps } from '../provider-configs/types';
 import { getProviderSchemasByType, getProviderSchema } from '../provider-configs';
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { avatarService } from '../services/AvatarService';

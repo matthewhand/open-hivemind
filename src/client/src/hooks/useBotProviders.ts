@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 import {
-  MessageProvider,
-  LLMProvider,
   MessageProviderType,
   LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS
 } from '../types/bot';
+import type { MessageProvider, LLMProvider } from '../types/bot';
 import { useBots } from './useBots';
 
 const useBotProviders = () => {

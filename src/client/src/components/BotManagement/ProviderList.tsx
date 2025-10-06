@@ -1,5 +1,5 @@
 import React from 'react';
-import {
+import type {
   MessageProvider,
   LLMProvider
 } from '../../types/bot';

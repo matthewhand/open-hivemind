@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
+  MESSAGE_PROVIDER_CONFIGS,
+  LLM_PROVIDER_CONFIGS
+} from '../../types/bot';
+import type {
   ProviderModalState,
   MessageProvider,
   LLMProvider,
   MessageProviderType,
   LLMProviderType,
-  MESSAGE_PROVIDER_CONFIGS,
-  LLM_PROVIDER_CONFIGS,
   ProviderTypeConfig,
   FieldConfig
 } from '../../types/bot';

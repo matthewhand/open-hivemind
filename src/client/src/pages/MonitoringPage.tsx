@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import VisualFeedback from '../components/DaisyUI/VisualFeedback';
-import Timeline, { TimelineEvent } from '../components/DaisyUI/Timeline';
+import Timeline from '../components/DaisyUI/Timeline';
+import type { TimelineEvent } from '../components/DaisyUI/Timeline';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 const MonitoringPage: React.FC = () => {

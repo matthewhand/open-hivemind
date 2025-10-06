@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePersonas } from '../hooks/usePersonas';
-import { Persona, PersonaCategory, PersonaModalState } from '../types/bot';
+import { PersonaCategory } from '../types/bot';
+import type { Persona, PersonaModalState } from '../types/bot';
 import { Card, Button, Badge, Input, Modal } from '../components/DaisyUI';
 import {
   User as UserIcon,

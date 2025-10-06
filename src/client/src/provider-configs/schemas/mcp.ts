@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 /**
  * MCP (Model Context Protocol) Provider Configuration Schema

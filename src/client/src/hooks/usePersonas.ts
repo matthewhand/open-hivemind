@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import {
-  Persona,
   PersonaCategory,
-  PersonaTrait,
   BUILTIN_PERSONAS,
-  DEFAULT_PERSONA,
+  DEFAULT_PERSONA
+} from '../types/bot';
+import type {
+  Persona,
+  PersonaTrait,
   CreatePersonaRequest,
   UpdatePersonaRequest
 } from '../types/bot';

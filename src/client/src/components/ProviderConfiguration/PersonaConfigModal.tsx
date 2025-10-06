@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
+import { PersonaCategory } from '../../types/bot';
+import type {
   Persona,
-  PersonaCategory,
   PersonaTrait,
   CreatePersonaRequest,
   UpdatePersonaRequest,

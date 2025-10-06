@@ -1,4 +1,4 @@
-import { ProviderConfigSchema } from '../types';
+import type { ProviderConfigSchema } from '../types';
 
 export const slackProviderSchema: ProviderConfigSchema = {
   type: 'message',

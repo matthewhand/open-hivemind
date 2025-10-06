@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Persona, PersonaCategory, DEFAULT_PERSONA } from '../../types/bot';
+import { PersonaCategory, DEFAULT_PERSONA } from '../../types/bot';
+import type { Persona } from '../../types/bot';
 import { Card, Button, Input, Badge } from '../DaisyUI';
 import {
   Search as SearchIcon,
