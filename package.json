@@ -108,6 +108,7 @@
     "jsonwebtoken": "^9.0.2",
     "libsodium-wrappers": "^0.7.9",
     "lru-cache": "^11.0.1",
+    "lucide-react": "^0.460.0",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
     "node-fetch": "^3.3.2",
