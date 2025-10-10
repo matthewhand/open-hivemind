@@ -7,6 +7,13 @@ export default defineConfig({
   server: {
     port: 5173
   },
+  resolve: {
+    alias: {
+      '@src': './src',
+      '@config': '../config',
+      '@webui': './webui/src'
+    }
+  },
   build: {
     rollupOptions: {
       output: {

@@ -18,8 +18,6 @@
     "incremental": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
-    "noImplicitReturns": false,
-    "noImplicitThis": false,
     "downlevelIteration": true,
     "jsx": "react",
     "forceConsistentCasingInFileNames": false,
