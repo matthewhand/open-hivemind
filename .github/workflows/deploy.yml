@@ -3,6 +3,8 @@ name: Deployments
 on:
   push:
     branches: [ main ]
+  pull_request:
+    types: [opened, synchronize]
   workflow_dispatch:
 
 jobs:
@@ -47,7 +49,9 @@ jobs:
             }
           "
 
+  # Production deployments for main branch
   deploy-fly:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -59,6 +63,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   deploy-vercel:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -69,6 +74,7 @@ jobs:
           echo "🚀 View live deployment at: https://open-hivemind.vercel.app"
 
   deploy-netlify:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -77,3 +83,9 @@ jobs:
         run: |
           echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
           echo "📝 To enable: Add secrets to GitHub repository settings"
+=======
+      - name: Netlify Deployment Skipped (Requires Configuration)
+        run: |
+          echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
+          echo "📝 To enable: Add secrets to GitHub repository settings"
+>>>>>>> main
