@@ -1,10 +1,11 @@
 [build]
 # Removed @netlify/plugin-nextjs as this project doesn't use Next.js
-  publish = "dist/public"
-  command = "npm run build:full"
+  publish = "src/client/dist"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
+  NODE_ENV = "production"
 
 [[redirects]]
   from = "/api/*"
