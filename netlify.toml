@@ -1,4 +1,5 @@
 [build]
+# Removed @netlify/plugin-nextjs as this project doesn't use Next.js
   publish = "dist/public"
   command = "npm run build:full"
 
