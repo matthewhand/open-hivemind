@@ -3,13 +3,17 @@ name: Deployments
 on:
   push:
     branches: [ main ]
+  pull_request:
+    types: [opened, synchronize]
   workflow_dispatch:
 
 jobs:
   ci:
     uses: ./.github/workflows/ci-fast.yml
 
+  # Production deployments for main branch
   deploy-fly:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +24,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   deploy-vercel:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     steps:
@@ -32,6 +37,7 @@ jobs:
           vercel-args: '--prod'
 
   deploy-netlify:
+    if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +46,40 @@ jobs:
         with:
           publish-dir: './dist/public'
           production-branch: main
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  # Preview deployments for pull requests
+  preview-vercel:
+    if: github.event_name == 'pull_request'
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--alias=pr-${{ github.event.number }}.vercel.app'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  preview-netlify:
+    if: github.event_name == 'pull_request'
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nwtgck/actions-netlify@v2.0
+        with:
+          publish-dir: './dist/public'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Preview deploy from PR #${{ github.event.number }}"
+          production-deploy: false
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          overwrites-pull-request-comment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
