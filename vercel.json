@@ -1,16 +1,12 @@
 {
   "version": 2,
-  "name": "open-hivemind",
-  "buildCommand": "npm run build:full",
-  "outputDirectory": "dist/public",
-  "installCommand": "npm ci",
-  "framework": null,
-  "regions": ["iad1"],
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
+  "outputDirectory": "src/client/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  },
+  ],
   "github": {
     "enabled": true,
     "autoAlias": false,
