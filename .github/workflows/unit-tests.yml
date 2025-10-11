@@ -30,7 +30,6 @@ jobs:
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
             tests/unit/ \
-            --testTimeout=10000 \
             --verbose \
             --ci \
             --maxWorkers=2
@@ -59,7 +58,6 @@ jobs:
             tests/integrations/ \
             tests/llm/ \
             tests/managers/ \
-            --testTimeout=10000 \
             --verbose \
             --ci \
             --maxWorkers=2
@@ -91,7 +89,6 @@ jobs:
             tests/auth/ \
             tests/commands/ \
             tests/common/ \
-            --testTimeout=10000 \
             --verbose \
             --ci \
             --maxWorkers=2
@@ -118,7 +115,6 @@ jobs:
         run: |
           cd src/client && NODE_ENV=test ../../node_modules/.bin/jest \
             src/ \
-            --testTimeout=10000 \
             --verbose \
             --ci \
             --maxWorkers=2

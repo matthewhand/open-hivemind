@@ -1,5 +1,5 @@
-const { describe, it, before, after, beforeEach, afterEach } = require('mocha');
-const { expect } = require('chai');
+import { describe, it, before, after, beforeEach, afterEach } from 'mocha';
+import { expect } from 'chai';
 const http = require('http');
 const fs = require('fs');
 const path = require('path');

@@ -1,25 +1,18 @@
 {
   "version": 2,
-  "outputDirectory": "src/client/dist",
+<<<<<<< HEAD
+  "outputDirectory": "public",
+=======
+  "outputDirectory": "public",
+>>>>>>> main
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "github": {
-    "enabled": true,
-    "autoAlias": false,
-    "silent": true
-  },
-  "git": {
-    "ignore": [
-      {
-        "type": "pull-request"
-      }
-    ],
-    "deploymentHook": {
-      "enabled": false
-    }
-  }
+<<<<<<< HEAD
+  ]
+=======
+  ]
+>>>>>>> main
 }

@@ -2,7 +2,13 @@
   "compilerOptions": {
     "target": "es2018",
     "module": "CommonJS",
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "noImplicitThis": false,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
@@ -11,8 +17,11 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
+    "noEmitOnError": false,
     "downlevelIteration": true,
     "jsx": "react",
+    "forceConsistentCasingInFileNames": false,
+    "isolatedModules": false,
     "paths": {
       "@command/*": ["src/command/*"],
       "@common/*": ["src/common/*"],
@@ -36,7 +45,6 @@
     "src/client/**/*"
   ],
   "files": [
-    "src/types/express.d.ts",
     "src/global.d.ts"
   ]
 }

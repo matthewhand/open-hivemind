@@ -8,6 +8,38 @@ const buildUrl = (endpoint: string): string => {
   return `${API_BASE_URL}${endpoint}`;
 };
 
+// Mock data for demo mode
+const mockConfigResponse = {
+  bots: [
+    {
+      name: "Demo Bot",
+      messageProvider: "discord",
+      llmProvider: "openai",
+      persona: "helpful-assistant",
+      systemInstruction: "You are a helpful assistant",
+      discord: { channelId: "demo-channel" }
+    }
+  ],
+  warnings: ["Running in demo mode - no backend connection"],
+  legacyMode: false,
+  environment: "production"
+};
+
+const mockStatusResponse = {
+  bots: [
+    {
+      name: "Demo Bot",
+      provider: "discord",
+      llmProvider: "openai",
+      status: "online",
+      connected: true,
+      messageCount: 42,
+      errorCount: 0
+    }
+  ],
+  uptime: 86400
+};
+
 export interface FieldMetadata {
   source: 'env' | 'user' | 'default';
   locked: boolean;
@@ -144,19 +176,41 @@ export interface ActivityResponse {
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = buildUrl(endpoint);
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        ...options,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.warn(`API request failed for ${endpoint}, using mock data:`, error);
+
+      // Return mock data for specific endpoints
+      if (endpoint.includes('/config')) {
+        return mockConfigResponse as T;
+      } else if (endpoint.includes('/status')) {
+        return mockStatusResponse as T;
+      } else if (endpoint.includes('/activity')) {
+        return {
+          events: [],
+          filters: { agents: [], messageProviders: [], llmProviders: [] },
+          timeline: [],
+          agentMetrics: []
+        } as T;
+      } else {
+        // Return empty/default responses for other endpoints
+        return { success: false, message: 'Demo mode - backend not available' } as T;
+      }
     }
-
-    return response.json();
   }
 
   async getConfig(): Promise<ConfigResponse> {

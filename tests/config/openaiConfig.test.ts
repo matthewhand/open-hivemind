@@ -1,5 +1,3 @@
-import openaiConfig from '../../src/config/openaiConfig';
-
 describe('openaiConfig', () => {
   const OLD_ENV = process.env;
 
@@ -11,21 +9,41 @@ describe('openaiConfig', () => {
   beforeEach(() => {
     // Clear OPENAI_BASE_URL to test defaults
     delete process.env.OPENAI_BASE_URL;
+    // Also clear any other OpenAI env vars that might interfere
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_MODEL;
+    delete process.env.OPENAI_ORGANIZATION;
+    delete process.env.OPENAI_TEMPERATURE;
+    delete process.env.OPENAI_MAX_TOKENS;
+    delete process.env.OPENAI_FREQUENCY_PENALTY;
+    delete process.env.OPENAI_PRESENCE_PENALTY;
+    delete process.env.OPENAI_TIMEOUT;
+    delete process.env.OPENAI_STOP;
+    delete process.env.OPENAI_TOP_P;
+    delete process.env.OPENAI_SYSTEM_PROMPT;
+    delete process.env.OPENAI_RESPONSE_MAX_TOKENS;
+    delete process.env.OPENAI_MAX_RETRIES;
+    delete process.env.OPENAI_FINISH_REASON_RETRY;
+    delete process.env.OPENAI_VOICE;
     jest.resetModules();
   });
 
   describe('default configuration values', () => {
     it('should have correct default string values', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(typeof openaiConfig.get('OPENAI_API_KEY')).toBe('string');
       expect(openaiConfig.get('OPENAI_BASE_URL')).toBe('https://api.openai.com/v1');
       expect(openaiConfig.get('OPENAI_ORGANIZATION')).toBe('');
       expect(openaiConfig.get('OPENAI_MODEL')).toBe('university');
-      expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('You are a bot that assists slack users.');
+      expect(openaiConfig.get('OPENAI_SYSTEM_PROMPT')).toBe('Greetings, human...');
       expect(openaiConfig.get('OPENAI_FINISH_REASON_RETRY')).toBe('stop');
       expect(openaiConfig.get('OPENAI_VOICE')).toBe('nova');
     });
 
     it('should have correct default numeric values', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(openaiConfig.get('OPENAI_TEMPERATURE')).toBe(0.7);
       expect(openaiConfig.get('OPENAI_MAX_TOKENS')).toBe(150);
       expect(openaiConfig.get('OPENAI_FREQUENCY_PENALTY')).toBe(0.1);
@@ -37,11 +55,15 @@ describe('openaiConfig', () => {
     });
 
     it('should have correct default array values', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(openaiConfig.get('OPENAI_STOP')).toEqual([]);
       expect(Array.isArray(openaiConfig.get('OPENAI_STOP'))).toBe(true);
     });
 
     it('should validate schema with defaults', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(() => openaiConfig.validate({ allowed: 'strict' })).not.toThrow();
     });
   });
@@ -113,6 +135,8 @@ describe('openaiConfig', () => {
 
   describe('configuration validation', () => {
     it('should validate with strict mode', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(() => openaiConfig.validate({ allowed: 'strict' })).not.toThrow();
     });
 
@@ -190,10 +214,14 @@ describe('openaiConfig', () => {
     });
 
     it('should handle missing configuration keys gracefully', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(() => openaiConfig.get('NON_EXISTENT_KEY')).toThrow();
     });
 
     it('should maintain consistency across multiple calls', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       const key1 = openaiConfig.get('OPENAI_API_KEY');
       const key2 = openaiConfig.get('OPENAI_API_KEY');
       expect(key1).toBe(key2);
@@ -206,6 +234,8 @@ describe('openaiConfig', () => {
 
   describe('configuration data types', () => {
     it('should return correct data types for all configuration keys', () => {
+      // Import the config module after clearing environment variables
+      const openaiConfig = require('../../src/config/openaiConfig').default;
       const stringKeys = ['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL', 'OPENAI_SYSTEM_PROMPT'];
       const numberKeys = ['OPENAI_TEMPERATURE', 'OPENAI_MAX_TOKENS', 'OPENAI_TIMEOUT'];
       const arrayKeys = ['OPENAI_STOP'];

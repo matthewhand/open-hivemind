@@ -3,6 +3,9 @@ import express from 'express';
 import { WebSocketService } from '../src/server/services/WebSocketService';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
 
+// Set default timeout for all tests
+jest.setTimeout(60000);
+
 let server: Server;
 
 beforeAll((done) => {

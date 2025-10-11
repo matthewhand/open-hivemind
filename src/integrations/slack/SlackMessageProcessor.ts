@@ -125,7 +125,7 @@ export class SlackMessageProcessor {
         });
       }
 
-      let channelContent = message.data.channelContent ? { ...message.data.channelContent } : undefined;
+      let channelContent = message.data.channelContent ? { ...(message.data.channelContent as any) } : undefined;
       if (!suppressCanvasContent) {
         debug(`Attempting to fetch canvas content for channel: ${channelId}`);
         try {

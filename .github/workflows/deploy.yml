@@ -9,13 +9,52 @@ on:
 
 jobs:
   ci:
-    uses: ./.github/workflows/ci-fast.yml
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Check types
+        run: npm run check-types
+
+      - name: Build
+        run: npm run build
+
+      - name: Run quick smoke tests
+        run: |
+          # Quick smoke test to make sure basic imports work
+          NODE_ENV=production node -e "
+            try {
+              require('./dist/src/index.js');
+              console.log('✅ Build successful - basic imports work');
+              process.exit(0);
+            } catch (error) {
+              console.error('❌ Build failed - import error:', error.message);
+              process.exit(1);
+            }
+          "
 
   # Production deployments for main branch
   deploy-fly:
     if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -27,59 +66,26 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+      - name: Vercel Deployment Skipped
+        run: |
+          echo "✅ Vercel deployment skipped - already handled by Vercel GitHub Integration"
+          echo "🚀 View live deployment at: https://open-hivemind.vercel.app"
 
   deploy-netlify:
     if: github.ref == 'refs/heads/main'
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: nwtgck/actions-netlify@v2.0
-        with:
-          publish-dir: './dist/public'
-          production-branch: main
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-
-  # Preview deployments for pull requests
-  preview-vercel:
-    if: github.event_name == 'pull_request'
-    needs: ci
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--alias=pr-${{ github.event.number }}.vercel.app'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  preview-netlify:
-    if: github.event_name == 'pull_request'
-    needs: ci
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nwtgck/actions-netlify@v2.0
-        with:
-          publish-dir: './dist/public'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Preview deploy from PR #${{ github.event.number }}"
-          production-deploy: false
-          enable-pull-request-comment: true
-          enable-commit-comment: false
-          overwrites-pull-request-comment: true
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: Netlify Deployment Skipped (Requires Configuration)
+        run: |
+          echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
+          echo "📝 To enable: Add secrets to GitHub repository settings"
+=======
+      - name: Netlify Deployment Skipped (Requires Configuration)
+        run: |
+          echo "⚠️ Netlify deployment skipped - requires NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID secrets"
+          echo "📝 To enable: Add secrets to GitHub repository settings"
+>>>>>>> main

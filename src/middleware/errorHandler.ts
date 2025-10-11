@@ -143,26 +143,26 @@ function createErrorResponse(
   const recovery = error.getRecoveryStrategy();
   
   const response: ErrorResponse = {
-    error: error.message,
-    code: error.code,
+    error: error.name,
+    code: error.code || 'INTERNAL_ERROR',
+    message: error.message,
     correlationId: context.correlationId,
     timestamp: new Date().toISOString(),
-    details: error.details,
-    recovery: {
+  };
+
+  if (error.details) {
+    response.details = error.details;
+  }
+
+  if (recovery) {
+    response.recovery = {
       canRecover: recovery.canRecover,
       retryDelay: recovery.retryDelay,
       maxRetries: recovery.maxRetries,
-      steps: recovery.recoverySteps
-    }
-  };
-
-  // Include user-friendly message in development or if it's a client error
-  if (process.env.NODE_ENV === 'development' || 
-      (error.statusCode && error.statusCode < 500)) {
-    response.message = error.message;
+      steps: recovery.recoverySteps,
+    };
   }
 
-  // Include stack trace in development
   if (includeStack && error.stack) {
     response.stack = error.stack;
   }
@@ -202,6 +202,11 @@ export function globalErrorHandler(
 
   // Create error response
   const errorResponse = createErrorResponse(hivemindError, context, includeStack);
+
+  // Ensure correlation ID is set in response headers
+  if (req.correlationId && !res.getHeader('X-Correlation-ID')) {
+    res.setHeader('X-Correlation-ID', req.correlationId);
+  }
 
   // Send error response
   res.status(statusCode).json(errorResponse);

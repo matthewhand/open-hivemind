@@ -43,7 +43,7 @@ const Login: React.FC = () => {
       // Mock authentication
       if (formData.username === 'admin' && formData.password === 'admin') {
         // For localhost development, just navigate to dashboard
-        navigate('/webui', { replace: true });
+        navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid username or password');
       }

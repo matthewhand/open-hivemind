@@ -4,6 +4,14 @@ import { ErrorFactory } from '../types/errorClasses';
 
 const router = Router();
 
+// Handle CORS preflight requests
+router.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, X-Correlation-ID');
+  res.status(204).send();
+});
+
 // Frontend error reporting endpoint
 router.post('/frontend', async (req: Request, res: Response) => {
   try {
@@ -32,6 +40,9 @@ router.post('/frontend', async (req: Request, res: Response) => {
         required: ['message', 'correlationId']
       });
     }
+
+    // Set correlation ID in response header
+    res.setHeader('X-Correlation-ID', errorReport.correlationId);
 
     // Create a structured error object
     const frontendError = ErrorFactory.createError(new Error(errorReport.message), {
@@ -76,9 +87,13 @@ router.post('/frontend', async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent']
     });
 
+    // Set correlation ID in response header
+    const correlationId = req.headers['x-correlation-id'] as string || 'unknown';
+    res.setHeader('X-Correlation-ID', correlationId);
+
     res.status(500).json({
       error: 'Failed to process error report',
-      correlationId: req.headers['x-correlation-id']
+      correlationId: correlationId
     });
   }
 });

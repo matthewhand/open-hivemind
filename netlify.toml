@@ -1,7 +1,12 @@
+# Netlify configuration for Open-Hivemind
 [build]
-# Removed @netlify/plugin-nextjs as this project doesn't use Next.js
+<<<<<<< HEAD
   publish = "src/client/dist"
-  command = "npm run build"
+  command = "npm run build:frontend"
+=======
+  publish = "src/client/dist"
+  command = "npm run build:frontend"
+>>>>>>> main
 
 [build.environment]
   NODE_VERSION = "20"
@@ -9,7 +14,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://your-backend-url.com/api/:splat"
+  to = "${BACKEND_URL}/api/:splat"
   status = 200
 
 [[redirects]]

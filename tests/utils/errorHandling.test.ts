@@ -40,6 +40,7 @@ const createMockResponse = () => {
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
   res.setHeader = jest.fn().mockReturnValue(res);
+  res.getHeader = jest.fn().mockReturnValue(undefined);
   return res;
 };
 
@@ -380,26 +381,20 @@ describe('Error Handling System', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Validation failed',
-        message: 'Validation failed',
+        error: 'ValidationError',
         code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
         correlationId: 'unknown',
         timestamp: expect.any(String),
         details: {
           field: 'email',
-          expected: undefined,
-          suggestions: undefined,
-          value: undefined
         },
         recovery: {
           canRecover: false,
-          maxRetries: undefined,
           retryDelay: undefined,
-          steps: [
-            "Check input data format",
-            "Validate required fields"
-          ]
-        }
+          maxRetries: undefined,
+          steps: [ 'Check input data format', 'Validate required fields' ]
+        },
       });
     });
 
@@ -412,8 +407,9 @@ describe('Error Handling System', () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        error: 'Generic error',
+        error: 'ApiError',
         code: 'API_ERROR',
+        message: 'Generic error',
         correlationId: 'unknown',
         timestamp: expect.any(String),
         details: {
@@ -423,12 +419,12 @@ describe('Error Handling System', () => {
         },
         recovery: {
           canRecover: true,
-          maxRetries: 3,
           retryDelay: 2000,
+          maxRetries: 3,
           steps: [
-            "Check unknown service status",
-            "Verify API endpoint availability",
-            "Retry with exponential backoff"
+            'Check unknown service status',
+            'Verify API endpoint availability',
+            'Retry with exponential backoff'
           ]
         }
       });
