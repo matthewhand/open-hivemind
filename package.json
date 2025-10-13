@@ -11,11 +11,7 @@
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
     "build": "node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck 2>/dev/null || echo 'TypeScript compilation completed with warnings, but build succeeded'",
-<<<<<<< HEAD
     "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
-=======
-    "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
->>>>>>> main
     "build:full": "npm run build",
     "start": "NODE_ENV=production node --max-old-space-size=256 dist/src/index.js",
     "start:test": "NODE_ENV=test node --max-old-space-size=256 dist/src/index.js",
