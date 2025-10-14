@@ -173,7 +173,7 @@ export interface BotConfigurationVersion {
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
-  mcpGuard?: MCPCuardConfig;
+  mcpGuard?: MCPCGuardConfig;
   discord?: DiscordConfig;
   slack?: SlackConfig;
   mattermost?: MattermostConfig;
@@ -270,6 +270,21 @@ export interface Anomaly {
   severity: 'low' | 'medium' | 'high' | 'critical';
   explanation: string;
   resolved: boolean;
+  tenantId?: string;
+}
+
+export interface ApprovalRequest {
+  id?: number;
+  resourceType: string;
+  resourceId: number;
+  changeType: 'CREATE' | 'UPDATE' | 'DELETE';
+  requestedBy: string;
+  diff?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  reviewComments?: string;
+  createdAt: Date;
   tenantId?: string;
 }
 
@@ -564,6 +579,25 @@ export class DatabaseManager {
       )
     `);
 
+    // Approval requests table
+    await this.db!.exec(`
+      CREATE TABLE IF NOT EXISTS approval_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        resourceType TEXT NOT NULL,
+        resourceId INTEGER NOT NULL,
+        changeType TEXT NOT NULL,
+        requestedBy TEXT NOT NULL,
+        diff TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        reviewedBy TEXT,
+        reviewedAt DATETIME,
+        reviewComments TEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        tenantId TEXT,
+        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+      )
+    `);
+
     // Anomalies table
     await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS anomalies (
@@ -602,6 +636,13 @@ export class DatabaseManager {
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
+
+    // Approval requests indexes
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`);
 
     // Anomalies indexes
     await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
@@ -1471,6 +1512,180 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error deleting bot configuration version:', error);
       throw new Error(`Failed to delete bot configuration version: ${error}`);
+    }
+  }
+
+  // Approval Request methods
+  async createApprovalRequest(request: Omit<ApprovalRequest, 'id' | 'createdAt'>): Promise<number> {
+    this.ensureConnected();
+
+    try {
+      const result = await this.db!.run(`
+        INSERT INTO approval_requests (
+          resourceType, resourceId, changeType, requestedBy, diff, status,
+          reviewedBy, reviewedAt, reviewComments, tenantId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        request.resourceType,
+        request.resourceId,
+        request.changeType,
+        request.requestedBy,
+        request.diff,
+        request.status,
+        request.reviewedBy,
+        request.reviewedAt ? request.reviewedAt.toISOString() : null,
+        request.reviewComments,
+        request.tenantId
+      ]);
+
+      debug(`Approval request created with ID: ${result.lastID}`);
+      return result.lastID as number;
+    } catch (error) {
+      debug('Error creating approval request:', error);
+      throw new Error(`Failed to create approval request: ${error}`);
+    }
+  }
+
+  async getApprovalRequest(id: number): Promise<ApprovalRequest | null> {
+    this.ensureConnected();
+
+    try {
+      const row = await this.db!.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
+
+      if (!row) return null;
+
+      return {
+        id: row.id,
+        resourceType: row.resourceType,
+        resourceId: row.resourceId,
+        changeType: row.changeType,
+        requestedBy: row.requestedBy,
+        diff: row.diff,
+        status: row.status,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
+        reviewComments: row.reviewComments,
+        createdAt: new Date(row.createdAt),
+        tenantId: row.tenantId
+      };
+    } catch (error) {
+      debug('Error getting approval request:', error);
+      throw new Error(`Failed to get approval request: ${error}`);
+    }
+  }
+
+  async getApprovalRequests(resourceType?: string, resourceId?: number, status?: string): Promise<ApprovalRequest[]> {
+    this.ensureConnected();
+
+    try {
+      let query = `SELECT * FROM approval_requests WHERE 1=1`;
+      const params: any[] = [];
+
+      if (resourceType) {
+        query += ` AND resourceType = ?`;
+        params.push(resourceType);
+      }
+
+      if (resourceId) {
+        query += ` AND resourceId = ?`;
+        params.push(resourceId);
+      }
+
+      if (status) {
+        query += ` AND status = ?`;
+        params.push(status);
+      }
+
+      query += ` ORDER BY createdAt DESC`;
+
+      const rows = await this.db!.all(query, params);
+
+      return rows.map(row => ({
+        id: row.id,
+        resourceType: row.resourceType,
+        resourceId: row.resourceId,
+        changeType: row.changeType,
+        requestedBy: row.requestedBy,
+        diff: row.diff,
+        status: row.status,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
+        reviewComments: row.reviewComments,
+        createdAt: new Date(row.createdAt),
+        tenantId: row.tenantId
+      }));
+    } catch (error) {
+      debug('Error getting approval requests:', error);
+      throw new Error(`Failed to get approval requests: ${error}`);
+    }
+  }
+
+  async updateApprovalRequest(id: number, updates: Partial<Pick<ApprovalRequest, 'status' | 'reviewedBy' | 'reviewedAt' | 'reviewComments'>>): Promise<boolean> {
+    this.ensureConnected();
+
+    try {
+      const updateFields = [];
+      const values = [];
+
+      if (updates.status !== undefined) {
+        updateFields.push('status = ?');
+        values.push(updates.status);
+      }
+
+      if (updates.reviewedBy !== undefined) {
+        updateFields.push('reviewedBy = ?');
+        values.push(updates.reviewedBy);
+      }
+
+      if (updates.reviewedAt !== undefined) {
+        updateFields.push('reviewedAt = ?');
+        values.push(updates.reviewedAt.toISOString());
+      }
+
+      if (updates.reviewComments !== undefined) {
+        updateFields.push('reviewComments = ?');
+        values.push(updates.reviewComments);
+      }
+
+      if (updateFields.length === 0) {
+        return true;
+      }
+
+      values.push(id);
+
+      const result = await this.db!.run(
+        `UPDATE approval_requests SET ${updateFields.join(', ')} WHERE id = ?`,
+        values
+      );
+
+      const updated = (result.changes ?? 0) > 0;
+
+      if (updated) {
+        debug(`Approval request updated: ${id}`);
+      }
+
+      return updated;
+    } catch (error) {
+      debug('Error updating approval request:', error);
+      throw new Error(`Failed to update approval request: ${error}`);
+    }
+  }
+
+  async deleteApprovalRequest(id: number): Promise<boolean> {
+    this.ensureConnected();
+
+    try {
+      const result = await this.db!.run('DELETE FROM approval_requests WHERE id = ?', [id]);
+      const deleted = (result.changes ?? 0) > 0;
+
+      if (deleted) {
+        debug(`Approval request deleted: ${id}`);
+      }
+
+      return deleted;
+    } catch (error) {
+      debug('Error deleting approval request:', error);
+      throw new Error(`Failed to delete approval request: ${error}`);
     }
   }
 }

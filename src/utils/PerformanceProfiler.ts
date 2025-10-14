@@ -360,34 +360,6 @@ export class PerformanceProfiler {
       alerts
     };
   }
-}
-
-/**
- * Decorator for profiling method execution
- */
-export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
-  const className = target.constructor.name;
-
-  descriptor.value = function (...args: any[]) {
-    const profiler = PerformanceProfiler.getInstance();
-    return profiler.profileMethod(propertyName, () => method.apply(this, args), className);
-  };
-}
-
-/**
- * Decorator for profiling async method execution
- */
-export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
-  const className = target.constructor.name;
-
-  descriptor.value = async function (...args: any[]) {
-    const profiler = PerformanceProfiler.getInstance();
-    return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
-  };
-}
-
 /**
    * Start automatic cleanup interval
    */
@@ -511,5 +483,32 @@ export function ProfileAsync(target: any, propertyName: string, descriptor: Prop
     this.startTime = 0;
     debug('Performance profiling data cleared');
   }
+}
+
+/**
+ * Decorator for profiling method execution
+ */
+export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  const method = descriptor.value;
+  const className = target.constructor.name;
+
+  descriptor.value = function (...args: any[]) {
+    const profiler = PerformanceProfiler.getInstance();
+    return profiler.profileMethod(propertyName, () => method.apply(this, args), className);
+  };
+}
+
+/**
+ * Decorator for profiling async method execution
+ */
+export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  const method = descriptor.value;
+  const className = target.constructor.name;
+
+  descriptor.value = async function (...args: any[]) {
+    const profiler = PerformanceProfiler.getInstance();
+    return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
+  };
+}
 
 export default PerformanceProfiler;
