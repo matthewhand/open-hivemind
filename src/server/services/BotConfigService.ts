@@ -216,22 +216,14 @@ export class BotConfigService {
   }
 
   /**
-   * Get all bot configurations
+   * Get all bot configurations (optimized with bulk queries)
    */
   async getAllBotConfigs(): Promise<BotConfigResponse[]> {
     try {
       this.ensureDatabaseEnabled('list bot configurations');
 
-      const configs = await this.dbManager.getAllBotConfigurations();
-      const configsWithDetails = await Promise.all(
-        configs.map(async (config) => ({
-          ...config,
-          versions: await this.dbManager.getBotConfigurationVersions(config.id!),
-          auditLog: await this.dbManager.getBotConfigurationAudit(config.id!)
-        }))
-      );
-
-      return configsWithDetails;
+      // Use optimized bulk query method - reduces from 1+2N queries to just 3 queries total
+      return await this.dbManager.getAllBotConfigurationsWithDetails();
     } catch (error) {
       debug('Error getting all bot configurations:', error);
       throw error;
