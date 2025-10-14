@@ -13,6 +13,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
+  /* Store Playwright artifacts here */
+  outputDir: 'test-results',
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Timeouts */
@@ -26,9 +28,13 @@ export default defineConfig({
   /* Constant to use with Playwright test hooks. */
   use: {
     /* Base URL to use when running tests locally. */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5005',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     /* Collect trace when retrying on CI. */
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
+    /* Capture screenshots for failed tests */
+    screenshot: 'only-on-failure',
+    /* Record videos for diagnostics in CI */
+    video: process.env.CI ? 'retain-on-failure' : 'off',
   },
 
   /* Configure projects for major browsers */
@@ -76,8 +82,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
-    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5005',
+    command: 'npm run playwright:serve',
+    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
   },
 });
