@@ -49,8 +49,14 @@ export class PerformanceProfiler {
   private methodProfiles: Map<string, MethodProfile> = new Map();
   private startTime: number = 0;
   private profileName: string = 'default';
+  private maxSnapshots: number = 50;
+  private cleanupInterval: NodeJS.Timeout | null = null;
+  private maxProfileAge: number = 24 * 60 * 60 * 1000; // 24 hours
 
-  private constructor() {}
+  private constructor() {
+    // Start automatic cleanup
+    this.startAutomaticCleanup();
+  }
 
   public static getInstance(): PerformanceProfiler {
     if (!PerformanceProfiler.instance) {
@@ -198,7 +204,7 @@ export class PerformanceProfiler {
     this.snapshots.push(snapshot);
 
     // Keep only recent snapshots
-    if (this.snapshots.length > 100) {
+    if (this.snapshots.length > this.maxSnapshots) {
       this.snapshots.shift();
     }
 
@@ -266,16 +272,7 @@ export class PerformanceProfiler {
     return filePath;
   }
 
-  /**
-   * Clear all profiling data
-   */
-  public clear(): void {
-    this.snapshots = [];
-    this.methodProfiles.clear();
-    this.startTime = 0;
-    debug('Performance profiling data cleared');
-  }
-
+  
   private recordMethodExecution(
     methodName: string,
     className: string | undefined,
@@ -390,5 +387,129 @@ export function ProfileAsync(target: any, propertyName: string, descriptor: Prop
     return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
   };
 }
+
+/**
+   * Start automatic cleanup interval
+   */
+  private startAutomaticCleanup(): void {
+    // Run cleanup every hour
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupOldData();
+    }, 60 * 60 * 1000); // 1 hour
+
+    debug('Automatic cleanup started');
+  }
+
+  /**
+   * Stop automatic cleanup interval
+   */
+  private stopAutomaticCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      debug('Automatic cleanup stopped');
+    }
+  }
+
+  /**
+   * Clean up old performance data
+   */
+  private cleanupOldData(): void {
+    const now = Date.now();
+    const cutoffTime = now - this.maxProfileAge;
+    let cleanedSnapshots = 0;
+    let cleanedProfiles = 0;
+
+    // Clean old snapshots
+    const originalSnapshotLength = this.snapshots.length;
+    this.snapshots = this.snapshots.filter(snapshot => snapshot.timestamp > cutoffTime);
+    cleanedSnapshots = originalSnapshotLength - this.snapshots.length;
+
+    // Clean old method profiles
+    const originalProfileCount = this.methodProfiles.size;
+    for (const [key, profile] of this.methodProfiles.entries()) {
+      if (profile.lastExecutionTime < cutoffTime) {
+        this.methodProfiles.delete(key);
+        cleanedProfiles++;
+      }
+    }
+
+    if (cleanedSnapshots > 0 || cleanedProfiles > 0) {
+      debug(`Cleanup completed: ${cleanedSnapshots} snapshots, ${cleanedProfiles} profiles removed`);
+    }
+  }
+
+  /**
+   * Force cleanup of old data
+   */
+  public forceCleanup(): void {
+    this.cleanupOldData();
+  }
+
+  /**
+   * Set cleanup configuration
+   */
+  public setCleanupConfig(config: {
+    maxSnapshots?: number;
+    maxProfileAge?: number;
+    cleanupIntervalMinutes?: number;
+  }): void {
+    if (config.maxSnapshots !== undefined) {
+      this.maxSnapshots = config.maxSnapshots;
+    }
+
+    if (config.maxProfileAge !== undefined) {
+      this.maxProfileAge = config.maxProfileAge;
+    }
+
+    if (config.cleanupIntervalMinutes !== undefined) {
+      this.stopAutomaticCleanup();
+      if (config.cleanupIntervalMinutes > 0) {
+        this.cleanupInterval = setInterval(() => {
+          this.cleanupOldData();
+        }, config.cleanupIntervalMinutes * 60 * 1000);
+      }
+    }
+
+    debug(`Cleanup config updated: maxSnapshots=${this.maxSnapshots}, maxAge=${this.maxProfileAge}ms`);
+  }
+
+  /**
+   * Get memory usage statistics
+   */
+  public getMemoryUsage(): {
+    snapshotsCount: number;
+    profilesCount: number;
+    estimatedMemoryUsage: number;
+  } {
+    const snapshotSize = JSON.stringify(this.snapshots).length * 2; // Rough estimate
+    const profilesSize = Array.from(this.methodProfiles.entries())
+      .reduce((size, [key, profile]) => size + key.length + JSON.stringify(profile).length * 2, 0);
+
+    return {
+      snapshotsCount: this.snapshots.length,
+      profilesCount: this.methodProfiles.size,
+      estimatedMemoryUsage: snapshotSize + profilesSize
+    };
+  }
+
+  /**
+   * Cleanup method for graceful shutdown
+   */
+  public destroy(): void {
+    this.stopAutomaticCleanup();
+    this.clear();
+    debug('PerformanceProfiler destroyed');
+  }
+
+  /**
+   * Enhanced clear method with better cleanup
+   */
+  public clear(): void {
+    this.snapshots = [];
+    this.methodProfiles.clear();
+    this.startTime = 0;
+    debug('Performance profiling data cleared');
+  }
 
 export default PerformanceProfiler;
