@@ -21,6 +21,7 @@ interface MethodProfile {
   minExecutionTime: number;
   maxExecutionTime: number;
   lastExecutionTime: number;
+  lastUsed: number;
   errorCount: number;
 }
 
@@ -291,6 +292,7 @@ export class PerformanceProfiler {
         minExecutionTime: Number.MAX_VALUE,
         maxExecutionTime: 0,
         lastExecutionTime: 0,
+        lastUsed: Date.now(),
         errorCount: 0
       });
     }
@@ -302,6 +304,7 @@ export class PerformanceProfiler {
     profile.minExecutionTime = Math.min(profile.minExecutionTime, executionTime);
     profile.maxExecutionTime = Math.max(profile.maxExecutionTime, executionTime);
     profile.lastExecutionTime = executionTime;
+    profile.lastUsed = Date.now();
 
     if (hadError) {
       profile.errorCount++;
@@ -356,39 +359,12 @@ export class PerformanceProfiler {
         final: finalSnapshot,
         delta: memoryDelta
       },
-      methods: Array.from(this.methodProfiles.values()),
+methods: Array.from(this.methodProfiles.values()),
       alerts
     };
   }
-}
 
-/**
- * Decorator for profiling method execution
- */
-export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
-  const className = target.constructor.name;
-
-  descriptor.value = function (...args: any[]) {
-    const profiler = PerformanceProfiler.getInstance();
-    return profiler.profileMethod(propertyName, () => method.apply(this, args), className);
-  };
-}
-
-/**
- * Decorator for profiling async method execution
- */
-export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
-  const className = target.constructor.name;
-
-  descriptor.value = async function (...args: any[]) {
-    const profiler = PerformanceProfiler.getInstance();
-    return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
-  };
-}
-
-/**
+  /**
    * Start automatic cleanup interval
    */
   private startAutomaticCleanup(): void {
@@ -418,88 +394,23 @@ export function ProfileAsync(target: any, propertyName: string, descriptor: Prop
     const now = Date.now();
     const cutoffTime = now - this.maxProfileAge;
     let cleanedSnapshots = 0;
-    let cleanedProfiles = 0;
 
     // Clean old snapshots
-    const originalSnapshotLength = this.snapshots.length;
-    this.snapshots = this.snapshots.filter(snapshot => snapshot.timestamp > cutoffTime);
-    cleanedSnapshots = originalSnapshotLength - this.snapshots.length;
+    const originalLength = this.snapshots.length;
+    this.snapshots = this.snapshots.filter(snapshot => snapshot.timestamp >= cutoffTime);
+    cleanedSnapshots = originalLength - this.snapshots.length;
 
     // Clean old method profiles
-    const originalProfileCount = this.methodProfiles.size;
     for (const [key, profile] of this.methodProfiles.entries()) {
-      if (profile.lastExecutionTime < cutoffTime) {
+      if (profile.lastUsed < cutoffTime) {
         this.methodProfiles.delete(key);
-        cleanedProfiles++;
+        cleanedSnapshots++;
       }
     }
 
-    if (cleanedSnapshots > 0 || cleanedProfiles > 0) {
-      debug(`Cleanup completed: ${cleanedSnapshots} snapshots, ${cleanedProfiles} profiles removed`);
+    if (cleanedSnapshots > 0) {
+      debug(`Cleaned up ${cleanedSnapshots} old performance entries`);
     }
-  }
-
-  /**
-   * Force cleanup of old data
-   */
-  public forceCleanup(): void {
-    this.cleanupOldData();
-  }
-
-  /**
-   * Set cleanup configuration
-   */
-  public setCleanupConfig(config: {
-    maxSnapshots?: number;
-    maxProfileAge?: number;
-    cleanupIntervalMinutes?: number;
-  }): void {
-    if (config.maxSnapshots !== undefined) {
-      this.maxSnapshots = config.maxSnapshots;
-    }
-
-    if (config.maxProfileAge !== undefined) {
-      this.maxProfileAge = config.maxProfileAge;
-    }
-
-    if (config.cleanupIntervalMinutes !== undefined) {
-      this.stopAutomaticCleanup();
-      if (config.cleanupIntervalMinutes > 0) {
-        this.cleanupInterval = setInterval(() => {
-          this.cleanupOldData();
-        }, config.cleanupIntervalMinutes * 60 * 1000);
-      }
-    }
-
-    debug(`Cleanup config updated: maxSnapshots=${this.maxSnapshots}, maxAge=${this.maxProfileAge}ms`);
-  }
-
-  /**
-   * Get memory usage statistics
-   */
-  public getMemoryUsage(): {
-    snapshotsCount: number;
-    profilesCount: number;
-    estimatedMemoryUsage: number;
-  } {
-    const snapshotSize = JSON.stringify(this.snapshots).length * 2; // Rough estimate
-    const profilesSize = Array.from(this.methodProfiles.entries())
-      .reduce((size, [key, profile]) => size + key.length + JSON.stringify(profile).length * 2, 0);
-
-    return {
-      snapshotsCount: this.snapshots.length,
-      profilesCount: this.methodProfiles.size,
-      estimatedMemoryUsage: snapshotSize + profilesSize
-    };
-  }
-
-  /**
-   * Cleanup method for graceful shutdown
-   */
-  public destroy(): void {
-    this.stopAutomaticCleanup();
-    this.clear();
-    debug('PerformanceProfiler destroyed');
   }
 
   /**
@@ -511,5 +422,32 @@ export function ProfileAsync(target: any, propertyName: string, descriptor: Prop
     this.startTime = 0;
     debug('Performance profiling data cleared');
   }
+}
+
+/**
+ * Decorator for profiling method execution
+ */
+export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  const method = descriptor.value;
+  const className = target.constructor.name;
+
+  descriptor.value = function (...args: any[]) {
+    const profiler = PerformanceProfiler.getInstance();
+    return profiler.profileMethod(propertyName, () => method.apply(this, args), className);
+  };
+}
+
+/**
+ * Decorator for profiling async method execution
+ */
+export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  const method = descriptor.value;
+  const className = target.constructor.name;
+
+  descriptor.value = async function (...args: any[]) {
+    const profiler = PerformanceProfiler.getInstance();
+    return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
+  };
+}
 
 export default PerformanceProfiler;

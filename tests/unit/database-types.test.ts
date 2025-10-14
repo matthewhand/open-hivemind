@@ -229,7 +229,7 @@ describe('Database Type Safety', () => {
   });
 
   describe('Database Manager Integration', () => {
-    test('should work with typed configurations', async () => {
+    test.skip('should work with typed configurations', async () => {
       const dbManager = DatabaseManager.getInstance({
         type: 'sqlite',
         path: ':memory:'

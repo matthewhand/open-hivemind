@@ -130,7 +130,7 @@ describe('PerformanceProfiler Memory Management', () => {
       expect(memoryUsage.snapshotsCount).toBeLessThanOrEqual(3);
     });
 
-    test('should remove oldest snapshots when limit exceeded', () => {
+    test('should remove oldest snapshots when limit exceeded', async () => {
       profiler.setCleanupConfig({ maxSnapshots: 2 });
       profiler.startProfiling('test-oldest-removal');
 
