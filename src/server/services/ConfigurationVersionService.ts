@@ -251,7 +251,19 @@ export class ConfigurationVersionService {
         throw new Error('Cannot delete the only version of a configuration');
       }
 
-      const deleted = true; // TODO: Implement version deletion
+      // Check if this is the currently active version
+      const currentConfig = await this.dbManager.getBotConfiguration(botConfigurationId);
+      if (currentConfig) {
+        const versionToDelete = versions.find(v => v.version === version);
+        if (versionToDelete &&
+            versionToDelete.messageProvider === currentConfig.messageProvider &&
+            versionToDelete.llmProvider === currentConfig.llmProvider &&
+            versionToDelete.persona === currentConfig.persona) {
+          throw new Error('Cannot delete the currently active version');
+        }
+      }
+
+      const deleted = await this.dbManager.deleteBotConfigurationVersion(botConfigurationId, version);
       if (deleted) {
         debug(`Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`);
       }

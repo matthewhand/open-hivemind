@@ -56,6 +56,86 @@ export interface BotMetadata {
   mcpGuard?: FieldMetadata;
 }
 
+// Provider-specific configuration interfaces
+export interface DiscordConfig {
+  channelId?: string;
+  guildId?: string;
+  token?: string;
+  prefix?: string;
+  intents?: string[];
+}
+
+export interface SlackConfig {
+  botToken?: string;
+  appToken?: string;
+  signingSecret?: string;
+  teamId?: string;
+  channels?: string[];
+}
+
+export interface MattermostConfig {
+  url?: string;
+  accessToken?: string;
+  teamId?: string;
+  channelId?: string;
+}
+
+export interface OpenAIConfig {
+  apiKey?: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  organization?: string;
+}
+
+export interface FlowiseConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  chatflowId?: string;
+}
+
+export interface OpenWebUIConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  model?: string;
+}
+
+export interface OpenSwarmConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  swarmId?: string;
+}
+
+export interface PerplexityConfig {
+  apiKey?: string;
+  model?: string;
+}
+
+export interface ReplicateConfig {
+  apiKey?: string;
+  model?: string;
+  version?: string;
+}
+
+export interface N8nConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  workflowId?: string;
+}
+
+// Union type for all provider configs
+export type ProviderConfig =
+  | DiscordConfig
+  | SlackConfig
+  | MattermostConfig
+  | OpenAIConfig
+  | FlowiseConfig
+  | OpenWebUIConfig
+  | OpenSwarmConfig
+  | PerplexityConfig
+  | ReplicateConfig
+  | N8nConfig;
+
 export interface Bot {
   name: string;
   messageProvider: string;
@@ -68,16 +148,16 @@ export interface Bot {
     type: 'owner' | 'custom';
     allowedUserIds?: string[];
   };
-  discord?: any;
-  slack?: any;
-  mattermost?: any;
-  openai?: any;
-  flowise?: any;
-  openwebui?: any;
-  openswarm?: any;
-  perplexity?: any;
-  replicate?: any;
-  n8n?: any;
+  discord?: DiscordConfig;
+  slack?: SlackConfig;
+  mattermost?: MattermostConfig;
+  openai?: OpenAIConfig;
+  flowise?: FlowiseConfig;
+  openwebui?: OpenWebUIConfig;
+  openswarm?: OpenSwarmConfig;
+  perplexity?: PerplexityConfig;
+  replicate?: ReplicateConfig;
+  n8n?: N8nConfig;
   metadata?: BotMetadata;
 }
 
@@ -102,16 +182,30 @@ export interface StatusResponse {
   uptime: number;
 }
 
+export interface ConfigFile {
+  path: string;
+  size: number;
+  lastModified: string;
+  exists: boolean;
+}
+
+export interface ConfigOverride {
+  key: string;
+  value: unknown;
+  source: 'cli' | 'env' | 'file';
+  timestamp: string;
+}
+
 export interface ConfigSourcesResponse {
-  environmentVariables: Record<string, any>;
-  configFiles: any[];
-  overrides: any[];
+  environmentVariables: Record<string, string>;
+  configFiles: ConfigFile[];
+  overrides: ConfigOverride[];
 }
 
 export interface SecureConfig {
   id: string;
   name: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   encrypted: boolean;
@@ -192,7 +286,17 @@ class ApiService {
 
       return response.json();
     } catch (error) {
-      console.warn(`API request failed for ${endpoint}, using mock data:`, error);
+      // Log error with proper typing
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const typedError = error as { response?: { status?: number } };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`API request failed for ${endpoint}, using mock data:`, {
+          message: errorMessage,
+          status: typedError.response?.status,
+          endpoint
+        });
+      }
 
       // Return mock data for specific endpoints
       if (endpoint.includes('/config')) {
@@ -233,7 +337,7 @@ class ApiService {
     name: string;
     messageProvider: string;
     llmProvider: string;
-    config?: any;
+    config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request('/webui/api/bots', {
       method: 'POST',
@@ -247,7 +351,7 @@ class ApiService {
     llmProvider?: string;
     persona?: string;
     systemInstruction?: string;
-    config?: any;
+    config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
     return this.request(`/webui/api/bots/${botId}`, {
       method: 'PUT',
@@ -275,7 +379,7 @@ class ApiService {
     return this.request(`/webui/api/secure-configs/${name}`);
   }
 
-  async saveSecureConfig(name: string, data: Record<string, any>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
+  async saveSecureConfig(name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
     return this.request('/webui/api/secure-configs', {
       method: 'POST',
       body: JSON.stringify({ name, data, encryptSensitive })
@@ -401,7 +505,7 @@ class ApiService {
     url: string;
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
     expectedStatusCodes?: number[];
     timeout?: number;
     interval?: number;
@@ -410,7 +514,21 @@ class ApiService {
     retryDelay?: number;
   }): Promise<{
     message: string;
-    endpoint: any;
+    endpoint: {
+      id: string;
+      name: string;
+      url: string;
+      status: 'online' | 'offline' | 'slow' | 'error';
+      responseTime: number;
+      lastChecked: string;
+      lastSuccessfulCheck?: string;
+      consecutiveFailures: number;
+      totalChecks: number;
+      successfulChecks: number;
+      averageResponseTime: number;
+      errorMessage?: string;
+      statusCode?: number;
+    };
     timestamp: string;
   }> {
     return this.request('/health/api-endpoints', {
@@ -424,7 +542,7 @@ class ApiService {
     url: string;
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
     headers: Record<string, string>;
-    body: any;
+    body: unknown;
     expectedStatusCodes: number[];
     timeout: number;
     interval: number;
@@ -433,7 +551,21 @@ class ApiService {
     retryDelay: number;
   }>): Promise<{
     message: string;
-    endpoint: any;
+    endpoint: {
+      id: string;
+      name: string;
+      url: string;
+      status: 'online' | 'offline' | 'slow' | 'error';
+      responseTime: number;
+      lastChecked: string;
+      lastSuccessfulCheck?: string;
+      consecutiveFailures: number;
+      totalChecks: number;
+      successfulChecks: number;
+      averageResponseTime: number;
+      errorMessage?: string;
+      statusCode?: number;
+    };
     timestamp: string;
   }> {
     return this.request(`/health/api-endpoints/${id}`, {
@@ -444,7 +576,21 @@ class ApiService {
 
   async removeApiEndpoint(id: string): Promise<{
     message: string;
-    removedEndpoint: any;
+    removedEndpoint: {
+      id: string;
+      name: string;
+      url: string;
+      status: 'online' | 'offline' | 'slow' | 'error';
+      responseTime: number;
+      lastChecked: string;
+      lastSuccessfulCheck?: string;
+      consecutiveFailures: number;
+      totalChecks: number;
+      successfulChecks: number;
+      averageResponseTime: number;
+      errorMessage?: string;
+      statusCode?: number;
+    };
     timestamp: string;
   }> {
     return this.request(`/health/api-endpoints/${id}`, { method: 'DELETE' });

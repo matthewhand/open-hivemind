@@ -26,8 +26,94 @@ export interface MessageRecord {
   authorName: string;
   timestamp: Date;
   provider: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
+
+// Provider configuration interfaces for type safety
+export interface DiscordConfig {
+  channelId?: string;
+  guildId?: string;
+  token?: string;
+  prefix?: string;
+  intents?: string[];
+}
+
+export interface SlackConfig {
+  botToken?: string;
+  appToken?: string;
+  signingSecret?: string;
+  teamId?: string;
+  channels?: string[];
+}
+
+export interface MattermostConfig {
+  url?: string;
+  accessToken?: string;
+  teamId?: string;
+  channelId?: string;
+}
+
+export interface OpenAIConfig {
+  apiKey?: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  organization?: string;
+}
+
+export interface FlowiseConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  chatflowId?: string;
+}
+
+export interface OpenWebUIConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  model?: string;
+}
+
+export interface OpenSwarmConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  swarmId?: string;
+}
+
+export interface PerplexityConfig {
+  apiKey?: string;
+  model?: string;
+}
+
+export interface ReplicateConfig {
+  apiKey?: string;
+  model?: string;
+  version?: string;
+}
+
+export interface N8nConfig {
+  apiUrl?: string;
+  apiKey?: string;
+  workflowId?: string;
+}
+
+export interface MCPCGuardConfig {
+  enabled: boolean;
+  type: 'owner' | 'custom';
+  allowedUserIds?: string[];
+}
+
+// Union type for all provider configs
+export type ProviderConfig =
+  | DiscordConfig
+  | SlackConfig
+  | MattermostConfig
+  | OpenAIConfig
+  | FlowiseConfig
+  | OpenWebUIConfig
+  | OpenSwarmConfig
+  | PerplexityConfig
+  | ReplicateConfig
+  | N8nConfig;
 
 export interface ConversationSummary {
   id?: number;
@@ -57,15 +143,18 @@ export interface BotConfiguration {
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: string | string[];
-  mcpGuard?: any;
-  discord?: any;
-  slack?: any;
-  mattermost?: any;
-  openai?: any;
-  flowise?: any;
-  openwebui?: any;
-  openswarm?: any;
+  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpGuard?: MCPCGuardConfig;
+  discord?: DiscordConfig;
+  slack?: SlackConfig;
+  mattermost?: MattermostConfig;
+  openai?: OpenAIConfig;
+  flowise?: FlowiseConfig;
+  openwebui?: OpenWebUIConfig;
+  openswarm?: OpenSwarmConfig;
+  perplexity?: PerplexityConfig;
+  replicate?: ReplicateConfig;
+  n8n?: N8nConfig;
   tenantId?: string;
   isActive: boolean;
   createdAt: Date;
@@ -83,15 +172,18 @@ export interface BotConfigurationVersion {
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: string | string[];
-  mcpGuard?: any;
-  discord?: any;
-  slack?: any;
-  mattermost?: any;
-  openai?: any;
-  flowise?: any;
-  openwebui?: any;
-  openswarm?: any;
+  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpGuard?: MCPCuardConfig;
+  discord?: DiscordConfig;
+  slack?: SlackConfig;
+  mattermost?: MattermostConfig;
+  openai?: OpenAIConfig;
+  flowise?: FlowiseConfig;
+  openwebui?: OpenWebUIConfig;
+  openswarm?: OpenSwarmConfig;
+  perplexity?: PerplexityConfig;
+  replicate?: ReplicateConfig;
+  n8n?: N8nConfig;
   tenantId?: string;
   isActive: boolean;
   createdAt: Date;
@@ -1330,6 +1422,55 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error resolving anomaly:', error);
       throw error;
+    }
+  }
+
+  async deleteBotConfigurationVersion(botConfigurationId: number, version: string): Promise<boolean> {
+    this.ensureConnected();
+
+    try {
+      // Check if this is the only version
+      const versions = await this.getBotConfigurationVersions(botConfigurationId);
+      if (versions.length <= 1) {
+        throw new Error('Cannot delete the only version of a configuration');
+      }
+
+      // Check if this is the currently active version
+      const currentConfig = await this.getBotConfiguration(botConfigurationId);
+      if (currentConfig) {
+        const versionToDelete = versions.find(v => v.version === version);
+        if (versionToDelete &&
+            versionToDelete.messageProvider === currentConfig.messageProvider &&
+            versionToDelete.llmProvider === currentConfig.llmProvider &&
+            versionToDelete.persona === currentConfig.persona) {
+          throw new Error('Cannot delete the currently active version');
+        }
+      }
+
+      const result = await this.db!.run(
+        'DELETE FROM bot_configuration_versions WHERE botConfigurationId = ? AND version = ?',
+        [botConfigurationId, version]
+      );
+
+      const deleted = (result.changes ?? 0) > 0;
+
+      if (deleted) {
+        debug(`Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`);
+
+        // Create audit log entry
+        await this.createBotConfigurationAudit({
+          botConfigurationId,
+          action: 'DELETE',
+          oldValues: JSON.stringify({ deletedVersion: version }),
+          newValues: JSON.stringify({ status: 'deleted' }),
+          performedAt: new Date()
+        });
+      }
+
+      return deleted;
+    } catch (error) {
+      debug('Error deleting bot configuration version:', error);
+      throw new Error(`Failed to delete bot configuration version: ${error}`);
     }
   }
 }
