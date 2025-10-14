@@ -11,7 +11,6 @@ interface Shortcut {
 }
 
 export const useKeyboardShortcuts = (shortcuts: Shortcut[]) => {
-  const navigate = useNavigate();
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Don't trigger shortcuts when user is typing in input fields
