@@ -1,12 +1,7 @@
 # Netlify configuration for Open-Hivemind
 [build]
-<<<<<<< HEAD
   publish = "src/client/dist"
   command = "npm run build:frontend"
-=======
-  publish = "src/client/dist"
-  command = "npm run build:frontend"
->>>>>>> main
 
 [build.environment]
   NODE_VERSION = "20"

@@ -1,18 +1,10 @@
 {
   "version": 2,
-<<<<<<< HEAD
   "outputDirectory": "public",
-=======
-  "outputDirectory": "public",
->>>>>>> main
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-<<<<<<< HEAD
   ]
-=======
-  ]
->>>>>>> main
 }
