@@ -21,6 +21,7 @@ interface MethodProfile {
   minExecutionTime: number;
   maxExecutionTime: number;
   lastExecutionTime: number;
+  lastUsed: number;
   errorCount: number;
 }
 
@@ -291,6 +292,7 @@ export class PerformanceProfiler {
         minExecutionTime: Number.MAX_VALUE,
         maxExecutionTime: 0,
         lastExecutionTime: 0,
+        lastUsed: Date.now(),
         errorCount: 0
       });
     }
@@ -302,6 +304,7 @@ export class PerformanceProfiler {
     profile.minExecutionTime = Math.min(profile.minExecutionTime, executionTime);
     profile.maxExecutionTime = Math.max(profile.maxExecutionTime, executionTime);
     profile.lastExecutionTime = executionTime;
+    profile.lastUsed = Date.now();
 
     if (hadError) {
       profile.errorCount++;

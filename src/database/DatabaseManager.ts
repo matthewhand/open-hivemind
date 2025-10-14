@@ -173,7 +173,7 @@ export interface BotConfigurationVersion {
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
-  mcpGuard?: MCPCuardConfig;
+  mcpGuard?: MCPCGuardConfig;
   discord?: DiscordConfig;
   slack?: SlackConfig;
   mattermost?: MattermostConfig;
