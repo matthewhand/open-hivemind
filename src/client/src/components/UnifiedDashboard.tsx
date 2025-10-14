@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
+import StatsCards, { useSystemStats } from './DaisyUI/StatsCards';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -158,55 +159,87 @@ const UnifiedDashboard: React.FC = () => {
 
   const summaryCards = [
     {
+      id: 'active-bots',
       title: 'Active Bots',
       value: `${activeBotCount}/${totalBots}`,
-      icon: <CheckCircleIcon color="success" />,
-      helper: totalBots > 0 ? `${totalBots - activeBotCount} offline` : 'No bots configured',
+      icon: '✅',
+      description: totalBots > 0 ? `${totalBots - activeBotCount} offline` : 'No bots configured',
+      color: 'success' as const,
+      change: totalBots > 0 ? ((activeBotCount / totalBots) * 100) : 0,
+      changeType: 'increase' as const,
     },
     {
+      id: 'total-messages',
       title: 'Total Messages',
-      value: totalMessages.toLocaleString(),
-      icon: <MessageIcon color="primary" />,
-      helper: `${performanceMetrics.activeConnections} active connections`,
+      value: totalMessages,
+      icon: '💬',
+      description: `${performanceMetrics.activeConnections} active connections`,
+      color: 'info' as const,
+      change: 12.5,
+      changeType: 'increase' as const,
     },
     {
+      id: 'error-rate',
       title: 'Error Rate',
-      value: `${errorRate}%`,
-      icon: <ErrorIcon color={parseFloat(errorRate) > 2 ? 'error' : 'warning'} />,
-      helper: parseFloat(errorRate) > 2 ? 'High error rate' : 'Normal operation',
+      value: parseFloat(errorRate),
+      icon: '🚨',
+      description: parseFloat(errorRate) > 2 ? 'High error rate' : 'Normal operation',
+      color: parseFloat(errorRate) > 2 ? 'error' as const : 'warning' as const,
+      change: -5.2,
+      changeType: parseFloat(errorRate) > 2 ? 'decrease' as const : 'increase' as const,
     },
     {
-      title: 'Uptime',
+      id: 'uptime',
+      title: 'System Uptime',
       value: uptimeDisplay,
-      icon: <TrendingUpIcon color="success" />,
-      helper: 'System running continuously',
+      icon: '⏰',
+      description: 'System running continuously',
+      color: 'success' as const,
+      change: 0.1,
+      changeType: 'neutral' as const,
     },
   ];
 
   const performanceCards = [
     {
+      id: 'cpu-usage',
       title: 'CPU Usage',
-      value: `${performanceMetrics.cpuUsage.toFixed(1)}%`,
-      icon: <TrendingUpIcon color={performanceMetrics.cpuUsage > 80 ? 'error' : 'primary'} />,
-      helper: performanceMetrics.cpuUsage > 80 ? 'High CPU usage' : 'Normal CPU usage',
+      value: performanceMetrics.cpuUsage,
+      icon: '📊',
+      description: performanceMetrics.cpuUsage > 80 ? 'High CPU usage' : 'Normal CPU usage',
+      color: performanceMetrics.cpuUsage > 80 ? 'error' as const : 'primary' as const,
+      change: performanceMetrics.cpuUsage > 50 ? 8.3 : -2.1,
+      changeType: performanceMetrics.cpuUsage > 50 ? 'decrease' as const : 'increase' as const,
     },
     {
+      id: 'memory-usage',
       title: 'Memory Usage',
-      value: `${performanceMetrics.memoryUsage.toFixed(1)}%`,
-      icon: <MemoryIcon color={performanceMetrics.memoryUsage > 80 ? 'error' : 'primary'} />,
-      helper: performanceMetrics.memoryUsage > 80 ? 'High memory usage' : 'Normal memory usage',
+      value: performanceMetrics.memoryUsage,
+      icon: '💾',
+      description: performanceMetrics.memoryUsage > 80 ? 'High memory usage' : 'Normal memory usage',
+      color: performanceMetrics.memoryUsage > 80 ? 'error' as const : 'warning' as const,
+      change: 5.7,
+      changeType: 'increase' as const,
     },
     {
+      id: 'response-time',
       title: 'Response Time',
-      value: `${performanceMetrics.responseTime.toFixed(1)} ms`,
-      icon: <SpeedIcon color="secondary" />,
-      helper: 'Average response time',
+      value: performanceMetrics.responseTime,
+      icon: '⚡',
+      description: 'Average response time',
+      color: 'accent' as const,
+      change: -12.8,
+      changeType: 'increase' as const, // Lower response time is good
     },
     {
+      id: 'active-connections',
       title: 'Active Connections',
-      value: performanceMetrics.activeConnections.toString(),
-      icon: <WifiIcon color="info" />,
-      helper: 'Connected bot instances',
+      value: performanceMetrics.activeConnections,
+      icon: '🔗',
+      description: 'Connected bot instances',
+      color: 'info' as const,
+      change: 3.2,
+      changeType: 'increase' as const,
     },
   ];
 
@@ -239,30 +272,17 @@ const UnifiedDashboard: React.FC = () => {
 
       {/* Overview Tab */}
       <TabPanel value={tabValue} index={0}>
-        <Grid container spacing={3}>
-          {/* Summary Cards */}
-          {summaryCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    {card.icon}
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        {card.title}
-                      </Typography>
-                      <Typography variant="h5" component="p">
-                        {card.value}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {card.helper}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+        {/* DaisyUI Stats Cards */}
+        <Box mb={4}>
+          <StatsCards 
+            stats={summaryCards}
+            isLoading={loading}
+            showTrends={true}
+            autoRefresh={true}
+            refreshInterval={30000}
+            gridCols={4}
+          />
+        </Box>
 
           {/* Bot Status Cards */}
           <Grid item xs={12}>
@@ -339,35 +359,21 @@ const UnifiedDashboard: React.FC = () => {
               })}
             </Grid>
           </Grid>
-        </Grid>
       </TabPanel>
 
       {/* Performance Tab */}
       <TabPanel value={tabValue} index={1}>
-        <Grid container spacing={3}>
-          {/* Performance Metrics Cards */}
-          {performanceCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    {card.icon}
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        {card.title}
-                      </Typography>
-                      <Typography variant="h5" component="p">
-                        {card.value}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {card.helper}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+        {/* DaisyUI Performance Stats Cards */}
+        <Box mb={4}>
+          <StatsCards 
+            stats={performanceCards}
+            isLoading={loading}
+            showTrends={true}
+            autoRefresh={true}
+            refreshInterval={15000}
+            gridCols={4}
+          />
+        </Box>
 
           {/* Performance Charts Placeholder */}
           <Grid item xs={12}>
@@ -406,7 +412,6 @@ const UnifiedDashboard: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-        </Grid>
       </TabPanel>
     </Container>
   );

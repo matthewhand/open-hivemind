@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface StatItem {
   id: string;
@@ -15,10 +16,48 @@ interface StatsCardsProps {
   stats: StatItem[];
   isLoading?: boolean;
   className?: string;
+  gridCols?: 1 | 2 | 3 | 4;
+  showTrends?: boolean;
+  compact?: boolean;
+  autoRefresh?: boolean;
+  refreshInterval?: number;
 }
 
-const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
+const StatsCards: React.FC<StatsCardsProps> = ({ 
+  stats, 
+  isLoading = false, 
+  className = '',
+  gridCols = 4,
+  showTrends = true,
+  compact = false,
+  autoRefresh = false,
+  refreshInterval = 30000
+}) => {
+  const { isMobile, isTablet } = useResponsive();
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [animatedValues, setAnimatedValues] = useState<Record<string, number>>({});
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (autoRefresh && refreshInterval > 0) {
+      const timer = setInterval(() => {
+        setLastRefresh(new Date());
+        // Trigger a refresh by calling the refresh function if available
+        if (typeof window !== 'undefined' && (window as any).refreshStats) {
+          (window as any).refreshStats();
+        }
+      }, refreshInterval);
+      
+      return () => clearInterval(timer);
+    }
+  }, [autoRefresh, refreshInterval]);
+
+  // Responsive grid columns
+  const getGridCols = () => {
+    if (isMobile) return 'grid-cols-1';
+    if (isTablet) return gridCols >= 3 ? 'grid-cols-2' : `grid-cols-${gridCols}`;
+    return `grid-cols-${gridCols}`;
+  };
 
   // Animate numbers when they change
   useEffect(() => {
@@ -98,7 +137,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   if (isLoading) {
     return (
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
+      <div className={`grid ${getGridCols()} gap-4 ${className}`}>
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="stats shadow">
             <div className="stat">
@@ -122,11 +161,20 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
   }
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
+    <div className={`grid ${getGridCols()} gap-4 ${className}`}>
       {stats.map((stat) => (
         <div 
           key={stat.id} 
-          className="stats shadow hover:shadow-lg transition-shadow duration-300 cursor-pointer hover:scale-105 transform transition-transform"
+          className={`
+            stats shadow hover:shadow-lg transition-all duration-300 cursor-pointer 
+            hover:scale-105 transform hover:-translate-y-1
+            ${compact ? 'stats-vertical' : ''}
+            ${stat.color === 'success' ? 'border-success/20' : ''}
+            ${stat.color === 'warning' ? 'border-warning/20' : ''}
+            ${stat.color === 'error' ? 'border-error/20' : ''}
+            ${stat.color === 'info' ? 'border-info/20' : ''}
+            border-2 border-transparent hover:border-current/20
+          `}
         >
           <div className="stat">
             <div className={`stat-figure ${getStatColor(stat.color)}`}>
@@ -141,18 +189,28 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
               {formatValue(stat.value, stat.id)}
             </div>
             
-            <div className="stat-desc flex items-center gap-1">
-              {stat.change !== undefined && (
-                <>
-                  <span className={getChangeColor(stat.changeType)}>
-                    {getChangeIcon(stat.changeType)}
-                    {Math.abs(stat.change)}%
-                  </span>
-                  <span className="text-base-content/40">vs last period</span>
-                </>
-              )}
-              {stat.description && !stat.change && (
-                <span className="text-base-content/60">{stat.description}</span>
+            <div className="stat-desc flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                {showTrends && stat.change !== undefined && (
+                  <>
+                    <span className={getChangeColor(stat.changeType)}>
+                      {getChangeIcon(stat.changeType)}
+                      {Math.abs(stat.change)}%
+                    </span>
+                    <span className="text-base-content/40 text-xs">vs last period</span>
+                  </>
+                )}
+                {stat.description && (!stat.change || !showTrends) && (
+                  <span className="text-base-content/60 text-xs">{stat.description}</span>
+                )}
+              </div>
+              
+              {/* Real-time indicator */}
+              {autoRefresh && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                  <span className="text-xs text-base-content/40">Live</span>
+                </div>
               )}
             </div>
           </div>
