@@ -11,15 +11,26 @@ describe('Database Query Optimization', () => {
   let dbManager: DatabaseManager;
 
   beforeEach(async () => {
+    // Reset the singleton for test isolation
+    (DatabaseManager as any).instance = null;
+
     dbManager = DatabaseManager.getInstance({
       type: 'sqlite',
       path: ':memory:'
     });
     await dbManager.connect();
+
+    // Clear any existing data to ensure clean test state
+    const allConfigs = await dbManager.getAllBotConfigurations();
+    for (const config of allConfigs) {
+      await dbManager.deleteBotConfiguration(config.id!);
+    }
   });
 
   afterEach(async () => {
     await dbManager.disconnect();
+    // Reset singleton after test
+    (DatabaseManager as any).instance = null;
   });
 
   test('should create and retrieve bot configurations', async () => {

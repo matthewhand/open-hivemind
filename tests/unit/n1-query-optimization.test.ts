@@ -136,6 +136,9 @@ describe('N+1 Query Optimization', () => {
     });
 
     test('should return empty array when no configurations exist', async () => {
+      // Reset singleton to get a fresh database instance
+      (DatabaseManager as any).instance = null;
+
       // Create a new database manager with empty database
       const emptyDbManager = DatabaseManager.getInstance({
         type: 'sqlite',
@@ -148,6 +151,8 @@ describe('N+1 Query Optimization', () => {
       expect(configs).toEqual([]);
 
       await emptyDbManager.disconnect();
+      // Reset singleton after test
+      (DatabaseManager as any).instance = null;
     });
 
     test('should handle bulk version queries correctly', async () => {
