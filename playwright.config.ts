@@ -26,7 +26,7 @@ export default defineConfig({
   /* Constant to use with Playwright test hooks. */
   use: {
     /* Base URL to use when running tests locally. */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5005',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     /* Collect trace when retrying on CI. */
     trace: 'on-first-retry',
   },
@@ -76,8 +76,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
-    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5005',
+    command: 'npm run playwright:serve',
+    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
   },
 });
