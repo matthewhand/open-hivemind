@@ -44,6 +44,7 @@ const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
 const frontendLogger = Logger.withContext('frontend');
+const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
 
 const resolveFrontendDistPath = (): string => {
     const candidates = [
@@ -246,30 +247,37 @@ async function main() {
     const llmProviders = getLlmProvider();
     appLogger.info('Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
 
-    const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
-    const messageProviders = (typeof rawMessageProviders === 'string'
-        ? rawMessageProviders.split(',').map((v: string) => v.trim())
-        : Array.isArray(rawMessageProviders)
-        ? rawMessageProviders
-        : ['slack']) as string[];
-    appLogger.info('Resolved message providers', { providers: messageProviders });
+    // Prepare messenger services collection for optional webhook registration later
+    let messengerServices: any[] = [];
 
-    const messengerServices = messengerProviderModule.getMessengerProvider();
-    // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
-    const filteredMessengers = messengerServices.filter((service: any) => {
-        // If providerName is not defined, assume 'slack' by default.
-        const providerName = service.providerName || 'slack';
-        return messageProviders.includes(providerName.toLowerCase());
-    });
-    if (filteredMessengers.length > 0) {
-        indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
-        for (const service of filteredMessengers) {
-            await startBot(service);
-        }
+    if (skipMessengers) {
+        appLogger.info('Skipping messenger initialization due to SKIP_MESSENGERS=true');
     } else {
-        indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
-        for (const service of messengerServices) {
-            await startBot(service);
+        const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+        const messageProviders = (typeof rawMessageProviders === 'string'
+            ? rawMessageProviders.split(',').map((v: string) => v.trim())
+            : Array.isArray(rawMessageProviders)
+            ? rawMessageProviders
+            : ['slack']) as string[];
+        appLogger.info('Resolved message providers', { providers: messageProviders });
+
+        messengerServices = messengerProviderModule.getMessengerProvider();
+        // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
+        const filteredMessengers = messengerServices.filter((service: any) => {
+            // If providerName is not defined, assume 'slack' by default.
+            const providerName = service.providerName || 'slack';
+            return messageProviders.includes(providerName.toLowerCase());
+        });
+        if (filteredMessengers.length > 0) {
+            indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
+            for (const service of filteredMessengers) {
+                await startBot(service);
+            }
+        } else {
+            indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
+            for (const service of messengerServices) {
+                await startBot(service);
+            }
         }
     }
 

@@ -30,13 +30,13 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Build application
-        run: |
-          npm run build
-          npm run build:frontend
+        run: npm run build
 
       - name: Run Playwright tests
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3028
+          SKIP_MESSENGERS: 'true'
+          HTTP_ENABLED: 'true'
         run: npm run test:playwright -- --reporter=line
 
       - name: Upload Playwright test artifacts
