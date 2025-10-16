@@ -1,4 +1,7 @@
-import sqlite3 from 'sqlite3';
+// IMPORTANT: Avoid importing native sqlite3 at module load time.
+// Some environments (like CI or sandboxes) may not have the native
+// binding available for the running Node/arch. We lazy-load it only
+// when a connection is explicitly requested.
 import { open, Database } from 'sqlite';
 import Debug from 'debug';
 import { join } from 'path';
@@ -335,9 +338,21 @@ export class DatabaseManager {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
+        // Lazy-load native sqlite3 only when needed
+        let sqlite3Driver: any;
+        try {
+          const sqlite3Module: any = await import('sqlite3');
+          sqlite3Driver = (sqlite3Module && sqlite3Module.default) ? sqlite3Module.default : sqlite3Module;
+        } catch (e) {
+          throw new DatabaseError(
+            'Failed to load sqlite3 native module. Database features are unavailable in this environment.',
+            'SQLITE3_MODULE_LOAD_FAILED'
+          );
+        }
+
         this.db = await open({
           filename: dbPath,
-          driver: sqlite3.Database
+          driver: sqlite3Driver.Database
         });
 
         await this.createTables();
