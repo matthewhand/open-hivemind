@@ -46,16 +46,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const parsedTokens = JSON.parse(storedTokens);
         const parsedUser = JSON.parse(storedUser);
 
-        setTokens(parsedTokens);
-        setUser(parsedUser);
-
-        // Check if token is still valid
-        if (isTokenExpired(parsedTokens.accessToken)) {
-          refreshToken();
+        // Check if token is still valid before setting it
+        if (!isTokenExpired(parsedTokens.accessToken)) {
+          setTokens(parsedTokens);
+          setUser(parsedUser);
+        } else {
+          // Token is expired, try to refresh it silently
+          refreshToken().catch((error) => {
+            console.warn('Failed to refresh expired token on load:', error);
+            // Don't logout here - just don't set the user
+            // The app will handle being in an unauthenticated state
+          });
         }
       } catch (error) {
         console.error('Failed to parse stored auth data:', error);
-        logout();
+        // Don't logout - just don't set the user
       }
     }
 

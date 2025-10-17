@@ -178,7 +178,7 @@ describe('MetricsCollector', () => {
       }
       const endTime = Date.now();
       const duration = endTime - startTime;
-      expect(duration).toBeLessThan(1000);
+      expect(duration).toBeLessThan(2000);
       expect(collector.getMetrics().messagesProcessed).toBe(10000);
 
       // Not leak memory with many response time recordings

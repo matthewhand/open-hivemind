@@ -131,6 +131,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(healthRoute);
 
+app.use(express.static(frontendDistPath));
+
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');

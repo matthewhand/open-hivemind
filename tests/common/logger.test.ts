@@ -5,6 +5,18 @@
 
 import { Logger } from '../../src/common/logger';
 
+// Mock the logger module to control console methods
+jest.mock('../../src/common/logger', () => {
+  const originalModule = jest.requireActual('../../src/common/logger');
+  return {
+    ...originalModule,
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  };
+});
+
 // Mock console methods
 const mockConsoleLog = jest.fn();
 const mockConsoleError = jest.fn();
