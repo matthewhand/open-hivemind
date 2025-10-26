@@ -16,7 +16,7 @@
     "build:server": "npm run build:backend",
     "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
     "sync-frontend-build": "node scripts/sync-frontend-build.js",
-    "build:full": "npm run build",
+    "build:full": "npm run build:backend && npm run build:frontend && npm run sync-frontend-build",
     "start": "cross-env NODE_ENV=production node --max-old-space-size=256 dist/src/index.js",
     "start:test": "cross-env NODE_ENV=test node --max-old-space-size=256 dist/src/index.js",
     "dev:frontend": "cd src/client && ../../node_modules/.bin/vite --port 5173 --host",
