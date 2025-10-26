@@ -1,6 +1,6 @@
 # Netlify configuration for Open-Hivemind
 [build]
-  publish = "src/client/dist"
+  publish = "public"
   command = "npm run build:frontend"
 
 [build.environment]
