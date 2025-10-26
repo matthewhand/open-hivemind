@@ -173,6 +173,7 @@ app.use('/uber/*', (req: Request, res: Response) => {
 // app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
 app.use('/dashboard', dashboardRouter);
+app.use('/webui/api/specs', authenticateToken, require('@src/server/routes/specs').default);
 app.use('/webui/api', authenticateToken, webuiConfigRouter);
 app.use('/webui', botsRouter);
 app.use('/webui', botConfigRouter);

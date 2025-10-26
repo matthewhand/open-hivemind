@@ -1,5 +1,5 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
-import UserConfigStore, { BotOverride } from './UserConfigStore';
+import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 import Debug from 'debug';

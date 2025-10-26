@@ -1,24 +1,24 @@
 # Netlify configuration for Open-Hivemind
 [build]
-  publish = "public"
   command = "npm run build:full"
+  publish = "public"
 
 [build.environment]
   NODE_VERSION = "20"
   NODE_ENV = "production"
 
+[dev]
+  command = "npm run dev"
+  publish = "dist" # This should point to the dev server's output
+  port = 8888
+
 [[redirects]]
   from = "/api/*"
-  to = "${BACKEND_URL}/api/:splat"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[dev]
-  command = "npm run dev"
-  port = 3000
-  publish = "src/client/dist"
 
