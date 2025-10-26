@@ -1,6 +1,10 @@
 {
   "version": 2,
+  "name": "open-hivemind",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:full",
   "outputDirectory": "public",
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
