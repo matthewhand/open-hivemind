@@ -14,7 +14,7 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    
+
     // Initialize login-specific locators
     this.usernameInput = page.locator('input[name="username"]');
     this.passwordInput = page.locator('input[name="password"]');
@@ -54,7 +54,7 @@ export class LoginPage extends BasePage {
     await this.navigateToLogin();
     await this.fillCredentials(username, password);
     await this.submitLogin();
-    
+
     // Wait for successful login redirect
     await this.waitForUrlToContain('dashboard');
     await this.waitForLoadingToComplete();
@@ -179,11 +179,11 @@ export class LoginPage extends BasePage {
     // Check for proper form labels
     const usernameLabel = this.page.locator('label[for="username"], label:has-text("Username")');
     const passwordLabel = this.page.locator('label[for="password"], label:has-text("Password")');
-    
+
     if (await usernameLabel.count() > 0) {
       await expect(usernameLabel.first()).toBeVisible();
     }
-    
+
     if (await passwordLabel.count() > 0) {
       await expect(passwordLabel.first()).toBeVisible();
     }
