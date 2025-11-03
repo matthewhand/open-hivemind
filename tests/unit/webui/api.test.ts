@@ -1,15 +1,6 @@
 import { apiService } from '../../../src/client/src/services/api';
 import { jest } from '@jest/globals';
 
-declare global {
-  interface ImportMetaEnv {
-    VITE_API_BASE_URL: string;
-  }
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-}
-
 interface MockResponse extends Response {
   json: jest.MockedFunction<() => Promise<any>>;
 }
@@ -35,7 +26,7 @@ const createMockResponse = (ok: boolean, data: any, statusText = 'OK'): MockResp
     blob: jest.fn(),
     formData: jest.fn(),
     json: jest.fn().mockResolvedValue(data)
-  };
+  } as MockResponse;
   return res;
 };
 
@@ -68,7 +59,9 @@ describe('API Service URL Handling', () => {
   ];
 
   test.each(testCases)('getConfig $description', async ({ env, expectedUrl }) => {
-    Object.defineProperty(import.meta, 'env', { value: env as ImportMetaEnv, writable: true });
+    // Mock process.env instead of import.meta.env for Jest compatibility
+    const originalEnv = process.env.VITE_API_BASE_URL;
+    process.env.VITE_API_BASE_URL = env.VITE_API_BASE_URL;
 
     const mockData = { bots: [] };
     const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(createMockResponse(true, mockData));
@@ -78,10 +71,14 @@ describe('API Service URL Handling', () => {
 
     await service.getConfig();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object));
+
+    // Restore original env
+    process.env.VITE_API_BASE_URL = originalEnv;
   });
 
   it('error recovery: handles invalid URL by attempting fetch', async () => {
-    Object.defineProperty(import.meta, 'env', { value: { VITE_API_BASE_URL: 'invalid://url' } as ImportMetaEnv, writable: true });
+    const originalEnv = process.env.VITE_API_BASE_URL;
+    process.env.VITE_API_BASE_URL = 'invalid://url';
 
     const mockResponse = createMockResponse(false, {}, 'Network Error');
     const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(mockResponse);
@@ -91,6 +88,9 @@ describe('API Service URL Handling', () => {
 
     await expect(service.getConfig()).rejects.toThrow('API request failed: Network Error');
     expect(mockFetch).toHaveBeenCalledWith('invalid://url/webui/api/config', expect.any(Object));
+
+    // Restore original env
+    process.env.VITE_API_BASE_URL = originalEnv;
   });
 
   it('handles API error in request', async () => {
@@ -98,9 +98,13 @@ describe('API Service URL Handling', () => {
     const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(mockResponse);
     (global.fetch as jest.MockedFunction<typeof fetch>) = mockFetch;
 
-    Object.defineProperty(import.meta, 'env', { value: { VITE_API_BASE_URL: '' } as ImportMetaEnv, writable: true });
+    const originalEnv = process.env.VITE_API_BASE_URL;
+    process.env.VITE_API_BASE_URL = '';
     const { apiService: service } = await import('../../../src/client/src/services/api');
 
     await expect(service.getConfig()).rejects.toThrow('API request failed: Not Found');
+    
+    // Restore original env
+    process.env.VITE_API_BASE_URL = originalEnv;
   });
 });
