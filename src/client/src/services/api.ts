@@ -2,10 +2,14 @@ const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
 const buildUrl = (endpoint: string): string => {
-  if (!API_BASE_URL) {
+  // In development, if no API_BASE_URL is set, use relative URLs for local backend
+  if (!API_BASE_URL && import.meta.env.DEV) {
     return endpoint;
   }
-  return `${API_BASE_URL}${endpoint}`;
+  
+  // In production or when API_BASE_URL is set, use the full URL
+  const baseUrl = API_BASE_URL || (import.meta.env.DEV ? '' : 'https://open-hivemind.fly.dev');
+  return `${baseUrl}${endpoint}`;
 };
 
 // Mock data for demo mode

@@ -13,6 +13,12 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
 } from '@mui/material';
 import {
@@ -21,7 +27,6 @@ import {
   Delete as DeleteIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import DataTable from './DaisyUI/DataTable';
 
 interface Persona {
   key: string;
@@ -208,90 +213,72 @@ const PersonaManager: React.FC = () => {
         </Alert>
       )}
 
-      <DataTable
-        data={personas}
-        columns={[
-          {
-            key: 'key',
-            title: 'Key',
-            sortable: true,
-            filterable: true,
-            render: (value: string) => (
-              <Box display="flex" alignItems="center" gap={1}>
-                <PersonIcon color="action" />
-                <Typography variant="body2" fontFamily="monospace">
-                  {value}
-                </Typography>
-              </Box>
-            )
-          },
-          {
-            key: 'name',
-            title: 'Name',
-            sortable: true,
-            filterable: true,
-            render: (value: string) => (
-              <Typography variant="body1" fontWeight="medium">
-                {value}
-              </Typography>
-            )
-          },
-          {
-            key: 'systemPrompt',
-            title: 'System Prompt',
-            sortable: true,
-            filterable: true,
-            render: (value: string) => (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  maxWidth: 300,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {value}
-              </Typography>
-            )
-          },
-          {
-            key: 'actions',
-            title: 'Actions',
-            render: (_: any, persona: any) => (
-              <Box display="flex" gap={1}>
-                <Tooltip title="Edit">
-                  <IconButton
-                    size="small"
-                    onClick={() => openEditDialog(persona)}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Key</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>System Prompt</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {personas.map((persona) => (
+              <TableRow key={persona.key} hover>
+                <TableCell>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <PersonIcon color="action" />
+                    <Typography variant="body2" fontFamily="monospace">
+                      {persona.key}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body1" fontWeight="medium">
+                    {persona.name}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      maxWidth: 300,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDeletePersona(persona.key)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            )
-          }
-        ]}
-        loading={loading}
-        searchable={true}
-        selectable={true}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: [5, 10, 25, 50]
-        }}
-        exportable={true}
-      />
+                    {persona.systemPrompt}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box display="flex" gap={1}>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => openEditDialog(persona)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeletePersona(persona.key)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Create Persona Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>

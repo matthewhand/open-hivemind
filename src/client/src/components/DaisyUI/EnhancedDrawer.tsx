@@ -88,20 +88,22 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
     }
 
     return (
-      <li key={item.id} className={`${depth > 0 ? 'ml-4' : ''}`}>
-        <div className={`
-          group flex items-center justify-between rounded-lg p-3 
-          transition-all duration-200 ease-in-out
-          ${isActive 
-            ? 'bg-primary text-primary-content shadow-sm' 
-            : item.disabled
-              ? 'text-base-content/30 cursor-not-allowed'
-              : 'hover:bg-base-200 cursor-pointer'
-          }
-          ${depth > 0 ? 'text-sm' : 'text-base'}
-        `}>
-          <div 
-            className="flex items-center flex-1 min-w-0"
+      <li key={item.id} role="listitem" className={`${depth > 0 ? 'ml-4' : ''}`}>
+        <div
+          className={`
+            group flex items-center justify-between rounded-lg p-3 
+            transition-all duration-200 ease-in-out
+            ${isActive 
+              ? 'bg-primary text-primary-content shadow-sm' 
+              : item.disabled
+                ? 'text-base-content/30 cursor-not-allowed'
+                : 'hover:bg-base-200'}
+            ${depth > 0 ? 'text-sm' : 'text-base'}
+          `}
+        >
+          <button
+            type="button"
+            className="flex items-center flex-1 min-w-0 text-left focus:outline-none focus:ring focus:ring-primary/30 rounded"
             onClick={() => {
               if (item.disabled) return;
               if (item.path) {
@@ -110,28 +112,45 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
                 toggleExpanded(item.id);
               }
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (item.path) handleNavigation(item.path);
+                else if (hasChildren) toggleExpanded(item.id);
+              }
+            }}
+            aria-current={isActive && item.path ? 'page' : undefined}
+            aria-expanded={hasChildren ? isExpanded : undefined}
+            aria-controls={hasChildren ? `${item.id}-submenu` : undefined}
+            disabled={item.disabled}
           >
-            <span className={`
-              text-lg flex-shrink-0 mr-3
-              ${isActive ? 'text-primary-content' : 'text-base-content/70'}
-              ${item.disabled ? 'opacity-30' : ''}
-            `}>
+            <span
+              className={`
+                text-lg flex-shrink-0 mr-3
+                ${isActive ? 'text-primary-content' : 'text-base-content/70'}
+                ${item.disabled ? 'opacity-30' : ''}
+              `}
+              aria-hidden
+            >
               {item.icon}
             </span>
             <span className="font-medium truncate">{item.label}</span>
-            
+
             {item.badge && (
-              <div className={`
-                badge badge-sm ml-auto mr-2 flex-shrink-0
-                ${isActive ? 'badge-primary-content' : 'badge-primary'}
-              `}>
+              <div
+                className={`
+                  badge badge-sm ml-auto mr-2 flex-shrink-0
+                  ${isActive ? 'badge-primary-content' : 'badge-primary'}
+                `}
+              >
                 {typeof item.badge === 'number' && item.badge > 99 ? '99+' : item.badge}
               </div>
             )}
-          </div>
-          
+          </button>
+
           {hasChildren && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 if (!item.disabled) {
@@ -143,20 +162,26 @@ const EnhancedDrawer: React.FC<EnhancedDrawerProps> = ({
                 ${isActive ? 'text-primary-content hover:text-primary-content' : ''}
                 ${item.disabled ? 'opacity-30 cursor-not-allowed' : ''}
               `}
+              aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+              aria-expanded={isExpanded}
+              aria-controls={`${item.id}-submenu`}
               disabled={item.disabled}
             >
-              <span className={`
-                transform transition-transform duration-200 inline-block
-                ${isExpanded ? 'rotate-90' : ''}
-              `}>
+              <span
+                className={`
+                  transform transition-transform duration-200 inline-block
+                  ${isExpanded ? 'rotate-90' : ''}
+                `}
+                aria-hidden
+              >
                 ▶
               </span>
             </button>
           )}
         </div>
-        
+
         {hasChildren && isExpanded && (
-          <ul className="mt-1 space-y-1 animate-in slide-in-from-top-1 duration-200">
+          <ul id={`${item.id}-submenu`} className="mt-1 space-y-1 animate-in slide-in-from-top-1 duration-200" role="list">
             {item.children!.map(child => renderNavItem(child, depth + 1))}
           </ul>
         )}
