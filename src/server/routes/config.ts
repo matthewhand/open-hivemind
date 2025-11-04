@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
-import UserConfigStore from '@config/UserConfigStore';
+import { UserConfigStore } from '@config/UserConfigStore';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const router = Router();

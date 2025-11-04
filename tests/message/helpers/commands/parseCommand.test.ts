@@ -18,63 +18,41 @@ describe('parseCommand', () => {
     jest.clearAllMocks();
   });
 
-  it('returns null for non-command or invalid inputs', () => {
-    const invalidCases = [
-      '',
-      '   ',
-      'hello world',
-      'start! now',
-      '!!start',
-      'not a command',
-      '!?',
-      '!@#$%^&*()',
-      null,
-      undefined,
-      42,
-      {},
-      [],
-      '!🚀:deploy target'
+  it('should correctly parse valid commands and reject invalid ones', () => {
+    const testCases = [
+      // Invalid cases
+      { input: '', expected: null },
+      { input: '   ', expected: null },
+      { input: 'hello world', expected: null },
+      { input: 'start! now', expected: null },
+      { input: '!!start', expected: null },
+      { input: 'not a command', expected: null },
+      { input: '!?', expected: null },
+      { input: '!@#$%^&*()', expected: null },
+      { input: null, expected: null },
+      { input: undefined, expected: null },
+      { input: 42, expected: null },
+      { input: {}, expected: null },
+      { input: [], expected: null },
+      { input: '!🚀:deploy target', expected: null },
+      
+      // Valid cases
+      { input: '!start', expected: { commandName: 'start', action: '', args: [] } },
+      { input: '!start:now', expected: { commandName: 'start', action: 'now', args: [] } },
+      { input: '!deploy:prod server1 server2 --force', expected: { commandName: 'deploy', action: 'prod', args: ['server1', 'server2', '--force'] } },
+      { input: '!config:set:debug true', expected: { commandName: 'config', action: 'set', args: [':debug', 'true'] } },
+      { input: '!deploy:prod-v2.1', expected: { commandName: 'deploy', action: 'prod', args: ['-v2.1'] } },
+      { input: '!echo "hello world" test', expected: { commandName: 'echo', action: '', args: ['"hello', 'world"', 'test'] } }
     ];
 
-    invalidCases.forEach(expectNull);
-  });
-
-  it('parses canonical command patterns', () => {
-    const scenarios = [
-      {
-        input: '!start',
-        expected: { commandName: 'start', action: '', args: [] }
-      },
-      {
-        input: '!start:now',
-        expected: { commandName: 'start', action: 'now', args: [] }
-      },
-      {
-        input: '!deploy:prod server1 server2 --force',
-        expected: { commandName: 'deploy', action: 'prod', args: ['server1', 'server2', '--force'] }
-      },
-      {
-        input: '!config:set:debug true',
-        expected: { commandName: 'config', action: 'set', args: [':debug', 'true'] }
-      },
-      {
-        input: '!deploy:prod-v2.1',
-        expected: { commandName: 'deploy', action: 'prod', args: ['-v2.1'] }
-      },
-      {
-        input: '!echo "hello world" test',
-        expected: { commandName: 'echo', action: '', args: ['"hello', 'world"', 'test'] }
-      }
-    ];
-
-    scenarios.forEach(({ input, expected }) => {
-      const result = parseCommand(input);
+    testCases.forEach(({ input, expected }) => {
+      const result = parseCommand(input as any);
       expect(result).toEqual(expected);
     });
   });
 
   it('normalises whitespace while preserving argument order and case', () => {
-    const whitespaceExamples = [
+    const testCases = [
       { cmd: '  !status   ', expected: { commandName: 'status', action: '', args: [] } },
       {
         cmd: '!deploy:prod   server1    server2     --force',
@@ -83,40 +61,33 @@ describe('parseCommand', () => {
       {
         cmd: '!start:now\tquickly   fast',
         expected: { commandName: 'start', action: 'now', args: ['quickly', 'fast'] }
-      }
-    ];
-
-    whitespaceExamples.forEach(({ cmd, expected }) => {
-      expect(parseCommand(cmd)).toEqual(expected);
-    });
-
-    const complexArgs = [
+      },
       {
         cmd: '!feature:toggle true FALSE yes No',
-        expectedArgs: ['true', 'FALSE', 'yes', 'No']
+        expected: { commandName: 'feature', action: 'toggle', args: ['true', 'FALSE', 'yes', 'No'] }
       },
       {
         cmd: '!load:config /path/to/config.json ./relative/path',
-        expectedArgs: ['/path/to/config.json', './relative/path']
+        expected: { commandName: 'load', action: 'config', args: ['/path/to/config.json', './relative/path'] }
       },
       {
         cmd: '!config:set {"key":"value","number":42}',
-        expectedArgs: ['{"key":"value","number":42}']
+        expected: { commandName: 'config', action: 'set', args: ['{"key":"value","number":42}'] }
       },
       {
         cmd: '!webhook:add https://example.com/hook?token=abc123',
-        expectedArgs: ['https://example.com/hook?token=abc123']
+        expected: { commandName: 'webhook', action: 'add', args: ['https://example.com/hook?token=abc123'] }
+      },
+      {
+        cmd: '!echo Hello WORLD',
+        expected: { commandName: 'echo', action: '', args: ['Hello', 'WORLD'] }
       }
     ];
 
-    complexArgs.forEach(({ cmd, expectedArgs }) => {
+    testCases.forEach(({ cmd, expected }) => {
       const result = parseCommand(cmd);
-      expect(result?.args).toEqual(expectedArgs);
+      expect(result).toEqual(expected);
     });
-
-    const casePreserving = parseCommand('!echo Hello WORLD');
-    expect(casePreserving?.commandName).toBe('echo');
-    expect(casePreserving?.args).toEqual(['Hello', 'WORLD']);
   });
 
   it('enforces regex boundaries for command and action segments', () => {

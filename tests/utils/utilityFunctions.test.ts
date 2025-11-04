@@ -22,15 +22,19 @@ describe('Utility Functions Comprehensive Tests', () => {
   });
 
   describe('Boolean and Type Conversion', () => {
-    test('should convert various values to boolean correctly', () => {
-      expect(Boolean('x')).toBe(true);
-      expect(Boolean('')).toBe(false);
-      expect(Boolean(1)).toBe(true);
-      expect(Boolean(0)).toBe(false);
-      expect(Boolean([])).toBe(true);
-      expect(Boolean({})).toBe(true);
-      expect(Boolean(null)).toBe(false);
-      expect(Boolean(undefined)).toBe(false);
+    const booleanTestCases = [
+      { input: 'x', expected: true, description: 'non-empty string' },
+      { input: '', expected: false, description: 'empty string' },
+      { input: 1, expected: true, description: 'positive number' },
+      { input: 0, expected: false, description: 'zero' },
+      { input: [], expected: true, description: 'empty array' },
+      { input: {}, expected: true, description: 'empty object' },
+      { input: null, expected: false, description: 'null' },
+      { input: undefined, expected: false, description: 'undefined' },
+    ];
+
+    test.each(booleanTestCases)('should convert $description to boolean correctly', ({ input, expected }) => {
+      expect(Boolean(input)).toBe(expected);
     });
 
     test('should handle truthy and falsy values', () => {

@@ -23,6 +23,8 @@ import messageConfig from '../../config/messageConfig';
 // ChannelRouter exports functions, not a class
 import { pickBestChannel, computeScore as channelComputeScore } from '../../message/routing/ChannelRouter';
 import WebSocketService from '../../server/services/WebSocketService';
+import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
+import { SpecifyCommand } from './commands/speckit/specify';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -271,6 +273,9 @@ export const Discord = {
       // Initialize voice manager after bots are ready
       const { VoiceChannelManager } = require('./voice/voiceChannelManager');
       this.voiceManager = new VoiceChannelManager(this.bots[0].client);
+
+      // Set up interaction handler for slash commands
+      this.setInteractionHandler();
     }
 
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {
@@ -304,6 +309,22 @@ export const Discord = {
           } catch {
             // Swallow malformed events to avoid crashing handler loop
             return;
+          }
+        });
+      });
+    }
+
+    public setInteractionHandler(): void {
+      this.bots.forEach((bot) => {
+        bot.client.on('interactionCreate', async (interaction) => {
+          if (!interaction.isCommand()) return;
+
+          if (!interaction.isChatInputCommand()) return;
+          const commandName = interaction.commandName;
+          const subcommand = interaction.options.getSubcommand();
+
+          if (commandName === 'speckit' && subcommand === 'specify') {
+            await handleSpeckitSpecify(interaction);
           }
         });
       });
