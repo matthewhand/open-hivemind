@@ -97,22 +97,27 @@ describeIf('Admin Routes RBAC', () => {
   }, 10000); // Increase setup timeout but keep individual tests fast
 
   describe.skip('Authentication required - TEMPORARILY DISABLED FOR CI', () => {
-    it('should deny access without authentication', async () => {
-      const response = await request(app)
-        .get('/admin/status')
-        .expect(401);
+    const endpoints = [
+      { method: 'get', url: '/admin/status' },
+      { method: 'post', url: '/admin/slack-bots' },
+      { method: 'post', url: '/admin/discord-bots' },
+      { method: 'post', url: '/admin/reload' }
+    ];
 
-      expect(response.body.error).toBeTruthy();
-    }, 3000);
+    endpoints.forEach(({ method, url }) => {
+      it(`should deny access to ${method.toUpperCase()} ${url} without authentication`, async () => {
+        const response = await (request(app) as any)[method](url)
+          .expect(401);
+        expect(response.body.error).toBeTruthy();
+      }, 3000);
 
-    it('should deny access with invalid token', async () => {
-      const response = await request(app)
-        .get('/admin/status')
-        .set('Authorization', 'Bearer invalid-token')
-        .expect(401);
-
-      expect(response.body.error).toBeTruthy();
-    }, 3000);
+      it(`should deny access to ${method.toUpperCase()} ${url} with invalid token`, async () => {
+        const response = await (request(app) as any)[method](url)
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401);
+        expect(response.body.error).toBeTruthy();
+      }, 3000);
+    });
   });
 
   describe('Authenticated access', () => {
@@ -169,55 +174,50 @@ describeIf('Admin Routes RBAC', () => {
   });
 
   describe.skip('Admin-only operations - TEMPORARILY DISABLED FOR CI', () => {
-    it('should allow admin to create Slack bot', async () => {
-      const response = await request(app)
-        .post('/admin/slack-bots')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
+    const adminOnlyEndpoints = [
+      {
+        method: 'post',
+        url: '/admin/slack-bots',
+        body: {
           name: 'test-bot',
           botToken: 'test-token',
           signingSecret: 'test-secret'
-        })
-        .expect(200);
-
-      expect(response.body.error).not.toBe('Authentication required');
-      expect(response.body.error).not.toBe('Insufficient permissions');
-      expect(response.body.ok).toBe(true);
-    });
-
-    it('should deny regular user from creating Slack bot', async () => {
-      const response = await request(app)
-        .post('/admin/slack-bots')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'test-bot',
-          botToken: 'test-token',
-          signingSecret: 'test-secret'
-        })
-        .expect(403);
-
-      expect(response.body.error).toBe('Insufficient permissions');
-    });
-
-    it('should deny regular user from creating Discord bot', async () => {
-      const response = await request(app)
-        .post('/admin/discord-bots')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
+        }
+      },
+      {
+        method: 'post',
+        url: '/admin/discord-bots',
+        body: {
           token: 'test-discord-token'
-        })
-        .expect(403);
+        }
+      },
+      {
+        method: 'post',
+        url: '/admin/reload',
+        body: {}
+      }
+    ];
 
-      expect(response.body.error).toBe('Insufficient permissions');
-    });
+    adminOnlyEndpoints.forEach(({ method, url, body }) => {
+      it(`should allow admin to access ${method.toUpperCase()} ${url}`, async () => {
+        const response = await (request(app) as any)[method](url)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send(body)
+          .expect(200);
 
-    it('should deny regular user from reloading bots', async () => {
-      const response = await request(app)
-        .post('/admin/reload')
-        .set('Authorization', `Bearer ${userToken}`)
-        .expect(403);
+        expect(response.body.error).not.toBe('Authentication required');
+        expect(response.body.error).not.toBe('Insufficient permissions');
+        expect(response.body.ok).toBe(true);
+      });
 
-      expect(response.body.error).toBe('Insufficient permissions');
+      it(`should deny regular user from accessing ${method.toUpperCase()} ${url}`, async () => {
+        const response = await (request(app) as any)[method](url)
+          .set('Authorization', `Bearer ${userToken}`)
+          .send(body)
+          .expect(403);
+
+        expect(response.body.error).toBe('Insufficient permissions');
+      });
     });
   });
 });

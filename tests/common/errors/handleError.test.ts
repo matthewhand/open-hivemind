@@ -65,27 +65,14 @@ describe('handleError', () => {
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
 
-    it('should not send message if messageChannel has no send method', () => {
+    it.each([
+      { channel: { notSend: jest.fn() }, case: 'no send method' },
+      { channel: { send: null }, case: 'null send method' },
+      { channel: { send: undefined }, case: 'undefined send method' },
+    ])('should not send message if messageChannel has $case', ({ channel }) => {
       const error = new Error('Test error');
-      const messageChannel = { notSend: jest.fn() };
       
-      expect(() => handleError(error, messageChannel)).not.toThrow();
-      expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
-    });
-
-    it('should handle messageChannel with null send method', () => {
-      const error = new Error('Test error');
-      const messageChannel = { send: null };
-      
-      expect(() => handleError(error, messageChannel)).not.toThrow();
-      expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
-    });
-
-    it('should handle messageChannel with undefined send method', () => {
-      const error = new Error('Test error');
-      const messageChannel = { send: undefined };
-      
-      expect(() => handleError(error, messageChannel)).not.toThrow();
+      expect(() => handleError(error, channel)).not.toThrow();
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
   });

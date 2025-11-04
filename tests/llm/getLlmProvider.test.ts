@@ -29,53 +29,77 @@ describe('getLlmProvider', () => {
     jest.clearAllMocks();
   });
 
-  it('should default to the OpenAI provider if LLM_PROVIDER is not set', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue(undefined);
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(1);
-    expect((providers[0] as any).name).toBe('openai');
-  });
+  it.each([
+    {
+      name: 'should default to the OpenAI provider if LLM_PROVIDER is not set',
+      configValue: undefined,
+      expectedLength: 1,
+      expectedNames: ['openai'],
+      checkMethods: false
+    },
+    {
+      name: 'should return the OpenAI provider when specified',
+      configValue: 'openai',
+      expectedLength: 1,
+      expectedNames: ['openai'],
+      checkMethods: false
+    },
+    {
+      name: 'should return the Flowise provider when specified',
+      configValue: 'flowise',
+      expectedLength: 1,
+      expectedNames: ['flowise'],
+      checkMethods: false
+    },
+    {
+      name: 'should return the OpenWebUI provider when specified',
+      configValue: 'openwebui',
+      expectedLength: 1,
+      expectedNames: [],
+      checkMethods: true
+    },
+    {
+      name: 'should return multiple providers for a comma-separated list',
+      configValue: 'openai, flowise',
+      expectedLength: 2,
+      expectedNames: ['openai', 'flowise'],
+      checkMethods: false
+    },
+    {
+      name: 'should skip unknown providers and return only valid ones',
+      configValue: 'openai, unknownprovider, flowise',
+      expectedLength: 2,
+      expectedNames: ['openai', 'flowise'],
+      checkMethods: false
+    },
+    {
+      name: 'should throw an error if no valid providers are configured',
+      configValue: 'unknown, invalid',
+      expectedLength: 0,
+      expectedNames: [],
+      checkMethods: false,
+      shouldThrow: true,
+      errorMessage: 'No valid LLM providers initialized'
+    }
+  ])('$name', ({ configValue, expectedLength, expectedNames, checkMethods, shouldThrow, errorMessage }) => {
+    (mockedLlmConfig.get as jest.Mock).mockReturnValue(configValue);
 
-  it('should return the OpenAI provider when specified', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('openai');
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(1);
-    expect((providers[0] as any).name).toBe('openai');
-  });
+    if (shouldThrow) {
+      expect(() => getLlmProvider()).toThrow(errorMessage);
+    } else {
+      const providers = getLlmProvider();
+      expect(providers).toHaveLength(expectedLength);
 
-  it('should return the Flowise provider when specified', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('flowise');
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(1);
-    expect((providers[0] as any).name).toBe('flowise');
-  });
+      if (expectedNames.length > 0) {
+        expectedNames.forEach(name => {
+          expect(providers.some(p => (p as any).name === name)).toBe(true);
+        });
+      }
 
-  it('should return the OpenWebUI provider when specified', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('openwebui');
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(1);
-    expect(providers[0].supportsChatCompletion).toBeDefined();
-    expect(providers[0].generateChatCompletion).toBeDefined();
-  });
-
-  it('should return multiple providers for a comma-separated list', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('openai, flowise');
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(2);
-    expect(providers.some(p => (p as any).name === 'openai')).toBe(true);
-    expect(providers.some(p => (p as any).name === 'flowise')).toBe(true);
-  });
-  
-  it('should skip unknown providers and return only valid ones', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('openai, unknownprovider, flowise');
-    const providers = getLlmProvider();
-    expect(providers).toHaveLength(2);
-    expect(providers.some(p => (p as any).name === 'openai')).toBe(true);
-    expect(providers.some(p => (p as any).name === 'flowise')).toBe(true);
-  });
-
-  it('should throw an error if no valid providers are configured', () => {
-    (mockedLlmConfig.get as jest.Mock).mockReturnValue('unknown, invalid');
-    expect(() => getLlmProvider()).toThrow('No valid LLM providers initialized');
+      if (checkMethods) {
+        expect(providers[0].supportsChatCompletion).toBeDefined();
+        expect(providers[0].generateChatCompletion).toBeDefined();
+      }
+    }
   });
 });

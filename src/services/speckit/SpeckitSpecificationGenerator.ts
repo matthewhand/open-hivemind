@@ -24,7 +24,7 @@ export class SpeckitSpecificationGenerator {
       }
 
       const primaryProvider = llmProviders[0];
-      if (!primaryProvider || typeof primaryProvider.generateChatCompletion !== 'function') {
+    if (!primaryProvider || typeof primaryProvider.generateChatCompletion !== 'function') {
         throw new Error('Primary LLM provider is not properly configured');
       }
 
@@ -41,7 +41,7 @@ Please create a well-structured specification in markdown format that includes:
 
 Make sure the specification is detailed, clear, and actionable.`;
 
-      const response = await primaryProvider.generateChatCompletion(prompt, []);
+  const response = await primaryProvider.generateChatCompletion(prompt, []);
 
       if (!response || typeof response !== 'string' || response.trim().length === 0) {
         throw new Error('Empty or invalid response from LLM provider');
