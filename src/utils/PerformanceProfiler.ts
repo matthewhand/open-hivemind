@@ -21,6 +21,7 @@ interface MethodProfile {
   minExecutionTime: number;
   maxExecutionTime: number;
   lastExecutionTime: number;
+  lastUsed: number;
   errorCount: number;
 }
 
@@ -49,8 +50,14 @@ export class PerformanceProfiler {
   private methodProfiles: Map<string, MethodProfile> = new Map();
   private startTime: number = 0;
   private profileName: string = 'default';
+  private maxSnapshots: number = 50;
+  private cleanupInterval: NodeJS.Timeout | null = null;
+  private maxProfileAge: number = 24 * 60 * 60 * 1000; // 24 hours
 
-  private constructor() {}
+  private constructor() {
+    // Start automatic cleanup
+    this.startAutomaticCleanup();
+  }
 
   public static getInstance(): PerformanceProfiler {
     if (!PerformanceProfiler.instance) {
@@ -198,7 +205,7 @@ export class PerformanceProfiler {
     this.snapshots.push(snapshot);
 
     // Keep only recent snapshots
-    if (this.snapshots.length > 100) {
+    if (this.snapshots.length > this.maxSnapshots) {
       this.snapshots.shift();
     }
 
@@ -266,16 +273,7 @@ export class PerformanceProfiler {
     return filePath;
   }
 
-  /**
-   * Clear all profiling data
-   */
-  public clear(): void {
-    this.snapshots = [];
-    this.methodProfiles.clear();
-    this.startTime = 0;
-    debug('Performance profiling data cleared');
-  }
-
+  
   private recordMethodExecution(
     methodName: string,
     className: string | undefined,
@@ -294,6 +292,7 @@ export class PerformanceProfiler {
         minExecutionTime: Number.MAX_VALUE,
         maxExecutionTime: 0,
         lastExecutionTime: 0,
+        lastUsed: Date.now(),
         errorCount: 0
       });
     }
@@ -305,6 +304,7 @@ export class PerformanceProfiler {
     profile.minExecutionTime = Math.min(profile.minExecutionTime, executionTime);
     profile.maxExecutionTime = Math.max(profile.maxExecutionTime, executionTime);
     profile.lastExecutionTime = executionTime;
+    profile.lastUsed = Date.now();
 
     if (hadError) {
       profile.errorCount++;
@@ -359,9 +359,68 @@ export class PerformanceProfiler {
         final: finalSnapshot,
         delta: memoryDelta
       },
-      methods: Array.from(this.methodProfiles.values()),
+methods: Array.from(this.methodProfiles.values()),
       alerts
     };
+  }
+
+  /**
+   * Start automatic cleanup interval
+   */
+  private startAutomaticCleanup(): void {
+    // Run cleanup every hour
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupOldData();
+    }, 60 * 60 * 1000); // 1 hour
+
+    debug('Automatic cleanup started');
+  }
+
+  /**
+   * Stop automatic cleanup interval
+   */
+  private stopAutomaticCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      debug('Automatic cleanup stopped');
+    }
+  }
+
+  /**
+   * Clean up old performance data
+   */
+  private cleanupOldData(): void {
+    const now = Date.now();
+    const cutoffTime = now - this.maxProfileAge;
+    let cleanedSnapshots = 0;
+
+    // Clean old snapshots
+    const originalLength = this.snapshots.length;
+    this.snapshots = this.snapshots.filter(snapshot => snapshot.timestamp >= cutoffTime);
+    cleanedSnapshots = originalLength - this.snapshots.length;
+
+    // Clean old method profiles
+    for (const [key, profile] of this.methodProfiles.entries()) {
+      if (profile.lastUsed < cutoffTime) {
+        this.methodProfiles.delete(key);
+        cleanedSnapshots++;
+      }
+    }
+
+    if (cleanedSnapshots > 0) {
+      debug(`Cleaned up ${cleanedSnapshots} old performance entries`);
+    }
+  }
+
+  /**
+   * Enhanced clear method with better cleanup
+   */
+  public clear(): void {
+    this.snapshots = [];
+    this.methodProfiles.clear();
+    this.startTime = 0;
+    debug('Performance profiling data cleared');
   }
 }
 

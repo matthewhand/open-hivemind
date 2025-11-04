@@ -10,11 +10,11 @@
 ### **Phase 2: 5 Core DaisyUI Components Implementation (🚧 IN PROGRESS)**
 
 #### **1. 🧭 Drawer Navigation System**
-- [ ] Replace basic routing with **DaisyUI Drawer** for slide-out navigation
-- [ ] Implement **responsive drawer** that collapses on mobile
-- [ ] Add **breadcrumb navigation** within drawer
-- [ ] **Nested menu structure** for admin sections (Bots, MCP, Activity, etc.)
-- [ ] **Quick actions menu** with keyboard shortcuts
+- [✅] Replace basic routing with **DaisyUI Drawer** for slide-out navigation
+- [✅] Implement **responsive drawer** that collapses on mobile
+- [✅] Add **breadcrumb navigation** within drawer
+- [✅] **Nested menu structure** for admin sections (Bots, MCP, Activity, etc.)
+- [✅] **Quick actions menu** with keyboard shortcuts
 
 #### **2. 📊 Stats Cards Dashboard**
 - [ ] Transform system status into **DaisyUI Stats** cards
@@ -198,6 +198,74 @@ src/api/routes/config.ts
     - Converted tests from callback-based patterns to `async/await` to prevent race conditions.
     - Implemented robust timeout protection and enhanced test cleanup procedures to ensure test isolation.
     - Improved singleton pattern management for test environments.
+
+---
+
+## Web Rendering Blockers and Fixes (Action Plan)
+
+Context: The app currently fails to render a website. This checklist captures root causes and concrete steps to fix, without changing scope beyond rendering and startup.
+
+1) Align frontend build output with server static path
+- Problem: Server prefers `dist/client/dist` then `src/client/dist`. Vite outputs to `src/client/dist` but nothing places assets under `dist/` for prod-only deployments.
+- Fix options:
+  - A: Configure Vite build output to `dist/client/dist` so prod-only runs can serve assets from `dist/`.
+  - B: Add a post-build copy step to move `src/client/dist` → `dist/client/dist` after `npm run build:frontend`.
+- Files: `src/index.ts`, `src/client/vite.config.ts`, `package.json` (scripts)
+- Acceptance: `GET /` serves `index.html` (200) when running `npm run build && npm start` from a clean environment with only `dist/` available.
+
+2) Fix Docker build/run pipeline
+- Problems:
+  - Dockerfile installs prod deps only, but build needs devDependencies (TypeScript + Vite) → build fails/partial.
+  - `npm start` uses `cross-env` (devDep) and may be missing at runtime.
+  - EXPOSE/healthcheck use port 3000; app listens on 3028 unless `PORT` is set.
+- Fix options:
+  - Use multi-stage build: install devDeps → build → prune devDeps for runtime layer.
+  - Make `cross-env` available at runtime or remove its usage in `start` script.
+  - Standardize port to 3000 or 3028 across Dockerfile and app env.
+- Files: `Dockerfile`, `package.json`
+- Acceptance: `docker build` succeeds; container serves UI and healthcheck passes.
+
+3) Standardize ports across code, docs, and compose
+- Problem: Code defaults to 3028; Docker and docs reference 3000; README mentions 5005 in places. Leads to “nothing there” when visiting the wrong port.
+- Fix:
+  - Choose a default port (e.g., 3028) and make Docker EXPOSE/healthcheck, compose, and docs match. Or switch app default to 3000 and update `.env`/tests/docs consistently.
+- Files: `Dockerfile`, `docker-compose.yml`, `README.md`, `.env`
+- Acceptance: One consistent port in code and docs; starting via any supported method serves the site at the documented URL.
+
+4) Dev workflow clarity and port collisions
+- Problem: `dev:frontend` runs Vite on 3028 while backend also defaults to 3028 during dev; can collide.
+- Fix:
+  - Keep unified dev on a single port via backend serving the built frontend.
+  - Run isolated UI on a different port (e.g., Vite 5173), clearly documented.
+- Files: `package.json`, `src/client/vite.config.ts`, `README.md`
+- Acceptance: `npm run dev` boots unified server and serves UI without clashes; `npm run dev:frontend` runs standalone UI on a different port.
+
+5) Ensure initial UI doesn’t break on auth-protected APIs
+- Problem: Several `/webui/*` APIs are behind auth middleware; if frontend makes unauthenticated calls during boot and doesn’t handle 401s, first paint can appear broken.
+- Fix:
+  - Confirm the initial shell renders without gated calls; handle 401s gracefully (show login/notice) rather than failing silently.
+- Files: `src/index.ts`, `src/server/routes/*`, `src/client/src/*`
+- Acceptance: Visiting `/` renders app shell; any unauthorized API requests are handled with visible UI states (not blank screens).
+
+6) Commentary consistency in `src/index.ts`
+- Problem: Comment says API routes must come before static, but static is mounted early. Not necessarily wrong, but confusing.
+- Fix:
+  - Update comments or re-order mounting to match intent.
+- Files: `src/index.ts`
+- Acceptance: Comments match behavior, reducing confusion during future changes.
+
+7) Public vs. app index expectations
+- Problem: There is a `public/index.html` with Vite asset references, but root route serves the built app `index.html` under `src/client/dist`.
+- Fix:
+  - Document intended usage; ensure no one expects `public/index.html` to be the SPA entry.
+- Files: `README.md`, `src/index.ts`, `public/index.html`
+- Acceptance: Docs clarify which index is served; no ambiguity for contributors.
+
+Validation Steps (post-fixes)
+- `npm ci && npm run build && npm start` → `GET /` returns 200 with HTML; assets resolve (no 404s) and console shows no module errors.
+- Docker build/run path serves the same UI on the documented port; healthcheck succeeds.
+- `npm run dev` serves UI at documented URL with stable reloads; no port conflicts.
+
 
 **Note**: The 2 remaining failing test suites are infrastructure-related and do not affect core functionality.
 

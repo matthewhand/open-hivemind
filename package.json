@@ -10,12 +10,10 @@
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
-    "build": "node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck 2>/dev/null || echo 'TypeScript compilation completed with warnings, but build succeeded'",
-<<<<<<< HEAD
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck 2>/dev/null || echo 'TypeScript compilation completed with warnings, but build succeeded'",
+    "build:server": "npm run build:backend",
     "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
-=======
-    "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
->>>>>>> main
     "build:full": "npm run build",
     "start": "NODE_ENV=production node --max-old-space-size=256 dist/src/index.js",
     "start:test": "NODE_ENV=test node --max-old-space-size=256 dist/src/index.js",
@@ -33,6 +31,8 @@
     "test:e2e": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000",
     "test:e2e:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test TEST_SERVER_RUNNING=true node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --reporter spec",
     "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.js --timeout 30000 --watch",
+    "test:playwright": "node ./node_modules/.bin/playwright test",
+    "playwright:serve": "npm run start",
     "ncu": "ncu",
     "dev:only": "npm run dev",
     "dev:only:backend": "npm run dev:backend",
@@ -154,6 +154,7 @@
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/js": "^9.33.0",
     "@jridgewell/sourcemap-codec": "^1.5.0",
+    "@playwright/test": "^1.56.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",

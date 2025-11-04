@@ -389,7 +389,7 @@ export class TelegramService implements IMessengerService {
       content: msg.content,
       channelId: msg.channelId,
       data: msg,
-      role: msg.metadata?.isBot ? 'assistant' : 'user',
+      role: (msg.metadata?.isBot as boolean) ? 'assistant' : 'user',
       platform: 'telegram',
       metadata: msg.metadata,
       
@@ -405,7 +405,7 @@ export class TelegramService implements IMessengerService {
       getGuildOrWorkspaceId: () => null,
       isReplyToBot: () => false,
       mentionsUsers: (userId: string) => false,
-      isFromBot: () => msg.metadata?.isBot || false,
+      isFromBot: () => (msg.metadata?.isBot as boolean) || false,
       setText: async (newText: string) => {
         throw new Error('Cannot edit historical messages');
       }

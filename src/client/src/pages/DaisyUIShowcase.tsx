@@ -115,43 +115,92 @@ const DaisyUIShowcase: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="tabs tabs-boxed justify-center mt-6 mx-4">
-        <a 
+      <div
+        className="tabs tabs-boxed justify-center mt-6 mx-4"
+        role="tablist"
+        aria-label="DaisyUI showcase sections"
+        onKeyDown={(e) => {
+          const order = ['core', 'navigation', 'forms', 'utility', 'advanced', 'tracking'];
+          const idx = order.indexOf(selectedTab);
+          if (e.key === 'ArrowRight') {
+            const next = order[(idx + 1) % order.length];
+            setSelectedTab(next);
+          } else if (e.key === 'ArrowLeft') {
+            const prev = order[(idx - 1 + order.length) % order.length];
+            setSelectedTab(prev);
+          } else if (e.key === 'Home') {
+            setSelectedTab(order[0]);
+          } else if (e.key === 'End') {
+            setSelectedTab(order[order.length - 1]);
+          }
+        }}
+      >
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'core'}
+          aria-controls="showcase-panel-core"
           className={`tab ${selectedTab === 'core' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('core')}
+          data-testid="tab-core"
+          type="button"
         >
           Core Components
-        </a>
-        <a 
+        </button>
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'navigation'}
+          aria-controls="showcase-panel-navigation"
           className={`tab ${selectedTab === 'navigation' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('navigation')}
+          data-testid="tab-navigation"
+          type="button"
         >
           Navigation
-        </a>
-        <a 
+        </button>
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'forms'}
+          aria-controls="showcase-panel-forms"
           className={`tab ${selectedTab === 'forms' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('forms')}
+          data-testid="tab-forms"
+          type="button"
         >
           Forms & Inputs
-        </a>
-        <a 
+        </button>
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'utility'}
+          aria-controls="showcase-panel-utility"
           className={`tab ${selectedTab === 'utility' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('utility')}
+          data-testid="tab-utility"
+          type="button"
         >
           Utilities
-        </a>
-        <a
+        </button>
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'advanced'}
+          aria-controls="showcase-panel-advanced"
           className={`tab ${selectedTab === 'advanced' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('advanced')}
+          data-testid="tab-advanced"
+          type="button"
         >
           Advanced
-        </a>
-        <a
+        </button>
+        <button
+          role="tab"
+          aria-selected={selectedTab === 'tracking'}
+          aria-controls="showcase-panel-tracking"
           className={`tab ${selectedTab === 'tracking' ? 'tab-active' : ''}`}
           onClick={() => setSelectedTab('tracking')}
+          data-testid="tab-tracking"
+          type="button"
         >
           📊 Tracking
-        </a>
+        </button>
       </div>
 
       <div className="container mx-auto p-6">

@@ -42,21 +42,13 @@ describe('executeCommand', () => {
     });
 
     describe('Error handling', () => {
-        it('should handle command errors gracefully', async () => {
-            await expect(executeCommand('invalidcommand')).rejects.toThrow();
-        });
-
-        it('should handle commands that exit with non-zero status', async () => {
-            await expect(executeCommand('exit 1')).rejects.toThrow();
-        });
-
-        it('should handle commands with stderr output', async () => {
-            // This command should write to stderr and exit with error
-            await expect(executeCommand('ls /nonexistent/directory')).rejects.toThrow();
-        });
-
-        it('should handle empty commands', async () => {
-            await expect(executeCommand('')).rejects.toThrow();
+        it.each([
+            ['invalidcommand', 'should handle command errors gracefully'],
+            ['exit 1', 'should handle commands that exit with non-zero status'],
+            ['ls /nonexistent/directory', 'should handle commands with stderr output'],
+            ['', 'should handle empty commands']
+        ])('%s', async (command, description) => {
+            await expect(executeCommand(command)).rejects.toThrow();
         });
 
         it('should handle null/undefined commands', async () => {
@@ -173,69 +165,31 @@ describe('readFile', () => {
     });
 
     describe('File path handling', () => {
-        it('should handle absolute paths', async () => {
-            mockReadFile.mockResolvedValueOnce('Absolute path content');
+        test.each([
+            ['/absolute/path/file.txt', 'Absolute path content', 'absolute paths'],
+            ['./relative/path/file.txt', 'Relative path content', 'relative paths'],
+            ['file with spaces & special chars!.txt', 'Special chars content', 'paths with special characters'],
+            ['path\\with\\backslashes.txt', 'Normalized content', 'path separators']
+        ])('should handle %s', async (filePath, expectedContent, description) => {
+            mockReadFile.mockResolvedValueOnce(expectedContent);
 
-            const content = await readFile('/absolute/path/file.txt');
-            expect(content).toBe('Absolute path content');
-        });
-
-        it('should handle relative paths', async () => {
-            mockReadFile.mockResolvedValueOnce('Relative path content');
-
-            const content = await readFile('./relative/path/file.txt');
-            expect(content).toBe('Relative path content');
-        });
-
-        it('should handle paths with special characters', async () => {
-            mockReadFile.mockResolvedValueOnce('Special chars content');
-
-            const content = await readFile('file with spaces & special chars!.txt');
-            expect(content).toBe('Special chars content');
-        });
-
-        it('should normalize path separators', async () => {
-            mockReadFile.mockResolvedValueOnce('Normalized content');
-
-            const content = await readFile('path\\with\\backslashes.txt');
-            expect(content).toBe('Normalized content');
+            const content = await readFile(filePath);
+            expect(content).toBe(expectedContent);
         });
     });
 
     describe('Content types', () => {
-        it('should handle JSON files', async () => {
-            const jsonContent = JSON.stringify({ key: 'value', number: 42 });
-            mockReadFile.mockResolvedValueOnce(jsonContent);
+        test.each([
+            ['config.json', JSON.stringify({ key: 'value', number: 42 }), 'JSON files', (content: string) => expect(() => JSON.parse(content)).not.toThrow()],
+            ['large.txt', 'x'.repeat(10000), 'large files', (content: string) => expect(content.length).toBe(10000)],
+            ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => {}],
+            ['multiline.txt', 'Line 1\nLine 2\r\nLine 3\n\nLine 5', 'multiline content', (content: string) => expect(content.split('\n')).toHaveLength(5)]
+        ])('should handle %s', async (fileName, fileContent, description, additionalCheck) => {
+            mockReadFile.mockResolvedValueOnce(fileContent);
 
-            const content = await readFile('config.json');
-            expect(content).toBe(jsonContent);
-            expect(() => JSON.parse(content)).not.toThrow();
-        });
-
-        it('should handle large files', async () => {
-            const largeContent = 'x'.repeat(10000);
-            mockReadFile.mockResolvedValueOnce(largeContent);
-
-            const content = await readFile('large.txt');
-            expect(content).toBe(largeContent);
-            expect(content.length).toBe(10000);
-        });
-
-        it('should handle binary-like content', async () => {
-            const binaryContent = '\x00\x01\x02\x03\xFF';
-            mockReadFile.mockResolvedValueOnce(binaryContent);
-
-            const content = await readFile('binary.dat');
-            expect(content).toBe(binaryContent);
-        });
-
-        it('should handle multiline content', async () => {
-            const multilineContent = 'Line 1\nLine 2\r\nLine 3\n\nLine 5';
-            mockReadFile.mockResolvedValueOnce(multilineContent);
-
-            const content = await readFile('multiline.txt');
-            expect(content).toBe(multilineContent);
-            expect(content.split('\n')).toHaveLength(5);
+            const content = await readFile(fileName);
+            expect(content).toBe(fileContent);
+            additionalCheck(content);
         });
     });
 

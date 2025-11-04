@@ -58,24 +58,14 @@ describe('Health Route', () => {
     });
 
     describe('Unsupported HTTP methods', () => {
-        it('should return 404 for POST requests', async () => {
-            const response = await request(app).post('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for PUT requests', async () => {
-            const response = await request(app).put('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for DELETE requests', async () => {
-            const response = await request(app).delete('/health');
-            expect(response.status).toBe(404);
-        });
-
-        it('should return 404 for PATCH requests', async () => {
-            const response = await request(app).patch('/health');
-            expect(response.status).toBe(404);
+        it.each([
+            { method: 'post', expectedStatus: 404 },
+            { method: 'put', expectedStatus: 404 },
+            { method: 'delete', expectedStatus: 404 },
+            { method: 'patch', expectedStatus: 404 },
+        ])('should return $expectedStatus for $method requests', async ({ method, expectedStatus }) => {
+            const response = await request(app)[method]('/health');
+            expect(response.status).toBe(expectedStatus);
         });
 
         it('should return 405 for OPTIONS requests if not explicitly handled', async () => {

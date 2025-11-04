@@ -4,7 +4,7 @@ import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { BotConfig } from '../../types/config';
+import { BotConfig, MessageProvider, LlmProvider } from '../../types/config';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -42,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
         overrides: overrides || {},
         metadata: {
           source: overrides ? 'user_override' : 'default',
-          lastModified: overrides?.updatedAt || new Date().toISOString(),
+          lastModified: overrides?.updatedAt?.toISOString?.() || new Date().toISOString(),
           isActive: true
         }
       };
@@ -94,7 +94,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
           overrides: overrides || {},
           metadata: {
             source: overrides ? 'user_override' : 'default',
-            lastModified: overrides?.updatedAt || new Date().toISOString(),
+            lastModified: overrides?.updatedAt?.toISOString?.() || new Date().toISOString(),
             isActive: true
           }
         }
@@ -262,8 +262,8 @@ router.post('/:botId/apply-update', requireRole('admin'), async (req: Request, r
 
     // Update user overrides
     userConfigStore.setBotOverride(botId, {
-      messageProvider: "",
-      llmProvider: "",
+      messageProvider: "discord" as MessageProvider,
+      llmProvider: "flowise" as LlmProvider,
       persona: "",
       systemInstruction: "",
       mcpServers: [],

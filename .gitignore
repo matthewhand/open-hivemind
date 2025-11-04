@@ -159,3 +159,6 @@ test-results/archive/
 .claude/
 .qwen/
 .vercel
+
+test-results/
+.last-run*

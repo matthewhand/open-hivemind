@@ -1,28 +1,53 @@
-# Netlify configuration for Open-Hivemind
+# Netlify configuration for Open-Hivemind - Frontend Only Deployment
 [build]
-<<<<<<< HEAD
-  publish = "src/client/dist"
   command = "npm run build:frontend"
-=======
   publish = "src/client/dist"
-  command = "npm run build:frontend"
->>>>>>> main
 
 [build.environment]
   NODE_VERSION = "20"
   NODE_ENV = "production"
+  VITE_API_BASE_URL = "https://open-hivemind.fly.dev"
 
+[dev]
+  command = "npm run dev:frontend"
+  publish = "src/client/dist"
+  port = 8888
+
+# Redirect all API requests to the backend on Fly.io
 [[redirects]]
   from = "/api/*"
-  to = "${BACKEND_URL}/api/:splat"
+  to = "https://open-hivemind.fly.dev/api/:splat"
   status = 200
 
+# Redirect WebUI API requests to the backend
+[[redirects]]
+  from = "/webui/api/*"
+  to = "https://open-hivemind.fly.dev/webui/api/:splat"
+  status = 200
+
+# Redirect dashboard API requests to the backend
+[[redirects]]
+  from = "/dashboard/api/*"
+  to = "https://open-hivemind.fly.dev/dashboard/api/:splat"
+  status = 200
+
+# Redirect health checks to the backend
+[[redirects]]
+  from = "/health/*"
+  to = "https://open-hivemind.fly.dev/health/:splat"
+  status = 200
+
+# WebSocket connection redirect for development (will be handled by frontend in production)
+[[redirects]]
+  from = "/webui/socket.io/*"
+  to = "https://open-hivemind.fly.dev/webui/socket.io/:splat"
+  status = 200
+
+# Fallback for SPA routing - serve index.html for all non-API routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
+  conditions = {Role = ["admin", "user"]}
 
-[dev]
-  command = "npm run dev"
-  port = 3000
-  publish = "dist/public"
