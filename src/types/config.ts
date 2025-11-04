@@ -534,6 +534,8 @@ export interface BotOverride {
   mcpServers?: McpServerConfig[];
   /** MCP guard override */
   mcpGuard?: McpGuardConfig;
+  /** Last update timestamp */
+  updatedAt?: Date;
 }
 
 /**
