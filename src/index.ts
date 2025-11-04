@@ -10,6 +10,7 @@ if (process.env.NODE_ENV === 'production') {
 const express = require('express');
 // Import Express types for TypeScript
 import { Request, Response, NextFunction } from 'express';
+import Logger from '@common/logger';
 const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
 const messageHandlerModule = require('@message/handlers/messageHandler');
@@ -39,6 +40,9 @@ import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
+const indexLog = debug('app:index');
+const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
+
 const resolveFrontendDistPath = (): string => {
     const candidates = [
         path.join(process.cwd(), 'dist/client/dist'),
@@ -46,38 +50,39 @@ const resolveFrontendDistPath = (): string => {
     ];
 
     for (const candidate of candidates) {
-        console.log(`[DEBUG] Checking frontend path: ${candidate}, exists: ${fs.existsSync(candidate)}`);
-        if (fs.existsSync(candidate)) {
-            console.log(`[DEBUG] Using frontend path: ${candidate}`);
+        const exists = fs.existsSync(candidate);
+        console.log('[DEBUG] Evaluating frontend dist path candidate', { candidate, exists });
+        if (exists) {
+            console.log('[DEBUG] Using frontend dist path', { candidate });
             return candidate;
         }
     }
 
-    console.log(`[DEBUG] No frontend path found, defaulting to: ${candidates[candidates.length - 1]}`);
-    return candidates[candidates.length - 1];
+    const fallback = candidates[candidates.length - 1];
+    console.warn('[WARN] No frontend dist path matched; using fallback', { fallback });
+    return fallback;
 };
 
 const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 if (!fs.existsSync(frontendDistPath)) {
-    console.warn('[WARN] Frontend dist directory not found at', frontendDistPath);
+    console.warn('[WARN] Frontend dist directory not found', { path: frontendDistPath });
 }
 
 // Add error handling for unhandled rejections and exceptions
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('[ERROR] Unhandled Rejection at:', promise, 'reason:', reason);
+    console.error('[ERROR] Unhandled promise rejection', { promise, reason });
     // Application specific logging, throwing an error, or other logic here
     process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-    console.error('[ERROR] Uncaught Exception:', error);
+    console.error('[ERROR] Uncaught exception', { error });
     // Application specific logging, throwing an error, or other logic here
     process.exit(1);
 });
 
-const indexLog = debug('app:index');
 const app = express();
 debug("Messenger services are being initialized...");
 
@@ -88,19 +93,33 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware for localhost development
+// Enhanced CORS middleware for development and production
 app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
     const isLocalhost = origin?.includes('localhost') ||
                        origin?.includes('127.0.0.1') ||
                        req.hostname === 'localhost' ||
                        req.hostname === '127.0.0.1';
+    
+    // Allow Netlify frontend in production
+    const isNetlify = origin?.includes('netlify.app') ||
+                      origin?.includes('netlify.com') ||
+                      process.env.NODE_ENV === 'production';
+    
+    // Allow Fly.io backend
+    const isFlyBackend = origin?.includes('fly.dev') ||
+                         req.hostname?.includes('fly.dev');
 
-    if (isLocalhost) {
-        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+    const allowedOrigin = isLocalhost ? (origin || 'http://localhost:3000') :
+                       isNetlify ? origin :
+                       isFlyBackend ? origin :
+                       null;
+
+    if (allowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token, X-Api-Key');
 
         // Handle preflight requests
         if (req.method === 'OPTIONS') {
@@ -113,7 +132,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
+    console.log('[DEBUG] Incoming request', { method: req.method, path: req.path });
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -123,24 +142,25 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(healthRoute);
 
+app.use(express.static(frontendDistPath));
+
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
-    console.log('[DEBUG] Root route hit');
-    console.log('[DEBUG] Frontend dist path:', frontendDistPath);
     const indexPath = path.join(frontendDistPath, 'index.html');
-    console.log('[DEBUG] Resolved index path:', indexPath);
+    console.log('[DEBUG] Handling root request for frontend shell', { frontendDistPath, indexPath });
+
     if (fs.existsSync(indexPath)) {
-        console.log('[DEBUG] Frontend index.html exists, sending...');
+        console.log('[DEBUG] Serving frontend index.html');
         res.sendFile(indexPath, (err) => {
             if (err) {
-                console.error('[DEBUG] Error sending frontend file:', err);
+                console.error('[ERROR] Error sending frontend file', { error: err });
                 res.status(500).send('Error serving frontend');
             } else {
-                console.log('[DEBUG] Frontend sent successfully');
+                console.log('[DEBUG] Frontend served successfully');
             }
         });
     } else {
-        console.error('[DEBUG] Frontend index.html does not exist at path:', indexPath);
+        console.error('[ERROR] Frontend index.html not found', { indexPath });
         res.status(404).send('Frontend not found - please run npm run build:frontend');
     }
 });
@@ -164,6 +184,7 @@ app.use('/uber/*', (req: Request, res: Response) => {
 // app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
 app.use('/dashboard', dashboardRouter);
+app.use('/webui/api/specs', authenticateToken, require('@src/server/routes/specs').default);
 app.use('/webui/api', authenticateToken, webuiConfigRouter);
 app.use('/webui', botsRouter);
 app.use('/webui', botConfigRouter);
@@ -206,7 +227,7 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // Catch-all handler for React Router (must be AFTER all API routes)
 // Return 404 for all non-existent routes
 app.get('*', (req: Request, res: Response) => {
-    console.log('[DEBUG] Catch-all route hit for:', req.path);
+    console.log('[DEBUG] No matching route for request', { path: req.path });
     res.status(404).json({ error: 'Endpoint not found' });
 });
 
@@ -232,38 +253,45 @@ async function startBot(messengerService: any) {
     } catch (error) {
         indexLog('[ERROR] Error starting bot service:', error);
         // Log the error but don't exit the process - we want other bots to continue working
-        console.error('[ERROR] Bot initialization failed:', error instanceof Error ? error.message : String(error));
+        console.error('[ERROR] Bot initialization failed', { error });
     }
 }
 
 async function main() {
     const llmProviders = getLlmProvider();
-    console.log('LLM Providers in use:', llmProviders.map(p => p.constructor.name || 'Unknown').join(', ') || 'Default OpenAI');
+    console.log('[INFO] Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
 
-    const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
-    const messageProviders = (typeof rawMessageProviders === 'string'
-        ? rawMessageProviders.split(',').map((v: string) => v.trim())
-        : Array.isArray(rawMessageProviders)
-        ? rawMessageProviders
-        : ['slack']) as string[];
-    console.log('Message Providers in use:', messageProviders.join(', ') || 'Default Message Service');
+    // Prepare messenger services collection for optional webhook registration later
+    let messengerServices: any[] = [];
 
-    const messengerServices = messengerProviderModule.getMessengerProvider();
-    // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
-    const filteredMessengers = messengerServices.filter((service: any) => {
-        // If providerName is not defined, assume 'slack' by default.
-        const providerName = service.providerName || 'slack';
-        return messageProviders.includes(providerName.toLowerCase());
-    });
-    if (filteredMessengers.length > 0) {
-        indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
-        for (const service of filteredMessengers) {
-            await startBot(service);
-        }
+    if (skipMessengers) {
+        console.log('[INFO] Skipping messenger initialization due to SKIP_MESSENGERS=true');
     } else {
-        indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
-        for (const service of messengerServices) {
-            await startBot(service);
+        const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+        const messageProviders = (typeof rawMessageProviders === 'string'
+            ? rawMessageProviders.split(',').map((v: string) => v.trim())
+            : Array.isArray(rawMessageProviders)
+            ? rawMessageProviders
+            : ['slack']) as string[];
+        Logger.info('Resolved message providers', { providers: messageProviders });
+
+        messengerServices = messengerProviderModule.getMessengerProvider();
+        // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
+        const filteredMessengers = messengerServices.filter((service: any) => {
+            // If providerName is not defined, assume 'slack' by default.
+            const providerName = service.providerName || 'slack';
+            return messageProviders.includes(providerName.toLowerCase());
+        });
+        if (filteredMessengers.length > 0) {
+            indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
+            for (const service of filteredMessengers) {
+                await startBot(service);
+            }
+        } else {
+            indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
+            for (const service of messengerServices) {
+                await startBot(service);
+            }
         }
     }
 
@@ -277,21 +305,21 @@ async function main() {
         wsService.initialize(server);
 
         server.on('error', (err) => {
-            console.error('[DEBUG] Server error:', err);
+            Logger.error('HTTP server error', { error: err });
         });
 
-        console.log(`[DEBUG] Attempting to bind server to port ${port} on host 0.0.0.0`);
+        Logger.info('Binding HTTP server', { port, host: '0.0.0.0' });
         server.listen(port, '0.0.0.0', () => {
-            console.log('Server is listening on port ' + port);
-            console.log('WebSocket service available at /webui/socket.io');
+            Logger.info('HTTP server listening', { port });
+            Logger.info('WebSocket service ready', { endpoint: '/webui/socket.io' });
         });
     } else {
-        console.log('HTTP server is disabled (HTTP_ENABLED=false).');
+        Logger.info('HTTP server is disabled via configuration');
     }
 
     const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
-        console.log('Webhook service is enabled, registering routes...');
+        Logger.info('Webhook service enabled; registering routes');
         for (const messengerService of messengerServices) {
             const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
             if (channelId) {
@@ -299,12 +327,12 @@ async function main() {
             }
         }
     } else {
-        console.log('Webhook service is disabled.');
+        Logger.info('Webhook service is disabled');
     }
 }
 
 main().catch((error) => {
-    console.error('[DEBUG] Unexpected error in main execution:', error);
+    Logger.error('Unexpected error in main execution', { error });
     process.exit(1);
 });
 

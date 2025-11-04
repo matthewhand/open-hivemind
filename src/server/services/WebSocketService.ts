@@ -269,7 +269,19 @@ export class WebSocketService {
       }
 
       this.io = new SocketIOServer(server, {
-        path: '/webui/socket.io'
+        path: '/webui/socket.io',
+        cors: {
+          origin: [
+            /^https?:\/\/localhost(:\d+)?/,
+            /^https?:\/\/127\.0\.0\.1(:\d+)?/,
+            /^https:\/\/.*\.netlify\.app$/,
+            /^https:\/\/.*\.netlify\.com$/,
+            /^https:\/\/.*\.fly\.dev$/
+          ],
+          methods: ['GET', 'POST'],
+          credentials: true,
+          allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control', 'X-CSRF-Token']
+        }
       });
 
       this.setupEventHandlers();

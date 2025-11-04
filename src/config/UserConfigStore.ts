@@ -1,37 +1,24 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
-import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { BotConfiguration } from '../database/DatabaseManager';
+import { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 
-const debug = Debug('app:UserConfigStore');
-
-export interface BotOverride {
-  messageProvider?: string;
-  llmProvider?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string; apiKey?: string }>;
-  mcpGuard?: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds?: string[];
+interface ToolConfig {
+  guards?: {
+    ownerOnly?: boolean;
+    allowedUsers?: string[];
   };
-  updatedAt?: string;
 }
-
-type StoreShape = Record<string, BotOverride>;
 
 export class UserConfigStore {
   private static instance: UserConfigStore;
-  private readonly filePath: string;
-  private cache: StoreShape | null = null;
+  private config: {
+    toolSettings?: Record<string, ToolConfig>;
+    bots?: BotConfiguration[];
+  } = {};
 
   private constructor() {
-    const configDir = path.join(process.cwd(), 'config', 'user');
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-    this.filePath = path.join(configDir, 'bot-overrides.json');
+    this.loadConfig();
   }
 
   public static getInstance(): UserConfigStore {
@@ -41,87 +28,82 @@ export class UserConfigStore {
     return UserConfigStore.instance;
   }
 
-  private load(): StoreShape {
-    if (this.cache) {
-      return this.cache;
-    }
-
+  private async loadConfig(): Promise<void> {
     try {
-      if (!fs.existsSync(this.filePath)) {
-        this.cache = {};
-        return this.cache;
-      }
-
-      const raw = fs.readFileSync(this.filePath, 'utf8');
-      this.cache = JSON.parse(raw) as StoreShape;
-      return this.cache;
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug('Failed to load bot overrides, falling back to empty store:', {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-        filePath: this.filePath
-      });
-      this.cache = {};
-      return this.cache;
+      const configPath = path.join(process.cwd(), 'config', 'user-config.json');
+      const data = await fs.readFile(configPath, 'utf-8');
+      this.config = JSON.parse(data);
+    } catch (error) {
+      // If config file doesn't exist, use default empty config
+      this.config = {
+        toolSettings: {},
+        bots: []
+      };
     }
   }
 
-  private persist(data: StoreShape): void {
-    this.cache = data;
-    try {
-      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-      debug('Failed to persist bot overrides:', {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
-        errorType: errorInfo.type,
-        severity: errorInfo.severity,
-        filePath: this.filePath
-      });
-      throw ErrorUtils.createError(
-        `Failed to persist bot overrides: ${hivemindError.message}`,
-        'error' as any,
-        'USER_CONFIG_PERSIST_FAILED',
-        500,
-        { originalError: hivemindError, filePath: this.filePath }
-      );
+  public getToolConfig(toolName: string): ToolConfig | undefined {
+    return this.config.toolSettings?.[toolName];
+  }
+
+  public setToolConfig(toolName: string, config: ToolConfig): void {
+    if (!this.config.toolSettings) {
+      this.config.toolSettings = {};
     }
+    this.config.toolSettings[toolName] = config;
   }
 
-  public getAll(): StoreShape {
-    return { ...this.load() };
-  }
-
+  /**
+   * Get user overrides for a specific bot.
+   * @param botName The name of the bot.
+   * @returns A BotOverride object if found, otherwise undefined.
+   */
   public getBotOverride(botName: string): BotOverride | undefined {
-    const store = this.load();
-    return store[botName] ? { ...store[botName] } : undefined;
-  }
-
-  public setBotOverride(botName: string, override: BotOverride): void {
-    const store = this.load();
-    const existing = store[botName] || {};
-    const merged: BotOverride = {
-      ...existing,
-      ...override,
-      updatedAt: new Date().toISOString(),
+    if (!this.config.bots) {
+      return undefined;
+    }
+    const botConfig = this.config.bots.find(bot => bot.name === botName);
+    if (!botConfig) {
+      return undefined;
+    }
+    // Map BotConfiguration to BotOverride
+    return {
+      messageProvider: botConfig.messageProvider as MessageProvider,
+      llmProvider: botConfig.llmProvider as LlmProvider,
+      persona: botConfig.persona,
+      systemInstruction: botConfig.systemInstruction,
+      mcpServers: botConfig.mcpServers as McpServerConfig[],
+      mcpGuard: botConfig.mcpGuard as McpGuardConfig,
     };
-    store[botName] = merged;
-    this.persist(store);
   }
 
-  public removeBot(botName: string): void {
-    const store = this.load();
-    if (store[botName]) {
-      delete store[botName];
-      this.persist(store);
+  /**
+   * Set user overrides for a specific bot.
+   * @param botName The name of the bot.
+   * @param overrides The overrides to apply.
+   */
+  public setBotOverride(botName: string, overrides: BotOverride): void {
+    if (!this.config.bots) {
+      this.config.bots = [];
+    }
+    const existingBotIndex = this.config.bots.findIndex(bot => bot.name === botName);
+    const botConfig: BotConfiguration = {
+      name: botName,
+      messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
+      llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
+      persona: overrides.persona,
+      systemInstruction: overrides.systemInstruction,
+      mcpServers: overrides.mcpServers,
+      mcpGuard: overrides.mcpGuard,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (existingBotIndex >= 0) {
+      this.config.bots[existingBotIndex] = botConfig;
+    } else {
+      this.config.bots.push(botConfig);
     }
   }
 }
-
-export default UserConfigStore;

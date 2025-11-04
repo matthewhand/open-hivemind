@@ -1,7 +1,8 @@
 import { BotConfigurationManager } from './BotConfigurationManager';
-import UserConfigStore, { BotOverride } from './UserConfigStore';
+import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { BotOverride } from '@src/types/config';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
@@ -384,10 +385,10 @@ export class HotReloadManager {
           sanitizedChanges.mcpGuard = {
             enabled: Boolean(guard?.enabled),
             type: guard?.type === 'custom' ? 'custom' : 'owner',
-            allowedUserIds: Array.isArray(guard?.allowedUserIds)
-              ? guard?.allowedUserIds.filter(Boolean)
-              : typeof guard?.allowedUserIds === 'string'
-                ? (guard?.allowedUserIds as string).split(',').map((id: string) => id.trim()).filter(Boolean)
+            allowedUsers: Array.isArray(guard?.allowedUsers)
+              ? guard?.allowedUsers.filter(Boolean)
+              : typeof guard?.allowedUsers === 'string'
+                ? (guard?.allowedUsers as string).split(',').map((id: string) => id.trim()).filter(Boolean)
                 : undefined,
           };
           continue;
