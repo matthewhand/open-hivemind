@@ -2,12 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
+  Paper, 
   TextField, 
   MenuItem,
   Select,
   FormControl,
   InputLabel,
   Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Chip,
   FormControlLabel,
   Checkbox,
@@ -20,7 +27,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { useWebSocket } from '../../hooks/useWebSocket';
-import DataTable from '../DaisyUI/DataTable';
 
 interface MessageFlowEvent {
   id: string;
@@ -280,85 +286,56 @@ const ActivityMonitor: React.FC = () => {
         </Paper>
         
         {/* Message Flow Table */}
-        <Card>
-          <CardContent>
-            <DataTable
-              data={filteredMessages}
-              columns={[
-                {
-                  key: 'timestamp',
-                  title: 'Timestamp',
-                  sortable: true,
-                  render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm:ss')
-                },
-                {
-                  key: 'botName',
-                  title: 'Agent',
-                  sortable: true,
-                  filterable: true
-                },
-                {
-                  key: 'provider',
-                  title: 'Provider',
-                  sortable: true,
-                  filterable: true
-                },
-                {
-                  key: 'messageType',
-                  title: 'Type',
-                  sortable: true,
-                  filterable: true,
-                  render: (value: 'incoming' | 'outgoing') => (
-                    <Chip 
-                      label={value} 
-                      size="small" 
-                      color={value === 'incoming' ? 'primary' : 'secondary'} 
-                    />
-                  )
-                },
-                {
-                  key: 'channelId',
-                  title: 'Channel',
-                  sortable: true,
-                  filterable: true
-                },
-                {
-                  key: 'contentLength',
-                  title: 'Length',
-                  sortable: true
-                },
-                {
-                  key: 'processingTime',
-                  title: 'Processing Time',
-                  sortable: true,
-                  render: (value?: number) => value ? `${value}ms` : '-'
-                },
-                {
-                  key: 'status',
-                  title: 'Status',
-                  sortable: true,
-                  filterable: true,
-                  render: (value: 'success' | 'error' | 'timeout') => (
-                    <Chip 
-                      label={value} 
-                      size="small" 
-                      color={value === 'success' ? 'success' : value === 'error' ? 'error' : 'warning'} 
-                    />
-                  )
-                }
-              ]}
-              loading={loading}
-              searchable={true}
-              selectable={true}
-              pagination={{
-                pageSize: 25,
-                showSizeChanger: true,
-                pageSizeOptions: [10, 25, 50, 100]
-              }}
-              exportable={true}
-            />
-          </CardContent>
-        </Card>
+        <Paper>
+          <TableContainer>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Timestamp</TableCell>
+                  <TableCell>Agent</TableCell>
+                  <TableCell>Provider</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Channel</TableCell>
+                  <TableCell>Length</TableCell>
+                  <TableCell>Processing Time</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredMessages.map((msg) => (
+                  <TableRow 
+                    key={msg.id} 
+                    sx={{ 
+                      '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
+                      ...(msg.status === 'error' && { backgroundColor: 'error.light' })
+                    }}
+                  >
+                    <TableCell>{dayjs(msg.timestamp).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                    <TableCell>{msg.botName}</TableCell>
+                    <TableCell>{msg.provider}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={msg.messageType} 
+                        size="small" 
+                        color={msg.messageType === 'incoming' ? 'primary' : 'secondary'} 
+                      />
+                    </TableCell>
+                    <TableCell>{msg.channelId}</TableCell>
+                    <TableCell>{msg.contentLength}</TableCell>
+                    <TableCell>{msg.processingTime ? `${msg.processingTime}ms` : '-'}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={msg.status} 
+                        size="small" 
+                        color={msg.status === 'success' ? 'success' : msg.status === 'error' ? 'error' : 'warning'} 
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       </Box>
     </LocalizationProvider>
   );

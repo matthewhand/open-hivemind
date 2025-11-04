@@ -38,6 +38,8 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
 
   return (
     <div className={`flex min-h-screen bg-base-200 ${className}`}>
+      {/* Skip link for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn btn-sm btn-primary">Skip to main content</a>
       {/* Mobile Header */}
       {isMobile && (
         <div className="fixed top-0 left-0 right-0 z-40 bg-base-100 border-b border-base-300">
@@ -95,7 +97,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       <main className={`
         flex-1 transition-all duration-300 ease-in-out
         ${isMobile ? 'ml-0 pt-16' : 'ml-72'}
-      `}>
+      `} id="main-content" role="main" data-testid="main-content">
         <div className="p-6">
           {children}
         </div>

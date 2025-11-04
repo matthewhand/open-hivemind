@@ -1,10 +1,18 @@
 {
   "version": 2,
+  "name": "open-hivemind",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:full",
   "outputDirectory": "public",
+  "devCommand": "npm run dev:vercel",
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
