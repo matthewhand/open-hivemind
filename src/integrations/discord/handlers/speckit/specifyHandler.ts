@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { CommandInteraction } from 'discord.js';
 import Debug from 'debug';
 import { SpeckitSpecificationGenerator } from '@src/services/speckit/SpeckitSpecificationGenerator';
@@ -37,6 +38,18 @@ export async function handleSpeckitSpecify(interaction: CommandInteraction): Pro
             });
         }
 
+=======
+import { ChatInputCommandInteraction } from 'discord.js';
+import Debug from 'debug';
+import { SpeckitSpecificationGenerator } from '@src/services/speckit/SpeckitSpecificationGenerator';
+
+const log = Debug('app:discord:handlers:speckit:specify');
+
+export async function handleSpeckitSpecify(interaction: ChatInputCommandInteraction): Promise<void> {
+    log('Handling /speckit specify command');
+
+    try {
+>>>>>>> origin/main
         // Get the topic from the command options
         const topic = interaction.options.getString('topic', true);
 
@@ -51,6 +64,7 @@ export async function handleSpeckitSpecify(interaction: CommandInteraction): Pro
         });
 
     } catch (error: unknown) {
+<<<<<<< HEAD
         const hivemindError = ErrorUtils.toHivemindError(error);
         const classification = ErrorUtils.classifyError(hivemindError);
 
@@ -61,6 +75,13 @@ export async function handleSpeckitSpecify(interaction: CommandInteraction): Pro
 
         await interaction.reply({
             content: `Failed to generate specification: ${ErrorUtils.getMessage(hivemindError)}`,
+=======
+        console.error('Discord speckit specify error:', error);
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        await interaction.reply({
+            content: `Failed to generate specification: ${errorMessage}`,
+>>>>>>> origin/main
             ephemeral: true
         });
     }

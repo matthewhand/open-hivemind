@@ -1,7 +1,11 @@
 import { getLlmProvider } from '@llm/getLlmProvider';
 import Logger from '@common/logger';
 
+<<<<<<< HEAD
 const log = Logger.withContext('SpeckitSpecificationGenerator');
+=======
+const log = Logger;
+>>>>>>> origin/main
 
 export class SpeckitSpecificationGenerator {
   /**
@@ -24,7 +28,11 @@ export class SpeckitSpecificationGenerator {
       }
 
       const primaryProvider = llmProviders[0];
+<<<<<<< HEAD
       if (!primaryProvider || typeof primaryProvider.generateResponse !== 'function') {
+=======
+      if (!primaryProvider || typeof primaryProvider.generateChatCompletion !== 'function') {
+>>>>>>> origin/main
         throw new Error('Primary LLM provider is not properly configured');
       }
 
@@ -41,7 +49,11 @@ Please create a well-structured specification in markdown format that includes:
 
 Make sure the specification is detailed, clear, and actionable.`;
 
+<<<<<<< HEAD
       const response = await primaryProvider.generateResponse(prompt);
+=======
+      const response = await primaryProvider.generateChatCompletion(prompt, []);
+>>>>>>> origin/main
 
       if (!response || typeof response !== 'string' || response.trim().length === 0) {
         throw new Error('Empty or invalid response from LLM provider');

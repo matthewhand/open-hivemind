@@ -458,7 +458,7 @@ export class BotConfigurationManager {
       const clonedValue = Array.isArray(overrideValue)
         ? [...overrideValue]
         : typeof overrideValue === 'object' && overrideValue !== null
-          ? { ...(overrideValue as Record<string, unknown>) }
+          ? { ...(overrideValue as unknown as Record<string, unknown>) }
           : overrideValue;
 
       (config as any)[field] = clonedValue;

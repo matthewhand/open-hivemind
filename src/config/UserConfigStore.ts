@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { BotConfiguration } from '../database/DatabaseManager';
-import { BotOverride } from '@src/types/config';
+import { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 
 interface ToolConfig {
   guards?: {
@@ -68,12 +68,12 @@ export class UserConfigStore {
     }
     // Map BotConfiguration to BotOverride
     return {
-      messageProvider: botConfig.messageProvider,
-      llmProvider: botConfig.llmProvider,
+      messageProvider: botConfig.messageProvider as MessageProvider,
+      llmProvider: botConfig.llmProvider as LlmProvider,
       persona: botConfig.persona,
       systemInstruction: botConfig.systemInstruction,
-      mcpServers: botConfig.mcpServers,
-      mcpGuard: botConfig.mcpGuard,
+      mcpServers: botConfig.mcpServers as McpServerConfig[],
+      mcpGuard: botConfig.mcpGuard as McpGuardConfig,
     };
   }
 
@@ -89,8 +89,15 @@ export class UserConfigStore {
     const existingBotIndex = this.config.bots.findIndex(bot => bot.name === botName);
     const botConfig: BotConfiguration = {
       name: botName,
-      ...overrides,
-      updatedAt: new Date().toISOString(),
+      messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
+      llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
+      persona: overrides.persona,
+      systemInstruction: overrides.systemInstruction,
+      mcpServers: overrides.mcpServers,
+      mcpGuard: overrides.mcpGuard,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     if (existingBotIndex >= 0) {

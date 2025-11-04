@@ -6,6 +6,8 @@ interface BreakpointValues {
   lg: boolean;
   xl: boolean;
   '2xl': boolean;
+  isMobile: boolean;
+  isTablet: boolean;
 }
 
 const breakpoints = {
@@ -46,6 +48,8 @@ export const useResponsive = (): BreakpointValues => {
     lg: width >= breakpoints.lg,
     xl: width >= breakpoints.xl,
     '2xl': width >= breakpoints['2xl'],
+    isMobile: width < breakpoints.sm,
+    isTablet: width >= breakpoints.sm && width < breakpoints.lg,
   };
 };
 
