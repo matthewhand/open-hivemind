@@ -41,6 +41,9 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
 const indexLog = debug('app:index');
+const appLogger = Logger.withContext('app:index');
+const httpLogger = Logger.withContext('http');
+const frontendLogger = Logger.withContext('frontend');
 const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
 
 const resolveFrontendDistPath = (): string => {
@@ -51,15 +54,15 @@ const resolveFrontendDistPath = (): string => {
 
     for (const candidate of candidates) {
         const exists = fs.existsSync(candidate);
-        console.log('[DEBUG] Evaluating frontend dist path candidate', { candidate, exists });
+        frontendLogger.debug('Evaluating frontend dist path candidate', { candidate, exists });
         if (exists) {
-            console.log('[DEBUG] Using frontend dist path', { candidate });
+            frontendLogger.debug('Using frontend dist path', { candidate });
             return candidate;
         }
     }
 
     const fallback = candidates[candidates.length - 1];
-    console.warn('[WARN] No frontend dist path matched; using fallback', { fallback });
+    frontendLogger.warn('No frontend dist path matched; using fallback', { fallback });
     return fallback;
 };
 
@@ -67,18 +70,18 @@ const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 if (!fs.existsSync(frontendDistPath)) {
-    console.warn('[WARN] Frontend dist directory not found', { path: frontendDistPath });
+    frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
 }
 
 // Add error handling for unhandled rejections and exceptions
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('[ERROR] Unhandled promise rejection', { promise, reason });
+    appLogger.error('Unhandled promise rejection', { promise, reason });
     // Application specific logging, throwing an error, or other logic here
     process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-    console.error('[ERROR] Uncaught exception', { error });
+    appLogger.error('Uncaught exception', { error });
     // Application specific logging, throwing an error, or other logic here
     process.exit(1);
 });
@@ -93,33 +96,19 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Enhanced CORS middleware for development and production
+// CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
     const isLocalhost = origin?.includes('localhost') ||
                        origin?.includes('127.0.0.1') ||
                        req.hostname === 'localhost' ||
                        req.hostname === '127.0.0.1';
-    
-    // Allow Netlify frontend in production
-    const isNetlify = origin?.includes('netlify.app') ||
-                      origin?.includes('netlify.com') ||
-                      process.env.NODE_ENV === 'production';
-    
-    // Allow Fly.io backend
-    const isFlyBackend = origin?.includes('fly.dev') ||
-                         req.hostname?.includes('fly.dev');
 
-    const allowedOrigin = isLocalhost ? (origin || 'http://localhost:3000') :
-                       isNetlify ? origin :
-                       isFlyBackend ? origin :
-                       null;
-
-    if (allowedOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    if (isLocalhost) {
+        res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token, X-Api-Key');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-CSRF-Token');
 
         // Handle preflight requests
         if (req.method === 'OPTIONS') {
@@ -132,7 +121,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log('[DEBUG] Incoming request', { method: req.method, path: req.path });
+    httpLogger.debug('Incoming request', { method: req.method, path: req.path });
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -142,25 +131,23 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 app.use(healthRoute);
 
-app.use(express.static(frontendDistPath));
-
 // Serve unified dashboard at root
 app.get('/', (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');
-    console.log('[DEBUG] Handling root request for frontend shell', { frontendDistPath, indexPath });
+    appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
 
     if (fs.existsSync(indexPath)) {
-        console.log('[DEBUG] Serving frontend index.html');
+        appLogger.debug('Serving frontend index.html');
         res.sendFile(indexPath, (err) => {
             if (err) {
-                console.error('[ERROR] Error sending frontend file', { error: err });
+                appLogger.error('Error sending frontend file', { error: err });
                 res.status(500).send('Error serving frontend');
             } else {
-                console.log('[DEBUG] Frontend served successfully');
+                appLogger.info('Frontend served successfully');
             }
         });
     } else {
-        console.error('[ERROR] Frontend index.html not found', { indexPath });
+        appLogger.error('Frontend index.html not found', { indexPath });
         res.status(404).send('Frontend not found - please run npm run build:frontend');
     }
 });
@@ -184,7 +171,6 @@ app.use('/uber/*', (req: Request, res: Response) => {
 // app.use('/api/admin', adminRouter);
 app.use('/api/swarm', swarmRouter);
 app.use('/dashboard', dashboardRouter);
-app.use('/webui/api/specs', authenticateToken, require('@src/server/routes/specs').default);
 app.use('/webui/api', authenticateToken, webuiConfigRouter);
 app.use('/webui', botsRouter);
 app.use('/webui', botConfigRouter);
@@ -227,7 +213,7 @@ app.use('/admin/*', (req: Request, res: Response) => {
 // Catch-all handler for React Router (must be AFTER all API routes)
 // Return 404 for all non-existent routes
 app.get('*', (req: Request, res: Response) => {
-    console.log('[DEBUG] No matching route for request', { path: req.path });
+    httpLogger.debug('No matching route for request', { path: req.path });
     res.status(404).json({ error: 'Endpoint not found' });
 });
 
@@ -253,19 +239,19 @@ async function startBot(messengerService: any) {
     } catch (error) {
         indexLog('[ERROR] Error starting bot service:', error);
         // Log the error but don't exit the process - we want other bots to continue working
-        console.error('[ERROR] Bot initialization failed', { error });
+        appLogger.error('Bot initialization failed', { error });
     }
 }
 
 async function main() {
     const llmProviders = getLlmProvider();
-    console.log('[INFO] Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
+    appLogger.info('Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
 
     // Prepare messenger services collection for optional webhook registration later
     let messengerServices: any[] = [];
 
     if (skipMessengers) {
-        console.log('[INFO] Skipping messenger initialization due to SKIP_MESSENGERS=true');
+        appLogger.info('Skipping messenger initialization due to SKIP_MESSENGERS=true');
     } else {
         const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
         const messageProviders = (typeof rawMessageProviders === 'string'
@@ -273,7 +259,7 @@ async function main() {
             : Array.isArray(rawMessageProviders)
             ? rawMessageProviders
             : ['slack']) as string[];
-        Logger.info('Resolved message providers', { providers: messageProviders });
+        appLogger.info('Resolved message providers', { providers: messageProviders });
 
         messengerServices = messengerProviderModule.getMessengerProvider();
         // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
@@ -305,21 +291,21 @@ async function main() {
         wsService.initialize(server);
 
         server.on('error', (err) => {
-            Logger.error('HTTP server error', { error: err });
+            appLogger.error('HTTP server error', { error: err });
         });
 
-        Logger.info('Binding HTTP server', { port, host: '0.0.0.0' });
+        appLogger.info('Binding HTTP server', { port, host: '0.0.0.0' });
         server.listen(port, '0.0.0.0', () => {
-            Logger.info('HTTP server listening', { port });
-            Logger.info('WebSocket service ready', { endpoint: '/webui/socket.io' });
+            appLogger.info('HTTP server listening', { port });
+            appLogger.info('WebSocket service ready', { endpoint: '/webui/socket.io' });
         });
     } else {
-        Logger.info('HTTP server is disabled via configuration');
+        appLogger.info('HTTP server is disabled via configuration');
     }
 
     const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
-        Logger.info('Webhook service enabled; registering routes');
+        appLogger.info('Webhook service enabled; registering routes');
         for (const messengerService of messengerServices) {
             const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
             if (channelId) {
@@ -327,12 +313,12 @@ async function main() {
             }
         }
     } else {
-        Logger.info('Webhook service is disabled');
+        appLogger.info('Webhook service is disabled');
     }
 }
 
 main().catch((error) => {
-    Logger.error('Unexpected error in main execution', { error });
+    appLogger.error('Unexpected error in main execution', { error });
     process.exit(1);
 });
 

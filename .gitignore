@@ -162,5 +162,3 @@ test-results/archive/
 
 test-results/
 .last-run*
-# Ignore local TODO planning file updates
-TODO.md
