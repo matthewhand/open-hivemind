@@ -1,14 +1,18 @@
 import { parse } from '@message/helpers/commands/commandParser';
 
 describe('commandParser.parse', () => {
-  test('returns null when input does not start with !', () => {
-    expect(parse('hello')).toBeNull();
-    expect(parse('  hello')).toBeNull();
+  test.each([
+    ['hello', 'input without exclamation mark'],
+    ['  hello', 'input with leading whitespace'],
+  ])('returns null when %s', (input, description) => {
+    expect(parse(input)).toBeNull();
   });
 
-  test('returns null for lone ! or whitespace-only after !', () => {
-    expect(parse('!')).toBeNull();
-    expect(parse('!   ')).toBeNull();
+  test.each([
+    ['!', 'lone exclamation mark'],
+    ['!   ', 'exclamation mark with whitespace'],
+  ])('returns null for %s', (input, description) => {
+    expect(parse(input)).toBeNull();
   });
 
   test('parses command and args with spaces', () => {

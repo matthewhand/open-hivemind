@@ -1,4 +1,6 @@
 export class Database {
+  private _connected = false;
+
   async exec(_sql: string): Promise<void> {
     return;
   }
@@ -16,7 +18,20 @@ export class Database {
   }
 
   async close(): Promise<void> {
+    this._connected = false;
     return;
+  }
+
+  configure(_options: any): void {
+    // Mock configure method
+  }
+
+  get connected(): boolean {
+    return this._connected;
+  }
+
+  set connected(value: boolean) {
+    this._connected = value;
   }
 }
 

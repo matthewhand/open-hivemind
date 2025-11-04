@@ -107,10 +107,10 @@ import { TEST_USERS } from './fixtures/auth-fixtures';
 test.describe('Authentication', () => {
   test('user can login', async ({ page }) => {
     const loginPage = new LoginPage(page);
-    
+
     await loginPage.navigateToLogin();
     await loginPage.login(TEST_USERS.admin.username, TEST_USERS.admin.password);
-    
+
     expect(await loginPage.isLoggedIn()).toBe(true);
   });
 });
@@ -126,7 +126,7 @@ authenticatedTest.describe('Dashboard', () => {
   authenticatedTest('displays metrics', async ({ page }) => {
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.navigateToDashboard();
-    
+
     expect(await dashboardPage.areSummaryCardsVisible()).toBe(true);
   });
 });
@@ -142,7 +142,7 @@ test('creates new bot', async ({ page }) => {
     name: 'Test Bot',
     platform: 'discord'
   });
-  
+
   // Use testBot in test logic
 });
 ```

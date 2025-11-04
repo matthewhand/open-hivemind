@@ -27,11 +27,11 @@ test.describe('Login flow', () => {
 
   test('disables submit while loading', async () => {
     await loginPage.fillCredentials(TEST_USERS.admin.username, 'wrong');
-    
+
     // Submit and check if button becomes disabled
     await loginPage.submitButton.click();
     await loginPage.waitForSubmitButtonDisabled();
-    
+
     expect(await loginPage.isSubmitButtonEnabled()).toBe(false);
   });
 
@@ -57,14 +57,14 @@ test.describe('Login flow', () => {
 
   test('maintains proper focus order', async () => {
     await loginPage.navigateToLogin();
-    
+
     // Check initial focus on username field
     expect(await loginPage.isUsernameFieldFocused()).toBe(true);
-    
+
     // Tab to password field
     await loginPage.page.keyboard.press('Tab');
     expect(await loginPage.isPasswordFieldFocused()).toBe(true);
-    
+
     // Check password field is masked
     expect(await loginPage.isPasswordMasked()).toBe(true);
   });

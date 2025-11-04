@@ -196,6 +196,13 @@ export const hivemindNavItems: NavItem[] = [
     ],
   },
   {
+    id: 'specs-section',
+    label: 'Specifications',
+    icon: '📋',
+    path: '/admin/specs',
+    visible: true,
+  },
+  {
     id: 'development',
     label: 'Development',
     icon: '🎨',

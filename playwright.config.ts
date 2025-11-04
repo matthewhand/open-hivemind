@@ -153,7 +153,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run playwright:serve',
+    command: 'npx cross-env NODE_ENV=production node --max-old-space-size=256 dist/src/index.js',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
