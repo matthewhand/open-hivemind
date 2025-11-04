@@ -2,7 +2,17 @@ import convict from 'convict';
 import Debug from 'debug';
 import path from 'path';
 import fs from 'fs';
-import UserConfigStore, { BotOverride } from './UserConfigStore';
+import { UserConfigStore } from './UserConfigStore';
+
+// Define BotOverride interface locally since it's not exported
+interface BotOverride {
+  messageProvider?: string;
+  llmProvider?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: unknown[];
+  mcpGuard?: unknown;
+}
 import {
   BotConfig,
   MessageProvider,
@@ -436,7 +446,7 @@ export class BotConfigurationManager {
       return;
     }
 
-    const assignIfAllowed = <K extends keyof BotOverride>(field: K, envKey: string) => {
+    const assignIfAllowed = (field: keyof BotOverride, envKey: string) => {
       const overrideValue = overrides[field];
       if (overrideValue === undefined) {
         return;
@@ -448,10 +458,10 @@ export class BotConfigurationManager {
       const clonedValue = Array.isArray(overrideValue)
         ? [...overrideValue]
         : typeof overrideValue === 'object' && overrideValue !== null
-          ? { ...(overrideValue as Record<string, unknown>) }
+          ? { ...(overrideValue as unknown as Record<string, unknown>) }
           : overrideValue;
 
-      (config as Record<string, unknown>)[field] = clonedValue;
+      (config as any)[field] = clonedValue;
     };
 
     assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');

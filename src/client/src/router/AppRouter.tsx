@@ -38,6 +38,8 @@ const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'))
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
+const SpecsPage = lazy(() => import('../pages/SpecsPage'));
+const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 
 interface LoadingFallbackProps {
   message?: string;
@@ -148,6 +150,8 @@ const AppRouter: React.FC = () => {
             <Route path="static" element={<StaticPagesPage />} />
             <Route path="sitemap" element={<SitemapPage />} />
             <Route path="showcase" element={<DaisyUIShowcase />} />
+            <Route path="specs" element={<SpecsPage />} />
+            <Route path="specs/:id" element={<SpecDetailPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

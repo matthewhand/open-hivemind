@@ -32,17 +32,17 @@ export const test = base.extend<AuthFixtures>({
   // Fixture for an authenticated page (admin by default)
   authenticatedPage: async ({ page }, use) => {
     const basePage = new BasePage(page);
-    
+
     // Login as admin by default
     await basePage.navigateTo('/login');
     await page.fill('input[name="username"]', TEST_USERS.admin.username);
     await page.fill('input[name="password"]', TEST_USERS.admin.password);
     await page.click('button[type="submit"]');
-    
+
     // Wait for successful login
     await page.waitForURL(/\/dashboard(\/)?$/i, { timeout: 10000 });
     await basePage.waitForLoadingToComplete();
-    
+
     await use(basePage);
   },
 
@@ -53,10 +53,10 @@ export const test = base.extend<AuthFixtures>({
     await page.fill('input[name="username"]', TEST_USERS.admin.username);
     await page.fill('input[name="password"]', TEST_USERS.admin.password);
     await page.click('button[type="submit"]');
-    
+
     // Wait for successful login
     await page.waitForURL(/\/dashboard(\/)?$/i, { timeout: 10000 });
-    
+
     await use(page);
   },
 
@@ -67,10 +67,10 @@ export const test = base.extend<AuthFixtures>({
     await page.fill('input[name="username"]', TEST_USERS.user.username);
     await page.fill('input[name="password"]', TEST_USERS.user.password);
     await page.click('button[type="submit"]');
-    
+
     // Wait for successful login
     await page.waitForURL(/\/dashboard(\/)?$/i, { timeout: 10000 });
-    
+
     await use(page);
   },
 
@@ -81,11 +81,11 @@ export const test = base.extend<AuthFixtures>({
       await page.fill('input[name="username"]', TEST_USERS.admin.username);
       await page.fill('input[name="password"]', TEST_USERS.admin.password);
       await page.click('button[type="submit"]');
-      
+
       // Wait for successful login
       await page.waitForURL(/\/dashboard(\/)?$/i, { timeout: 10000 });
     };
-    
+
     await use(loginAsAdminFunc);
   },
 
@@ -96,11 +96,11 @@ export const test = base.extend<AuthFixtures>({
       await page.fill('input[name="username"]', username || TEST_USERS.user.username);
       await page.fill('input[name="password"]', password || TEST_USERS.user.password);
       await page.click('button[type="submit"]');
-      
+
       // Wait for successful login
       await page.waitForURL(/\/dashboard(\/)?$/i, { timeout: 10000 });
     };
-    
+
     await use(loginAsUserFunc);
   },
 
@@ -115,7 +115,7 @@ export const test = base.extend<AuthFixtures>({
         'a:has-text("Logout")',
         'a:has-text("Sign Out")'
       ];
-      
+
       for (const selector of logoutSelectors) {
         const element = page.locator(selector);
         if (await element.isVisible()) {
@@ -123,11 +123,11 @@ export const test = base.extend<AuthFixtures>({
           break;
         }
       }
-      
+
       // Wait for redirect to login page
       await page.waitForURL(/\/login/, { timeout: 10000 });
     };
-    
+
     await use(logoutFunc);
   },
 });

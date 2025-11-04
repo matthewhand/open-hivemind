@@ -15,10 +15,30 @@ describe('debugEnvVars', () => {
     
     // Create mocks
     mockDebug = jest.fn();
-    mockRedactSensitiveInfo = jest.fn((value: string, charsToShow: number) => {
-      if (!value) return '';
-      if (value.length <= charsToShow) return '*'.repeat(value.length);
-      return value.substring(0, charsToShow) + '*'.repeat(Math.max(0, value.length - charsToShow));
+    mockRedactSensitiveInfo = jest.fn((key: string, value: any) => {
+      const sensitivePatterns = ['password', 'apikey', 'api_key', 'auth_token', 'secret', 'token', 'key'];
+      const lowerKey = key.toLowerCase();
+      const isSensitive = sensitivePatterns.some(pattern => lowerKey.includes(pattern));
+
+      if (!isSensitive) {
+        return value === undefined || value === null ? '' : String(value);
+      }
+
+      const stringValue = value === undefined || value === null ? '' : String(value);
+      if (stringValue.length === 0) {
+        return '********';
+      }
+
+      if (stringValue.length <= 8) {
+        const visible = stringValue.slice(-4);
+        const redactionLength = Math.max(stringValue.length - visible.length, 4);
+        return `${'*'.repeat(redactionLength)}${visible}`;
+      }
+
+      const start = stringValue.slice(0, 4);
+      const end = stringValue.slice(-4);
+      const middleLength = Math.max(stringValue.length - 8, 4);
+      return `${start}${'*'.repeat(middleLength)}${end}`;
     });
 
     // Mock the debug module at the top level
@@ -98,20 +118,20 @@ describe('debugEnvVars', () => {
       debugEnvVars();
 
       // Test KEY variables
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('secret_api_key_12345', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('super_secret_key', 4);
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('API_KEY', 'secret_api_key_12345');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('SECRET_KEY', 'super_secret_key');
 
       // Test TOKEN variables
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('bot_token_12345', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('access_token_67890', 4);
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('BOT_TOKEN', 'bot_token_12345');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('ACCESS_TOKEN', 'access_token_67890');
 
       // Test SECRET variables
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('jwt_secret_123', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('db_secret_456', 4);
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('JWT_SECRET', 'jwt_secret_123');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('DATABASE_SECRET', 'db_secret_456');
 
       // Test PASSWORD variables
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('database_password', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('user_password_123', 4);
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('DB_PASSWORD', 'database_password');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('USER_PASSWORD', 'user_password_123');
     });
 
     it('should handle empty environment variables', async () => {
@@ -128,9 +148,9 @@ describe('debugEnvVars', () => {
       
       debugEnvVars();
 
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('lowercase_key_value', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('TOKEN_VALUE_UPPER', 4);
-      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('jwt_secret_lowercase', 4);
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('api_key', 'lowercase_key_value');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('TOKEN_VALUE', 'TOKEN_VALUE_UPPER');
+      expect(mockRedactSensitiveInfo).toHaveBeenCalledWith('jwt_secret', 'jwt_secret_lowercase');
     });
   });
 

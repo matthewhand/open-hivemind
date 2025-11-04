@@ -2,6 +2,8 @@ declare module '@discordjs/builders' {
   export class SlashCommandBuilder {
     setName(name: string): this;
     setDescription(description: string): this;
+    addSubcommand(subcommand: any): this;
+    addSubcommandGroup(subcommandGroup: any): this;
     addStringOption(option: any): this;
     addBooleanOption(option: any): this;
     addIntegerOption(option: any): this;

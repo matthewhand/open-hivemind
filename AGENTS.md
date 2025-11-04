@@ -61,6 +61,27 @@ Agents inherit personality from:
 - **Slack**: Bot management with Socket Mode
 - **Mattermost**: Experimental REST integration
 
+## WebUI Features and Unified Server Architecture
+
+The WebUI provides comprehensive management capabilities:
+- **Agent Configuration**: Configure LLM providers, messenger providers, personas
+- **Persona Management**: Create, edit, and delete personas
+- **MCP Server Management**: Connect to and manage MCP servers
+- **Tool Usage Guards**: Configure access controls for MCP tools
+- **Real-time Status**: Monitor agent status and connections
+- **Env Override Awareness**: Locked fields clearly indicate environment-variable ownership with redacted previews
+- **OpenAPI Export**: Download JSON/YAML specs for all WebUI endpoints via `/webui/api/openapi`
+
+## Unified Server Architecture
+
+The application uses a unified server architecture where both the frontend and backend are served from a single port:
+- The backend Express server serves the compiled frontend static files
+- This eliminates CORS issues and simplifies deployment
+- The `dev` script builds the frontend and starts the unified backend server
+- The `build:frontend` command compiles the React/Vite application
+- The backend's `resolveFrontendDistPath` function determines the correct path for serving static assets
+- This design ensures a consistent development and production experience
+
 ## WebUI Features
 The WebUI provides comprehensive management capabilities:
 - **Agent Configuration**: Configure LLM providers, messenger providers, personas
