@@ -176,18 +176,6 @@ ARGS ?=
 
 .DEFAULT_GOAL := help
 .PHONY: help test test-watch test-ci
-
-help:
-	@echo ""
-	@echo "Open Hivemind - Make targets"
-	@echo "============================"
-	@echo "Usage:"
-	@echo "  make [target] [ARGS='...'] [ALLOW_CONSOLE=1]"
-	@echo ""
-	@echo "Targets:"
-	@echo "  help           Show this help"
-	@echo "  test           Run Jest quietly with coverage summary"
-	@echo "  test-watch     Run Jest in watch mode (developer friendly)"
 	@echo "  test-ci        Run Jest quietly with coverage (CI friendly)"
 	@echo ""
 	@echo "Common variables:"
