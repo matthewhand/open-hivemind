@@ -12,7 +12,12 @@
 const mockBotConfigurationManager = {
   getAllBots: jest.fn().mockReturnValue([
     {
+      id: 'test-bot-id',
       name: 'test-bot',
+      messageProvider: 'discord',
+      llmProvider: 'openai',
+      isActive: true,
+      envOverrides: {},
       discord: {
         token: 'test-discord-token',
         clientId: '123456789',
@@ -22,7 +27,8 @@ const mockBotConfigurationManager = {
         apiKey: 'test-openai-key',
         baseUrl: 'https://api.openai.com/v1'
       },
-      enabled: true
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
   ]),
   getWarnings: jest.fn().mockReturnValue([]),
@@ -50,8 +56,6 @@ jest.mock('../../src/config/UserConfigStore', () => ({
   UserConfigStore: class {
     static getInstance() {
       return {
-        get: jest.fn().mockReturnValue({}),
-        set: jest.fn(),
         getBotOverride: jest.fn().mockReturnValue(undefined),
       };
     }

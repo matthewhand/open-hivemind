@@ -15,6 +15,10 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   icon?: React.ReactNode;
   /** Optional icon to display after the content */
   iconRight?: React.ReactNode;
+  /** Optional icon to display before the content (alias for icon) */
+  startIcon?: React.ReactNode;
+  /** Optional icon to display after the content (alias for iconRight) */
+  endIcon?: React.ReactNode;
   /** Additional CSS classes */
   className?: string;
   /** Loading text to display when loading */
@@ -30,6 +34,8 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   icon,
   iconRight,
+  startIcon,
+  endIcon,
   className = '',
   loadingText,
   onClick,
@@ -68,9 +74,9 @@ export const Button: React.FC<ButtonProps> = ({
   const buttonContent = (
     <>
       {loading && !loadingText && <span className="loading loading-spinner loading-sm"></span>}
-      {icon && !loading && <span className="mr-2">{icon}</span>}
+      {(icon || startIcon) && !loading && <span className="mr-2">{icon || startIcon}</span>}
       {loading && loadingText ? loadingText : children}
-      {iconRight && !loading && <span className="ml-2">{iconRight}</span>}
+      {(iconRight || endIcon) && !loading && <span className="ml-2">{iconRight || endIcon}</span>}
     </>
   );
 

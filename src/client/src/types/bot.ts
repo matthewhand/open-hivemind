@@ -124,18 +124,127 @@ export interface FieldConfig {
 export interface Bot {
   id: string;
   name: string;
-  description?: string;
-  instance: BotInstance;
+  messageProvider: string;
+  llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  isActive: boolean;
+  envOverrides?: Record<string, any>;
+  discord?: {
+    token?: string;
+    clientId?: string;
+    guildId?: string;
+    channelId?: string;
+    voiceChannelId?: string;
+  };
+  slack?: {
+    botToken?: string;
+    appToken?: string;
+    signingSecret?: string;
+    teamId?: string;
+    channels?: string[];
+    defaultChannelId?: string;
+    mode?: string;
+  };
+  mattermost?: {
+    url?: string;
+    accessToken?: string;
+    teamId?: string;
+    channelId?: string;
+    channel?: string;
+  };
+  openai?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    baseUrl?: string;
+  };
+  flowise?: {
+    apiKey?: string;
+    apiUrl?: string;
+    chatflowId?: string;
+  };
+  openwebui?: {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+  };
+  openswarm?: {
+    apiKey?: string;
+    apiUrl?: string;
+    swarmId?: string;
+    team?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateBotRequest {
   name: string;
-  description?: string;
-  providerId: string;
-  personaId?: string;
-  config: Record<string, any>;
+  messageProvider: string;
+  llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  isActive: boolean;
+  discord?: {
+    token?: string;
+    clientId?: string;
+    guildId?: string;
+    channelId?: string;
+    voiceChannelId?: string;
+  };
+  slack?: {
+    botToken?: string;
+    appToken?: string;
+    signingSecret?: string;
+    teamId?: string;
+    channels?: string[];
+    defaultChannelId?: string;
+    mode?: string;
+  };
+  mattermost?: {
+    url?: string;
+    accessToken?: string;
+    teamId?: string;
+    channelId?: string;
+    channel?: string;
+  };
+  openai?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    baseUrl?: string;
+  };
+  flowise?: {
+    apiKey?: string;
+    apiUrl?: string;
+    chatflowId?: string;
+  };
+  openwebui?: {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+  };
+  openswarm?: {
+    apiKey?: string;
+    apiUrl?: string;
+    swarmId?: string;
+    team?: string;
+  };
 }
 
 export const MESSAGE_PROVIDER_CONFIGS = {
