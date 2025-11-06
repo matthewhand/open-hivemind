@@ -100,12 +100,55 @@ jest.mock('../../src/server/middleware/audit', () => ({
   logConfigChange: jest.fn()
 }));
 
+// Mock AuditLogger to prevent dependency issues
+jest.mock('../../src/common/auditLogger', () => ({
+  AuditLogger: class {
+    static getInstance() {
+      return {
+        logConfigChange: jest.fn(),
+        logBotAction: jest.fn(),
+        logAdminAction: jest.fn()
+      };
+    }
+  }
+}));
+
+// Mock ErrorUtils to prevent dependency issues
+jest.mock('../../src/types/errors', () => ({
+  ErrorUtils: {
+    toHivemindError: jest.fn((error) => ({
+      message: error.message || 'Unknown error',
+      statusCode: 500,
+      code: 'TEST_ERROR',
+      stack: error.stack
+    })),
+    classifyError: jest.fn(() => ({
+      type: 'test',
+      severity: 'low'
+    }))
+  },
+  HivemindError: class extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'HivemindError';
+    }
+    statusCode: number = 500;
+    code: string = 'TEST_ERROR';
+  }
+}));
+
+// Mock Debug to prevent dependency issues
+jest.mock('debug', () => jest.fn(() => jest.fn()));
+
 describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
 
   beforeAll(() => {
     app = express();
     app.use(express.json());
+    // Apply audit middleware manually since it's commented out in the router
+    const { auditMiddleware } = require('../../src/server/middleware/audit');
+    app.use(auditMiddleware);
     app.use('/', configRouter);
   });
 
@@ -238,9 +281,14 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   describe('POST /api/config/reload - CONFIGURATION RELOAD', () => {
     it('should successfully reload configuration', async () => {
       const response = await request(app)
-        .post('/api/config/reload')
-        .expect(200);
+        .post('/api/config/reload');
 
+      if (response.status !== 200) {
+        console.log('Error response body:', response.body);
+        console.log('Error status:', response.status);
+      }
+
+      expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('message');
       expect(response.body).toHaveProperty('timestamp');

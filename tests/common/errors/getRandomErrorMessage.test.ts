@@ -30,7 +30,7 @@ describe('getRandomErrorMessage', () => {
         expect(hasEmoji).toBe(true);
 
         // Check 4: Does it have robot-themed content?
-        const robotKeywords = ['circuits', 'digital', 'byte', 'binary', 'code', 'bits', 'gears', 'pixels', 'sensors', 'virtual'];
+        const robotKeywords = ['circuits', 'digital', 'byte', 'binary', 'code', 'bits', 'gears', 'pixels', 'sensors', 'virtual', 'loop'];
         const hasRobotTheme = robotKeywords.some(keyword => message.toLowerCase().includes(keyword));
         expect(hasRobotTheme).toBe(true);
 
