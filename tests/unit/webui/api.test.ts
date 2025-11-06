@@ -1,47 +1,53 @@
-import { apiService } from '../../../src/client/src/services/api';
-import { jest } from '@jest/globals';
+/**
+ * Tests for API Service URL handling
+ */
 
-declare global {
-  interface ImportMetaEnv {
-    VITE_API_BASE_URL: string;
-  }
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-}
+// Mock fetch globally
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
-interface MockResponse extends Response {
-  json: jest.MockedFunction<() => Promise<any>>;
-}
+// Mock import.meta.env
+const importMetaEnv = {
+  VITE_API_BASE_URL: ''
+};
 
-const createMockResponse = (ok: boolean, data: any, statusText = 'OK'): MockResponse => {
-  const res: MockResponse = {
+// Set up import.meta properly for Jest
+Object.defineProperty(global, 'import', {
+  value: {
+    meta: {
+      env: importMetaEnv
+    }
+  },
+  writable: true,
+  configurable: true
+});
+
+describe('API Service URL Handling', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Reset import.meta.env to default
+    (global.import as any).meta.env = {
+      VITE_API_BASE_URL: ''
+    };
+  });
+
+  const createMockResponse = (ok: boolean, data: any, status = 200) => ({
     ok,
-    status: ok ? 200 : 404,
-    statusText,
+    status,
+    statusText: ok ? 'OK' : 'Error',
     json: jest.fn().mockResolvedValue(data),
     text: jest.fn().mockResolvedValue(JSON.stringify(data)),
     headers: new Headers(),
-    ok: ok,
     redirected: false,
-    status: ok ? 200 : 404,
-    statusText,
-    type: 'basic',
+    type: 'basic' as const,
     url: '',
     clone: jest.fn(),
     body: null,
     bodyUsed: false,
-    arrayBuffer: jest.fn(),
-    blob: jest.fn(),
-    formData: jest.fn(),
-    json: jest.fn().mockResolvedValue(data)
-  };
-  return res;
-};
-
-describe('API Service URL Handling', () => {
-  beforeEach(() => {
-    jest.resetModules();
+    arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
+    blob: jest.fn().mockResolvedValue(new Blob()),
+    formData: jest.fn().mockResolvedValue(new FormData())
   });
 
   const testCases = [
@@ -68,39 +74,38 @@ describe('API Service URL Handling', () => {
   ];
 
   test.each(testCases)('getConfig $description', async ({ env, expectedUrl }) => {
-    Object.defineProperty(import.meta, 'env', { value: env as ImportMetaEnv, writable: true });
+    // Set up environment
+    (global.import as any).meta.env = env;
 
     const mockData = { bots: [] };
-    const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(createMockResponse(true, mockData));
-    (global.fetch as jest.MockedFunction<typeof fetch>) = mockFetch;
+    mockFetch.mockResolvedValue(createMockResponse(true, mockData));
 
-    const { apiService: service } = await import('../../../src/client/src/services/api');
+    // Import service dynamically to pick up new env
+    const { apiService } = await import('../../../src/client/src/services/api');
 
-    await service.getConfig();
+    await apiService.getConfig();
     expect(mockFetch).toHaveBeenCalledWith(expectedUrl, expect.any(Object));
   });
 
   it('error recovery: handles invalid URL by attempting fetch', async () => {
-    Object.defineProperty(import.meta, 'env', { value: { VITE_API_BASE_URL: 'invalid://url' } as ImportMetaEnv, writable: true });
+    (global.import as any).meta.env = { VITE_API_BASE_URL: 'invalid://url' };
 
-    const mockResponse = createMockResponse(false, {}, 'Network Error');
-    const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(mockResponse);
-    (global.fetch as jest.MockedFunction<typeof fetch>) = mockFetch;
+    const mockResponse = createMockResponse(false, {}, 'Network Error', 404);
+    mockFetch.mockResolvedValue(mockResponse);
 
-    const { apiService: service } = await import('../../../src/client/src/services/api');
+    const { apiService } = await import('../../../src/client/src/services/api');
 
-    await expect(service.getConfig()).rejects.toThrow('API request failed: Network Error');
+    await expect(apiService.getConfig()).rejects.toThrow('API request failed: Network Error');
     expect(mockFetch).toHaveBeenCalledWith('invalid://url/webui/api/config', expect.any(Object));
   });
 
   it('handles API error in request', async () => {
-    const mockResponse = createMockResponse(false, {}, 'Not Found');
-    const mockFetch = jest.fn<jest.MockedFunction<typeof fetch>>().mockResolvedValue(mockResponse);
-    (global.fetch as jest.MockedFunction<typeof fetch>) = mockFetch;
+    const mockResponse = createMockResponse(false, {}, 'Not Found', 404);
+    mockFetch.mockResolvedValue(mockResponse);
 
-    Object.defineProperty(import.meta, 'env', { value: { VITE_API_BASE_URL: '' } as ImportMetaEnv, writable: true });
-    const { apiService: service } = await import('../../../src/client/src/services/api');
+    (global.import as any).meta.env = { VITE_API_BASE_URL: '' };
+    const { apiService } = await import('../../../src/client/src/services/api');
 
-    await expect(service.getConfig()).rejects.toThrow('API request failed: Not Found');
+    await expect(apiService.getConfig()).rejects.toThrow('API request failed: Not Found');
   });
 });

@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import { BotConfigurationManager } from '../../config/BotConfigurationManager';
+import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
-import { UserConfigStore } from '@config/UserConfigStore';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { UserConfigStore } from '../../config/UserConfigStore';
+import { HivemindError, ErrorUtils } from '../../types/errors';
 
 const router = Router();
 
 // Apply audit middleware to all config routes
-// router.use(auditMiddleware); // Temporarily disabled for debugging
+// router.use(auditMiddleware); // Disabled for testing
 
 // Get all configuration with sensitive data redacted
 router.get('/api/config', (req, res) => {
@@ -190,7 +190,12 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
     const manager = BotConfigurationManager.getInstance();
     manager.reload();
 
-    logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
+    // Try to log, but don't fail if audit logging fails
+    try {
+      logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
+    } catch (auditError) {
+      console.warn('Audit logging failed:', auditError);
+    }
 
     res.json({
       success: true,
@@ -208,7 +213,13 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
       severity: errorInfo.severity
     });
 
-    logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
+    // Try to log error, but don't fail if audit logging fails
+    try {
+      logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
+    } catch (auditError) {
+      console.warn('Audit logging failed:', auditError);
+    }
+
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_RELOAD_ERROR',

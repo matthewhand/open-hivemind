@@ -6,17 +6,7 @@
 import Logger from '../../src/common/logger';
 
 
-// Mock the logger module to control console methods
-jest.mock('../../src/common/logger', () => {
-  const originalModule = jest.requireActual('../../src/common/logger');
-  return {
-    ...originalModule,
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn()
-  };
-});
+// Don't mock the entire module, just spy on console methods
 
 // Mock console methods
 const mockConsoleInfo = jest.fn();
@@ -73,7 +63,6 @@ describe('Logger', () => {
       Logger.error(...args);
       expect(mockConsoleError).toHaveBeenCalledWith(...expected);
     });
-  });
 
     it('should sanitize Error objects', () => {
       const errorMessage = 'Something went wrong';

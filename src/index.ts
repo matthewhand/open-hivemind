@@ -4,7 +4,7 @@ require('dotenv/config');
 // which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
 // in development because its _moduleAliases in package.json point to dist/, which does not
 // exist (or is stale) when running directly from src.
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
     require('module-alias/register');
 }
 const express = require('express');
@@ -167,37 +167,24 @@ app.use('/uber/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
-// API routes - MUST come before static file serving
-// app.use('/api/admin', adminRouter);
+// Unified API routes - all on same port, no separation
 app.use('/api/swarm', swarmRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/webui/api', authenticateToken, webuiConfigRouter);
-app.use('/webui', botsRouter);
-app.use('/webui', botConfigRouter);
-app.use('/webui', validationRouter);
-app.use('/webui', hotReloadRouter);
-app.use('/webui', ciRouter);
-app.use('/webui', enterpriseRouter);
-app.use('/webui', secureConfigRouter);
-app.use('/webui', authRouter);
-app.use('/webui', adminApiRouter);
-app.use('/webui', openapiRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/config', authenticateToken, webuiConfigRouter);
+app.use('/api/bots', botsRouter);
+app.use('/api/bot-config', botConfigRouter);
+app.use('/api/validation', validationRouter);
+app.use('/api/hot-reload', hotReloadRouter);
+app.use('/api/ci', ciRouter);
+app.use('/api/enterprise', enterpriseRouter);
+app.use('/api/secure-config', secureConfigRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/admin', adminApiRouter);
+app.use('/api/openapi', openapiRouter);
 
-// Legacy /webui support - AFTER API routes
-app.use('/webui', express.static(frontendDistPath));
-app.use('/webui/*', (req: Request, res: Response) => {
-    res.status(404).json({ error: 'WebUI route not found' });
-});
-
-// Admin UI (unified dashboard)
-app.use('/admin', express.static(frontendDistPath));
-app.use('/admin/*', (req: Request, res: Response) => {
-    res.status(404).json({ error: 'Admin route not found' });
-});
-
-// Redirects
-// app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/uber' + req.path));
-// app.use('/admin', (req: Request, res: Response) => res.redirect(301, '/uber/guards'));
+// Legacy route redirects - everything now unified under /
+app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
+app.use('/admin', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
 
 // Deprecated /admin static serve (commented out)
 // app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
@@ -244,22 +231,32 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+    // Unified application startup
+    appLogger.info('🚀 Starting Open Hivemind Unified Server');
+    appLogger.info('🔧 Configuration', {
+        nodeEnv: process.env.NODE_ENV || 'development',
+        httpEnabled: process.env.HTTP_ENABLED !== 'false',
+        skipMessengers: skipMessengers,
+        port: process.env.PORT || '3028'
+    });
+
     const llmProviders = getLlmProvider();
-    appLogger.info('Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
+    appLogger.info('🤖 Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
 
     // Prepare messenger services collection for optional webhook registration later
     let messengerServices: any[] = [];
 
     if (skipMessengers) {
-        appLogger.info('Skipping messenger initialization due to SKIP_MESSENGERS=true');
+        appLogger.info('🤖 Skipping messenger initialization due to SKIP_MESSENGERS=true');
     } else {
+        appLogger.info('📡 Initializing messenger services');
         const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
         const messageProviders = (typeof rawMessageProviders === 'string'
             ? rawMessageProviders.split(',').map((v: string) => v.trim())
             : Array.isArray(rawMessageProviders)
             ? rawMessageProviders
             : ['slack']) as string[];
-        appLogger.info('Resolved message providers', { providers: messageProviders });
+        appLogger.info('📡 Message providers configured', { providers: messageProviders });
 
         messengerServices = messengerProviderModule.getMessengerProvider();
         // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
@@ -269,14 +266,18 @@ async function main() {
             return messageProviders.includes(providerName.toLowerCase());
         });
         if (filteredMessengers.length > 0) {
-            indexLog('[DEBUG] Found matching messenger service(s): ' + filteredMessengers.map((s: any) => s.providerName).join(', '));
+            appLogger.info('🤖 Starting messenger bots', {
+                services: filteredMessengers.map((s: any) => s.providerName).join(', ')
+            });
             for (const service of filteredMessengers) {
                 await startBot(service);
+                appLogger.info('✅ Bot started', { provider: service.providerName });
             }
         } else {
-            indexLog('[DEBUG] No messenger service matching configured MESSAGE_PROVIDER found. Falling back to initializing all messenger services.');
+            appLogger.info('🤖 No specific messenger service configured - starting all available services');
             for (const service of messengerServices) {
                 await startBot(service);
+                appLogger.info('✅ Bot started', { provider: service.providerName });
             }
         }
     }
@@ -294,27 +295,39 @@ async function main() {
             appLogger.error('HTTP server error', { error: err });
         });
 
-        appLogger.info('Binding HTTP server', { port, host: '0.0.0.0' });
+        appLogger.info('🌐 Starting HTTP server', { port, host: '0.0.0.0' });
         server.listen(port, '0.0.0.0', () => {
-            appLogger.info('HTTP server listening', { port });
-            appLogger.info('WebSocket service ready', { endpoint: '/webui/socket.io' });
+            appLogger.info('✅ HTTP server listening', { port });
+            appLogger.info('🔌 WebSocket service ready', { endpoint: '/webui/socket.io' });
+            appLogger.info('🌍 WebUI available', { url: `http://localhost:${port}` });
+            appLogger.info('📡 API endpoints available', { baseUrl: `http://localhost:${port}/api` });
+
+            if (fs.existsSync(frontendDistPath)) {
+                appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
+            } else {
+                appLogger.warn('⚠️  Frontend build not found - run `npm run build` to create WebUI assets');
+            }
         });
     } else {
-        appLogger.info('HTTP server is disabled via configuration');
+        appLogger.info('🔌 HTTP server is disabled via configuration');
     }
 
     const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
     if (isWebhookEnabled) {
-        appLogger.info('Webhook service enabled; registering routes');
+        appLogger.info('🪝 Webhook service enabled - registering routes');
         for (const messengerService of messengerServices) {
             const channelId = messengerService.getDefaultChannel ? messengerService.getDefaultChannel() : null;
             if (channelId) {
                 await webhookServiceModule.webhookService.start(app, messengerService, channelId);
+                appLogger.info('✅ Webhook route registered', { provider: messengerService.providerName, channelId });
             }
         }
     } else {
-        appLogger.info('Webhook service is disabled');
+        appLogger.info('🪝 Webhook service is disabled');
     }
+
+    // Startup complete
+    appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
 }
 
 main().catch((error) => {

@@ -18,7 +18,18 @@ export class UserConfigStore {
   } = {};
 
   private constructor() {
-    this.loadConfig();
+    // Load config synchronously for now to avoid async issues in constructor
+    try {
+      const configPath = path.join(process.cwd(), 'config', 'user-config.json');
+      const data = require('fs').readFileSync(configPath, 'utf-8');
+      this.config = JSON.parse(data);
+    } catch (error) {
+      // If config file doesn't exist, use default empty config
+      this.config = {
+        toolSettings: {},
+        bots: []
+      };
+    }
   }
 
   public static getInstance(): UserConfigStore {
