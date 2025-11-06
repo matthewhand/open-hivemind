@@ -52,7 +52,7 @@ jest.mock('../../src/config/UserConfigStore', () => ({
       return {
         get: jest.fn().mockReturnValue({}),
         set: jest.fn(),
-        getBotOverride: jest.fn().mockReturnValue({}),
+        getBotOverride: jest.fn().mockReturnValue(undefined),
       };
     }
   }
@@ -317,6 +317,7 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
       if (response.status !== 200) {
         console.log('Error response:', response.body);
         console.log('Error status:', response.status);
+        console.log('Error headers:', response.headers);
       }
 
       expect(response.status).toBe(200);

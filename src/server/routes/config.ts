@@ -530,7 +530,7 @@ function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.g
   const describeField = (field: keyof typeof overrides, envKey: string) => {
     const envVar = `BOTS_${botName.toUpperCase()}_${envKey}`;
     const hasEnv = process.env[envVar] !== undefined && process.env[envVar] !== '';
-    const hasOverride = overrides[field] !== undefined;
+    const hasOverride = overrides && overrides[field] !== undefined;
 
     return {
       source: hasEnv ? 'env' : hasOverride ? 'user' : 'default',
