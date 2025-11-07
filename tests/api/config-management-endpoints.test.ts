@@ -139,27 +139,25 @@ jest.mock('../../src/common/redactSensitiveInfo', () => ({
 
 // Mock audit middleware
 jest.mock('../../src/server/middleware/audit', () => {
-  const mockAuditMiddleware = jest.fn((req: any, res: any, next: any) => {
-    // Add audit properties to request
-    req.auditUser = 'test-user';
-    req.auditIp = '127.0.0.1';
-    req.auditUserAgent = 'test-agent';
-    req.user = {
-      username: 'test-user',
-      email: 'test@example.com',
-      id: 'test-id',
-      role: 'admin',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
-    };
-    next();
-  });
-  
   const mockLogConfigChange = jest.fn().mockImplementation(() => Promise.resolve());
   
   return {
-    auditMiddleware: mockAuditMiddleware,
+    auditMiddleware: jest.fn((req: any, res: any, next: any) => {
+      // Add audit properties to request
+      req.auditUser = 'test-user';
+      req.auditIp = '127.0.0.1';
+      req.auditUserAgent = 'test-agent';
+      req.user = {
+        username: 'test-user',
+        email: 'test@example.com',
+        id: 'test-id',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
+      next();
+    }),
     AuditedRequest: class {},
     logConfigChange: mockLogConfigChange
   };
@@ -185,62 +183,63 @@ jest.mock('../../src/common/auditLogger', () => ({
 }));
 
 // Mock ErrorUtils to prevent dependency issues
-jest.mock('../../src/types/errors', () => ({
-  ErrorUtils: {
-    toHivemindError: jest.fn((error) => {
-      // Determine appropriate status code based on error type
-      let statusCode = 500;
-      const message = error.message || 'Unknown error';
-      
-      // Check if this is a test-induced error (should return 500)
-      if (message.includes('Test error') ||
-          message.includes('Config retrieval failed') ||
-          message.includes('Reload failed') ||
-          message.includes('Cache clear failed') ||
-          message.includes('Export failed') ||
-          message.includes('Database error') ||
-          message.includes('File system error') ||
-          message.includes('Database connection failed') ||
-          message.includes('Config reload failed') ||
-          message.includes('Cache clear operation failed') ||
-          message.includes('Export operation failed')) {
-        statusCode = 500;
-      } else if (message.includes('not found') || message.includes('does not exist')) {
-        statusCode = 404;
-      } else if (message.includes('invalid') || message.includes('bad request') || message.includes('malformed')) {
-        statusCode = 400;
-      } else if (message.includes('unauthorized') || message.includes('authentication')) {
-        statusCode = 401;
-      } else if (message.includes('forbidden')) {
-        statusCode = 403;
-      } else if (message.includes('already exists') || message.includes('duplicate')) {
-        statusCode = 409;
-      } else {
-        // For normal operation without errors, return 200
-        statusCode = 200;
-      }
-      
-      return {
-        message,
-        statusCode,
-        code: 'TEST_ERROR',
-        stack: error.stack
-      };
-    }),
-    classifyError: jest.fn(() => ({
-      type: 'test',
-      severity: 'low'
-    }))
-  },
-  HivemindError: class extends Error {
-    constructor(message: string) {
-      super(message);
-      this.name = 'HivemindError';
-    }
-    statusCode: number = 500;
-    code: string = 'TEST_ERROR';
-  }
-}));
+jest.mock('../../src/types/errors', () => {
+ const originalModule = jest.requireActual('../../src/types/errors');
+  
+  return {
+    ...originalModule,
+    ErrorUtils: {
+      ...originalModule.ErrorUtils,
+      toHivemindError: jest.fn((error) => {
+        // Determine appropriate status code based on error type
+        let statusCode = 500;
+        const message = error?.message || 'Unknown error';
+        
+        // Check if this is a test-induced error (should return 500)
+        if (message.includes('Test error') ||
+            message.includes('Config retrieval failed') ||
+            message.includes('Reload failed') ||
+            message.includes('Cache clear failed') ||
+            message.includes('Export failed') ||
+            message.includes('Database error') ||
+            message.includes('File system error') ||
+            message.includes('Database connection failed') ||
+            message.includes('Config reload failed') ||
+            message.includes('Cache clear operation failed') ||
+            message.includes('Export operation failed')) {
+          statusCode = 500;
+        } else if (message.includes('not found') || message.includes('does not exist')) {
+          statusCode = 404;
+        } else if (message.includes('invalid') || message.includes('bad request') || message.includes('malformed')) {
+          statusCode = 400;
+        } else if (message.includes('unauthorized') || message.includes('authentication')) {
+          statusCode = 401;
+        } else if (message.includes('forbidden')) {
+          statusCode = 403;
+        } else if (message.includes('already exists') || message.includes('duplicate')) {
+          statusCode = 409;
+        } else {
+          // For normal operation without errors, return 200
+          statusCode = 200;
+        }
+        
+        return {
+          message,
+          statusCode,
+          code: 'TEST_ERROR',
+          stack: error?.stack
+        };
+      }),
+      classifyError: jest.fn(() => ({
+        type: 'test',
+        retryable: false,
+        severity: 'low',
+        userMessage: undefined,
+        logLevel: 'error'
+      }))
+    },
+  };
+});
 
 // Mock Debug to prevent dependency issues
 jest.mock('debug', () => jest.fn(() => jest.fn()));
