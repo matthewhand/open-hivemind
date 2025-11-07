@@ -1,4 +1,4 @@
-# Netlify configuration for Open-Hivemind - Frontend Only Deployment
+# Netlify configuration for Open-Hivemind - Frontend Only Deployment (Webhook/Serverless Mode)
 [build]
   command = "npm run build:frontend"
   publish = "src/client/dist"
@@ -7,9 +7,10 @@
   NODE_VERSION = "20"
   NODE_ENV = "production"
   VITE_API_BASE_URL = "https://open-hivemind.fly.dev"
+  NPM_FLAGS = "--production=false"
 
 [dev]
-  command = "npm run dev:frontend"
+  command = "npm run dev:frontend-only"
   publish = "src/client/dist"
   port = 8888
 
@@ -49,5 +50,13 @@
   to = "/index.html"
   status = 200
   force = false
-  conditions = {Role = ["admin", "user"]}
+
+# Headers to ensure proper CORS and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 

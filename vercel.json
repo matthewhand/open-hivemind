@@ -2,17 +2,34 @@
   "version": 2,
   "name": "open-hivemind",
   "installCommand": "npm ci",
-  "buildCommand": "npm run build:full",
-  "outputDirectory": "public",
-  "devCommand": "npm run dev:vercel",
-  "framework": null,
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "src/client/dist",
+  "devCommand": "npm run dev:frontend-only",
+  "framework": "vite",
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://open-hivemind.fly.dev/api/$1"
+    },
+    {
+      "source": "/webui/api/(.*)",
+      "destination": "https://open-hivemind.fly.dev/webui/api/$1"
+    },
+    {
+      "source": "/dashboard/api/(.*)",
+      "destination": "https://open-hivemind.fly.dev/dashboard/api/$1"
+    },
+    {
+      "source": "/health/(.*)",
+      "destination": "https://open-hivemind.fly.dev/health/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "VITE_API_BASE_URL": "https://open-hivemind.fly.dev"
   }
 }

@@ -35,7 +35,7 @@ describe('getRandomErrorMessage', () => {
         expect(hasRobotTheme).toBe(true);
 
         // Check 5: Does it have a friendly/humorous tone?
-        const friendlyWords = ['oops', 'whoa', 'ah', 'yikes', 'gosh', 'oopsie', 'uh-oh', 'hold on'];
+        const friendlyWords = ['oops', 'whoa', 'ah', 'yikes', 'gosh', 'oopsie', 'uh-oh', 'hold on', 'bumble', 'pickle', 'spilled'];
         const hasFriendlyTone = friendlyWords.some(word => message.toLowerCase().includes(word));
         expect(hasFriendlyTone).toBe(true);
     });

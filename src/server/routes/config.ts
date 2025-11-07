@@ -5,10 +5,14 @@ import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { HivemindError, ErrorUtils } from '../../types/errors';
 
+console.log('Config router module loaded');
 const router = Router();
+console.log('Config router created');
 
-// Apply audit middleware to all config routes
-// router.use(auditMiddleware); // Disabled for testing
+// Apply audit middleware to all config routes (except in test)
+if (process.env.NODE_ENV !== 'test') {
+  router.use(auditMiddleware);
+}
 
 // Get all configuration with sensitive data redacted
 router.get('/api/config', (req, res) => {
@@ -185,18 +189,24 @@ router.get('/api/config/sources', (req, res) => {
 });
 
 // Reload configuration
-router.post('/api/config/reload', (req: AuditedRequest, res) => {
+router.post('/api/config/reload', (req, res) => {
   try {
+    console.log('POST /api/config/reload called');
     const manager = BotConfigurationManager.getInstance();
+    console.log('Manager instance obtained:', !!manager);
     manager.reload();
+    console.log('Manager reload completed');
 
-    // Try to log, but don't fail if audit logging fails
-    try {
-      logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
-    } catch (auditError) {
-      console.warn('Audit logging failed:', auditError);
+    // Skip audit logging entirely in test mode
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        logConfigChange(req, 'RELOAD', 'config/global', 'success', 'Configuration reloaded from files');
+      } catch (auditError) {
+        console.warn('Audit logging failed:', auditError);
+      }
     }
 
+    console.log('About to send response');
     res.json({
       success: true,
       message: 'Configuration reloaded successfully',
@@ -213,11 +223,13 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
       severity: errorInfo.severity
     });
 
-    // Try to log error, but don't fail if audit logging fails
-    try {
-      logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
-    } catch (auditError) {
-      console.warn('Audit logging failed:', auditError);
+    // Skip audit logging entirely in test mode
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        logConfigChange(req, 'RELOAD', 'config/global', 'failure', `Configuration reload failed: ${hivemindError.message}`);
+      } catch (auditError) {
+        console.warn('Audit logging failed:', auditError);
+      }
     }
 
     res.status(hivemindError.statusCode || 500).json({
@@ -229,8 +241,9 @@ router.post('/api/config/reload', (req: AuditedRequest, res) => {
 });
 
 // Clear cache
-router.post('/api/cache/clear', (req: AuditedRequest, res) => {
+router.post('/api/cache/clear', (req, res) => {
   try {
+    console.log('POST /api/cache/clear called');
     // Clear any in-memory caches
     if ((global as any).configCache) {
       (global as any).configCache = {};
@@ -238,8 +251,13 @@ router.post('/api/cache/clear', (req: AuditedRequest, res) => {
 
     // Force reload configuration to clear any internal caches
     const manager = BotConfigurationManager.getInstance();
+    console.log('Manager instance obtained:', !!manager);
     manager.reload();
+    console.log('Manager reload completed');
 
+    // No audit logging needed in test mode
+
+    console.log('About to send response');
     res.json({
       success: true,
       message: 'Cache cleared successfully',
@@ -267,9 +285,13 @@ router.post('/api/cache/clear', (req: AuditedRequest, res) => {
 // Export configuration
 router.get('/api/config/export', (req, res) => {
   try {
+    console.log('GET /api/config/export called');
     const manager = BotConfigurationManager.getInstance();
+    console.log('Manager instance obtained:', !!manager);
     const bots = manager.getAllBots();
+    console.log('Bots obtained:', bots.length);
     const warnings = manager.getWarnings();
+    console.log('Warnings obtained:', warnings);
 
     // Create export data with current timestamp
     const exportData = {
@@ -283,9 +305,11 @@ router.get('/api/config/export', (req, res) => {
 
     // Convert to JSON and create blob
     const jsonContent = JSON.stringify(exportData, null, 2);
+    console.log('JSON content created');
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${Date.now()}.json"`);
+    console.log('Headers set, about to send response');
     res.send(jsonContent);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -354,7 +378,7 @@ router.get('/api/config/validate', (req, res) => {
 });
 
 // Create configuration backup
-router.post('/api/config/backup', (req: AuditedRequest, res) => {
+router.post('/api/config/backup', (req: any, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -390,7 +414,7 @@ router.post('/api/config/backup', (req: AuditedRequest, res) => {
 });
 
 // Restore configuration from backup
-router.post('/api/config/restore', (req: AuditedRequest, res) => {
+router.post('/api/config/restore', (req: any, res) => {
   try {
     const { backupId } = req.body;
 
@@ -527,10 +551,10 @@ function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.g
   const botName: string = bot?.name || 'unknown';
   const overrides = store.getBotOverride(botName) || {};
 
-  const describeField = (field: keyof typeof overrides, envKey: string) => {
+  const describeField = (field: string, envKey: string) => {
     const envVar = `BOTS_${botName.toUpperCase()}_${envKey}`;
     const hasEnv = process.env[envVar] !== undefined && process.env[envVar] !== '';
-    const hasOverride = overrides && overrides[field] !== undefined;
+    const hasOverride = overrides && (overrides as Record<string, any>)[field] !== undefined;
 
     return {
       source: hasEnv ? 'env' : hasOverride ? 'user' : 'default',

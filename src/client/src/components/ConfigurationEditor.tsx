@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Card,
-  CardContent,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import { Input, Select } from './DaisyUI';
+import { 
+  Card, 
+  Button, 
+  Alert, 
+  Input, 
+  Select, 
+  Textarea, 
+  Modal,
+  Loading,
+  Tooltip,
+  Badge
+} from './DaisyUI';
 import {
   Save as SaveIcon,
-  Refresh as RefreshIcon,
-  ExpandMore as ExpandMoreIcon,
+  RotateCcw as RefreshIcon,
   Settings as SettingsIcon,
-} from '@mui/icons-material';
+  Shield,
+  Lock,
+  CheckCircle,
+  Info
+} from 'lucide-react';
 import { type Bot } from '../services/api';
+import ProviderConfig from './ProviderConfig';
 
 interface ConfigurationEditorProps {
   bot?: Bot;
@@ -29,26 +31,56 @@ interface ConfigurationEditorProps {
 const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   // Configuration state
   const [config, setConfig] = useState({
+    name: '',
     messageProvider: '',
     llmProvider: '',
     persona: '',
     systemInstruction: '',
+    discord: {},
+    slack: {},
+    mattermost: {},
+    openai: {},
+    flowise: {},
+    openwebui: {},
+    openswarm: {},
   });
 
-  const messageProviders = ['discord', 'slack', 'mattermost'];
-  const llmProviders = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+  const messageProviders = [
+    { value: 'discord', label: 'Discord' },
+    { value: 'slack', label: 'Slack' },
+    { value: 'mattermost', label: 'Mattermost' }
+  ];
+
+  const llmProviders = [
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'flowise', label: 'Flowise' },
+    { value: 'openwebui', label: 'OpenWebUI' },
+    { value: 'openswarm', label: 'OpenSwarm' },
+    { value: 'perplexity', label: 'Perplexity' },
+    { value: 'replicate', label: 'Replicate' },
+    { value: 'n8n', label: 'n8n' }
+  ];
 
   useEffect(() => {
     if (bot) {
       setConfig({
+        name: bot.name || '',
         messageProvider: bot.messageProvider || '',
         llmProvider: bot.llmProvider || '',
         persona: bot.persona || '',
         systemInstruction: bot.systemInstruction || '',
+        discord: bot.discord || {},
+        slack: bot.slack || {},
+        mattermost: bot.mattermost || {},
+        openai: bot.openai || {},
+        flowise: bot.flowise || {},
+        openwebui: bot.openwebui || {},
+        openswarm: bot.openswarm || {},
       });
     }
   }, [bot]);
@@ -61,149 +93,343 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
       setError(null);
 
       // TODO: Implement configuration update API call
-      setSnackbar({ open: true, message: 'Configuration saved successfully', severity: 'success' });
+      setSuccess('Configuration saved successfully');
+      setShowSaveModal(false);
       onSave?.(bot);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save configuration');
-      setSnackbar({
-        open: true,
-        message: err instanceof Error ? err.message : 'Failed to save configuration',
-        severity: 'error'
-      });
     } finally {
       setLoading(false);
     }
   };
 
+  const hasEnvironmentOverrides = bot?.envOverrides && Object.keys(bot.envOverrides).length > 0;
+
   if (!bot) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <Typography variant="body1" color="text.secondary">
-          Select a bot to edit its configuration
-        </Typography>
-      </Box>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="text-center">
+          <SettingsIcon className="w-16 h-16 mx-auto mb-4 text-base-content/30" />
+          <p className="text-lg text-base-content/70">
+            Select a bot to edit its configuration
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
-          Configuration Editor - {bot.name}
-        </Typography>
-        <Box display="flex" gap={1}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <SettingsIcon className="w-6 h-6" />
+            Configuration Editor - {bot.name}
+          </h2>
+          <p className="text-base-content/70">
+            Configure bot settings, providers, and security options
+          </p>
+        </div>
+        <div className="flex gap-2">
           <Button
-            variant="outlined"
+            variant="outline"
             startIcon={<RefreshIcon />}
             onClick={() => window.location.reload()}
           >
             Refresh
           </Button>
           <Button
-            variant="contained"
+            variant="primary"
             startIcon={<SaveIcon />}
-            onClick={handleSave}
+            onClick={() => setShowSaveModal(true)}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={20} /> : 'Save Configuration'}
+            {loading ? <Loading size="sm" /> : 'Save Configuration'}
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+      {/* Environment Override Alert */}
+      {hasEnvironmentOverrides && (
+        <Alert severity="info" className="alert-info">
+          <Shield className="w-4 h-4" />
+          <div>
+            <div className="font-bold">Environment Variable Overrides Active</div>
+            <div className="text-sm">
+              Some configuration fields are controlled by environment variables and cannot be modified here.
+              <div className="mt-2">
+                {Object.entries(bot.envOverrides!)
+                  .slice(0, 3)
+                  .map(([key]) => (
+                    <Badge key={key} className="badge-info badge-xs mr-2 mb-1">
+                      {key}
+                    </Badge>
+                  ))}
+                {Object.keys(bot.envOverrides!).length > 3 && (
+                  <span className="text-xs text-base-content/70">
+                    +{Object.keys(bot.envOverrides!).length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </Alert>
       )}
 
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <SettingsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" className="alert-error">
+          <Info className="w-4 h-4" />
+          <div>{error}</div>
+        </Alert>
+      )}
+
+      {/* Basic Configuration */}
+      <Card className="bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title flex items-center gap-2">
+            <SettingsIcon className="w-5 h-5" />
             Basic Configuration
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">Message Provider</span>
+                <Tooltip content="The messaging platform where the bot will operate">
+                  <Info className="w-4 h-4" />
+                </Tooltip>
               </label>
               <Select
-                options={messageProviders.map(provider => ({
-                  value: provider,
-                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
-                }))}
+                options={messageProviders}
                 value={config.messageProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, messageProvider: e.target.value }))}
+                placeholder="Select message provider"
+                disabled={hasEnvironmentOverrides}
+                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
               />
+              {hasEnvironmentOverrides && (
+                <label className="label">
+                  <span className="label-text-alt">
+                    <Lock className="w-3 h-3 inline mr-1" />
+                    Controlled by environment variables
+                  </span>
+                </label>
+              )}
             </div>
 
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">LLM Provider</span>
+                <Tooltip content="The AI service that powers the bot's responses">
+                  <Info className="w-4 h-4" />
+                </Tooltip>
               </label>
               <Select
-                options={llmProviders.map(provider => ({
-                  value: provider,
-                  label: provider.charAt(0).toUpperCase() + provider.slice(1)
-                }))}
+                options={llmProviders}
                 value={config.llmProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, llmProvider: e.target.value }))}
+                placeholder="Select LLM provider"
+                disabled={hasEnvironmentOverrides}
+                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
               />
+              {hasEnvironmentOverrides && (
+                <label className="label">
+                  <span className="label-text-alt">
+                    <Lock className="w-3 h-3 inline mr-1" />
+                    Controlled by environment variables
+                  </span>
+                </label>
+              )}
             </div>
 
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">Persona</span>
+                <Tooltip content="The personality and behavior template for the bot">
+                  <Info className="w-4 h-4" />
+                </Tooltip>
               </label>
               <Input
                 value={config.persona}
                 onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
-                placeholder="Enter persona"
+                placeholder="Enter persona name"
+                disabled={hasEnvironmentOverrides}
+                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
               />
+              {hasEnvironmentOverrides && (
+                <label className="label">
+                  <span className="label-text-alt">
+                    <Lock className="w-3 h-3 inline mr-1" />
+                    Controlled by environment variables
+                  </span>
+                </label>
+              )}
             </div>
 
             <div className="form-control w-full">
               <label className="label">
-                <span className="label-text">System Instruction</span>
+                <span className="label-text">Bot Status</span>
               </label>
-              <textarea
-                className="textarea textarea-bordered w-full"
-                rows={3}
-                value={config.systemInstruction}
-                onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
-                placeholder="Enter system instruction"
-              />
+              <div className="flex items-center gap-2">
+                <Badge className={bot.isActive ? 'badge-success' : 'badge-ghost'}>
+                  {bot.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+                {hasEnvironmentOverrides && (
+                  <Tooltip content="Bot status is controlled by environment variables">
+                    <Lock className="w-4 h-4 text-base-content/50" />
+                  </Tooltip>
+                )}
+              </div>
             </div>
-          </Box>
-        </CardContent>
+          </div>
+
+          <div className="form-control w-full mt-4">
+            <label className="label">
+              <span className="label-text">System Instruction</span>
+              <Tooltip content="Custom instructions that override or extend the persona">
+                <Info className="w-4 h-4" />
+              </Tooltip>
+            </label>
+            <Textarea
+              value={config.systemInstruction}
+              onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
+              placeholder="Enter custom system instructions to override or extend the persona"
+              rows={4}
+              disabled={hasEnvironmentOverrides}
+              className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
+            />
+            {hasEnvironmentOverrides && (
+              <label className="label">
+                <span className="label-text-alt">
+                  <Lock className="w-3 h-3 inline mr-1" />
+                  Controlled by environment variables
+                </span>
+              </label>
+            )}
+          </div>
+        </div>
       </Card>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6">Advanced Settings</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography variant="body2" color="text.secondary">
-            Advanced configuration options will be available here in a future update.
-          </Typography>
-        </AccordionDetails>
-      </Accordion>
+      {/* Provider-specific configurations */}
+      {config.messageProvider && (
+        <Card className="bg-base-100 shadow-lg">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Message Provider Configuration
+              <Badge className="badge-info badge-sm">{config.messageProvider}</Badge>
+            </h3>
+            <ProviderConfig
+              provider={config.messageProvider}
+              config={config[config.messageProvider as keyof typeof config] || {}}
+              onChange={(providerConfig) => setConfig({ ...config, [config.messageProvider]: providerConfig })}
+              envOverrides={bot.envOverrides || {}}
+              showSecurityIndicators={true}
+            />
+          </div>
+        </Card>
+      )}
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      {config.llmProvider && (
+        <Card className="bg-base-100 shadow-lg">
+          <div className="card-body">
+            <h3 className="card-title flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              LLM Provider Configuration
+              <Badge className="badge-secondary badge-sm">{config.llmProvider}</Badge>
+            </h3>
+            <ProviderConfig
+              provider={config.llmProvider}
+              config={config[config.llmProvider as keyof typeof config] || {}}
+              onChange={(providerConfig) => setConfig({ ...config, [config.llmProvider]: providerConfig })}
+              envOverrides={bot.envOverrides || {}}
+              showSecurityIndicators={true}
+            />
+          </div>
+        </Card>
+      )}
+
+      {/* Security Information Card */}
+      {hasEnvironmentOverrides && (
+        <Card className="bg-info/10 border-info/20">
+          <div className="card-body">
+            <h3 className="card-title text-info">
+              <Shield className="w-5 h-5" />
+              Security Information
+            </h3>
+            <div className="text-sm">
+              <p className="mb-2">This bot configuration is partially controlled by environment variables:</p>
+              <div className="space-y-1">
+                {Object.entries(bot.envOverrides!)
+                  .map(([key, value]) => (
+                    <div key={key} className="flex items-center gap-2 text-xs">
+                      <Lock className="w-3 h-3" />
+                      <code className="bg-base-300 px-2 py-1 rounded">{key}</code>
+                      <span className="text-base-content/60">= ••••••••</span>
+                      <CheckCircle className="w-3 h-3 text-success" />
+                    </div>
+                  ))}
+              </div>
+              <p className="mt-3 text-xs text-base-content/70">
+                Environment variables provide enhanced security by preventing sensitive data from being stored in the database or exposed in the WebUI.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Save Confirmation Modal */}
+      <Modal 
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        title="Confirm Save Configuration"
+        size="md"
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <div className="modal-body">
+          <p className="mb-4">
+            Are you sure you want to save the configuration for "{bot.name}"?
+          </p>
+          {hasEnvironmentOverrides && (
+            <Alert severity="warning" className="alert-warning">
+              <Info className="w-4 h-4" />
+              <div>
+                <div className="font-bold">Note about Environment Overrides</div>
+                <div className="text-sm">
+                  Some configuration fields are controlled by environment variables and will not be updated.
+                </div>
+              </div>
+            </Alert>
+          )}
+        </div>
+        <div className="modal-action">
+          <Button
+            variant="ghost"
+            onClick={() => setShowSaveModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? <Loading size="sm" /> : 'Save Configuration'}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Success Notification */}
+      {success && (
+        <div className="toast toast-top toast-end">
+          <Alert severity="success" className="alert-success">
+            <CheckCircle className="w-4 h-4" />
+            <div>{success}</div>
+          </Alert>
+        </div>
+      )}
+    </div>
   );
 };
 
