@@ -16,7 +16,7 @@ RUN apk add --no-cache \
             py3-pip \
             python3-dev \
             build-base \
-            && pip3 install --no-cache uvx \
+            && python3 -m pip install --no-cache-dir --break-system-packages uv \
         ; fi
 
 # Install Node.js tools if enabled
