@@ -14,8 +14,8 @@ This project provides two Docker image variants optimized for different use case
 - **Best for**: Production deployments requiring full functionality
 
 **Includes:**
-- Python 3 + uvx package manager
-- Node.js + npx + MCP CLI tools
+- Python 3 + uv package manager (provides `uvx`)
+- Node.js + npx (+ MCP CLI tools when published)
 - FFmpeg for Discord voice processing
 - All integration features enabled
 
@@ -36,8 +36,8 @@ docker pull matthewhand/open-hivemind:latest
 - Basic integrations (no voice processing)
 
 **Excludes:**
-- Python tools and uvx
-- MCP CLI tools
+- Python tools and uv
+- MCP CLI tools (optional add-on)
 - FFmpeg (no Discord voice)
 - Additional runtime dependencies
 
@@ -57,10 +57,12 @@ docker pull matthewhand/open-hivemind:slim
 | Telegram Integration | ✅ | ✅ |
 | Python MCP Servers | ✅ | ❌ |
 | Node.js MCP Servers | ✅ | ❌ |
-| Custom MCP CLI Tools | ✅ | ❌ |
+| Custom MCP CLI Tools | ✅* | ❌ |
 | Advanced Audio Processing | ✅ | ❌ |
 | Image Size | ~500MB | ~150MB |
 | Memory Usage | ~256MB | ~128MB |
+
+`*` The image attempts to install the MCP CLI when the package is published to npm and logs a warning if it is unavailable.
 
 ## Build Arguments
 
