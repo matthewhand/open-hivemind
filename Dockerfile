@@ -19,12 +19,15 @@ RUN apk add --no-cache \
             && python3 -m pip install --no-cache-dir --break-system-packages uv \
         ; fi
 
-# Install Node.js tools if enabled
+# Install Node.js tools (MCP CLI is optional until package is published)
 RUN if [ "$INCLUDE_NODE_TOOLS" = "true" ]; then \
-        npm install -g \
-            npx \
-            @modelcontextprotocol/cli \
-        ; fi
+        npm install -g npx; \
+        if npm view @modelcontextprotocol/cli >/dev/null 2>&1; then \
+            npm install -g @modelcontextprotocol/cli; \
+        else \
+            echo "Skipping @modelcontextprotocol/cli install (package not available)"; \
+        fi; \
+    fi
 
 # Install ffmpeg for Discord voice support if enabled
 RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
