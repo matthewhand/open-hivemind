@@ -1,62 +1,34 @@
-# Netlify configuration for Open-Hivemind - Frontend Only Deployment (Webhook/Serverless Mode)
 [build]
-  command = "npm run build:frontend"
-  publish = "src/client/dist"
-
-[build.environment]
-  NODE_VERSION = "20"
-  NODE_ENV = "production"
-  VITE_API_BASE_URL = "https://open-hivemind.fly.dev"
-  NPM_FLAGS = "--production=false"
+  command = "npm run build:netlify"
+  functions = "dist/netlify/functions"
+  publish = "dist/client/dist"
 
 [dev]
-  command = "npm run dev:frontend-only"
-  publish = "src/client/dist"
-  port = 8888
+  command = "echo 'Dev server disabled for Netlify testing'"
+  functions = "dist/netlify/functions"
+  publish = "dist/client/dist"
 
-# Redirect all API requests to the backend on Fly.io
 [[redirects]]
   from = "/api/*"
-  to = "https://open-hivemind.fly.dev/api/:splat"
+  to = "/.netlify/functions/server"
   status = 200
 
-# Redirect WebUI API requests to the backend
 [[redirects]]
-  from = "/webui/api/*"
-  to = "https://open-hivemind.fly.dev/webui/api/:splat"
+  from = "/webui/*"
+  to = "/.netlify/functions/server"
   status = 200
 
-# Redirect dashboard API requests to the backend
-[[redirects]]
-  from = "/dashboard/api/*"
-  to = "https://open-hivemind.fly.dev/dashboard/api/:splat"
-  status = 200
-
-# Redirect health checks to the backend
 [[redirects]]
   from = "/health/*"
-  to = "https://open-hivemind.fly.dev/health/:splat"
+  to = "/.netlify/functions/server"
   status = 200
 
-# WebSocket connection redirect for development (will be handled by frontend in production)
 [[redirects]]
-  from = "/webui/socket.io/*"
-  to = "https://open-hivemind.fly.dev/webui/socket.io/:splat"
+  from = "/dashboard/*"
+  to = "/.netlify/functions/server"
   status = 200
 
-# Fallback for SPA routing - serve index.html for all non-API routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
-
-# Headers to ensure proper CORS and security
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
