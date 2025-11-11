@@ -58,6 +58,7 @@ export function getMessengerProvider() {
     return providerFilter.length === 0 || providerFilter.includes(name.toLowerCase());
   };
 
+  // LOW_MEMORY_MODE_GATING_APPLIED
   // In tests we exclusively support the { providers: [{ type: string }] } shape
   const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig as any).providers)
     ? (messengersConfig as any).providers
@@ -66,12 +67,13 @@ export function getMessengerProvider() {
   const hasType = (type: string) =>
     providersArray.some((p) => String(p.type).toLowerCase() === type.toLowerCase());
 
+  const LOW_MEMORY = process.env.LOW_MEMORY_MODE === 'true';
   const hasDiscord = hasType('discord');
   const hasSlack = hasType('slack');
   const hasMattermost = hasType('mattermost');
 
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
-  if (wantProvider('discord') && hasDiscord) {
+  if (hasDiscord && wantProvider('discord')) {
     try {
       const svc =
         DiscordMgr?.DiscordService?.getInstance
@@ -92,7 +94,7 @@ export function getMessengerProvider() {
   }
 
   // Slack (singleton) - use getInstance
-  if (wantProvider('slack') && hasSlack) {
+  if (!LOW_MEMORY && wantProvider('slack') && hasSlack) {
     try {
       let svc: any = null;
       // Prefer the exact export shape used by tests
@@ -120,7 +122,7 @@ export function getMessengerProvider() {
   }
 
   // Mattermost (singleton)
-  if (MattermostMgr && wantProvider('mattermost') && hasMattermost) {
+  if (!LOW_MEMORY && MattermostMgr && wantProvider('mattermost') && hasMattermost) {
     try {
       const svc = MattermostMgr.MattermostService?.getInstance
         ? MattermostMgr.MattermostService.getInstance()
