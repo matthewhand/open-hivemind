@@ -240,36 +240,65 @@ export const Discord = {
     }
 
     public async initialize(): Promise<void> {
-      // Validate tokens before initializing
-      const hasEmptyToken = this.bots.some(bot => {
-        const token = bot.config.token || bot.config.discord?.token;
-        return !token || token.trim() === '';
-      });
-      
-      if (hasEmptyToken) {
+      // If no bots are configured at all, surface a clear warning and skip.
+      if (!this.bots || this.bots.length === 0) {
+        log('DiscordService.initialize(): no Discord bots configured. Skipping Discord initialization.');
+        return;
+      }
+
+      // Validate tokens before initializing - log which bots are invalid instead of silently failing.
+      const invalidBots = this.bots
+        .map((bot, index) => {
+          const token = bot.config.token || bot.config.discord?.token;
+          const trimmed = token ? token.trim() : '';
+          return !trimmed
+            ? { index, name: bot.botUserName || bot.config.name || `bot#${index + 1}` }
+            : null;
+        })
+        .filter((b): b is { index: number; name: string } => !!b);
+
+      if (invalidBots.length > 0) {
+        log(
+          `DiscordService.initialize(): found ${invalidBots.length} bot(s) with missing/empty tokens: ` +
+          invalidBots.map(b => b.name).join(', ')
+        );
         throw new ValidationError(
           'Cannot initialize DiscordService: One or more bot tokens are empty',
           'DISCORD_EMPTY_TOKENS_INIT'
         );
       }
-  
+
+      log(`DiscordService.initialize(): starting login for ${this.bots.length} Discord bot(s).`);
+
       const loginPromises = this.bots.map((bot) => {
         return new Promise<void>(async (resolve) => {
           bot.client.once('ready', () => {
-            log(`Discord ${bot.botUserName} logged in as ${bot.client.user?.tag}`);
-            bot.botUserId = bot.client.user?.id || '';
+            const user = bot.client.user;
+            // Structured debug: confirm Discord identity on startup
+            log(
+              `Discord bot ready: name=${bot.botUserName}, tag=${user?.tag}, id=${user?.id}, username=${user?.username}`
+            );
+            bot.botUserId = user?.id || '';
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
           });
-  
-          const token = bot.config.token || bot.config.discord?.token;
-          await bot.client.login(token);
-          log(`Bot ${bot.botUserName} logged in`);
+
+          try {
+            const token = (bot.config.token || bot.config.discord?.token || '').trim();
+            log(`DiscordService.initialize(): initiating login for bot=${bot.botUserName}`);
+            await bot.client.login(token);
+            log(`DiscordService.initialize(): login call completed for bot=${bot.botUserName}`);
+          } catch (err: any) {
+            log(
+              `DiscordService.initialize(): failed to login bot=${bot.botUserName}: ${err?.message || String(err)}`
+            );
+            resolve();
+          }
         });
       });
-  
+
       await Promise.all(loginPromises);
-      
+
       // Initialize voice manager after bots are ready
       const { VoiceChannelManager } = require('./voice/voiceChannelManager');
       this.voiceManager = new VoiceChannelManager(this.bots[0].client);
