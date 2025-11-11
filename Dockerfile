@@ -37,10 +37,13 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 COPY . .
 RUN npm run build
+
+# Remove dev dependencies after build to keep runtime image slim
+RUN npm prune --omit=dev
 
 # Create feature flag environment file
 RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
