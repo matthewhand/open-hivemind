@@ -11,7 +11,7 @@
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
     "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "(node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck 2>/dev/null || echo 'TypeScript compilation completed with warnings, but build succeeded') && sleep 3600",
+    "build:backend": "bash -c 'set -x; echo \"[build:backend] starting at $(date -Iseconds)\"; node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck || echo \"TypeScript compilation completed with warnings, but build succeeded\"; echo \"[build:backend] finished\"; sleep 3600'",
     "build:frontend": "cd src/client && ../../node_modules/.bin/vite build",
     "build:netlify": "npm run build:backend && npm run build:frontend && mkdir -p dist/client && cp -r src/client/dist dist/client/ && mkdir -p dist/netlify/functions && node node_modules/.bin/tsc netlify/functions/server.ts --outDir dist/netlify/functions --moduleResolution node --target es2020 --module commonjs --esModuleInterop --skipLibCheck",
     "start": "npm run build && NODE_ENV=production node --max-old-space-size=256 dist/src/index.js",
