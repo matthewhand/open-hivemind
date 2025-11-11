@@ -163,6 +163,8 @@ When deploying to platforms with extremely small build containers (e.g., 512 M
 | `BUILD_POST_BUILD_SLEEP_SECONDS` | `3600` | Keeps the container alive after the backend build; set to `0` to disable the sleep entirely. |
 | `SKIP_FRONTEND_BUILD` | `false` | Skip the Vite build entirely (also implied by `LOW_MEMORY_MODE=true`). |
 | `FORCE_FRONTEND_BUILD` | `false` | Run the frontend build even when `LOW_MEMORY_MODE=true`. |
+| `RUNTIME_BUILD_ON_START` | `false` | When `true`, `npm start` will run `npm run build` before launching the server. Defaults to `false` to avoid re-building on constrained hosts. |
+| `RUNTIME_MAX_OLD_SPACE_SIZE` | `256` | Heap cap (MB) for the runtime process when using `npm start`, `npm run start:test`, or headless variants. |
 
 Example Render build command:
 
