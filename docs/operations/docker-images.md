@@ -152,6 +152,26 @@ const hasNodeTools = process.env.INCLUDE_NODE_TOOLS === 'true';
 - Suitable for IoT devices or low-memory servers
 - Perfect for text-only bot deployments
 
+#### Build-Time Memory Controls
+
+When deploying to platforms with extremely small build containers (e.g., 512 MB Render plans), leverage the new environment variables exposed by the build scripts:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BUILD_MAX_OLD_SPACE_SIZE` | `2048` | Caps the Node.js heap (in MB) for both backend (`tsc`) and frontend builds. |
+| `BUILD_FRONTEND_MAX_OLD_SPACE_SIZE` | Inherits `BUILD_MAX_OLD_SPACE_SIZE` | Override the heap limit only for the Vite frontend build. |
+| `BUILD_POST_BUILD_SLEEP_SECONDS` | `3600` | Keeps the container alive after the backend build; set to `0` to disable the sleep entirely. |
+| `SKIP_FRONTEND_BUILD` | `false` | Skip the Vite build entirely (also implied by `LOW_MEMORY_MODE=true`). |
+| `FORCE_FRONTEND_BUILD` | `false` | Run the frontend build even when `LOW_MEMORY_MODE=true`. |
+
+Example Render build command:
+
+```bash
+BUILD_MAX_OLD_SPACE_SIZE=384 BUILD_POST_BUILD_SLEEP_SECONDS=0 npm run build
+```
+
+These limits dramatically reduce build-time memory spikes and avoid repeated restarts on resource-constrained hosts.
+
 ## Migration
 
 ### From Full to Slim
