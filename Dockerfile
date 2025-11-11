@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Install Python and additional tools based on feature flags
 # Set default feature flags - these can be overridden during build
