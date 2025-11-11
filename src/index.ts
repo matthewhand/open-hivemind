@@ -121,11 +121,22 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    httpLogger.debug('Incoming request', { method: req.method, path: req.path });
+    // Suppress noisy health checks by default to keep logs clean.
+    if (req.path === '/health' || req.path === '/api/health') {
+        // Only log health traffic when explicitly debugging httpLogger
+        if (process.env.DEBUG && /httpLogger/.test(process.env.DEBUG)) {
+            httpLogger.debug('Incoming health request', { method: req.method, path: req.path });
+        }
+    } else {
+        httpLogger.debug('Incoming request', { method: req.method, path: req.path });
+    }
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data:; object-src 'none'; frame-ancestors 'none';");
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data:; object-src 'none'; frame-ancestors 'none';"
+    );
 
     next();
 });
