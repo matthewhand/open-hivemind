@@ -37,9 +37,10 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci && npm cache clean --force
 
 COPY . .
+ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
 RUN npm run build
 
 # Remove dev dependencies after build to keep runtime image slim
