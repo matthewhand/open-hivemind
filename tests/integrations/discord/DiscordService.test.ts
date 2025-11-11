@@ -99,6 +99,33 @@ jest.mock('discord.js', () => {
       expect(bot.botUserName).toBe('TestBot1');
       expect(bot.client.login).toHaveBeenCalledWith('test_token_1');
     });
+
+    it('logs structured ready info and sets botUserId on client ready', async () => {
+      const debugCalls: string[] = [];
+      jest.doMock('debug', () => {
+        return (ns: string) => (msg: string) => {
+          debugCalls.push(`[${ns}] ${msg}`);
+        };
+      });
+
+      jest.resetModules();
+      const { DiscordService: LocalDiscordService } = require('@integrations/discord/DiscordService');
+      const localService = LocalDiscordService.getInstance();
+
+      await localService.initialize();
+      const bot = localService.getAllBots()[0];
+
+      // botUserId is derived from client.user.id set by our discord.js mock
+      expect(bot.botUserId).toBe(bot.client.user.id);
+
+      // Ensure structured log includes expected identity fields
+      const combinedLogs = debugCalls.join('\n');
+      expect(combinedLogs).toContain('app:discordService');
+      expect(combinedLogs).toContain('Discord bot ready:');
+      expect(combinedLogs).toContain('name=TestBot1');
+      expect(combinedLogs).toContain(`id=${bot.client.user.id}`);
+      expect(combinedLogs).toContain(`tag=${bot.client.user.tag}`);
+    });
   
     it('shuts down correctly', async () => {
       await service.initialize();
