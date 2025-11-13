@@ -58,7 +58,6 @@ export function getMessengerProvider() {
     return providerFilter.length === 0 || providerFilter.includes(name.toLowerCase());
   };
 
-  // LOW_MEMORY_MODE_GATING_APPLIED
   // In tests we exclusively support the { providers: [{ type: string }] } shape
   const providersArray: Array<{ type: string }> = Array.isArray((messengersConfig as any).providers)
     ? (messengersConfig as any).providers
@@ -94,7 +93,7 @@ export function getMessengerProvider() {
   }
 
   // Slack (singleton) - use getInstance
-  if (!LOW_MEMORY && wantProvider('slack') && hasSlack) {
+  if (wantProvider('slack') && hasSlack) {
     try {
       let svc: any = null;
       // Prefer the exact export shape used by tests
@@ -122,7 +121,7 @@ export function getMessengerProvider() {
   }
 
   // Mattermost (singleton)
-  if (!LOW_MEMORY && MattermostMgr && wantProvider('mattermost') && hasMattermost) {
+  if (MattermostMgr && wantProvider('mattermost') && hasMattermost) {
     try {
       const svc = MattermostMgr.MattermostService?.getInstance
         ? MattermostMgr.MattermostService.getInstance()
