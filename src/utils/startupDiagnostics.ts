@@ -374,7 +374,7 @@ export class StartupDiagnostics {
 
       // Count users from secure configuration (if available)
       try {
-        const SecureConfigManager = eval('require')('@config/SecureConfigManager');
+        const SecureConfigManager = require('../config/SecureConfigManager');
         const secureConfig = SecureConfigManager.getInstance();
         // Note: This would need to be implemented in SecureConfigManager
         // status.secureConfigUsers = secureConfig.getUserCount();
@@ -394,7 +394,7 @@ export class StartupDiagnostics {
    */
   private checkAuthManagerExists(): boolean {
     try {
-      const AuthManager = eval('require')('@auth/AuthManager');
+      const AuthManager = require('../auth/AuthManager');
       const authManager = AuthManager.getInstance();
       return !!authManager;
     } catch (error) {

@@ -75,6 +75,10 @@
             }
         }
     },
+    "greeting": {
+        "disabled": false,
+        "message": "Hello! I'm online and ready to assist."
+    },
     "service": {
         "webhook": {
             "url": "https://example.com/webhook"

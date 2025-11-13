@@ -39,9 +39,9 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
-import startupDiagnostics from '@utils/startupDiagnostics';
+import startupDiagnostics from './utils/startupDiagnostics';
 
-import { IMessage } from '@src/types/messages';
+import { Message } from './types/messages';
  
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -368,17 +368,14 @@ async function sendGreeting(messengerServices: any[]) {
         const defaultChannel = service.getDefaultChannel();
         if (defaultChannel) {
             try {
-                const greetingMessage: IMessage = {
-                    text: greetingConfig.message,
-                    channel: defaultChannel,
-                    threadId: '',
-                    provider: service.providerName,
-                    botId: '',
-                    botName: '',
-                    userId: '',
-                    userName: '',
-                    userAvatar: '',
-                    userProfile: {},
+                const greetingMessage: Message = {
+                    id: `greeting-${Date.now()}`,
+                    content: greetingConfig.message,
+                    channelId: defaultChannel,
+                    role: 'assistant',
+                    platform: service.providerName as any,
+                    data: {},
+                    createdAt: new Date()
                 };
                 await service.sendMessage(greetingMessage);
                 appLogger.info('Greeting message sent successfully', { provider: service.providerName, channel: defaultChannel });
