@@ -39,6 +39,7 @@ import fs from 'fs';
 import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import startupDiagnostics from '@utils/startupDiagnostics';
 
 import { IMessage } from '@src/types/messages';
  
@@ -218,6 +219,8 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 async function startBot(messengerService: any) {
+    const providerType = messengerService.providerName || messengerService.constructor?.name || 'Unknown';
+
     try {
         debugEnvVarsModule.debugEnvVars();
         indexLog('[DEBUG] Starting bot initialization...');
@@ -227,31 +230,39 @@ async function startBot(messengerService: any) {
         await messengerService.initialize();
         indexLog('[DEBUG] Bot initialization completed.');
         indexLog('[DEBUG] Setting up message handler...');
-        
+
         // Initialize idle response manager
         const idleResponseManager = IdleResponseManager.getInstance();
         idleResponseManager.initialize();
-        
+
         messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
             messageHandlerModule.handleMessage(message, historyMessages, botConfig)
         );
         indexLog('[DEBUG] Message handler set up successfully.');
+
+        // Log successful provider initialization
+        startupDiagnostics.logProviderInitialized(providerType, {
+            providerName: messengerService.providerName,
+            hasDefaultChannel: !!messengerService.getDefaultChannel?.(),
+            channelCount: messengerService.getChannels?.()?.length || 0
+        });
     } catch (error) {
         indexLog('[ERROR] Error starting bot service:', error);
+
+        // Log provider initialization failure with diagnostics
+        startupDiagnostics.logProviderInitializationFailed(providerType, error);
+
         // Log the error but don't exit the process - we want other bots to continue working
-        appLogger.error('Bot initialization failed', { error });
+        appLogger.error('Bot initialization failed', { error, providerType });
     }
 }
 
 async function main() {
-    // Unified application startup
+    // Unified application startup with enhanced diagnostics
     appLogger.info('🚀 Starting Open Hivemind Unified Server');
-    appLogger.info('🔧 Configuration', {
-        nodeEnv: process.env.NODE_ENV || 'development',
-        httpEnabled: process.env.HTTP_ENABLED !== 'false',
-        skipMessengers: skipMessengers,
-        port: process.env.PORT || '3028'
-    });
+
+    // Run comprehensive startup diagnostics
+    await startupDiagnostics.logStartupDiagnostics();
 
     const llmProviders = getLlmProvider();
     appLogger.info('🤖 Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
