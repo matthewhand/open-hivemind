@@ -121,15 +121,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    // Suppress noisy health checks by default to keep logs clean.
-    if (req.path === '/health' || req.path === '/api/health') {
-        // Only log health traffic when explicitly debugging httpLogger
-        if (process.env.DEBUG && /httpLogger/.test(process.env.DEBUG)) {
-            httpLogger.debug('Incoming health request', { method: req.method, path: req.path });
-        }
-    } else {
+    // Suppress noisy health checks completely to keep logs clean.
+    if (req.path !== '/health' && req.path !== '/api/health') {
         httpLogger.debug('Incoming request', { method: req.method, path: req.path });
     }
+    // Health requests are never logged
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
