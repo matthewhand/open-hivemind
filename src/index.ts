@@ -40,6 +40,8 @@ import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 
+import { IMessage } from '@src/types/messages';
+ 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
@@ -121,11 +123,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-    // Suppress noisy health checks completely to keep logs clean.
-    if (req.path !== '/health' && req.path !== '/api/health') {
+    // Suppress noisy health checks by default, but allow override via SUPPRESS_HEALTH_LOGS
+    const suppressHealthLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
+    if (req.path === '/health' || req.path === '/api/health') {
+        if (!suppressHealthLogs) {
+            httpLogger.debug('Incoming request', { method: req.method, path: req.path });
+        }
+    } else {
         httpLogger.debug('Incoming request', { method: req.method, path: req.path });
     }
-    // Health requests are never logged
 
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -335,8 +341,43 @@ async function main() {
 
     // Startup complete
     appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+
+    sendGreeting(messengerServices);
 }
 
+async function sendGreeting(messengerServices: any[]) {
+    const greetingConfig = messageConfig.get('greeting') as { disabled: boolean; message: string };
+
+    if (greetingConfig.disabled) {
+        appLogger.info('Greeting message is disabled by configuration.');
+        return;
+    }
+
+    for (const service of messengerServices) {
+        const defaultChannel = service.getDefaultChannel();
+        if (defaultChannel) {
+            try {
+                const greetingMessage: IMessage = {
+                    text: greetingConfig.message,
+                    channel: defaultChannel,
+                    threadId: '',
+                    provider: service.providerName,
+                    botId: '',
+                    botName: '',
+                    userId: '',
+                    userName: '',
+                    userAvatar: '',
+                    userProfile: {},
+                };
+                await service.sendMessage(greetingMessage);
+                appLogger.info('Greeting message sent successfully', { provider: service.providerName, channel: defaultChannel });
+            } catch (error) {
+                appLogger.error('Failed to send greeting message', { provider: service.providerName, channel: defaultChannel, error });
+            }
+        }
+    }
+}
+ 
 main().catch((error) => {
     appLogger.error('Unexpected error in main execution', { error });
     process.exit(1);
