@@ -25,6 +25,7 @@ import { pickBestChannel, computeScore as channelComputeScore } from '../../mess
 import WebSocketService from '../../server/services/WebSocketService';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
 import { SpecifyCommand } from './commands/speckit/specify';
+import { EventEmitter } from 'events';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -72,7 +73,7 @@ export const Discord = {
    * await service.sendMessageToChannel("123456789", "Hello", "Bot #2");
    * ```
    */
-  DiscordService: class implements IMessengerService {
+  DiscordService: class extends EventEmitter implements IMessengerService {
     private static instance: DiscordService;
     private bots: Bot[] = [];
     private handlerSet: boolean = false;
@@ -305,6 +306,9 @@ export const Discord = {
 
       // Set up interaction handler for slash commands
       this.setInteractionHandler();
+      
+      const startupGreetingService = require('../../services/StartupGreetingService').default;
+      startupGreetingService.emit('service-ready', this);
     }
 
     public setMessageHandler(handler: (message: IMessage, historyMessages: IMessage[], botConfig: any) => Promise<string>): void {

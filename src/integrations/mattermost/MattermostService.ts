@@ -6,12 +6,13 @@ import { Application } from 'express';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import { EventEmitter } from 'events';
 
 /**
  * MattermostService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
-export class MattermostService implements IMessengerService {
+export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
   private clients: Map<string, MattermostClient> = new Map();
   private channels: Map<string, string> = new Map();
@@ -95,6 +96,9 @@ export class MattermostService implements IMessengerService {
         throw error;
       }
     }
+    
+    const startupGreetingService = require('../../services/StartupGreetingService').default;
+    startupGreetingService.emit('service-ready', this);
   }
 
   public setApp(app: Application): void {

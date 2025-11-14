@@ -8,12 +8,14 @@ primary_region = 'syd'
 
 [build]
   image = 'mhand79/open-hivemind'
+  [build.args]
+    BUILD_TIMESTAMP = "1736852400"
 
 [env]
   PORT = '5005'
 
 [http_service]
-  internal_port = 5005
+  internal_port = 6000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

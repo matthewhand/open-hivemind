@@ -40,6 +40,7 @@ import { createServer } from 'http';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import startupDiagnostics from './utils/startupDiagnostics';
+import StartupGreetingService from '@src/services/StartupGreetingService';
 
 import { Message } from './types/messages';
  
@@ -263,6 +264,9 @@ async function main() {
 
     // Run comprehensive startup diagnostics
     await startupDiagnostics.logStartupDiagnostics();
+    
+    // Initialize the StartupGreetingService
+    await StartupGreetingService.initialize();
 
     const llmProviders = getLlmProvider();
     appLogger.info('🤖 Resolved LLM providers', { providers: llmProviders.map(p => p.constructor.name || 'Unknown') });
@@ -352,96 +356,6 @@ async function main() {
 
     // Startup complete
     appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
-
-    sendGreeting(messengerServices);
-}
-
-async function sendGreeting(messengerServices: any[]) {
-    const greetingConfig = messageConfig.get('greeting') as { disabled: boolean; message: string };
-
-    if (greetingConfig.disabled) {
-        appLogger.info('Greeting message is disabled by configuration.');
-        return;
-    }
-
-    // Get LLM providers for generating unique greeting
-    const llmProviders = getLlmProvider();
-    if (llmProviders.length === 0) {
-        appLogger.warn('No LLM providers available for greeting generation, using fallback message');
-        await sendFallbackGreeting(messengerServices, greetingConfig.message);
-        return;
-    }
-
-    for (const service of messengerServices) {
-        const defaultChannel = service.getDefaultChannel();
-        if (defaultChannel) {
-            try {
-                appLogger.info('Generating unique greeting using LLM', { provider: service.providerName });
-
-                // Generate unique greeting using LLM
-                const greetingPrompt = `Generate a brief, friendly welcome message for an AI assistant bot joining a ${service.providerName} workspace. The bot is called Open-Hivemind and helps with various tasks. Make it concise and engaging (under 100 characters).`;
-
-                const generatedGreeting = await llmProviders[0].generateChatCompletion(greetingPrompt, [], {
-                    provider: service.providerName,
-                    channel: defaultChannel,
-                    maxTokens: 50,
-                    temperature: 0.8
-                });
-
-                const greetingMessage: Message = {
-                    id: `greeting-${Date.now()}`,
-                    content: generatedGreeting || greetingConfig.message, // Fallback to static message
-                    channelId: defaultChannel,
-                    role: 'assistant',
-                    platform: service.providerName as any,
-                    data: {},
-                    createdAt: new Date()
-                };
-
-                await service.sendMessage(greetingMessage);
-                appLogger.info('✅ Generated greeting message sent successfully', {
-                    provider: service.providerName,
-                    channel: defaultChannel,
-                    greeting: generatedGreeting?.substring(0, 50) + (generatedGreeting?.length > 50 ? '...' : ''),
-                    llmProvider: llmProviders[0].name || 'unknown'
-                });
-            } catch (error) {
-                appLogger.error('❌ Failed to generate/send greeting message', {
-                    provider: service.providerName,
-                    channel: defaultChannel,
-                    error: error instanceof Error ? error.message : String(error)
-                });
-
-                // Fallback to static greeting
-                await sendFallbackGreeting([service], greetingConfig.message);
-            }
-        }
-    }
-}
-
-async function sendFallbackGreeting(messengerServices: any[], fallbackMessage: string) {
-    appLogger.info('Using fallback static greeting message');
-
-    for (const service of messengerServices) {
-        const defaultChannel = service.getDefaultChannel();
-        if (defaultChannel) {
-            try {
-                const greetingMessage: Message = {
-                    id: `greeting-${Date.now()}`,
-                    content: fallbackMessage,
-                    channelId: defaultChannel,
-                    role: 'assistant',
-                    platform: service.providerName as any,
-                    data: {},
-                    createdAt: new Date()
-                };
-                await service.sendMessage(greetingMessage);
-                appLogger.info('Fallback greeting sent successfully', { provider: service.providerName, channel: defaultChannel });
-            } catch (error) {
-                appLogger.error('Failed to send fallback greeting message', { provider: service.providerName, channel: defaultChannel, error });
-            }
-        }
-    }
 }
  
 main().catch((error) => {

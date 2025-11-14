@@ -435,6 +435,15 @@ const messageConfig = convict({
     format: 'channel-priorities',
     default: {},
     env: 'CHANNEL_PRIORITIES'
+  },
+  greeting: {
+    doc: 'Greeting message configuration',
+    format: Object,
+    default: {
+      disabled: true,
+      message: 'Hello! I am online.'
+    },
+    env: 'GREETING'
   }
 });
 

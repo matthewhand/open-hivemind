@@ -28,6 +28,7 @@ import { ErrorUtils } from '@src/types/errors';
 import { createErrorResponse } from '@src/utils/errorResponse';
 import * as fs from 'fs';
 import * as path from 'path';
+import { EventEmitter } from 'events';
 
 // Routing
 import messageConfig from '@config/messageConfig';
@@ -53,7 +54,7 @@ const RETRY_CONFIG = {
  * SlackService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */
-export class SlackService implements IMessengerService {
+export class SlackService extends EventEmitter implements IMessengerService {
   private static instance: SlackService | undefined;
   private botManagers: Map<string, SlackBotManager> = new Map();
   private signatureVerifiers: Map<string, SlackSignatureVerifier> = new Map();
@@ -362,6 +363,8 @@ export class SlackService implements IMessengerService {
         throw new Error(`Failed to initialize SlackService for ${botName}: ${error}`);
       }
     }
+    const startupGreetingService = require('@src/services/StartupGreetingService').default;
+    startupGreetingService.emit('service-ready', this);
   }
 
   public setApp(app: Application): void {
