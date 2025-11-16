@@ -85,7 +85,7 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
         version: '1.0.0'
       }, {
         capabilities: {
-          tools: {}
+          experimental: {}
         }
       });
       

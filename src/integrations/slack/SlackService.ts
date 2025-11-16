@@ -75,6 +75,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
   public supportsChannelPrioritization: boolean = true;
 
   private constructor() {
+    super();
     debug('Entering SlackService constructor');
     this.initializeFromConfiguration();
 
