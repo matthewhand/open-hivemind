@@ -49,9 +49,16 @@ jest.mock('discord.js', () => {
   }));
   
   jest.mock('@config/discordConfig', () => ({
-    default: {
-      get: jest.fn((key) => (key === 'DISCORD_MESSAGE_HISTORY_LIMIT' ? 10 : undefined)),
-    },
+    get: jest.fn((key) => {
+      switch(key) {
+        case 'DISCORD_MESSAGE_HISTORY_LIMIT':
+          return 10;
+        case 'DISCORD_DEFAULT_CHANNEL_ID':
+          return 'test-channel-123';
+        default:
+          return undefined;
+      }
+    }),
   }));
   
   describe('DiscordService', () => {
