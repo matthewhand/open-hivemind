@@ -9,7 +9,7 @@ primary_region = 'syd'
 [build]
   image = 'mhand79/open-hivemind'
   [build.args]
-    BUILD_TIMESTAMP = "1736852400"
+    BUILD_TIMESTAMP = "1736856000"
 
 [env]
   PORT = '5005'

@@ -363,6 +363,9 @@ export class SlackService extends EventEmitter implements IMessengerService {
         throw new Error(`Failed to initialize SlackService for ${botName}: ${error}`);
       }
     }
+    
+    console.log('!!! EMITTING service-ready FOR SlackService !!!');
+    console.log('!!! SlackService EMITTER INSTANCE:', this);
     const startupGreetingService = require('@src/services/StartupGreetingService').default;
     startupGreetingService.emit('service-ready', this);
   }
