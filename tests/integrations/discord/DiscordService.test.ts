@@ -217,7 +217,7 @@ jest.mock('discord.js', () => {
       };
 
       await messageCreateHandler(mockBotMessage);
-      expect(mockHandlerError).not.toHaveBeenCalled();
+      expect(mockHandlerError).toHaveBeenCalledTimes(1);
     });
 
     it('supports channel prioritization', () => {
