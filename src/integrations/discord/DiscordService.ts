@@ -307,6 +307,8 @@ export const Discord = {
       // Set up interaction handler for slash commands
       this.setInteractionHandler();
       
+      console.log('!!! EMITTING service-ready FOR DiscordService !!!');
+      console.log('!!! DiscordService EMITTER INSTANCE:', this);
       const startupGreetingService = require('../../services/StartupGreetingService').default;
       startupGreetingService.emit('service-ready', this);
     }
