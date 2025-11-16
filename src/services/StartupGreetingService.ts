@@ -34,7 +34,9 @@ class StartupGreetingService extends EventEmitter {
 
     private async handleServiceReady(service: IMessengerService) {
         try {
-            console.log('!!! service-ready EVENT RECEIVED FOR:', service.providerName);
+            // Get service name from constructor name or use a fallback
+            const serviceName = service.constructor.name || 'UnknownService';
+            console.log('!!! service-ready EVENT RECEIVED FOR:', serviceName);
             const greetingConfig = messageConfig.get('greeting') as { disabled: boolean; message: string };
             if (greetingConfig.disabled) {
                 appLogger.info('Greeting message is disabled by configuration.');
@@ -43,31 +45,25 @@ class StartupGreetingService extends EventEmitter {
 
             const defaultChannel = service.getDefaultChannel();
             if (!defaultChannel) {
-                appLogger.warn('No default channel configured for greeting message', { provider: service.providerName });
+                appLogger.warn('No default channel configured for greeting message', { provider: serviceName });
                 return;
             }
 
-            const serviceId = `${service.providerName}-${defaultChannel}`;
+            const serviceId = `${serviceName}-${defaultChannel}`;
             if (this.greetingStateManager.hasGreetingBeenSent(serviceId)) {
                 appLogger.info('Greeting already sent for this service and channel', { serviceId });
                 return;
             }
 
-            const greetingMessage: Message = {
-                id: `greeting-${Date.now()}`,
-                content: greetingConfig.message,
-                channelId: defaultChannel,
-                role: 'assistant',
-                platform: service.providerName as any,
-                data: {},
-                createdAt: new Date()
-            };
-            await service.sendMessage(greetingMessage);
+            // Use sendMessageToChannel instead of sendMessage
+            await service.sendMessageToChannel(defaultChannel, greetingConfig.message);
             await this.greetingStateManager.markGreetingAsSent(serviceId, defaultChannel);
-            appLogger.info('Greeting message sent successfully', { provider: service.providerName, channel: defaultChannel });
+            appLogger.info('Greeting message sent successfully', { provider: serviceName, channel: defaultChannel });
         } catch (error) {
+            const serviceName = service.constructor.name || 'UnknownService';
+            const defaultChannel = service.getDefaultChannel() || 'unknown';
             console.error('!!! ERROR IN handleServiceReady !!!', error);
-            appLogger.error('Failed to send greeting message', { provider: service.providerName, channel: defaultChannel, error });
+            appLogger.error('Failed to send greeting message', { provider: serviceName, channel: defaultChannel, error });
         }
     }
 }
