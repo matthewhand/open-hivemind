@@ -23,6 +23,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   public supportsChannelPrioritization: boolean = true;
 
   private constructor() {
+    super();
     console.log('Initializing MattermostService with multi-instance support');
     this.initializeFromConfiguration();
   }

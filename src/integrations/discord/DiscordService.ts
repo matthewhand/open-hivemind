@@ -111,11 +111,12 @@ export const Discord = {
      * - Supports graceful degradation with fallback options
      */
     public constructor() {
-      this.bots = [];
+      super();
+
       // Prefer the new BotConfigurationManager for multi-bot configuration (also in tests)
       const configManager = BotConfigurationManager.getInstance();
       const botConfigs = configManager.getDiscordBotConfigs();
-      
+
       if (botConfigs.length > 0) {
         // Use new configuration system
         botConfigs.forEach((botConfig) => {
