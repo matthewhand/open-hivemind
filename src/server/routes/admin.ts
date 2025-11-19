@@ -10,6 +10,7 @@ import Debug from 'debug';
 import agentsRouter from './agents';
 import mcpRouter from './mcp';
 import activityRouter from './activity';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 const debug = Debug('app:webui:admin');
@@ -17,16 +18,466 @@ const debug = Debug('app:webui:admin');
 // Apply authentication middleware to all admin routes
 router.use(authenticate, requireAdmin);
 
+// Apply rate limiting to configuration endpoints
+const rateLimit = require('express-rate-limit');
+const configRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many configuration attempts, please try again later.',
+  standardHeaders: true,
+});
+
+// Apply rate limiting to sensitive configuration operations
+router.use('/api/admin', configRateLimit);
+
 // Mount sub-routes
 router.use('/agents', agentsRouter);
 router.use('/mcp', mcpRouter);
 router.use('/activity', activityRouter);
 
+// Define the new route for tool usage guards
+router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
+  try {
+    // Mock data for tool usage guards
+    const guards = [
+      {
+        id: 'guard1',
+        name: 'Owner Only for Summarize',
+        toolName: 'summarize',
+        guardType: 'owner_only',
+        config: { ownerOnly: true },
+        isActive: true,
+      },
+      {
+        id: 'guard2',
+        'Specific Users for Translate',
+        toolName: 'translate',
+        guardType: 'user_list',
+        config: { allowedUsers: ['user1', 'user2'] },
+        isActive: false,
+      },
+      {
+        id: 'guard3',
+        name: 'Role-based for Generate',
+        toolName: 'generate',
+        guardType: 'role_based',
+        config: { allowedRoles: ['admin', 'moderator'] },
+        isActive: true,
+      },
+    ];
+
+    res.json({
+      success: true,
+      data: { guards },
+      message: 'Tool usage guards retrieved successfully',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to retrieve tool usage guards',
+      message: error.message || 'An error occurred while retrieving tool usage guards',
+    });
+  }
+});
+
+// POST /api/admin/tool-usage-guards - Create a new tool usage guard
+router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
+    
+    // Validation
+    if (!name || !toolId || !guardType) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, toolId, and guardType are required'
+      });
+    }
+    
+    // Validate guardType
+    const validGuardTypes = ['owner_only', 'user_list', 'role_based'];
+    if (!validGuardTypes.includes(guardType)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: `guardType must be one of: ${validGuardTypes.join(', ')}`
+      });
+    }
+    
+    // In a real implementation, this would save to database
+    const newGuard = {
+      id: `guard${Date.now()}`,
+      name,
+      description,
+      toolId,
+      guardType,
+      allowedUsers: allowedUsers || [],
+      allowedRoles: allowedRoles || [],
+      isActive: isActive !== false,
+    };
+    
+    res.json({
+      success: true,
+      data: { guard: newGuard },
+      message: 'Tool usage guard created successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to create tool usage guard',
+      message: error.message || 'An error occurred while creating tool usage guard'
+    });
+  }
+});
+
+// PUT /api/admin/tool-usage-guards/:id - Update an existing tool usage guard
+router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
+    
+    // Validation
+    if (!name || !toolId || !guardType) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, toolId, and guardType are required'
+      });
+    }
+    
+    // Validate guardType
+    const validGuardTypes = ['owner_only', 'user_list', 'role_based'];
+    if (!validGuardTypes.includes(guardType)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: `guardType must be one of: ${validGuardTypes.join(', ')}`
+      });
+    }
+    
+    // In a real implementation, this would update in database
+    const updatedGuard = {
+      id,
+      name,
+      description,
+      toolId,
+      guardType,
+      allowedUsers: allowedUsers || [],
+      allowedRoles: allowedRoles || [],
+      isActive: isActive !== false,
+    };
+    
+    res.json({
+      success: true,
+      data: { guard: updatedGuard },
+      message: 'Tool usage guard updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update tool usage guard',
+      message: error.message || 'An error occurred while updating tool usage guard'
+    });
+  }
+});
+
+// DELETE /api/admin/tool-usage-guards/:id - Delete a tool usage guard
+router.delete('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // In a real implementation, this would delete from database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'Tool usage guard deleted successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to delete tool usage guard',
+      message: error.message || 'An error occurred while deleting tool usage guard'
+    });
+  }
+});
+
+// POST /api/admin/tool-usage-guards/:id/toggle - Toggle tool usage guard active status
+router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    
+    // In a real implementation, this would update in database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'Tool usage guard status updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update guard status',
+      message: error.message || 'An error occurred while updating guard status'
+    });
+  }
+});
+// POST /api/admin/llm-providers - Create a new LLM provider
+router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Response) => {
+  try {
+    const { name, type, config } = req.body;
+    
+    // Validation
+    if (!name || !type || !config) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, type, and config are required'
+      });
+    }
+    
+    // Sanitize sensitive data
+    const sanitizedConfig = { ...config };
+    if (sanitizedConfig.apiKey) {
+      sanitizedConfig.apiKey = sanitizedConfig.apiKey.substring(0, 3) + '***';
+    }
+    if (sanitizedConfig.botToken) {
+      sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
+    }
+    
+    // In a real implementation, this would save to database
+    const newProvider = {
+      id: `llm${Date.now()}`,
+      name,
+      type,
+      config: sanitizedConfig,
+      isActive: true,
+    };
+    
+    res.json({
+      success: true,
+      data: { provider: newProvider },
+      message: 'LLM provider created successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to create LLM provider',
+      message: error.message || 'An error occurred while creating LLM provider'
+    });
+  }
+});
+
+// PUT /api/admin/llm-providers/:id - Update an existing LLM provider
+router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, type, config } = req.body;
+    
+    // Validation
+    if (!name || !type || !config) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, type, and config are required'
+      });
+    }
+    
+    // In a real implementation, this would update in database
+    const updatedProvider = {
+      id,
+      name,
+      type,
+      config,
+      isActive: true,
+    };
+    
+    res.json({
+      success: true,
+      data: { provider: updatedProvider },
+      message: 'LLM provider updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update LLM provider',
+      message: error.message || 'An error occurred while updating LLM provider'
+    });
+  }
+});
+
+// DELETE /api/admin/llm-providers/:id - Delete an LLM provider
+router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // In a real implementation, this would delete from database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'LLM provider deleted successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to delete LLM provider',
+      message: error.message || 'An error occurred while deleting LLM provider'
+    });
+  }
+});
+
+// POST /api/admin/llm-providers/:id/toggle - Toggle LLM provider active status
+router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    
+    // In a real implementation, this would update in database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'LLM provider status updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update provider status',
+      message: error.message || 'An error occurred while updating provider status'
+    });
+  }
+});
+
+// POST /api/admin/messenger-providers - Create a new messenger provider
+router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
+  try {
+    const { name, type, config } = req.body;
+    
+    // Validation
+    if (!name || !type || !config) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, type, and config are required'
+      });
+    }
+    
+    // In a real implementation, this would save to database
+    const newProvider = {
+      id: `messenger${Date.now()}`,
+      name,
+      type,
+      config,
+      isActive: true,
+    };
+    
+    res.json({
+      success: true,
+      data: { provider: newProvider },
+      message: 'Messenger provider created successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to create messenger provider',
+      message: error.message || 'An error occurred while creating messenger provider'
+    });
+  }
+});
+
+// PUT /api/admin/messenger-providers/:id - Update an existing messenger provider
+router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, type, config } = req.body;
+    
+    // Validation
+    if (!name || !type || !config) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Name, type, and config are required'
+      });
+    }
+    
+    // In a real implementation, this would update in database
+    const updatedProvider = {
+      id,
+      name,
+      type,
+      config,
+      isActive: true,
+    };
+    
+    res.json({
+      success: true,
+      data: { provider: updatedProvider },
+      message: 'Messenger provider updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update messenger provider',
+      message: error.message || 'An error occurred while updating messenger provider'
+    });
+  }
+});
+
+// DELETE /api/admin/messenger-providers/:id - Delete a messenger provider
+router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // In a real implementation, this would delete from database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'Messenger provider deleted successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to delete messenger provider',
+      message: error.message || 'An error occurred while deleting messenger provider'
+    });
+  }
+});
+
+// POST /api/admin/messenger-providers/:id/toggle - Toggle messenger provider active status
+router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+    
+    // In a real implementation, this would update in database
+    // For now, just return success
+    
+    res.json({
+      success: true,
+      message: 'Messenger provider status updated successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: 'Failed to update provider status',
+      message: error.message || 'An error occurred while updating provider status'
+    });
+  }
+});
+
+
 // Get available LLM providers
 router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
   try {
-    // These are the supported LLM providers based on the codebase analysis
-    const providers = ['openai', 'flowise', 'openwebui'];
+    // Mock data for LLM providers
+    const providers = [
+      {
+        id: 'llm1',
+        name: 'OpenAI GPT-4',
+        type: 'openai',
+        config: {
+          apiKey: 'sk-...',
+          model: 'gpt-4',
+          baseUrl: 'https://api.openai.com/v1',
+          temperature: 0.7,
+          maxTokens: 2048,
+        },
+        isActive: true,
+      },
+      {
+        id: 'llm2',
+        name: 'Flowise Local',
+        type: 'flowise',
+        config: {
+          apiKey: 'flowise-key',
+          apiUrl: 'http://localhost:3000/api/v1',
+          chatflowId: 'chatflow-123',
+        },
+        isActive: false,
+      },
+    ];
     
     res.json({
       success: true,
@@ -44,8 +495,35 @@ router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
 // Get available messenger providers
 router.get('/api/admin/messenger-providers', (req: Request, res: Response) => {
   try {
-    // These are the supported messenger providers based on the codebase analysis
-    const providers = ['discord', 'slack', 'mattermost'];
+    // Mock data for messenger providers
+    const providers = [
+      {
+        id: 'messenger1',
+        name: 'Discord Bot',
+        type: 'discord',
+        config: {
+          token: 'discord-token',
+          clientId: 'client-id',
+          guildId: 'guild-id',
+          channelId: 'channel-id',
+        },
+        isActive: true,
+      },
+      {
+        id: 'messenger2',
+        name: 'Slack Bot',
+        type: 'slack',
+        config: {
+          botToken: 'slack-bot-token',
+          appToken: 'slack-app-token',
+          signingSecret: 'slack-signing-secret',
+          defaultChannelId: 'C1234567890',
+          mode: 'socket',
+          channels: 'C1234567890, C0987654321',
+        },
+        isActive: false,
+      },
+    ];
     
     res.json({
       success: true,
@@ -179,7 +657,7 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
 });
 
 // Connect to an MCP server
-router.post('/api/admin/mcp-servers/connect', async (req: Request, res: Response) => {
+router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Request, res: Response) => {
   try {
     const { serverUrl, apiKey, name } = req.body;
     
@@ -191,11 +669,24 @@ router.post('/api/admin/mcp-servers/connect', async (req: Request, res: Response
       });
     }
     
+    // Validate URL format
+    try {
+      new URL(serverUrl);
+    } catch {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Server URL must be a valid URL'
+      });
+    }
+    
+    // Sanitize API key for storage
+    const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
+    
     const mcpService = MCPService.getInstance();
     const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
     
-    // Save to persistent storage
-    webUIStorage.saveMcp({ name, serverUrl, apiKey });
+    // Save to persistent storage with sanitized API key
+    webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
     
     res.json({
       success: true,
