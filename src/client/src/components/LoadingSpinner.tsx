@@ -1,50 +1,37 @@
 import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { LoadingSpinner } from './DaisyUI';
 
-interface LoadingSpinnerProps {
+interface LoadingSpinnerComponentProps {
   message?: string;
-  size?: number;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   fullScreen?: boolean;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  message = 'Loading...', 
-  size = 40, 
-  fullScreen = false 
+const LoadingSpinnerComponent: React.FC<LoadingSpinnerComponentProps> = ({
+  message = 'Loading...',
+  size = 'md',
+  fullScreen = false
 }) => {
   const content = (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      gap={2}
-      p={3}
-    >
-      <CircularProgress size={size} />
+    <div className="flex flex-col items-center justify-center gap-4 p-6">
+      <LoadingSpinner color="primary" size={size} />
       {message && (
-        <Typography variant="body2" color="text.secondary">
+        <p className="text-sm text-base-content/70">
           {message}
-        </Typography>
+        </p>
       )}
-    </Box>
+    </div>
   );
 
   if (fullScreen) {
     return (
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        minHeight="100vh"
-        width="100%"
-      >
+      <div className="flex items-center justify-center min-h-screen w-full">
         {content}
-      </Box>
+      </div>
     );
   }
 
   return content;
 };
 
-export default LoadingSpinner;
+export default LoadingSpinnerComponent;

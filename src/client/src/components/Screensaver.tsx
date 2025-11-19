@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Box } from '@mui/material';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingSpinnerComponent from './LoadingSpinner';
 import { useInactivity } from '../hooks/useInactivity';
 
 interface ScreensaverProps {
@@ -58,35 +57,21 @@ const Screensaver: React.FC<ScreensaverProps> = ({
   if (!enabled || !isIdle) return null;
 
   return (
-    <Box
+    <div
       ref={containerRef}
-      sx={{
-        position: 'fixed',
-        inset: 0,
-        bgcolor: 'rgba(0,0,0,0.85)',
-        color: '#fff',
-        zIndex: 2000,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        userSelect: 'none',
-        cursor: 'none',
-      }}
-      // Click or movement will already wake via global listeners; manual pointer events suppressed
+      className="fixed inset-0 bg-black/85 text-white z-[2000] overflow-hidden flex items-center justify-center select-none cursor-none"
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          left: position.x,
-          top: position.y,
+      <div
+        className="absolute transition-all duration-[1200ms] ease-in-out"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
           transform: 'translate(-50%, -50%)',
-          transition: 'left 1.2s ease-in-out, top 1.2s ease-in-out',
         }}
       >
-        <LoadingSpinner message="" size={64} />
-      </Box>
-    </Box>
+        <LoadingSpinnerComponent message="" size="lg" />
+      </div>
+    </div>
   );
 };
 
