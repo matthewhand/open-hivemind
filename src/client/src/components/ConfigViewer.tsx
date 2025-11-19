@@ -1,22 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  TextField,
-  InputAdornment,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  CircularProgress,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import { Search, ExpandMore } from '@mui/icons-material';
+import { Alert, Loading, Badge, Input, Accordion } from './DaisyUI';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import type { ConfigResponse, ConfigSourcesResponse } from '../services/api';
 
@@ -77,203 +61,185 @@ const ConfigViewer: React.FC = () => {
     if (data === null) return null;
 
     if (typeof data === 'object' && !Array.isArray(data)) {
-      return Object.entries(data).map(([key, value]) => (
-        <Accordion key={path + key} sx={{ mb: 1 }}>
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              {key}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {renderConfigTree(value, path + key + '.')}
-          </AccordionDetails>
+      return (
+        <Accordion>
+          {Object.entries(data).map(([key, value]) => (
+            <Accordion.Item key={path + key} value={path + key}>
+              <Accordion.Trigger>
+                <span className="font-bold">{key}</span>
+              </Accordion.Trigger>
+              <Accordion.Content>
+                {renderConfigTree(value, path + key + '.')}
+              </Accordion.Content>
+            </Accordion.Item>
+          ))}
         </Accordion>
-      ));
+      );
     }
 
     if (Array.isArray(data)) {
       return (
-        <List dense>
+        <ul className="space-y-2">
           {data.map((item, index) => (
-            <ListItem key={index}>
-              <ListItemText primary={JSON.stringify(item, null, 2)} />
-            </ListItem>
+            <li key={index} className="text-sm">
+              {JSON.stringify(item, null, 2)}
+            </li>
           ))}
-        </List>
+        </ul>
       );
     }
 
     return (
-      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+      <p className="text-sm font-mono">
         {typeof data === 'string' ? `"${data}"` : JSON.stringify(data)}
-      </Typography>
+      </p>
     );
   };
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loading size="lg" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <div className="container mx-auto max-w-6xl mt-8">
+        <Alert variant="error">{error}</Alert>
+      </div>
     );
   }
 
   const filteredConfig = config ? filterConfig(config, searchTerm) : null;
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <div className="container mx-auto max-w-6xl mt-8 mb-8 px-4">
+      <h1 className="text-3xl font-bold mb-6">
         Configuration Viewer
-      </Typography>
+      </h1>
 
-      <Box mb={3}>
-        <TextField
-          fullWidth
-          variant="outlined"
+      <div className="mb-6">
+        <Input
           placeholder="Search configuration..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
+          iconLeft={<MagnifyingGlassIcon className="w-5 h-5" />}
         />
-      </Box>
+      </div>
 
       {config && (
-        <Box mb={4}>
-          <Typography variant="h6" gutterBottom>
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">
             Configuration Overview
-          </Typography>
-          <Box display="flex" gap={2} mb={2}>
-            <Chip label={`Environment: ${config.environment}`} />
-            <Chip label={`Legacy Mode: ${config.legacyMode ? 'Yes' : 'No'}`} />
-            <Chip label={`Bots: ${config.bots.length}`} />
-          </Box>
+          </h2>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge variant="primary">Environment: {config.environment}</Badge>
+            <Badge variant={config.legacyMode ? 'warning' : 'success'}>
+              Legacy Mode: {config.legacyMode ? 'Yes' : 'No'}
+            </Badge>
+            <Badge variant="info">Bots: {config.bots.length}</Badge>
+          </div>
           {config.warnings.length > 0 && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="subtitle2">Warnings:</Typography>
-              <ul>
+            <Alert variant="warning">
+              <h3 className="font-semibold mb-2">Warnings:</h3>
+              <ul className="list-disc list-inside">
                 {config.warnings.map((warning, index) => (
                   <li key={index}>{warning}</li>
                 ))}
               </ul>
             </Alert>
           )}
-        </Box>
+        </div>
       )}
 
       {filteredConfig && (
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <div className="bg-base-200 p-4 rounded-lg mb-8">
+          <h2 className="text-xl font-semibold mb-4">
             Configuration Tree
-          </Typography>
+          </h2>
           {renderConfigTree(filteredConfig)}
-        </Paper>
+        </div>
       )}
 
       {sources && (
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">
             Configuration Sources
-          </Typography>
+          </h2>
 
           <Accordion>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography>Environment Variables ({Object.keys(sources.environmentVariables).length})</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List dense>
-                {Object.entries(sources.environmentVariables).map(([key, value]: [string, any]) => (
-                  <ListItem key={key}>
-                    <ListItemText
-                      primary={key}
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" component="span">
-                            Source: {value.source}
-                          </Typography>
-                          {value.sensitive && (
-                            <Chip label="Sensitive" size="small" color="warning" sx={{ ml: 1 }} />
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </AccordionDetails>
-          </Accordion>
+            <Accordion.Item value="env">
+              <Accordion.Trigger>
+                Environment Variables ({Object.keys(sources.environmentVariables).length})
+              </Accordion.Trigger>
+              <Accordion.Content>
+                <ul className="space-y-2">
+                  {Object.entries(sources.environmentVariables).map(([key, value]: [string, any]) => (
+                    <li key={key} className="border-b border-base-300 pb-2">
+                      <div className="font-semibold">{key}</div>
+                      <div className="text-sm text-base-content/70">
+                        Source: {value.source}
+                        {value.sensitive && (
+                          <Badge variant="warning" size="sm" className="ml-2">
+                            Sensitive
+                          </Badge>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Accordion.Content>
+            </Accordion.Item>
 
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography>Configuration Files ({sources.configFiles.length})</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List dense>
-                {sources.configFiles.map((file: any, index: number) => (
-                  <ListItem key={index}>
-                    <ListItemText
-                      primary={file.name}
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" component="span">
-                            Type: {file.type} | Size: {file.size} bytes
-                          </Typography>
-                          <Typography variant="body2" component="span" sx={{ ml: 2 }}>
-                            Modified: {new Date(file.modified).toLocaleString()}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </AccordionDetails>
-          </Accordion>
+            <Accordion.Item value="files">
+              <Accordion.Trigger>
+                Configuration Files ({sources.configFiles.length})
+              </Accordion.Trigger>
+              <Accordion.Content>
+                <ul className="space-y-2">
+                  {sources.configFiles.map((file: any, index: number) => (
+                    <li key={index} className="border-b border-base-300 pb-2">
+                      <div className="font-semibold">{file.name}</div>
+                      <div className="text-sm text-base-content/70">
+                        Type: {file.type} | Size: {file.size} bytes
+                        <span className="ml-2">
+                          Modified: {new Date(file.modified).toLocaleString()}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Accordion.Content>
+            </Accordion.Item>
 
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography>Overrides ({sources.overrides.length})</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List dense>
-                {sources.overrides.map((override: any, index: number) => (
-                  <ListItem key={index}>
-                    <ListItemText
-                      primary={override.key}
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" component="span">
-                            Bot: {override.bot} | Type: {override.type}
-                          </Typography>
-                          {override.value && (
-                            <Typography variant="body2" component="span" sx={{ ml: 2 }}>
-                              Value: {override.value}
-                            </Typography>
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </AccordionDetails>
+            <Accordion.Item value="overrides">
+              <Accordion.Trigger>
+                Overrides ({sources.overrides.length})
+              </Accordion.Trigger>
+              <Accordion.Content>
+                <ul className="space-y-2">
+                  {sources.overrides.map((override: any, index: number) => (
+                    <li key={index} className="border-b border-base-300 pb-2">
+                      <div className="font-semibold">{override.key}</div>
+                      <div className="text-sm text-base-content/70">
+                        Bot: {override.bot} | Type: {override.type}
+                        {override.value && (
+                          <span className="ml-2">
+                            Value: {override.value}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Accordion.Content>
+            </Accordion.Item>
           </Accordion>
-        </Box>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
 
