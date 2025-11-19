@@ -16,19 +16,19 @@ import AgentForm from './AgentForm';
 interface Agent {
   id: string;
   name: string;
-  message Provider: string;
-llmProvider: string;
-persona ?: string;
-systemInstruction ?: string;
-mcpServers: string[];
-mcpGuard: {
-  enabled: boolean;
-  type: 'owner' | 'custom';
-  allowedUserIds: string[];
-};
-isActive: boolean;
-isRunning ?: boolean;
-envOverrides ?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
+  messageProvider: string;
+  llmProvider: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers: string[];
+  mcpGuard: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds: string[];
+  };
+  isActive: boolean;
+  isRunning?: boolean;
+  envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
 interface Provider {
