@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar,
   Card,
-  CardContent,
-  Grid,
+  Button,
+  ModalForm,
+  Input,
+  Select,
+  Alert,
+  ToastNotification,
   Chip,
-} from '@mui/material';
+  Badge,
+  Loading
+} from './DaisyUI';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Chat as ChatIcon,
-} from '@mui/icons-material';
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ChatBubbleLeftRightIcon
+} from '@heroicons/react/24/outline';
 import ProviderConfig from './ProviderConfig';
 
 interface MessengerProvider {
@@ -40,10 +34,10 @@ const MessengerProvidersConfig: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProvider, setEditingProvider] = useState<MessengerProvider | null>(null);
   const [formData, setFormData] = useState<any>({});
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
     message: '',
-    severity: 'success',
+    type: 'success',
   });
 
   const messengerProviderTypes = [
@@ -56,7 +50,6 @@ const MessengerProvidersConfig: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      // TODO: Replace with actual API call
       const response = await fetch('/api/admin/messenger-providers');
       if (!response.ok) {
         throw new Error('Failed to fetch messenger providers');
@@ -91,9 +84,9 @@ const MessengerProvidersConfig: React.FC = () => {
       const url = editingProvider
         ? `/api/admin/messenger-providers/${editingProvider.id}`
         : '/api/admin/messenger-providers';
-      
+
       const method = editingProvider ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -110,18 +103,18 @@ const MessengerProvidersConfig: React.FC = () => {
         throw new Error(`Failed to ${editingProvider ? 'update' : 'create'} messenger provider`);
       }
 
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: `Messenger provider ${editingProvider ? 'updated' : 'created'} successfully`,
-        severity: 'success',
+        type: 'success',
       });
       handleCloseDialog();
       fetchProviders();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : `Failed to ${editingProvider ? 'update' : 'create'} messenger provider`,
-        severity: 'error',
+        type: 'error',
       });
     }
   };
@@ -138,17 +131,17 @@ const MessengerProvidersConfig: React.FC = () => {
         throw new Error('Failed to delete messenger provider');
       }
 
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: 'Messenger provider deleted successfully',
-        severity: 'success',
+        type: 'success',
       });
       fetchProviders();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : 'Failed to delete messenger provider',
-        severity: 'error',
+        type: 'error',
       });
     }
   };
@@ -169,167 +162,135 @@ const MessengerProvidersConfig: React.FC = () => {
 
       fetchProviders();
     } catch (err) {
-      setSnackbar({
-        open: true,
+      setToast({
+        show: true,
         message: err instanceof Error ? err.message : 'Failed to update provider status',
-        severity: 'error',
+        type: 'error',
       });
     }
   };
 
   if (loading) {
-    return <Typography>Loading messenger providers...</Typography>;
-  }
-
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <Loading />;
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">Messenger Providers</Typography>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Messenger Providers</h2>
         <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+          variant="primary"
+          startIcon={<PlusIcon className="w-5 h-5" />}
           onClick={() => handleOpenDialog()}
         >
           Add Messenger Provider
         </Button>
-      </Box>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert type="error" className="mb-4">
           {error}
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {providers.map((provider) => (
-          <Grid item xs={12} md={6} key={provider.id}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                  <Box>
-                    <Typography variant="h6">{provider.name}</Typography>
-                    <Chip
-                      label={provider.type}
-                      size="small"
-                      color="primary"
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Chip
-                      label={provider.isActive ? 'Active' : 'Inactive'}
-                      size="small"
-                      color={provider.isActive ? 'success' : 'default'}
-                    />
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(provider)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteProvider(provider.id)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
-
-                <Box display="flex" alignItems="center" gap={2} mt={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    Status: {provider.isActive ? 'Active' : 'Inactive'}
-                  </Typography>
+          <Card key={provider.id} className="bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="card-title">{provider.name}</h3>
+                  <div className="mt-2">
+                    <Badge color="primary">{provider.type}</Badge>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Badge color={provider.isActive ? 'success' : 'ghost'}>
+                    {provider.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
                   <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleToggleActive(provider.id, !provider.isActive)}
+                    size="sm"
+                    shape="circle"
+                    color="ghost"
+                    onClick={() => handleOpenDialog(provider)}
                   >
-                    {provider.isActive ? 'Deactivate' : 'Activate'}
+                    <PencilIcon className="w-4 h-4" />
                   </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                  <Button
+                    size="sm"
+                    shape="circle"
+                    color="error"
+                    variant="outline"
+                    onClick={() => handleDeleteProvider(provider.id)}
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 mt-4">
+                <span className="text-sm text-base-content/70">
+                  Status: {provider.isActive ? 'Active' : 'Inactive'}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleToggleActive(provider.id, !provider.isActive)}
+                >
+                  {provider.isActive ? 'Deactivate' : 'Activate'}
+                </Button>
+              </div>
+            </div>
+          </Card>
         ))}
-      </Grid>
+      </div>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingProvider ? 'Edit Messenger Provider' : 'Add New Messenger Provider'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Provider Name"
-              value={formData.name || editingProvider?.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              margin="normal"
-            />
-            
-            <TextField
-              fullWidth
-              select
-              label="Provider Type"
-              value={formData.type || editingProvider?.type || ''}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              margin="normal"
-              disabled={!!editingProvider}
-            >
-              {messengerProviderTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </TextField>
-
-            {(formData.type || editingProvider?.type) && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Provider Configuration
-                </Typography>
-                <ProviderConfig
-                  provider={formData.type || editingProvider?.type}
-                  config={formData}
-                  onChange={setFormData}
-                  showSecurityIndicators={true}
-                />
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveProvider} variant="contained">
-            {editingProvider ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      <ModalForm
+        open={openDialog}
+        title={editingProvider ? 'Edit Messenger Provider' : 'Add New Messenger Provider'}
+        onClose={handleCloseDialog}
+        onSubmit={handleSaveProvider}
+        submitLabel={editingProvider ? 'Update' : 'Create'}
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <div className="space-y-4">
+          <Input
+            label="Provider Name"
+            value={formData.name || editingProvider?.name || ''}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            fullWidth
+          />
+
+          <Select
+            label="Provider Type"
+            value={formData.type || editingProvider?.type || ''}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            options={messengerProviderTypes}
+            disabled={!!editingProvider}
+            fullWidth
+          />
+
+          {(formData.type || editingProvider?.type) && (
+            <div className="mt-4">
+              <h4 className="text-lg font-semibold mb-2">Provider Configuration</h4>
+              <ProviderConfig
+                provider={formData.type || editingProvider?.type}
+                config={formData}
+                onChange={setFormData}
+                showSecurityIndicators={true}
+              />
+            </div>
+          )}
+        </div>
+      </ModalForm>
+
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
+    </div>
   );
 };
 

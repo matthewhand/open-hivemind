@@ -1,38 +1,53 @@
 import React, { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
 import LLMProvidersConfig from './LLMProvidersConfig';
 import MessengerProvidersConfig from './MessengerProvidersConfig';
 import PersonaManager from './PersonaManager';
 import MCPServerManager from './Admin/MCPServerManager';
 import ToolUsageGuardsConfig from './ToolUsageGuardsConfig';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ChatIcon from '@mui/icons-material/Chat';
-import PersonIcon from '@mui/icons-material/Person';
-import BuildIcon from '@mui/icons-material/Build';
-import SecurityIcon from '@mui/icons-material/Security';
+import {
+  Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+  ShieldCheckIcon
+} from '@heroicons/react/24/outline';
 
 const ComprehensiveConfigPanel: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
+  const tabs = [
+    { label: 'LLM Providers', icon: Cog6ToothIcon, component: LLMProvidersConfig },
+    { label: 'Messenger Providers', icon: ChatBubbleLeftRightIcon, component: MessengerProvidersConfig },
+    { label: 'Personas', icon: UserGroupIcon, component: PersonaManager },
+    { label: 'MCP Server Management', icon: WrenchScrewdriverIcon, component: MCPServerManager },
+    { label: 'Tool Usage Guards', icon: ShieldCheckIcon, component: ToolUsageGuardsConfig },
+  ];
+
+  const ActiveComponent = tabs[currentTab].component;
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Tabs value={currentTab} onChange={handleChange} aria-label="configuration panel tabs">
-        <Tab icon={<SettingsIcon />} label="LLM Providers" />
-        <Tab icon={<ChatIcon />} label="Messenger Providers" />
-        <Tab icon={<PersonIcon />} label="Personas" />
-        <Tab icon={<BuildIcon />} label="MCP Server Management" />
-        <Tab icon={<SecurityIcon />} label="Tool Usage Guards" />
-      </Tabs>
-      {currentTab === 0 && <LLMProvidersConfig />}
-      {currentTab === 1 && <MessengerProvidersConfig />}
-      {currentTab === 2 && <PersonaManager />}
-      {currentTab === 3 && <MCPServerManager />}
-      {currentTab === 4 && <ToolUsageGuardsConfig />}
-    </Box>
+    <div className="w-full">
+      <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-200 p-2 rounded-lg">
+        {tabs.map((tab, index) => {
+          const Icon = tab.icon;
+          return (
+            <a
+              key={index}
+              role="tab"
+              className={`tab h-10 gap-2 ${currentTab === index ? 'tab-active' : ''}`}
+              onClick={() => setCurrentTab(index)}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </a>
+          );
+        })}
+      </div>
+
+      <div className="bg-base-100 rounded-box">
+        <ActiveComponent />
+      </div>
+    </div>
   );
 };
 

@@ -81,7 +81,7 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
 router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
-    
+
     // Validation
     if (!name || !toolId || !guardType) {
       return res.status(400).json({
@@ -89,7 +89,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
         message: 'Name, toolId, and guardType are required'
       });
     }
-    
+
     // Validate guardType
     const validGuardTypes = ['owner_only', 'user_list', 'role_based'];
     if (!validGuardTypes.includes(guardType)) {
@@ -98,7 +98,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
         message: `guardType must be one of: ${validGuardTypes.join(', ')}`
       });
     }
-    
+
     // In a real implementation, this would save to database
     const newGuard = {
       id: `guard${Date.now()}`,
@@ -110,7 +110,7 @@ router.post('/api/admin/tool-usage-guards', configRateLimit, (req: Request, res:
       allowedRoles: allowedRoles || [],
       isActive: isActive !== false,
     };
-    
+
     res.json({
       success: true,
       data: { guard: newGuard },
@@ -129,7 +129,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
   try {
     const { id } = req.params;
     const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } = req.body;
-    
+
     // Validation
     if (!name || !toolId || !guardType) {
       return res.status(400).json({
@@ -137,7 +137,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
         message: 'Name, toolId, and guardType are required'
       });
     }
-    
+
     // Validate guardType
     const validGuardTypes = ['owner_only', 'user_list', 'role_based'];
     if (!validGuardTypes.includes(guardType)) {
@@ -146,7 +146,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
         message: `guardType must be one of: ${validGuardTypes.join(', ')}`
       });
     }
-    
+
     // In a real implementation, this would update in database
     const updatedGuard = {
       id,
@@ -158,7 +158,7 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
       allowedRoles: allowedRoles || [],
       isActive: isActive !== false,
     };
-    
+
     res.json({
       success: true,
       data: { guard: updatedGuard },
@@ -176,10 +176,10 @@ router.put('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, r
 router.delete('/api/admin/tool-usage-guards/:id', configRateLimit, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+
     // In a real implementation, this would delete from database
     // For now, just return success
-    
+
     res.json({
       success: true,
       message: 'Tool usage guard deleted successfully'
@@ -197,10 +197,10 @@ router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Re
   try {
     const { id } = req.params;
     const { isActive } = req.body;
-    
+
     // In a real implementation, this would update in database
     // For now, just return success
-    
+
     res.json({
       success: true,
       message: 'Tool usage guard status updated successfully'
@@ -216,7 +216,7 @@ router.post('/api/admin/tool-usage-guards/:id/toggle', configRateLimit, (req: Re
 router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
-    
+
     // Validation
     if (!name || !type || !config) {
       return res.status(400).json({
@@ -224,7 +224,7 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
         message: 'Name, type, and config are required'
       });
     }
-    
+
     // Sanitize sensitive data
     const sanitizedConfig = { ...config };
     if (sanitizedConfig.apiKey) {
@@ -233,8 +233,7 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
     if (sanitizedConfig.botToken) {
       sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
     }
-    
-    // In a real implementation, this would save to database
+
     const newProvider = {
       id: `llm${Date.now()}`,
       name,
@@ -242,7 +241,10 @@ router.post('/api/admin/llm-providers', configRateLimit, (req: Request, res: Res
       config: sanitizedConfig,
       isActive: true,
     };
-    
+
+    // Save to persistent storage
+    webUIStorage.saveLlmProvider(newProvider);
+
     res.json({
       success: true,
       data: { provider: newProvider },
@@ -261,7 +263,7 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
-    
+
     // Validation
     if (!name || !type || !config) {
       return res.status(400).json({
@@ -269,16 +271,22 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
         message: 'Name, type, and config are required'
       });
     }
-    
-    // In a real implementation, this would update in database
+
+    // Get existing provider to preserve ID and status if needed, or just overwrite
+    const providers = webUIStorage.getLlmProviders();
+    const existingProvider = providers.find((p: any) => p.id === id);
+
     const updatedProvider = {
       id,
       name,
       type,
       config,
-      isActive: true,
+      isActive: existingProvider ? existingProvider.isActive : true,
     };
-    
+
+    // Save to persistent storage
+    webUIStorage.saveLlmProvider(updatedProvider);
+
     res.json({
       success: true,
       data: { provider: updatedProvider },
@@ -296,10 +304,10 @@ router.put('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
 router.delete('/api/admin/llm-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    // In a real implementation, this would delete from database
-    // For now, just return success
-    
+
+    // Delete from persistent storage
+    webUIStorage.deleteLlmProvider(id);
+
     res.json({
       success: true,
       message: 'LLM provider deleted successfully'
@@ -317,10 +325,20 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
   try {
     const { id } = req.params;
     const { isActive } = req.body;
-    
-    // In a real implementation, this would update in database
-    // For now, just return success
-    
+
+    const providers = webUIStorage.getLlmProviders();
+    const provider = providers.find((p: any) => p.id === id);
+
+    if (provider) {
+      provider.isActive = isActive;
+      webUIStorage.saveLlmProvider(provider);
+    } else {
+      return res.status(404).json({
+        error: 'Provider not found',
+        message: `LLM provider with ID ${id} not found`
+      });
+    }
+
     res.json({
       success: true,
       message: 'LLM provider status updated successfully'
@@ -337,7 +355,7 @@ router.post('/api/admin/llm-providers/:id/toggle', (req: Request, res: Response)
 router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
   try {
     const { name, type, config } = req.body;
-    
+
     // Validation
     if (!name || !type || !config) {
       return res.status(400).json({
@@ -345,8 +363,7 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
         message: 'Name, type, and config are required'
       });
     }
-    
-    // In a real implementation, this would save to database
+
     const newProvider = {
       id: `messenger${Date.now()}`,
       name,
@@ -354,7 +371,10 @@ router.post('/api/admin/messenger-providers', (req: Request, res: Response) => {
       config,
       isActive: true,
     };
-    
+
+    // Save to persistent storage
+    webUIStorage.saveMessengerProvider(newProvider);
+
     res.json({
       success: true,
       data: { provider: newProvider },
@@ -373,7 +393,7 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
   try {
     const { id } = req.params;
     const { name, type, config } = req.body;
-    
+
     // Validation
     if (!name || !type || !config) {
       return res.status(400).json({
@@ -381,16 +401,22 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
         message: 'Name, type, and config are required'
       });
     }
-    
-    // In a real implementation, this would update in database
+
+    // Get existing provider to preserve ID and status if needed
+    const providers = webUIStorage.getMessengerProviders();
+    const existingProvider = providers.find((p: any) => p.id === id);
+
     const updatedProvider = {
       id,
       name,
       type,
       config,
-      isActive: true,
+      isActive: existingProvider ? existingProvider.isActive : true,
     };
-    
+
+    // Save to persistent storage
+    webUIStorage.saveMessengerProvider(updatedProvider);
+
     res.json({
       success: true,
       data: { provider: updatedProvider },
@@ -408,10 +434,10 @@ router.put('/api/admin/messenger-providers/:id', (req: Request, res: Response) =
 router.delete('/api/admin/messenger-providers/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
-    // In a real implementation, this would delete from database
-    // For now, just return success
-    
+
+    // Delete from persistent storage
+    webUIStorage.deleteMessengerProvider(id);
+
     res.json({
       success: true,
       message: 'Messenger provider deleted successfully'
@@ -429,10 +455,20 @@ router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Res
   try {
     const { id } = req.params;
     const { isActive } = req.body;
-    
-    // In a real implementation, this would update in database
-    // For now, just return success
-    
+
+    const providers = webUIStorage.getMessengerProviders();
+    const provider = providers.find((p: any) => p.id === id);
+
+    if (provider) {
+      provider.isActive = isActive;
+      webUIStorage.saveMessengerProvider(provider);
+    } else {
+      return res.status(404).json({
+        error: 'Provider not found',
+        message: `Messenger provider with ID ${id} not found`
+      });
+    }
+
     res.json({
       success: true,
       message: 'Messenger provider status updated successfully'
@@ -449,34 +485,9 @@ router.post('/api/admin/messenger-providers/:id/toggle', (req: Request, res: Res
 // Get available LLM providers
 router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
   try {
-    // Mock data for LLM providers
-    const providers = [
-      {
-        id: 'llm1',
-        name: 'OpenAI GPT-4',
-        type: 'openai',
-        config: {
-          apiKey: 'sk-...',
-          model: 'gpt-4',
-          baseUrl: 'https://api.openai.com/v1',
-          temperature: 0.7,
-          maxTokens: 2048,
-        },
-        isActive: true,
-      },
-      {
-        id: 'llm2',
-        name: 'Flowise Local',
-        type: 'flowise',
-        config: {
-          apiKey: 'flowise-key',
-          apiUrl: 'http://localhost:3000/api/v1',
-          chatflowId: 'chatflow-123',
-        },
-        isActive: false,
-      },
-    ];
-    
+    // Get providers from persistent storage
+    const providers = webUIStorage.getLlmProviders();
+
     res.json({
       success: true,
       data: { providers },
@@ -493,36 +504,9 @@ router.get('/api/admin/llm-providers', (req: Request, res: Response) => {
 // Get available messenger providers
 router.get('/api/admin/messenger-providers', (req: Request, res: Response) => {
   try {
-    // Mock data for messenger providers
-    const providers = [
-      {
-        id: 'messenger1',
-        name: 'Discord Bot',
-        type: 'discord',
-        config: {
-          token: 'discord-token',
-          clientId: 'client-id',
-          guildId: 'guild-id',
-          channelId: 'channel-id',
-        },
-        isActive: true,
-      },
-      {
-        id: 'messenger2',
-        name: 'Slack Bot',
-        type: 'slack',
-        config: {
-          botToken: 'slack-bot-token',
-          appToken: 'slack-app-token',
-          signingSecret: 'slack-signing-secret',
-          defaultChannelId: 'C1234567890',
-          mode: 'socket',
-          channels: 'C1234567890, C0987654321',
-        },
-        isActive: false,
-      },
-    ];
-    
+    // Get providers from persistent storage
+    const providers = webUIStorage.getMessengerProviders();
+
     res.json({
       success: true,
       data: { providers },
@@ -541,7 +525,7 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
   try {
     // Get personas from persistent storage
     const storedPersonas = webUIStorage.getPersonas();
-    
+
     // Default personas - in a real implementation, these would be stored in a database
     const defaultPersonas = [
       {
@@ -560,10 +544,10 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
         systemPrompt: 'You are a customer support agent.'
       }
     ];
-    
+
     // Combine stored and default personas
     const allPersonas = [...storedPersonas, ...defaultPersonas];
-    
+
     res.json({
       success: true,
       data: { personas: allPersonas },
@@ -581,7 +565,7 @@ router.get('/api/admin/personas', (req: Request, res: Response) => {
 router.post('/api/admin/personas', (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
-    
+
     // Validation
     if (!key || !name || !systemPrompt) {
       return res.status(400).json({
@@ -589,10 +573,10 @@ router.post('/api/admin/personas', (req: Request, res: Response) => {
         message: 'Key, name, and systemPrompt are required'
       });
     }
-    
+
     // Save to persistent storage
     webUIStorage.savePersona({ key, name, systemPrompt });
-    
+
     res.json({
       success: true,
       message: 'Persona created successfully'
@@ -610,7 +594,7 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
-    
+
     // Validation
     if (!name || !systemPrompt) {
       return res.status(400).json({
@@ -618,10 +602,10 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
         message: 'Name and systemPrompt are required'
       });
     }
-    
+
     // Save to persistent storage
     webUIStorage.savePersona({ key, name, systemPrompt });
-    
+
     res.json({
       success: true,
       message: 'Persona updated successfully'
@@ -638,10 +622,10 @@ router.put('/api/admin/personas/:key', (req: Request, res: Response) => {
 router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
   try {
     const { key } = req.params;
-    
+
     // Delete from persistent storage
     webUIStorage.deletePersona(key);
-    
+
     res.json({
       success: true,
       message: 'Persona deleted successfully'
@@ -658,7 +642,7 @@ router.delete('/api/admin/personas/:key', (req: Request, res: Response) => {
 router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Request, res: Response) => {
   try {
     const { serverUrl, apiKey, name } = req.body;
-    
+
     // Validation
     if (!serverUrl || !name) {
       return res.status(400).json({
@@ -666,7 +650,7 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
         message: 'Server URL and name are required'
       });
     }
-    
+
     // Validate URL format
     try {
       new URL(serverUrl);
@@ -676,16 +660,16 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
         message: 'Server URL must be a valid URL'
       });
     }
-    
+
     // Sanitize API key for storage
     const sanitizedApiKey = apiKey ? apiKey.substring(0, 3) + '***' : '';
-    
+
     const mcpService = MCPService.getInstance();
     const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
-    
+
     // Save to persistent storage with sanitized API key
     webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
-    
+
     res.json({
       success: true,
       data: { tools },
@@ -703,7 +687,7 @@ router.post('/api/admin/mcp-servers/connect', configRateLimit, async (req: Reque
 router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
-    
+
     // Validation
     if (!name) {
       return res.status(400).json({
@@ -711,13 +695,13 @@ router.post('/api/admin/mcp-servers/disconnect', async (req: Request, res: Respo
         message: 'Server name is required'
       });
     }
-    
+
     const mcpService = MCPService.getInstance();
     await mcpService.disconnectFromServer(name);
-    
+
     // Remove from persistent storage
     webUIStorage.deleteMcp(name);
-    
+
     res.json({
       success: true,
       message: `Successfully disconnected from MCP server: ${name}`
@@ -735,10 +719,10 @@ router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const servers = mcpService.getConnectedServers();
-    
+
     // Get stored MCP server configurations
     const storedMcps = webUIStorage.getMcps();
-    
+
     res.json({
       success: true,
       data: { servers, configurations: storedMcps },
@@ -756,17 +740,17 @@ router.get('/api/admin/mcp-servers', (req: Request, res: Response) => {
 router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
-    
+
     const mcpService = MCPService.getInstance();
     const tools = mcpService.getToolsFromServer(name);
-    
+
     if (!tools) {
       return res.status(404).json({
         error: 'Server not found',
         message: `MCP server ${name} not found or not connected`
       });
     }
-    
+
     res.json({
       success: true,
       data: { tools },
@@ -784,7 +768,7 @@ router.get('/api/admin/mcp-servers/:name/tools', async (req: Request, res: Respo
 router.get('/api/admin/env-overrides', (req: Request, res: Response) => {
   try {
     const envVars = getRelevantEnvVars();
-    
+
     res.json({
       success: true,
       data: { envVars },
@@ -804,7 +788,7 @@ router.get('/api/admin/activity/messages', (req: Request, res: Response) => {
     // In a real implementation, this would fetch from WebSocketService or database
     // For now, we'll return mock data
     const messages: any[] = [];
-    
+
     res.json({
       success: true,
       data: { messages },
@@ -824,7 +808,7 @@ router.get('/api/admin/activity/metrics', (req: Request, res: Response) => {
     // In a real implementation, this would fetch from WebSocketService or database
     // For now, we'll return mock data
     const metrics: any[] = [];
-    
+
     res.json({
       success: true,
       data: { metrics },
@@ -842,7 +826,7 @@ router.get('/api/admin/activity/metrics', (req: Request, res: Response) => {
 router.get('/env-overrides', async (req: Request, res: Response) => {
   try {
     const envOverrides: Record<string, string> = {};
-    
+
     // Check for common environment variables that might override config
     const envVarPatterns = [
       /^DISCORD_/,
@@ -862,9 +846,9 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
         const value = process.env[key];
         if (value) {
           // Redact sensitive values
-          if (key.toLowerCase().includes('token') || 
-              key.toLowerCase().includes('key') || 
-              key.toLowerCase().includes('secret')) {
+          if (key.toLowerCase().includes('token') ||
+            key.toLowerCase().includes('key') ||
+            key.toLowerCase().includes('secret')) {
             envOverrides[key] = `***${value.slice(-4)}`;
           } else if (value.length > 20) {
             envOverrides[key] = `${value.slice(0, 10)}...${value.slice(-4)}`;
@@ -886,30 +870,30 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
 router.get('/providers', async (req: Request, res: Response) => {
   try {
     const messageProviders = [
-      { 
-        id: 'discord', 
-        name: 'Discord', 
+      {
+        id: 'discord',
+        name: 'Discord',
         description: 'Discord bot integration',
         configRequired: ['token'],
         envVarPrefix: 'DISCORD_'
       },
-      { 
-        id: 'slack', 
-        name: 'Slack', 
+      {
+        id: 'slack',
+        name: 'Slack',
         description: 'Slack bot integration',
         configRequired: ['botToken', 'appToken'],
         envVarPrefix: 'SLACK_'
       },
-      { 
-        id: 'telegram', 
-        name: 'Telegram', 
+      {
+        id: 'telegram',
+        name: 'Telegram',
         description: 'Telegram bot integration',
         configRequired: ['token'],
         envVarPrefix: 'TELEGRAM_'
       },
-      { 
-        id: 'mattermost', 
-        name: 'Mattermost', 
+      {
+        id: 'mattermost',
+        name: 'Mattermost',
         description: 'Mattermost bot integration',
         configRequired: ['token', 'serverUrl'],
         envVarPrefix: 'MATTERMOST_'
@@ -917,32 +901,32 @@ router.get('/providers', async (req: Request, res: Response) => {
     ];
 
     const llmProviders = [
-      { 
-        id: 'openai', 
-        name: 'OpenAI', 
+      {
+        id: 'openai',
+        name: 'OpenAI',
         description: 'OpenAI GPT models',
         configRequired: ['apiKey'],
         envVarPrefix: 'OPENAI_'
       },
-      { 
-        id: 'flowise', 
-        name: 'Flowise', 
+      {
+        id: 'flowise',
+        name: 'Flowise',
         description: 'Flowise workflow engine',
         configRequired: ['baseUrl'],
         envVarPrefix: 'FLOWISE_'
       },
-      { 
-        id: 'openwebui', 
-        name: 'Open WebUI', 
+      {
+        id: 'openwebui',
+        name: 'Open WebUI',
         description: 'Open WebUI local models',
         configRequired: ['baseUrl'],
         envVarPrefix: 'OPENWEBUI_'
       }
     ];
 
-    res.json({ 
-      messageProviders, 
-      llmProviders 
+    res.json({
+      messageProviders,
+      llmProviders
     });
   } catch (error) {
     debug('Error fetching providers:', error);
@@ -954,7 +938,7 @@ router.get('/providers', async (req: Request, res: Response) => {
 router.get('/system-info', async (req: Request, res: Response) => {
   try {
     const dbManager = DatabaseManager.getInstance();
-    
+
     const systemInfo = {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
