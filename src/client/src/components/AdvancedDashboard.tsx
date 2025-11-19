@@ -14,36 +14,23 @@
 
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Card, Badge, Alert, Loading, Button, Tooltip } from './DaisyUI';
 import {
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  IconButton,
-  Tooltip,
-  Alert,
-  CircularProgress,
-  Stack,
-  Button,
-} from '@mui/material';
-import {
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  Memory as MemoryIcon,
-  Speed as SpeedIcon,
-  Error as ErrorIcon,
-  CheckCircle as CheckCircleIcon,
-  Refresh as RefreshIcon,
-  Settings as SettingsIcon,
-  Dashboard as DashboardIcon,
-  People as PeopleIcon,
-  Build as BuildIcon,
-  Assessment as AssessmentIcon,
-  Timeline as TimelineIcon,
-  Computer as ComputerIcon,
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  Cog6ToothIcon,
+  ChartBarIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+  ChartPieIcon,
+  ClockIcon,
+  ComputerDesktopIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  CpuChipIcon,
+  BoltIcon,
+} from '@heroicons/react/24/outline';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { useGetStatusQuery, useGetPerformanceMetricsQuery, useGetAnalyticsQuery } from '../store/slices/apiSlice';
 import {
@@ -120,7 +107,7 @@ const AdvancedDashboard: React.FC = () => {
     isLoading: dashboardLoading,
     error: dashboardError,
   } = dashboard;
-  
+
   // RTK Query hooks for real-time data
   const {
     data: statusData,
@@ -131,7 +118,7 @@ const AdvancedDashboard: React.FC = () => {
   } = useGetStatusQuery(undefined, {
     pollingInterval: 5000, // Poll every 5 seconds
   });
-  
+
   const {
     data: performanceData,
     error: performanceError,
@@ -140,7 +127,7 @@ const AdvancedDashboard: React.FC = () => {
   } = useGetPerformanceMetricsQuery(undefined, {
     pollingInterval: 5000, // Poll periodically for real-time metrics
   });
-  
+
   const {
     data: analyticsData,
     isFetching: isFetchingAnalytics,
@@ -149,7 +136,7 @@ const AdvancedDashboard: React.FC = () => {
 
   const statusErrorMessage = statusError ? getErrorMessage(statusError) : null;
   const performanceErrorMessage = performanceError ? getErrorMessage(performanceError) : null;
-  
+
   // Enhanced loading logic
   const showGlobalLoader = (statusLoading && !statusData) || (dashboardLoading && !bots.length);
 
@@ -168,7 +155,7 @@ const AdvancedDashboard: React.FC = () => {
 
     try {
       debugLog('Processing status data', statusData);
-      
+
       // Defensive check for bots array (backend might rename to 'instances')
       // Handle multiple potential data shapes for maximum compatibility
       const possibleBotsSources = [
@@ -177,16 +164,16 @@ const AdvancedDashboard: React.FC = () => {
         (statusData as any)?.botInstances,
         (statusData as any)?.agents,
       ];
-      
+
       const rawBots = possibleBotsSources.find(source => Array.isArray(source)) || [];
-      
+
       // Validate and normalize bot data
       const normalizedBots = rawBots.map((bot: any, index: number) => {
         if (!bot || typeof bot !== 'object') {
           debugLog('Invalid bot object', { bot, index });
           return null;
         }
-        
+
         return {
           name: bot.name || `Unknown Bot ${index + 1}`,
           provider: bot.provider || 'unknown',
@@ -210,7 +197,7 @@ const AdvancedDashboard: React.FC = () => {
           version: (statusData as any)?.version || '2.0.0',
           environment: (statusData as any)?.environment || 'production',
         };
-        
+
         debugLog('System status update', systemStatusUpdate);
         dispatch(setSystemStatus(systemStatusUpdate));
       } else {
@@ -219,7 +206,7 @@ const AdvancedDashboard: React.FC = () => {
 
       dispatch(setLastUpdated());
       dispatch(setError(null));
-      
+
     } catch (error) {
       debugLog('Error processing status data', error);
       dispatch(setError(`Failed to process status data: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -238,7 +225,7 @@ const AdvancedDashboard: React.FC = () => {
     }
 
     debugLog('Status error occurred', { statusErrorMessage, dashboardError });
-    
+
     dispatch(setError(statusErrorMessage));
     dispatch(addNotification({
       type: 'error',
@@ -254,7 +241,7 @@ const AdvancedDashboard: React.FC = () => {
     }
 
     debugLog('Performance error occurred', performanceErrorMessage);
-    
+
     dispatch(addNotification({
       type: 'error',
       title: 'Performance Error',
@@ -266,7 +253,7 @@ const AdvancedDashboard: React.FC = () => {
   useEffect(() => {
     if (performanceData) {
       debugLog('Performance data received', performanceData);
-      
+
       // Validate performance metrics before dispatch
       const validatedMetrics = {
         cpuUsage: Math.max(0, Math.min(100, performanceData.cpuUsage || 0)),
@@ -276,7 +263,7 @@ const AdvancedDashboard: React.FC = () => {
         uptime: Math.max(0, performanceData.uptime || 0),
         activeConnections: Math.max(0, performanceData.activeConnections || 0),
       };
-      
+
       dispatch(setPerformanceMetrics(validatedMetrics));
     }
   }, [dispatch, performanceData]);
@@ -285,7 +272,7 @@ const AdvancedDashboard: React.FC = () => {
   useEffect(() => {
     if (analyticsData) {
       debugLog('Analytics data received', analyticsData);
-      
+
       // Validate analytics data before dispatch
       const validatedAnalytics = {
         totalMessages: Math.max(0, analyticsData.totalMessages || 0),
@@ -294,12 +281,12 @@ const AdvancedDashboard: React.FC = () => {
         averageResponseTime: Math.max(0, analyticsData.averageResponseTime || 0),
         errorRate: Math.max(0, Math.min(1, analyticsData.errorRate || 0)),
         topChannels: Array.isArray(analyticsData.topChannels) ? analyticsData.topChannels : [],
-        providerUsage: analyticsData.providerUsage && typeof analyticsData.providerUsage === 'object' 
-          ? analyticsData.providerUsage 
+        providerUsage: analyticsData.providerUsage && typeof analyticsData.providerUsage === 'object'
+          ? analyticsData.providerUsage
           : {},
         dailyStats: Array.isArray(analyticsData.dailyStats) ? analyticsData.dailyStats : [],
       };
-      
+
       dispatch(setAnalytics(validatedAnalytics));
     }
   }, [analyticsData, dispatch]);
@@ -307,28 +294,28 @@ const AdvancedDashboard: React.FC = () => {
   // Prioritize showing error over loader if initial fetch fails
   if (statusErrorMessage && !statusData) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          <Typography variant="h6">Dashboard Failed to Load</Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
+      <div className="p-6">
+        <Alert variant="error">
+          <h3 className="font-bold">Dashboard Failed to Load</h3>
+          <p className="mt-2">
             Could not fetch initial status from the server. Please check your connection and the backend logs.
-          </Typography>
-          <Typography variant="caption" sx={{ mt: 2, display: 'block', fontFamily: 'monospace' }}>
+          </p>
+          <p className="mt-4 text-xs font-mono">
             Error: {statusErrorMessage}
-          </Typography>
+          </p>
         </Alert>
-      </Box>
+      </div>
     );
   }
 
   if (showGlobalLoader) {
     return (
-      <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ py: 8 }}>
-        <CircularProgress size={40} />
-        <Typography variant="body1" color="text.secondary">
+      <div className="flex flex-row items-center justify-center gap-4 py-16">
+        <Loading size="lg" />
+        <p className="text-base-content/70">
           Loading dashboard data...
-        </Typography>
-      </Stack>
+        </p>
+      </div>
     );
   }
 
@@ -355,7 +342,7 @@ const AdvancedDashboard: React.FC = () => {
       key: 'activeBots',
       title: 'Active Bots',
       value: `${activeBotCount}/${totalBots}`,
-      icon: <CheckCircleIcon color="success" />,
+      icon: <CheckCircleIcon className="w-6 h-6 text-success" />,
       helper: connectingBotCount > 0
         ? `${connectingBotCount} connecting`
         : offlineBotCount > 0
@@ -366,21 +353,21 @@ const AdvancedDashboard: React.FC = () => {
       key: 'messages',
       title: 'Messages (24h)',
       value: totalMessages.toLocaleString(),
-      icon: <TrendingUpIcon color="primary" />,
+      icon: <ArrowTrendingUpIcon className="w-6 h-6 text-primary" />,
       helper: `${activeConnections} live connections`,
     },
     {
       key: 'response',
       title: 'Avg Response',
       value: `${averageResponseTime.toFixed(1)} ms`,
-      icon: <SpeedIcon color="primary" />,
+      icon: <BoltIcon className="w-6 h-6 text-primary" />,
       helper: 'Rolling 24h average',
     },
     {
       key: 'errors',
       title: 'Error Rate',
       value: `${errorRatePercent.toFixed(2)}%`,
-      icon: <ErrorIcon color={errorRatePercent > 2 ? 'error' : 'warning'} />,
+      icon: <ExclamationCircleIcon className={`w-6 h-6 ${errorRatePercent > 2 ? 'text-error' : 'text-warning'}`} />,
       helper: errorRatePercent > 2 ? 'Investigate issues' : 'Stable',
     },
   ];
@@ -390,28 +377,28 @@ const AdvancedDashboard: React.FC = () => {
       key: 'cpu',
       title: 'CPU Usage',
       value: `${cpuUsage.toFixed(1)}%`,
-      icon: <TrendingUpIcon color={cpuUsage > 80 ? 'error' : 'primary'} />,
+      icon: <ArrowTrendingUpIcon className={`w-6 h-6 ${cpuUsage > 80 ? 'text-error' : 'text-primary'}`} />,
       helper: cpuUsage > 80 ? 'High load' : 'Operating nominally',
     },
     {
       key: 'memory',
       title: 'Memory Usage',
       value: `${memoryUsage.toFixed(1)}%`,
-      icon: <MemoryIcon color={memoryUsage > 80 ? 'error' : 'primary'} />,
+      icon: <CpuChipIcon className={`w-6 h-6 ${memoryUsage > 80 ? 'text-error' : 'text-primary'}`} />,
       helper: memoryUsage > 80 ? 'Consider scaling' : 'Within budget',
     },
     {
       key: 'latency',
       title: 'Response Time',
       value: `${responseTimeMs.toFixed(1)} ms`,
-      icon: <SpeedIcon color="secondary" />,
+      icon: <BoltIcon className="w-6 h-6 text-secondary" />,
       helper: 'Last sample',
     },
     {
       key: 'perfErrors',
       title: 'Error Rate',
       value: `${performanceErrorRate.toFixed(2)}%`,
-      icon: <TrendingDownIcon color={performanceErrorRate > 5 ? 'error' : 'primary'} />,
+      icon: <ArrowTrendingDownIcon className={`w-6 h-6 ${performanceErrorRate > 5 ? 'text-error' : 'text-primary'}`} />,
       helper: performanceErrorRate > 5 ? 'Errors above threshold' : 'Within tolerance',
     },
   ];
@@ -422,12 +409,12 @@ const AdvancedDashboard: React.FC = () => {
    */
   const handleRefresh = () => {
     debugLog('Manual refresh triggered', new Date().toISOString());
-    
+
     try {
       refetchStatus();
       refetchPerformance();
       refetchAnalytics();
-      
+
       dispatch(addNotification({
         type: 'info',
         title: 'Refresh triggered',
@@ -443,184 +430,136 @@ const AdvancedDashboard: React.FC = () => {
     }
   };
 
+  const navLinks = [
+    { path: '/dashboard', icon: <ChartBarIcon className="w-4 h-4" />, label: 'Dashboard' },
+    { path: '/bots', icon: <UserGroupIcon className="w-4 h-4" />, label: 'Bot Manager' },
+    { path: '/config', icon: <WrenchScrewdriverIcon className="w-4 h-4" />, label: 'Configuration' },
+    { path: '/performance', icon: <ChartPieIcon className="w-4 h-4" />, label: 'Performance Monitor' },
+    { path: '/monitoring', icon: <ClockIcon className="w-4 h-4" />, label: 'Real-Time Dashboard' },
+    { path: '/settings', icon: <Cog6ToothIcon className="w-4 h-4" />, label: 'Settings' },
+    { path: '/system', icon: <ComputerDesktopIcon className="w-4 h-4" />, label: 'System' },
+  ];
+
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header Section */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">
           Advanced Dashboard
-        </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {isRefreshing && <CircularProgress size={20} />}
-          <Tooltip title="Refresh Data">
-            <span>
-              <IconButton onClick={handleRefresh} disabled={isRefreshing}>
-                <RefreshIcon />
-              </IconButton>
-            </span>
+        </h1>
+        <div className="flex items-center gap-3">
+          {isRefreshing && <Loading size="sm" />}
+          <Tooltip content="Refresh Data">
+            <Button onClick={handleRefresh} disabled={isRefreshing} variant="ghost" size="sm">
+              <ArrowPathIcon className="w-5 h-5" />
+            </Button>
           </Tooltip>
-          <Tooltip title="Settings">
-            <IconButton>
-              <SettingsIcon />
-            </IconButton>
+          <Tooltip content="Settings">
+            <Button variant="ghost" size="sm">
+              <Cog6ToothIcon className="w-5 h-5" />
+            </Button>
           </Tooltip>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {dashboardError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert variant="error" className="mb-6">
           {dashboardError}
         </Alert>
       )}
 
       {/* Navigation */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        <Button
-          component={Link}
-          to="/dashboard"
-          variant={location.pathname === '/dashboard' ? 'contained' : 'outlined'}
-          startIcon={<DashboardIcon />}
-          size="small"
-        >
-          Dashboard
-        </Button>
-        <Button
-          component={Link}
-          to="/bots"
-          variant={location.pathname === '/bots' ? 'contained' : 'outlined'}
-          startIcon={<PeopleIcon />}
-          size="small"
-        >
-          Bot Manager
-        </Button>
-        <Button
-          component={Link}
-          to="/config"
-          variant={location.pathname === '/config' ? 'contained' : 'outlined'}
-          startIcon={<BuildIcon />}
-          size="small"
-        >
-          Configuration
-        </Button>
-        <Button
-          component={Link}
-          to="/performance"
-          variant={location.pathname === '/performance' ? 'contained' : 'outlined'}
-          startIcon={<AssessmentIcon />}
-          size="small"
-        >
-          Performance Monitor
-        </Button>
-        <Button
-          component={Link}
-          to="/monitoring"
-          variant={location.pathname === '/monitoring' ? 'contained' : 'outlined'}
-          startIcon={<TimelineIcon />}
-          size="small"
-        >
-          Real-Time Dashboard
-        </Button>
-        <Button
-          component={Link}
-          to="/settings"
-          variant={location.pathname === '/settings' ? 'contained' : 'outlined'}
-          startIcon={<SettingsIcon />}
-          size="small"
-        >
-          Settings
-        </Button>
-        <Button
-          component={Link}
-          to="/system"
-          variant={location.pathname === '/system' ? 'contained' : 'outlined'}
-          startIcon={<ComputerIcon />}
-          size="small"
-        >
-          System
-        </Button>
-      </Box>
+      <div className="flex gap-2 flex-wrap mb-6">
+        {navLinks.map((link) => (
+          <Button
+            key={link.path}
+            component={Link}
+            to={link.path}
+            variant={location.pathname === link.path ? 'primary' : 'outline'}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            {link.icon}
+            {link.label}
+          </Button>
+        ))}
+      </div>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {summaryCards.map((card) => (
-          <Grid item xs={12} sm={6} md={3} key={card.key}>
-            <Card elevation={1}>
-              <CardContent>
-                <Box display="flex" alignItems="center" gap={2}>
-                  {card.icon}
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {card.title}
-                    </Typography>
-                    <Typography variant="h5" component="p">
-                      {card.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {card.helper}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card key={card.key}>
+            <Card.Body>
+              <div className="flex items-center gap-4">
+                {card.icon}
+                <div>
+                  <p className="text-sm text-base-content/70">
+                    {card.title}
+                  </p>
+                  <h2 className="text-2xl font-bold">
+                    {card.value}
+                  </h2>
+                  <p className="text-sm text-base-content/70">
+                    {card.helper}
+                  </p>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
         ))}
-      </Grid>
+      </div>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {performanceCards.map((card) => (
-          <Grid item xs={12} sm={6} md={3} key={card.key}>
-            <Card elevation={1}>
-              <CardContent>
-                <Box display="flex" alignItems="center" gap={2}>
-                  {card.icon}
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {card.title}
-                    </Typography>
-                    <Typography variant="h6" component="p">
-                      {card.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {card.helper}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card key={card.key}>
+            <Card.Body>
+              <div className="flex items-center gap-4">
+                {card.icon}
+                <div>
+                  <p className="text-sm text-base-content/70">
+                    {card.title}
+                  </p>
+                  <h3 className="text-xl font-bold">
+                    {card.value}
+                  </h3>
+                  <p className="text-sm text-base-content/70">
+                    {card.helper}
+                  </p>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
         ))}
-      </Grid>
+      </div>
 
       {/* Bot Status Overview */}
-      <Card elevation={1} sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Bot Network Status
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={2}>
+      <Card>
+        <Card.Body>
+          <Card.Title>Bot Network Status</Card.Title>
+          <div className="flex flex-wrap gap-2 mt-4">
             {bots.map((bot) => (
-              <Chip
+              <Badge
                 key={bot.name}
-                label={bot.name}
-                color={bot.status === 'active' ? 'success' : bot.status === 'connecting' ? 'warning' : 'error'}
-                variant="outlined"
-                sx={{ minWidth: 120 }}
-              />
+                variant={bot.status === 'active' ? 'success' : bot.status === 'connecting' ? 'warning' : 'error'}
+                size="lg"
+              >
+                {bot.name}
+              </Badge>
             ))}
-          </Box>
+          </div>
           {bots.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
+            <p className="text-base-content/70 mt-4">
               No bots configured. Add bots from the Bot Manager.
-            </Typography>
+            </p>
           )}
           {offlineBotCount > 0 && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
+            <Alert variant="warning" className="mt-4">
               {offlineBotCount} bot{offlineBotCount === 1 ? '' : 's'} offline. Check connection settings.
             </Alert>
           )}
-        </CardContent>
+        </Card.Body>
       </Card>
 
-    </Box>
+    </div>
   );
 };
 
