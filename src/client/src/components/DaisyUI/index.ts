@@ -40,6 +40,8 @@ export { default as Radio } from './Radio';
 export { default as Rating } from './Rating';
 export { default as Select } from './Select';
 export { default as Textarea } from './Textarea';
+export { default as Toggle } from './Toggle';
+export { default as Divider } from './Divider';
 
 // Utility Components
 export { default as Kbd } from './Kbd';
