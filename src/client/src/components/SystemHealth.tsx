@@ -1,32 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
   Card,
-  CardContent,
-  Typography,
-  LinearProgress,
-  Chip,
+  Loading,
+  Badge,
   Alert,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
   Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
+  Divider
+} from './DaisyUI';
 import {
-  ExpandMore as ExpandMoreIcon,
-  Memory as MemoryIcon,
-  Speed as SpeedIcon,
-  Storage as StorageIcon,
-  NetworkCheck as NetworkIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  Info as InfoIcon,
-} from '@mui/icons-material';
+  ChevronDownIcon,
+  CpuChipIcon,
+  BoltIcon,
+  ServerIcon,
+  SignalIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
 
 interface SystemHealthProps {
   refreshInterval?: number;
@@ -153,18 +144,19 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   }, [refreshInterval]);
 
   const getStatusIcon = (status: string) => {
+    const className = "w-5 h-5";
     switch (status) {
       case 'healthy':
       case 'online':
-        return <CheckCircleIcon color="success" />;
+        return <CheckCircleIcon className={`${className} text-success`} />;
       case 'warning':
       case 'slow':
-        return <WarningIcon color="warning" />;
+        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
       case 'error':
       case 'offline':
-        return <ErrorIcon color="error" />;
+        return <ExclamationCircleIcon className={`${className} text-error`} />;
       default:
-        return <InfoIcon color="action" />;
+        return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
@@ -180,7 +172,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       case 'offline':
         return 'error';
       default:
-        return 'default';
+        return 'ghost';
     }
   };
 
@@ -227,252 +219,236 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
   if (loading) {
     return (
       <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
-            <CircularProgress />
-            <Typography variant="body1" sx={{ ml: 2 }}>
+        <Card.Body>
+          <div className="flex justify-center items-center py-8">
+            <Loading size="lg" />
+            <span className="ml-2 text-base-content/70">
               Loading system health data...
-            </Typography>
-          </Box>
-        </CardContent>
+            </span>
+          </div>
+        </Card.Body>
       </Card>
     );
   }
 
+  const accordionItems = [
+    {
+      id: 'system-info',
+      title: 'System Information',
+      icon: 'ℹ️',
+      content: (
+        <div className="flex flex-wrap gap-4">
+          <div className="min-w-[300px] flex-1">
+            <h4 className="font-medium mb-2">Performance Metrics</h4>
+            <p className="text-sm">• CPU Load: {(metrics?.loadAverage[0] || 0).toFixed(2)} (1m), {(metrics?.loadAverage[1] || 0).toFixed(2)} (5m), {(metrics?.loadAverage[2] || 0).toFixed(2)} (15m)</p>
+            <p className="text-sm">• Memory Available: {formatBytes((metrics?.memory.total || 0) - (metrics?.memory.used || 0))}</p>
+            <p className="text-sm">• Disk Available: {formatBytes((metrics?.disk.total || 0) - (metrics?.disk.used || 0))}</p>
+          </div>
+          <div className="min-w-[300px] flex-1">
+            <h4 className="font-medium mb-2">Network Status</h4>
+            <p className="text-sm">• Connection Status: {metrics?.network.status}</p>
+            <p className="text-sm">• Response Time: {formatLatency(metrics?.network.latency || 0)}</p>
+            <p className="text-sm">• System Uptime: {formatUptime(metrics?.uptime || 0)}</p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
   return (
     <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h6">
+      <Card.Body>
+        <div className="flex justify-between items-center mb-6">
+          <Card.Title>
             System Health Monitor
-          </Typography>
+          </Card.Title>
           {lastRefresh && (
-            <Typography variant="body2" color="text.secondary">
+            <span className="text-sm text-base-content/70">
               Last updated: {lastRefresh.toLocaleTimeString()}
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
 
         {/* Overall Health Status */}
-        <Alert
-          severity={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
-          icon={getStatusIcon(overallHealth.status)}
-          sx={{ mb: 3 }}
-        >
-          {overallHealth.message}
-        </Alert>
+        <div className="mb-6">
+          <Alert
+            variant={overallHealth.status === 'healthy' ? 'success' : overallHealth.status === 'warning' ? 'warning' : 'error'}
+            icon={getStatusIcon(overallHealth.status)}
+          >
+            {overallHealth.message}
+          </Alert>
+        </div>
 
         {/* System Metrics */}
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+        <h3 className="text-lg font-bold mb-4 mt-2">
           System Metrics
-        </Typography>
+        </h3>
 
-        <Box display="flex" flexWrap="wrap" gap={2} sx={{ mb: 3 }}>
+        <div className="flex flex-wrap gap-4 mb-6">
           {/* CPU Usage */}
-          <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <SpeedIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">CPU Usage</Typography>
-                </Box>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box flex={1}>
-                    <LinearProgress
-                      variant="determinate"
+          <div className="min-w-[300px] flex-1">
+            <div className="card card-bordered border-base-300">
+              <div className="card-body p-4">
+                <div className="flex items-center mb-2">
+                  <BoltIcon className="w-5 h-5 mr-2" />
+                  <span className="font-medium">CPU Usage</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <progress
+                      className={`progress w-full ${(metrics?.cpu.usage || 0) > 80 ? 'progress-error' : (metrics?.cpu.usage || 0) > 60 ? 'progress-warning' : 'progress-success'}`}
                       value={metrics?.cpu.usage || 0}
-                      color={(metrics?.cpu.usage || 0) > 80 ? 'error' : (metrics?.cpu.usage || 0) > 60 ? 'warning' : 'success'}
-                    />
-                  </Box>
-                  <Typography variant="body2">
+                      max="100"
+                    ></progress>
+                  </div>
+                  <span className="text-sm">
                     {(metrics?.cpu.usage || 0).toFixed(1)}%
-                  </Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
+                  </span>
+                </div>
+                <span className="text-xs text-base-content/70 mt-1">
                   {metrics?.cpu.cores} cores • {metrics?.cpu.temperature?.toFixed(0)}°C
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Memory Usage */}
-          <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <MemoryIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">Memory Usage</Typography>
-                </Box>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box flex={1}>
-                    <LinearProgress
-                      variant="determinate"
+          <div className="min-w-[300px] flex-1">
+            <div className="card card-bordered border-base-300">
+              <div className="card-body p-4">
+                <div className="flex items-center mb-2">
+                  <CpuChipIcon className="w-5 h-5 mr-2" />
+                  <span className="font-medium">Memory Usage</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <progress
+                      className={`progress w-full ${(metrics?.memory.usage || 0) > 90 ? 'progress-error' : (metrics?.memory.usage || 0) > 70 ? 'progress-warning' : 'progress-success'}`}
                       value={metrics?.memory.usage || 0}
-                      color={(metrics?.memory.usage || 0) > 90 ? 'error' : (metrics?.memory.usage || 0) > 70 ? 'warning' : 'success'}
-                    />
-                  </Box>
-                  <Typography variant="body2">
+                      max="100"
+                    ></progress>
+                  </div>
+                  <span className="text-sm">
                     {(metrics?.memory.usage || 0).toFixed(1)}%
-                  </Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
+                  </span>
+                </div>
+                <span className="text-xs text-base-content/70 mt-1">
                   {formatBytes(metrics?.memory.used || 0)} / {formatBytes(metrics?.memory.total || 0)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Disk Usage */}
-          <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <StorageIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">Disk Usage</Typography>
-                </Box>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box flex={1}>
-                    <LinearProgress
-                      variant="determinate"
+          <div className="min-w-[300px] flex-1">
+            <div className="card card-bordered border-base-300">
+              <div className="card-body p-4">
+                <div className="flex items-center mb-2">
+                  <ServerIcon className="w-5 h-5 mr-2" />
+                  <span className="font-medium">Disk Usage</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <progress
+                      className={`progress w-full ${(metrics?.disk.usage || 0) > 90 ? 'progress-error' : (metrics?.disk.usage || 0) > 80 ? 'progress-warning' : 'progress-success'}`}
                       value={metrics?.disk.usage || 0}
-                      color={(metrics?.disk.usage || 0) > 90 ? 'error' : (metrics?.disk.usage || 0) > 80 ? 'warning' : 'success'}
-                    />
-                  </Box>
-                  <Typography variant="body2">
+                      max="100"
+                    ></progress>
+                  </div>
+                  <span className="text-sm">
                     {(metrics?.disk.usage || 0).toFixed(1)}%
-                  </Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
+                  </span>
+                </div>
+                <span className="text-xs text-base-content/70 mt-1">
                   {formatBytes(metrics?.disk.used || 0)} / {formatBytes(metrics?.disk.total || 0)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Network Status */}
-          <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <NetworkIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">Network Status</Typography>
-                </Box>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Chip
-                    label={metrics?.network.status || 'unknown'}
-                    color={getStatusColor(metrics?.network.status || 'unknown')}
-                    size="small"
-                  />
-                  <Typography variant="body2">
+          <div className="min-w-[300px] flex-1">
+            <div className="card card-bordered border-base-300">
+              <div className="card-body p-4">
+                <div className="flex items-center mb-2">
+                  <SignalIcon className="w-5 h-5 mr-2" />
+                  <span className="font-medium">Network Status</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge
+                    variant={getStatusColor(metrics?.network.status || 'unknown') as any}
+                    size="sm"
+                  >
+                    {metrics?.network.status || 'unknown'}
+                  </Badge>
+                  <span className="text-sm">
                     {formatLatency(metrics?.network.latency || 0)}
-                  </Typography>
-                </Box>
-                <Typography variant="caption" color="text.secondary">
+                  </span>
+                </div>
+                <span className="text-xs text-base-content/70 mt-1">
                   System uptime: {formatUptime(metrics?.uptime || 0)}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Load Average */}
-        <Typography variant="h6" gutterBottom>
+        <h3 className="text-lg font-bold mb-4">
           Load Average
-        </Typography>
-        <Box display="flex" gap={2} mb={3}>
+        </h3>
+        <div className="flex gap-2 mb-6">
           {metrics?.loadAverage.map((load, index) => (
-            <Chip
+            <Badge
               key={index}
-              label={`${index + 1}m: ${load.toFixed(2)}`}
-              variant="outlined"
-              color={load > 2 ? 'error' : load > 1 ? 'warning' : 'success'}
-            />
+              variant={load > 2 ? 'error' : load > 1 ? 'warning' : 'success'}
+              size="lg"
+            >
+              {`${index + 1}m: ${load.toFixed(2)}`}
+            </Badge>
           ))}
-        </Box>
+        </div>
 
         {/* Health Checks */}
-        <Typography variant="h6" gutterBottom>
+        <h3 className="text-lg font-bold mb-4">
           Health Checks
-        </Typography>
+        </h3>
 
-        <List>
+        <ul className="menu bg-base-200 w-full rounded-box mb-6">
           {healthChecks.map((check, index) => (
             <React.Fragment key={check.id}>
-              <ListItem>
-                <Box display="flex" alignItems="center" sx={{ mr: 2 }}>
-                  {getStatusIcon(check.status)}
-                </Box>
-
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="subtitle2">
-                        {check.name}
-                      </Typography>
-                      <Chip
-                        label={check.status}
-                        size="small"
-                        color={getStatusColor(check.status)}
-                      />
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
+              <li>
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(check.status)}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{check.name}</span>
+                        <Badge
+                          variant={getStatusColor(check.status) as any}
+                          size="sm"
+                        >
+                          {check.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-base-content/70 mt-1">
                         {check.message}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      </div>
+                      <div className="text-xs text-base-content/50 mt-1">
                         Last checked: {new Date(check.lastChecked).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </ListItem>
-
-              {index < healthChecks.length - 1 && <Divider />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {index < healthChecks.length - 1 && <Divider className="my-0" />}
             </React.Fragment>
           ))}
-        </List>
+        </ul>
 
         {/* Detailed Information */}
-        <Accordion sx={{ mt: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>System Information</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box display="flex" flexWrap="wrap" gap={2}>
-              <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Performance Metrics
-                </Typography>
-                <Typography variant="body2">
-                  • CPU Load: {(metrics?.loadAverage[0] || 0).toFixed(2)} (1m), {(metrics?.loadAverage[1] || 0).toFixed(2)} (5m), {(metrics?.loadAverage[2] || 0).toFixed(2)} (15m)
-                </Typography>
-                <Typography variant="body2">
-                  • Memory Available: {formatBytes((metrics?.memory.total || 0) - (metrics?.memory.used || 0))}
-                </Typography>
-                <Typography variant="body2">
-                  • Disk Available: {formatBytes((metrics?.disk.total || 0) - (metrics?.disk.used || 0))}
-                </Typography>
-              </Box>
-              <Box sx={{ minWidth: 300, flex: '1 1 auto' }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Network Status
-                </Typography>
-                <Typography variant="body2">
-                  • Connection Status: {metrics?.network.status}
-                </Typography>
-                <Typography variant="body2">
-                  • Response Time: {formatLatency(metrics?.network.latency || 0)}
-                </Typography>
-                <Typography variant="body2">
-                  • System Uptime: {formatUptime(metrics?.uptime || 0)}
-                </Typography>
-              </Box>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      </CardContent>
+        <Accordion items={accordionItems} className="mt-4" />
+      </Card.Body>
     </Card>
   );
 };
