@@ -1,26 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Card, Badge, Alert, Button, Loading } from '../DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Tabs,
-  Tab,
-  AppBar,
-  Toolbar,
-  Button,
-  Chip,
-  Alert,
-  CircularProgress,
-  Stack,
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Dashboard as DashboardIcon,
-  MonitorHeart as SystemIcon,
-  SmartToy as BotIcon,
-  Timeline as ActivityIcon,
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  ChartBarIcon,
+  HeartIcon,
+  CpuChipIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from '../ActivityMonitor';
@@ -48,7 +34,7 @@ interface TabPanelProps {
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
-    {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    {value === index && <div className="p-6">{children}</div>}
   </div>
 );
 
@@ -67,7 +53,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const [bots, setBots] = useState<BotWithStatus[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (newValue: number) => {
     setActiveTab(newValue);
   };
 
@@ -123,7 +109,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
     // Derive system health from StatusResponse data
     const systemHealth = systemMetrics.bots.some(bot => bot.status === 'error') ? 'error' :
-                        systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
+      systemMetrics.bots.some(bot => bot.status === 'warning') ? 'warning' : 'healthy';
 
     const botHealthIssues = bots.filter(bot =>
       bot.statusData?.status === 'error' || bot.statusData?.status === 'warning'
@@ -139,124 +125,133 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       case 'healthy': return 'success';
       case 'warning': return 'warning';
       case 'error': return 'error';
-      default: return 'default';
+      default: return 'ghost';
     }
   };
 
   const overallStatus = getOverallHealthStatus();
 
-  return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Header */}
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar>
-          <DashboardIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            System Monitoring Dashboard
-          </Typography>
+  const tabs = [
+    { icon: <HeartIcon className="w-5 h-5" />, label: 'System Health' },
+    { icon: <CpuChipIcon className="w-5 h-5" />, label: 'Bot Status' },
+    { icon: <ClockIcon className="w-5 h-5" />, label: 'Activity Monitor' },
+  ];
 
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Chip
-              label={`Overall: ${overallStatus}`}
-              color={getHealthColor(overallStatus)}
-              variant="outlined"
-            />
-            <Typography variant="body2" color="text.secondary">
+  return (
+    <div className="flex-1">
+      {/* Header */}
+      <div className="bg-base-200 shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <ChartBarIcon className="w-6 h-6" />
+            <h1 className="text-xl font-bold">System Monitoring Dashboard</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Badge variant={getHealthColor(overallStatus) as any} size="lg">
+              Overall: {overallStatus}
+            </Badge>
+            <span className="text-sm text-base-content/70">
               Last updated: {lastRefresh.toLocaleTimeString()}
-            </Typography>
+            </span>
             <Button
-              startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+              variant="outline"
               onClick={handleRefresh}
               disabled={loading}
-              variant="outlined"
+              className="flex items-center gap-2"
             >
+              {loading ? (
+                <Loading size="sm" />
+              ) : (
+                <ArrowPathIcon className="w-5 h-5" />
+              )}
               Refresh
             </Button>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+          </div>
+        </div>
+      </div>
 
       {/* Overall Health Summary */}
-      <Box sx={{ p: 3, bgcolor: 'background.default' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 3 }}>
+      <div className="p-6 bg-base-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
                 System Health
-              </Typography>
-              <Typography variant="h4">
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
                 {getOverallHealthStatus()}
-              </Typography>
-              <Chip
-                label={getOverallHealthStatus()}
-                color={getHealthColor(getOverallHealthStatus())}
-                size="small"
-              />
-            </CardContent>
+              </h2>
+              <Badge variant={getHealthColor(getOverallHealthStatus()) as any} size="sm">
+                {getOverallHealthStatus()}
+              </Badge>
+            </Card.Body>
           </Card>
 
           <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
                 Active Bots
-              </Typography>
-              <Typography variant="h4">
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
                 {bots.filter(bot => bot.statusData?.connected).length}/{bots.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </h2>
+              <p className="text-sm text-base-content/70">
                 Connected / Total
-              </Typography>
-            </CardContent>
+              </p>
+            </Card.Body>
           </Card>
 
           <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
                 Error Rate
-              </Typography>
-              <Typography variant="h4">
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
                 {bots.length > 0
                   ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
                   : 0}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </h2>
+              <p className="text-sm text-base-content/70">
                 Bots with errors
-              </Typography>
-            </CardContent>
+              </p>
+            </Card.Body>
           </Card>
 
           <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
+            <Card.Body>
+              <p className="text-base-content/70 text-sm mb-2">
                 Response Time
-              </Typography>
-              <Typography variant="h4">
+              </p>
+              <h2 className="text-3xl font-bold mb-2">
                 {bots.length > 0
                   ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
                   : 0}ms
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </h2>
+              <p className="text-sm text-base-content/70">
                 Average
-              </Typography>
-            </CardContent>
+              </p>
+            </Card.Body>
           </Card>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Tab Navigation */}
-      <AppBar position="static" color="default" elevation={1}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
-        >
-          <Tab icon={<SystemIcon />} label="System Health" />
-          <Tab icon={<BotIcon />} label="Bot Status" />
-          <Tab icon={<ActivityIcon />} label="Activity Monitor" />
-        </Tabs>
-      </AppBar>
+      <div className="bg-base-200 border-b border-base-300">
+        <div role="tablist" className="tabs tabs-boxed bg-transparent">
+          {tabs.map((tab, index) => (
+            <a
+              key={index}
+              role="tab"
+              className={`tab gap-2 ${activeTab === index ? 'tab-active' : ''}`}
+              onClick={() => handleTabChange(index)}
+            >
+              {tab.icon}
+              {tab.label}
+            </a>
+          ))}
+        </div>
+      </div>
 
       {/* Tab Content */}
       <TabPanel value={activeTab} index={0}>
@@ -264,7 +259,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       </TabPanel>
 
       <TabPanel value={activeTab} index={1}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 3 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {bots.map((bot) => (
             <BotStatusCard
               key={bot.id}
@@ -274,17 +269,17 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
             />
           ))}
           {bots.length === 0 && (
-            <Alert severity="info">
+            <Alert variant="info">
               No bots configured. Add bots through the Bot Manager to see status information.
             </Alert>
           )}
-        </Box>
+        </div>
       </TabPanel>
 
       <TabPanel value={activeTab} index={2}>
         <ActivityMonitor refreshInterval={refreshInterval} />
       </TabPanel>
-    </Box>
+    </div>
   );
 };
 
