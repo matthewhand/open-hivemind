@@ -1,50 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { Badge, Alert, Loading, Button } from '../DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Button,
-  Chip,
-  Switch,
-  FormControlLabel,
-  Alert,
-  CircularProgress,
-  Paper,
-  IconButton,
-  Tooltip
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Settings as SettingsIcon,
-  Security as SecurityIcon,
-  CheckCircle as CheckIcon,
-  Cancel as CancelIcon,
-  Warning as WarningIcon
-} from '@mui/icons-material';
-import { green, red, orange, grey } from '@mui/material/colors';
+  PlusIcon,
+  TrashIcon,
+  ArrowPathIcon,
+  Cog6ToothIcon,
+  ShieldCheckIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 import { Modal, Pagination } from '../DaisyUI';
 import AgentForm from './AgentForm';
 
 interface Agent {
   id: string;
   name: string;
-  messageProvider: string;
-  llmProvider: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers: string[];
-  mcpGuard: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds: string[];
-  };
-  isActive: boolean;
-  isRunning?: boolean;
-  envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
+  message Provider: string;
+llmProvider: string;
+persona ?: string;
+systemInstruction ?: string;
+mcpServers: string[];
+mcpGuard: {
+  enabled: boolean;
+  type: 'owner' | 'custom';
+  allowedUserIds: string[];
+};
+isActive: boolean;
+isRunning ?: boolean;
+envOverrides ?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
 interface Provider {
@@ -79,7 +63,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(12); // Show 12 agents per page (3x4 grid)
+  const [pageSize] = useState(12);
 
   useEffect(() => {
     fetchData();
@@ -128,7 +112,6 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const handleSaveAgent = async (agentData: Partial<Agent>) => {
     try {
       if (editingAgent) {
-        // Update existing agent
         const response = await fetch(`/api/admin/agents/${editingAgent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -136,7 +119,6 @@ const EnhancedAgentConfigurator: React.FC = () => {
         });
         if (!response.ok) throw new Error('Failed to update agent');
       } else {
-        // Create new agent
         const response = await fetch('/api/admin/agents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -186,25 +168,24 @@ const EnhancedAgentConfigurator: React.FC = () => {
     const hasOverrides = agent.envOverrides && Object.keys(agent.envOverrides).length > 0;
 
     if (!hasMessageProvider || !hasLlmProvider) {
-      return { status: 'incomplete', color: red[500], icon: <CancelIcon /> };
+      return { status: 'incomplete', color: 'error', icon: <XCircleIcon className="w-5 h-5" /> };
     }
     if (hasOverrides) {
-      return { status: 'env-override', color: orange[500], icon: <WarningIcon /> };
+      return { status: 'env-override', color: 'warning', icon: <ExclamationTriangleIcon className="w-5 h-5" /> };
     }
     if (agent.isRunning) {
-      return { status: 'running', color: green[500], icon: <CheckIcon /> };
+      return { status: 'running', color: 'success', icon: <CheckCircleIcon className="w-5 h-5" /> };
     }
     if (agent.isActive) {
-      return { status: 'ready', color: green[300], icon: <CheckIcon /> };
+      return { status: 'ready', color: 'success', icon: <CheckCircleIcon className="w-5 h-5" /> };
     }
-    return { status: 'inactive', color: grey[500], icon: <CancelIcon /> };
+    return { status: 'inactive', color: 'ghost', icon: <XCircleIcon className="w-5 h-5" /> };
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Calculate pagination
   const totalAgents = agents.length;
   const totalPages = Math.ceil(totalAgents / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -212,212 +193,173 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const paginatedAgents = agents.slice(startIndex, endIndex);
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
+    return <Loading />;
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Agent Configuration
-        </Typography>
-        <Box display="flex" gap={2}>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Agent Configuration</h1>
+        <div className="flex gap-2">
           <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
+            variant="ghost"
+            startIcon={<ArrowPathIcon className="w-5 h-5" />}
             onClick={fetchData}
           >
             Refresh
           </Button>
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+            variant="primary"
+            startIcon={<PlusIcon className="w-5 h-5" />}
             onClick={handleCreateAgent}
           >
             Create Agent
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert type="error" className="mb-6" onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedAgents.map((agent) => {
           const status = getAgentStatus(agent);
           return (
-            <Grid item xs={12} md={6} lg={4} key={agent.id}>
-              <Card
-                sx={{
-                  height: '100%',
-                  border: `2px solid ${status.color}`,
-                  position: 'relative'
-                }}
-              >
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
-                    <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
-                      {agent.name}
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {status.icon}
-                      <Typography variant="caption" color={status.color}>
-                        {status.status}
-                      </Typography>
-                    </Box>
-                  </Box>
+            <div
+              key={agent.id}
+              className={`card bg-base-100 shadow-xl border-2 border-${status.color}`}
+            >
+              <div className="card-body">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="card-title flex-1">{agent.name}</h3>
+                  <div className={`flex items-center gap-1 text-${status.color}`}>
+                    {status.icon}
+                    <span className="text-xs">{status.status}</span>
+                  </div>
+                </div>
 
-                  {/* Provider Configuration */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Message Provider
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip
-                        label={agent.messageProvider || 'Not Set'}
-                        size="small"
-                        color={agent.messageProvider ? 'primary' : 'default'}
-                      />
+                <div className="space-y-3">
+                  {/* Message Provider */}
+                  <div>
+                    <p className="text-sm text-base-content/60 mb-1">Message Provider</p>
+                    <div className="flex items-center gap-2">
+                      <Badge color={agent.messageProvider ? 'primary' : 'ghost'}>
+                        {agent.messageProvider || 'Not Set'}
+                      </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
                         key.toLowerCase().includes(agent.messageProvider?.toLowerCase() || '')
                       ) && (
-                        <Tooltip title="Environment variable override active">
-                          <SettingsIcon fontSize="small" color="warning" />
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </Box>
+                          <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
+                        )}
+                    </div>
+                  </div>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      LLM Provider
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip
-                        label={agent.llmProvider || 'Not Set'}
-                        size="small"
-                        color={agent.llmProvider ? 'secondary' : 'default'}
-                      />
+                  {/* LLM Provider */}
+                  <div>
+                    <p className="text-sm text-base-content/60 mb-1">LLM Provider</p>
+                    <div className="flex items-center gap-2">
+                      <Badge color={agent.llmProvider ? 'secondary' : 'ghost'}>
+                        {agent.llmProvider || 'Not Set'}
+                      </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
                         key.toLowerCase().includes(agent.llmProvider?.toLowerCase() || '')
                       ) && (
-                        <Tooltip title="Environment variable override active">
-                          <SettingsIcon fontSize="small" color="warning" />
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </Box>
+                          <Cog6ToothIcon className="w-4 h-4 text-warning" title="Environment variable override active" />
+                        )}
+                    </div>
+                  </div>
 
                   {/* Persona */}
                   {agent.persona && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Persona
-                      </Typography>
-                      <Chip
-                        label={personas.find(p => p.key === agent.persona)?.name || agent.persona}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </Box>
+                    <div>
+                      <p className="text-sm text-base-content/60 mb-1">Persona</p>
+                      <Badge color="accent">
+                        {personas.find(p => p.key === agent.persona)?.name || agent.persona}
+                      </Badge>
+                    </div>
                   )}
 
                   {/* MCP Servers */}
                   {agent.mcpServers.length > 0 && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        MCP Servers ({agent.mcpServers.length})
-                      </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={0.5}>
+                    <div>
+                      <p className="text-sm text-base-content/60 mb-1">MCP Servers ({agent.mcpServers.length})</p>
+                      <div className="flex flex-wrap gap-1">
                         {agent.mcpServers.slice(0, 3).map((serverName) => {
                           const server = mcpServers.find(s => s.name === serverName);
                           return (
-                            <Chip
+                            <Badge
                               key={serverName}
-                              label={serverName}
-                              size="small"
-                              color={server?.connected ? 'success' : 'default'}
-                            />
+                              color={server?.connected ? 'success' : 'ghost'}
+                            >
+                              {serverName}
+                            </Badge>
                           );
                         })}
                         {agent.mcpServers.length > 3 && (
-                          <Chip
-                            label={`+${agent.mcpServers.length - 3} more`}
-                            size="small"
-                            variant="outlined"
-                          />
+                          <Badge color="ghost">+{agent.mcpServers.length - 3} more</Badge>
                         )}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
 
                   {/* MCP Guard */}
                   {agent.mcpGuard.enabled && (
-                    <Box sx={{ mb: 2 }}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <SecurityIcon fontSize="small" color="primary" />
-                        <Typography variant="subtitle2" color="text.secondary">
-                          MCP Guard: {agent.mcpGuard.type}
-                        </Typography>
-                      </Box>
-                    </Box>
+                    <div className="flex items-center gap-2">
+                      <ShieldCheckIcon className="w-4 h-4 text-primary" />
+                      <p className="text-sm text-base-content/60">
+                        MCP Guard: {agent.mcpGuard.type}
+                      </p>
+                    </div>
                   )}
 
                   {/* Environment Overrides Warning */}
                   {agent.envOverrides && Object.keys(agent.envOverrides).length > 0 && (
-                    <Alert severity="warning" sx={{ mt: 2, mb: 2 }}>
-                      <Typography variant="caption">
-                        {Object.keys(agent.envOverrides).length} environment variable override(s) active
-                      </Typography>
+                    <Alert type="warning">
+                      {Object.keys(agent.envOverrides).length} environment variable override(s) active
                     </Alert>
                   )}
+                </div>
 
-                  {/* Actions */}
-                  <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={agent.isActive}
-                          onChange={() => handleToggleAgent(agent)}
-                          size="small"
-                        />
-                      }
-                      label="Active"
-                    />
-                    <Box display="flex" gap={1}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEditAgent(agent)}
-                        color="primary"
-                      >
-                        <SettingsIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteAgent(agent.id)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                {/* Actions */}
+                <div className="card-actions justify-between items-center mt-4">
+                  <div className="form-control">
+                    <label className="label cursor-pointer gap-2">
+                      <span className="label-text">Active</span>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-primary toggle-sm"
+                        checked={agent.isActive}
+                        onChange={() => handleToggleAgent(agent)}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      className="btn btn-sm btn-circle btn-ghost"
+                      onClick={() => handleEditAgent(agent)}
+                    >
+                      <Cog6ToothIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="btn btn-sm btn-circle btn-error btn-ghost"
+                      onClick={() => handleDeleteAgent(agent.id)}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           );
         })}
-      </Grid>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+        <div className="flex justify-center mt-8">
           <Pagination
             currentPage={currentPage}
             totalItems={totalAgents}
@@ -425,7 +367,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
             onPageChange={handlePageChange}
             style="standard"
           />
-        </Box>
+        </div>
       )}
 
       {/* Create/Edit Agent Modal */}
@@ -445,7 +387,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
           onCancel={() => setOpenCreateDialog(false)}
         />
       </Modal>
-    </Box>
+    </div>
   );
 };
 
