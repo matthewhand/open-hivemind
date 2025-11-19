@@ -1,36 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  DatePicker,
-  LocalizationProvider,
-  Pagination as MuiPagination,
-  Box as MuiBox,
-  Tooltip,
-  IconButton
-} from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+  ArrowPathIcon,
+  ArrowDownTrayIcon,
+  FunnelIcon,
+  ChartBarIcon,
+  PresentationChartLineIcon
+} from '@heroicons/react/24/outline';
 import {
   LineChart,
   Line,
@@ -46,15 +21,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import {
-  Refresh as RefreshIcon,
-  Download as DownloadIcon,
-  FilterList as FilterIcon,
-  Timeline as TimelineIcon,
-  Assessment as AssessmentIcon
-} from '@mui/icons-material';
 import { format, subDays, subHours } from 'date-fns';
-import { Pagination } from '../DaisyUI';
+import { Badge, Alert, Loading, Button, Pagination } from '../DaisyUI';
 
 interface ActivityFilter {
   agentId?: string;
@@ -117,13 +85,13 @@ const ActivityMonitor: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Data states
   const [activities, setActivities] = useState<MessageActivity[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
-  
+
   // Filter states
   const [filter, setFilter] = useState<ActivityFilter>({
     startDate: subHours(new Date(), 24),
@@ -131,7 +99,7 @@ const ActivityMonitor: React.FC = () => {
     limit: 100,
     offset: 0
   });
-  
+
   const [pagination, setPagination] = useState({
     page: 1,
     totalPages: 1,
@@ -179,11 +147,11 @@ const ActivityMonitor: React.FC = () => {
 
       const endpoint = endpoints[currentTab as keyof typeof endpoints];
       const response = await fetch(`${endpoint}?${queryParams}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
 
       switch (currentTab) {
@@ -224,7 +192,7 @@ const ActivityMonitor: React.FC = () => {
   const handleQuickTimeRange = (range: string) => {
     const now = new Date();
     let startDate: Date;
-    
+
     switch (range) {
       case '1h':
         startDate = subHours(now, 1);
@@ -241,7 +209,7 @@ const ActivityMonitor: React.FC = () => {
       default:
         startDate = subHours(now, 24);
     }
-    
+
     handleFilterChange({ startDate, endDate: now });
   };
 
@@ -256,7 +224,7 @@ const ActivityMonitor: React.FC = () => {
 
       const response = await fetch(`/api/admin/activity/messages?${queryParams}&limit=10000`);
       const data = await response.json();
-      
+
       const csv = [
         ['Timestamp', 'Agent', 'Provider', 'LLM', 'Type', 'Status', 'Response Time', 'Content Length'].join(','),
         ...data.messages.map((msg: MessageActivity) => [
@@ -288,214 +256,214 @@ const ActivityMonitor: React.FC = () => {
   };
 
   const renderFilters = () => (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-          <Typography variant="h6">Filters</Typography>
-          <Button
-            startIcon={<FilterIcon />}
+    <div className="card bg-base-100 shadow-xl mb-6">
+      <div className="card-body">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="card-title">Filters</h3>
+          <button
+            className="btn btn-sm btn-ghost gap-2"
             onClick={() => setShowFilters(!showFilters)}
           >
+            <FunnelIcon className="w-4 h-4" />
             {showFilters ? 'Hide' : 'Show'} Filters
-          </Button>
-        </Box>
-        
+          </button>
+        </div>
+
         {showFilters && (
-          <Box>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Agent</InputLabel>
-                  <Select
-                    value={filter.agentId || ''}
-                    label="Agent"
-                    onChange={(e) => handleFilterChange({ agentId: e.target.value || undefined })}
-                  >
-                    <MenuItem value="">All Agents</MenuItem>
-                    {agents.map((agent) => (
-                      <MenuItem key={agent.id} value={agent.id}>
-                        {agent.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Message Provider</InputLabel>
-                  <Select
-                    value={filter.messageProvider || ''}
-                    label="Message Provider"
-                    onChange={(e) => handleFilterChange({ messageProvider: e.target.value || undefined })}
-                  >
-                    <MenuItem value="">All Providers</MenuItem>
-                    {getUniqueProviders('messageProvider').map((provider) => (
-                      <MenuItem key={provider} value={provider}>
-                        {provider}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>LLM Provider</InputLabel>
-                  <Select
-                    value={filter.llmProvider || ''}
-                    label="LLM Provider"
-                    onChange={(e) => handleFilterChange({ llmProvider: e.target.value || undefined })}
-                  >
-                    <MenuItem value="">All LLM Providers</MenuItem>
-                    {getUniqueProviders('llmProvider').map((provider) => (
-                      <MenuItem key={provider} value={provider}>
-                        {provider}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Agent</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={filter.agentId || ''}
+                  onChange={(e) => handleFilterChange({ agentId: e.target.value || undefined })}
+                >
+                  <option value="">All Agents</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <DatePicker
-                    label="Start Date"
-                    value={filter.startDate}
-                    onChange={(date) => handleFilterChange({ startDate: date || undefined })}
-                    slotProps={{ textField: { fullWidth: true } }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <DatePicker
-                    label="End Date"
-                    value={filter.endDate}
-                    onChange={(date) => handleFilterChange({ endDate: date || undefined })}
-                    slotProps={{ textField: { fullWidth: true } }}
-                  />
-                </Grid>
-              </Grid>
-            </LocalizationProvider>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Message Provider</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={filter.messageProvider || ''}
+                  onChange={(e) => handleFilterChange({ messageProvider: e.target.value || undefined })}
+                >
+                  <option value="">All Providers</option>
+                  {getUniqueProviders('messageProvider').map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <Box display="flex" gap={1} flexWrap="wrap">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">LLM Provider</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={filter.llmProvider || ''}
+                  onChange={(e) => handleFilterChange({ llmProvider: e.target.value || undefined })}
+                >
+                  <option value="">All LLM Providers</option>
+                  {getUniqueProviders('llmProvider').map((provider) => (
+                    <option key={provider} value={provider}>
+                      {provider}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Start Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={filter.startDate ? format(filter.startDate, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => handleFilterChange({ startDate: e.target.value ? new Date(e.target.value) : undefined })}
+                />
+              </div>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">End Date</span>
+                </label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={filter.endDate ? format(filter.endDate, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => handleFilterChange({ endDate: e.target.value ? new Date(e.target.value) : undefined })}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 flex-wrap">
               {['1h', '24h', '7d', '30d'].map((range) => (
-                <Button
+                <button
                   key={range}
-                  size="small"
-                  variant="outlined"
+                  className="btn btn-sm btn-outline"
                   onClick={() => handleQuickTimeRange(range)}
                 >
                   Last {range}
-                </Button>
+                </button>
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   const renderMessagesTab = () => (
-    <Box>
+    <div>
       {renderFilters()}
-      
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-            <Typography variant="h6">
+
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="card-title">
               Message Activity ({pagination.totalItems} total)
-            </Typography>
-            <Box display="flex" gap={1}>
+            </h3>
+            <div className="flex gap-2">
               <Button
-                startIcon={<RefreshIcon />}
+                variant="ghost"
+                startIcon={<ArrowPathIcon className="w-5 h-5" />}
                 onClick={fetchData}
                 disabled={loading}
               >
                 Refresh
               </Button>
               <Button
-                startIcon={<DownloadIcon />}
+                variant="ghost"
+                startIcon={<ArrowDownTrayIcon className="w-5 h-5" />}
                 onClick={exportData}
               >
                 Export
               </Button>
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {loading ? (
-            <Box display="flex" justifyContent="center" sx={{ py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Loading />
+            </div>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Timestamp</TableCell>
-                    <TableCell>Agent</TableCell>
-                    <TableCell>Provider</TableCell>
-                    <TableCell>LLM</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Response Time</TableCell>
-                    <TableCell>Length</TableCell>
-                    <TableCell>MCP Tools</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Agent</th>
+                    <th>Provider</th>
+                    <th>LLM</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Response Time</th>
+                    <th>Length</th>
+                    <th>MCP Tools</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {activities.map((activity) => (
-                    <TableRow key={activity.id}>
-                      <TableCell>
-                        <Tooltip title={activity.timestamp}>
-                          <span>{format(new Date(activity.timestamp), 'HH:mm:ss')}</span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{activity.agentName}</TableCell>
-                      <TableCell>
-                        <Chip label={activity.messageProvider} size="small" />
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={activity.llmProvider} size="small" color="secondary" />
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={activity.messageType} 
-                          size="small"
-                          color={activity.messageType === 'incoming' ? 'primary' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={activity.status}
-                          size="small"
-                          color={
-                            activity.status === 'success' ? 'success' :
+                    <tr key={activity.id}>
+                      <td title={activity.timestamp}>
+                        {format(new Date(activity.timestamp), 'HH:mm:ss')}
+                      </td>
+                      <td>{activity.agentName}</td>
+                      <td>
+                        <Badge>{activity.messageProvider}</Badge>
+                      </td>
+                      <td>
+                        <Badge color="secondary">{activity.llmProvider}</Badge>
+                      </td>
+                      <td>
+                        <Badge color={activity.messageType === 'incoming' ? 'primary' : 'ghost'}>
+                          {activity.messageType}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge color={
+                          activity.status === 'success' ? 'success' :
                             activity.status === 'error' ? 'error' : 'warning'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
+                        }>
+                          {activity.status}
+                        </Badge>
+                      </td>
+                      <td>
                         {activity.processingTime ? `${activity.processingTime}ms` : '-'}
-                      </TableCell>
-                      <TableCell>{activity.contentLength}</TableCell>
-                      <TableCell>
+                      </td>
+                      <td>{activity.contentLength}</td>
+                      <td>
                         {activity.mcpToolsUsed?.length ? (
-                          <Tooltip title={activity.mcpToolsUsed.join(', ')}>
-                            <Chip label={`${activity.mcpToolsUsed.length} tools`} size="small" />
-                          </Tooltip>
+                          <span title={activity.mcpToolsUsed.join(', ')}>
+                            <Badge>{activity.mcpToolsUsed.length} tools</Badge>
+                          </span>
                         ) : '-'}
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                </tbody>
+              </table>
+            </div>
           )}
 
           {pagination.totalPages > 1 && (
-            <Box display="flex" justifyContent="center" sx={{ mt: 2 }}>
+            <div className="flex justify-center mt-4">
               <Pagination
                 currentPage={pagination.page}
                 totalItems={pagination.totalItems}
@@ -503,243 +471,219 @@ const ActivityMonitor: React.FC = () => {
                 onPageChange={handlePageChange}
                 style="standard"
               />
-            </Box>
+            </div>
           )}
-        </CardContent>
-      </Card>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 
   const renderChartsTab = () => (
-    <Box>
+    <div>
       {renderFilters()}
-      
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6">Message Activity Over Time</Typography>
-                <FormControl size="small">
-                  <InputLabel>Interval</InputLabel>
-                  <Select
-                    value={chartInterval}
-                    label="Interval"
-                    onChange={(e) => setChartInterval(e.target.value as 'hour' | 'day')}
-                  >
-                    <MenuItem value="hour">Hourly</MenuItem>
-                    <MenuItem value="day">Daily</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="timestamp"
-                    tickFormatter={(value) => format(new Date(value), chartInterval === 'hour' ? 'HH:mm' : 'MM/dd')}
+
+      <div className="grid grid-cols-1 gap-6">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="card-title">Message Activity Over Time</h3>
+              <select
+                className="select select-bordered select-sm"
+                value={chartInterval}
+                onChange={(e) => setChartInterval(e.target.value as 'hour' | 'day')}
+              >
+                <option value="hour">Hourly</option>
+                <option value="day">Daily</option>
+              </select>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={(value) => format(new Date(value), chartInterval === 'hour' ? 'HH:mm' : 'MM/dd')}
+                />
+                <YAxis />
+                <RechartsTooltip
+                  labelFormatter={(value) => format(new Date(value), 'PPpp')}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#8884d8"
+                  name="Messages"
+                />
+                {chartData.some(d => d.responseTime) && (
+                  <Line
+                    type="monotone"
+                    dataKey="responseTime"
+                    stroke="#82ca9d"
+                    name="Avg Response Time (ms)"
+                    yAxisId="right"
                   />
-                  <YAxis />
-                  <RechartsTooltip 
-                    labelFormatter={(value) => format(new Date(value), 'PPpp')}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#8884d8" 
-                    name="Messages"
-                  />
-                  {chartData.some(d => d.responseTime) && (
-                    <Line 
-                      type="monotone" 
-                      dataKey="responseTime" 
-                      stroke="#82ca9d" 
-                      name="Avg Response Time (ms)"
-                      yAxisId="right"
-                    />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
         {summary && (
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Messages by Provider
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(summary.messagesByProvider).map(([provider, count]) => ({
-                        name: provider,
-                        value: count
-                      }))}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {Object.entries(summary.messagesByProvider).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title mb-4">Messages by Provider</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={Object.entries(summary.messagesByProvider).map(([provider, count]) => ({
+                      name: provider,
+                      value: count
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {Object.entries(summary.messagesByProvider).map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 
   const renderSummaryTab = () => (
-    <Box>
+    <div>
       {renderFilters()}
-      
+
       {summary && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Total Messages
-                </Typography>
-                <Typography variant="h4">
-                  {summary.totalMessages.toLocaleString()}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Active Agents
-                </Typography>
-                <Typography variant="h4">
-                  {summary.totalAgents}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Avg Response Time
-                </Typography>
-                <Typography variant="h4">
-                  {summary.averageResponseTime.toFixed(0)}ms
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Error Rate
-                </Typography>
-                <Typography variant="h4" color={summary.errorRate > 0.05 ? 'error' : 'primary'}>
-                  {(summary.errorRate * 100).toFixed(1)}%
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="stat bg-base-100 shadow-xl rounded-box">
+            <div className="stat-title">Total Messages</div>
+            <div className="stat-value">{summary.totalMessages.toLocaleString()}</div>
+          </div>
 
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Messages by Agent
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={Object.entries(summary.messagesByAgent).map(([agent, count]) => ({
-                    agent,
-                    count
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="agent" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div className="stat bg-base-100 shadow-xl rounded-box">
+            <div className="stat-title">Active Agents</div>
+            <div className="stat-value">{summary.totalAgents}</div>
+          </div>
 
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  LLM Usage by Provider
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={Object.entries(summary.llmUsageByProvider).map(([provider, usage]) => ({
-                    provider,
-                    usage
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="provider" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Bar dataKey="usage" fill="#82ca9d" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          <div className="stat bg-base-100 shadow-xl rounded-box">
+            <div className="stat-title">Avg Response Time</div>
+            <div className="stat-value">{summary.averageResponseTime.toFixed(0)}ms</div>
+          </div>
+
+          <div className="stat bg-base-100 shadow-xl rounded-box">
+            <div className="stat-title">Error Rate</div>
+            <div className={`stat-value ${summary.errorRate > 0.05 ? 'text-error' : 'text-primary'}`}>
+              {(summary.errorRate * 100).toFixed(1)}%
+            </div>
+          </div>
+        </div>
       )}
-    </Box>
+
+      {summary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title mb-4">Messages by Agent</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={Object.entries(summary.messagesByAgent).map(([agent, count]) => ({
+                  agent,
+                  count
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="agent" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Bar dataKey="count" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h3 className="card-title mb-4">LLM Usage by Provider</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={Object.entries(summary.llmUsageByProvider).map(([provider, usage]) => ({
+                  provider,
+                  usage
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="provider" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Bar dataKey="usage" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Activity Monitor
-        </Typography>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Activity Monitor</h1>
         <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
+          variant="ghost"
+          startIcon={<ArrowPathIcon className="w-5 h-5" />}
           onClick={fetchData}
           disabled={loading}
         >
           Refresh
         </Button>
-      </Box>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert type="error" className="mb-6" onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)} sx={{ mb: 3 }}>
-        <Tab icon={<TimelineIcon />} label="Messages" />
-        <Tab icon={<AssessmentIcon />} label="Charts" />
-        <Tab icon={<AssessmentIcon />} label="Summary" />
-      </Tabs>
+      <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2">
+        <a
+          role="tab"
+          className={`tab gap-2 ${currentTab === 0 ? 'tab-active' : ''}`}
+          onClick={() => setCurrentTab(0)}
+        >
+          <PresentationChartLineIcon className="w-4 h-4" />
+          Messages
+        </a>
+        <a
+          role="tab"
+          className={`tab gap-2 ${currentTab === 1 ? 'tab-active' : ''}`}
+          onClick={() => setCurrentTab(1)}
+        >
+          <ChartBarIcon className="w-4 h-4" />
+          Charts
+        </a>
+        <a
+          role="tab"
+          className={`tab gap-2 ${currentTab === 2 ? 'tab-active' : ''}`}
+          onClick={() => setCurrentTab(2)}
+        >
+          <ChartBarIcon className="w-4 h-4" />
+          Summary
+        </a>
+      </div>
 
       {currentTab === 0 && renderMessagesTab()}
       {currentTab === 1 && renderChartsTab()}
       {currentTab === 2 && renderSummaryTab()}
-    </Box>
+    </div>
   );
 };
 
