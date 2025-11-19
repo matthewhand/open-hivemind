@@ -10,8 +10,6 @@ import Debug from 'debug';
 import agentsRouter from './agents';
 import mcpRouter from './mcp';
 import activityRouter from './activity';
-import rateLimit from 'express-rate-limit';
-
 const router = Router();
 const debug = Debug('app:webui:admin');
 
@@ -50,7 +48,7 @@ router.get('/api/admin/tool-usage-guards', (req: Request, res: Response) => {
       },
       {
         id: 'guard2',
-        'Specific Users for Translate',
+        name: 'Specific Users for Translate',
         toolName: 'translate',
         guardType: 'user_list',
         config: { allowedUsers: ['user1', 'user2'] },
