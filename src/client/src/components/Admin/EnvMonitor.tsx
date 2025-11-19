@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  Chip
-} from '@mui/material';
+import { Badge, Alert, Loading } from '../DaisyUI';
 import { getEnvOverrides } from '../services/agentService';
 
 const EnvMonitor: React.FC = () => {
@@ -34,62 +23,46 @@ const EnvMonitor: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Typography>Loading environment variables...</Typography>;
+    return <Loading />;
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <Alert type="error">{error}</Alert>;
   }
 
   return (
-    <Paper sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Environment Variable Overrides
-      </Typography>
-      
+    <div className="card bg-base-100 shadow-xl p-6 mt-6">
+      <h2 className="text-xl font-bold mb-4">Environment Variable Overrides</h2>
+
       {Object.keys(envVars).length === 0 ? (
-        <Typography>No environment variable overrides detected</Typography>
+        <Alert type="info">No environment variable overrides detected</Alert>
       ) : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Environment Variable</TableCell>
-                <TableCell>Value</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="overflow-x-auto">
+          <table className="table table-sm w-full">
+            <thead>
+              <tr>
+                <th>Environment Variable</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
               {Object.entries(envVars).map(([key, value]) => (
-                <TableRow key={key}>
-                  <TableCell>
-                    <Chip 
-                      label={key} 
-                      size="small" 
-                      sx={{ 
-                        fontFamily: 'monospace',
-                        fontSize: '0.8rem'
-                      }} 
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={value} 
-                      size="small" 
-                      sx={{ 
-                        fontFamily: 'monospace',
-                        fontSize: '0.8rem',
-                        backgroundColor: '#1976d2',
-                        color: 'white'
-                      }} 
-                    />
-                  </TableCell>
-                </TableRow>
+                <tr key={key}>
+                  <td>
+                    <code className="badge badge-outline font-mono text-xs">{key}</code>
+                  </td>
+                  <td>
+                    <Badge color="primary">
+                      <code className="font-mono text-xs">{value}</code>
+                    </Badge>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 };
 
