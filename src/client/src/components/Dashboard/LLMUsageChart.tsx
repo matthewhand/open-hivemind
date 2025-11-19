@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, Typography } from '@mui/material';
+import { Card } from '../DaisyUI';
 import { useMetrics } from '../../../hooks/useMetrics';
 
 const LLMUsageChart: React.FC = () => {
@@ -18,17 +18,17 @@ const LLMUsageChart: React.FC = () => {
   }, [metrics]);
 
   if (loading && data.length === 0) {
-    return <Typography>Loading LLM usage...</Typography>;
+    return <p className="text-base-content">Loading LLM usage...</p>;
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <p className="text-error">{error}</p>;
   }
 
   return (
     <Card>
-      <CardContent>
-        <Typography variant="h6">LLM Token Usage</Typography>
+      <Card.Body>
+        <Card.Title>LLM Token Usage</Card.Title>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -39,7 +39,7 @@ const LLMUsageChart: React.FC = () => {
             <Bar dataKey="tokens" fill="#8884d8" name="Token Usage" />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
+      </Card.Body>
     </Card>
   );
 };
