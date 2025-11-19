@@ -19,7 +19,7 @@ const debug = Debug('app:webui:admin');
 router.use(authenticate, requireAdmin);
 
 // Apply rate limiting to configuration endpoints
-const rateLimit = require('express-rate-limit');
+const rateLimit = require('express-rate-limit').default;
 const configRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
