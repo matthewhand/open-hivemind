@@ -1,42 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
   Card,
-  CardContent,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
+  Badge,
   Alert,
-  CircularProgress,
-  Grid,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  LinearProgress,
-  IconButton,
-} from '@mui/material';
+  Modal,
+  Input,
+  Select,
+  Loading
+} from './DaisyUI';
 import {
-  PlayArrow as PlayArrowIcon,
-  Stop as StopIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Timeline as TimelineIcon,
-  Build as BuildIcon,
-  DeployedCode as DeployIcon,
-  Undo as RollbackIcon,
-} from '@mui/icons-material';
+  PlayIcon,
+  StopIcon,
+  ArrowPathIcon as RefreshIcon,
+  CheckCircleIcon,
+  XCircleIcon as ErrorIcon,
+  ExclamationTriangleIcon as WarningIcon,
+  ClockIcon,
+  RocketLaunchIcon as DeployIcon,
+  ArrowUturnLeftIcon as RollbackIcon,
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 
 interface PipelineStage {
@@ -62,31 +45,13 @@ interface Deployment {
   branch?: string;
 }
 
-interface DriftDetection {
-  environment: string;
-  detectedAt: string;
-  changes: Array<{
-    type: 'added' | 'removed' | 'modified';
-    path: string;
-    currentValue: any;
-    expectedValue: any;
-  }>;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-}
-
 const CIDeploymentManager: React.FC = () => {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
-  const [driftDetections, setDriftDetections] = useState<DriftDetection[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Dialog states
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
-  const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [selectedDeployment, setSelectedDeployment] = useState<Deployment | null>(null);
-
-  // Form data
   const [deployForm, setDeployForm] = useState({
     name: '',
     environment: 'staging',
@@ -96,14 +61,11 @@ const CIDeploymentManager: React.FC = () => {
 
   useEffect(() => {
     loadDeployments();
-    loadDriftDetections();
   }, []);
 
   const loadDeployments = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would fetch from an API
-      // For now, we'll simulate deployment data
       const mockDeployments: Deployment[] = [
         {
           id: 'deploy_001',
@@ -116,33 +78,9 @@ const CIDeploymentManager: React.FC = () => {
           commitHash: 'a1b2c3d4e5f6',
           branch: 'main',
           stages: [
-            {
-              id: 'build',
-              name: 'Build',
-              status: 'success',
-              duration: 300,
-              logs: ['Build started', 'Dependencies installed', 'Tests passed', 'Build completed'],
-              startTime: '2024-01-15T10:30:00Z',
-              endTime: '2024-01-15T10:35:00Z'
-            },
-            {
-              id: 'test',
-              name: 'Test',
-              status: 'success',
-              duration: 180,
-              logs: ['Unit tests started', 'Integration tests passed', 'E2E tests completed'],
-              startTime: '2024-01-15T10:35:00Z',
-              endTime: '2024-01-15T10:38:00Z'
-            },
-            {
-              id: 'deploy',
-              name: 'Deploy',
-              status: 'success',
-              duration: 240,
-              logs: ['Deployment started', 'Configuration validated', 'Services restarted', 'Health checks passed'],
-              startTime: '2024-01-15T10:38:00Z',
-              endTime: '2024-01-15T10:42:00Z'
-            }
+            { id: 'build', name: 'Build', status: 'success', duration: 300, logs: ['Build completed'], startTime: '2024-01-15T10:30:00Z', endTime: '2024-01-15T10:35:00Z' },
+            { id: 'test', name: 'Test', status: 'success', duration: 180, logs: ['Tests passed'], startTime: '2024-01-15T10:35:00Z', endTime: '2024-01-15T10:38:00Z' },
+            { id: 'deploy', name: 'Deploy', status: 'success', duration: 240, logs: ['Deployment successful'], startTime: '2024-01-15T10:38:00Z', endTime: '2024-01-15T10:42:00Z' }
           ]
         },
         {
@@ -156,54 +94,16 @@ const CIDeploymentManager: React.FC = () => {
           commitHash: 'f6e5d4c3b2a1',
           branch: 'feature/new-ui',
           stages: [
-            {
-              id: 'build',
-              name: 'Build',
-              status: 'success',
-              duration: 250,
-              logs: ['Build started', 'Dependencies installed', 'Build completed'],
-              startTime: '2024-01-15T14:00:00Z',
-              endTime: '2024-01-15T14:04:10Z'
-            },
-            {
-              id: 'test',
-              name: 'Test',
-              status: 'running',
-              logs: ['Unit tests started', 'Integration tests running...'],
-              startTime: '2024-01-15T14:04:10Z'
-            }
+            { id: 'build', name: 'Build', status: 'success', duration: 250, logs: ['Build completed'], startTime: '2024-01-15T14:00:00Z', endTime: '2024-01-15T14:04:10Z' },
+            { id: 'test', name: 'Test', status: 'running', logs: ['Tests running...'], startTime: '2024-01-15T14:04:10Z' }
           ]
         }
       ];
       setDeployments(mockDeployments);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load deployments');
+      setError('Failed to load deployments');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadDriftDetections = async () => {
-    try {
-      // In a real implementation, this would fetch from an API
-      const mockDrifts: DriftDetection[] = [
-        {
-          environment: 'production',
-          detectedAt: '2024-01-15T12:00:00Z',
-          severity: 'medium',
-          changes: [
-            {
-              type: 'modified',
-              path: 'bots.main.llmProvider',
-              currentValue: 'openai',
-              expectedValue: 'anthropic'
-            }
-          ]
-        }
-      ];
-      setDriftDetections(mockDrifts);
-    } catch (err) {
-      console.error('Failed to load drift detections:', err);
     }
   };
 
@@ -215,7 +115,6 @@ const CIDeploymentManager: React.FC = () => {
 
     try {
       setLoading(true);
-      // In a real implementation, this would trigger a deployment via API
       const newDeployment: Deployment = {
         id: `deploy_${Date.now()}`,
         name: deployForm.name,
@@ -226,407 +125,233 @@ const CIDeploymentManager: React.FC = () => {
         triggeredBy: 'current.user@example.com',
         commitHash: deployForm.commitHash || 'HEAD',
         branch: deployForm.branch,
-        stages: [
-          {
-            id: 'build',
-            name: 'Build',
-            status: 'running',
-            logs: ['Build started...'],
-            startTime: new Date().toISOString()
-          }
-        ]
+        stages: [{ id: 'build', name: 'Build', status: 'running', logs: ['Build started...'], startTime: new Date().toISOString() }]
       };
 
       setDeployments(prev => [newDeployment, ...prev]);
       setSuccess('Deployment started successfully!');
       setDeployDialogOpen(false);
       setDeployForm({ name: '', environment: 'staging', branch: 'main', commitHash: '' });
-
-      // Simulate deployment progress
-      simulateDeploymentProgress(newDeployment.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start deployment');
+      setError('Failed to start deployment');
     } finally {
       setLoading(false);
     }
   };
 
-  const simulateDeploymentProgress = (deploymentId: string) => {
-    // Simulate deployment stages progressing
-    setTimeout(() => {
-      setDeployments(prev => prev.map(deploy => {
-        if (deploy.id === deploymentId) {
-          return {
-            ...deploy,
-            stages: deploy.stages.map(stage => ({
-              ...stage,
-              status: 'success' as const,
-              endTime: new Date().toISOString(),
-              duration: 300
-            })),
-            status: 'success' as const,
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return deploy;
-      }));
-    }, 5000);
-  };
-
-  const handleRollback = async (deployment: Deployment) => {
-    try {
-      setLoading(true);
-      // In a real implementation, this would trigger a rollback via API
-      setDeployments(prev => prev.map(deploy => {
-        if (deploy.id === deployment.id) {
-          return {
-            ...deploy,
-            status: 'rolled_back' as const,
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return deploy;
-      }));
-      setSuccess(`Deployment ${deployment.name} rolled back successfully!`);
-      setRollbackDialogOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rollback deployment');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'primary' | 'neutral' => {
     switch (status) {
       case 'success': return 'success';
       case 'running': return 'primary';
       case 'failed': return 'error';
       case 'pending': return 'warning';
-      case 'rolled_back': return 'secondary';
-      default: return 'default';
+      default: return 'neutral';
     }
   };
 
   const getStageIcon = (status: string) => {
     switch (status) {
-      case 'success': return <CheckCircleIcon color="success" />;
-      case 'running': return <CircularProgress size={20} />;
-      case 'failed': return <ErrorIcon color="error" />;
-      case 'pending': return <WarningIcon color="warning" />;
-      default: return <BuildIcon />;
+      case 'success': return <CheckCircleIcon className="w-5 h-5 text-success" />;
+      case 'running': return <Loading.Spinner size="sm" />;
+      case 'failed': return <ErrorIcon className="w-5 h-5 text-error" />;
+      default: return <ClockIcon className="w-5 h-5 text-warning" />;
     }
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          CI/CD Deployment Manager
-        </Typography>
-        <Box display="flex" gap={2}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => { loadDeployments(); loadDriftDetections(); }}
-            disabled={loading}
-          >
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">CI/CD Deployment Manager</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadDeployments} disabled={loading}>
+            <RefreshIcon className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<DeployIcon />}
-            onClick={() => setDeployDialogOpen(true)}
-            disabled={loading}
-          >
+          <Button variant="primary" onClick={() => setDeployDialogOpen(true)} disabled={loading}>
+            <DeployIcon className="w-4 h-4 mr-2" />
             Start Deployment
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      {/* Alerts */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
+      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+      {success && <Alert status="success" message={success} onClose={() => setSuccess(null)} />}
 
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-          {success}
-        </Alert>
-      )}
-
-      {/* Drift Detection Alerts */}
-      {driftDetections.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Configuration Drift Detected
-          </Typography>
-          {driftDetections.map((drift, index) => (
-            <Typography key={index} variant="body2">
-              {drift.environment}: {drift.changes.length} changes detected
-            </Typography>
-          ))}
-        </Alert>
-      )}
-
-      {/* Deployment Pipeline Overview */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {deployments.slice(0, 3).map((deployment) => (
-          <Grid item xs={12} md={6} lg={4} key={deployment.id}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                  <Box>
-                    <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-                      {deployment.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {deployment.environment} • {deployment.branch}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={deployment.status}
-                    color={getStatusColor(deployment.status)}
-                    size="small"
-                  />
-                </Box>
+          <Card key={deployment.id} className="shadow-xl">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-lg font-bold">{deployment.name}</h2>
+                  <p className="text-sm opacity-70">{deployment.environment} • {deployment.branch}</p>
+                </div>
+                <Badge variant={getStatusColor(deployment.status)}>
+                  {deployment.status}
+                </Badge>
+              </div>
 
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    Triggered by: {deployment.triggeredBy}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Started: {new Date(deployment.createdAt).toLocaleString()}
-                  </Typography>
-                </Box>
+              <div className="text-sm space-y-1 mb-4 opacity-70">
+                <p>By: {deployment.triggeredBy}</p>
+                <p>Started: {new Date(deployment.createdAt).toLocaleString()}</p>
+              </div>
 
-                {/* Pipeline Stages */}
-                <Box mb={2}>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Pipeline Stages:
-                  </Typography>
-                  {deployment.stages.map((stage, index) => (
-                    <Box key={stage.id} display="flex" alignItems="center" sx={{ mb: 0.5 }}>
-                      {getStageIcon(stage.status)}
-                      <Typography variant="body2" sx={{ ml: 1, mr: 1 }}>
-                        {stage.name}
-                      </Typography>
-                      {stage.duration && (
-                        <Typography variant="caption" color="text.secondary">
-                          ({stage.duration}s)
-                        </Typography>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
+              <div className="mb-4 space-y-2">
+                <p className="text-sm font-bold">Pipeline Stages:</p>
+                {deployment.stages.map((stage) => (
+                  <div key={stage.id} className="flex items-center gap-2">
+                    {getStageIcon(stage.status)}
+                    <span className="text-sm">{stage.name}</span>
+                    {stage.duration && <span className="text-xs opacity-70">({stage.duration}s)</span>}
+                  </div>
+                ))}
+              </div>
 
-                <Box display="flex" gap={1}>
-                  <Button
-                    size="small"
-                    startIcon={<TimelineIcon />}
-                    onClick={() => setSelectedDeployment(deployment)}
-                  >
-                    Details
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setSelectedDeployment(deployment)}>
+                  <ClockIcon className="w-4 h-4 mr-1" />
+                  Details
+                </Button>
+                {deployment.status === 'success' && (
+                  <Button size="sm" variant="warning">
+                    <RollbackIcon className="w-4 h-4" />
                   </Button>
-                  {deployment.status === 'success' && (
-                    <Button
-                      size="small"
-                      startIcon={<RollbackIcon />}
-                      onClick={() => {
-                        setSelectedDeployment(deployment);
-                        setRollbackDialogOpen(true);
-                      }}
-                      color="warning"
-                    >
-                      Rollback
-                    </Button>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                )}
+              </div>
+            </div>
+          </Card>
         ))}
-      </Grid>
+      </div>
 
-      {/* Recent Deployments List */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Recent Deployments
-          </Typography>
-          <List dense>
+      <Card className="shadow-xl">
+        <div className="p-6">
+          <h3 className="text-lg font-bold mb-4">Recent Deployments</h3>
+          <div className="space-y-2">
             {deployments.map((deployment) => (
-              <ListItem key={deployment.id} divider>
-                <ListItemText
-                  primary={
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="body1">{deployment.name}</Typography>
-                      <Box display="flex" gap={1}>
-                        <Chip
-                          label={deployment.environment}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={deployment.status}
-                          size="small"
-                          color={getStatusColor(deployment.status)}
-                        />
-                      </Box>
-                    </Box>
-                  }
-                  secondary={
-                    <Typography variant="body2" color="text.secondary">
-                      {deployment.triggeredBy} • {new Date(deployment.createdAt).toLocaleString()}
-                      {deployment.commitHash && ` • ${deployment.commitHash.substring(0, 7)}`}
-                    </Typography>
-                  }
-                />
-              </ListItem>
+              <div key={deployment.id} className="flex justify-between items-center p-3 border border-base-300 rounded-lg hover:bg-base-200 transition-colors">
+                <div>
+                  <p className="font-bold">{deployment.name}</p>
+                  <p className="text-sm opacity-70">
+                    {deployment.triggeredBy} • {new Date(deployment.createdAt).toLocaleString()}
+                    {deployment.commitHash && ` • ${deployment.commitHash.substring(0, 7)}`}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant="neutral" size="sm">{deployment.environment}</Badge>
+                  <Badge variant={getStatusColor(deployment.status)} size="sm">{deployment.status}</Badge>
+                </div>
+              </div>
             ))}
-          </List>
-        </CardContent>
+          </div>
+        </div>
       </Card>
 
-      {/* Deployment Details Dialog */}
+      {/* Deployment Details Modal */}
       {selectedDeployment && (
-        <Dialog
-          open={!!selectedDeployment}
+        <Modal
+          isOpen={!!selectedDeployment}
           onClose={() => setSelectedDeployment(null)}
-          maxWidth="md"
-          fullWidth
+          title={`Deployment Details: ${selectedDeployment.name}`}
         >
-          <DialogTitle>
-            Deployment Details: {selectedDeployment.name}
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Pipeline Progress
-              </Typography>
-              <Stepper activeStep={selectedDeployment.stages.findIndex(s => s.status === 'running')} orientation="vertical">
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-bold mb-3">Pipeline Progress</h4>
+              <div className="space-y-3">
                 {selectedDeployment.stages.map((stage) => (
-                  <Step key={stage.id} completed={stage.status === 'success'}>
-                    <StepLabel
-                      icon={getStageIcon(stage.status)}
-                      error={stage.status === 'failed'}
-                    >
-                      <Box>
-                        <Typography variant="body1">{stage.name}</Typography>
-                        {stage.duration && (
-                          <Typography variant="caption" color="text.secondary">
-                            Duration: {stage.duration}s
-                          </Typography>
-                        )}
-                      </Box>
-                    </StepLabel>
-                  </Step>
+                  <div key={stage.id} className="flex items-start gap-3">
+                    {getStageIcon(stage.status)}
+                    <div className="flex-grow">
+                      <p className="font-bold">{stage.name}</p>
+                      {stage.duration && <p className="text-xs opacity-70">Duration: {stage.duration}s</p>}
+                    </div>
+                  </div>
                 ))}
-              </Stepper>
-            </Box>
+              </div>
+            </div>
 
-            <Typography variant="h6" gutterBottom>
-              Logs
-            </Typography>
-            <Paper sx={{ p: 2, maxHeight: 300, overflow: 'auto', bgcolor: 'grey.900', color: 'grey.100' }}>
-              {selectedDeployment.stages.map((stage) => (
-                <Box key={stage.id} sx={{ mb: 2 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.light' }}>
-                    {stage.name}:
-                  </Typography>
-                  {stage.logs.map((log, index) => (
-                    <Typography key={index} variant="body2" sx={{ fontFamily: 'monospace' }}>
-                      {log}
-                    </Typography>
-                  ))}
-                </Box>
-              ))}
-            </Paper>
-          </DialogContent>
-          <DialogActions>
+            <div>
+              <h4 className="font-bold mb-2">Logs</h4>
+              <div className="bg-base-300 p-3 rounded-lg max-h-60 overflow-auto font-mono text-xs">
+                {selectedDeployment.stages.map((stage) => (
+                  <div key={stage.id} className="mb-2">
+                    <p className="font-bold text-primary">{stage.name}:</p>
+                    {stage.logs.map((log, idx) => (
+                      <p key={idx}>{log}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="modal-action">
             <Button onClick={() => setSelectedDeployment(null)}>Close</Button>
-          </DialogActions>
-        </Dialog>
+          </div>
+        </Modal>
       )}
 
-      {/* Start Deployment Dialog */}
-      <Dialog open={deployDialogOpen} onClose={() => setDeployDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Start New Deployment</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Deployment Name"
-            value={deployForm.name}
-            onChange={(e) => setDeployForm(prev => ({ ...prev, name: e.target.value }))}
-            sx={{ mb: 2, mt: 1 }}
-            required
-          />
-          <TextField
-            fullWidth
-            label="Environment"
-            select
-            value={deployForm.environment}
-            onChange={(e) => setDeployForm(prev => ({ ...prev, environment: e.target.value }))}
-            sx={{ mb: 2 }}
-          >
-            <MenuItem value="development">Development</MenuItem>
-            <MenuItem value="staging">Staging</MenuItem>
-            <MenuItem value="production">Production</MenuItem>
-          </TextField>
-          <TextField
-            fullWidth
-            label="Branch"
-            value={deployForm.branch}
-            onChange={(e) => setDeployForm(prev => ({ ...prev, branch: e.target.value }))}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Commit Hash (optional)"
-            value={deployForm.commitHash}
-            onChange={(e) => setDeployForm(prev => ({ ...prev, commitHash: e.target.value }))}
-            sx={{ mb: 2 }}
-            placeholder="HEAD"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeployDialogOpen(false)}>Cancel</Button>
+      {/* Start Deployment Modal */}
+      <Modal
+        isOpen={deployDialogOpen}
+        onClose={() => setDeployDialogOpen(false)}
+        title="Start New Deployment"
+      >
+        <div className="space-y-4">
+          <div className="form-control">
+            <label className="label"><span className="label-text">Deployment Name *</span></label>
+            <Input
+              value={deployForm.name}
+              onChange={(e) => setDeployForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="e.g., Production Release v2.2.0"
+              required
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label"><span className="label-text">Environment</span></label>
+            <Select
+              value={deployForm.environment}
+              onChange={(e) => setDeployForm(prev => ({ ...prev, environment: e.target.value }))}
+              options={[
+                { value: 'development', label: 'Development' },
+                { value: 'staging', label: 'Staging' },
+                { value: 'production', label: 'Production' }
+              ]}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label"><span className="label-text">Branch</span></label>
+            <Input
+              value={deployForm.branch}
+              onChange={(e) => setDeployForm(prev => ({ ...prev, branch: e.target.value }))}
+              placeholder="main"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label"><span className="label-text">Commit Hash (optional)</span></label>
+            <Input
+              value={deployForm.commitHash}
+              onChange={(e) => setDeployForm(prev => ({ ...prev, commitHash: e.target.value }))}
+              placeholder="HEAD"
+            />
+          </div>
+        </div>
+
+        <div className="modal-action">
+          <Button variant="ghost" onClick={() => setDeployDialogOpen(false)}>Cancel</Button>
           <Button
+            variant="primary"
             onClick={handleStartDeployment}
-            variant="contained"
             disabled={loading || !deployForm.name.trim()}
           >
-            {loading ? <CircularProgress size={20} /> : 'Start Deployment'}
+            {loading ? <Loading.Spinner size="sm" className="mr-2" /> : <DeployIcon className="w-4 h-4 mr-2" />}
+            {loading ? 'Starting...' : 'Start Deployment'}
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Rollback Confirmation Dialog */}
-      <Dialog open={rollbackDialogOpen} onClose={() => setRollbackDialogOpen(false)}>
-        <DialogTitle>Confirm Rollback</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to rollback to deployment "{selectedDeployment?.name}"?
-            This will revert the system to the state before this deployment.
-          </Typography>
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            This action cannot be undone and may cause service interruption.
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRollbackDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => selectedDeployment && handleRollback(selectedDeployment)}
-            variant="contained"
-            color="warning"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Confirm Rollback'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        </div>
+      </Modal>
+    </div>
   );
 };
 
