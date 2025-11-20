@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -42,7 +33,6 @@ const Login: React.FC = () => {
 
       // Mock authentication
       if (formData.username === 'admin' && formData.password === 'admin') {
-        // For localhost development, just navigate to dashboard
         navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid username or password');
@@ -53,84 +43,72 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Card sx={{ maxWidth: 400, width: '100%', mx: 2 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
-            Open-Hivemind
-          </Typography>
-
-          <Typography variant="h6" component="h2" gutterBottom align="center">
-            Sign In
-          </Typography>
+    <div className="min-h-screen flex items-center justify-center bg-base-200">
+      <Card className="max-w-md w-full mx-4">
+        <div className="p-8">
+          <h1 className="text-3xl font-bold text-center mb-2">Open-Hivemind</h1>
+          <h2 className="text-xl text-center mb-6">Sign In</h2>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
+            <Alert status="error" message={error} className="mb-4" />
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="username"
-              disabled={isLoading}
-              placeholder="Enter 'admin'"
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Username *</span>
+              </label>
+              <Input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Enter 'admin'"
+                disabled={isLoading}
+                required
+                autoComplete="username"
+              />
+            </div>
 
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="current-password"
-              disabled={isLoading}
-              placeholder="Enter 'admin'"
-            />
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password *</span>
+              </label>
+              <Input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter 'admin'"
+                disabled={isLoading}
+                required
+                autoComplete="current-password"
+              />
+            </div>
 
             <Button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              variant="primary"
               disabled={isLoading}
-              size="large"
+              size="lg"
+              className="w-full mt-6"
             >
               {isLoading ? (
-                <CircularProgress size={24} />
+                <><Loading size="sm" className="mr-2" /> Signing in...</>
               ) : (
                 'Sign In'
               )}
             </Button>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="text-center mt-4">
+              <p className="text-sm text-base-content/70">
                 Demo credentials: admin / admin
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
+              </p>
+            </div>
+          </form>
+        </div>
       </Card>
-    </Box>
+    </div>
   );
 };
 
