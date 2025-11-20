@@ -1,42 +1,16 @@
 import React, { useState } from 'react';
+import { Card, Badge, Button, Input, Select, Modal, Alert, Toggle, Tooltip, Loading } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  Switch,
-  FormControlLabel,
-  Alert,
-  Chip,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  InputAdornment,
-  Snackbar,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  FilterList as FilterIcon,
-} from '@mui/icons-material';
+  ArrowPathIcon,
+  TrashIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 import {
   selectConfig,
   selectConfigError,
 } from '../store/slices/configSlice';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingSpinnerComponent from './LoadingSpinner';
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -49,10 +23,10 @@ const ConfigManager: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [configToDelete, setConfigToDelete] = useState<any>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
     message: '',
-    severity: 'success',
+    type: 'success',
   });
 
   // Mock configuration data for demonstration
@@ -64,6 +38,11 @@ const ConfigManager: React.FC = () => {
 
   const [editingConfig, setEditingConfig] = useState(mockConfigs[0]);
   const [configs, setConfigs] = useState(mockConfigs);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+  };
 
   const handleSaveConfig = () => {
     // Basic validation
@@ -77,11 +56,7 @@ const ConfigManager: React.FC = () => {
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
-      setSnackbar({
-        open: true,
-        message: 'Please fix validation errors before saving',
-        severity: 'error',
-      });
+      showToast('Please fix validation errors before saving', 'error');
       return;
     }
 
@@ -92,18 +67,10 @@ const ConfigManager: React.FC = () => {
       setEditingConfig(updatedConfig);
       setHasChanges(false);
       setValidationErrors({});
-      setSnackbar({
-        open: true,
-        message: 'Configuration saved successfully',
-        severity: 'success',
-      });
+      showToast('Configuration saved successfully', 'success');
     } catch (error) {
       console.error('Failed to save configuration:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to save configuration',
-        severity: 'error',
-      });
+      showToast('Failed to save configuration', 'error');
     }
   };
 
@@ -131,261 +98,261 @@ const ConfigManager: React.FC = () => {
 
   const filteredConfigs = configs.filter(config => {
     const matchesSearch = config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         config.environment.toLowerCase().includes(searchTerm.toLowerCase());
+      config.environment.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEnvironment = filterEnvironment === 'all' || config.environment === filterEnvironment;
     const matchesStatus = filterStatus === 'all' ||
-                         (filterStatus === 'active' && config.isActive) ||
-                         (filterStatus === 'inactive' && !config.isActive);
+      (filterStatus === 'active' && config.isActive) ||
+      (filterStatus === 'inactive' && !config.isActive);
     return matchesSearch && matchesEnvironment && matchesStatus;
   });
 
   if (config.isLoading) {
-    return <LoadingSpinner message="Loading configurations..." />;
+    return <LoadingSpinnerComponent message="Loading configurations..." />;
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Configuration Manager
-      </Typography>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Configuration Manager</h1>
 
       {configError && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {configError}
-        </Alert>
+        <Alert status="error" message={configError} className="mb-6" />
       )}
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Left Panel - Configuration List */}
+        <div className="md:col-span-4">
           <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Configurations</Typography>
-                <Tooltip title="Refresh configurations">
-                  <IconButton onClick={() => console.log('Refresh configs')} color="primary">
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Configurations</h2>
+              <Tooltip content="Refresh configurations">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="btn-circle"
+                  onClick={() => console.log('Refresh configs')}
+                >
+                  <ArrowPathIcon className="w-5 h-5" />
+                </Button>
+              </Tooltip>
+            </div>
 
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  size="small"
+            {/* Search */}
+            <div className="form-control w-full mb-4">
+              <div className="relative">
+                <Input
                   placeholder="Search configurations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
+                  className="pr-10"
                 />
-              </Box>
+                <MagnifyingGlassIcon className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50" />
+              </div>
+            </div>
 
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Environment</InputLabel>
-                    <Select
-                      value={filterEnvironment}
-                      onChange={(e) => setFilterEnvironment(e.target.value)}
-                      label="Environment"
-                    >
-                      <MenuItem value="all">All</MenuItem>
-                      <MenuItem value="development">Development</MenuItem>
-                      <MenuItem value="staging">Staging</MenuItem>
-                      <MenuItem value="production">Production</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      label="Status"
-                    >
-                      <MenuItem value="all">All</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="inactive">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+            {/* Filters */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Environment</span>
+                </label>
+                <Select
+                  size="sm"
+                  value={filterEnvironment}
+                  onChange={(e) => setFilterEnvironment(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    { value: 'development', label: 'Development' },
+                    { value: 'staging', label: 'Staging' },
+                    { value: 'production', label: 'Production' },
+                  ]}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Status</span>
+                </label>
+                <Select
+                  size="sm"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' },
+                  ]}
+                />
+              </div>
+            </div>
 
+            {/* Configuration List */}
+            <div className="space-y-2">
               {filteredConfigs.map((config) => (
-                <Box
+                <div
                   key={config.id}
                   onClick={() => handleEnvironmentChange(config.environment)}
-                  sx={{
-                    p: 2,
-                    mb: 1,
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    bgcolor: selectedEnv === config.environment ? 'action.selected' : 'background.paper',
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                    },
-                  }}
+                  className={`p-3 border rounded-box cursor-pointer transition-colors ${selectedEnv === config.environment
+                      ? 'bg-primary/10 border-primary'
+                      : 'bg-base-200 border-base-300 hover:bg-base-300'
+                    }`}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box>
-                      <Typography variant="body1">{config.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-grow">
+                      <p className="font-medium">{config.name}</p>
+                      <p className="text-xs text-base-content/70">
                         Last Modified: {config.lastModified.toLocaleString()}
-                      </Typography>
-                      <Box display="flex" gap={1} mt={1}>
-                        <Chip
-                          label={config.environment}
-                          size="small"
-                          variant="outlined"
-                        />
+                      </p>
+                      <div className="flex gap-1 mt-2">
+                        <Badge variant="neutral" size="sm" style="outline">
+                          {config.environment}
+                        </Badge>
                         {config.isActive && (
-                          <Chip
-                            label="Active"
-                            size="small"
-                            color="success"
-                          />
+                          <Badge variant="success" size="sm">
+                            Active
+                          </Badge>
                         )}
-                      </Box>
-                    </Box>
-                    <Tooltip title="Delete configuration">
-                      <IconButton onClick={(e) => { e.stopPropagation(); handleDeleteConfig(config); }} color="error">
-                        <DeleteIcon />
-                      </IconButton>
+                      </div>
+                    </div>
+                    <Tooltip content="Delete configuration">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="btn-circle text-error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteConfig(config);
+                        }}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </Button>
                     </Tooltip>
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               ))}
-
-              {/* Delete Confirmation Dialog */}
-              <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                  <Typography>
-                    Are you sure you want to delete the configuration "{configToDelete?.name}"?
-                    This action cannot be undone.
-                  </Typography>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={confirmDeleteConfig} color="error">Delete</Button>
-                </DialogActions>
-              </Dialog>
-            </CardContent>
+            </div>
           </Card>
-        </Grid>
+        </div>
 
-        <Grid size={{ xs: 12, md: 8 }}>
+        {/* Right Panel - Configuration Editor */}
+        <div className="md:col-span-8">
           {editingConfig ? (
             <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                  <Typography variant="h6">Edit Configuration</Typography>
-                  <Box display="flex" gap={1}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setEditingConfig(mockConfigs[0])}
-                      startIcon={<RefreshIcon />}
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleSaveConfig}
-                      disabled={!hasChanges}
-                      startIcon={<SaveIcon />}
-                    >
-                      Save Changes
-                    </Button>
-                  </Box>
-                </Box>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Edit Configuration</h2>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    buttonStyle="outline"
+                    onClick={() => setEditingConfig(mockConfigs[0])}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Reset
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveConfig}
+                    disabled={!hasChanges}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
 
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Configuration Name"
-                      value={editingConfig.name || ''}
-                      error={!!validationErrors.name}
-                      helperText={validationErrors.name}
-                      onChange={(e) => {
-                        setEditingConfig({ ...editingConfig, name: e.target.value });
-                        setHasChanges(true);
-                        if (validationErrors.name) {
-                          setValidationErrors(prev => ({ ...prev, name: '' }));
-                        }
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Environment"
-                      value={editingConfig.environment || 'development'}
-                      error={!!validationErrors.environment}
-                      helperText={validationErrors.environment}
-                      onChange={(e) => {
-                        setEditingConfig({ ...editingConfig, environment: e.target.value });
-                        setHasChanges(true);
-                        if (validationErrors.environment) {
-                          setValidationErrors(prev => ({ ...prev, environment: '' }));
-                        }
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={editingConfig.isActive || false}
-                          onChange={(e) => {
-                            setEditingConfig({ ...editingConfig, isActive: e.target.checked });
-                            setHasChanges(true);
-                          }}
-                        />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text">Configuration Name</span>
+                  </label>
+                  <Input
+                    value={editingConfig.name || ''}
+                    onChange={(e) => {
+                      setEditingConfig({ ...editingConfig, name: e.target.value });
+                      setHasChanges(true);
+                      if (validationErrors.name) {
+                        setValidationErrors(prev => ({ ...prev, name: '' }));
                       }
-                      label="Active Configuration"
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
+                    }}
+                  />
+                  {validationErrors.name && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{validationErrors.name}</span>
+                    </label>
+                  )}
+                </div>
+
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text">Environment</span>
+                  </label>
+                  <Input
+                    value={editingConfig.environment || 'development'}
+                    onChange={(e) => {
+                      setEditingConfig({ ...editingConfig, environment: e.target.value });
+                      setHasChanges(true);
+                      if (validationErrors.environment) {
+                        setValidationErrors(prev => ({ ...prev, environment: '' }));
+                      }
+                    }}
+                  />
+                  {validationErrors.environment && (
+                    <label className="label">
+                      <span className="label-text-alt text-error">{validationErrors.environment}</span>
+                    </label>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Toggle
+                    label="Active Configuration"
+                    checked={editingConfig.isActive || false}
+                    onChange={(e) => {
+                      setEditingConfig({ ...editingConfig, isActive: e.target.checked });
+                      setHasChanges(true);
+                    }}
+                    color="primary"
+                  />
+                </div>
+              </div>
             </Card>
           ) : (
             <Card>
-              <CardContent>
-                <Typography variant="h6" color="text.secondary" textAlign="center">
-                  Select a configuration to edit
-                </Typography>
-              </CardContent>
+              <h2 className="text-lg text-base-content/70 text-center">
+                Select a configuration to edit
+              </h2>
             </Card>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        title="Confirm Deletion"
       >
-        <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <p className="py-4">
+          Are you sure you want to delete the configuration "{configToDelete?.name}"?
+          This action cannot be undone.
+        </p>
+        <div className="modal-action">
+          <Button onClick={() => setDeleteDialogOpen(false)} variant="ghost">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteConfig} variant="primary" className="btn-error">
+            Delete
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Toast notification */}
+      {toast.show && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

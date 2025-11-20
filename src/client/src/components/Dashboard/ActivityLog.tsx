@@ -17,7 +17,7 @@ const ActivityLog: React.FC = () => {
   const [filters, setFilters] = useState<ActivityFilters>({});
   const [appliedFilters, setAppliedFilters] = useState<ActivityFilters>({});
 
-  const { data, isLoading, isFetching, error, refetch } = useGet ActivityQuery(appliedFilters);
+  const { data, isLoading, isFetching, error, refetch } = useGetActivityQuery(appliedFilters);
 
   const handleApply = () => {
     setAppliedFilters(filters);
