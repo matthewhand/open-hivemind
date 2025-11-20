@@ -1,23 +1,13 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography, Button, CircularProgress, Card, CardContent, Chip, Divider, Menu, MenuItem } from '@mui/material';
-import { ArrowBack as BackIcon, GetApp as ExportIcon } from '@mui/icons-material';
+import { Card, Button, Badge, Dropdown, Breadcrumbs } from '../components/DaisyUI';
+import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
-import { Breadcrumbs } from '../components/DaisyUI';
 import useSpec from '../hooks/useSpec';
 
 const SpecDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleExportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleExportClose = () => {
-    setAnchorEl(null);
-  };
 
   const handleExport = (format: 'md' | 'json' | 'yaml') => {
     if (!spec) return;
@@ -38,7 +28,6 @@ const SpecDetailPage: React.FC = () => {
         filename = `${spec.topic}.json`;
         break;
       case 'yaml':
-        // Basic JSON to YAML conversion
         content = `
 topic: ${spec.topic}
 author: ${spec.author}
@@ -48,143 +37,124 @@ ${spec.tags.map(tag => `  - ${tag}`).join('\n')}
 content: |
 ${spec.content.replace(/^/gm, '  ')}
         `.trim();
-        mimeType = 'application/x-yaml';
+        mimeType = 'text/yaml';
         filename = `${spec.topic}.yaml`;
         break;
     }
 
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    handleExportClose();
   };
 
-  const breadcrumbItems = [
-    { label: 'Specifications', href: '/admin/specs' },
-    { label: spec?.topic || '...', href: `/admin/specs/${id}`, isActive: true }
+  const exportItems = [
+    { label: 'Markdown', onClick: () => handleExport('md') },
+    { label: 'JSON', onClick: () => handleExport('json') },
+    { label: 'YAML', onClick: () => handleExport('yaml') },
   ];
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
     );
   }
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
+  if (error || !spec) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md">
+          <div className="card-body text-center">
+            <h2 className="card-title text-error">Error Loading Spec</h2>
+            <p className="opacity-70">{error || 'Specification not found'}</p>
+            <Button className="btn-primary" onClick={() => window.history.back()}>
+              Go Back
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
-  if (!spec) {
-    return <Typography>Specification not found.</Typography>;
-  }
+  const breadcrumbItems = [
+    { label: 'Specs', href: '/specs' },
+    { label: spec.topic, href: `/specs/${id}`, isActive: true },
+  ];
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="container mx-auto p-6 max-w-4xl">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <Box sx={{ mt: 2, mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" gutterBottom>
-          {spec.topic}
-        </Typography>
-        <Box>
-          <Button
-            variant="outlined"
-            startIcon={<BackIcon />}
-            onClick={() => window.history.back()}
-            sx={{ mr: 2 }}
-          >
-            Back
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<ExportIcon />}
-            onClick={handleExportClick}
-          >
-            Export
-          </Button>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleExportClose}
-          >
-            <MenuItem onClick={() => handleExport('md')}>Markdown</MenuItem>
-            <MenuItem onClick={() => handleExport('json')}>JSON</MenuItem>
-            <MenuItem onClick={() => handleExport('yaml')}>YAML</MenuItem>
-          </Menu>
-        </Box>
-      </Box>
+      <div className="mt-6">
+        <Card className="shadow-lg">
+          <div className="card-body">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <Button
+                  size="sm"
+                  className="btn-ghost"
+                  onClick={() => window.history.back()}
+                >
+                  <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div>
+                  <h1 className="text-3xl font-bold">{spec.topic}</h1>
+                  <p className="opacity-70">By {spec.author} • {new Date(spec.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <Dropdown
+                trigger={
+                  <Button className="btn-primary">
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                }
+                items={exportItems}
+              />
+            </div>
 
-      {/* Metadata */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Metadata
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
-                Author: {spec.author}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
-                Date: {new Date(spec.date).toLocaleDateString()}
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {spec.tags.map((tag, index) => (
-                  <Chip key={index} label={tag} size="small" />
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Divider sx={{ my: 4 }} />
-
-      {/* Markdown Content */}
-      <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 1 }}>
-        <ReactMarkdown>{spec.content}</ReactMarkdown>
-      </Box>
-
-      {/* Version History */}
-      {spec.versionHistory && spec.versionHistory.length > 0 && (
-        <>
-          <Divider sx={{ my: 4 }} />
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Version History
-              </Typography>
-              {spec.versionHistory.map((version, index) => (
-                <Box key={index} sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1">
-                    Version {version.version}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {new Date(version.date).toLocaleString()} by {version.author}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {version.changes}
-                  </Typography>
-                </Box>
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {spec.tags.map((tag, index) => (
+                <Badge key={index} variant="neutral" size="sm">
+                  {tag}
+                </Badge>
               ))}
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </Box>
+            </div>
+
+            {/* Content */}
+            <div className="prose max-w-none">
+              <ReactMarkdown>{spec.content}</ReactMarkdown>
+            </div>
+
+            {/* Footer */}
+            <div className="divider mt-8"></div>
+            <div className="flex justify-between items-center">
+              <p className="text-sm opacity-70">
+                Last updated: {new Date(spec.date).toLocaleString()}
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" className="btn-ghost">
+                  Edit
+                </Button>
+                <Button size="sm" className="btn-ghost">
+                  Share
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 };
 
