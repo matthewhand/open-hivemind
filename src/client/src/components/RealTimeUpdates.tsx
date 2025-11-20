@@ -1,556 +1,390 @@
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import { Card, Badge, Button, Alert, Toggle, Progress } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Switch,
-  FormControlLabel,
-  Button,
-  Chip,
-  Alert,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-  Tooltip,
-  Badge,
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
-  Error as ErrorIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
-import { apiService } from '../services/api';
+  SparklesIcon,
+  WifiIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  BellIcon,
+  RefreshIcon
+} from '@heroicons/react/24/outline';
 
-interface UpdateEvent {
+export interface RealtimeEvent {
   id: string;
-  type: 'bot_status' | 'system_health' | 'activity' | 'config_change';
-  timestamp: string;
-  data: Record<string, unknown>;
+  timestamp: Date;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
   source: string;
+  acknowledged?: boolean;
 }
 
-interface RealTimeUpdateSettings {
+export interface RealtimeConfig {
   enabled: boolean;
-  refreshInterval: number;
-  notifications: {
-    botStatus: boolean;
-    systemHealth: boolean;
-    activity: boolean;
-    configChanges: boolean;
-  };
-  soundEnabled: boolean;
+  autoReconnect: boolean;
+  reconnectInterval: number;
+  maxReconnectAttempts: number;
+  heartbeatInterval: number;
 }
 
-interface RealTimeUpdatesContextType {
+interface RealtimeContextType {
   isConnected: boolean;
   lastUpdate: Date | null;
-  settings: RealTimeUpdateSettings;
-  updateSettings: (settings: Partial<RealTimeUpdateSettings>) => void;
-  manualRefresh: () => Promise<void>;
-  connectionStatus: 'connected' | 'disconnected' | 'error';
-  events: UpdateEvent[];
+  events: RealtimeEvent[];
+  config: RealtimeConfig;
+  updateConfig: (config: Partial<RealtimeConfig>) => void;
+  acknowledgeEvent: (id: string) => void;
+  clearEvents: () => void;
 }
 
-const RealTimeUpdatesContext = createContext<RealTimeUpdatesContextType | null>(null);
+const RealtimeContext = createContext<RealtimeContextType | undefined>(undefined);
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-const normalizedBase = rawBaseUrl?.replace(/\/$/, '') ?? '';
+const mockEvents: RealtimeEvent[] = [
+  {
+    id: '1',
+    timestamp: new Date(),
+    type: 'info',
+    title: 'System Update',
+    message: 'New version available for download',
+    source: 'System',
+    acknowledged: false
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 60000),
+    type: 'success',
+    title: 'Backup Complete',
+    message: 'Database backup completed successfully',
+    source: 'Backup Service',
+    acknowledged: true
+  },
+  {
+    id: '3',
+    timestamp: new Date(Date.now() - 120000),
+    type: 'warning',
+    title: 'High Memory Usage',
+    message: 'Memory usage exceeds 80%',
+    source: 'Monitor',
+    acknowledged: false
+  },
+];
 
-const buildWebSocketUrl = (path: string): string => {
-  if (normalizedBase) {
-    const wsOrigin = normalizedBase.replace(/^http/i, (match) => (match.toLowerCase() === 'https' ? 'wss' : 'ws'));
-    return `${wsOrigin}${path}`;
-  }
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${protocol}://${window.location.host}${path}`;
-};
-
-interface RealTimeUpdatesProviderProps {
-  children: ReactNode;
-}
-
-export const RealTimeUpdatesProvider: React.FC<RealTimeUpdatesProviderProps> = ({ children }) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('disconnected');
-  const [events, setEvents] = useState<UpdateEvent[]>([]);
-  const [settings, setSettings] = useState<RealTimeUpdateSettings>({
+const RealtimeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [isConnected, setIsConnected] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date());
+  const [events, setEvents] = useState<RealtimeEvent[]>(mockEvents);
+  const [config, setConfig] = useState<RealtimeConfig>({
     enabled: true,
-    refreshInterval: 30000, // 30 seconds
-    notifications: {
-      botStatus: true,
-      systemHealth: true,
-      activity: true,
-      configChanges: true,
-    },
-    soundEnabled: false,
+    autoReconnect: true,
+    reconnectInterval: 5000,
+    maxReconnectAttempts: 5,
+    heartbeatInterval: 30000
   });
-
-  const updateSettings = useCallback((newSettings: Partial<RealTimeUpdateSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  }, []);
-
-  const manualRefresh = useCallback(async () => {
-    try {
-      setConnectionStatus('connected');
-      await Promise.all([
-        apiService.getStatus(),
-        apiService.getConfig(),
-        apiService.getActivity()
-      ]);
-      setLastUpdate(new Date());
-      setIsConnected(true);
-    } catch (error) {
-      console.error('Manual refresh failed:', error);
-      setConnectionStatus('error');
-      setIsConnected(false);
-    }
-  }, []);
 
   useEffect(() => {
-    if (!settings.enabled) {
-      setIsConnected(false);
-      setConnectionStatus('disconnected');
-      return;
-    }
+    if (!config.enabled) return;
 
-    const connectWebSocket = () => {
-      // Simulate WebSocket connection for real-time updates
-      const ws = new WebSocket(buildWebSocketUrl('/ws'));
+    const heartbeat = setInterval(() => {
+      setLastUpdate(new Date());
 
-      ws.onopen = () => {
-        setIsConnected(true);
-        setConnectionStatus('connected');
-        setLastUpdate(new Date());
-      };
+      // Simulate random events
+      if (Math.random() > 0.7) {
+        const types: Array<'info' | 'success' | 'warning' | 'error'> = ['info', 'success', 'warning', 'error'];
+        const titles = ['System Update', 'Performance Alert', 'User Activity', 'API Call'];
+        const sources = ['System', 'Monitor', 'User', 'API'];
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const updateEvent: UpdateEvent = {
-            id: Date.now().toString(),
-            type: data.type || 'bot_status',
-            timestamp: new Date().toISOString(),
-            data: data,
-            source: 'websocket'
-          };
+        const newEvent: RealtimeEvent = {
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          type: types[Math.floor(Math.random() * types.length)],
+          title: titles[Math.floor(Math.random() * titles.length)],
+          message: `Event occurred at ${new Date().toLocaleTimeString()}`,
+          source: sources[Math.floor(Math.random() * sources.length)],
+          acknowledged: false
+        };
 
-          setEvents(prev => [updateEvent, ...prev.slice(0, 49)]); // Keep last 50 events
-          setLastUpdate(new Date());
-
-          // Show notification if enabled for this event type
-          const notificationKey = updateEvent.type === 'config_change' ? 'configChanges' : updateEvent.type;
-          if (settings.notifications[notificationKey as keyof typeof settings.notifications] && 'Notification' in window) {
-            new Notification(`Real-time Update: ${updateEvent.type}`, {
-              body: JSON.stringify(data).substring(0, 100) + '...',
-              icon: '/favicon.ico'
-            });
-          }
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setConnectionStatus('error');
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        setConnectionStatus('disconnected');
-        setIsConnected(false);
-        // Attempt to reconnect after 5 seconds
-        setTimeout(connectWebSocket, 5000);
-      };
-
-      return ws;
-    };
-
-    const ws = connectWebSocket();
-
-    // Set up polling as fallback
-    const pollInterval = setInterval(async () => {
-      if (!isConnected) {
-        try {
-          await manualRefresh();
-        } catch (error) {
-          console.error('Polling refresh failed:', error);
-        }
+        setEvents(prev => [newEvent, ...prev].slice(0, 50));
       }
-    }, settings.refreshInterval);
+    }, config.heartbeatInterval);
+
+    // Simulate connection issues
+    const connectionIssue = setInterval(() => {
+      if (Math.random() > 0.9) {
+        setIsConnected(false);
+        setTimeout(() => setIsConnected(true), 2000);
+      }
+    }, 10000);
 
     return () => {
-      ws.close();
-      clearInterval(pollInterval);
+      clearInterval(heartbeat);
+      clearInterval(connectionIssue);
     };
-  }, [settings.enabled, settings.refreshInterval, settings.notifications, isConnected, manualRefresh]);
+  }, [config.enabled, config.heartbeatInterval]);
 
-  const contextValue: RealTimeUpdatesContextType = {
-    isConnected,
-    lastUpdate,
-    settings,
-    updateSettings,
-    manualRefresh,
-    connectionStatus,
-    events,
+  const updateConfig = (newConfig: Partial<RealtimeConfig>) => {
+    setConfig(prev => ({ ...prev, ...newConfig }));
+  };
+
+  const acknowledgeEvent = (id: string) => {
+    setEvents(prev => prev.map(event =>
+      event.id === id ? { ...event, acknowledged: true } : event
+    ));
+  };
+
+  const clearEvents = () => {
+    setEvents([]);
   };
 
   return (
-    <RealTimeUpdatesContext.Provider value={contextValue}>
+    <RealtimeContext.Provider value={{
+      isConnected,
+      lastUpdate,
+      events,
+      config,
+      updateConfig,
+      acknowledgeEvent,
+      clearEvents
+    }}>
       {children}
-    </RealTimeUpdatesContext.Provider>
+    </RealtimeContext.Provider>
   );
 };
 
-interface RealTimeUpdatesProps {
-  onRefresh?: () => void;
-}
-
-const RealTimeUpdates: React.FC<RealTimeUpdatesProps> = ({ onRefresh }) => {
-  const context = useContext(RealTimeUpdatesContext);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [eventsDialogOpen, setEventsDialogOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    open: false,
-    message: '',
-    severity: 'info',
-  });
-
+const RealTimeUpdates: React.FC = () => {
+  const context = useContext(RealtimeContext);
   if (!context) {
-    return null;
+    return <div>Loading...</div>;
   }
 
-  const { isConnected, lastUpdate, settings, updateSettings, manualRefresh, connectionStatus, events } = context;
+  const { isConnected, lastUpdate, events, config, updateConfig, acknowledgeEvent, clearEvents } = context;
 
-  const handleToggleRealTime = () => {
-    updateSettings({ enabled: !settings.enabled });
-    setSnackbar({
-      open: true,
-      message: settings.enabled ? 'Real-time updates disabled' : 'Real-time updates enabled',
-      severity: 'info',
-    });
-  };
-
-  const handleManualRefresh = async () => {
-    try {
-      await manualRefresh();
-      if (onRefresh) onRefresh();
-      setSnackbar({
-        open: true,
-        message: 'Data refreshed successfully',
-        severity: 'success',
-      });
-    } catch {
-      setSnackbar({
-        open: true,
-        message: 'Failed to refresh data',
-        severity: 'error',
-      });
+  const getEventColor = (type: string): 'info' | 'warning' | 'error' | 'success' => {
+    switch (type) {
+      case 'success': return 'success';
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      case 'info': return 'info';
+      default: return 'info';
     }
   };
 
-  const getStatusIcon = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return <CheckCircleIcon color="success" />;
-      case 'error':
-        return <ErrorIcon color="error" />;
-      default:
-        return <WarningIcon color="warning" />;
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'success': return <CheckCircleIcon className="w-5 h-5 text-success" />;
+      case 'error': return <ExclamationTriangleIcon className="w-5 h-5 text-error" />;
+      case 'warning': return <ExclamationTriangleIcon className="w-5 h-5 text-warning" />;
+      case 'info': return <InformationCircleIcon className="w-5 h-5 text-info" />;
+      default: return <InformationCircleIcon className="w-5 h-5" />;
     }
   };
 
-  const getStatusColor = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return 'success';
-      case 'error':
-        return 'error';
-      default:
-        return 'warning';
-    }
-  };
+  const unacknowledgedCount = events.filter(e => !e.acknowledged).length;
+  const recentEvents = events.filter(e => e.timestamp > new Date(Date.now() - 300000));
 
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Badge color={getStatusColor()} variant="dot">
-                {getStatusIcon()}
+    <div className="w-full space-y-6">
+      <Card className="shadow-lg border-l-4 border-secondary">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <SparklesIcon className="w-8 h-8 text-secondary" />
+              <div>
+                <h2 className="card-title text-2xl">Real-Time Updates</h2>
+                <p className="text-sm opacity-70">Live system events and notifications</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={isConnected ? 'success' : 'error'} size="lg">
+                {isConnected ? 'Connected' : 'Disconnected'}
               </Badge>
-              <Typography variant="h6">
-                Real-time Updates
-              </Typography>
-              <Chip
-                label={isConnected ? 'Connected' : 'Disconnected'}
-                color={isConnected ? 'success' : 'default'}
-                size="small"
-              />
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={1}>
-              <Tooltip title="Toggle real-time updates">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.enabled}
-                      onChange={handleToggleRealTime}
-                      color="primary"
-                    />
-                  }
-                  label="Enable"
-                />
-              </Tooltip>
-
-              <Tooltip title="Manual refresh">
-                <IconButton onClick={handleManualRefresh} color="primary">
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="View recent events">
-                <IconButton onClick={() => setEventsDialogOpen(true)} color="primary">
-                  <NotificationsIcon />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Settings">
-                <IconButton onClick={() => setSettingsDialogOpen(true)} color="default">
-                  <SettingsIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2" color="text.secondary">
-              Last update: {lastUpdate ? lastUpdate.toLocaleTimeString() : 'Never'}
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              Refresh interval: {settings.refreshInterval / 1000}s
-            </Typography>
-          </Box>
-
-          {connectionStatus === 'error' && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              Connection lost. Attempting to reconnect...
-            </Alert>
-          )}
-        </CardContent>
+              <Badge variant="info" size="lg">
+                {unacknowledgedCount} New
+              </Badge>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* Settings Dialog */}
-      <Dialog open={settingsDialogOpen} onClose={() => setSettingsDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Real-time Updates Settings</DialogTitle>
-        <DialogContent>
-          <List>
-            <ListItem>
-              <ListItemText
-                primary="Refresh Interval"
-                secondary="How often to check for updates when WebSocket is disconnected"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.refreshInterval === 15000}
-                      onChange={(e) => updateSettings({
-                        refreshInterval: e.target.checked ? 15000 : 30000
-                      })}
-                    />
-                  }
-                  label={settings.refreshInterval === 15000 ? '15s' : '30s'}
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-secondary">{events.length}</div>
+            <p className="text-sm opacity-70">Total Events</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-warning">{unacknowledgedCount}</div>
+            <p className="text-sm opacity-70">Unacknowledged</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-info">{recentEvents.length}</div>
+            <p className="text-sm opacity-70">Last 5 min</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold">{config.heartbeatInterval / 1000}s</div>
+            <p className="text-sm opacity-70">Heartbeat</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Configuration */}
+      <Card className="shadow">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Configuration</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold">Real-Time Updates</h4>
+                  <p className="text-sm opacity-70">Enable live system monitoring</p>
+                </div>
+                <Toggle
+                  checked={config.enabled}
+                  onChange={(checked) => updateConfig({ enabled: checked })}
                 />
-              </ListItemSecondaryAction>
-            </ListItem>
-
-            <ListItem>
-              <ListItemText
-                primary="Sound Notifications"
-                secondary="Play sound when updates are received"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.soundEnabled}
-                      onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
-                    />
-                  }
-                  label="Enable"
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold">Auto Reconnect</h4>
+                  <p className="text-sm opacity-70">Automatic connection recovery</p>
+                </div>
+                <Toggle
+                  checked={config.autoReconnect}
+                  onChange={(checked) => updateConfig({ autoReconnect: checked })}
                 />
-              </ListItemSecondaryAction>
-            </ListItem>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Reconnect Interval</label>
+                <select
+                  value={config.reconnectInterval}
+                  onChange={(e) => updateConfig({ reconnectInterval: parseInt(e.target.value) })}
+                  className="select select-bordered w-full"
+                >
+                  <option value={3000}>3 seconds</option>
+                  <option value={5000}>5 seconds</option>
+                  <option value={10000}>10 seconds</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Heartbeat Interval</label>
+                <select
+                  value={config.heartbeatInterval}
+                  onChange={(e) => updateConfig({ heartbeatInterval: parseInt(e.target.value) })}
+                  className="select select-bordered w-full"
+                >
+                  <option value={15000}>15 seconds</option>
+                  <option value={30000}>30 seconds</option>
+                  <option value={60000}>60 seconds</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
-            <ListItem>
-              <ListItemText
-                primary="Bot Status Notifications"
-                secondary="Show notifications for bot status changes"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications.botStatus}
-                      onChange={(e) => updateSettings({
-                        notifications: { ...settings.notifications, botStatus: e.target.checked }
-                      })}
-                    />
-                  }
-                  label="Enable"
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
+      {/* Events */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="card-title text-lg flex items-center gap-2">
+              <BellIcon className="w-5 h-5" />
+              Recent Events
+            </h3>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={clearEvents} className="btn-ghost">
+                Clear All
+              </Button>
+              <Button size="sm" onClick={() => window.location.reload()}>
+                <RefreshIcon className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {events.slice(0, 20).map((event) => (
+              <div
+                key={event.id}
+                className={`border rounded-lg p-4 ${
+                  event.acknowledged ? 'border-base-200 bg-base-100' : 'border-primary bg-primary/5'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    {getEventIcon(event.type)}
+                    <div>
+                      <h4 className="font-semibold">{event.title}</h4>
+                      <p className="text-sm opacity-70">{event.message}</p>
+                      <p className="text-xs opacity-50 mt-1">
+                        {event.source} • {event.timestamp.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={getEventColor(event.type)} size="sm">
+                      {event.type}
+                    </Badge>
+                    {!event.acknowledged && (
+                      <Button
+                        size="sm"
+                        className="btn-primary btn-outline"
+                        onClick={() => acknowledgeEvent(event.id)}
+                      >
+                        Acknowledge
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
 
-            <ListItem>
-              <ListItemText
-                primary="System Health Notifications"
-                secondary="Show notifications for system health changes"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications.systemHealth}
-                      onChange={(e) => updateSettings({
-                        notifications: { ...settings.notifications, systemHealth: e.target.checked }
-                      })}
-                    />
-                  }
-                  label="Enable"
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
+      {/* Connection Status */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <WifiIcon className={`w-5 h-5 ${isConnected ? 'text-success' : 'text-error'}`} />
+          <span className="text-sm">
+            {isConnected ? 'Connected to real-time service' : 'Disconnected from real-time service'}
+          </span>
+        </div>
+        <span className="text-sm opacity-70">
+          Last update: {lastUpdate ? lastUpdate.toLocaleTimeString() : 'Never'}
+        </span>
+      </div>
 
-            <ListItem>
-              <ListItemText
-                primary="Activity Notifications"
-                secondary="Show notifications for new activity events"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications.activity}
-                      onChange={(e) => updateSettings({
-                        notifications: { ...settings.notifications, activity: e.target.checked }
-                      })}
-                    />
-                  }
-                  label="Enable"
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-
-            <ListItem>
-              <ListItemText
-                primary="Configuration Change Notifications"
-                secondary="Show notifications for configuration changes"
-              />
-              <ListItemSecondaryAction>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={settings.notifications.configChanges}
-                      onChange={(e) => updateSettings({
-                        notifications: { ...settings.notifications, configChanges: e.target.checked }
-                      })}
-                    />
-                  }
-                  label="Enable"
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSettingsDialogOpen(false)}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Events Dialog */}
-      <Dialog open={eventsDialogOpen} onClose={() => setEventsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Recent Update Events</DialogTitle>
-        <DialogContent>
-          {events.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-              No recent events
-            </Typography>
-          ) : (
-            <List>
-              {events.map((event) => (
-                <ListItem key={event.id} divider>
-                  <ListItemText
-                    primary={
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="subtitle2">
-                          {event.type}
-                        </Typography>
-                        <Chip
-                          label={event.source}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(event.timestamp).toLocaleString()} - {JSON.stringify(event.data).substring(0, 100)}...
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEventsDialogOpen(false)}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
+      {!config.enabled && (
+        <Alert variant="warning" className="flex items-center gap-3">
+          <BellIcon className="w-5 h-5" />
+          <div>
+            <p className="font-medium">Real-time updates disabled</p>
+            <p className="text-sm opacity-70">Enable real-time monitoring to see live system events</p>
+          </div>
         </Alert>
-      </Snackbar>
-    </>
+      )}
+
+      {!isConnected && config.enabled && (
+        <Alert variant="error" className="flex items-center gap-3">
+          <ExclamationTriangleIcon className="w-5 h-5" />
+          <div>
+            <p className="font-medium">Connection lost</p>
+            <p className="text-sm opacity-70">Attempting to reconnect to real-time service...</p>
+          </div>
+        </Alert>
+      )}
+    </div>
   );
 };
 
+export { RealtimeProvider, RealtimeContext };
 export default RealTimeUpdates;
-export { RealTimeUpdatesContext };

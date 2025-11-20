@@ -1,422 +1,463 @@
 import React, { useState } from 'react';
+import { Card, Badge, Button, Alert, Progress, Modal } from './DaisyUI';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  FormControlLabel,
-  Switch,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  FileCopy as FileIcon,
-} from '@mui/icons-material';
-import { apiService } from '../services/api';
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  DocumentArrowDownIcon,
+  DocumentArrowUpIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 
-interface ExportImportProps {
-  onRefresh?: () => void;
+export interface ExportFormat {
+  id: string;
+  name: string;
+  extension: string;
+  icon: string;
+  description: string;
 }
 
-const ExportImport: React.FC<ExportImportProps> = ({ onRefresh }) => {
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [loading, setLoading] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info';
-  }>({
-    open: false,
-    message: '',
-    severity: 'info',
-  });
+export interface ImportJob {
+  id: string;
+  filename: string;
+  format: string;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  progress: number;
+  startTime: Date;
+  endTime?: Date;
+  recordsProcessed?: number;
+  totalRecords?: number;
+  errorMessage?: string;
+}
 
-  const [exportSettings, setExportSettings] = useState({
-    filename: `config-export-${new Date().toISOString().split('T')[0]}`,
-    includeSensitive: false,
-    includeEnvironment: true,
-    includeMetadata: true,
+const exportFormats: ExportFormat[] = [
+  {
+    id: 'json',
+    name: 'JSON',
+    extension: '.json',
+    icon: '{ }',
+    description: 'JavaScript Object Notation format'
+  },
+  {
+    id: 'csv',
+    name: 'CSV',
+    extension: '.csv',
+    icon: ',',
+    description: 'Comma-separated values format'
+  },
+  {
+    id: 'xlsx',
+    name: 'Excel',
+    extension: '.xlsx',
+    icon: '📊',
+    description: 'Microsoft Excel spreadsheet format'
+  },
+  {
+    id: 'xml',
+    name: 'XML',
+    extension: '.xml',
+    icon: '</>',
+    description: 'Extensible Markup Language format'
+  },
+];
+
+const mockImportJobs: ImportJob[] = [
+  {
+    id: '1',
+    filename: 'users_2024.csv',
+    format: 'csv',
+    status: 'success',
+    progress: 100,
+    startTime: new Date(Date.now() - 60000),
+    endTime: new Date(Date.now() - 30000),
+    recordsProcessed: 1247,
+    totalRecords: 1247
+  },
+  {
+    id: '2',
+    filename: 'config_backup.json',
     format: 'json',
-  });
+    status: 'processing',
+    progress: 65,
+    startTime: new Date(Date.now() - 120000),
+    recordsProcessed: 326,
+    totalRecords: 500
+  },
+  {
+    id: '3',
+    filename: 'data_export.xlsx',
+    format: 'xlsx',
+    status: 'error',
+    progress: 30,
+    startTime: new Date(Date.now() - 300000),
+    endTime: new Date(Date.now() - 240000),
+    errorMessage: 'Invalid file format detected'
+  },
+];
 
-  const [importSettings, setImportSettings] = useState({
-    file: null as File | null,
-    mergeExisting: false,
-    backupCurrent: true,
-    validateOnly: false,
-  });
+const ExportImport: React.FC = () => {
+  const [importJobs, setImportJobs] = useState<ImportJob[]>(mockImportJobs);
+  const [selectedFormat, setSelectedFormat] = useState<string>('json');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info') => {
-    setSnackbar({ open: true, message, severity });
+  const handleExport = (format: string) => {
+    setIsProcessing(true);
+    setSelectedFormat(format);
+
+    setTimeout(() => {
+      setIsProcessing(false);
+      setShowExportModal(false);
+
+      const formatInfo = exportFormats.find(f => f.id === format);
+      if (formatInfo) {
+        const blob = new Blob([JSON.stringify({ data: 'exported', format, timestamp: new Date() }, null, 2)], {
+          type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export_${Date.now()}${formatInfo.extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    }, 2000);
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+  const handleImport = (file: File) => {
+    const newJob: ImportJob = {
+      id: Date.now().toString(),
+      filename: file.name,
+      format: file.name.split('.').pop() || 'unknown',
+      status: 'pending',
+      progress: 0,
+      startTime: new Date()
+    };
+
+    setImportJobs(prev => [newJob, ...prev]);
+
+    setTimeout(() => {
+      setImportJobs(prev => prev.map(job =>
+        job.id === newJob.id ? { ...job, status: 'processing', progress: 0 } : job
+      ));
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 30;
+
+        setImportJobs(prev => prev.map(job =>
+          job.id === newJob.id ? {
+            ...job,
+            progress: Math.min(progress, 100),
+            recordsProcessed: Math.floor((progress / 100) * 100)
+          } : job
+        ));
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          const success = Math.random() > 0.2;
+
+          setImportJobs(prev => prev.map(job =>
+            job.id === newJob.id ? {
+              ...job,
+              status: success ? 'success' : 'error',
+              progress: 100,
+              endTime: new Date(),
+              recordsProcessed: 100,
+              totalRecords: 100,
+              errorMessage: success ? undefined : 'Random error occurred'
+            } : job
+          ));
+        }
+      }, 500);
+    }, 1000);
+
+    setShowImportModal(false);
   };
 
-  const handleExport = async () => {
-    setLoading('export');
-
-    try {
-      const blob = await apiService.exportConfig();
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `${exportSettings.filename}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      showSnackbar('Configuration exported successfully', 'success');
-      setExportDialogOpen(false);
-    } catch {
-      showSnackbar('Failed to export configuration', 'error');
-    } finally {
-      setLoading(null);
+  const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
+    switch (status) {
+      case 'success': return 'success';
+      case 'error': return 'error';
+      case 'processing': return 'warning';
+      case 'pending': return 'info';
+      default: return 'info';
     }
   };
 
-  const handleImport = async () => {
-    if (!importSettings.file) {
-      showSnackbar('Please select a file to import', 'error');
-      return;
-    }
-
-    setLoading('import');
-
-    try {
-      // In a real implementation, you would read the file and send it to the API
-      // For now, we'll simulate the import process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      showSnackbar('Configuration imported successfully', 'success');
-      setImportDialogOpen(false);
-      if (onRefresh) onRefresh();
-    } catch {
-      showSnackbar('Failed to import configuration', 'error');
-    } finally {
-      setLoading(null);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success': return <CheckCircleIcon className="w-5 h-5 text-success" />;
+      case 'error': return <ExclamationTriangleIcon className="w-5 h-5 text-error" />;
+      case 'processing': return <ClockIcon className="w-5 h-5 animate-spin text-warning" />;
+      case 'pending': return <ClockIcon className="w-5 h-5 text-info" />;
+      default: return <ClockIcon className="w-5 h-5" />;
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImportSettings({ ...importSettings, file });
-    }
-  };
+  const activeJobs = importJobs.filter(job => job.status === 'processing' || job.status === 'pending').length;
+  const successfulJobs = importJobs.filter(job => job.status === 'success').length;
+  const failedJobs = importJobs.filter(job => job.status === 'error').length;
 
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              <FileIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Configuration Export/Import
-            </Typography>
-          </Box>
-
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Export your bot configurations for backup or sharing, or import configurations from files.
-          </Typography>
-
-          <Box display="flex" gap={2} mb={3}>
-            <Button
-              variant="contained"
-              startIcon={<DownloadIcon />}
-              onClick={() => setExportDialogOpen(true)}
-              color="primary"
-            >
-              Export Configuration
-            </Button>
-
-            <Button
-              variant="contained"
-              startIcon={<UploadIcon />}
-              onClick={() => setImportDialogOpen(true)}
-              color="secondary"
-            >
-              Import Configuration
-            </Button>
-          </Box>
-
-          {/* Quick Info */}
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Export:</strong> Download your current bot configurations as a JSON file for backup or sharing.
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              <strong>Import:</strong> Upload a configuration file to restore or merge bot settings.
-            </Typography>
-          </Alert>
-
-          {/* Recent Activity */}
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Recent Activity</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary="Configuration exported"
-                    secondary="config-export-2024-01-19.json • 2 hours ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Success" size="small" color="success" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Configuration imported"
-                    secondary="config-backup-2024-01-15.json • 1 day ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Success" size="small" color="success" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Export failed"
-                    secondary="Network error • 3 days ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Error" size="small" color="error" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </List>
-            </AccordionDetails>
-          </Accordion>
-        </CardContent>
+    <div className="w-full space-y-6">
+      <Card className="shadow-lg border-l-4 border-primary">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <ArrowDownTrayIcon className="w-8 h-8 text-primary" />
+              <div>
+                <h2 className="card-title text-2xl">Export & Import</h2>
+                <p className="text-sm opacity-70">Data import and export management system</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={activeJobs > 0 ? 'warning' : 'success'} size="lg">
+                {activeJobs > 0 ? 'Processing' : 'Ready'}
+              </Badge>
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* Export Dialog */}
-      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Export Configuration</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Filename"
-              value={exportSettings.filename}
-              onChange={(e) => setExportSettings({ ...exportSettings, filename: e.target.value })}
-              sx={{ mb: 2 }}
-              placeholder="config-export-2024-01-19"
-              helperText="File will be saved as .json"
-            />
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-primary">{importJobs.length}</div>
+            <p className="text-sm opacity-70">Total Jobs</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-warning">{activeJobs}</div>
+            <p className="text-sm opacity-70">Active</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-success">{successfulJobs}</div>
+            <p className="text-sm opacity-70">Successful</p>
+          </div>
+        </Card>
+        <Card className="shadow">
+          <div className="card-body text-center">
+            <div className="text-2xl font-bold text-error">{failedJobs}</div>
+            <p className="text-sm opacity-70">Failed</p>
+          </div>
+        </Card>
+      </div>
 
-            <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeEnvironment}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeEnvironment: e.target.checked })}
-                  />
-                }
-                label="Include environment variables"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeMetadata}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeMetadata: e.target.checked })}
-                  />
-                }
-                label="Include metadata and field information"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeSensitive}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeSensitive: e.target.checked })}
-                  />
-                }
-                label="Include sensitive data (tokens, keys, etc.)"
-              />
-            </Box>
-
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>Warning:</strong> Including sensitive data will export tokens, API keys, and other credentials in plain text.
-                Only enable this option if you need to transfer configurations between systems.
-              </Typography>
-            </Alert>
-
-            <Typography variant="body2" color="text.secondary">
-              <strong>Export Contents:</strong>
-            </Typography>
-            <Box display="flex" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-              <Chip label="Bot configurations" size="small" color="primary" />
-              <Chip label="Provider settings" size="small" color="primary" />
-              {exportSettings.includeEnvironment && (
-                <Chip label="Environment variables" size="small" color="secondary" />
-              )}
-              {exportSettings.includeMetadata && (
-                <Chip label="Metadata" size="small" color="secondary" />
-              )}
-              {exportSettings.includeSensitive && (
-                <Chip label="Sensitive data" size="small" color="error" />
-              )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExportDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleExport}
-            variant="contained"
-            startIcon={loading === 'export' ? <CircularProgress size={20} /> : <DownloadIcon />}
-            disabled={loading === 'export'}
-          >
-            Export Configuration
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Import Dialog */}
-      <Dialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Import Configuration</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <Box display="flex" alignItems="center" gap={2} sx={{ mb: 2 }}>
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<UploadIcon />}
+      {/* Export Section */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="card-title text-lg flex items-center gap-2">
+              <DocumentArrowDownIcon className="w-5 h-5" />
+              Export Data
+            </h3>
+            <Button onClick={() => setShowExportModal(true)} className="btn-primary">
+              <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {exportFormats.map((format) => (
+              <div
+                key={format.id}
+                className="border border-base-300 rounded-lg p-4 hover:bg-base-200 transition-colors cursor-pointer"
+                onClick={() => setSelectedFormat(format.id)}
               >
-                Select File
-                <input
-                  type="file"
-                  hidden
-                  accept=".json"
-                  onChange={handleFileSelect}
-                />
-              </Button>
-              {importSettings.file && (
-                <Typography variant="body2">
-                  Selected: {importSettings.file.name}
-                </Typography>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl">{format.icon}</span>
+                  {selectedFormat === format.id && (
+                    <Badge variant="success" size="sm">Selected</Badge>
+                  )}
+                </div>
+                <h4 className="font-semibold">{format.name}</h4>
+                <p className="text-sm opacity-70">{format.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Import Section */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="card-title text-lg flex items-center gap-2">
+              <DocumentArrowUpIcon className="w-5 h-5" />
+              Import Data
+            </h3>
+            <Button onClick={() => setShowImportModal(true)} className="btn-secondary">
+              <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+          </div>
+
+          <div className="border-2 border-dashed border-base-300 rounded-lg p-8 text-center">
+            <ArrowUpTrayIcon className="w-12 h-12 mx-auto text-primary mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Drop files here or click to browse</h3>
+            <p className="text-sm opacity-70 mb-4">
+              Supports JSON, CSV, Excel, and XML formats
+            </p>
+            <Button onClick={() => setShowImportModal(true)} className="btn-primary btn-outline">
+              Select Files
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Import Jobs */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Recent Import Jobs</h3>
+          <div className="space-y-3">
+            {importJobs.slice(0, 10).map((job) => (
+              <div key={job.id} className="border border-base-300 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(job.status)}
+                    <div>
+                      <h4 className="font-semibold">{job.filename}</h4>
+                      <p className="text-sm opacity-70">
+                        {job.format.toUpperCase()} • Started {job.startTime.toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={getStatusColor(job.status)} size="sm">
+                    {job.status}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Progress</span>
+                    <span>{Math.round(job.progress)}%</span>
+                  </div>
+                  <Progress value={job.progress} max={100} className="w-full" />
+
+                  {job.recordsProcessed && job.totalRecords && (
+                    <div className="text-sm opacity-70">
+                      {job.recordsProcessed} / {job.totalRecords} records processed
+                    </div>
+                  )}
+
+                  {job.errorMessage && (
+                    <div className="text-sm text-error">
+                      Error: {job.errorMessage}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Export Modal */}
+      <Modal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        title="Export Data"
+      >
+        <div className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">Select Format</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {exportFormats.map((format) => (
+                <button
+                  key={format.id}
+                  className={`p-3 border rounded-lg text-left transition-colors ${
+                    selectedFormat === format.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-base-300 hover:bg-base-200'
+                  }`}
+                  onClick={() => setSelectedFormat(format.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{format.icon}</span>
+                    <span>{format.name}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleExport(selectedFormat)}
+              disabled={isProcessing}
+              className="btn-primary flex-1"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="loading loading-spinner loading-sm mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                  Export
+                </>
               )}
-            </Box>
+            </Button>
+            <Button onClick={() => setShowExportModal(false)} className="btn-ghost">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
-            <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.mergeExisting}
-                    onChange={(e) => setImportSettings({ ...importSettings, mergeExisting: e.target.checked })}
-                  />
-                }
-                label="Merge with existing configurations"
-              />
+      {/* Import Modal */}
+      <Modal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Import Data"
+      >
+        <div className="space-y-4">
+          <div className="border-2 border-dashed border-base-300 rounded-lg p-8 text-center">
+            <ArrowUpTrayIcon className="w-12 h-12 mx-auto text-primary mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Select file to import</h3>
+            <p className="text-sm opacity-70 mb-4">
+              Choose JSON, CSV, Excel, or XML files
+            </p>
+            <input
+              type="file"
+              accept=".json,.csv,.xlsx,.xml"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImport(file);
+              }}
+              className="hidden"
+              id="file-input"
+            />
+            <label htmlFor="file-input" className="btn-primary cursor-pointer">
+              Browse Files
+            </label>
+          </div>
 
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.backupCurrent}
-                    onChange={(e) => setImportSettings({ ...importSettings, backupCurrent: e.target.checked })}
-                  />
-                }
-                label="Create backup of current configuration"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.validateOnly}
-                    onChange={(e) => setImportSettings({ ...importSettings, validateOnly: e.target.checked })}
-                  />
-                }
-                label="Validate only (do not apply changes)"
-              />
-            </Box>
-
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>Import Options:</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                • <strong>Merge:</strong> Combine imported configs with existing ones
-              </Typography>
-              <Typography variant="body2">
-                • <strong>Backup:</strong> Create a backup before making changes
-              </Typography>
-              <Typography variant="body2">
-                • <strong>Validate:</strong> Check the file without applying changes
-              </Typography>
-            </Alert>
-
-            <Alert severity="warning">
-              <Typography variant="body2">
-                <strong>Warning:</strong> Importing configurations will modify your bot settings.
-                Make sure to backup your current configuration first.
-              </Typography>
-            </Alert>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImportDialogOpen(false)}>
+          <Button onClick={() => setShowImportModal(false)} className="btn-ghost w-full">
             Cancel
           </Button>
-          <Button
-            onClick={handleImport}
-            variant="contained"
-            color="secondary"
-            startIcon={loading === 'import' ? <CircularProgress size={20} /> : <UploadIcon />}
-            disabled={loading === 'import' || !importSettings.file}
-          >
-            Import Configuration
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
+      {activeJobs > 0 && (
+        <Alert variant="warning" className="flex items-center gap-3">
+          <ClockIcon className="w-5 h-5 animate-spin" />
+          <div>
+            <p className="font-medium">{activeJobs} import job{activeJobs !== 1 ? 's' : ''} processing</p>
+            <p className="text-sm opacity-70">Processing files in background</p>
+          </div>
         </Alert>
-      </Snackbar>
-    </>
+      )}
+    </div>
   );
 };
 
