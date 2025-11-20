@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Card, CardContent, CardActions, Button, Switch, FormControlLabel, TextField, Chip, Grid, Divider } from '@mui/material';
-import { Alert } from '../DaisyUI';
+import { Alert, Badge, Button, Card, Divider, Toggle } from '../DaisyUI';
+import {
+  PuzzlePieceIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 
 interface Integration {
   id: string;
@@ -97,7 +102,6 @@ const SettingsIntegrations: React.FC = () => {
       status: 'disconnected'
     }
   ]);
-  const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const handleToggleIntegration = async (id: string) => {
@@ -106,46 +110,57 @@ const SettingsIntegrations: React.FC = () => {
 
     if (!integration.configured && !integration.enabled) {
       setAlert({ type: 'error', message: 'Please configure this integration before enabling it' });
+      setTimeout(() => setAlert(null), 3000);
       return;
     }
 
-    setIntegrations(prev => prev.map(integration => 
-      integration.id === id 
-        ? { 
-            ...integration, 
-            enabled: !integration.enabled,
-            status: !integration.enabled ? 'connected' : 'disconnected'
-          }
+    setIntegrations(prev => prev.map(integration =>
+      integration.id === id
+        ? {
+          ...integration,
+          enabled: !integration.enabled,
+          status: !integration.enabled ? 'connected' : 'disconnected'
+        }
         : integration
     ));
 
-    setAlert({ 
-      type: 'success', 
-      message: `${integration.name} ${!integration.enabled ? 'enabled' : 'disabled'} successfully` 
+    setAlert({
+      type: 'success',
+      message: `${integration.name} ${!integration.enabled ? 'enabled' : 'disabled'} successfully`
     });
+    setTimeout(() => setAlert(null), 3000);
   };
 
   const handleConfigure = (id: string) => {
     // In a real app, this would open a configuration dialog
     setAlert({ type: 'success', message: 'Configuration dialog would open here' });
+    setTimeout(() => setAlert(null), 3000);
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryVariant = (category: string): 'primary' | 'secondary' | 'accent' | 'warning' => {
     switch (category) {
       case 'messaging': return 'primary';
       case 'ai': return 'secondary';
-      case 'database': return 'info';
       case 'monitoring': return 'warning';
-      default: return 'default';
+      default: return 'accent';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'neutral' | 'error' => {
     switch (status) {
       case 'connected': return 'success';
-      case 'disconnected': return 'default';
+      case 'disconnected': return 'neutral';
       case 'error': return 'error';
-      default: return 'default';
+      default: return 'neutral';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    const className = "w-4 h-4";
+    switch (status) {
+      case 'connected': return <CheckCircleIcon className={`${className} text-success`} />;
+      case 'error': return <ExclamationTriangleIcon className={`${className} text-error`} />;
+      default: return <XCircleIcon className={`${className} text-base-content/50`} />;
     }
   };
 
@@ -158,162 +173,135 @@ const SettingsIntegrations: React.FC = () => {
   }, {} as Record<string, Integration[]>);
 
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
-        Integrations
-      </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
-        Manage third-party integrations and external service connections
-      </Typography>
+    <div className="p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <PuzzlePieceIcon className="w-8 h-8 text-primary" />
+        <div>
+          <h2 className="text-2xl font-bold">Integrations</h2>
+          <p className="text-base-content/70">
+            Manage third-party integrations and external service connections
+          </p>
+        </div>
+      </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
       )}
 
-      <Box sx={{ mt: 3 }}>
+      <div className="space-y-6">
         {Object.entries(groupedIntegrations).map(([category, categoryIntegrations]) => (
-          <Box key={category} sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom sx={{ textTransform: 'capitalize' }}>
+          <section key={category}>
+            <h3 className="text-lg font-semibold capitalize mb-4 border-b border-base-300 pb-2">
               {category} Integrations
-            </Typography>
-            
-            <Grid container spacing={3}>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categoryIntegrations.map((integration) => (
-                <Grid item xs={12} md={6} lg={4} key={integration.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Typography variant="h6" component="h3">
-                          {integration.name}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Chip 
-                            label={integration.status}
-                            color={getStatusColor(integration.status) as any}
-                            size="small"
-                          />
-                          <Chip 
-                            label={integration.category}
-                            color={getCategoryColor(integration.category) as any}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </Box>
-                      </Box>
-                      
-                      <Typography variant="body2" color="text.secondary" paragraph>
-                        {integration.description}
-                      </Typography>
+                <Card key={integration.id} className="h-full flex flex-col">
+                  <div className="flex-grow">
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="text-lg font-semibold">{integration.name}</h4>
+                      <div className="flex gap-1">
+                        <Badge variant={getStatusVariant(integration.status)} size="sm">
+                          {getStatusIcon(integration.status)}
+                          {integration.status}
+                        </Badge>
+                        <Badge
+                          variant={getCategoryVariant(integration.category)}
+                          size="sm"
+                          style="outline"
+                        >
+                          {integration.category}
+                        </Badge>
+                      </div>
+                    </div>
 
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={integration.enabled}
-                            onChange={() => handleToggleIntegration(integration.id)}
-                            disabled={!integration.configured}
-                          />
-                        }
+                    <p className="text-sm text-base-content/70 mb-4">
+                      {integration.description}
+                    </p>
+
+                    <div className="mb-3">
+                      <Toggle
                         label={integration.enabled ? 'Enabled' : 'Disabled'}
+                        checked={integration.enabled}
+                        onChange={() => handleToggleIntegration(integration.id)}
+                        disabled={!integration.configured}
+                        color="primary"
                       />
+                    </div>
 
-                      {!integration.configured && (
-                        <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                          Configuration required
-                        </Typography>
-                      )}
-                    </CardContent>
-                    
-                    <CardActions>
-                      <Button
-                        size="small"
-                        onClick={() => handleConfigure(integration.id)}
-                        variant={integration.configured ? 'outlined' : 'contained'}
-                      >
-                        {integration.configured ? 'Reconfigure' : 'Configure'}
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
+                    {!integration.configured && (
+                      <p className="text-sm text-warning">
+                        ⚠️ Configuration required
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-base-200">
+                    <Button
+                      size="sm"
+                      onClick={() => handleConfigure(integration.id)}
+                      variant={integration.configured ? 'secondary' : 'primary'}
+                      buttonStyle={integration.configured ? 'outline' : 'solid'}
+                      className="w-full"
+                    >
+                      {integration.configured ? 'Reconfigure' : 'Configure'}
+                    </Button>
+                  </div>
+                </Card>
               ))}
-            </Grid>
-          </Box>
+            </div>
+          </section>
         ))}
-      </Box>
+      </div>
 
-      <Divider sx={{ my: 4 }} />
+      <Divider />
 
       {/* Integration Statistics */}
-      <Typography variant="h6" gutterBottom>
-        Integration Statistics
-      </Typography>
-      
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Total Integrations
-              </Typography>
-              <Typography variant="h4">
-                {integrations.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Enabled
-              </Typography>
-              <Typography variant="h4" color="success.main">
-                {integrations.filter(i => i.enabled).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Configured
-              </Typography>
-              <Typography variant="h4" color="info.main">
-                {integrations.filter(i => i.configured).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={6} sm={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Connected
-              </Typography>
-              <Typography variant="h4" color="primary.main">
-                {integrations.filter(i => i.status === 'connected').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <section className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Integration Statistics</h3>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-        <Button
-          variant="outlined"
-          size="large"
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card className="text-center">
+            <div className="text-sm text-base-content/70">Total Integrations</div>
+            <div className="text-3xl font-bold">{integrations.length}</div>
+          </Card>
+
+          <Card className="text-center">
+            <div className="text-sm text-base-content/70">Enabled</div>
+            <div className="text-3xl font-bold text-success">
+              {integrations.filter(i => i.enabled).length}
+            </div>
+          </Card>
+
+          <Card className="text-center">
+            <div className="text-sm text-base-content/70">Configured</div>
+            <div className="text-3xl font-bold text-info">
+              {integrations.filter(i => i.configured).length}
+            </div>
+          </Card>
+
+          <Card className="text-center">
+            <div className="text-sm text-base-content/70">Connected</div>
+            <div className="text-3xl font-bold text-primary">
+              {integrations.filter(i => i.status === 'connected').length}
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      <div className="flex justify-end mt-8">
+        <Button variant="secondary" buttonStyle="outline" size="lg">
           Refresh All Connections
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
