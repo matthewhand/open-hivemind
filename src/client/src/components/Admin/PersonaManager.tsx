@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemText
-} from '@mui/material';
-import { Modal, ToastNotification, Checkbox, Button, Card, Form } from '../DaisyUI';
-import { 
-  getPersonas, 
-  createPersona, 
-  updatePersona, 
+import { Modal, ToastNotification, Checkbox, Button, Card, Form, Loading } from '../DaisyUI';
+import {
+  getPersonas,
+  createPersona,
+  updatePersona,
   deletePersona,
-  type Persona 
+  type Persona
 } from '../../services/agentService';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import {
+  PlusIcon as AddIcon,
+  PencilIcon as EditIcon,
+  TrashIcon as DeleteIcon,
+  ArchiveBoxXMarkIcon as DeleteSweepIcon
+} from '@heroicons/react/24/outline';
 
 const PersonaManager: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -59,7 +54,7 @@ const PersonaManager: React.FC = () => {
   const handleFormSubmit = async (data: Record<string, string | number | boolean>) => {
     const name = data.name as string;
     const systemPrompt = data.systemPrompt as string;
-    
+
     try {
       if (editingPersona) {
         await updatePersona(editingPersona.key, { name, systemPrompt });
@@ -124,17 +119,21 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <Typography>Loading personas...</Typography>;
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loading.Spinner size="lg" />
+      </div>
+    );
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return <div className="alert alert-error">{error}</div>;
   }
 
   return (
     <Card title="Personas" className="p-4">
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Box display="flex" alignItems="center">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
           <Checkbox
             checked={personas.length > 0 && selectedPersonas.size === personas.length}
             indeterminate={selectedPersonas.size > 0 && selectedPersonas.size < personas.length}
@@ -146,60 +145,56 @@ const PersonaManager: React.FC = () => {
             <Button
               variant="secondary"
               style="outline"
-              icon={<DeleteSweepIcon />}
               onClick={handleDeleteSelected}
-              className="ml-2"
             >
+              <DeleteSweepIcon className="w-4 h-4 mr-2" />
               Delete Selected ({selectedPersonas.size})
             </Button>
           )}
-        </Box>
+        </div>
         <Button
           variant="primary"
-          icon={<AddIcon />}
           onClick={() => handleOpenModal()}
         >
+          <AddIcon className="w-4 h-4 mr-2" />
           Add Persona
         </Button>
-      </Box>
-      
-      <List>
+      </div>
+
+      <div className="space-y-2">
         {personas.map((persona) => (
-          <ListItem
-            key={persona.key}
-            secondaryAction={
-              <Box className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<EditIcon />}
-                  onClick={() => handleOpenModal(persona)}
-                  className="btn-square"
-                >
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<DeleteIcon />}
-                  onClick={() => handleDeletePersona(persona.key)}
-                  className="btn-square text-error hover:bg-error hover:text-error-content"
-                >
-                </Button>
-              </Box>
-            }
-          >
-            <Box display="flex" alignItems="center">
-              <Checkbox
-                checked={selectedPersonas.has(persona.key)}
-                onChange={() => handleToggleSelect(persona.key)}
+          <div key={persona.key} className="flex items-center gap-3 p-3 border border-base-300 rounded-lg hover:bg-base-200">
+            <Checkbox
+              checked={selectedPersonas.has(persona.key)}
+              onChange={() => handleToggleSelect(persona.key)}
+              size="sm"
+            />
+            <div className="flex-grow">
+              <p className="font-bold">{persona.name}</p>
+              <p className="text-sm opacity-70">{persona.systemPrompt}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
                 size="sm"
-              />
-              <ListItemText primary={persona.name} secondary={persona.systemPrompt} sx={{ ml: 2 }} />
-            </Box>
-          </ListItem>
+                onClick={() => handleOpenModal(persona)}
+                className="btn-square"
+              >
+                <EditIcon className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeletePersona(persona.key)}
+                className="btn-square text-error hover:bg-error hover:text-error-content"
+              >
+                <DeleteIcon className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         ))}
-      </List>
-      
+      </div>
+
       <Modal
         isOpen={openModal}
         onClose={handleCloseModal}
@@ -229,7 +224,7 @@ const PersonaManager: React.FC = () => {
           showCancel
         />
       </Modal>
-      
+
       {toastMessage && (
         <ToastNotification
           message={toastMessage}
