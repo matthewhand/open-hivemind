@@ -1,35 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
   Card,
-  CardContent,
-  Typography,
-  TextField,
+  Badge,
   Button,
+  Input,
   Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Snackbar,
-} from '@mui/material';
+  Modal,
+  Loading,
+} from './DaisyUI';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  PlayArrow as PlayIcon,
-  Stop as StopIcon,
-} from '@mui/icons-material';
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  PlayIcon,
+  StopIcon,
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 
 interface EndpointConfig {
@@ -56,7 +41,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState<EndpointConfig | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -72,6 +57,11 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
     retries: 3,
     retryDelay: 1000,
   });
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+  };
 
   const fetchEndpoints = async () => {
     try {
@@ -148,10 +138,10 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
 
       if (editingEndpoint) {
         await apiService.updateApiEndpoint(editingEndpoint.id, endpointData);
-        setSnackbar({ open: true, message: 'Endpoint updated successfully', severity: 'success' });
+        showToast('Endpoint updated successfully', 'success');
       } else {
         await apiService.addApiEndpoint(endpointData);
-        setSnackbar({ open: true, message: 'Endpoint added successfully', severity: 'success' });
+        showToast('Endpoint added successfully', 'success');
       }
 
       handleCloseDialog();
@@ -159,19 +149,19 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       onEndpointsChange?.();
     } catch (error) {
       console.error('Failed to save endpoint:', error);
-      setSnackbar({ open: true, message: 'Failed to save endpoint', severity: 'error' });
+      showToast('Failed to save endpoint', 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await apiService.removeApiEndpoint(id);
-      setSnackbar({ open: true, message: 'Endpoint deleted successfully', severity: 'success' });
+      showToast('Endpoint deleted successfully', 'success');
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
       console.error('Failed to delete endpoint:', error);
-      setSnackbar({ open: true, message: 'Failed to delete endpoint', severity: 'error' });
+      showToast('Failed to delete endpoint', 'error');
     }
   };
 
@@ -194,219 +184,243 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
   if (loading) {
     return (
       <Card>
-        <CardContent>
-          <Typography>Loading endpoints...</Typography>
-        </CardContent>
+        <div className="flex items-center gap-2">
+          <Loading size="md" />
+          <p>Loading endpoints...</p>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h6">
-            API Endpoint Configuration
-          </Typography>
+    <>
+      <Card>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">API Endpoint Configuration</h2>
           <Button
-            startIcon={<AddIcon />}
+            variant="primary"
+            size="sm"
             onClick={() => handleOpenDialog()}
-            variant="contained"
-            size="small"
+            className="flex items-center gap-2"
           >
+            <PlusIcon className="w-4 h-4" />
             Add Endpoint
           </Button>
-        </Box>
+        </div>
 
         {endpoints.length === 0 ? (
-          <Box textAlign="center" py={4}>
-            <Typography variant="body1" color="text.secondary">
-              No API endpoints configured
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Add your first endpoint to start monitoring
-            </Typography>
-          </Box>
+          <div className="text-center py-8">
+            <p className="text-base-content/70 mb-2">No API endpoints configured</p>
+            <p className="text-sm text-base-content/50">Add your first endpoint to start monitoring</p>
+          </div>
         ) : (
-          <List>
+          <ul className="space-y-3">
             {endpoints.map((endpoint) => (
-              <ListItem key={endpoint.id} divider>
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="subtitle2">{endpoint.name}</Typography>
-                      <Chip
-                        label={endpoint.method}
-                        size="small"
-                        variant="outlined"
-                      />
-                      <Chip
-                        label={endpoint.enabled ? 'Enabled' : 'Disabled'}
-                        size="small"
-                        color={endpoint.enabled ? 'success' : 'default'}
-                      />
-                    </Box>
-                  }
-                  secondary={
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {endpoint.url}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Interval: {formatInterval(endpoint.interval || 60000)} |
-                        Timeout: {formatInterval(endpoint.timeout || 10000)} |
-                        Retries: {endpoint.retries || 3}
-                      </Typography>
-                    </Box>
-                  }
-                />
-                <ListItemSecondaryAction>
-                  <IconButton
-                    onClick={() => handleToggle(endpoint.id, !endpoint.enabled)}
-                    size="small"
-                    color={endpoint.enabled ? 'warning' : 'success'}
-                  >
-                    {endpoint.enabled ? <StopIcon /> : <PlayIcon />}
-                  </IconButton>
-                  <IconButton onClick={() => handleOpenDialog(endpoint)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(endpoint.id)} size="small" color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
+              <li key={endpoint.id} className="p-4 bg-base-200 rounded-box hover:bg-base-300 transition-colors">
+                <div className="flex justify-between items-start">
+                  <div className="flex-grow">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold">{endpoint.name}</span>
+                      <Badge variant="neutral" size="sm" style="outline">
+                        {endpoint.method}
+                      </Badge>
+                      <Badge variant={endpoint.enabled ? "success" : "neutral"} size="sm">
+                        {endpoint.enabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-base-content/70 mb-1">{endpoint.url}</p>
+                    <p className="text-xs text-base-content/50">
+                      Interval: {formatInterval(endpoint.interval || 60000)} |
+                      Timeout: {formatInterval(endpoint.timeout || 10000)} |
+                      Retries: {endpoint.retries || 3}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="btn-circle"
+                      onClick={() => handleToggle(endpoint.id, !endpoint.enabled)}
+                    >
+                      {endpoint.enabled ? (
+                        <StopIcon className="w-4 h-4 text-warning" />
+                      ) : (
+                        <PlayIcon className="w-4 h-4 text-success" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="btn-circle"
+                      onClick={() => handleOpenDialog(endpoint)}
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="btn-circle text-error"
+                      onClick={() => handleDelete(endpoint.id)}
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </li>
             ))}
-          </List>
+          </ul>
         )}
+      </Card>
 
-        {/* Configuration Dialog */}
-        <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogTitle>
-            {editingEndpoint ? 'Edit Endpoint' : 'Add New Endpoint'}
-          </DialogTitle>
-          <DialogContent>
-            <Box display="flex" flexDirection="column" gap={2} pt={1}>
-              <TextField
-                label="Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                fullWidth
-                required
+      {/* Configuration Modal */}
+      <Modal
+        isOpen={dialogOpen}
+        onClose={handleCloseDialog}
+        title={editingEndpoint ? 'Edit Endpoint' : 'Add New Endpoint'}
+      >
+        <div className="space-y-4 py-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Name *</span>
+            </label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Endpoint name"
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">URL *</span>
+            </label>
+            <Input
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+              placeholder="https://api.example.com/health"
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Method</span>
+            </label>
+            <Select
+              value={formData.method}
+              onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
+              options={[
+                { value: 'GET', label: 'GET' },
+                { value: 'POST', label: 'POST' },
+                { value: 'PUT', label: 'PUT' },
+                { value: 'DELETE', label: 'DELETE' },
+                { value: 'HEAD', label: 'HEAD' },
+              ]}
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Headers (JSON)</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered"
+              value={formData.headers}
+              onChange={(e) => setFormData({ ...formData, headers: e.target.value })}
+              rows={3}
+              placeholder='{"Authorization": "Bearer token"}'
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Body (JSON)</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered"
+              value={formData.body}
+              onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+              rows={3}
+              placeholder='{"key": "value"}'
+            />
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Expected Status Codes</span>
+            </label>
+            <Input
+              value={formData.expectedStatusCodes}
+              onChange={(e) => setFormData({ ...formData, expectedStatusCodes: e.target.value })}
+              placeholder="200,201,202,204"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Timeout (ms)</span>
+              </label>
+              <Input
+                type="number"
+                value={formData.timeout}
+                onChange={(e) => setFormData({ ...formData, timeout: parseInt(e.target.value) })}
               />
+            </div>
 
-              <TextField
-                label="URL"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                fullWidth
-                required
-                placeholder="https://api.example.com/health"
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Interval (ms)</span>
+              </label>
+              <Input
+                type="number"
+                value={formData.interval}
+                onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value) })}
               />
+            </div>
+          </div>
 
-              <FormControl fullWidth>
-                <InputLabel>Method</InputLabel>
-                <Select
-                  value={formData.method}
-                  onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
-                >
-                  <MenuItem value="GET">GET</MenuItem>
-                  <MenuItem value="POST">POST</MenuItem>
-                  <MenuItem value="PUT">PUT</MenuItem>
-                  <MenuItem value="DELETE">DELETE</MenuItem>
-                  <MenuItem value="HEAD">HEAD</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField
-                label="Headers (JSON)"
-                value={formData.headers}
-                onChange={(e) => setFormData({ ...formData, headers: e.target.value })}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder='{"Authorization": "Bearer token"}'
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Retries</span>
+              </label>
+              <Input
+                type="number"
+                value={formData.retries}
+                onChange={(e) => setFormData({ ...formData, retries: parseInt(e.target.value) })}
               />
+            </div>
 
-              <TextField
-                label="Body (JSON)"
-                value={formData.body}
-                onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-                fullWidth
-                multiline
-                rows={3}
-                placeholder='{"key": "value"}'
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Retry Delay (ms)</span>
+              </label>
+              <Input
+                type="number"
+                value={formData.retryDelay}
+                onChange={(e) => setFormData({ ...formData, retryDelay: parseInt(e.target.value) })}
               />
+            </div>
+          </div>
+        </div>
 
-              <TextField
-                label="Expected Status Codes"
-                value={formData.expectedStatusCodes}
-                onChange={(e) => setFormData({ ...formData, expectedStatusCodes: e.target.value })}
-                fullWidth
-                placeholder="200,201,202,204"
-              />
+        <div className="modal-action">
+          <Button onClick={handleCloseDialog} variant="ghost">Cancel</Button>
+          <Button onClick={handleSubmit} variant="primary">
+            {editingEndpoint ? 'Update' : 'Add'} Endpoint
+          </Button>
+        </div>
+      </Modal>
 
-              <Box display="flex" gap={2}>
-                <TextField
-                  label="Timeout (ms)"
-                  type="number"
-                  value={formData.timeout}
-                  onChange={(e) => setFormData({ ...formData, timeout: parseInt(e.target.value) })}
-                  fullWidth
-                />
-
-                <TextField
-                  label="Interval (ms)"
-                  type="number"
-                  value={formData.interval}
-                  onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value) })}
-                  fullWidth
-                />
-              </Box>
-
-              <Box display="flex" gap={2}>
-                <TextField
-                  label="Retries"
-                  type="number"
-                  value={formData.retries}
-                  onChange={(e) => setFormData({ ...formData, retries: parseInt(e.target.value) })}
-                  fullWidth
-                />
-
-                <TextField
-                  label="Retry Delay (ms)"
-                  type="number"
-                  value={formData.retryDelay}
-                  onChange={(e) => setFormData({ ...formData, retryDelay: parseInt(e.target.value) })}
-                  fullWidth
-                />
-              </Box>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={handleSubmit} variant="contained">
-              {editingEndpoint ? 'Update' : 'Add'} Endpoint
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Snackbar for notifications */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </CardContent>
-    </Card>
+      {/* Toast notification */}
+      {toast.show && (
+        <div className="toast toast-end toast-bottom z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
