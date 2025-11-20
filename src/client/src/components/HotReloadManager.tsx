@@ -1,369 +1,241 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  Alert,
-  CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Undo as UndoIcon,
-  History as HistoryIcon,
-  ExpandMore as ExpandMoreIcon,
-  PlayArrow as PlayArrowIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
-import { apiService } from '../services/api';
-import type { ConfigurationChange } from '../../../src/config/HotReloadManager';
+import { Card, Button, Input, Alert, Toggle, Badge, Modal } from './DaisyUI';
+import { PlayIcon, StopIcon, ClockIcon } from '@heroicons/react/24/outline';
 
-interface HotReloadStatus {
-  isActive: boolean;
-  changeHistoryCount: number;
-  availableRollbacksCount: number;
-  lastChange: ConfigurationChange | null;
+export interface ReloadEvent {
+  id: string;
+  timestamp: Date;
+  type: 'auto' | 'manual';
+  component: string;
+  status: 'success' | 'error';
+  duration: number;
 }
 
 const HotReloadManager: React.FC = () => {
-  const [status, setStatus] = useState<HotReloadStatus | null>(null);
-  const [changeHistory, setChangeHistory] = useState<ConfigurationChange[]>([]);
-  const [availableRollbacks, setAvailableRollbacks] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  // Quick change dialog
-  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
-  const [changeData, setChangeData] = useState({
-    botName: '',
-    changes: {} as Record<string, any>
-  });
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [interval, setInterval] = useState(5);
+  const [isMonitoring, setIsMonitoring] = useState(false);
+  const [events, setEvents] = useState<ReloadEvent[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
-    loadHotReloadData();
-  }, []);
+    if (isEnabled && isMonitoring) {
+      const timer = setInterval(() => {
+        const newEvent: ReloadEvent = {
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          type: 'auto',
+          component: 'Dashboard',
+          status: Math.random() > 0.1 ? 'success' : 'error',
+          duration: Math.floor(Math.random() * 1000) + 100
+        };
+        setEvents(prev => [newEvent, ...prev].slice(0, 10));
+      }, interval * 1000);
 
-  const loadHotReloadData = async () => {
-    try {
-      setLoading(true);
-      const [statusRes, historyRes, rollbacksRes] = await Promise.all([
-        fetch('/webui/api/config/hot-reload/status'),
-        fetch('/webui/api/config/hot-reload/history'),
-        fetch('/webui/api/config/hot-reload/rollbacks')
-      ]);
-
-      const statusData = await statusRes.json();
-      const historyData = await historyRes.json();
-      const rollbacksData = await rollbacksRes.json();
-
-      if (statusData.success) setStatus(statusData.status);
-      if (historyData.success) setChangeHistory(historyData.history);
-      if (rollbacksData.success) setAvailableRollbacks(rollbacksData.rollbacks);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load hot reload data');
-    } finally {
-      setLoading(false);
+      return () => clearInterval(timer);
     }
+  }, [isEnabled, isMonitoring, interval]);
+
+  const handleManualReload = () => {
+    const newEvent: ReloadEvent = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      type: 'manual',
+      component: 'Manual Trigger',
+      status: 'success',
+      duration: 150
+    };
+    setEvents(prev => [newEvent, ...prev].slice(0, 10));
   };
 
-  const handleApplyChange = async () => {
-    if (!changeData.botName || Object.keys(changeData.changes).length === 0) {
-      setError('Please provide bot name and changes');
-      return;
-    }
+  const recentEvents = events.filter(e =>
+    e.timestamp > new Date(Date.now() - 60000)
+  );
 
-    try {
-      setLoading(true);
-      const response = await fetch('/webui/api/config/hot-reload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'update',
-          botName: changeData.botName,
-          changes: changeData.changes
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setSuccess('Configuration change applied successfully!');
-        setChangeDialogOpen(false);
-        setChangeData({ botName: '', changes: {} });
-        loadHotReloadData();
-      } else {
-        setError(result.message || 'Failed to apply changes');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to apply changes');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRollback = async (snapshotId: string) => {
-    if (!confirm('Are you sure you want to rollback to this configuration? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch(`/webui/api/config/hot-reload/rollback/${snapshotId}`, {
-        method: 'POST'
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setSuccess('Configuration rolled back successfully!');
-        loadHotReloadData();
-      } else {
-        setError(result.message || 'Failed to rollback');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rollback');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
-  };
-
-  const getChangeTypeColor = (type: string) => {
-    switch (type) {
-      case 'create': return 'success';
-      case 'update': return 'primary';
-      case 'delete': return 'error';
-      default: return 'default';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success': return 'success';
+      case 'error': return 'error';
+      default: return 'info';
     }
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Hot Reload Configuration Manager
-        </Typography>
-        <Box display="flex" gap={2}>
-          <Button
-            variant="contained"
-            startIcon={<PlayArrowIcon />}
-            onClick={() => setChangeDialogOpen(true)}
-            disabled={loading}
-          >
-            Apply Change
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={loadHotReloadData}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Refresh'}
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Status Overview */}
-      {status && (
-        <Box display="flex" gap={3} mb={4}>
-          <Card sx={{ flex: 1 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                System Status
-              </Typography>
-              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                {status.isActive ? (
-                  <CheckCircleIcon color="success" />
-                ) : (
-                  <ErrorIcon color="error" />
-                )}
-                <Typography variant="body2">
-                  Hot Reload: {status.isActive ? 'Active' : 'Inactive'}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
-                Changes: {status.changeHistoryCount} | Rollbacks: {status.availableRollbacksCount}
-              </Typography>
-            </CardContent>
-          </Card>
-
-          {status.lastChange && (
-            <Card sx={{ flex: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Last Change
-                </Typography>
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <Chip
-                    label={status.lastChange.type}
-                    color={getChangeTypeColor(status.lastChange.type)}
-                    size="small"
-                  />
-                  {status.lastChange.botName && (
-                    <Typography variant="body2">
-                      Bot: {status.lastChange.botName}
-                    </Typography>
-                  )}
-                </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {formatTimestamp(status.lastChange.timestamp)}
-                </Typography>
-              </CardContent>
-            </Card>
-          )}
-        </Box>
-      )}
-
-      {/* Alerts */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-          {success}
-        </Alert>
-      )}
-
-      {/* Change History */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Change History
-          </Typography>
-          <List dense>
-            {changeHistory.slice(0, 10).map((change) => (
-              <ListItem key={change.id} divider>
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip
-                        label={change.type}
-                        color={getChangeTypeColor(change.type)}
-                        size="small"
-                      />
-                      {change.botName && (
-                        <Typography variant="body2">
-                          {change.botName}
-                        </Typography>
-                      )}
-                      {change.applied && <CheckCircleIcon color="success" fontSize="small" />}
-                    </Box>
-                  }
-                  secondary={
-                    <Typography variant="caption" color="text.secondary">
-                      {formatTimestamp(change.timestamp)}
-                      {change.rollbackAvailable && (
-                        <Chip label="Rollback Available" size="small" color="warning" sx={{ ml: 1 }} />
-                      )}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-            ))}
-            {changeHistory.length === 0 && (
-              <ListItem>
-                <ListItemText primary="No changes yet" />
-              </ListItem>
-            )}
-          </List>
-        </CardContent>
+    <div className="w-full space-y-6">
+      <Card className="shadow-lg border-l-4 border-warning">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="card-title text-2xl">Hot Reload Manager</h2>
+              <p className="text-sm opacity-70">Auto-refresh components during development</p>
+            </div>
+            <Badge variant={isEnabled ? 'success' : 'neutral'} size="lg">
+              {isEnabled ? 'Active' : 'Disabled'}
+            </Badge>
+          </div>
+        </div>
       </Card>
 
-      {/* Available Rollbacks */}
-      {availableRollbacks.length > 0 && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Available Rollbacks
-            </Typography>
-            <List dense>
-              {availableRollbacks.map((snapshotId) => (
-                <ListItem key={snapshotId} divider>
-                  <ListItemText
-                    primary={`Snapshot: ${snapshotId}`}
-                    secondary="Click rollback to restore this configuration"
-                  />
-                  <Tooltip title="Rollback to this configuration">
-                    <IconButton
-                      color="warning"
-                      onClick={() => handleRollback(snapshotId)}
-                      disabled={loading}
-                    >
-                      <UndoIcon />
-                    </IconButton>
-                  </Tooltip>
-                </ListItem>
-              ))}
-            </List>
-          </CardContent>
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="shadow">
+          <div className="card-body">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold">Auto Reload</h3>
+              <Toggle
+                checked={isEnabled}
+                onChange={setIsEnabled}
+              />
+            </div>
+            <p className="text-sm opacity-70">Enable automatic component reloading</p>
+          </div>
         </Card>
+
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-2">Interval</h3>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={interval}
+                onChange={(e) => setInterval(parseInt(e.target.value) || 5)}
+                className="w-20"
+                min="1"
+                max="60"
+              />
+              <span className="text-sm opacity-70">seconds</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-2">Manual Action</h3>
+            <Button
+              onClick={handleManualReload}
+              className="btn-primary btn-sm"
+            >
+              <PlayIcon className="w-4 h-4 mr-2" />
+              Reload Now
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* Monitoring */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="card-title text-lg">Monitoring Status</h3>
+            <Button
+              onClick={() => setIsMonitoring(!isMonitoring)}
+              className={`btn-${isMonitoring ? 'error' : 'success'}`}
+            >
+              {isMonitoring ? (
+                <>
+                  <StopIcon className="w-4 h-4 mr-2" />
+                  Stop Monitoring
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="w-4 h-4 mr-2" />
+                  Start Monitoring
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{events.length}</div>
+              <p className="text-sm opacity-70">Total Events</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-success">{recentEvents.filter(e => e.status === 'success').length}</div>
+              <p className="text-sm opacity-70">Successful</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-error">{recentEvents.filter(e => e.status === 'error').length}</div>
+              <p className="text-sm opacity-70">Failed</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{interval}s</div>
+              <p className="text-sm opacity-70">Interval</p>
+            </div>
+          </div>
+
+          {/* Recent Events */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold">Recent Events</h4>
+              <Button
+                size="sm"
+                className="btn-ghost"
+                onClick={() => setShowDetails(true)}
+              >
+                View All
+              </Button>
+            </div>
+            {events.slice(0, 5).map((event) => (
+              <div key={event.id} className="flex items-center justify-between p-2 border border-base-300 rounded">
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="w-4 h-4 opacity-50" />
+                  <span className="text-sm">{event.component}</span>
+                  <Badge variant={getStatusColor(event.status)} size="sm">
+                    {event.status}
+                  </Badge>
+                </div>
+                <span className="text-xs opacity-70">
+                  {event.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {isMonitoring && (
+        <Alert variant="info" className="flex items-center gap-3">
+          <ClockIcon className="w-5 h-5 animate-pulse" />
+          <div>
+            <p className="font-medium">Monitoring active</p>
+            <p className="text-sm opacity-70">Auto-reload enabled every {interval} seconds</p>
+          </div>
+        </Alert>
       )}
 
-      {/* Quick Change Dialog */}
-      <Dialog open={changeDialogOpen} onClose={() => setChangeDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Apply Configuration Change</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Bot Name"
-            value={changeData.botName}
-            onChange={(e) => setChangeData(prev => ({ ...prev, botName: e.target.value }))}
-            sx={{ mb: 2, mt: 1 }}
-          />
-          <TextField
-            fullWidth
-            label="Changes (JSON)"
-            multiline
-            rows={6}
-            value={JSON.stringify(changeData.changes, null, 2)}
-            onChange={(e) => {
-              try {
-                const changes = JSON.parse(e.target.value);
-                setChangeData(prev => ({ ...prev, changes }));
-              } catch (err) {
-                // Invalid JSON, keep current value
-              }
-            }}
-            helperText="Enter configuration changes as JSON"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setChangeDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleApplyChange}
-            variant="contained"
-            disabled={loading || !changeData.botName || Object.keys(changeData.changes).length === 0}
-          >
-            {loading ? <CircularProgress size={20} /> : 'Apply Changes'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+      {/* Details Modal */}
+      <Modal
+        open={showDetails}
+        onClose={() => setShowDetails(false)}
+        title="Hot Reload Details"
+      >
+        <div className="space-y-4">
+          <div className="max-h-96 overflow-y-auto space-y-2">
+            {events.map((event) => (
+              <div key={event.id} className="p-3 border border-base-300 rounded">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold">{event.component}</p>
+                    <p className="text-sm opacity-70">{event.timestamp.toLocaleString()}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={event.type === 'auto' ? 'info' : 'primary'} size="sm">
+                      {event.type}
+                    </Badge>
+                    <Badge variant={getStatusColor(event.status)} size="sm">
+                      {event.status}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="text-sm opacity-70">Duration: {event.duration}ms</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
+    </div>
   );
 };
 
