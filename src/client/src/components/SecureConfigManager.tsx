@@ -135,7 +135,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   };
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleString();
-  const formatBytes = (obj: Record<string, unknown>) => new Blob([JSON.stringify(obj)]).size);
+  const formatBytes = (obj: Record<string, unknown>) => new Blob([JSON.stringify(obj)]).size;
 
   if (loading) {
     return (
