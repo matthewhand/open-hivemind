@@ -1,198 +1,120 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar,
-  Switch,
-  FormControlLabel,
-} from '@mui/material';
-import {
-  VolumeUp as VolumeUpIcon,
-  VolumeOff as VolumeOffIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  Accessibility as AccessibilityIcon,
-  Keyboard as KeyboardIcon,
-  ZoomIn as ZoomInIcon,
-  ZoomOut as ZoomOutIcon,
-} from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setHighContrast, setReducedMotion, selectUIState } from '../store/slices/uiSlice';
+  VolumeUpIcon,
+  VolumeOffIcon,
+  EyeIcon,
+  EyeOffIcon,
+  AccessibilityIcon,
+  KeyboardIcon,
+  MagnifyingGlassPlusIcon as ZoomInIcon,
+  MagnifyingGlassMinusIcon as ZoomOutIcon,
+} from '@heroicons/react/24/outline';
 
+// Screen Reader Announcement (unchanged logic, using a hidden div)
 interface ScreenReaderAnnouncementProps {
   message: string;
   priority?: 'polite' | 'assertive';
   delay?: number;
 }
-
 export const ScreenReaderAnnouncement: React.FC<ScreenReaderAnnouncementProps> = ({
   message,
   priority = 'polite',
   delay = 0,
 }) => {
   const [announcement, setAnnouncement] = useState('');
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnnouncement(message);
-      // Clear after announcement to prevent repetition
       const clearTimer = setTimeout(() => setAnnouncement(''), 1000);
       return () => clearTimeout(clearTimer);
     }, delay);
-
     return () => clearTimeout(timer);
   }, [message, delay]);
-
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        left: '-10000px',
-        width: '1px',
-        height: '1px',
-        overflow: 'hidden',
-      }}
+    <div
+      className="sr-only"
       role="status"
       aria-live={priority}
       aria-atomic="true"
     >
       {announcement}
-    </Box>
+    </div>
   );
 };
 
+// Keyboard Navigation with help overlay
 interface KeyboardNavigationProps {
   children: React.ReactNode;
-  shortcuts?: {
-    key: string;
-    description: string;
-    action: () => void;
-  }[];
+  shortcuts?: { key: string; description: string; action: () => void }[];
 }
-
 export const KeyboardNavigation: React.FC<KeyboardNavigationProps> = ({
   children,
   shortcuts = [],
 }) => {
-  const [showShortcuts, setShowShortcuts] = useState(false);
-
+  const [showHelp, setShowHelp] = useState(false);
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Show help overlay
-      if (event.ctrlKey && event.key === 'h') {
-        event.preventDefault();
-        setShowShortcuts(prev => !prev);
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        setShowHelp((prev) => !prev);
       }
-
-      // Handle custom shortcuts
-      shortcuts.forEach(shortcut => {
-        if (event.key.toLowerCase() === shortcut.key.toLowerCase()) {
-          event.preventDefault();
-          shortcut.action();
+      shortcuts.forEach((s) => {
+        if (e.key.toLowerCase() === s.key.toLowerCase()) {
+          e.preventDefault();
+          s.action();
         }
       });
     };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [shortcuts]);
-
   return (
     <>
       {children}
-      {showShortcuts && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onClick={() => setShowShortcuts(false)}
+      {showHelp && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          onClick={() => setShowHelp(false)}
         >
-          <Box
-            sx={{
-              backgroundColor: 'background.paper',
-              p: 4,
-              borderRadius: 2,
-              maxWidth: 600,
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
+          <div
+            className="bg-base-100 p-4 rounded shadow max-w-lg w-full max-h-[80vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <Typography variant="h6" gutterBottom>
-              Keyboard Shortcuts
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Press Ctrl+H to toggle this help
-            </Typography>
-            <Box sx={{ mt: 2 }}>
-              {shortcuts.map((shortcut, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    py: 1,
-                    borderBottom: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Typography variant="body2">{shortcut.description}</Typography>
-                  <Box
-                    component="kbd"
-                    sx={{
-                      px: 1,
-                      py: 0.5,
-                      backgroundColor: 'action.selected',
-                      borderRadius: 1,
-                      fontSize: '0.75rem',
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {shortcut.key}
-                  </Box>
-                </Box>
+            <h2 className="text-xl font-bold mb-2">Keyboard Shortcuts</h2>
+            <p className="mb-2">Press Ctrl+H to toggle this help.</p>
+            <ul className="space-y-2">
+              {shortcuts.map((s, i) => (
+                <li key={i} className="flex justify-between items-center border-b pb-1">
+                  <span>{s.description}</span>
+                  <kbd className="px-2 py-1 bg-neutral text-neutral-content rounded text-sm">
+                    {s.key}
+                  </kbd>
+                </li>
               ))}
-            </Box>
-          </Box>
-        </Box>
+            </ul>
+          </div>
+        </div>
       )}
     </>
   );
 };
 
+// High Contrast Mode
 interface HighContrastModeProps {
   children: React.ReactNode;
 }
-
 export const HighContrastMode: React.FC<HighContrastModeProps> = ({ children }) => {
-  const dispatch = useAppDispatch();
-  const ui = useAppSelector(selectUIState);
+  const [enabled, setEnabled] = useState(false);
   const [announcement, setAnnouncement] = useState('');
-
   useEffect(() => {
-    if (ui.highContrast) {
+    if (enabled) {
       setAnnouncement('High contrast mode enabled');
       document.documentElement.setAttribute('data-high-contrast', 'true');
     } else {
       setAnnouncement('High contrast mode disabled');
       document.documentElement.removeAttribute('data-high-contrast');
     }
-  }, [ui.highContrast]);
-
+  }, [enabled]);
   return (
     <>
       <ScreenReaderAnnouncement message={announcement} />
@@ -201,24 +123,22 @@ export const HighContrastMode: React.FC<HighContrastModeProps> = ({ children }) 
   );
 };
 
+// Reduced Motion Mode
 interface ReducedMotionModeProps {
   children: React.ReactNode;
 }
-
 export const ReducedMotionMode: React.FC<ReducedMotionModeProps> = ({ children }) => {
-  const ui = useAppSelector(selectUIState);
+  const [enabled, setEnabled] = useState(false);
   const [announcement, setAnnouncement] = useState('');
-
   useEffect(() => {
-    if (ui.reducedMotion) {
+    if (enabled) {
       setAnnouncement('Reduced motion mode enabled');
       document.documentElement.setAttribute('data-reduced-motion', 'true');
     } else {
       setAnnouncement('Reduced motion mode disabled');
       document.documentElement.removeAttribute('data-reduced-motion');
     }
-  }, [ui.reducedMotion]);
-
+  }, [enabled]);
   return (
     <>
       <ScreenReaderAnnouncement message={announcement} />
@@ -227,101 +147,75 @@ export const ReducedMotionMode: React.FC<ReducedMotionModeProps> = ({ children }
   );
 };
 
+// Focus Manager (focus trap)
 interface FocusManagerProps {
   children: React.ReactNode;
   autoFocus?: boolean;
   focusTrapped?: boolean;
 }
-
 export const FocusManager: React.FC<FocusManagerProps> = ({
   children,
   autoFocus = false,
   focusTrapped = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [focusableElements, setFocusableElements] = useState<HTMLElement[]>([]);
-
+  const [focusable, setFocusable] = useState<HTMLElement[]>([]);
   useEffect(() => {
     if (containerRef.current) {
-      const elements = Array.from(
+      const elems = Array.from(
         containerRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )
       ) as HTMLElement[];
-      setFocusableElements(elements);
+      setFocusable(elems);
     }
   }, []);
-
   useEffect(() => {
-    if (autoFocus && focusableElements.length > 0) {
-      focusableElements[0].focus();
-    }
-  }, [autoFocus, focusableElements]);
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (!focusTrapped || focusableElements.length === 0) return;
-
-    const activeElement = document.activeElement as HTMLElement;
-    const currentIndex = focusableElements.indexOf(activeElement);
-
-    if (event.key === 'Tab') {
-      event.preventDefault();
-
-      if (event.shiftKey) {
-        // Shift + Tab (previous)
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
-        focusableElements[prevIndex].focus();
-      } else {
-        // Tab (next)
-        const nextIndex = currentIndex < focusableElements.length - 1 ? currentIndex + 1 : 0;
-        focusableElements[nextIndex].focus();
-      }
+    if (autoFocus && focusable.length) focusable[0].focus();
+  }, [autoFocus, focusable]);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!focusTrapped || focusable.length === 0) return;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const active = document.activeElement as HTMLElement;
+      const idx = focusable.indexOf(active);
+      const next = e.shiftKey
+        ? idx > 0
+          ? focusable[idx - 1]
+          : focusable[focusable.length - 1]
+        : idx < focusable.length - 1
+          ? focusable[idx + 1]
+          : focusable[0];
+      next.focus();
     }
   };
-
   return (
-    <Box
+    <div
       ref={containerRef}
-      onKeyDown={handleKeyDown}
+      onKeyDown={onKeyDown}
       tabIndex={-1}
-      sx={{ outline: 'none' }}
+      className="outline-none"
     >
       {children}
-    </Box>
+    </div>
   );
 };
 
+// Skip Link
 interface SkipLinkProps {
   href: string;
   text: string;
 }
+export const SkipLink: React.FC<SkipLinkProps> = ({ href, text }) => (
+  <a
+    href={href}
+    className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-primary text-primary-content px-4 py-2 rounded"
+  >
+    {text}
+  </a>
+);
 
-export const SkipLink: React.FC<SkipLinkProps> = ({ href, text }) => {
-  return (
-    <Box
-      component="a"
-      href={href}
-      sx={{
-        position: 'absolute',
-        top: -40,
-        left: 6,
-        backgroundColor: 'primary.main',
-        color: 'primary.contrastText',
-        padding: '8px 16px',
-        borderRadius: 1,
-        textDecoration: 'none',
-        zIndex: 9999,
-        transition: 'top 0.3s ease',
-        '&:focus': {
-          top: 6,
-        },
-      }}
-    >
-      {text}
-    </Box>
-  );
-};
-
+// Accessibility Toolbar
 interface AccessibilityToolbarProps {
   onToggleHighContrast?: () => void;
   onToggleReducedMotion?: () => void;
@@ -329,7 +223,6 @@ interface AccessibilityToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
 }
-
 export const AccessibilityToolbar: React.FC<AccessibilityToolbarProps> = ({
   onToggleHighContrast,
   onToggleReducedMotion,
@@ -337,128 +230,80 @@ export const AccessibilityToolbar: React.FC<AccessibilityToolbarProps> = ({
   onZoomIn,
   onZoomOut,
 }) => {
-  const dispatch = useAppDispatch();
-  const ui = useAppSelector(selectUIState);
   const [announcement, setAnnouncement] = useState('');
-
-  const handleHighContrastToggle = () => {
-    dispatch(setHighContrast(!ui.highContrast));
-    setAnnouncement(ui.highContrast ? 'High contrast mode disabled' : 'High contrast mode enabled');
+  const handleHighContrast = () => {
+    onToggleHighContrast?.();
+    setAnnouncement('High contrast toggled');
   };
-
-  const handleReducedMotionToggle = () => {
-    dispatch(setReducedMotion(!ui.reducedMotion));
-    setAnnouncement(ui.reducedMotion ? 'Reduced motion mode disabled' : 'Reduced motion mode enabled');
+  const handleReducedMotion = () => {
+    onToggleReducedMotion?.();
+    setAnnouncement('Reduced motion toggled');
   };
-
   return (
     <>
       <ScreenReaderAnnouncement message={announcement} />
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-          zIndex: 1000,
-        }}
-      >
-        <Tooltip title="Toggle high contrast mode" placement="left">
-          <IconButton
-            onClick={onToggleHighContrast || handleHighContrastToggle}
-            color={ui.highContrast ? 'primary' : 'default'}
-            sx={{
-              backgroundColor: 'background.paper',
-              boxShadow: 3,
-            }}
-          >
-            {ui.highContrast ? <VisibilityIcon /> : <VisibilityOffIcon />}
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Toggle reduced motion" placement="left">
-          <IconButton
-            onClick={onToggleReducedMotion || handleReducedMotionToggle}
-            color={ui.reducedMotion ? 'primary' : 'default'}
-            sx={{
-              backgroundColor: 'background.paper',
-              boxShadow: 3,
-            }}
-          >
-            <AccessibilityIcon />
-          </IconButton>
-        </Tooltip>
-
+      <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-50">
+        <button
+          className="btn btn-sm btn-ghost"
+          onClick={handleHighContrast}
+          aria-label="Toggle high contrast"
+        >
+          <EyeIcon className="w-5 h-5" />
+        </button>
+        <button
+          className="btn btn-sm btn-ghost"
+          onClick={handleReducedMotion}
+          aria-label="Toggle reduced motion"
+        >
+          <AccessibilityIcon className="w-5 h-5" />
+        </button>
         {onZoomIn && (
-          <Tooltip title="Zoom in" placement="left">
-            <IconButton
-              onClick={onZoomIn}
-              sx={{
-                backgroundColor: 'background.paper',
-                boxShadow: 3,
-              }}
-            >
-              <ZoomInIcon />
-            </IconButton>
-          </Tooltip>
+          <button
+            className="btn btn-sm btn-ghost"
+            onClick={onZoomIn}
+            aria-label="Zoom in"
+          >
+            <ZoomInIcon className="w-5 h-5" />
+          </button>
         )}
-
         {onZoomOut && (
-          <Tooltip title="Zoom out" placement="left">
-            <IconButton
-              onClick={onZoomOut}
-              sx={{
-                backgroundColor: 'background.paper',
-                boxShadow: 3,
-              }}
-            >
-              <ZoomOutIcon />
-            </IconButton>
-          </Tooltip>
+          <button
+            className="btn btn-sm btn-ghost"
+            onClick={onZoomOut}
+            aria-label="Zoom out"
+          >
+            <ZoomOutIcon className="w-5 h-5" />
+          </button>
         )}
-      </Box>
+      </div>
     </>
   );
 };
 
+// Accessible Form (replaces MUI FormControl)
 interface AccessibleFormProps {
   children: React.ReactNode;
   onSubmit: (data: Record<string, string>) => void;
   ariaLabel: string;
 }
-
 export const AccessibleForm: React.FC<AccessibleFormProps> = ({
   children,
   onSubmit,
   ariaLabel,
 }) => {
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const formData = new FormData(event.target as HTMLFormElement);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
     const data: Record<string, string> = {};
-    
-    formData.forEach((value, key) => {
+    new FormData(form).forEach((value, key) => {
       data[key] = value.toString();
     });
-    
     onSubmit(data);
   };
-
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      role="form"
-      aria-label={ariaLabel}
-      sx={{
-        '& .MuiTextField-root': { mb: 2 },
-        '& .MuiFormControl-root': { mb: 2 },
-      }}
-    >
+    <form onSubmit={handleSubmit} aria-label={ariaLabel} className="space-y-4">
       {children}
-    </Box>
+    </form>
   );
 };
 
