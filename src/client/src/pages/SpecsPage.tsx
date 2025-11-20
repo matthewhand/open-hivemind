@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button, TextField, Chip, Pagination, CircularProgress } from '@mui/material';
-import { Search as SearchIcon, Add as AddIcon, Book as BookIcon } from '@mui/icons-material';
-import { Breadcrumbs } from '../components/DaisyUI';
+import { Card, Button, Input, Badge, Breadcrumbs, Pagination } from '../components/DaisyUI';
+import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 
 const SpecsPage: React.FC = () => {
@@ -22,13 +21,11 @@ const SpecsPage: React.FC = () => {
     page * pageSize
   );
 
+  const totalPages = Math.ceil(filteredSpecs.length / pageSize);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1);
-  };
-
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value);
   };
 
   const handleViewSpec = (id: string) => {
@@ -37,113 +34,133 @@ const SpecsPage: React.FC = () => {
 
   const breadcrumbItems = [{ label: 'Specifications', href: '/admin/specs', isActive: true }];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md">
+          <div className="card-body text-center">
+            <h2 className="card-title text-error">Error Loading Specifications</h2>
+            <p className="opacity-70">{error}</p>
+            <Button className="btn-primary" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="container mx-auto p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Specifications
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          View, search, and manage persisted specifications
-        </Typography>
-      </Box>
+      <div className="mt-6 mb-8">
+        <h1 className="text-3xl font-bold mb-2">Specifications</h1>
+        <p className="opacity-70">View, search, and manage persisted specifications</p>
+      </div>
 
       {/* Search and Actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-        <TextField
-          variant="outlined"
-          placeholder="Search specifications..."
-          value={searchTerm}
-          onChange={handleSearch}
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-          }}
-          sx={{ width: '40%' }}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/admin/specs/create')}
-        >
-          Create New
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 opacity-50" />
+          <Input
+            className="pl-10"
+            placeholder="Search specifications..."
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+        </div>
+        <Button className="btn-primary">
+          <PlusIcon className="w-4 h-4 mr-2" />
+          Add Specification
         </Button>
-      </Box>
+      </div>
 
-      {/* Error Display */}
-      {error && (
-        <Box sx={{ color: 'error.main', mb: 2 }}>
-          {error}
-        </Box>
-      )}
+      {/* Results Summary */}
+      <div className="mb-4">
+        <p className="text-sm opacity-70">
+          {filteredSpecs.length} specification{filteredSpecs.length !== 1 ? 's' : ''} found
+        </p>
+      </div>
 
       {/* Specifications Grid */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : filteredSpecs.length === 0 ? (
-        <Card sx={{ bgcolor: 'background.paper', border: '1px dashed', borderColor: 'divider', p: 4 }}>
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <BookIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              No specifications found
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create your first specification to get started
-            </Typography>
-          </Box>
-        </Card>
-      ) : (
-        <>
-          <Grid container spacing={3}>
-            {paginatedSpecs.map((spec) => (
-              <Grid item xs={12} sm={6} md={4} key={spec.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" gutterBottom>
-                      {spec.topic}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                      {spec.tags.map((tag, index) => (
-                        <Chip key={index} label={tag} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      Author: {spec.author}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Date: {new Date(spec.date).toLocaleDateString()}
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => handleViewSpec(spec.id)}
-                    >
-                      View Details
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {paginatedSpecs.map((spec) => (
+          <Card key={spec.id} className="shadow-lg hover:shadow-xl transition-shadow">
+            <div className="card-body">
+              <div className="flex items-start justify-between mb-3">
+                <BookOpenIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                <Badge variant="neutral" size="sm">
+                  {spec.tags.length} tag{spec.tags.length !== 1 ? 's' : ''}
+                </Badge>
+              </div>
 
-          {/* Pagination */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Pagination
-              count={Math.ceil(filteredSpecs.length / pageSize)}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-            />
-          </Box>
-        </>
+              <h3 className="card-title text-lg mb-2">{spec.topic}</h3>
+              <p className="text-sm opacity-70 mb-4 line-clamp-3">
+                By {spec.author} • {new Date(spec.date).toLocaleDateString()}
+              </p>
+
+              <div className="flex flex-wrap gap-1 mb-4">
+                {spec.tags.slice(0, 3).map((tag, index) => (
+                  <Badge key={index} variant="info" size="xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {spec.tags.length > 3 && (
+                  <Badge variant="neutral" size="xs">
+                    +{spec.tags.length - 3} more
+                  </Badge>
+                )}
+              </div>
+
+              <div className="card-actions justify-end">
+                <Button
+                  size="sm"
+                  className="btn-ghost"
+                  onClick={() => handleViewSpec(spec.id)}
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination
+            current={page}
+            total={totalPages}
+            onPageChange={setPage}
+          />
+        </div>
       )}
-    </Box>
+
+      {/* Empty State */}
+      {filteredSpecs.length === 0 && (
+        <div className="text-center py-12">
+          <BookOpenIcon className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
+          <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
+          <p className="opacity-70 mb-4">
+            {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first specification'}
+          </p>
+          <Button className="btn-primary">
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Create Specification
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 

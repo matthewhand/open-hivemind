@@ -1,281 +1,252 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Box } from '@mui/material';
-import type { BoxProps } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Badge, Progress, Alert } from '../components/DaisyUI';
 import {
-  fadeInVariants,
-  staggerContainerVariants,
-  staggerItemVariants,
-  shakeVariants,
-  type AnimationVariants,
-  type AnimationConfig,
-  defaultTransition,
-} from './animationVariants';
+  SparklesIcon,
+  PlayIcon,
+  PauseIcon,
+  ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
-interface AnimatedBoxProps extends BoxProps {
-  animation?: AnimationVariants;
-  config?: AnimationConfig;
-  isVisible?: boolean;
-  onAnimationComplete?: () => void;
-  onAnimationStart?: () => void;
+export interface SimpleAnimation {
+  id: string;
+  name: string;
+  type: 'fade' | 'slide' | 'scale' | 'rotate' | 'bounce';
+  duration: number;
+  isActive: boolean;
 }
 
-export const AnimatedBox: React.FC<AnimatedBoxProps> = ({
-  animation = fadeInVariants,
-  config = defaultTransition,
-  isVisible = true,
-  onAnimationComplete,
-  onAnimationStart,
-  children,
-  ...props
-}) => {
-  return (
-    <AnimatePresence mode="wait">
-      {isVisible && (
-        <Box
-          component={motion.div}
-          initial={animation.initial}
-          animate={animation.animate}
-          exit={animation.exit}
-          whileHover={animation.hover}
-          whileTap={animation.tap}
-          whileDrag={animation.drag}
-          transition={config}
-          onAnimationComplete={onAnimationComplete}
-          onAnimationStart={onAnimationStart}
-          {...props}
-        >
-          {children}
-        </Box>
-      )}
-    </AnimatePresence>
-  );
-};
+const animations: SimpleAnimation[] = [
+  { id: '1', name: 'Fade In', type: 'fade', duration: 500, isActive: false },
+  { id: '2', name: 'Slide Right', type: 'slide', duration: 300, isActive: false },
+  { id: '3', name: 'Scale Up', type: 'scale', duration: 200, isActive: false },
+  { id: '4', name: 'Rotate', type: 'rotate', duration: 1000, isActive: false },
+  { id: '5', name: 'Bounce', type: 'bounce', duration: 800, isActive: false },
+];
 
-interface AnimatedContainerProps extends BoxProps {
+export const AnimatedBox: React.FC<{
   children: React.ReactNode;
-  containerVariants?: AnimationVariants;
-  itemVariants?: AnimationVariants;
-  config?: AnimationConfig;
-}
-
-export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
-  children,
-  containerVariants = staggerContainerVariants,
-  itemVariants = staggerItemVariants,
-  ...props
-}) => {
-  return (
-    <Box
-      component={motion.div}
-      variants={containerVariants}
-      initial="initial"
-      animate="animate"
-      {...props}
-    >
-      {React.Children.map(children, (child, index) => (
-        <Box
-          key={index}
-          component={motion.div}
-          variants={itemVariants}
-        >
-          {child}
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
-interface LoadingAnimationProps extends BoxProps {
-  size?: number;
-  color?: string;
+  animation?: string;
   duration?: number;
-}
+}> = ({ children, animation = 'fade-in', duration = 300 }) => {
+  const [isAnimating, setIsAnimating] = useState(true);
 
-export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
-  size = 40,
-  color = '#3b82f6',
-  duration = 1.5,
-  ...props
-}) => {
+  useEffect(() => {
+    const timer = setTimeout(() => setIsAnimating(false), duration);
+    return () => clearTimeout(timer);
+  }, [duration]);
+
   return (
-    <Box
-      component={motion.div}
-      animate={{ rotate: 360 }}
-      transition={{
-        duration,
-        repeat: Infinity,
-        ease: 'linear',
-      }}
-      sx={{
-        width: size,
-        height: size,
-        border: `${size * 0.1}px solid ${color}20`,
-        borderTop: `${size * 0.1}px solid ${color}`,
-        borderRadius: '50%',
-        ...props.sx,
-      }}
-      {...props}
-    />
-  );
-};
-
-interface ErrorShakeAnimationProps extends BoxProps {
-  isError?: boolean;
-  children: React.ReactNode;
-}
-
-export const ErrorShakeAnimation: React.FC<ErrorShakeAnimationProps> = ({
-  isError = false,
-  children,
-  ...props
-}) => {
-  return (
-    <Box
-      component={motion.div}
-      animate={isError ? shakeVariants.animate : {}}
-      {...props}
+    <div
+      className={`transition-all ${animation} ${
+        isAnimating ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
+      }`}
+      style={{ transitionDuration: `${duration}ms` }}
     >
       {children}
-    </Box>
+    </div>
   );
 };
 
-interface SuccessBounceAnimationProps extends BoxProps {
-  isSuccess?: boolean;
-  children: React.ReactNode;
-}
+const AnimationComponents: React.FC = () => {
+  const [activeAnimations, setActiveAnimations] = useState<SimpleAnimation[]>(animations);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentDemo, setCurrentDemo] = useState<string>('fade-in');
 
-export const SuccessBounceAnimation: React.FC<SuccessBounceAnimationProps> = ({
-  isSuccess = false,
-  children,
-  ...props
-}) => {
-  return (
-    <Box
-      component={motion.div}
-      initial={{ scale: 0 }}
-      animate={isSuccess ? { scale: 1 } : { scale: 1 }}
-      transition={{
-        type: 'spring',
-        stiffness: 500,
-        damping: 15,
-      }}
-      {...props}
-    >
-      {children}
-    </Box>
-  );
-};
-
-interface PageTransitionProps extends BoxProps {
-  children: React.ReactNode;
-  key: string;
-  direction?: 'x' | 'y';
-  duration?: number;
-}
-
-export const PageTransition: React.FC<PageTransitionProps> = ({
-  children,
-  key,
-  direction = 'x',
-  duration = 0.3,
-  ...props
-}) => {
-  return (
-    <AnimatePresence mode="wait">
-      <Box
-        key={key}
-        component={motion.div}
-        initial={{ opacity: 0, [direction]: direction === 'x' ? 100 : 50 }}
-        animate={{ opacity: 1, [direction]: 0 }}
-        exit={{ opacity: 0, [direction]: direction === 'x' ? -100 : -50 }}
-        transition={{
-          duration,
-          ease: 'easeInOut',
-        }}
-        {...props}
-      >
-        {children}
-      </Box>
-    </AnimatePresence>
-  );
-};
-
-interface HoverScaleAnimationProps extends BoxProps {
-  children: React.ReactNode;
-  scale?: number;
-  whileHoverScale?: number;
-  duration?: number;
-}
-
-export const HoverScaleAnimation: React.FC<HoverScaleAnimationProps> = ({
-  children,
-  scale = 1,
-  whileHoverScale = 1.05,
-  duration = 0.2,
-  ...props
-}) => {
-  return (
-    <Box
-      component={motion.div}
-      initial={{ scale }}
-      whileHover={{ scale: whileHoverScale }}
-      transition={{ duration, ease: 'easeInOut' }}
-      {...props}
-    >
-      {children}
-    </Box>
-  );
-};
-
-interface ParallaxScrollProps extends BoxProps {
-  children: React.ReactNode;
-  offset?: number;
-  direction?: 'up' | 'down' | 'left' | 'right';
-}
-
-export const ParallaxScroll: React.FC<ParallaxScrollProps> = ({
-  children,
-  offset = 50,
-  direction = 'up',
-  ...props
-}) => {
-  const getTransform = () => {
-    switch (direction) {
-      case 'up': return { y: [offset, -offset] };
-      case 'down': return { y: [-offset, offset] };
-      case 'left': return { x: [offset, -offset] };
-      case 'right': return { x: [-offset, offset] };
-      default: return { y: [offset, -offset] };
-    }
+  const toggleAnimation = (id: string) => {
+    setActiveAnimations(prev =>
+      prev.map(anim =>
+        anim.id === id ? { ...anim, isActive: !anim.isActive } : anim
+      )
+    );
   };
 
+  const playAll = () => {
+    setIsPlaying(true);
+    setActiveAnimations(animations.map(anim => ({ ...anim, isActive: true })));
+
+    setTimeout(() => {
+      setIsPlaying(false);
+      setActiveAnimations(animations.map(anim => ({ ...anim, isActive: false })));
+    }, 1200);
+  };
+
+  const stopAll = () => {
+    setIsPlaying(false);
+    setActiveAnimations(animations.map(anim => ({ ...anim, isActive: false })));
+  };
+
+  const demoAnimations = [
+    { id: 'fade-in', name: 'Fade In', className: 'animate-fade-in' },
+    { id: 'slide-in', name: 'Slide In', className: 'animate-slide-in' },
+    { id: 'bounce', name: 'Bounce', className: 'animate-bounce' },
+    { id: 'spin', name: 'Spin', className: 'animate-spin' },
+    { id: 'pulse', name: 'Pulse', className: 'animate-pulse' },
+  ];
+
+  const activeCount = activeAnimations.filter(a => a.isActive).length;
+
   return (
-    <Box
-      component={motion.div}
-      animate={getTransform()}
-      transition={{
-        scrollY: {
-          type: 'spring',
-          stiffness: 100,
-          damping: 20,
-        }
-      }}
-      {...props}
-    >
-      {children}
-    </Box>
+    <div className="w-full space-y-6">
+      <Card className="shadow-lg border-l-4 border-secondary">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <SparklesIcon className="w-8 h-8 text-secondary" />
+              <div>
+                <h2 className="card-title text-2xl">Animation Components</h2>
+                <p className="text-sm opacity-70">Simple animation utilities and effects</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={isPlaying ? 'success' : 'neutral'} size="lg">
+                {isPlaying ? 'Playing' : 'Ready'}
+              </Badge>
+              <Badge variant="info" size="lg">
+                {activeCount}/{animations.length} Active
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-4">Animation Controls</h3>
+            <div className="flex gap-2">
+              <Button onClick={playAll} className="btn-success">
+                <PlayIcon className="w-4 h-4 mr-2" />
+                Play All
+              </Button>
+              <Button onClick={stopAll} className="btn-error">
+                <PauseIcon className="w-4 h-4 mr-2" />
+                Stop All
+              </Button>
+              <Button onClick={() => {
+                const shuffled = animations.map(a => ({
+                  ...a,
+                  isActive: Math.random() > 0.5
+                }));
+                setActiveAnimations(shuffled);
+              }} className="btn-warning">
+                <ArrowPathIcon className="w-4 h-4 mr-2" />
+                Random
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="shadow">
+          <div className="card-body">
+            <h3 className="font-bold mb-2">Active Animations</h3>
+            <div className="flex items-center gap-2">
+              <Progress
+                value={(activeCount / animations.length) * 100}
+                max={100}
+                className="flex-1"
+              />
+              <span className="text-sm">{activeCount}/{animations.length}</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Animation List */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Available Animations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeAnimations.map((animation) => (
+              <div
+                key={animation.id}
+                className={`border rounded-lg p-4 transition-all ${
+                  animation.isActive ? 'border-primary bg-primary/10' : 'border-base-300'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold">{animation.name}</h4>
+                  <Badge
+                    variant={animation.isActive ? 'success' : 'neutral'}
+                    size="sm"
+                  >
+                    {animation.type}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm opacity-70">{animation.duration}ms</span>
+                  <Button
+                    size="sm"
+                    className={`btn-${animation.isActive ? 'error' : 'primary'}`}
+                    onClick={() => toggleAnimation(animation.id)}
+                  >
+                    {animation.isActive ? 'Stop' : 'Start'}
+                  </Button>
+                </div>
+                {animation.isActive && (
+                  <div className="mt-2">
+                    <div className="w-4 h-4 bg-primary rounded-full animate-ping"></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Demo Section */}
+      <Card className="shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Animation Demo</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">Select Animation:</h4>
+              <div className="flex flex-wrap gap-2">
+                {demoAnimations.map((demo) => (
+                  <Button
+                    key={demo.id}
+                    size="sm"
+                    className={`btn-${currentDemo === demo.id ? 'primary' : 'ghost'}`}
+                    onClick={() => setCurrentDemo(demo.id)}
+                  >
+                    {demo.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Preview:</h4>
+              <div className="border border-base-300 rounded-lg p-8 bg-base-100">
+                <AnimatedBox animation={currentDemo} duration={1000}>
+                  <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center">
+                    <SparklesIcon className="w-8 h-8 text-primary-content" />
+                  </div>
+                </AnimatedBox>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {isPlaying && (
+        <Alert variant="success" className="flex items-center gap-3">
+          <SparklesIcon className="w-5 h-5 animate-spin" />
+          <div>
+            <p className="font-medium">Animations playing</p>
+            <p className="text-sm opacity-70">All animation effects are currently active</p>
+          </div>
+        </Alert>
+      )}
+
+      <Alert variant="info" className="flex items-center gap-3">
+        <SparklesIcon className="w-5 h-5" />
+        <div>
+          <p className="font-medium">Simple animation utilities</p>
+          <p className="text-sm opacity-70">Lightweight animations without external dependencies</p>
+        </div>
+      </Alert>
+    </div>
   );
 };
 
-export default {
-  AnimatedBox,
-  AnimatedContainer,
-  LoadingAnimation,
-  ErrorShakeAnimation,
-  SuccessBounceAnimation,
-  PageTransition,
-  HoverScaleAnimation,
-  ParallaxScroll,
-};
+export default AnimationComponents;
