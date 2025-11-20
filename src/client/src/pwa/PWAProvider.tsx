@@ -1,46 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
+import {
+  Card,
   Button,
-  LinearProgress,
-  Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Switch,
-  FormControlLabel,
-  Badge
-} from '@mui/material';
-import { 
-  OfflineBolt as OfflineIcon,
-  Wifi as OnlineIcon,
-  Download as DownloadIcon,
-  Update as UpdateIcon,
-  Settings as SettingsIcon,
-  Storage as StorageIcon,
-  Speed as SpeedIcon,
-  CheckCircle as CheckIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Notifications as NotificationIcon,
-  PhoneIphone as DeviceIcon,
-  SignalWifiOff as OfflineIndicatorIcon,
-  SignalWifi4Bar as OnlineIndicatorIcon,
-  InstallMobile as InstallIcon,
-  Share as ShareIcon
-} from '@mui/icons-material';
-import { AnimatedBox } from '../animations/AnimationComponents';
+  Badge,
+  Toggle,
+  Loading
+} from '../components/DaisyUI';
+import {
+  BoltIcon as OfflineIcon,
+  WifiIcon as OnlineIcon,
+  ArrowPathIcon as UpdateIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon as WarningIcon,
+  DevicePhoneMobileIcon as DeviceIcon,
+  ServerStackIcon as StorageIcon,
+} from '@heroicons/react/24/outline';
 
 export interface PWAConfig {
   enabled: boolean;
@@ -48,24 +24,6 @@ export interface PWAConfig {
   backgroundSync: boolean;
   pushNotifications: boolean;
   autoUpdate: boolean;
-  cacheFirst: boolean;
-  networkTimeout: number; // milliseconds
-  maxCacheAge: number; // seconds
-  maxCacheSize: number; // MB
-  strategies: {
-    api: CacheStrategy;
-    static: CacheStrategy;
-    images: CacheStrategy;
-    fonts: CacheStrategy;
-  };
-}
-
-export interface CacheStrategy {
-  type: 'cacheFirst' | 'networkFirst' | 'staleWhileRevalidate';
-  maxAge: number; // seconds
-  maxEntries: number;
-  networkTimeout: number; // milliseconds
-  backgroundSync: boolean;
 }
 
 export interface ServiceWorkerStatus {
@@ -73,275 +31,30 @@ export interface ServiceWorkerStatus {
   activated: boolean;
   controlling: boolean;
   updateAvailable: boolean;
-  error?: Error;
-}
-
-export interface OfflineStatus {
-  online: boolean;
-  type?: 'wifi' | 'cellular' | 'ethernet' | 'none';
-  effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
-  downlink?: number;
-  rtt?: number;
-  saveData?: boolean;
-}
-
-export interface InstallPrompt {
-  prompt?: () => Promise<void>;
-  userChoice?: 'accepted' | 'dismissed';
-  platform?: string;
 }
 
 export interface PWAMetrics {
   cacheSize: number;
   cachedRequests: number;
-  offlineRequests: number;
   syncQueueSize: number;
-  lastSync: Date | null;
   installStatus: 'not-installed' | 'installed' | 'prompt-available';
   updateStatus: 'up-to-date' | 'update-available' | 'updating';
 }
 
-export interface BackgroundSyncEvent {
-  id: string;
-  type: 'queue' | 'retry' | 'periodic';
-  url: string;
-  method: string;
-  data: any;
-  timestamp: Date;
-  attempts: number;
-  status: 'pending' | 'success' | 'failed';
-  error?: string;
-}
-
 interface PWAContextType {
-  // Configuration
   config: PWAConfig;
   isSupported: boolean;
   isInstalled: boolean;
-  
-  // Service Worker
   swStatus: ServiceWorkerStatus;
-  updateAvailable: boolean;
-  
-  // Offline functionality
   isOnline: boolean;
-  offlineStatus: OfflineStatus;
-  
-  // Installation
-  installPrompt: InstallPrompt | null;
   metrics: PWAMetrics;
-  
-  // Core functionality
   install: () => Promise<void>;
   update: () => Promise<void>;
-  checkForUpdates: () => Promise<void>;
-  
-  // Cache management
-  clearCache: () => Promise<void>;
-  getCacheSize: () => Promise<number>;
-  getCachedUrls: () => Promise<string[]>;
-  
-  // Background sync
-  enableBackgroundSync: () => Promise<void>;
-  disableBackgroundSync: () => Promise<void>;
-  getSyncQueue: () => Promise<BackgroundSyncEvent[]>;
-  clearSyncQueue: () => Promise<void>;
-  
-  // Offline requests
-  queueOfflineRequest: (request: any) => Promise<void>;
-  getOfflineRequests: () => Promise<any[]>;
-  clearOfflineRequests: () => Promise<void>;
-  
-  // Configuration
   updateConfig: (updates: Partial<PWAConfig>) => Promise<void>;
-  
-  // Metrics and monitoring
-  subscribeToUpdates: (callback: (event: any) => void) => () => void;
-  getPerformanceMetrics: () => Promise<any>;
-  
-  // UI helpers
   formatBytes: (bytes: number) => string;
-  formatDuration: (ms: number) => string;
-  getNetworkQuality: () => 'excellent' | 'good' | 'poor' | 'offline';
 }
 
-// Create PWA Context
 const PWAContext = createContext<PWAContextType | undefined>(undefined);
-
-// Mock service worker implementation for demonstration
-class MockServiceWorker {
-  private status: ServiceWorkerStatus = {
-    installed: false,
-    activated: false,
-    controlling: false,
-    updateAvailable: false,
-  };
-  
-  private cache = new Map<string, any>();
-  private syncQueue: BackgroundSyncEvent[] = [];
-  private offlineRequests: any[] = [];
-  private subscribers: Array<(event: any) => void> = [];
-  private metrics: PWAMetrics = {
-    cacheSize: 0,
-    cachedRequests: 0,
-    offlineRequests: 0,
-    syncQueueSize: 0,
-    lastSync: null,
-    installStatus: 'not-installed',
-    updateStatus: 'up-to-date',
-  };
-
-  constructor() {
-    this.initialize();
-  }
-
-  private initialize() {
-    // Simulate service worker initialization
-    setTimeout(() => {
-      this.status.installed = true;
-      this.status.activated = true;
-      this.status.controlling = true;
-      this.metrics.installStatus = 'installed';
-      this.notifySubscribers({ type: 'sw-installed' });
-    }, 1000);
-  }
-
-  async install(): Promise<void> {
-    if (this.status.installed) {
-      throw new Error('Service Worker already installed');
-    }
-    
-    this.status.installed = true;
-    this.status.activated = true;
-    this.status.controlling = true;
-    this.metrics.installStatus = 'installed';
-    this.notifySubscribers({ type: 'installed' });
-  }
-
-  async update(): Promise<void> {
-    this.metrics.updateStatus = 'updating';
-    this.notifySubscribers({ type: 'update-start' });
-    
-    // Simulate update process
-    setTimeout(() => {
-      this.status.updateAvailable = false;
-      this.metrics.updateStatus = 'up-to-date';
-      this.notifySubscribers({ type: 'update-complete' });
-    }, 2000);
-  }
-
-  async checkForUpdates(): Promise<void> {
-    // Simulate checking for updates
-    const hasUpdate = Math.random() > 0.7;
-    if (hasUpdate) {
-      this.status.updateAvailable = true;
-      this.metrics.updateStatus = 'update-available';
-      this.notifySubscribers({ type: 'update-available' });
-    }
-  }
-
-  private notifySubscribers(event: any): void {
-    this.subscribers.forEach(callback => callback(event));
-  }
-
-  subscribe(callback: (event: any) => void): () => void {
-    this.subscribers.push(callback);
-    return () => {
-      const index = this.subscribers.indexOf(callback);
-      if (index > -1) {
-        this.subscribers.splice(index, 1);
-      }
-    };
-  }
-
-  getMetrics(): PWAMetrics {
-    return { ...this.metrics };
-  }
-
-  getOfflineStatus(): OfflineStatus {
-    return {
-      online: navigator.onLine,
-      type: 'wifi',
-      effectiveType: '4g',
-      downlink: 10,
-      rtt: 50,
-      saveData: false,
-    };
-  }
-
-  async enableBackgroundSync(): Promise<void> {
-    this.metrics.syncQueueSize = this.syncQueue.length;
-    this.notifySubscribers({ type: 'sync-enabled' });
-  }
-
-  async disableBackgroundSync(): Promise<void> {
-    this.notifySubscribers({ type: 'sync-disabled' });
-  }
-
-  getSyncQueue(): Promise<BackgroundSyncEvent[]> {
-    return Promise.resolve([...this.syncQueue]);
-  }
-
-  async clearSyncQueue(): Promise<void> {
-    this.syncQueue = [];
-    this.metrics.syncQueueSize = 0;
-    this.notifySubscribers({ type: 'sync-cleared' });
-  }
-
-  async queueOfflineRequest(request: any): Promise<void> {
-    const syncEvent: BackgroundSyncEvent = {
-      id: `sync-${Date.now()}`,
-      type: 'queue',
-      url: request.url || '/api/request',
-      method: request.method || 'POST',
-      data: request.data,
-      timestamp: new Date(),
-      attempts: 0,
-      status: 'pending',
-    };
-    
-    this.syncQueue.push(syncEvent);
-    this.metrics.syncQueueSize = this.syncQueue.length;
-    this.notifySubscribers({ type: 'request-queued', syncEvent });
-  }
-
-  getOfflineRequests(): Promise<any[]> {
-    return Promise.resolve([...this.offlineRequests]);
-  }
-
-  async clearOfflineRequests(): Promise<void> {
-    this.offlineRequests = [];
-    this.metrics.offlineRequests = 0;
-  }
-
-  async getPerformanceMetrics(): Promise<any> {
-    return {
-      cacheSize: this.metrics.cacheSize,
-      cachedRequests: this.metrics.cachedRequests,
-      offlineRequests: this.metrics.offlineRequests,
-      syncQueueSize: this.metrics.syncQueueSize,
-      lastSync: this.metrics.lastSync,
-      installStatus: this.metrics.installStatus,
-      updateStatus: this.metrics.updateStatus,
-      serviceWorker: this.status,
-    };
-  }
-
-  async clearCache(): Promise<void> {
-    this.cache.clear();
-    this.metrics.cacheSize = 0;
-    this.metrics.cachedRequests = 0;
-    this.notifySubscribers({ type: 'cache-cleared' });
-  }
-
-  async getCacheSize(): Promise<number> {
-    return this.metrics.cacheSize;
-  }
-
-  async getCachedUrls(): Promise<string[]> {
-    return Array.from(this.cache.keys());
-  }
-}
 
 const defaultPWAConfig: PWAConfig = {
   enabled: true,
@@ -349,40 +62,6 @@ const defaultPWAConfig: PWAConfig = {
   backgroundSync: true,
   pushNotifications: true,
   autoUpdate: true,
-  cacheFirst: true,
-  networkTimeout: 3000,
-  maxCacheAge: 86400, // 24 hours
-  maxCacheSize: 50, // MB
-  strategies: {
-    api: {
-      type: 'networkFirst',
-      maxAge: 300,
-      maxEntries: 50,
-      networkTimeout: 3000,
-      backgroundSync: true,
-    },
-    static: {
-      type: 'cacheFirst',
-      maxAge: 86400,
-      maxEntries: 100,
-      networkTimeout: 5000,
-      backgroundSync: false,
-    },
-    images: {
-      type: 'cacheFirst',
-      maxAge: 604800, // 7 days
-      maxEntries: 200,
-      networkTimeout: 10000,
-      backgroundSync: false,
-    },
-    fonts: {
-      type: 'cacheFirst',
-      maxAge: 31536000, // 1 year
-      maxEntries: 30,
-      networkTimeout: 5000,
-      backgroundSync: false,
-    },
-  },
 };
 
 interface PWAProviderProps {
@@ -392,8 +71,7 @@ interface PWAProviderProps {
 export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
   const currentUser = useAppSelector(selectUser);
   const [config, setConfig] = useState<PWAConfig>(defaultPWAConfig);
-  const [sw] = useState<MockServiceWorker>(new MockServiceWorker());
-  const [isSupported, setIsSupported] = useState(true);
+  const [isSupported] = useState(true);
   const [isInstalled, setIsInstalled] = useState(false);
   const [swStatus, setSwStatus] = useState<ServiceWorkerStatus>({
     installed: false,
@@ -402,42 +80,32 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
     updateAvailable: false,
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>({
-    online: navigator.onLine,
+  const [metrics, setMetrics] = useState<PWAMetrics>({
+    cacheSize: 0,
+    cachedRequests: 0,
+    syncQueueSize: 0,
+    installStatus: 'not-installed',
+    updateStatus: 'up-to-date',
   });
-  const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(null);
-  const [metrics, setMetrics] = useState<PWAMetrics>(sw.getMetrics());
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      setOfflineStatus({ online: true });
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-      setOfflineStatus({ online: false });
-    };
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check if PWA is supported
-    if ('serviceWorker' in navigator && 'caches' in window) {
-      setIsSupported(true);
-    }
-
-    // Simulate install prompt
+    // Simulate SW installation
     setTimeout(() => {
-      setInstallPrompt({
-        prompt: async () => {
-          console.log('Install prompt shown');
-          setIsInstalled(true);
-        },
-        platform: 'web',
+      setSwStatus({
+        installed: true,
+        activated: true,
+        controlling: true,
+        updateAvailable: false,
       });
-    }, 3000);
+      setMetrics(prev => ({ ...prev, installStatus: 'installed' }));
+    }, 1000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -445,99 +113,23 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
     };
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = sw.subscribe((event) => {
-      if (event.type === 'installed') {
-        setIsInstalled(true);
-        setSwStatus(sw.getServiceWorkerStatus());
-      } else if (event.type === 'update-available') {
-        setSwStatus(sw.getServiceWorkerStatus());
-        setUpdateDialogOpen(true);
-      } else if (event.type === 'sw-installed') {
-        setSwStatus(sw.getServiceWorkerStatus());
-      }
-    });
-
-    return () => unsubscribe();
-  }, [sw]);
-
-  // Core functionality
   const install = async (): Promise<void> => {
-    if (!installPrompt?.prompt) {
-      throw new Error('No install prompt available');
-    }
-    
-    await installPrompt.prompt();
     setIsInstalled(true);
   };
 
   const update = async (): Promise<void> => {
-    await sw.update();
-    setUpdateDialogOpen(false);
-  };
-
-  const checkForUpdates = async (): Promise<void> => {
-    await sw.checkForUpdates();
+    setMetrics(prev => ({ ...prev, updateStatus: 'updating' }));
+    setTimeout(() => {
+      setSwStatus(prev => ({ ...prev, updateAvailable: false }));
+      setMetrics(prev => ({ ...prev, updateStatus: 'up-to-date' }));
+      setUpdateDialogOpen(false);
+    }, 2000);
   };
 
   const updateConfig = async (updates: Partial<PWAConfig>): Promise<void> => {
     setConfig(prev => ({ ...prev, ...updates }));
   };
 
-  const subscribeToUpdates = useCallback((callback: (event: any) => void): (() => void) => {
-    return sw.subscribe(callback);
-  }, [sw]);
-
-  const getPerformanceMetrics = async (): Promise<any> => {
-    return sw.getPerformanceMetrics();
-  };
-
-  // Cache management
-  const clearCache = async (): Promise<void> => {
-    await sw.clearCache();
-    setMetrics(sw.getMetrics());
-  };
-
-  const getCacheSize = async (): Promise<number> => {
-    return sw.getCacheSize();
-  };
-
-  const getCachedUrls = async (): Promise<string[]> => {
-    return sw.getCachedUrls();
-  };
-
-  // Background sync
-  const enableBackgroundSync = async (): Promise<void> => {
-    await sw.enableBackgroundSync();
-  };
-
-  const disableBackgroundSync = async (): Promise<void> => {
-    await sw.disableBackgroundSync();
-  };
-
-  const getSyncQueue = async (): Promise<BackgroundSyncEvent[]> => {
-    return sw.getSyncQueue();
-  };
-
-  const clearSyncQueue = async (): Promise<void> => {
-    await sw.clearSyncQueue();
-  };
-
-  // Offline requests
-  const queueOfflineRequest = async (request: any): Promise<void> => {
-    await sw.queueOfflineRequest(request);
-    setMetrics(sw.getMetrics());
-  };
-
-  const getOfflineRequests = async (): Promise<any[]> => {
-    return sw.getOfflineRequests();
-  };
-
-  const clearOfflineRequests = async (): Promise<void> => {
-    await sw.clearOfflineRequests();
-  };
-
-  // Utility functions
   const formatBytes = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -546,321 +138,251 @@ export const PWAProvider: React.FC<PWAProviderProps> = ({ children }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }, []);
 
-  const formatDuration = useCallback((ms: number): string => {
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    return `${(ms / 60000).toFixed(1)}m`;
-  }, []);
-
-  const getNetworkQuality = useCallback((): 'excellent' | 'good' | 'poor' | 'offline' => {
-    if (!isOnline) return 'offline';
-    if (offlineStatus.effectiveType === '4g' && (offlineStatus.downlink || 0) > 5) return 'excellent';
-    if (offlineStatus.effectiveType === '3g' || (offlineStatus.downlink || 0) > 1) return 'good';
-    return 'poor';
-  }, [isOnline, offlineStatus]);
-
   const contextValue: PWAContextType = {
     config,
     isSupported,
     isInstalled,
     swStatus,
-    updateAvailable: swStatus.updateAvailable,
     isOnline,
-    offlineStatus,
-    installPrompt,
     metrics,
     install,
     update,
-    checkForUpdates,
-    clearCache,
-    getCacheSize,
-    getCachedUrls,
-    enableBackgroundSync,
-    disableBackgroundSync,
-    getSyncQueue,
-    clearSyncQueue,
-    queueOfflineRequest,
-    getOfflineRequests,
-    clearOfflineRequests,
     updateConfig,
-    subscribeToUpdates,
-    getPerformanceMetrics,
     formatBytes,
-    formatDuration,
-    getNetworkQuality,
   };
 
   if (!currentUser) {
     return (
-      <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
-      >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <OfflineIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
-              PWA Features
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Please log in to access Progressive Web App features.
-            </Typography>
-          </CardContent>
+      <div className="flex justify-center items-center min-h-96 p-6">
+        <Card className="max-w-md text-center shadow-xl">
+          <div className="p-8">
+            <OfflineIcon className="w-16 h-16 mx-auto text-primary mb-4" />
+            <h2 className="text-2xl font-bold mb-2">PWA Features</h2>
+            <p className="opacity-70">Please log in to access Progressive Web App features.</p>
+          </div>
         </Card>
-      </AnimatedBox>
+      </div>
     );
   }
 
   return (
     <PWAContext.Provider value={contextValue}>
-      <AnimatedBox
-        animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-        sx={{ width: '100%' }}
-      >
+      <div className="w-full space-y-6">
         {/* PWA Header */}
-        <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center" gap={2}>
-                <DeviceIcon color="primary" />
-                <Box>
-                  <Typography variant="h6">
-                    Progressive Web App
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {isInstalled ? 'Installed' : 'Web App'} • {getNetworkQuality()} connection
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box display="flex" alignItems="center" gap={1}>
-                <Badge badgeContent={metrics.syncQueueSize} color="warning">
-                  <OfflineIcon />
+        <Card className="shadow-xl border-l-4 border-primary">
+          <div className="p-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <DeviceIcon className="w-8 h-8 text-primary" />
+                <div>
+                  <h2 className="text-xl font-bold">Progressive Web App</h2>
+                  <p className="text-sm opacity-70">
+                    {isInstalled ? 'Installed' : 'Web App'} • {isOnline ? 'Online' : 'Offline'} connection
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {metrics.syncQueueSize > 0 && (
+                  <Badge variant="warning">{metrics.syncQueueSize}</Badge>
+                )}
+                <Badge variant={isOnline ? 'success' : 'warning'}>
+                  {isOnline ? 'Online' : 'Offline'}
                 </Badge>
-                <Chip
-                  label={isOnline ? 'Online' : 'Offline'}
-                  size="small"
-                  color={isOnline ? 'success' : 'warning'}
-                  icon={isOnline ? <OnlineIndicatorIcon /> : <OfflineIndicatorIcon />}
-                />
-              </Box>
-            </Box>
-          </CardContent>
+              </div>
+            </div>
+          </div>
         </Card>
 
-        {/* Network Status */}
-        <Grid container spacing={2} mb={3}>
-          <Grid xs={12} sm={6} md={4}>
-            <Card>
-              <CardContent>
-                <Box textAlign="center">
-                  <Typography variant="h4" color={isOnline ? 'success.main' : 'warning.main'}>
-                    {isOnline ? 'Online' : 'Offline'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Network Status
-                  </Typography>
-                  {isOnline ? <OnlineIcon color="success" /> : <OfflineIcon color="warning" />}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid xs={12} sm={6} md={4}>
-            <Card>
-              <CardContent>
-                <Box textAlign="center">
-                  <Typography variant="h4" color="info.main">
-                    {formatBytes(metrics.cacheSize)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Cache Size
-                  </Typography>
-                  <StorageIcon color="info" />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid xs={12} sm={6} md={4}>
-            <Card>
-              <CardContent>
-                <Box textAlign="center">
-                  <Typography variant="h4" color="primary.main">
-                    {metrics.syncQueueSize}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Sync Queue
-                  </Typography>
-                  <UpdateIcon color="primary" />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        {/* Network Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="shadow-xl">
+            <div className="p-6 text-center">
+              <h3 className={`text-4xl font-bold mb-2 ${isOnline ? 'text-success' : 'text-warning'}`}>
+                {isOnline ? 'Online' : 'Offline'}
+              </h3>
+              <p className="text-sm opacity-70 mb-4">Network Status</p>
+              {isOnline ? (
+                <OnlineIcon className="w-8 h-8 mx-auto text-success" />
+              ) : (
+                <OfflineIcon className="w-8 h-8 mx-auto text-warning" />
+              )}
+            </div>
+          </Card>
+
+          <Card className="shadow-xl">
+            <div className="p-6 text-center">
+              <h3 className="text-4xl font-bold mb-2 text-info">{formatBytes(metrics.cacheSize)}</h3>
+              <p className="text-sm opacity-70 mb-4">Cache Size</p>
+              <StorageIcon className="w-8 h-8 mx-auto text-info" />
+            </div>
+          </Card>
+
+          <Card className="shadow-xl">
+            <div className="p-6 text-center">
+              <h3 className="text-4xl font-bold mb-2 text-primary">{metrics.syncQueueSize}</h3>
+              <p className="text-sm opacity-70 mb-4">Sync Queue</p>
+              <UpdateIcon className="w-8 h-8 mx-auto text-primary" />
+            </div>
+          </Card>
+        </div>
 
         {/* Installation & Updates */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Installation & Updates
-            </Typography>
-            <Grid container spacing={2} alignItems="center">
-              <Grid xs={12} sm={6}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Chip
-                    label={isInstalled ? 'Installed' : 'Not Installed'}
-                    color={isInstalled ? 'success' : 'default'}
-                    icon={isInstalled ? <CheckIcon /> : <WarningIcon />}
-                  />
-                  {!isInstalled && installPrompt && (
-                    <Button
-                      variant="contained"
-                      startIcon={<InstallIcon />}
-                      onClick={install}
-                    >
-                      Install App
-                    </Button>
-                  )}
-                </Box>
-              </Grid>
-              <Grid xs={12} sm={6}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Chip
-                    label={metrics.updateStatus.replace('-', ' ').toUpperCase()}
-                    color={metrics.updateStatus === 'up-to-date' ? 'success' : 'warning'}
-                    icon={metrics.updateStatus === 'up-to-date' ? <CheckIcon /> : <UpdateIcon />}
-                  />
-                  {swStatus.updateAvailable && (
-                    <Button
-                      variant="outlined"
-                      startIcon={<UpdateIcon />}
-                      onClick={() => setUpdateDialogOpen(true)}
-                    >
-                      Update Now
-                    </Button>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
+        <Card className="shadow-xl">
+          <div className="p-6">
+            <h3 className="text-lg font-bold mb-4">Installation & Updates</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2">
+                <Badge variant={isInstalled ? 'success' : 'neutral'}>
+                  {isInstalled ? 'Installed' : 'Not Installed'}
+                </Badge>
+                {!isInstalled && (
+                  <Button variant="primary" size="sm" onClick={install}>
+                    Install App
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={metrics.updateStatus === 'up-to-date' ? 'success' : 'warning'}>
+                  {metrics.updateStatus.replace('-', ' ').toUpperCase()}
+                </Badge>
+                {swStatus.updateAvailable && (
+                  <Button variant="outline" size="sm" onClick={() => setUpdateDialogOpen(true)}>
+                    <UpdateIcon className="w-4 h-4 mr-2" />
+                    Update Now
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Service Worker Status */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Service Worker Status
-            </Typography>
-            <List dense>
-              <ListItem>
-                <ListItemIcon>
-                  {swStatus.installed ? <CheckIcon color="success" /> : <WarningIcon color="warning" />}
-                </ListItemIcon>
-                <ListItemText
-                  primary="Installed"
-                  secondary={swStatus.installed ? 'Service Worker is active' : 'Service Worker not installed'}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  {swStatus.activated ? <CheckIcon color="success" /> : <WarningIcon color="warning" />}
-                </ListItemIcon>
-                <ListItemText
-                  primary="Activated"
-                  secondary={swStatus.activated ? 'Service Worker is controlling the page' : 'Service Worker not activated'}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  {swStatus.controlling ? <CheckIcon color="success" /> : <WarningIcon color="warning" />}
-                </ListItemIcon>
-                <ListItemText
-                  primary="Controlling"
-                  secondary={swStatus.controlling ? 'Service Worker is handling requests' : 'Service Worker not controlling requests'}
-                />
-              </ListItem>
-            </List>
-          </CardContent>
+        <Card className="shadow-xl">
+          <div className="p-6">
+            <h3 className="text-lg font-bold mb-4">Service Worker Status</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                {swStatus.installed ? (
+                  <CheckCircleIcon className="w-5 h-5 text-success" />
+                ) : (
+                  <WarningIcon className="w-5 h-5 text-warning" />
+                )}
+                <div>
+                  <p className="font-bold">Installed</p>
+                  <p className="text-sm opacity-70">
+                    {swStatus.installed ? 'Service Worker is active' : 'Service Worker not installed'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {swStatus.activated ? (
+                  <CheckCircleIcon className="w-5 h-5 text-success" />
+                ) : (
+                  <WarningIcon className="w-5 h-5 text-warning" />
+                )}
+                <div>
+                  <p className="font-bold">Activated</p>
+                  <p className="text-sm opacity-70">
+                    {swStatus.activated ? 'Service Worker is controlling the page' : 'Service Worker not activated'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {swStatus.controlling ? (
+                  <CheckCircleIcon className="w-5 h-5 text-success" />
+                ) : (
+                  <WarningIcon className="w-5 h-5 text-warning" />
+                )}
+                <div>
+                  <p className="font-bold">Controlling</p>
+                  <p className="text-sm opacity-70">
+                    {swStatus.controlling ? 'Service Worker is handling requests' : 'Service Worker not controlling requests'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
 
         {/* Configuration */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              PWA Configuration
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.offlineSupport}
-                      onChange={(e) => updateConfig({ offlineSupport: e.target.checked })}
-                    />
-                  }
-                  label="Offline Support"
-                />
-              </Grid>
-              <Grid xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.backgroundSync}
-                      onChange={(e) => updateConfig({ backgroundSync: e.target.checked })}
-                    />
-                  }
-                  label="Background Sync"
-                />
-              </Grid>
-              <Grid xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.pushNotifications}
-                      onChange={(e) => updateConfig({ pushNotifications: e.target.checked })}
-                    />
-                  }
-                  label="Push Notifications"
-                />
-              </Grid>
-              <Grid xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={config.autoUpdate}
-                      onChange={(e) => updateConfig({ autoUpdate: e.target.checked })}
-                    />
-                  }
-                  label="Auto Update"
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
+        <Card className="shadow-xl">
+          <div className="p-6">
+            <h3 className="text-lg font-bold mb-4">PWA Configuration</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Offline Support</span>
+                  <Toggle
+                    checked={config.offlineSupport}
+                    onChange={(checked) => updateConfig({ offlineSupport: checked })}
+                  />
+                </label>
+              </div>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Background Sync</span>
+                  <Toggle
+                    checked={config.backgroundSync}
+                    onChange={(checked) => updateConfig({ backgroundSync: checked })}
+                  />
+                </label>
+              </div>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Push Notifications</span>
+                  <Toggle
+                    checked={config.pushNotifications}
+                    onChange={(checked) => updateConfig({ pushNotifications: checked })}
+                  />
+                </label>
+              </div>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Auto Update</span>
+                  <Toggle
+                    checked={config.autoUpdate}
+                    onChange={(checked) => updateConfig({ autoUpdate: checked })}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
         </Card>
-      </AnimatedBox>
 
-      {/* Update Dialog */}
-      <Dialog open={updateDialogOpen} onClose={() => setUpdateDialogOpen(false)}>
-        <DialogTitle>Update Available</DialogTitle>
-        <DialogContent>
-          <Typography>
-            A new version of Open-Hivemind is available. Would you like to update now?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUpdateDialogOpen(false)}>
-            Later
-          </Button>
-          <Button onClick={update} variant="contained" startIcon={<UpdateIcon />}>
-            Update Now
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Update Dialog */}
+        {updateDialogOpen && (
+          <div className="modal modal-open">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg">Update Available</h3>
+              <p className="py-4">A new version of the application is available. Update now to get the latest features and improvements.</p>
+              <div className="modal-action">
+                <Button variant="ghost" onClick={() => setUpdateDialogOpen(false)}>
+                  Later
+                </Button>
+                <Button variant="primary" onClick={update} disabled={metrics.updateStatus === 'updating'}>
+                  {metrics.updateStatus === 'updating' ? (
+                    <><Loading.Spinner size="sm" className="mr-2" /> Updating...</>
+                  ) : (
+                    'Update Now'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {children}
     </PWAContext.Provider>
   );
 };
 
-// Export types and utilities
-export type { PWAConfig, CacheStrategy, ServiceWorkerStatus, OfflineStatus, InstallPrompt, PWAMetrics, BackgroundSyncEvent, PWAContextType };
-export { PWAContext };
+export const usePWA = () => {
+  const context = useContext(PWAContext);
+  if (context === undefined) {
+    throw new Error('usePWA must be used within a PWAProvider');
+  }
+  return context;
+};
 
 export default PWAProvider;
