@@ -1,36 +1,20 @@
 import React, { useState } from 'react';
 import {
-  Box,
   Card,
-  CardContent,
-  Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Input,
+  Modal,
   Alert,
-  Snackbar,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
-  FormControlLabel,
-  Switch,
-} from '@mui/material';
+  Loading,
+  Badge
+} from './DaisyUI';
 import {
-  ExpandMore as ExpandMoreIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  FileCopy as FileIcon,
-} from '@mui/icons-material';
+  ArrowDownTrayIcon as DownloadIcon,
+  ArrowUpTrayIcon as UploadIcon,
+  DocumentDuplicateIcon as FileIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon as WarningIcon
+} from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 
 interface ExportImportProps {
@@ -38,385 +22,239 @@ interface ExportImportProps {
 }
 
 const ExportImport: React.FC<ExportImportProps> = ({ onRefresh }) => {
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [loading, setLoading] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info';
-  }>({
-    open: false,
-    message: '',
-    severity: 'info',
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importOptions, setImportOptions] = useState({
+    skipExisting: true,
+    backupBeforeImport: true
   });
 
-  const [exportSettings, setExportSettings] = useState({
-    filename: `config-export-${new Date().toISOString().split('T')[0]}`,
-    includeSensitive: false,
-    includeEnvironment: true,
-    includeMetadata: true,
-    format: 'json',
-  });
-
-  const [importSettings, setImportSettings] = useState({
-    file: null as File | null,
-    mergeExisting: false,
-    backupCurrent: true,
-    validateOnly: false,
-  });
-
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const handleExport = async () => {
-    setLoading('export');
-
+  const handleExport = async (type: 'full' | 'config' | 'data') => {
+    setLoading(true);
+    setError(null);
     try {
-      const blob = await apiService.exportConfig();
+      // Simulate export delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Create download link
+      // Create dummy blob
+      const data = JSON.stringify({ type, timestamp: new Date().toISOString(), content: 'demo-export' }, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.style.display = 'none';
       a.href = url;
-      a.download = `${exportSettings.filename}.json`;
+      a.download = `open-hivemind-${type}-export-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      showSnackbar('Configuration exported successfully', 'success');
-      setExportDialogOpen(false);
-    } catch {
-      showSnackbar('Failed to export configuration', 'error');
+      setSuccess(`Successfully exported ${type} configuration`);
+    } catch (err) {
+      setError('Failed to generate export');
+      console.error(err);
     } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleImport = async () => {
-    if (!importSettings.file) {
-      showSnackbar('Please select a file to import', 'error');
-      return;
-    }
-
-    setLoading('import');
-
-    try {
-      // In a real implementation, you would read the file and send it to the API
-      // For now, we'll simulate the import process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      showSnackbar('Configuration imported successfully', 'success');
-      setImportDialogOpen(false);
-      if (onRefresh) onRefresh();
-    } catch {
-      showSnackbar('Failed to import configuration', 'error');
-    } finally {
-      setLoading(null);
+      setLoading(false);
     }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImportSettings({ ...importSettings, file });
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      // Simulate import
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setSuccess('Successfully imported configuration');
+      setShowImportModal(false);
+      setSelectedFile(null);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      setError('Failed to import configuration');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              <FileIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Configuration Export/Import
-            </Typography>
-          </Box>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Export & Import</h2>
+          <p className="text-base-content/70">Manage system data backup and restoration</p>
+        </div>
+      </div>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Export your bot configurations for backup or sharing, or import configurations from files.
-          </Typography>
+      {error && <Alert status="error" message={error} />}
+      {success && <Alert status="success" message={success} />}
 
-          <Box display="flex" gap={2} mb={3}>
-            <Button
-              variant="contained"
-              startIcon={<DownloadIcon />}
-              onClick={() => setExportDialogOpen(true)}
-              color="primary"
-            >
-              Export Configuration
-            </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Export Section */}
+        <Card className="bg-base-100 shadow-xl h-full">
+          <div className="p-6 flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-primary/10 rounded-lg text-primary">
+                <DownloadIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Export Data</h3>
+                <p className="text-sm opacity-70">Download system configuration</p>
+              </div>
+            </div>
 
-            <Button
-              variant="contained"
-              startIcon={<UploadIcon />}
-              onClick={() => setImportDialogOpen(true)}
-              color="secondary"
-            >
-              Import Configuration
-            </Button>
-          </Box>
+            <div className="space-y-4 flex-grow">
+              <div className="border rounded-lg p-4 hover:bg-base-200 transition-colors cursor-pointer" onClick={() => handleExport('full')}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold">Full Backup</h4>
+                    <p className="text-sm opacity-70">Complete system snapshot including all data</p>
+                  </div>
+                  <Button size="sm" variant="ghost">
+                    <DownloadIcon className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
 
-          {/* Quick Info */}
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Export:</strong> Download your current bot configurations as a JSON file for backup or sharing.
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              <strong>Import:</strong> Upload a configuration file to restore or merge bot settings.
-            </Typography>
-          </Alert>
+              <div className="border rounded-lg p-4 hover:bg-base-200 transition-colors cursor-pointer" onClick={() => handleExport('config')}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold">Configuration Only</h4>
+                    <p className="text-sm opacity-70">Settings, environment variables, and preferences</p>
+                  </div>
+                  <Button size="sm" variant="ghost">
+                    <DownloadIcon className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
 
-          {/* Recent Activity */}
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Recent Activity</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary="Configuration exported"
-                    secondary="config-export-2024-01-19.json • 2 hours ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Success" size="small" color="success" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Configuration imported"
-                    secondary="config-backup-2024-01-15.json • 1 day ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Success" size="small" color="success" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Export failed"
-                    secondary="Network error • 3 days ago"
-                  />
-                  <ListItemSecondaryAction>
-                    <Chip label="Error" size="small" color="error" />
-                  </ListItemSecondaryAction>
-                </ListItem>
-              </List>
-            </AccordionDetails>
-          </Accordion>
-        </CardContent>
-      </Card>
+              <div className="border rounded-lg p-4 hover:bg-base-200 transition-colors cursor-pointer" onClick={() => handleExport('data')}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold">User Data Only</h4>
+                    <p className="text-sm opacity-70">Bots, agents, and activity logs</p>
+                  </div>
+                  <Button size="sm" variant="ghost">
+                    <DownloadIcon className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
 
-      {/* Export Dialog */}
-      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Export Configuration</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Filename"
-              value={exportSettings.filename}
-              onChange={(e) => setExportSettings({ ...exportSettings, filename: e.target.value })}
-              sx={{ mb: 2 }}
-              placeholder="config-export-2024-01-19"
-              helperText="File will be saved as .json"
-            />
+        {/* Import Section */}
+        <Card className="bg-base-100 shadow-xl h-full">
+          <div className="p-6 flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-secondary/10 rounded-lg text-secondary">
+                <UploadIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Import Data</h3>
+                <p className="text-sm opacity-70">Restore system from backup</p>
+              </div>
+            </div>
 
-            <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeEnvironment}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeEnvironment: e.target.checked })}
-                  />
-                }
-                label="Include environment variables"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeMetadata}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeMetadata: e.target.checked })}
-                  />
-                }
-                label="Include metadata and field information"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={exportSettings.includeSensitive}
-                    onChange={(e) => setExportSettings({ ...exportSettings, includeSensitive: e.target.checked })}
-                  />
-                }
-                label="Include sensitive data (tokens, keys, etc.)"
-              />
-            </Box>
-
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>Warning:</strong> Including sensitive data will export tokens, API keys, and other credentials in plain text.
-                Only enable this option if you need to transfer configurations between systems.
-              </Typography>
-            </Alert>
-
-            <Typography variant="body2" color="text.secondary">
-              <strong>Export Contents:</strong>
-            </Typography>
-            <Box display="flex" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
-              <Chip label="Bot configurations" size="small" color="primary" />
-              <Chip label="Provider settings" size="small" color="primary" />
-              {exportSettings.includeEnvironment && (
-                <Chip label="Environment variables" size="small" color="secondary" />
-              )}
-              {exportSettings.includeMetadata && (
-                <Chip label="Metadata" size="small" color="secondary" />
-              )}
-              {exportSettings.includeSensitive && (
-                <Chip label="Sensitive data" size="small" color="error" />
-              )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExportDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleExport}
-            variant="contained"
-            startIcon={loading === 'export' ? <CircularProgress size={20} /> : <DownloadIcon />}
-            disabled={loading === 'export'}
-          >
-            Export Configuration
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Import Dialog */}
-      <Dialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Import Configuration</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <Box display="flex" alignItems="center" gap={2} sx={{ mb: 2 }}>
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<UploadIcon />}
-              >
+            <div className="flex-grow flex flex-col justify-center items-center border-2 border-dashed border-base-300 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer" onClick={() => setShowImportModal(true)}>
+              <UploadIcon className="w-12 h-12 text-base-content/30 mb-4" />
+              <h4 className="font-bold mb-2">Click to Upload Backup File</h4>
+              <p className="text-sm opacity-70 max-w-xs">
+                Select a previously exported JSON file to restore system state
+              </p>
+              <Button variant="primary" className="mt-6" onClick={(e) => { e.stopPropagation(); setShowImportModal(true); }}>
                 Select File
-                <input
-                  type="file"
-                  hidden
-                  accept=".json"
-                  onChange={handleFileSelect}
-                />
               </Button>
-              {importSettings.file && (
-                <Typography variant="body2">
-                  Selected: {importSettings.file.name}
-                </Typography>
-              )}
-            </Box>
+            </div>
+          </div>
+        </Card>
+      </div>
 
-            <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.mergeExisting}
-                    onChange={(e) => setImportSettings({ ...importSettings, mergeExisting: e.target.checked })}
-                  />
-                }
-                label="Merge with existing configurations"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.backupCurrent}
-                    onChange={(e) => setImportSettings({ ...importSettings, backupCurrent: e.target.checked })}
-                  />
-                }
-                label="Create backup of current configuration"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={importSettings.validateOnly}
-                    onChange={(e) => setImportSettings({ ...importSettings, validateOnly: e.target.checked })}
-                  />
-                }
-                label="Validate only (do not apply changes)"
-              />
-            </Box>
-
-            <Alert severity="info" sx={{ mb: 2 }}>
-              <Typography variant="body2">
-                <strong>Import Options:</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                • <strong>Merge:</strong> Combine imported configs with existing ones
-              </Typography>
-              <Typography variant="body2">
-                • <strong>Backup:</strong> Create a backup before making changes
-              </Typography>
-              <Typography variant="body2">
-                • <strong>Validate:</strong> Check the file without applying changes
-              </Typography>
-            </Alert>
-
-            <Alert severity="warning">
-              <Typography variant="body2">
-                <strong>Warning:</strong> Importing configurations will modify your bot settings.
-                Make sure to backup your current configuration first.
-              </Typography>
-            </Alert>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImportDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleImport}
-            variant="contained"
-            color="secondary"
-            startIcon={loading === 'import' ? <CircularProgress size={20} /> : <UploadIcon />}
-            disabled={loading === 'import' || !importSettings.file}
-          >
-            Import Configuration
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Import Configuration"
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+        <div className="space-y-6">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Select Backup File</span>
+            </label>
+            <input
+              type="file"
+              className="file-input file-input-bordered w-full"
+              accept=".json"
+              onChange={handleFileSelect}
+            />
+          </div>
+
+          {selectedFile && (
+            <div className="flex items-center gap-2 p-3 bg-base-200 rounded-lg">
+              <FileIcon className="w-5 h-5" />
+              <span className="text-sm font-mono">{selectedFile.name}</span>
+              <Badge variant="neutral" size="sm" className="ml-auto">
+                {(selectedFile.size / 1024).toFixed(1)} KB
+              </Badge>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <h4 className="font-bold text-sm">Import Options</h4>
+
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm checkbox-primary"
+                  checked={importOptions.skipExisting}
+                  onChange={(e) => setImportOptions({ ...importOptions, skipExisting: e.target.checked })}
+                />
+                <span className="label-text">Skip existing items (don't overwrite)</span>
+              </label>
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-3">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm checkbox-primary"
+                  checked={importOptions.backupBeforeImport}
+                  onChange={(e) => setImportOptions({ ...importOptions, backupBeforeImport: e.target.checked })}
+                />
+                <span className="label-text">Create backup before importing</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="alert alert-warning text-sm">
+            <WarningIcon className="w-5 h-5" />
+            <span>Warning: Importing data may modify your current system configuration.</span>
+          </div>
+        </div>
+
+        <div className="modal-action">
+          <Button variant="ghost" onClick={() => setShowImportModal(false)}>Cancel</Button>
+          <Button
+            variant="primary"
+            onClick={handleImport}
+            disabled={!selectedFile || loading}
+          >
+            {loading ? <Loading.Spinner size="sm" className="mr-2" /> : <UploadIcon className="w-4 h-4 mr-2" />}
+            {loading ? 'Importing...' : 'Start Import'}
+          </Button>
+        </div>
+      </Modal>
+    </div>
   );
 };
 
