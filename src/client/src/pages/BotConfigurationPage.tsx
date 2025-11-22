@@ -1,14 +1,11 @@
 import React from 'react';
-import { Box, Typography, Container } from '@mui/material';
 import ConfigurationEditor from '../components/ConfigurationEditor';
 
 const BotConfigurationPage: React.FC = () => {
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        <ConfigurationEditor />
-      </Box>
-    </Container>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <ConfigurationEditor />
+    </div>
   );
 };
 

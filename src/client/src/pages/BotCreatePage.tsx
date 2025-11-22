@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Card, CardContent } from '@mui/material';
-import { Breadcrumbs, Alert, Select } from '../components/DaisyUI';
 import { useNavigate } from 'react-router-dom';
+import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +22,7 @@ const BotCreatePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
-    
+
     try {
       const response = await fetch('/api/webui/bots', {
         method: 'POST',
@@ -52,112 +51,121 @@ const BotCreatePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
+    <div className="p-6 max-w-4xl mx-auto">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
+
+      <h1 className="text-3xl font-bold mt-4 mb-6">
         Create New Bot
-      </Typography>
+      </h1>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
       )}
 
-      <Card sx={{ mt: 3 }}>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <TextField
-                label="Bot Name"
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Bot Name</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered w-full"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 required
-                fullWidth
-                helperText="Enter a unique name for your bot"
+                placeholder="Enter a unique name for your bot"
               />
+            </div>
 
-              <TextField
-                label="Description"
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Description</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered h-24"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                multiline
-                rows={3}
-                fullWidth
-                helperText="Describe what this bot will do"
+                placeholder="Describe what this bot will do"
               />
+            </div>
 
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Platform</span>
-                </label>
-                <Select
-                  options={[
-                    { value: 'discord', label: 'Discord' },
-                    { value: 'slack', label: 'Slack' },
-                    { value: 'mattermost', label: 'Mattermost' },
-                    { value: 'telegram', label: 'Telegram' },
-                  ]}
-                  value={formData.platform}
-                  onChange={(e) => handleInputChange('platform', e.target.value)}
-                />
-              </div>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Platform</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={formData.platform}
+                onChange={(e) => handleInputChange('platform', e.target.value)}
+              >
+                <option value="discord">Discord</option>
+                <option value="slack">Slack</option>
+                <option value="mattermost">Mattermost</option>
+                <option value="telegram">Telegram</option>
+              </select>
+            </div>
 
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">Persona</span>
-                </label>
-                <Select
-                  options={[
-                    { value: 'friendly-helper', label: 'Friendly Helper' },
-                    { value: 'dev-assistant', label: 'Developer Assistant' },
-                    { value: 'teacher', label: 'Teacher' },
-                  ]}
-                  value={formData.persona}
-                  onChange={(e) => handleInputChange('persona', e.target.value)}
-                />
-              </div>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Persona</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={formData.persona}
+                onChange={(e) => handleInputChange('persona', e.target.value)}
+              >
+                <option value="friendly-helper">Friendly Helper</option>
+                <option value="dev-assistant">Developer Assistant</option>
+                <option value="teacher">Teacher</option>
+              </select>
+            </div>
 
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text">LLM Provider</span>
-                </label>
-                <Select
-                  options={[
-                    { value: 'openai', label: 'OpenAI' },
-                    { value: 'anthropic', label: 'Anthropic' },
-                    { value: 'openwebui', label: 'Open WebUI' },
-                    { value: 'flowise', label: 'Flowise' },
-                  ]}
-                  value={formData.llmProvider}
-                  onChange={(e) => handleInputChange('llmProvider', e.target.value)}
-                />
-              </div>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">LLM Provider</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={formData.llmProvider}
+                onChange={(e) => handleInputChange('llmProvider', e.target.value)}
+              >
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+                <option value="openwebui">Open WebUI</option>
+                <option value="flowise">Flowise</option>
+              </select>
+            </div>
 
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/uber/bots')}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isCreating || !formData.name}
-                >
-                  {isCreating ? 'Creating...' : 'Create Bot'}
-                </Button>
-              </Box>
-            </Box>
+            <div className="flex gap-2 justify-end mt-8">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => navigate('/uber/bots')}
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isCreating || !formData.name}
+              >
+                {isCreating ? <span className="loading loading-spinner"></span> : null}
+                {isCreating ? 'Creating...' : 'Create Bot'}
+              </button>
+            </div>
           </form>
-        </CardContent>
-      </Card>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

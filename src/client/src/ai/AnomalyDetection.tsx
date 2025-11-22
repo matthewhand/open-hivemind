@@ -1,359 +1,700 @@
-import React, { useState } from 'react';
-import { Card, Badge, Button, Alert, Table } from '../components/DaisyUI';
+import React, { useState, useEffect } from 'react';
+import { useAppSelector } from '../store/hooks';
+import { selectUser } from '../store/slices/authSlice';
+import { AnimatedBox } from '../animations/AnimationComponents';
 import {
   ExclamationTriangleIcon,
-  ShieldCheckIcon,
-  ArrowPathIcon,
+  ArrowTrendingUpIcon,
+  BoltIcon,
   ChartBarIcon,
+  Cog6ToothIcon,
+  FunnelIcon,
+  BellIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  NoSymbolIcon,
   ClockIcon,
-  BeakerIcon
 } from '@heroicons/react/24/outline';
 
-export interface SimpleAnomaly {
+export interface AnomalyConfig {
+  enabled: boolean;
+  algorithms: AnomalyAlgorithm[];
+  sensitivity: number;
+  windowSize: number;
+  minSamples: number;
+  features: string[];
+  thresholds: {
+    zScore: number;
+    isolationForest: number;
+    localOutlierFactor: number;
+    oneClassSVM: number;
+  };
+  notifications: {
+    enabled: boolean;
+    email: boolean;
+    slack: boolean;
+    webhook: boolean;
+    severityThreshold: 'low' | 'medium' | 'high' | 'critical';
+  };
+  autoResponse: {
+    enabled: boolean;
+    actions: AutoResponseAction[];
+  };
+  learning: {
+    enabled: boolean;
+    feedbackLoop: boolean;
+    adaptationRate: number;
+    historicalDataWeight: number;
+  };
+}
+
+export interface AnomalyAlgorithm {
+  id: string;
+  name: string;
+  type: 'statistical' | 'machine-learning' | 'deep-learning' | 'ensemble';
+  description: string;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  trainingTime: number;
+  predictionTime: number;
+  memoryUsage: number;
+  hyperparameters: Record<string, number>;
+  features: string[];
+  isActive: boolean;
+}
+
+export interface AnomalyEvent {
   id: string;
   timestamp: Date;
-  type: 'spike' | 'drop' | 'pattern' | 'error';
-  severity: 'low' | 'medium' | 'high' | 'critical';
   metric: string;
   value: number;
   expected: number;
   deviation: number;
-  status: 'active' | 'resolved' | 'investigating';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: 'point' | 'contextual' | 'collective' | 'seasonal';
+  algorithm: string;
+  confidence: number;
+  explanation: string;
+  context: {
+    timeWindow: { start: Date; end: Date };
+    relatedMetrics: string[];
+    baselineStats: {
+      mean: number;
+      stdDev: number;
+      min: number;
+      max: number;
+    };
+  };
+  status: 'new' | 'acknowledged' | 'investigating' | 'resolved' | 'false-positive';
+  assignedTo?: string;
+  tags: string[];
+  metadata: Record<string, unknown>;
 }
 
-const anomalies: SimpleAnomaly[] = [
+export interface AutoResponseAction {
+  id: string;
+  name: string;
+  trigger: {
+    severity: AnomalyEvent['severity'][];
+    types: AnomalyEvent['type'][];
+    confidence: number;
+  };
+  action: {
+    type: 'alert' | 'log' | 'quarantine' | 'block' | 'notify' | 'escalate';
+    parameters: Record<string, unknown>;
+    cooldown: number;
+  };
+  enabled: boolean;
+  successRate: number;
+}
+
+export interface AnomalyMetrics {
+  totalEvents: number;
+  bySeverity: Record<AnomalyEvent['severity'], number>;
+  byType: Record<AnomalyEvent['type'], number>;
+  byAlgorithm: Record<string, number>;
+  falsePositiveRate: number;
+  detectionRate: number;
+  averageConfidence: number;
+  responseTime: number;
+}
+
+export interface AnomalyState {
+  events: AnomalyEvent[];
+  algorithms: AnomalyAlgorithm[];
+  activeAlgorithms: string[];
+  metrics: AnomalyMetrics;
+  isTraining: boolean;
+  isDetecting: boolean;
+  lastTraining: Date;
+  lastDetection: Date;
+  alerts: AnomalyAlert[];
+}
+
+export interface AnomalyAlert {
+  id: string;
+  eventId: string;
+  severity: AnomalyEvent['severity'];
+  message: string;
+  timestamp: Date;
+  acknowledged: boolean;
+  acknowledgedBy?: string;
+  acknowledgedAt?: Date;
+}
+
+// Mock machine learning algorithms for demonstration
+const mockAlgorithms: AnomalyAlgorithm[] = [
   {
-    id: '1',
-    timestamp: new Date(Date.now() - 300000),
-    type: 'spike',
-    severity: 'critical',
-    metric: 'Response Time',
-    value: 4500,
-    expected: 1200,
-    deviation: 275,
-    status: 'active'
+    id: 'isolation-forest-001',
+    name: 'Isolation Forest',
+    type: 'machine-learning',
+    description: 'Isolation-based anomaly detection for high-dimensional data',
+    accuracy: 0.89,
+    precision: 0.87,
+    recall: 0.91,
+    f1Score: 0.89,
+    trainingTime: 120,
+    predictionTime: 15,
+    memoryUsage: 256,
+    hyperparameters: {
+      n_estimators: 100,
+      max_samples: 256,
+      contamination: 0.1,
+      random_state: 42,
+    },
+    features: ['cpu_usage', 'memory_usage', 'response_time', 'error_rate'],
+    isActive: true,
   },
   {
-    id: '2',
-    timestamp: new Date(Date.now() - 900000),
-    type: 'drop',
-    severity: 'high',
-    metric: 'Success Rate',
-    value: 78,
-    expected: 98,
-    deviation: -20,
-    status: 'investigating'
+    id: 'zscore-001',
+    name: 'Z-Score Statistical',
+    type: 'statistical',
+    description: 'Statistical anomaly detection using standard deviations',
+    accuracy: 0.82,
+    precision: 0.85,
+    recall: 0.78,
+    f1Score: 0.81,
+    trainingTime: 10,
+    predictionTime: 5,
+    memoryUsage: 64,
+    hyperparameters: {
+      threshold: 2.5,
+      window_size: 24,
+      min_samples: 30,
+    },
+    features: ['response_time', 'cpu_usage'],
+    isActive: true,
   },
   {
-    id: '3',
-    timestamp: new Date(Date.now() - 1800000),
-    type: 'pattern',
-    severity: 'medium',
-    metric: 'Memory Usage',
-    value: 89,
-    expected: 65,
-    deviation: 37,
-    status: 'active'
+    id: 'lstm-autoencoder-001',
+    name: 'LSTM Autoencoder',
+    type: 'deep-learning',
+    description: 'Deep learning anomaly detection using LSTM autoencoders',
+    accuracy: 0.94,
+    precision: 0.92,
+    recall: 0.96,
+    f1Score: 0.94,
+    trainingTime: 1800,
+    predictionTime: 45,
+    memoryUsage: 1024,
+    hyperparameters: {
+      lstm_units: 128,
+      dropout: 0.2,
+      learning_rate: 0.001,
+      epochs: 100,
+      batch_size: 32,
+    },
+    features: ['multi_variate_time_series'],
+    isActive: false,
   },
   {
-    id: '4',
-    timestamp: new Date(Date.now() - 3600000),
-    type: 'error',
-    severity: 'low',
-    metric: 'Error Rate',
-    value: 2.1,
-    expected: 0.5,
-    deviation: 320,
-    status: 'resolved'
+    id: 'ensemble-voting-001',
+    name: 'Ensemble Voting',
+    type: 'ensemble',
+    description: 'Combines multiple algorithms for improved accuracy',
+    accuracy: 0.91,
+    precision: 0.90,
+    recall: 0.92,
+    f1Score: 0.91,
+    trainingTime: 300,
+    predictionTime: 25,
+    memoryUsage: 512,
+    hyperparameters: {
+      voting: 1, // 1 for soft voting (simplified)
+      weights: 0, // Simplified
+      threshold: 0.5,
+    },
+    features: ['ensemble_features'],
+    isActive: true,
   },
 ];
 
-export const AnomalyDetection: React.FC = () => {
-  const [isScanning, setIsScanning] = useState(false);
-  const [filterSeverity, setFilterSeverity] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+// Mock anomaly events for demonstration
+const generateMockAnomalies = (): AnomalyEvent[] => {
+  const anomalies: AnomalyEvent[] = [];
+  const now = new Date();
 
-  const handleScan = async () => {
-    setIsScanning(true);
-    setTimeout(() => setIsScanning(false), 3000);
-  };
+  for (let i = 0; i < 20; i++) {
+    const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
+    const isAnomaly = Math.random() > 0.7;
 
-  const getSeverityColor = (severity: string): 'info' | 'warning' | 'error' | 'success' => {
-    switch (severity) {
-      case 'critical': return 'error';
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'info';
+    if (isAnomaly) {
+      const baseValue = 100 + Math.sin(i / 24) * 20;
+      const anomalyValue = baseValue + (Math.random() - 0.5) * 100;
+      const deviation = Math.abs(anomalyValue - baseValue) / baseValue;
+
+      const severity: AnomalyEvent['severity'] = deviation > 0.5 ? 'critical' :
+        deviation > 0.3 ? 'high' :
+          deviation > 0.15 ? 'medium' : 'low';
+
+      const type: AnomalyEvent['type'] = Math.random() > 0.7 ? 'point' :
+        Math.random() > 0.5 ? 'contextual' : 'seasonal';
+
+      anomalies.push({
+        id: `anomaly-${Date.now()}-${i}`,
+        timestamp,
+        metric: ['CPU Usage', 'Memory Usage', 'Response Time', 'Error Rate'][Math.floor(Math.random() * 4)],
+        value: Math.max(0, anomalyValue),
+        expected: baseValue,
+        deviation,
+        severity,
+        type,
+        algorithm: mockAlgorithms[Math.floor(Math.random() * mockAlgorithms.length)].name,
+        confidence: 0.7 + Math.random() * 0.3,
+        explanation: `Value deviated ${(deviation * 100).toFixed(1)}% from expected baseline`,
+        context: {
+          timeWindow: { start: new Date(timestamp.getTime() - 3600000), end: new Date(timestamp.getTime() + 3600000) },
+          relatedMetrics: ['CPU Usage', 'Memory Usage'],
+          baselineStats: {
+            mean: baseValue,
+            stdDev: 15,
+            min: baseValue - 30,
+            max: baseValue + 30,
+          },
+        },
+        status: ['new', 'acknowledged', 'investigating'][Math.floor(Math.random() * 3)] as AnomalyEvent['status'],
+        tags: ['performance', 'critical', 'automated'],
+        metadata: { severity_score: deviation * 100 },
+      });
     }
-  };
+  }
 
-  const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
-    switch (status) {
-      case 'active': return 'error';
-      case 'investigating': return 'warning';
-      case 'resolved': return 'success';
-      default: return 'info';
-    }
-  };
+  return anomalies;
+};
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'spike': return '📈';
-      case 'drop': return '📉';
-      case 'pattern': return '🔍';
-      case 'error': return '⚠️';
-      default: return '❓';
-    }
-  };
+const mockAutoResponseActions: AutoResponseAction[] = [
+  {
+    id: 'action-001',
+    name: 'High CPU Alert',
+    trigger: {
+      severity: ['critical', 'high'],
+      types: ['point', 'contextual'],
+      confidence: 0.8,
+    },
+    action: {
+      type: 'alert',
+      parameters: { channels: ['email', 'slack'], priority: 'high' },
+      cooldown: 300,
+    },
+    enabled: true,
+    successRate: 0.95,
+  },
+  {
+    id: 'action-002',
+    name: 'Quarantine Suspicious Bot',
+    trigger: {
+      severity: ['critical'],
+      types: ['point'],
+      confidence: 0.9,
+    },
+    action: {
+      type: 'quarantine',
+      parameters: { duration: 3600, reason: 'anomaly_detection' },
+      cooldown: 3600,
+    },
+    enabled: false,
+    successRate: 0.88,
+  },
+  {
+    id: 'action-003',
+    name: 'Log Anomaly Event',
+    trigger: {
+      severity: ['low', 'medium', 'high', 'critical'],
+      types: ['point', 'contextual', 'seasonal'],
+      confidence: 0.6,
+    },
+    action: {
+      type: 'log',
+      parameters: { level: 'warning', category: 'anomaly' },
+      cooldown: 0,
+    },
+    enabled: true,
+    successRate: 0.99,
+  },
+];
 
-  const filteredAnomalies = anomalies.filter(anomaly => {
-    const severityMatch = filterSeverity === 'all' || anomaly.severity === filterSeverity;
-    const statusMatch = filterStatus === 'all' || anomaly.status === filterStatus;
-    return severityMatch && statusMatch;
+interface AnomalyDetectionProps {
+  onAnomalyDetected?: (anomaly: AnomalyEvent) => void;
+}
+
+export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDetected }) => {
+  const currentUser = useAppSelector(selectUser);
+  const [config, setConfig] = useState<AnomalyConfig>({
+    enabled: true,
+    algorithms: mockAlgorithms,
+    sensitivity: 0.8,
+    windowSize: 24,
+    minSamples: 30,
+    features: ['cpu_usage', 'memory_usage', 'response_time', 'error_rate'],
+    thresholds: {
+      zScore: 2.5,
+      isolationForest: 0.1,
+      localOutlierFactor: 1.5,
+      oneClassSVM: 0.5,
+    },
+    notifications: {
+      enabled: true,
+      email: true,
+      slack: false,
+      webhook: false,
+      severityThreshold: 'medium',
+    },
+    autoResponse: {
+      enabled: true,
+      actions: mockAutoResponseActions,
+    },
+    learning: {
+      enabled: true,
+      feedbackLoop: true,
+      adaptationRate: 0.1,
+      historicalDataWeight: 0.7,
+    },
   });
 
-  const activeAnomalies = anomalies.filter(a => a.status === 'active').length;
-  const criticalAnomalies = anomalies.filter(a => a.severity === 'critical').length;
+  const [state, setState] = useState<AnomalyState>({
+    events: generateMockAnomalies(),
+    algorithms: mockAlgorithms,
+    activeAlgorithms: mockAlgorithms.filter(a => a.isActive).map(a => a.id),
+    metrics: {
+      totalEvents: 0,
+      bySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
+      byType: { point: 0, contextual: 0, collective: 0, seasonal: 0 },
+      byAlgorithm: {},
+      falsePositiveRate: 0.05,
+      detectionRate: 0.85,
+      averageConfidence: 0.82,
+      responseTime: 150,
+    },
+    isTraining: false,
+    isDetecting: false,
+    lastTraining: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    lastDetection: new Date(),
+    alerts: [],
+  });
+
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize metrics
+  useEffect(() => {
+    updateMetrics();
+  }, [state.events]);
+
+  const updateMetrics = () => {
+    const metrics: AnomalyMetrics = {
+      totalEvents: state.events.length,
+      bySeverity: state.events.reduce((acc, event) => {
+        acc[event.severity] = (acc[event.severity] || 0) + 1;
+        return acc;
+      }, {} as Record<AnomalyEvent['severity'], number>),
+      byType: state.events.reduce((acc, event) => {
+        acc[event.type] = (acc[event.type] || 0) + 1;
+        return acc;
+      }, {} as Record<AnomalyEvent['type'], number>),
+      byAlgorithm: state.events.reduce((acc, event) => {
+        acc[event.algorithm] = (acc[event.algorithm] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      falsePositiveRate: 0.05,
+      detectionRate: 0.85,
+      averageConfidence: state.events.reduce((sum, e) => sum + e.confidence, 0) / state.events.length,
+      responseTime: 150,
+    };
+
+    setState(prev => ({ ...prev, metrics }));
+  };
+
+  const runAnomalyDetection = async () => {
+    setIsLoading(true);
+    setState(prev => ({ ...prev, isDetecting: true }));
+
+    // Simulate detection process
+    setTimeout(() => {
+      const newEvents = generateMockAnomalies();
+      setState(prev => ({
+        ...prev,
+        events: [...prev.events, ...newEvents].slice(-100), // Keep last 100 events
+        isDetecting: false,
+        lastDetection: new Date(),
+      }));
+
+      // Trigger callback for new anomalies
+      newEvents.forEach(event => {
+        if (onAnomalyDetected) {
+          onAnomalyDetected(event);
+        }
+      });
+
+      setIsLoading(false);
+    }, 2000);
+  };
+
+  const toggleAlgorithm = (algorithmId: string) => {
+    setState(prev => ({
+      ...prev,
+      algorithms: prev.algorithms.map(algorithm =>
+        algorithm.id === algorithmId
+          ? { ...algorithm, isActive: !algorithm.isActive }
+          : algorithm
+      ),
+      activeAlgorithms: prev.activeAlgorithms.includes(algorithmId)
+        ? prev.activeAlgorithms.filter(id => id !== algorithmId)
+        : [...prev.activeAlgorithms, algorithmId],
+    }));
+  };
+
+  const toggleFeature = (feature: keyof AnomalyConfig) => {
+    setConfig(prev => ({
+      ...prev,
+      [feature]: !prev[feature],
+    }));
+  };
+
+  const updateSensitivity = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfig(prev => ({
+      ...prev,
+      sensitivity: parseFloat(e.target.value),
+    }));
+  };
+
+  if (!currentUser) {
+    return (
+      <AnimatedBox
+        animation="fade-in"
+        className="p-6 flex justify-center items-center min-h-[400px]"
+      >
+        <div className="card bg-base-100 shadow-xl max-w-md text-center">
+          <div className="card-body">
+            <ExclamationTriangleIcon className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="card-title justify-center mb-2">
+              Anomaly Detection
+            </h2>
+            <p className="text-base-content/70">
+              Please log in to access anomaly detection features.
+            </p>
+          </div>
+        </div>
+      </AnimatedBox>
+    );
+  }
 
   return (
-    <div className="w-full space-y-6">
-      <Card className="shadow-lg border-l-4 border-warning">
-        <div className="card-body">
-          <div className="flex items-center justify-between">
+    <AnimatedBox
+      animation="slide-up"
+      className="w-full space-y-6"
+    >
+      {/* Anomaly Detection Header */}
+      <div className="card bg-base-100 shadow-lg border-l-4 border-primary">
+        <div className="card-body p-6">
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <ExclamationTriangleIcon className="w-8 h-8 text-warning" />
+              <ChartBarIcon className="w-10 h-10 text-primary" />
               <div>
-                <h2 className="card-title text-2xl">Anomaly Detection</h2>
-                <p className="text-sm opacity-70">Real-time system anomaly monitoring and alerts</p>
+                <h2 className="card-title text-2xl">
+                  Anomaly Detection
+                </h2>
+                <p className="text-base-content/70">
+                  {state.events.length} anomalies detected • {state.activeAlgorithms.length}/{state.algorithms.length} algorithms active
+                </p>
               </div>
             </div>
-            <Button
-              onClick={handleScan}
-              disabled={isScanning}
-              className="btn-warning"
-            >
-              {isScanning ? (
-                <>
-                  <div className="loading loading-spinner loading-sm mr-2" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <ShieldCheckIcon className="w-4 h-4 mr-2" />
-                  Run Scan
-                </>
-              )}
-            </Button>
+
+            <div className="flex items-center gap-2">
+              <div className={`badge ${state.metrics.falsePositiveRate < 0.1 ? 'badge-success' : 'badge-warning'}`}>
+                {state.metrics.falsePositiveRate < 0.1 ? 'Low FP' : 'High FP'}
+              </div>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={runAnomalyDetection}
+                disabled={isLoading}
+              >
+                <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={() => setShowConfigDialog(!showConfigDialog)}
+              >
+                <Cog6ToothIcon className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </Card>
-
-      {/* Alert Summary */}
-      {(criticalAnomalies > 0 || activeAnomalies > 0) && (
-        <Alert variant={criticalAnomalies > 0 ? 'error' : 'warning'} className="flex items-center gap-3">
-          <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
-          <div>
-            <p className="font-medium">
-              {criticalAnomalies > 0 ? `${criticalAnomalies} critical anomalies detected!` : `${activeAnomalies} active anomalies`}
-            </p>
-            <p className="text-sm opacity-70">
-              Immediate attention required for critical issues
-            </p>
-          </div>
-        </Alert>
-      )}
-
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ExclamationTriangleIcon className="w-8 h-8 mx-auto text-error mb-2" />
-            <div className="text-2xl font-bold text-error">{criticalAnomalies}</div>
-            <p className="text-sm opacity-70">Critical</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ChartBarIcon className="w-8 h-8 mx-auto text-warning mb-2" />
-            <div className="text-2xl font-bold text-warning">{activeAnomalies}</div>
-            <p className="text-sm opacity-70">Active</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ClockIcon className="w-8 h-8 mx-auto text-info mb-2" />
-            <div className="text-2xl font-bold text-info">
-              {anomalies.filter(a => a.status === 'investigating').length}
-            </div>
-            <p className="text-sm opacity-70">Investigating</p>
-          </div>
-        </Card>
-        <Card className="shadow">
-          <div className="card-body text-center">
-            <ShieldCheckIcon className="w-8 h-8 mx-auto text-success mb-2" />
-            <div className="text-2xl font-bold text-success">
-              {anomalies.filter(a => a.status === 'resolved').length}
-            </div>
-            <p className="text-sm opacity-70">Resolved</p>
-          </div>
-        </Card>
       </div>
 
-      {/* Filters */}
-      <Card className="shadow">
-        <div className="card-body">
-          <h3 className="font-bold mb-3">Filters</h3>
-          <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-sm">Severity:</label>
-              <select
-                value={filterSeverity}
-                onChange={(e) => setFilterSeverity(e.target.value)}
-                className="select select-sm select-bordered"
-              >
-                <option value="all">All</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm">Status:</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="select select-sm select-bordered"
-              >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="investigating">Investigating</option>
-                <option value="resolved">Resolved</option>
-              </select>
-            </div>
-            <Button size="sm" className="btn-ghost" onClick={() => {
-              setFilterSeverity('all');
-              setFilterStatus('all');
-            }}>
-              Clear Filters
-            </Button>
+      {/* Metrics Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-error">
+              {state.metrics.totalEvents}
+            </h3>
+            <p className="text-sm text-base-content/70">Total Anomalies</p>
+            <ExclamationTriangleIcon className="w-6 h-6 text-error mx-auto mt-2" />
           </div>
         </div>
-      </Card>
-
-      {/* Anomalies Table */}
-      <Card className="shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Detected Anomalies</h3>
-          <div className="overflow-x-auto">
-            <Table className="table table-zebra table-compact">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Metric</th>
-                  <th>Value vs Expected</th>
-                  <th>Deviation</th>
-                  <th>Severity</th>
-                  <th>Status</th>
-                  <th>Time</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAnomalies.map((anomaly) => (
-                  <tr key={anomaly.id}>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getTypeIcon(anomaly.type)}</span>
-                        <span className="capitalize">{anomaly.type}</span>
-                      </div>
-                    </td>
-                    <td className="font-medium">{anomaly.metric}</td>
-                    <td>
-                      <div className="text-sm">
-                        <span className="font-mono">{anomaly.value}</span>
-                        <span className="opacity-50 mx-1">vs</span>
-                        <span className="font-mono opacity-70">{anomaly.expected}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge
-                        variant={anomaly.deviation > 100 ? 'error' : 'warning'}
-                        size="sm"
-                      >
-                        {anomaly.deviation > 0 ? '+' : ''}{anomaly.deviation}%
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge variant={getSeverityColor(anomaly.severity)} size="sm">
-                        {anomaly.severity}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge variant={getStatusColor(anomaly.status)} size="sm">
-                        {anomaly.status}
-                      </Badge>
-                    </td>
-                    <td className="text-sm opacity-70">
-                      {anomaly.timestamp.toLocaleTimeString()}
-                    </td>
-                    <td>
-                      <div className="flex gap-1">
-                        <Button size="sm" className="btn-ghost btn-xs">
-                          View
-                        </Button>
-                        {anomaly.status !== 'resolved' && (
-                          <Button size="sm" className="btn-ghost btn-xs">
-                            Investigate
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-warning">
+              {state.metrics.bySeverity.high + state.metrics.bySeverity.critical}
+            </h3>
+            <p className="text-sm text-base-content/70">High Priority</p>
+            <ExclamationCircleIcon className="w-6 h-6 text-warning mx-auto mt-2" />
           </div>
         </div>
-      </Card>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-info">
+              {(state.metrics.averageConfidence * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Avg Confidence</p>
+            <ChartBarIcon className="w-6 h-6 text-info mx-auto mt-2" />
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow">
+          <div className="card-body p-6 text-center">
+            <h3 className="text-3xl font-bold text-success">
+              {(state.metrics.detectionRate * 100).toFixed(0)}%
+            </h3>
+            <p className="text-sm text-base-content/70">Detection Rate</p>
+            <CheckCircleIcon className="w-6 h-6 text-success mx-auto mt-2" />
+          </div>
+        </div>
+      </div>
 
-      {/* Detection Settings */}
-      <Card className="shadow">
+      {/* Active Algorithms */}
+      <div className="card bg-base-100 shadow-lg">
         <div className="card-body">
-          <h3 className="font-bold mb-3 flex items-center gap-2">
-            <BeakerIcon className="w-5 h-5" />
-            Detection Sensitivity
+          <h3 className="card-title text-lg mb-4">
+            Active Algorithms ({state.activeAlgorithms.length}/{state.algorithms.length})
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm opacity-70">Threshold Sensitivity</label>
-              <select className="select select-sm select-bordered w-full mt-1">
-                <option>High (Most Sensitive)</option>
-                <option selected>Medium</option>
-                <option>Low (Least Sensitive)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm opacity-70">Scan Frequency</label>
-              <select className="select select-sm select-bordered w-full mt-1">
-                <option>Every 1 minute</option>
-                <option selected>Every 5 minutes</option>
-                <option>Every 15 minutes</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm opacity-70">Auto-Resolve Threshold</label>
-              <select className="select select-sm select-bordered w-full mt-1">
-                <option>Never</option>
-                <option selected>After 1 hour</option>
-                <option>After 24 hours</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {state.algorithms.map(algorithm => (
+              <div key={algorithm.id} className="card bg-base-200 border border-base-300">
+                <div className="card-body p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-sm">{algorithm.name}</h4>
+                    <div className={`badge badge-sm ${algorithm.isActive ? 'badge-success' : 'badge-ghost'}`}>
+                      {algorithm.type}
+                    </div>
+                  </div>
+                  <p className="text-xs text-base-content/70 mb-3 line-clamp-2">
+                    {algorithm.description}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1 text-xs mb-3">
+                    <span className="text-base-content/60">Acc: {(algorithm.accuracy * 100).toFixed(0)}%</span>
+                    <span className="text-base-content/60">F1: {(algorithm.f1Score * 100).toFixed(0)}%</span>
+                    <span className="text-base-content/60">Spd: {algorithm.predictionTime}ms</span>
+                    <span className="text-base-content/60">Mem: {algorithm.memoryUsage}MB</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-auto">
+                    <div
+                      className={`badge badge-sm cursor-pointer ${algorithm.isActive ? 'badge-success' : 'badge-ghost'}`}
+                      onClick={() => toggleAlgorithm(algorithm.id)}
+                    >
+                      {algorithm.isActive ? 'Active' : 'Inactive'}
+                    </div>
+                    <button className="btn btn-ghost btn-xs btn-square">
+                      <Cog6ToothIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </Card>
-    </div>
+      </div>
+
+      {/* Sensitivity Control */}
+      <div className="card bg-base-100 shadow-lg">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-4">Detection Sensitivity</h3>
+          <div className="mb-6">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm">Sensitivity Level</span>
+              <span className="text-sm font-bold">{config.sensitivity.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.1"
+              value={config.sensitivity}
+              onChange={updateSensitivity}
+              className="range range-primary range-sm"
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-2">
+              <span>Low</span>
+              <span>Medium</span>
+              <span>High</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.anomalyDetection}
+                onChange={() => toggleFeature('anomalyDetection')}
+              />
+              <span className="label-text">Anomaly Detection</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.learning.enabled}
+                onChange={() => toggleFeature('learning')}
+              />
+              <span className="label-text">ML Learning</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.autoResponse.enabled}
+                onChange={() => toggleFeature('autoResponse')}
+              />
+              <span className="label-text">Auto Response</span>
+            </label>
+            <label className="label cursor-pointer justify-start gap-3">
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-sm"
+                checked={config.notifications.enabled}
+                onChange={() => toggleFeature('notifications')}
+              />
+              <span className="label-text">Notifications</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </AnimatedBox>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { Box } from '@mui/material';
+
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 import MainLayout from '../layouts/MainLayout';
@@ -41,24 +41,25 @@ const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 
+// AI Features
+const IntelligentDashboard = lazy(() => import('../ai/IntelligentDashboard'));
+const AIInsightsPanel = lazy(() => import('../ai/AIInsightsPanel'));
+const PredictiveAnalytics = lazy(() => import('../ai/PredictiveAnalytics'));
+const AnomalyDetection = lazy(() => import('../ai/AnomalyDetection'));
+const NaturalLanguageInterface = lazy(() => import('../ai/NaturalLanguageInterface'));
+const BotTrainingDashboard = lazy(() => import('../ai/BotTrainingDashboard'));
+
 interface LoadingFallbackProps {
   message?: string;
 }
 
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...' }) => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="60vh"
-    flexDirection="column"
-    gap={2}
-  >
+  <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
     <LoadingSpinner size="lg" />
-    <Box component="span" sx={{ color: 'text.secondary' }}>
+    <span className="text-base-content/70">
       {message}
-    </Box>
-  </Box>
+    </span>
+  </div>
 );
 
 // Simplified ProtectedRoute that always allows access (for localhost development)
@@ -152,6 +153,14 @@ const AppRouter: React.FC = () => {
             <Route path="showcase" element={<DaisyUIShowcase />} />
             <Route path="specs" element={<SpecsPage />} />
             <Route path="specs/:id" element={<SpecDetailPage />} />
+
+            {/* AI Features Routes */}
+            <Route path="ai/dashboard" element={<IntelligentDashboard />} />
+            <Route path="ai/insights" element={<AIInsightsPanel />} />
+            <Route path="ai/analytics" element={<PredictiveAnalytics />} />
+            <Route path="ai/anomalies" element={<AnomalyDetection />} />
+            <Route path="ai/chat" element={<NaturalLanguageInterface />} />
+            <Route path="ai/training" element={<BotTrainingDashboard />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

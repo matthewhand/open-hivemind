@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 import { Breadcrumbs } from '../components/DaisyUI';
 import ActivityMonitor from '../components/ActivityMonitor';
 
@@ -9,16 +8,16 @@ const ActivityPage: React.FC = () => {
   ];
 
   return (
-    <Box>
-      <Box mb={3}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">
           Activity Monitor
-        </Typography>
+        </h1>
         <Breadcrumbs items={breadcrumbItems} />
-      </Box>
+      </div>
 
       <ActivityMonitor showPopoutButton={true} />
-    </Box>
+    </div>
   );
 };
 

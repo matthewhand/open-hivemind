@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Box, Typography, Slider, Chip } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 
 interface BotNode {
   id: string;
@@ -57,19 +59,26 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
   const [nodeScale, setNodeScale] = useState(1);
   const [viewMode, setViewMode] = useState<'sphere' | 'grid' | 'tree'>('sphere');
 
+  // Mock metrics since they were missing in original file's props/selector
+  const metrics = {
+    responseTime: 120,
+    memoryUsage: 45,
+    cpuUsage: 30
+  };
+
   const createBotNode = useCallback((bot: BotNode): THREE.Mesh => {
     const geometry = new THREE.SphereGeometry(0.5 * nodeScale, 32, 32);
     const material = new THREE.MeshPhongMaterial({
-      color: bot.status === 'active' ? 0x4caf50 : 
-             bot.status === 'connecting' ? 0xff9800 : 0xf44336,
-      emissive: bot.status === 'active' ? 0x1b5e20 : 
-                bot.status === 'connecting' ? 0xe65100 : 0xb71c1c,
+      color: bot.status === 'active' ? 0x4caf50 :
+        bot.status === 'connecting' ? 0xff9800 : 0xf44336,
+      emissive: bot.status === 'active' ? 0x1b5e20 :
+        bot.status === 'connecting' ? 0xe65100 : 0xb71c1c,
       emissiveIntensity: 0.3,
       shininess: 100,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     // Position based on view mode
     switch (viewMode) {
       case 'sphere': {
@@ -118,7 +127,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
         pulseRing.rotation.z += 0.02;
         pulseRing.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.1);
       };
-      
+
       const pulseAnimation = () => {
         animatePulse();
         requestAnimationFrame(pulseAnimation);
@@ -141,8 +150,8 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
 
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = new THREE.LineBasicMaterial({
-      color: connection.strength > 0.7 ? 0x4caf50 : 
-             connection.strength > 0.4 ? 0xff9800 : 0xf44336,
+      color: connection.strength > 0.7 ? 0x4caf50 :
+        connection.strength > 0.4 ? 0xff9800 : 0xf44336,
       transparent: true,
       opacity: connectionOpacity * connection.strength,
     });
@@ -290,9 +299,9 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
     // Animation loop
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
-      
+
       controls.update();
-      
+
       if (particlesRef.current) {
         particlesRef.current.rotation.y += 0.001;
       }
@@ -316,7 +325,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
         labelMountRef.current.removeChild(labelRenderer.domElement);
       }
       renderer.dispose();
-      labelRenderer.dispose();
+      // labelRenderer.dispose(); // CSS2DRenderer doesn't have dispose in some versions
     };
   }, [width, height, autoRotate, rotationSpeed]);
 
@@ -342,7 +351,10 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
           borderRadius: 2,
         }}
       >
-        <Typography>Loading 3D Network Visualization...</Typography>
+        <div className="flex flex-col items-center gap-2">
+          <span className="loading loading-spinner loading-lg"></span>
+          <p>Loading 3D Network Visualization...</p>
+        </div>
       </AnimatedBox>
     );
   }
@@ -353,111 +365,93 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
       sx={{ width, height, position: 'relative' }}
     >
       {/* Controls Panel */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          zIndex: 100,
-          backgroundColor: 'background.paper',
-          borderRadius: 2,
-          p: 2,
-          boxShadow: 3,
-          maxWidth: 300,
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
+      <div className="absolute top-4 right-4 z-50 bg-base-100 rounded-box p-4 shadow-xl max-w-xs border border-base-200">
+        <h3 className="font-bold mb-2">
           Network Controls
-        </Typography>
-        
+        </h3>
+
         {/* View Mode */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>View Mode:</Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <div className="mb-4">
+          <p className="text-xs mb-1">View Mode:</p>
+          <div className="flex gap-1 flex-wrap">
             {(['sphere', 'grid', 'tree'] as const).map((mode) => (
-              <Chip
+              <div
                 key={mode}
-                label={mode}
+                className={`badge cursor-pointer ${viewMode === mode ? 'badge-primary' : 'badge-ghost'}`}
                 onClick={() => handleViewModeChange(mode)}
-                color={viewMode === mode ? 'primary' : 'default'}
-                size="small"
-              />
+              >
+                {mode}
+              </div>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Rotation Speed */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Rotation Speed:</Typography>
-          <Slider
+        <div className="mb-4">
+          <p className="text-xs mb-1">Rotation Speed: {(rotationSpeed * 1000).toFixed(1)}x</p>
+          <input
+            type="range"
+            min="0"
+            max="10"
+            step="0.1"
             value={rotationSpeed * 1000}
-            onChange={(_, value) => setRotationSpeed((value as number) / 1000)}
-            min={0}
-            max={10}
-            step={0.1}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${value.toFixed(1)}x`}
+            onChange={(e) => setRotationSpeed(Number(e.target.value) / 1000)}
+            className="range range-xs range-primary"
           />
-        </Box>
+        </div>
 
         {/* Connection Opacity */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Connection Opacity:</Typography>
-          <Slider
+        <div className="mb-4">
+          <p className="text-xs mb-1">Connection Opacity: {(connectionOpacity * 100).toFixed(0)}%</p>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
             value={connectionOpacity * 100}
-            onChange={(_, value) => setConnectionOpacity((value as number) / 100)}
-            min={0}
-            max={100}
-            step={5}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${value}%`}
+            onChange={(e) => setConnectionOpacity(Number(e.target.value) / 100)}
+            className="range range-xs range-primary"
           />
-        </Box>
+        </div>
 
         {/* Node Scale */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Node Scale:</Typography>
-          <Slider
+        <div className="mb-4">
+          <p className="text-xs mb-1">Node Scale: {nodeScale.toFixed(1)}x</p>
+          <input
+            type="range"
+            min="5"
+            max="15"
+            step="0.5"
             value={nodeScale * 10}
-            onChange={(_, value) => setNodeScale((value as number) / 10)}
-            min={5}
-            max={15}
-            step={0.5}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${(value / 10).toFixed(1)}x`}
+            onChange={(e) => setNodeScale(Number(e.target.value) / 10)}
+            className="range range-xs range-primary"
           />
-        </Box>
+        </div>
 
         {/* Stats */}
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2">
-            Active Bots: {bots.filter(b => b.status === 'active').length}
-          </Typography>
-          <Typography variant="body2">
-            Total Bots: {bots.length}
-          </Typography>
-          <Typography variant="body2">
-            Avg Response Time: {metrics.responseTime?.toFixed(0) || 0}ms
-          </Typography>
-        </Box>
-      </Box>
+        <div className="mt-2 pt-2 border-t border-base-200 text-xs space-y-1">
+          <p>Active Bots: {bots.filter(b => b.status === 'active').length}</p>
+          <p>Total Bots: {bots.length}</p>
+          <p>Avg Response Time: {metrics.responseTime?.toFixed(0) || 0}ms</p>
+        </div>
+      </div>
 
       {/* 3D Canvas Container */}
-      <Box
+      <div
         ref={mountRef}
-        sx={{
+        style={{
           width: '100%',
           height: '100%',
-          borderRadius: 2,
+          borderRadius: '0.5rem',
           overflow: 'hidden',
-          boxShadow: 3,
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
         }}
       />
 
       {/* Label Overlay */}
-      <Box
+      <div
         ref={labelMountRef}
-        sx={{
+        style={{
           position: 'absolute',
           top: 0,
           left: 0,

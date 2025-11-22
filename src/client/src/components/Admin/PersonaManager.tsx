@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, ToastNotification, Checkbox, Button, Card, Form, Loading } from '../DaisyUI';
+import { Modal, ToastNotification, Checkbox, Button, Card, Form } from '../DaisyUI';
 import {
   getPersonas,
   createPersona,
@@ -8,10 +8,10 @@ import {
   type Persona
 } from '../../services/agentService';
 import {
-  PlusIcon as AddIcon,
-  PencilIcon as EditIcon,
-  TrashIcon as DeleteIcon,
-  ArchiveBoxXMarkIcon as DeleteSweepIcon
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ArchiveBoxXMarkIcon
 } from '@heroicons/react/24/outline';
 
 const PersonaManager: React.FC = () => {
@@ -119,15 +119,11 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center p-12">
-        <Loading.Spinner size="lg" />
-      </div>
-    );
+    return <div className="text-center p-4">Loading personas...</div>;
   }
 
   if (error) {
-    return <div className="alert alert-error">{error}</div>;
+    return <div className="text-error p-4">{error}</div>;
   }
 
   return (
@@ -144,10 +140,10 @@ const PersonaManager: React.FC = () => {
           {selectedPersonas.size > 0 && (
             <Button
               variant="secondary"
-              style="outline"
+              className="btn-outline ml-2"
               onClick={handleDeleteSelected}
             >
-              <DeleteSweepIcon className="w-4 h-4 mr-2" />
+              <ArchiveBoxXMarkIcon className="w-4 h-4 mr-2" />
               Delete Selected ({selectedPersonas.size})
             </Button>
           )}
@@ -156,44 +152,49 @@ const PersonaManager: React.FC = () => {
           variant="primary"
           onClick={() => handleOpenModal()}
         >
-          <AddIcon className="w-4 h-4 mr-2" />
+          <PlusIcon className="w-4 h-4 mr-2" />
           Add Persona
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <ul className="menu bg-base-100 w-full rounded-box p-2">
         {personas.map((persona) => (
-          <div key={persona.key} className="flex items-center gap-3 p-3 border border-base-300 rounded-lg hover:bg-base-200">
-            <Checkbox
-              checked={selectedPersonas.has(persona.key)}
-              onChange={() => handleToggleSelect(persona.key)}
-              size="sm"
-            />
-            <div className="flex-grow">
-              <p className="font-bold">{persona.name}</p>
-              <p className="text-sm opacity-70">{persona.systemPrompt}</p>
+          <li key={persona.key} className="border-b border-base-200 last:border-none">
+            <div className="flex items-center justify-between p-2 hover:bg-base-200 rounded-lg">
+              <div className="flex items-center gap-3 flex-1">
+                <Checkbox
+                  checked={selectedPersonas.has(persona.key)}
+                  onChange={() => handleToggleSelect(persona.key)}
+                  size="sm"
+                />
+                <div className="flex flex-col">
+                  <span className="font-bold">{persona.name}</span>
+                  <span className="text-xs text-base-content/70 truncate max-w-md">{persona.systemPrompt}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="btn-square"
+                  onClick={() => handleOpenModal(persona)}
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="btn-square text-error hover:bg-error hover:text-error-content"
+                  onClick={() => handleDeletePersona(persona.key)}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleOpenModal(persona)}
-                className="btn-square"
-              >
-                <EditIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeletePersona(persona.key)}
-                className="btn-square text-error hover:bg-error hover:text-error-content"
-              >
-                <DeleteIcon className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
 
       <Modal
         isOpen={openModal}

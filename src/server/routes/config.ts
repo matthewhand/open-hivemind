@@ -4,15 +4,198 @@ import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { HivemindError, ErrorUtils } from '../../types/errors';
+import fs from 'fs';
+import path from 'path';
+
+// Import all convict config modules
+import messageConfig from '../../config/messageConfig';
+import llmConfig from '../../config/llmConfig';
+import discordConfig from '../../config/discordConfig';
+import slackConfig from '../../config/slackConfig';
+import openaiConfig from '../../config/openaiConfig';
+import flowiseConfig from '../../config/flowiseConfig';
+import mattermostConfig from '../../config/mattermostConfig';
+import openWebUIConfig from '../../config/openWebUIConfig';
+import webhookConfig from '../../config/webhookConfig';
 
 console.log('Config router module loaded');
 const router = Router();
 console.log('Config router created');
 
+// Map of config names to their convict objects
+const globalConfigs: Record<string, any> = {
+  message: messageConfig,
+  llm: llmConfig,
+  discord: discordConfig,
+  slack: slackConfig,
+  openai: openaiConfig,
+  flowise: flowiseConfig,
+  mattermost: mattermostConfig,
+  openwebui: openWebUIConfig,
+  webhook: webhookConfig
+};
+
 // Apply audit middleware to all config routes (except in test)
 if (process.env.NODE_ENV !== 'test') {
   router.use(auditMiddleware);
 }
+
+// GET /api/config/global - Get all global configurations (schema + values)
+router.get('/api/config/global', (req, res) => {
+  try {
+    const response: Record<string, any> = {};
+
+    Object.entries(globalConfigs).forEach(([key, config]) => {
+      // Get properties (values)
+      const props = config.getProperties();
+
+      // Get schema (if available via internal API or we need to reconstruct it)
+      // Convict doesn't expose the raw schema easily after init, but we can try to get it
+      // or we just send the values and rely on the frontend to infer types or use a shared schema.
+      // However, for a "comprehensive" panel, we ideally want the doc strings too.
+      // config.getSchema() returns the schema with current values, but let's see.
+      const schema = config.getSchema();
+
+      // Redact sensitive values in props
+      const redactedProps = JSON.parse(JSON.stringify(props)); // Deep copy
+
+      // Helper to redact recursively
+      const redactObject = (obj: any) => {
+        for (const k in obj) {
+          if (typeof obj[k] === 'object' && obj[k] !== null) {
+            redactObject(obj[k]);
+          } else if (typeof k === 'string') {
+            if (k.toLowerCase().includes('token') ||
+              k.toLowerCase().includes('key') ||
+              k.toLowerCase().includes('secret') ||
+              k.toLowerCase().includes('password')) {
+              obj[k] = '********';
+            }
+          }
+        }
+      };
+      redactObject(redactedProps);
+
+      response[key] = {
+        values: redactedProps,
+        schema: schema
+      };
+    });
+
+    res.json(response);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/global - Update global configuration
+router.put('/api/config/global', async (req, res) => {
+  try {
+    const { configName, updates } = req.body;
+
+    if (!configName || !globalConfigs[configName]) {
+      return res.status(400).json({ error: `Invalid or missing configName. Valid options: ${Object.keys(globalConfigs).join(', ')}` });
+    }
+
+    const config = globalConfigs[configName];
+
+    // Validate updates against schema
+    // We can use config.load(updates) and then validate, but we don't want to pollute the in-memory config 
+    // if validation fails, although convict is mutable.
+    // For now, we'll try to load and validate.
+
+    // Note: This only updates the in-memory config. To persist, we need to write to a file.
+    // We'll write to config/local.json or similar.
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const localConfigPath = path.join(configDir, 'local.json');
+
+    // Load existing local config if it exists
+    let localConfig: any = {};
+    if (fs.existsSync(localConfigPath)) {
+      try {
+        localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+      } catch (e) {
+        console.warn('Failed to parse local.json, starting fresh');
+      }
+    }
+
+    // Update local config
+    // We assume the structure in local.json matches the config structure
+    // But since we have multiple convict instances, we might need to namespace them in local.json 
+    // OR we write to specific files like `config/providers/message.json` if that's how they are loaded.
+    // `messageConfig.ts` loads from `config/providers/message.json`.
+
+    // Let's check where each config loads from.
+    // messageConfig: config/providers/message.json
+    // We should probably write back to that file or a local override.
+
+    // For simplicity and safety, let's write to `config/local-{configName}.json` and ensure the app loads it.
+    // BUT, the app code needs to be aware of this new file.
+    // `messageConfig.ts` only loads `providers/message.json`.
+
+    // Alternative: We update the specific provider file.
+    let targetFile = '';
+    switch (configName) {
+      case 'message': targetFile = 'providers/message.json'; break;
+      case 'llm': targetFile = 'providers/llm.json'; break;
+      case 'discord': targetFile = 'providers/discord.json'; break;
+      case 'slack': targetFile = 'providers/slack.json'; break;
+      case 'openai': targetFile = 'providers/openai.json'; break;
+      case 'flowise': targetFile = 'providers/flowise.json'; break;
+      case 'mattermost': targetFile = 'providers/mattermost.json'; break;
+      case 'openwebui': targetFile = 'providers/openwebui.json'; break;
+      case 'webhook': targetFile = 'providers/webhook.json'; break;
+      default: targetFile = `providers/${configName}.json`;
+    }
+
+    const targetPath = path.join(configDir, targetFile);
+
+    // Read existing file
+    let fileContent: any = {};
+    if (fs.existsSync(targetPath)) {
+      try {
+        fileContent = JSON.parse(fs.readFileSync(targetPath, 'utf8'));
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // Merge updates
+    const newContent = { ...fileContent, ...updates };
+
+    // Write back
+    // Ensure directory exists
+    const targetDir = path.dirname(targetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    fs.writeFileSync(targetPath, JSON.stringify(newContent, null, 2));
+
+    // Reload config in memory
+    config.load(newContent);
+    config.validate({ allowed: 'warn' });
+
+    // Log audit
+    if (process.env.NODE_ENV !== 'test') {
+      logConfigChange(req as any, 'UPDATE', `config/${configName}`, 'success', `Updated configuration for ${configName}`);
+    }
+
+    res.json({ success: true, message: 'Configuration updated and persisted' });
+
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR'
+    });
+  }
+});
 
 // Get all configuration with sensitive data redacted
 router.get('/api/config', (req, res) => {
@@ -22,7 +205,7 @@ router.get('/api/config', (req, res) => {
     const bots = manager.getAllBots();
     const warnings = manager.getWarnings();
     const userConfigStore = UserConfigStore.getInstance();
-    
+
     // Redact sensitive information
     const sanitizedBots = bots.map(bot => ({
       ...bot,
@@ -54,7 +237,7 @@ router.get('/api/config', (req, res) => {
       } : undefined,
       metadata: buildFieldMetadata(bot, userConfigStore)
     }));
-    
+
     res.json({
       bots: sanitizedBots,
       warnings,
@@ -102,8 +285,8 @@ router.get('/api/config/sources', (req, res) => {
           source: 'environment',
           value: redactSensitiveInfo(key, process.env[key] || ''),
           sensitive: key.toLowerCase().includes('token') ||
-                    key.toLowerCase().includes('key') ||
-                    key.toLowerCase().includes('secret')
+            key.toLowerCase().includes('key') ||
+            key.toLowerCase().includes('secret')
         };
         return acc;
       }, {} as Record<string, any>);
@@ -151,9 +334,9 @@ router.get('/api/config/sources', (req, res) => {
 
       envKeys.forEach(envKey => {
         if (envKey.toLowerCase().includes(botName) ||
-            envKey.includes('DISCORD_') ||
-            envKey.includes('SLACK_') ||
-            envKey.includes('OPENAI_')) {
+          envKey.includes('DISCORD_') ||
+          envKey.includes('SLACK_') ||
+          envKey.includes('OPENAI_')) {
           overrides.push({
             key: envKey,
             value: redactSensitiveInfo(envKey, process.env[envKey] || ''),

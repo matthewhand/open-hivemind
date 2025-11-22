@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Alert,
-  Snackbar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-} from '@mui/material';
-import {
-  GetApp as DownloadIcon,
-  Description as DocIcon,
-  Code as ApiIcon,
-} from '@mui/icons-material';
+  ArrowDownTrayIcon as DownloadIcon,
+  DocumentTextIcon as DocIcon,
+  CodeBracketIcon as ApiIcon,
+} from '@heroicons/react/24/outline';
+import { Alert, ToastNotification } from '../components/DaisyUI';
 
 const ExportPage: React.FC = () => {
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
     try {
@@ -37,12 +26,11 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setSnackbar({ open: true, message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, severity: 'success' });
+      setToast({ message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
     } catch (error) {
-      setSnackbar({
-        open: true,
+      setToast({
         message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
-        severity: 'error'
+        type: 'error'
       });
     }
   };
@@ -51,71 +39,70 @@ const ExportPage: React.FC = () => {
     {
       title: 'OpenAPI JSON',
       description: 'Download the complete API specification in JSON format',
-      icon: <ApiIcon />,
+      icon: <ApiIcon className="w-6 h-6" />,
       action: () => handleDownloadOpenAPI('json'),
     },
     {
       title: 'OpenAPI YAML',
       description: 'Download the complete API specification in YAML format',
-      icon: <DocIcon />,
+      icon: <DocIcon className="w-6 h-6" />,
       action: () => handleDownloadOpenAPI('yaml'),
     },
   ];
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Export & Documentation
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Download API specifications and system documentation for integration and development.
-      </Typography>
+    <div className="p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          Export & Documentation
+        </h1>
+        <p className="text-base-content/70">
+          Download API specifications and system documentation for integration and development.
+        </p>
+      </div>
 
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          API Specifications
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Export the OpenAPI specification for the Open-Hivemind WebUI API endpoints.
-        </Typography>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title mb-2">
+            API Specifications
+          </h2>
+          <p className="text-sm text-base-content/70 mb-6">
+            Export the OpenAPI specification for the Open-Hivemind WebUI API endpoints.
+          </p>
 
-        <List>
-          {exportOptions.map((option, index) => (
-            <ListItem key={index} sx={{ px: 0 }}>
-              <ListItemIcon>
-                {option.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={option.title}
-                secondary={option.description}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={option.action}
-                sx={{ ml: 2 }}
-              >
-                Download
-              </Button>
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
+          <div className="divide-y divide-base-200">
+            {exportOptions.map((option, index) => (
+              <div key={index} className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-base-200 rounded-lg text-primary">
+                    {option.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold">{option.title}</h3>
+                    <p className="text-sm text-base-content/70">{option.description}</p>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={option.action}
+                >
+                  <DownloadIcon className="w-4 h-4 mr-2" />
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {toast && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
   );
 };
 

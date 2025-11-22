@@ -1,14 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid
-} from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
@@ -40,7 +30,7 @@ const ActivityCharts: React.FC = () => {
         messageRate: metric.messageRate,
         errorRate: metric.errorRate
       }));
-      
+
       setChartData(processedData);
     }
   }, [metrics]);
@@ -58,58 +48,67 @@ const ActivityCharts: React.FC = () => {
   };
 
   return (
-    <Paper sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Activity Charts
-      </Typography>
-      
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Select Metric</InputLabel>
-            <Select
+    <div className="card bg-base-100 shadow-xl mt-6">
+      <div className="card-body">
+        <h2 className="card-title mb-4">
+          Activity Charts
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Select Metric</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
               value={selectedMetric}
-              label="Select Metric"
-              onChange={(e) => setSelectedMetric(e.target.value as string)}
+              onChange={(e) => setSelectedMetric(e.target.value)}
             >
-              <MenuItem value="messageRate">Message Rate</MenuItem>
-              <MenuItem value="responseTime">Response Time</MenuItem>
-              <MenuItem value="memoryUsage">Memory Usage</MenuItem>
-              <MenuItem value="cpuUsage">CPU Usage</MenuItem>
-              <MenuItem value="activeConnections">Active Connections</MenuItem>
-              <MenuItem value="errorRate">Error Rate</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
-      
-      <Box sx={{ height: 400, mt: 2 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{
-              top: 5,
-              right: 30,
-              left: 20,
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey={selectedMetric} 
-              stroke="#8884d8" 
-              activeDot={{ r: 8 }} 
-              name={getMetricLabel(selectedMetric)}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </Box>
-    </Paper>
+              <option value="messageRate">Message Rate</option>
+              <option value="responseTime">Response Time</option>
+              <option value="memoryUsage">Memory Usage</option>
+              <option value="cpuUsage">CPU Usage</option>
+              <option value="activeConnections">Active Connections</option>
+              <option value="errorRate">Error Rate</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="h-96 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+              <XAxis dataKey="time" stroke="currentColor" opacity={0.7} />
+              <YAxis stroke="currentColor" opacity={0.7} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--b1))',
+                  borderColor: 'hsl(var(--b3))',
+                  color: 'hsl(var(--bc))'
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey={selectedMetric}
+                stroke="hsl(var(--p))"
+                strokeWidth={2}
+                activeDot={{ r: 8 }}
+                name={getMetricLabel(selectedMetric)}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
   );
 };
 

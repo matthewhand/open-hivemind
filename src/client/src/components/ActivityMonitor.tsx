@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Alert, Progress, Table } from './DaisyUI';
 import {
-  ActivityIcon,
+  BoltIcon,
   ServerIcon,
   UserGroupIcon,
   ChartBarIcon
@@ -100,7 +100,7 @@ const ActivityMonitor: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <ActivityIcon className="w-8 h-8 text-info" />
+              <BoltIcon className="w-8 h-8 text-info" />
               <div>
                 <h2 className="card-title text-2xl">Activity Monitor</h2>
                 <p className="text-sm opacity-70">Real-time system activity tracking</p>
@@ -125,7 +125,7 @@ const ActivityMonitor: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow">
           <div className="card-body text-center">
-            <ActivityIcon className="w-8 h-8 mx-auto text-primary mb-2" />
+            <BoltIcon className="w-8 h-8 mx-auto text-primary mb-2" />
             <div className="text-2xl font-bold">{events.length}</div>
             <p className="text-sm opacity-70">Total Events</p>
           </div>
@@ -240,7 +240,7 @@ const ActivityMonitor: React.FC = () => {
 
       {isMonitoring && (
         <Alert variant="info" className="flex items-center gap-3">
-          <ActivityIcon className="w-5 h-5 animate-pulse" />
+          <BoltIcon className="w-5 h-5 animate-pulse" />
           <div>
             <p className="font-medium">Live monitoring active</p>
             <p className="text-sm opacity-70">Real-time events being captured</p>

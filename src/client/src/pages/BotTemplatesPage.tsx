@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button, Chip } from '@mui/material';
-import { Breadcrumbs } from '../components/DaisyUI';
 import { useNavigate } from 'react-router-dom';
+import { Breadcrumbs } from '../components/DaisyUI';
 
 interface BotTemplate {
   id: string;
@@ -78,8 +77,8 @@ const BotTemplatesPage: React.FC = () => {
 
   const handleUseTemplate = (template: BotTemplate) => {
     // In real app, this would pre-populate the create form
-    navigate('/uber/bots/create', { 
-      state: { 
+    navigate('/uber/bots/create', {
+      state: {
         template: {
           platform: template.platform,
           persona: template.persona,
@@ -93,102 +92,95 @@ const BotTemplatesPage: React.FC = () => {
 
   const getPlatformColor = (platform: string) => {
     const colors: Record<string, string> = {
-      discord: 'primary',
-      slack: 'secondary',
-      mattermost: 'info',
-      telegram: 'success'
+      discord: 'badge-primary',
+      slack: 'badge-secondary',
+      mattermost: 'badge-info',
+      telegram: 'badge-success'
     };
-    return colors[platform] || 'default';
+    return colors[platform] || 'badge-ghost';
   };
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading templates...</Typography>
-      </Box>
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading templates...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
           Bot Templates
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-base-content/70">
           Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {templates.map((template) => (
-          <Grid item xs={12} md={6} lg={4} key={template.id}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                border: template.featured ? '2px solid' : 'none',
-                borderColor: template.featured ? 'primary.main' : 'transparent'
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="h2">
-                    {template.name}
-                  </Typography>
-                  {template.featured && (
-                    <Chip label="Featured" color="primary" size="small" />
-                  )}
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {template.description}
-                </Typography>
+          <div
+            key={template.id}
+            className={`card bg-base-100 shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
+              }`}
+          >
+            <div className="card-body">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="card-title">
+                  {template.name}
+                </h2>
+                {template.featured && (
+                  <div className="badge badge-primary">Featured</div>
+                )}
+              </div>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                  <Chip 
-                    label={template.platform.charAt(0).toUpperCase() + template.platform.slice(1)}
-                    color={getPlatformColor(template.platform) as any}
-                    size="small"
-                  />
-                  <Chip label={template.persona} variant="outlined" size="small" />
-                  <Chip label={template.llmProvider} variant="outlined" size="small" />
-                </Box>
+              <p className="text-sm text-base-content/70 mb-4">
+                {template.description}
+              </p>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {template.tags.map((tag) => (
-                    <Chip key={tag} label={tag} variant="outlined" size="small" />
-                  ))}
-                </Box>
-              </CardContent>
-              
-              <CardActions>
-                <Button 
-                  size="small" 
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className={`badge ${getPlatformColor(template.platform)}`}>
+                  {template.platform.charAt(0).toUpperCase() + template.platform.slice(1)}
+                </div>
+                <div className="badge badge-outline">{template.persona}</div>
+                <div className="badge badge-outline">{template.llmProvider}</div>
+              </div>
+
+              <div className="flex flex-wrap gap-1 mb-4">
+                {template.tags.map((tag) => (
+                  <div key={tag} className="badge badge-ghost badge-sm">
+                    {tag}
+                  </div>
+                ))}
+              </div>
+
+              <div className="card-actions mt-auto">
+                <button
+                  className="btn btn-primary w-full"
                   onClick={() => handleUseTemplate(template)}
-                  variant="contained"
-                  fullWidth
                 >
                   Use Template
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Button 
-          variant="outlined" 
+      <div className="mt-8 text-center">
+        <button
+          className="btn btn-outline"
           onClick={() => navigate('/uber/bots/create')}
         >
           Create Custom Bot
-        </Button>
-      </Box>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 };
 

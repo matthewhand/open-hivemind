@@ -1,38 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  LinkOff as LinkOffIcon,
-  Refresh as RefreshIcon,
-  Build as BuildIcon,
-} from '@mui/icons-material';
+  PlusIcon,
+  LinkIcon,
+  ArrowPathIcon,
+  WrenchScrewdriverIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 
 interface MCPServer {
   name: string;
@@ -198,198 +171,203 @@ const MCPServerManager: React.FC = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
           MCP Server Management
-        </Typography>
-        <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            className="btn btn-outline"
             onClick={fetchServers}
           >
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
             Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+          </button>
+          <button
+            className="btn btn-primary"
             onClick={openConnectDialog}
           >
+            <PlusIcon className="w-5 h-5 mr-2" />
             Connect Server
-          </Button>
-        </Box>
-      </Box>
+          </button>
+        </div>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+        <div className="alert alert-error mb-4">
+          <span>{error}</span>
+        </div>
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Server URL</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+      <div className="overflow-x-auto">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Server URL</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {servers.map((server) => (
-              <TableRow key={server.name} hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <BuildIcon color="action" />
-                    <Typography variant="body1" fontWeight="medium">
-                      {server.name}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontFamily="monospace">
-                    {server.serverUrl}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={server.connected ? 'Connected' : 'Disconnected'}
-                    color={server.connected ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" gap={1}>
+              <tr key={server.name} className="hover">
+                <td>
+                  <div className="flex items-center gap-2">
+                    <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
+                    <span className="font-medium">{server.name}</span>
+                  </div>
+                </td>
+                <td>
+                  <span className="font-mono text-sm">{server.serverUrl}</span>
+                </td>
+                <td>
+                  <div className={`badge ${server.connected ? 'badge-success' : 'badge-ghost'} badge-sm`}>
+                    {server.connected ? 'Connected' : 'Disconnected'}
+                  </div>
+                </td>
+                <td>
+                  <div className="flex gap-2">
                     {server.connected && (
-                      <Tooltip title="View Tools">
-                        <IconButton
-                          size="small"
+                      <div className="tooltip" data-tip="View Tools">
+                        <button
+                          className="btn btn-ghost btn-xs"
                           onClick={() => handleViewTools(server)}
                         >
-                          <BuildIcon />
-                        </IconButton>
-                      </Tooltip>
+                          <WrenchScrewdriverIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
-                    <Tooltip title="Disconnect">
-                      <IconButton
-                        size="small"
+                    <div className="tooltip" data-tip="Disconnect">
+                      <button
+                        className="btn btn-ghost btn-xs text-error"
                         onClick={() => handleDisconnectServer(server.name)}
-                        color="error"
                       >
-                        <LinkOffIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
+                        <LinkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
 
       {/* Connect Server Dialog */}
-      <Dialog open={connectDialogOpen} onClose={() => setConnectDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Connect to MCP Server</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Server Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Server URL"
-              value={formData.serverUrl}
-              onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
-              required
-              helperText="The URL of the MCP server"
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="API Key (Optional)"
-              value={formData.apiKey}
-              onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-              type="password"
-              helperText="API key for server authentication (if required)"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConnectDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleConnectServer} variant="contained">
-            Connect Server
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {connectDialogOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Connect to MCP Server</h3>
+            <div className="py-4 space-y-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Server Name</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">Server URL</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  value={formData.serverUrl}
+                  onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
+                  required
+                />
+                <label className="label">
+                  <span className="label-text-alt">The URL of the MCP server</span>
+                </label>
+              </div>
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text">API Key (Optional)</span>
+                </label>
+                <input
+                  type="password"
+                  className="input input-bordered w-full"
+                  value={formData.apiKey}
+                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                />
+                <label className="label">
+                  <span className="label-text-alt">API key for server authentication (if required)</span>
+                </label>
+              </div>
+            </div>
+            <div className="modal-action">
+              <button className="btn" onClick={() => setConnectDialogOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleConnectServer}>Connect Server</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tools Dialog */}
-      <Dialog
-        open={toolsDialogOpen}
-        onClose={() => setToolsDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          Tools - {selectedServer?.name}
-        </DialogTitle>
-        <DialogContent>
-          {serverTools.length > 0 ? (
-            <List>
-              {serverTools.map((tool, index) => (
-                <React.Fragment key={tool.name}>
-                  <ListItem>
-                    <ListItemIcon>
-                      <BuildIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={tool.name}
-                      secondary={tool.description}
-                    />
-                  </ListItem>
-                  {index < serverTools.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No tools available for this server.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setToolsDialogOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      {toolsDialogOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-3xl">
+            <h3 className="font-bold text-lg">
+              Tools - {selectedServer?.name}
+            </h3>
+            <div className="py-4">
+              {serverTools.length > 0 ? (
+                <ul className="menu bg-base-200 w-full rounded-box">
+                  {serverTools.map((tool, index) => (
+                    <li key={tool.name}>
+                      <div className="flex flex-col items-start gap-1 p-4">
+                        <div className="flex items-center gap-2 font-bold">
+                          <WrenchScrewdriverIcon className="w-4 h-4" />
+                          {tool.name}
+                        </div>
+                        <p className="text-sm opacity-70">{tool.description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-base-content/70">
+                  No tools available for this server.
+                </p>
+              )}
+            </div>
+            <div className="modal-action">
+              <button className="btn" onClick={() => setToolsDialogOpen(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+      {snackbar.open && (
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${snackbar.severity === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{snackbar.message}</span>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => setSnackbar({ ...snackbar, open: false })}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
