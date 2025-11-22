@@ -11,9 +11,7 @@ interface ConfigSchema {
 
 interface ConfigItem {
   values: Record<string, any>;
-  schema: {
-    _dct: Record<string, ConfigSchema>;
-  };
+  schema: Record<string, any>;
 }
 
 type GlobalConfig = Record<string, ConfigItem>;
