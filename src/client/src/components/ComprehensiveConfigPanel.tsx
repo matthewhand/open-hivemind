@@ -26,6 +26,9 @@ const ComprehensiveConfigPanel: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Local state for JSON textareas to allow editing invalid JSON temporarily
+  const [jsonState, setJsonState] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchConfig();
   }, []);
@@ -46,15 +49,31 @@ const ComprehensiveConfigPanel: React.FC = () => {
     }
   };
 
-  const handleSave = async (section: string, updates: Record<string, any>) => {
+  const handleSave = async (section: string, values: Record<string, any>) => {
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
+
+    // Merge any valid JSON state back into values before saving
+    const valuesToSave = { ...values };
+    Object.entries(jsonState).forEach(([key, jsonStr]) => {
+      // Only include if it belongs to the current section (keys are unique enough or we prefix)
+      if (key.startsWith(`${section}.`)) {
+        const fieldName = key.split('.')[1];
+        try {
+          valuesToSave[fieldName] = JSON.parse(jsonStr);
+        } catch (e) {
+          // Ignore invalid JSON, maybe warn user?
+          console.warn(`Skipping invalid JSON for ${fieldName}`);
+        }
+      }
+    });
+
     try {
       const res = await fetch('/api/config/global', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: section, updates })
+        body: JSON.stringify({ configName: section, updates: valuesToSave })
       });
 
       if (!res.ok) {
@@ -65,6 +84,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
       setSuccessMessage(`Configuration for ${section} saved successfully`);
       // Refresh config to ensure sync
       await fetchConfig();
+      setJsonState({}); // Clear local JSON state
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -76,7 +96,6 @@ const ComprehensiveConfigPanel: React.FC = () => {
   const renderField = (key: string, value: any, schema: ConfigSchema, section: string) => {
     const handleChange = (newValue: any) => {
       if (!config) return;
-      // Optimistic update locally (deep copy to avoid mutation issues)
       const newConfig = JSON.parse(JSON.stringify(config));
       newConfig[section].values[key] = newValue;
       setConfig(newConfig);
@@ -84,15 +103,12 @@ const ComprehensiveConfigPanel: React.FC = () => {
 
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
 
-    // Determine type from schema or value
     let type = 'text';
     if (typeof value === 'boolean' || schema.format === 'Boolean') type = 'boolean';
     else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'port' || schema.format === 'Number') type = 'number';
     else if (Array.isArray(value) || schema.format === 'Array') type = 'array';
 
-    // Handle specific formats if defined in schema
     if (Array.isArray(schema.format)) {
-      // Enum select
       return (
         <div className="form-control w-full" key={key}>
           <label className="label">
@@ -156,7 +172,6 @@ const ComprehensiveConfigPanel: React.FC = () => {
       );
     }
 
-    // Default text input
     return (
       <div className="form-control w-full" key={key}>
         <label className="label">
@@ -179,33 +194,6 @@ const ComprehensiveConfigPanel: React.FC = () => {
   if (!config) return <Alert status="warning" message="No configuration found" />;
 
   const activeConfig = config[activeTab];
-  // Flatten schema structure for easier access if needed, but convict schema is nested in _dct usually
-  // Actually convict schema structure is complex. Let's assume a simplified flat structure for now based on our backend implementation
-  // or iterate over values and look up schema.
-
-  // The backend sends: values: {...}, schema: {_dct: ...} or similar.
-  // Let's iterate over values.
-
-  // Helper to find schema for a key (handling nested properties if any, though convict usually flattens or uses dot notation)
-  // For this implementation, we'll assume flat keys or simple nesting.
-
-  // Note: Convict's getSchema() returns a nested object matching the config structure, where leaves are schema objects.
-  // We need to traverse it.
-
-  const getSchemaForKey = (obj: any, keyPath: string): ConfigSchema => {
-    const keys = keyPath.split('.');
-    let current = obj;
-    for (const k of keys) {
-      if (current && current[k]) {
-        current = current[k];
-      } else if (current && current.properties && current.properties[k]) {
-        current = current.properties[k];
-      } else {
-        return {};
-      }
-    }
-    return current;
-  };
 
   return (
     <div className="space-y-6">
@@ -242,23 +230,39 @@ const ComprehensiveConfigPanel: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Object.entries(activeConfig.values).map(([key, value]) => {
-                // Skip complex objects for now if not handled
+                // Handle objects (JSON editor)
                 if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                  // Recursive rendering could go here, but for now let's skip or JSON stringify
-                  return null;
+                  const stateKey = `${activeTab}.${key}`;
+                  const currentValue = jsonState[stateKey] !== undefined
+                    ? jsonState[stateKey]
+                    : JSON.stringify(value, null, 2);
+
+                  let isValidJson = true;
+                  try { JSON.parse(currentValue); } catch { isValidJson = false; }
+
+                  return (
+                    <div className="form-control w-full col-span-2" key={key}>
+                      <label className="label">
+                        <span className="label-text font-semibold">{key}</span>
+                        {activeConfig.schema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{activeConfig.schema[key].env}</span>}
+                      </label>
+                      <textarea
+                        className={`textarea textarea-bordered h-32 font-mono text-sm ${!isValidJson ? 'textarea-error' : ''}`}
+                        value={currentValue}
+                        onChange={(e) => setJsonState(prev => ({ ...prev, [stateKey]: e.target.value }))}
+                        placeholder="{}"
+                      ></textarea>
+                      <label className="label">
+                        <span className="label-text-alt text-base-content/70">
+                          {activeConfig.schema[key]?.doc || 'JSON Configuration Object'}
+                        </span>
+                        {!isValidJson && <span className="label-text-alt text-error">Invalid JSON</span>}
+                      </label>
+                    </div>
+                  );
                 }
 
-                // Find schema
-                // The schema object from convict is nested.
-                // We need to find the schema definition for this key.
-                // Since we are iterating values which might be flat or nested, 
-                // let's assume the backend sent a structure where schema matches values structure.
-                // Actually, convict values are nested if the schema is nested.
-
-                // Let's try to find the schema node.
-                // If activeConfig.schema has the same structure as values but with schema props.
                 const schemaNode = activeConfig.schema[key] || {};
-
                 return renderField(key, value, schemaNode, activeTab);
               })}
             </div>
