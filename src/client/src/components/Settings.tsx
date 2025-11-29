@@ -1,17 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  FormControlLabel,
-  Switch,
-  Select,
-  MenuItem,
-  Button,
-  Alert,
-  Divider,
-} from '@mui/material';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import {
   selectUI,
@@ -45,34 +32,36 @@ const Settings: React.FC = () => {
       title: 'Appearance',
       icon: '🎨',
       content: (
-        <Box>
-          <FormControlLabel
-            control={
-              <Switch
+        <div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Dark Mode</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
                 checked={ui.theme === 'dark'}
                 onChange={(event) => handleThemeToggle(event.target.checked)}
-                color="primary"
               />
-            }
-            label="Dark Mode"
-          />
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Theme preset
-          </Typography>
-          <Select
-            value={ui.theme}
-            onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
-            size="small"
-            sx={{ minWidth: 200 }}
-          >
-            {themeOptions.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
+            </label>
+          </div>
+          <div className="divider my-2"></div>
+          <div className="form-control w-full max-w-xs">
+            <label className="label">
+              <span className="label-text text-base-content/70">Theme preset</span>
+            </label>
+            <select
+              className="select select-bordered select-sm w-full"
+              value={ui.theme}
+              onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
+            >
+              {themeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       ),
     },
     {
@@ -80,36 +69,36 @@ const Settings: React.FC = () => {
       title: 'Dashboard Settings',
       icon: '📊',
       content: (
-        <Box>
-          <FormControlLabel
-            control={
-              <Switch
+        <div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Auto Refresh</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
                 checked={ui.autoRefreshEnabled}
                 onChange={handleAutoRefreshToggle}
-                color="primary"
               />
-            }
-            label="Auto Refresh"
-          />
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Refresh Interval:
-            </Typography>
-            <Select
+            </label>
+          </div>
+          <div className="mt-4 form-control w-full max-w-xs">
+            <label className="label">
+              <span className="label-text text-base-content/70">Refresh Interval:</span>
+            </label>
+            <select
+              className="select select-bordered select-sm w-full"
               value={ui.refreshInterval}
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
-              size="small"
-              sx={{ minWidth: 120 }}
               disabled={!ui.autoRefreshEnabled}
             >
-              <MenuItem value={1000}>1 second</MenuItem>
-              <MenuItem value={5000}>5 seconds</MenuItem>
-              <MenuItem value={10000}>10 seconds</MenuItem>
-              <MenuItem value={30000}>30 seconds</MenuItem>
-              <MenuItem value={60000}>1 minute</MenuItem>
-            </Select>
-          </Box>
-        </Box>
+              <option value={1000}>1 second</option>
+              <option value={5000}>5 seconds</option>
+              <option value={10000}>10 seconds</option>
+              <option value={30000}>30 seconds</option>
+              <option value={60000}>1 minute</option>
+            </select>
+          </div>
+        </div>
       ),
     },
     {
@@ -117,38 +106,41 @@ const Settings: React.FC = () => {
       title: 'Accessibility',
       icon: '♿',
       content: (
-        <Box>
-          <FormControlLabel
-            control={
-              <Switch
+        <div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Reduced Motion</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
                 checked={!ui.animationsEnabled}
                 onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
-                color="primary"
               />
-            }
-            label="Reduced Motion"
-          />
-          <FormControlLabel
-            control={
-              <Switch
+            </label>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Show Tooltips</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
                 checked={ui.showTooltips}
                 onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
-                color="primary"
               />
-            }
-            label="Show Tooltips"
-          />
-          <FormControlLabel
-            control={
-              <Switch
+            </label>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Keyboard Shortcuts Overlay</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
                 checked={ui.showKeyboardShortcuts}
                 onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
-                color="primary"
               />
-            }
-            label="Keyboard Shortcuts Overlay"
-          />
-        </Box>
+            </label>
+          </div>
+        </div>
       ),
     },
   ];
@@ -195,35 +187,36 @@ const Settings: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">
         Settings
-      </Typography>
+      </h1>
 
       {saveStatus === 'saved' && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Settings saved successfully!
-        </Alert>
+        <div className="alert alert-success mb-6">
+          <span>Settings saved successfully!</span>
+        </div>
       )}
 
       <Accordion items={accordionItems} allowMultiple defaultOpenItems={['appearance']} />
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
+      <div className="flex gap-4 mt-6">
+        <button
+          className="btn btn-primary"
           onClick={handleSaveSettings}
           disabled={saveStatus === 'saving'}
         >
+          {saveStatus === 'saving' ? <span className="loading loading-spinner"></span> : null}
           {saveStatus === 'saving' ? 'Saving...' : 'Save Settings'}
-        </Button>
-        <Button
-          variant="outlined"
+        </button>
+        <button
+          className="btn btn-outline"
           onClick={() => window.location.reload()}
         >
           Reset to Defaults
-        </Button>
-      </Box>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 };
 

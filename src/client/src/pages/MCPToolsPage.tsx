@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button, Chip, FormControl, InputLabel, Select, MenuItem, TextField, InputAdornment } from '@mui/material';
-import { Search as SearchIcon, Build as ToolIcon, PlayArrow as RunIcon } from '@mui/icons-material';
+import {
+  WrenchScrewdriverIcon as ToolIcon,
+  PlayIcon as RunIcon,
+  MagnifyingGlassIcon as SearchIcon
+} from '@heroicons/react/24/outline';
 import { Breadcrumbs, Alert } from '../components/DaisyUI';
 
 interface MCPTool {
@@ -127,7 +130,7 @@ const MCPToolsPage: React.FC = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(tool => 
+      filtered = filtered.filter(tool =>
         tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tool.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -151,23 +154,23 @@ const MCPToolsPage: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      git: 'primary',
-      database: 'secondary',
-      filesystem: 'info',
-      network: 'success',
-      ai: 'warning'
+      git: 'badge-primary',
+      database: 'badge-secondary',
+      filesystem: 'badge-info',
+      network: 'badge-success',
+      ai: 'badge-warning'
     };
-    return colors[category] || 'default';
+    return colors[category] || 'badge-ghost';
   };
 
   const handleRunTool = async (tool: MCPTool) => {
     try {
       // Simulate tool execution
       setAlert({ type: 'success', message: `Tool "${tool.name}" executed successfully` });
-      
+
       // Update usage count
-      setTools(prev => prev.map(t => 
-        t.id === tool.id 
+      setTools(prev => prev.map(t =>
+        t.id === tool.id
           ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
           : t
       ));
@@ -178,8 +181,8 @@ const MCPToolsPage: React.FC = () => {
 
   const handleToggleTool = async (toolId: string) => {
     try {
-      setTools(prev => prev.map(tool => 
-        tool.id === toolId 
+      setTools(prev => prev.map(tool =>
+        tool.id === toolId
           ? { ...tool, enabled: !tool.enabled }
           : tool
       ));
@@ -191,163 +194,152 @@ const MCPToolsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading MCP tools...</Typography>
-      </Box>
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading MCP tools...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
           MCP Tools
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-base-content/70">
           Browse and manage tools available from your MCP servers
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
       )}
 
       {/* Filters */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <TextField
-          placeholder="Search tools..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 250 }}
-        />
-        
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryFilter}
-            label="Category"
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Categories</MenuItem>
-            {categories.map(category => (
-              <MenuItem key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
+          <div className="input-group">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Search tools..."
+                className="input input-bordered w-full pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
+            </div>
+          </div>
+        </div>
 
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Server</InputLabel>
-          <Select
-            value={serverFilter}
-            label="Server"
-            onChange={(e) => setServerFilter(e.target.value)}
-          >
-            <MenuItem value="all">All Servers</MenuItem>
-            {servers.map(server => (
-              <MenuItem key={server.id} value={server.id}>
-                {server.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+        <select
+          className="select select-bordered w-full md:w-auto"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="all">All Categories</option>
+          {categories.map(category => (
+            <option key={category} value={category}>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </option>
+          ))}
+        </select>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <select
+          className="select select-bordered w-full md:w-auto"
+          value={serverFilter}
+          onChange={(e) => setServerFilter(e.target.value)}
+        >
+          <option value="all">All Servers</option>
+          {servers.map(server => (
+            <option key={server.id} value={server.id}>
+              {server.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <p className="text-sm text-base-content/70 mb-4">
         Showing {filteredTools.length} of {tools.length} tools
-      </Typography>
+      </p>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTools.map((tool) => (
-          <Grid item xs={12} md={6} lg={4} key={tool.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ToolIcon color="action" />
-                    <Typography variant="h6" component="h2">
-                      {tool.name}
-                    </Typography>
-                  </Box>
-                  <Chip 
-                    label={tool.enabled ? 'Enabled' : 'Disabled'}
-                    color={tool.enabled ? 'success' : 'default'}
-                    size="small"
-                  />
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {tool.description}
-                </Typography>
+          <div key={tool.id} className="card bg-base-100 shadow-xl h-full">
+            <div className="card-body">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                  <ToolIcon className="w-5 h-5 text-base-content/70" />
+                  <h2 className="card-title text-lg">
+                    {tool.name}
+                  </h2>
+                </div>
+                <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                  {tool.enabled ? 'Enabled' : 'Disabled'}
+                </div>
+              </div>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                  <Chip 
-                    label={tool.category}
-                    color={getCategoryColor(tool.category) as any}
-                    size="small"
-                  />
-                  <Chip label={tool.serverName} variant="outlined" size="small" />
-                </Box>
+              <p className="text-sm text-base-content/70 mb-4">
+                {tool.description}
+              </p>
 
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Usage:</strong> {tool.usageCount} times
-                </Typography>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <div className={`badge ${getCategoryColor(tool.category)}`}>
+                  {tool.category}
+                </div>
+                <div className="badge badge-outline">{tool.serverName}</div>
+              </div>
 
+              <div className="text-xs space-y-1 mb-4">
+                <p><strong>Usage:</strong> {tool.usageCount} times</p>
                 {tool.lastUsed && (
-                  <Typography variant="body2" color="text.secondary">
+                  <p className="text-base-content/50">
                     Last used: {new Date(tool.lastUsed).toLocaleString()}
-                  </Typography>
+                  </p>
                 )}
-              </CardContent>
-              
-              <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Button
-                  size="small"
+              </div>
+
+              <div className="card-actions justify-between mt-auto">
+                <button
+                  className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
                   onClick={() => handleToggleTool(tool.id)}
-                  color={tool.enabled ? 'error' : 'success'}
                 >
                   {tool.enabled ? 'Disable' : 'Enable'}
-                </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<RunIcon />}
+                </button>
+                <button
+                  className="btn btn-sm btn-primary"
                   onClick={() => handleRunTool(tool)}
                   disabled={!tool.enabled}
                 >
+                  <RunIcon className="w-4 h-4 mr-1" />
                   Run Tool
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
       {filteredTools.length === 0 && !loading && (
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography variant="h6" color="text.secondary">
+        <div className="text-center mt-12">
+          <h3 className="text-lg font-medium text-base-content/70">
             No tools found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-sm text-base-content/50 mt-1">
             Try adjusting your search criteria or add more MCP servers
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

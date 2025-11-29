@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import VisualFeedback from '../components/DaisyUI/VisualFeedback';
 import Timeline, { TimelineEvent } from '../components/DaisyUI/Timeline';
 import { useWebSocket } from '../hooks/useWebSocket';
+import ActivityCharts from '../components/Monitoring/ActivityCharts';
 
 const MonitoringPage: React.FC = () => {
   const { connect, disconnect, isConnected } = useWebSocket();
@@ -95,7 +95,7 @@ const MonitoringPage: React.FC = () => {
   useEffect(() => {
     // Connect to WebSocket for real-time monitoring
     connect();
-    
+
     // Initialize with mock events
     setEvents(mockEvents);
 
@@ -109,32 +109,38 @@ const MonitoringPage: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        System Monitoring
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Real-time performance metrics and system health monitoring.
-        {isConnected ? ' (Live updates enabled)' : ' (Connecting...)'}
-      </Typography>
-      
-      <Box sx={{ mb: 4 }}>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">
+          System Monitoring
+        </h1>
+        <p className="text-base-content/70">
+          Real-time performance metrics and system health monitoring.
+          {isConnected ? ' (Live updates enabled)' : ' (Connecting...)'}
+        </p>
+      </div>
+
+      <div className="mb-6">
         <VisualFeedback metrics={mockMetrics} initialRating={4} />
-      </Box>
-      
-      <Box sx={{ mb: 4 }}>
+      </div>
+
+      <div className="mb-6">
         <PerformanceMonitor />
-      </Box>
+      </div>
+
+      <div className="mb-6">
+        <ActivityCharts />
+      </div>
 
       {/* System Activity Timeline */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">
           System Activity
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        </h2>
+        <p className="text-sm text-base-content/70 mb-4">
           Recent system events and audit logs
-        </Typography>
-        
+        </p>
+
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <div className="flex justify-between items-center mb-4">
@@ -158,7 +164,7 @@ const MonitoringPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <Timeline
               events={events}
               viewMode="detailed"
@@ -170,8 +176,8 @@ const MonitoringPage: React.FC = () => {
             />
           </div>
         </div>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

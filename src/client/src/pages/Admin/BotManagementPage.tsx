@@ -1,175 +1,65 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-  Alert,
-  Breadcrumbs,
-  Link,
-  Button
-} from '@mui/material';
-import {
-  TableView as TableIcon,
-  ViewModule as CardIcon,
-  AdminPanelSettings as AdminIcon,
-  ArrowBack as BackIcon
-} from '@mui/icons-material';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import EnhancedBotManager from '../../components/Admin/EnhancedBotManager';
-import ReactAdminBotManager from '../../components/Admin/ReactAdminBotManager';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel({ children, value, index, ...other }: TabPanelProps) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`bot-management-tabpanel-${index}`}
-      aria-labelledby={`bot-management-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
-}
 
 const BotManagementPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [selectedBot, setSelectedBot] = useState<any>(null);
   const navigate = useNavigate();
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
   const handleBotSelect = (bot: any) => {
-    setSelectedBot(bot);
-    // Could navigate to bot details page or open modal
     console.log('Selected bot:', bot);
+    // Could navigate to bot details page or open modal
   };
-
-  const tabs = [
-    {
-      label: 'Card View',
-      icon: <CardIcon />,
-      description: 'Visual card-based bot management with status indicators',
-      component: <EnhancedBotManager onBotSelect={handleBotSelect} />
-    },
-    {
-      label: 'Table View',
-      icon: <TableIcon />,
-      description: 'React-Admin powered data grid with advanced CRUD operations',
-      component: <ReactAdminBotManager />
-    }
-  ];
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ mt: 2, mb: 4 }}>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-6">
         {/* Breadcrumbs */}
-        <Breadcrumbs sx={{ mb: 2 }}>
-          <Link
-            underline="hover"
-            color="inherit"
-            onClick={() => navigate('/admin')}
-            sx={{ cursor: 'pointer' }}
-          >
-            Admin Dashboard
-          </Link>
-          <Typography color="text.primary">Bot Management</Typography>
-        </Breadcrumbs>
+        <div className="text-sm breadcrumbs mb-4">
+          <ul>
+            <li>
+              <a onClick={() => navigate('/admin')} className="cursor-pointer">
+                Admin Dashboard
+              </a>
+            </li>
+            <li>Bot Management</li>
+          </ul>
+        </div>
 
         {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Bot Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Create, configure, and manage your AI bot instances with persistent storage
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<BackIcon />}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Bot Management</h1>
+            <p className="text-base-content/70 mt-1">
+              Create, configure, and manage your AI bot instances
+            </p>
+          </div>
+          <button
+            className="btn btn-outline gap-2"
             onClick={() => navigate('/admin')}
           >
+            <ArrowLeftIcon className="w-4 h-4" />
             Back to Dashboard
-          </Button>
-        </Box>
+          </button>
+        </div>
 
         {/* Info Alert */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Enhanced Bot Management:</strong> This interface provides two views for managing your bots. 
-            The Card View offers a visual approach with status indicators, while the Table View provides 
-            advanced data grid capabilities powered by React-Admin with full CRUD operations and persistent storage.
-          </Typography>
-        </Alert>
+        <div className="alert alert-info shadow-sm mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div>
+            <h3 className="font-bold">Enhanced Bot Management</h3>
+            <div className="text-xs">
+              Manage your bots with visual status indicators, persistent storage, and advanced configuration options.
+            </div>
+          </div>
+        </div>
 
-        {/* Selected Bot Info */}
-        {selectedBot && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              <strong>Selected Bot:</strong> {selectedBot.name} 
-              ({selectedBot.messageProvider} → {selectedBot.llmProvider})
-            </Typography>
-          </Alert>
-        )}
-
-        {/* Tabs */}
-        <Paper sx={{ width: '100%' }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            aria-label="bot management view tabs"
-            variant="fullWidth"
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              '& .MuiTab-root': {
-                minHeight: 80,
-                textTransform: 'none'
-              }
-            }}
-          >
-            {tabs.map((tab, index) => (
-              <Tab
-                key={index}
-                label={
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {tab.icon}
-                      <Typography variant="subtitle1">{tab.label}</Typography>
-                    </Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-                      {tab.description}
-                    </Typography>
-                  </Box>
-                }
-                id={`bot-management-tab-${index}`}
-                aria-controls={`bot-management-tabpanel-${index}`}
-              />
-            ))}
-          </Tabs>
-
-          {/* Tab Panels */}
-          {tabs.map((tab, index) => (
-            <TabPanel key={index} value={activeTab} index={index}>
-              {tab.component}
-            </TabPanel>
-          ))}
-        </Paper>
-      </Box>
-    </Container>
+        {/* Main Content */}
+        <div className="bg-base-100 rounded-box shadow-lg border border-base-200">
+          <EnhancedBotManager onBotSelect={handleBotSelect} />
+        </div>
+      </div>
+    </div>
   );
 };
 

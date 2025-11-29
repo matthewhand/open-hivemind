@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardActions, Button, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, PlayArrow as StartIcon, Stop as StopIcon } from '@mui/icons-material';
-import { Breadcrumbs, Alert } from '../components/DaisyUI';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  PlayIcon,
+  StopIcon
+} from '@heroicons/react/24/outline';
+import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
 interface MCPServer {
   id: string;
@@ -76,10 +81,10 @@ const MCPServersPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'success';
-      case 'stopped': return 'default';
-      case 'error': return 'error';
-      default: return 'default';
+      case 'running': return 'badge-success';
+      case 'stopped': return 'badge-ghost';
+      case 'error': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
@@ -87,10 +92,10 @@ const MCPServersPage: React.FC = () => {
     try {
       // Simulate API call
       setAlert({ type: 'success', message: `Server ${action} action completed` });
-      
+
       // Update server status
-      setServers(prev => prev.map(server => 
-        server.id === serverId 
+      setServers(prev => prev.map(server =>
+        server.id === serverId
           ? { ...server, status: action === 'start' ? 'running' : 'stopped' }
           : server
       ));
@@ -124,7 +129,7 @@ const MCPServersPage: React.FC = () => {
     try {
       if (isEditing) {
         // Update existing server
-        setServers(prev => prev.map(server => 
+        setServers(prev => prev.map(server =>
           server.id === selectedServer.id ? selectedServer : server
         ));
         setAlert({ type: 'success', message: 'Server updated successfully' });
@@ -153,158 +158,170 @@ const MCPServersPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography>Loading MCP servers...</Typography>
-      </Box>
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading MCP servers...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, mb: 4 }}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
+
+      <div className="flex justify-between items-center mt-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">
             MCP Servers
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
+          </h1>
+          <p className="text-base-content/70">
             Manage Model Context Protocol servers and their tools
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+          </p>
+        </div>
+        <button
+          className="btn btn-primary"
           onClick={handleAddServer}
         >
+          <PlusIcon className="w-5 h-5 mr-2" />
           Add Server
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
+        <div className="mb-6">
+          <Alert
+            status={alert.type === 'success' ? 'success' : 'error'}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {servers.map((server) => (
-          <Grid item xs={12} md={6} lg={4} key={server.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="h2">
-                    {server.name}
-                  </Typography>
-                  <Chip 
-                    label={server.status}
-                    color={getStatusColor(server.status) as any}
-                    size="small"
-                  />
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {server.description}
-                </Typography>
+          <div key={server.id} className="card bg-base-100 shadow-xl h-full">
+            <div className="card-body">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="card-title">
+                  {server.name}
+                </h2>
+                <div className={`badge ${getStatusColor(server.status)}`}>
+                  {server.status}
+                </div>
+              </div>
 
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>URL:</strong> {server.url}
-                </Typography>
+              <p className="text-sm text-base-content/70 mb-4">
+                {server.description}
+              </p>
 
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>Tools:</strong> {server.toolCount}
-                </Typography>
-
+              <div className="text-sm space-y-2 mb-4">
+                <p><strong>URL:</strong> {server.url}</p>
+                <p><strong>Tools:</strong> {server.toolCount}</p>
                 {server.lastConnected && (
-                  <Typography variant="body2" color="text.secondary">
+                  <p className="text-base-content/50">
                     Last connected: {new Date(server.lastConnected).toLocaleString()}
-                  </Typography>
+                  </p>
                 )}
-              </CardContent>
-              
-              <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Box>
+              </div>
+
+              <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
+                <div className="flex gap-1">
                   {server.status === 'running' ? (
-                    <IconButton 
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-error"
                       onClick={() => handleServerAction(server.id, 'stop')}
-                      color="error"
                       title="Stop Server"
                     >
-                      <StopIcon />
-                    </IconButton>
+                      <StopIcon className="w-5 h-5" />
+                    </button>
                   ) : (
-                    <IconButton 
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-success"
                       onClick={() => handleServerAction(server.id, 'start')}
-                      color="success"
                       title="Start Server"
                     >
-                      <StartIcon />
-                    </IconButton>
+                      <PlayIcon className="w-5 h-5" />
+                    </button>
                   )}
-                </Box>
-                <Box>
-                  <IconButton 
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    className="btn btn-ghost btn-sm btn-circle"
                     onClick={() => handleEditServer(server)}
                     title="Edit Server"
                   >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton 
+                    <PencilIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm btn-circle text-error"
                     onClick={() => handleDeleteServer(server.id)}
-                    color="error"
                     title="Delete Server"
                   >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </CardActions>
-            </Card>
-          </Grid>
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
-      </Grid>
+      </div>
 
-      {/* Add/Edit Server Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              label="Server Name"
+      {/* Add/Edit Server Modal */}
+      <Modal
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
+      >
+        <div className="space-y-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Server Name *</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={selectedServer?.name || ''}
               onChange={(e) => setSelectedServer(prev => prev ? { ...prev, name: e.target.value } : null)}
-              fullWidth
               required
             />
-            <TextField
-              label="Server URL"
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Server URL *</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
               value={selectedServer?.url || ''}
               onChange={(e) => setSelectedServer(prev => prev ? { ...prev, url: e.target.value } : null)}
-              fullWidth
               required
               placeholder="mcp://server-host:port"
             />
-            <TextField
-              label="Description"
+          </div>
+
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text">Description</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered h-24"
               value={selectedServer?.description || ''}
               onChange={(e) => setSelectedServer(prev => prev ? { ...prev, description: e.target.value } : null)}
-              fullWidth
-              multiline
-              rows={3}
             />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSaveServer} variant="contained">
+          </div>
+        </div>
+
+        <div className="modal-action">
+          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
+            Cancel
+          </button>
+          <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </button>
+        </div>
+      </Modal>
+    </div>
   );
 };
 

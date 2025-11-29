@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Box, BoxProps } from '@mui/material';
+import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
 
 export interface AnimationVariants {
   initial?: any;
@@ -51,8 +50,8 @@ export const scaleVariants: AnimationVariants = {
 
 export const bounceVariants: AnimationVariants = {
   initial: { y: -50, opacity: 0 },
-  animate: { 
-    y: 0, 
+  animate: {
+    y: 0,
     opacity: 1,
     transition: {
       type: 'spring',
@@ -101,7 +100,7 @@ export const shakeVariants: AnimationVariants = {
 
 export const glowVariants: AnimationVariants = {
   initial: { boxShadow: '0 0 0 rgba(59, 130, 246, 0)' },
-  animate: { 
+  animate: {
     boxShadow: [
       '0 0 0 rgba(59, 130, 246, 0)',
       '0 0 20px rgba(59, 130, 246, 0.5)',
@@ -123,7 +122,7 @@ export const flipVariants: AnimationVariants = {
 
 export const morphingButtonVariants: AnimationVariants = {
   initial: { borderRadius: '50px' },
-  animate: { 
+  animate: {
     borderRadius: ['50px', '20px', '50px'],
     transition: {
       duration: 2,
@@ -133,7 +132,7 @@ export const morphingButtonVariants: AnimationVariants = {
   }
 };
 
-interface AnimatedBoxProps extends BoxProps {
+interface AnimatedBoxProps extends HTMLMotionProps<"div"> {
   animation?: AnimationVariants;
   config?: AnimationConfig;
   isVisible?: boolean;
@@ -153,8 +152,7 @@ export const AnimatedBox: React.FC<AnimatedBoxProps> = ({
   return (
     <AnimatePresence mode="wait">
       {isVisible && (
-        <Box
-          component={motion.div}
+        <motion.div
           initial={animation.initial}
           animate={animation.animate}
           exit={animation.exit}
@@ -167,13 +165,13 @@ export const AnimatedBox: React.FC<AnimatedBoxProps> = ({
           {...props}
         >
           {children}
-        </Box>
+        </motion.div>
       )}
     </AnimatePresence>
   );
 };
 
-interface AnimatedContainerProps extends BoxProps {
+interface AnimatedContainerProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
   containerVariants?: AnimationVariants;
   itemVariants?: AnimationVariants;
@@ -188,27 +186,25 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   ...props
 }) => {
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       variants={containerVariants}
       initial="initial"
       animate="animate"
       {...props}
     >
       {React.Children.map(children, (child, index) => (
-        <Box
+        <motion.div
           key={index}
-          component={motion.div}
           variants={itemVariants}
         >
           {child}
-        </Box>
+        </motion.div>
       ))}
-    </Box>
+    </motion.div>
   );
 };
 
-interface LoadingAnimationProps extends BoxProps {
+interface LoadingAnimationProps extends HTMLMotionProps<"div"> {
   size?: number;
   color?: string;
   duration?: number;
@@ -218,31 +214,31 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
   size = 40,
   color = '#3b82f6',
   duration = 1.5,
+  style,
   ...props
 }) => {
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       animate={{ rotate: 360 }}
       transition={{
         duration,
         repeat: Infinity,
         ease: 'linear',
       }}
-      sx={{
+      style={{
         width: size,
         height: size,
         border: `${size * 0.1}px solid ${color}20`,
         borderTop: `${size * 0.1}px solid ${color}`,
         borderRadius: '50%',
-        ...props.sx,
+        ...style,
       }}
       {...props}
     />
   );
 };
 
-interface ErrorShakeAnimationProps extends BoxProps {
+interface ErrorShakeAnimationProps extends HTMLMotionProps<"div"> {
   isError?: boolean;
   children: React.ReactNode;
 }
@@ -253,17 +249,16 @@ export const ErrorShakeAnimation: React.FC<ErrorShakeAnimationProps> = ({
   ...props
 }) => {
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       animate={isError ? shakeVariants.animate : {}}
       {...props}
     >
       {children}
-    </Box>
+    </motion.div>
   );
 };
 
-interface SuccessBounceAnimationProps extends BoxProps {
+interface SuccessBounceAnimationProps extends HTMLMotionProps<"div"> {
   isSuccess?: boolean;
   children: React.ReactNode;
 }
@@ -274,8 +269,7 @@ export const SuccessBounceAnimation: React.FC<SuccessBounceAnimationProps> = ({
   ...props
 }) => {
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       initial={{ scale: 0 }}
       animate={isSuccess ? { scale: 1 } : { scale: 1 }}
       transition={{
@@ -286,29 +280,28 @@ export const SuccessBounceAnimation: React.FC<SuccessBounceAnimationProps> = ({
       {...props}
     >
       {children}
-    </Box>
+    </motion.div>
   );
 };
 
-interface PageTransitionProps extends BoxProps {
+interface PageTransitionProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
-  key: string;
+  pageKey: string; // Renamed from 'key' to avoid conflict
   direction?: 'x' | 'y';
   duration?: number;
 }
 
 export const PageTransition: React.FC<PageTransitionProps> = ({
   children,
-  key,
+  pageKey,
   direction = 'x',
   duration = 0.3,
   ...props
 }) => {
   return (
     <AnimatePresence mode="wait">
-      <Box
-        key={key}
-        component={motion.div}
+      <motion.div
+        key={pageKey}
         initial={{ opacity: 0, [direction]: direction === 'x' ? 100 : 50 }}
         animate={{ opacity: 1, [direction]: 0 }}
         exit={{ opacity: 0, [direction]: direction === 'x' ? -100 : -50 }}
@@ -319,12 +312,12 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
         {...props}
       >
         {children}
-      </Box>
+      </motion.div>
     </AnimatePresence>
   );
 };
 
-interface HoverScaleAnimationProps extends BoxProps {
+interface HoverScaleAnimationProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
   scale?: number;
   whileHoverScale?: number;
@@ -339,19 +332,18 @@ export const HoverScaleAnimation: React.FC<HoverScaleAnimationProps> = ({
   ...props
 }) => {
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       initial={{ scale }}
       whileHover={{ scale: whileHoverScale }}
       transition={{ duration, ease: 'easeInOut' }}
       {...props}
     >
       {children}
-    </Box>
+    </motion.div>
   );
 };
 
-interface ParallaxScrollProps extends BoxProps {
+interface ParallaxScrollProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
   offset?: number;
   direction?: 'up' | 'down' | 'left' | 'right';
@@ -374,8 +366,7 @@ export const ParallaxScroll: React.FC<ParallaxScrollProps> = ({
   };
 
   return (
-    <Box
-      component={motion.div}
+    <motion.div
       animate={getTransform()}
       transition={{
         scrollY: {
@@ -387,7 +378,7 @@ export const ParallaxScroll: React.FC<ParallaxScrollProps> = ({
       {...props}
     >
       {children}
-    </Box>
+    </motion.div>
   );
 };
 

@@ -2,32 +2,18 @@ import React, { createContext, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  IconButton,
-  CircularProgress,
-  Switch
-} from '@mui/material';
-import { 
-  Security as SecurityIcon,
-  Shield as ShieldIcon,
-  Lock as LockIcon,
-  VerifiedUser as VerifiedIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Settings as SettingsIcon,
-  Visibility as ViewIcon,
-  Block as BlockIcon,
-  Timeline as TimelineIcon,
-  SecurityUpdate as UpdateIcon
-} from '@mui/icons-material';
+  ShieldCheckIcon,
+  LockClosedIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  Cog6ToothIcon,
+  EyeIcon,
+  NoSymbolIcon,
+  ChartBarIcon,
+  ArrowPathIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
 import { AnimatedBox } from '../animations/AnimationComponents';
 
 export interface SecurityConfig {
@@ -163,6 +149,7 @@ export interface SecurityMetrics {
   overallScore: number;
   incidents: {
     total: number;
+    activeIncidents: number;
     bySeverity: Record<string, number>;
     byStatus: Record<string, number>;
     byType: Record<string, number>;
@@ -200,55 +187,55 @@ interface SecurityContextType {
   config: SecurityConfig;
   isLoading: boolean;
   lastUpdated: Date;
-  
+
   // Security incidents
   incidents: SecurityIncident[];
   activeIncidents: SecurityIncident[];
   recentIncidents: SecurityIncident[];
-  
+
   // Security scans
   scans: SecurityScan[];
   activeScans: SecurityScan[];
   recentFindings: SecurityFinding[];
-  
+
   // Metrics
   metrics: SecurityMetrics;
-  
+
   // Configuration management
   updateConfig: (updates: Partial<SecurityConfig>) => Promise<void>;
   resetConfig: () => Promise<void>;
   exportConfig: () => string;
   importConfig: (config: string) => Promise<void>;
-  
+
   // Incident management
   createIncident: (incident: Omit<SecurityIncident, 'id' | 'timestamp' | 'createdBy' | 'updatedAt'>) => Promise<SecurityIncident>;
   updateIncident: (id: string, updates: Partial<SecurityIncident>) => Promise<void>;
   resolveIncident: (id: string, resolution: string) => Promise<void>;
   assignIncident: (id: string, userId: string) => Promise<void>;
-  
+
   // Scan management
   startScan: (scan: Omit<SecurityScan, 'id' | 'status' | 'progress' | 'findings' | 'startedAt' | 'completedAt'>) => Promise<SecurityScan>;
   cancelScan: (id: string) => Promise<void>;
   scheduleScan: (scan: Omit<SecurityScan, 'id' | 'status' | 'progress' | 'findings' | 'startedAt' | 'completedAt'>, scheduleAt: Date) => Promise<SecurityScan>;
-  
+
   // Finding management
   markFindingAsFalsePositive: (id: string) => Promise<void>;
   verifyFinding: (id: string) => Promise<void>;
   remediateFinding: (id: string) => Promise<void>;
-  
+
   // Real-time monitoring
   enableRealTimeMonitoring: () => Promise<void>;
   disableRealTimeMonitoring: () => Promise<void>;
-  
+
   // Threat detection
   getThreats: () => SecurityIncident[];
   blockIP: (ip: string, reason: string) => Promise<void>;
   unblockIP: (ip: string) => Promise<void>;
-  
+
   // Compliance
   runComplianceCheck: (framework: string) => Promise<SecurityScan>;
   getComplianceReport: (framework: string) => Promise<string>;
-  
+
   // UI helpers
   getSeverityColor: (severity: string) => string;
   getStatusColor: (status: string) => string;
@@ -434,7 +421,7 @@ interface SecurityProviderProps {
 
 export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) => {
   const currentUser = useAppSelector(selectUser);
-  
+
   const [config, setConfig] = useState<SecurityConfig>(defaultSecurityConfig);
   const [incidents, setIncidents] = useState<SecurityIncident[]>(mockIncidents);
   const [scans, setScans] = useState<SecurityScan[]>(mockScans);
@@ -446,6 +433,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     overallScore: 85,
     incidents: {
       total: incidents.length,
+      activeIncidents: incidents.filter(i => i.status !== 'resolved' && i.status !== 'false_positive').length,
       bySeverity: incidents.reduce((acc, incident) => {
         acc[incident.severity] = (acc[incident.severity] || 0) + 1;
         return acc;
@@ -529,7 +517,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       createdBy: currentUser?.username || 'system',
       updatedAt: new Date(),
     };
-    
+
     setIncidents(prev => [newIncident, ...prev]);
     return newIncident;
   };
@@ -561,12 +549,12 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       findings: [],
       startedAt: new Date(),
     };
-    
+
     setScans(prev => [newScan, ...prev]);
-    
+
     // Simulate scan progress
     simulateScanProgress(newScan.id);
-    
+
     return newScan;
   };
 
@@ -585,7 +573,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       findings: [],
       scheduledAt,
     };
-    
+
     setScans(prev => [newScan, ...prev]);
     return newScan;
   };
@@ -629,7 +617,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
 
   // Threat detection
   const getThreats = (): SecurityIncident[] => {
-    return incidents.filter(incident => 
+    return incidents.filter(incident =>
       incident.status !== 'resolved' && incident.status !== 'false_positive'
     );
   };
@@ -654,7 +642,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       createdBy: currentUser?.username || 'system',
       updatedAt: new Date(),
     };
-    
+
     await createIncident(newIncident);
   };
 
@@ -674,7 +662,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       findings: [],
       config: { framework },
     };
-    
+
     return startScan(scan);
   };
 
@@ -686,57 +674,57 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   // UI helper functions
   const getSeverityColor = (severity: string): string => {
     const colorMap: Record<string, string> = {
-      critical: '#d32f2f',
-      high: '#f44336',
-      medium: '#ff9800',
-      low: '#4caf50',
-      info: '#2196f3',
+      critical: 'error',
+      high: 'error',
+      medium: 'warning',
+      low: 'success',
+      info: 'info',
     };
-    return colorMap[severity] || '#757575';
+    return colorMap[severity] || 'neutral';
   };
 
   const getStatusColor = (status: string): string => {
     const colorMap: Record<string, string> = {
-      open: '#f44336',
-      investigating: '#ff9800',
-      resolved: '#4caf50',
-      false_positive: '#9e9e9e',
-      pending: '#2196f3',
-      running: '#2196f3',
-      completed: '#4caf50',
-      failed: '#f44336',
+      open: 'error',
+      investigating: 'warning',
+      resolved: 'success',
+      false_positive: 'neutral',
+      pending: 'info',
+      running: 'info',
+      completed: 'success',
+      failed: 'error',
     };
-    return colorMap[status] || '#757575';
+    return colorMap[status] || 'neutral';
   };
 
   const getIncidentIcon = (type: string): React.ReactNode => {
     const iconMap: Record<string, React.ReactNode> = {
-      xss_attempt: <SecurityIcon />,
-      csrf_attempt: <ShieldIcon />,
-      rate_limit_exceeded: <TimelineIcon />,
-      suspicious_login: <WarningIcon />,
-      data_breach: <ErrorIcon />,
-      malware_detected: <BlockIcon />,
-      policy_violation: <VerifiedIcon />,
+      xss_attempt: <ShieldCheckIcon className="w-5 h-5" />,
+      csrf_attempt: <LockClosedIcon className="w-5 h-5" />,
+      rate_limit_exceeded: <ChartBarIcon className="w-5 h-5" />,
+      suspicious_login: <ExclamationTriangleIcon className="w-5 h-5" />,
+      data_breach: <XCircleIcon className="w-5 h-5" />,
+      malware_detected: <NoSymbolIcon className="w-5 h-5" />,
+      policy_violation: <CheckCircleIcon className="w-5 h-5" />,
     };
-    return iconMap[type] || <SecurityIcon />;
+    return iconMap[type] || <ShieldCheckIcon className="w-5 h-5" />;
   };
 
   const getScanIcon = (type: string): React.ReactNode => {
     const iconMap: Record<string, React.ReactNode> = {
-      vulnerability: <SecurityIcon />,
-      compliance: <VerifiedIcon />,
-      penetration: <FingerprintIcon />,
-      code_review: <ViewIcon />,
+      vulnerability: <ShieldCheckIcon className="w-5 h-5" />,
+      compliance: <CheckCircleIcon className="w-5 h-5" />,
+      penetration: <Cog6ToothIcon className="w-5 h-5" />,
+      code_review: <EyeIcon className="w-5 h-5" />,
     };
-    return iconMap[type] || <SecurityIcon />;
+    return iconMap[type] || <ShieldCheckIcon className="w-5 h-5" />;
   };
 
   const formatDuration = (ms: number): string => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) return `${hours}h ${minutes % 60}m`;
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
@@ -751,26 +739,26 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
           clearInterval(interval);
           return prev;
         }
-        
+
         const newProgress = Math.min(scan.progress + Math.random() * 20, 95);
-        return prev.map(s => 
+        return prev.map(s =>
           s.id === scanId ? { ...s, progress: newProgress } : s
         );
       });
     }, 1000);
-    
+
     // Complete scan after 10 seconds
     setTimeout(() => {
       clearInterval(interval);
-      setScans(prev => prev.map(s => 
-        s.id === scanId 
-          ? { 
-              ...s, 
-              status: 'completed', 
-              progress: 100,
-              completedAt: new Date(),
-              findings: generateMockFindings(scanId)
-            } 
+      setScans(prev => prev.map(s =>
+        s.id === scanId
+          ? {
+            ...s,
+            status: 'completed',
+            progress: 100,
+            completedAt: new Date(),
+            findings: generateMockFindings(scanId)
+          }
           : s
       ));
     }, 10000);
@@ -798,10 +786,10 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
         category: 'Configuration',
         title: 'Missing Security Headers',
         description: 'HTTP security headers are not properly configured',
-        remediation: 'Add X-Content-Type-Options, X-Frame-Options, and Content-Security-Policy headers',
-        affectedResources: ['web-server', 'application-gateway'],
+        remediation: 'Configure HSTS, CSP, and X-Frame-Options headers',
+        affectedResources: ['web-server'],
         falsePositive: false,
-        verified: false,
+        verified: true,
         status: 'open',
       },
     ];
@@ -813,11 +801,11 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     isLoading,
     lastUpdated,
     incidents,
-    activeIncidents: incidents.filter(i => i.status === 'open' || i.status === 'investigating'),
-    recentIncidents: incidents.slice(0, 10),
+    activeIncidents: incidents.filter(i => i.status !== 'resolved' && i.status !== 'false_positive'),
+    recentIncidents: incidents.slice(0, 5),
     scans,
     activeScans: scans.filter(s => s.status === 'running' || s.status === 'pending'),
-    recentFindings: scans.flatMap(s => s.findings).slice(0, 10),
+    recentFindings: scans.flatMap(s => s.findings).slice(0, 5),
     metrics,
     updateConfig,
     resetConfig,
@@ -850,20 +838,20 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   if (!currentUser) {
     return (
       <AnimatedBox
-        animation={{ initial: { opacity: 0 }, animate: { opacity: 1 } }}
-        sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        animation="fade-in"
+        duration={300}
       >
-        <Card sx={{ maxWidth: 400, textAlign: 'center' }}>
-          <CardContent>
-            <SecurityIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
-              Security Center
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Please log in to access security features and monitoring.
-            </Typography>
-          </CardContent>
-        </Card>
+        <div className="p-6 flex justify-center items-center min-h-[400px]">
+          <div className="card bg-base-100 shadow-xl max-w-sm text-center">
+            <div className="card-body items-center">
+              <ShieldCheckIcon className="w-16 h-16 text-warning mb-4" />
+              <h2 className="card-title text-2xl mb-2">Access Denied</h2>
+              <p className="text-base-content/70">
+                Please log in to access the security dashboard.
+              </p>
+            </div>
+          </div>
+        </div>
       </AnimatedBox>
     );
   }
@@ -871,256 +859,149 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   return (
     <SecurityContext.Provider value={contextValue}>
       <AnimatedBox
-        animation={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }}
-        sx={{ width: '100%' }}
+        animation="fade-in"
+        duration={300}
       >
-        {/* Security Header */}
-        <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center" gap={2}>
-                <SecurityIcon color="primary" />
-                <Box>
-                  <Typography variant="h6">
-                    Security Center
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Overall Score: {metrics.overallScore}/100 • Last Updated: {lastUpdated.toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Box display="flex" alignItems="center" gap={1}>
-                <Chip
-                  label={`${activeIncidents.length} Active`}
-                  size="small"
-                  color={incidents.filter(i => i.status === 'open' || i.status === 'investigating').length > 0 ? 'error' : 'success'}
-                />
-                <Chip
-                  label={`${scans.filter(s => s.status === 'running' || s.status === 'pending').length} Scanning`}
-                  size="small"
-                  color={activeScans.length > 0 ? 'primary' : 'default'}
-                />
-                <IconButton>
-                  <SettingsIcon />
-                </IconButton>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+        <div className="w-full">
+          {/* Security Header */}
+          <div className="card bg-base-100 shadow-xl mb-6 border-l-4 border-primary">
+            <div className="card-body">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <ShieldCheckIcon className="w-8 h-8 text-primary" />
+                  <div>
+                    <h2 className="card-title text-xl">
+                      Security Dashboard
+                    </h2>
+                    <p className="text-sm text-base-content/70">
+                      System Status: {metrics.incidents.activeIncidents > 0 ? 'Attention Needed' : 'Secure'}
+                    </p>
+                  </div>
+                </div>
 
-        {/* Security Overview */}
-        <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={2} mb={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Security Score
-              </Typography>
-              <Box position="relative" display="inline-flex">
-                <CircularProgress
-                  variant="determinate"
-                  value={metrics.overallScore}
-                  size={60}
-                  thickness={4}
-                  sx={{ color: metrics.overallScore > 80 ? 'success.main' : 'warning.main' }}
-                />
-                <Box
-                  top={0}
-                  left={0}
-                  bottom={0}
-                  right={0}
-                  position="absolute"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Typography variant="h6" component="div" color="text.secondary">
-                    {metrics.overallScore}
-                  </Typography>
-                </Box>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Overall security posture
-              </Typography>
-            </CardContent>
-          </Card>
+                <div className="flex items-center gap-2">
+                  <div className={`badge ${metrics.overallScore >= 80 ? 'badge-success' : metrics.overallScore >= 60 ? 'badge-warning' : 'badge-error'} gap-1`}>
+                    <ShieldCheckIcon className="w-4 h-4" />
+                    Score: {metrics.overallScore}
+                  </div>
+                  <div className="badge badge-ghost gap-1">
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Updated: {lastUpdated.toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Active Threats
-              </Typography>
-              <Typography variant="h4" color={getThreats().length > 0 ? 'error.main' : 'success.main'}>
-                {getThreats().length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {metrics.incidents.last24h} in last 24h
-              </Typography>
-            </CardContent>
-          </Card>
+          {/* Metrics Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h3 className="card-title text-lg mb-2">Active Incidents</h3>
+                <div className="text-3xl font-bold text-error">
+                  {metrics.incidents.activeIncidents}
+                </div>
+                <div className="text-sm text-base-content/70">
+                  {metrics.incidents.last24h} in last 24h
+                </div>
+              </div>
+            </div>
 
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Blocked Threats
-              </Typography>
-              <Typography variant="h4" color="primary.main">
-                {metrics.threats.blocked}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Successfully mitigated
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h3 className="card-title text-lg mb-2">Threats Blocked</h3>
+                <div className="text-3xl font-bold text-success">
+                  {metrics.threats.blocked}
+                </div>
+                <div className="text-sm text-base-content/70">
+                  {metrics.threats.detected} detected
+                </div>
+              </div>
+            </div>
 
-        {/* Recent Incidents */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Recent Security Incidents ({incidents.slice(0, 10).length})
-            </Typography>
-            <List sx={{ p: 0 }}>
-              {incidents.slice(0, 10).map((incident) => (
-                <ListItem key={incident.id} divider>
-                  <ListItemIcon>
-                    {getIncidentIcon(incident.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={incident.description}
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {incident.type.replace(/_/g, ' ').toUpperCase()} • {incident.source.ip}
-                        </Typography>
-                        <Box display="flex" alignItems="center" gap={1} mt={1}>
-                          <Chip
-                            label={incident.severity}
-                            size="small"
-                            sx={{
-                              backgroundColor: getSeverityColor(incident.severity) + '20',
-                              color: getSeverityColor(incident.severity),
-                              borderColor: getSeverityColor(incident.severity),
-                            }}
-                          />
-                          <Chip
-                            label={incident.status}
-                            size="small"
-                            sx={{
-                              backgroundColor: getStatusColor(incident.status) + '20',
-                              color: getStatusColor(incident.status),
-                              borderColor: getStatusColor(incident.status),
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                    }
-                  />
-                  <IconButton>
-                    <ViewIcon />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h3 className="card-title text-lg mb-2">Open Findings</h3>
+                <div className="text-3xl font-bold text-warning">
+                  {metrics.scans.findings}
+                </div>
+                <div className="text-sm text-base-content/70">
+                  From {metrics.scans.completed} scans
+                </div>
+              </div>
+            </div>
 
-        {/* Security Configuration */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Security Configuration
-            </Typography>
-            <List sx={{ p: 0 }}>
-              <ListItem divider>
-                <ListItemIcon>
-                  <ShieldIcon color={config.csrfProtection.enabled ? 'success' : 'error'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="CSRF Protection"
-                  secondary={`Token rotation: ${config.csrfProtection.tokenRotationInterval}min • SameSite: ${config.csrfProtection.sameSitePolicy}`}
-                />
-                <Switch
-                  checked={config.csrfProtection.enabled}
-                  onChange={(e) => updateConfig({ 
-                    csrfProtection: { ...config.csrfProtection, enabled: e.target.checked } 
-                  })}
-                />
-              </ListItem>
-              
-              <ListItem divider>
-                <ListItemIcon>
-                  <SecurityIcon color={config.xssPrevention.enabled ? 'success' : 'error'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="XSS Prevention"
-                  secondary={`CSP: ${config.xssPrevention.cspEnabled ? 'Enabled' : 'Disabled'} • Input sanitization: ${config.xssPrevention.inputSanitization ? 'Enabled' : 'Disabled'}`}
-                />
-                <Switch
-                  checked={config.xssPrevention.enabled}
-                  onChange={(e) => updateConfig({ 
-                    xssPrevention: { ...config.xssPrevention, enabled: e.target.checked } 
-                  })}
-                />
-              </ListItem>
-              
-              <ListItem divider>
-                <ListItemIcon>
-                  <LockIcon color={config.headers.hstsEnabled ? 'success' : 'error'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Security Headers"
-                  secondary={`HSTS: ${config.headers.hstsEnabled ? 'Enabled' : 'Disabled'} • Max-age: ${config.headers.hstsMaxAge}s`}
-                />
-                <Switch
-                  checked={config.headers.hstsEnabled}
-                  onChange={(e) => updateConfig({ 
-                    headers: { ...config.headers, hstsEnabled: e.target.checked } 
-                  })}
-                />
-              </ListItem>
-              
-              <ListItem divider>
-                <ListItemIcon>
-                  <TimelineIcon color={config.rateLimiting.enabled ? 'success' : 'error'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Rate Limiting"
-                  secondary={`${config.rateLimiting.maxRequests} requests per ${config.rateLimiting.windowMs / 60000}min`}
-                />
-                <Switch
-                  checked={config.rateLimiting.enabled}
-                  onChange={(e) => updateConfig({ 
-                    rateLimiting: { ...config.rateLimiting, enabled: e.target.checked } 
-                  })}
-                />
-              </ListItem>
-              
-              <ListItem>
-                <ListItemIcon>
-                  <UpdateIcon color={config.monitoring.enabled ? 'success' : 'error'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Real-time Monitoring"
-                  secondary={`Level: ${config.monitoring.logLevel} • Anomaly detection: ${config.monitoring.anomalyDetection ? 'Enabled' : 'Disabled'}`}
-                />
-                <Switch
-                  checked={config.monitoring.enabled}
-                  onChange={(e) => updateConfig({ 
-                    monitoring: { ...config.monitoring, enabled: e.target.checked } 
-                  })}
-                />
-              </ListItem>
-            </List>
-          </CardContent>
-        </Card>
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h3 className="card-title text-lg mb-2">Compliance</h3>
+                <div className="text-3xl font-bold text-info">
+                  {metrics.compliance.score}%
+                </div>
+                <div className="text-sm text-base-content/70">
+                  Average across frameworks
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Incidents */}
+          <div className="card bg-base-100 shadow-xl mb-6">
+            <div className="card-body">
+              <h3 className="card-title text-lg mb-4">
+                Recent Incidents
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="table w-full">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Severity</th>
+                      <th>Status</th>
+                      <th>Description</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {incidents.slice(0, 5).map((incident) => (
+                      <tr key={incident.id} className="hover">
+                        <td>
+                          <div className="flex items-center gap-2">
+                            {getIncidentIcon(incident.type)}
+                            <span className="font-medium capitalize">{incident.type.replace(/_/g, ' ')}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={`badge badge-${getSeverityColor(incident.severity)}`}>
+                            {incident.severity}
+                          </div>
+                        </td>
+                        <td>
+                          <div className={`badge badge-${getStatusColor(incident.status)} badge-outline`}>
+                            {incident.status.replace(/_/g, ' ')}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="text-sm truncate max-w-xs" title={incident.description}>
+                            {incident.description}
+                          </div>
+                        </td>
+                        <td className="text-sm opacity-70">
+                          {formatDuration(Date.now() - incident.timestamp.getTime())} ago
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </AnimatedBox>
     </SecurityContext.Provider>
   );
 };
 
-// Export types
-export type { SecurityConfig, SecurityIncident, SecurityScan, SecurityFinding, SecurityMetrics, SecurityContextType };
-export { SecurityContext };
-
 export default SecurityProvider;
+
+// Export types for external use
+export type { SecurityContextType };

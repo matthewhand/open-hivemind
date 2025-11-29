@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Container } from '@mui/material';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 const LoadingPage: React.FC = () => {
@@ -30,45 +29,35 @@ const LoadingPage: React.FC = () => {
   }, [navigate]);
 
   return (
-    <Container maxWidth="md">
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        textAlign="center"
-        gap={4}
-      >
-        <Typography variant="h2" component="h1" gutterBottom>
-          Open-Hivemind
-        </Typography>
+    <div className="container mx-auto max-w-md min-h-screen flex flex-col justify-center items-center text-center gap-8">
+      <h1 className="text-5xl font-bold">
+        Open-Hivemind
+      </h1>
 
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          Initializing AI Network Dashboard
-        </Typography>
+      <h2 className="text-xl text-base-content/70">
+        Initializing AI Network Dashboard
+      </h2>
 
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2} width="100%" maxWidth={400}>
-          <LoadingSpinner size="lg" variant="infinity" />
+      <div className="flex flex-col items-center gap-4 w-full max-w-sm">
+        <LoadingSpinner size="lg" variant="infinity" />
 
-          <Box width="100%">
-            <div className="w-full bg-base-200 rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all duration-100 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {Math.round(progress)}% Complete
-            </Typography>
-          </Box>
-        </Box>
+        <div className="w-full">
+          <div className="w-full bg-base-200 rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-100 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-base-content/70 mt-2">
+            {Math.round(progress)}% Complete
+          </p>
+        </div>
+      </div>
 
-        <Typography variant="body2" color="text.secondary">
-          Preparing your intelligent workspace...
-        </Typography>
-      </Box>
-    </Container>
+      <p className="text-sm text-base-content/70">
+        Preparing your intelligent workspace...
+      </p>
+    </div>
   );
 };
 

@@ -1,35 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, Tabs, Tab, Card, CardContent } from '@mui/material';
 import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`settings-tabpanel-${index}`}
-      aria-labelledby={`settings-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
+import ComprehensiveConfigPanel from '../components/ComprehensiveConfigPanel';
 
 const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -38,45 +12,46 @@ const SystemSettings: React.FC = () => {
     { label: 'Settings', href: '/uber/settings', isActive: true }
   ];
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+  const tabs = [
+    { label: 'General', component: <SettingsGeneral /> },
+    { label: 'Security', component: <SettingsSecurity /> },
+    { label: 'Integrations', component: <SettingsIntegrations /> },
+    { label: 'Advanced Config', component: <ComprehensiveConfigPanel /> }
+  ];
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
-      
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Settings
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Configure your Open-Hivemind instance settings and preferences
-        </Typography>
-      </Box>
 
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="settings tabs">
-            <Tab label="General" id="settings-tab-0" aria-controls="settings-tabpanel-0" />
-            <Tab label="Security" id="settings-tab-1" aria-controls="settings-tabpanel-1" />
-            <Tab label="Integrations" id="settings-tab-2" aria-controls="settings-tabpanel-2" />
-          </Tabs>
-        </Box>
-        
-        <TabPanel value={activeTab} index={0}>
-          <SettingsGeneral />
-        </TabPanel>
-        
-        <TabPanel value={activeTab} index={1}>
-          <SettingsSecurity />
-        </TabPanel>
-        
-        <TabPanel value={activeTab} index={2}>
-          <SettingsIntegrations />
-        </TabPanel>
-      </Card>
-    </Box>
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          Settings
+        </h1>
+        <p className="text-base-content/70">
+          Configure your Open-Hivemind instance settings and preferences
+        </p>
+      </div>
+
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="tabs tabs-boxed mb-6">
+            {tabs.map((tab, index) => (
+              <a
+                key={index}
+                className={`tab ${activeTab === index ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab(index)}
+              >
+                {tab.label}
+              </a>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            {tabs[activeTab].component}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { Box, Card, CardContent, Typography, FormControl, MenuItem, Select, Chip } from '@mui/material';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
 import { selectDashboard } from '../store/slices/dashboardSlice';
@@ -20,26 +19,19 @@ interface DataPoint {
   botId?: string;
 }
 
-interface MetricData {
-  timestamp: Date;
-  responseTime: number;
-  memoryUsage: number;
-  cpuUsage: number;
-  errorRate: number;
-  activeBots: number;
-}
-
 export const D3Analytics: React.FC<D3AnalyticsProps> = ({
   width = 800,
   height = 400,
-  chartType = 'line',
-  timeRange = '24h',
+  chartType: initialChartType = 'line',
+  timeRange: initialTimeRange = '24h',
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { metrics, historicalData } = useAppSelector(selectPerformance);
   const { bots, analytics } = useAppSelector(selectDashboard);
   const [isLoading, setIsLoading] = useState(true);
+  const [chartType, setChartType] = useState(initialChartType);
+  const [timeRange, setTimeRange] = useState(initialTimeRange);
   const [selectedMetric, setSelectedMetric] = useState<'responseTime' | 'memoryUsage' | 'cpuUsage' | 'errorRate'>('responseTime');
   const [colorScheme, setColorScheme] = useState<'category10' | 'viridis' | 'warm' | 'cool'>('category10');
 
@@ -48,10 +40,10 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
     const now = new Date();
     const dataPoints: DataPoint[] = [];
     const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : timeRange === '24h' ? 24 : timeRange === '7d' ? 168 : 720;
-    
+
     for (let i = 0; i < hours * 4; i++) { // 4 data points per hour
       const timestamp = new Date(now.getTime() - (i * 15 * 60 * 1000)); // 15-minute intervals
-      
+
       dataPoints.push({
         timestamp,
         value: Math.random() * 100 + (selectedMetric === 'responseTime' ? 200 : 0),
@@ -69,15 +61,14 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
         });
       });
     }
-    
+
     return dataPoints.reverse();
   };
 
   // Generate heatmap data
   const generateHeatmapData = () => {
     const data: { hour: number; day: number; value: number }[] = [];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
+
     for (let day = 0; day < 7; day++) {
       for (let hour = 0; hour < 24; hour++) {
         data.push({
@@ -87,22 +78,8 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
         });
       }
     }
-    
-    return data;
-  };
 
-  // Color schemes
-  const getColorScale = (scheme: string) => {
-    switch (scheme) {
-      case 'viridis':
-        return d3.interpolateViridis;
-      case 'warm':
-        return d3.interpolateWarm;
-      case 'cool':
-        return d3.interpolateCool;
-      default:
-        return d3.schemeCategory10;
-    }
+    return data;
   };
 
   // Create Line Chart
@@ -172,11 +149,11 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .attr('cy', d => yScale(d.value))
       .attr('r', 4)
       .attr('fill', '#1976d2')
-      .on('mouseover', function(event, d) {
+      .on('mouseover', function (event, d) {
         d3.select(this).attr('r', 6);
         showTooltip(event, d);
       })
-      .on('mouseout', function() {
+      .on('mouseout', function () {
         d3.select(this).attr('r', 4);
         hideTooltip();
       });
@@ -200,7 +177,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
     // Group data by category
-    const groupedData = d3.rollup(data, 
+    const groupedData = d3.rollup(data,
       v => d3.mean(v, d => d.value) || 0,
       d => d.category
     );
@@ -238,11 +215,11 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .attr('y', innerHeight)
       .attr('height', 0)
       .attr('fill', d => colorScale(d.category) as string)
-      .on('mouseover', function(event, d) {
+      .on('mouseover', function (event, d) {
         d3.select(this).attr('opacity', 0.8);
         showTooltip(event, { ...d, timestamp: new Date(), category: d.category });
       })
-      .on('mouseout', function() {
+      .on('mouseout', function () {
         d3.select(this).attr('opacity', 1);
         hideTooltip();
       })
@@ -267,12 +244,12 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
 
     // Scales
     const xScale = d3.scaleBand()
-      .domain(d3.range(24))
+      .domain(d3.range(24) as any)
       .range([0, innerWidth])
       .padding(0.05);
 
     const yScale = d3.scaleBand()
-      .domain(d3.range(7))
+      .domain(d3.range(7) as any)
       .range([0, innerHeight])
       .padding(0.05);
 
@@ -289,7 +266,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       .attr('width', xScale.bandwidth())
       .attr('height', yScale.bandwidth())
       .attr('fill', d => colorScale(d.value))
-      .on('mouseover', function(event, d) {
+      .on('mouseover', function (event, d) {
         d3.select(this).attr('stroke', '#fff').attr('stroke-width', 2);
         showTooltip(event, {
           timestamp: new Date(),
@@ -297,7 +274,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
           category: `Day ${d.day}, Hour ${d.hour}`,
         } as DataPoint);
       })
-      .on('mouseout', function() {
+      .on('mouseout', function () {
         d3.select(this).attr('stroke', 'none');
         hideTooltip();
       });
@@ -378,7 +355,10 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
           borderRadius: 2,
         }}
       >
-        <Typography>Loading Analytics Charts...</Typography>
+        <div className="flex flex-col items-center gap-2">
+          <span className="loading loading-spinner loading-lg"></span>
+          <p>Loading Analytics Charts...</p>
+        </div>
       </AnimatedBox>
     );
   }
@@ -389,109 +369,88 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
       sx={{ width, position: 'relative' }}
     >
       {/* Controls Panel */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          zIndex: 100,
-          backgroundColor: 'background.paper',
-          borderRadius: 2,
-          p: 2,
-          boxShadow: 3,
-          maxWidth: 300,
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
+      <div className="absolute top-4 right-4 z-50 bg-base-100 rounded-box p-4 shadow-xl max-w-xs border border-base-200">
+        <h3 className="font-bold mb-2">
           Chart Controls
-        </Typography>
-        
+        </h3>
+
         {/* Chart Type */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Chart Type:</Typography>
-          <Select
+        <div className="mb-4">
+          <p className="text-xs mb-1">Chart Type:</p>
+          <select
+            className="select select-bordered select-sm w-full"
             value={chartType}
             onChange={(e) => setChartType(e.target.value as any)}
-            size="small"
-            fullWidth
           >
-            <MenuItem value="line">Line Chart</MenuItem>
-            <MenuItem value="bar">Bar Chart</MenuItem>
-            <MenuItem value="heatmap">Heatmap</MenuItem>
-          </Select>
-        </Box>
+            <option value="line">Line Chart</option>
+            <option value="bar">Bar Chart</option>
+            <option value="heatmap">Heatmap</option>
+          </select>
+        </div>
 
         {/* Metric Selection */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Metric:</Typography>
-          <Select
+        <div className="mb-4">
+          <p className="text-xs mb-1">Metric:</p>
+          <select
+            className="select select-bordered select-sm w-full"
             value={selectedMetric}
             onChange={(e) => setSelectedMetric(e.target.value as any)}
-            size="small"
-            fullWidth
           >
-            <MenuItem value="responseTime">Response Time</MenuItem>
-            <MenuItem value="memoryUsage">Memory Usage</MenuItem>
-            <MenuItem value="cpuUsage">CPU Usage</MenuItem>
-            <MenuItem value="errorRate">Error Rate</MenuItem>
-          </Select>
-        </Box>
+            <option value="responseTime">Response Time</option>
+            <option value="memoryUsage">Memory Usage</option>
+            <option value="cpuUsage">CPU Usage</option>
+            <option value="errorRate">Error Rate</option>
+          </select>
+        </div>
 
         {/* Color Scheme */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" gutterBottom>Color Scheme:</Typography>
-          <Select
+        <div className="mb-4">
+          <p className="text-xs mb-1">Color Scheme:</p>
+          <select
+            className="select select-bordered select-sm w-full"
             value={colorScheme}
             onChange={(e) => setColorScheme(e.target.value as any)}
-            size="small"
-            fullWidth
           >
-            <MenuItem value="category10">Category 10</MenuItem>
-            <MenuItem value="viridis">Viridis</MenuItem>
-            <MenuItem value="warm">Warm</MenuItem>
-            <MenuItem value="cool">Cool</MenuItem>
-          </Select>
-        </Box>
+            <option value="category10">Category 10</option>
+            <option value="viridis">Viridis</option>
+            <option value="warm">Warm</option>
+            <option value="cool">Cool</option>
+          </select>
+        </div>
 
         {/* Stats */}
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2">
-            Data Points: {chartType === 'heatmap' ? '168' : '96'}
-          </Typography>
-          <Typography variant="body2">
-            Time Range: {timeRange}
-          </Typography>
-          <Typography variant="body2">
-            Active Metrics: 4
-          </Typography>
-        </Box>
-      </Box>
+        <div className="mt-2 pt-2 border-t border-base-200 text-xs space-y-1">
+          <p>Data Points: {chartType === 'heatmap' ? '168' : '96'}</p>
+          <p>Time Range: {timeRange}</p>
+          <p>Active Metrics: 4</p>
+        </div>
+      </div>
 
       {/* Chart Container */}
-      <Card sx={{ width, borderRadius: 2, overflow: 'hidden' }}>
-        <CardContent sx={{ p: 0 }}>
+      <div className="card bg-base-100 shadow-xl overflow-hidden">
+        <div className="card-body p-0">
           <svg
             ref={svgRef}
             style={{ display: 'block', background: 'white' }}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Custom Tooltip */}
-      <Box
+      <div
         ref={tooltipRef}
-        sx={{
+        style={{
           position: 'absolute',
           pointerEvents: 'none',
           backgroundColor: 'rgba(0, 0, 0, 0.9)',
           color: 'white',
           padding: '8px 12px',
-          borderRadius: 1,
+          borderRadius: 4,
           fontSize: '12px',
           opacity: 0,
           transition: 'opacity 0.2s',
           zIndex: 1000,
-          boxShadow: 3,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }}
       />
     </AnimatedBox>
