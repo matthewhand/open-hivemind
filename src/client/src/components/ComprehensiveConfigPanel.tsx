@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading } from './DaisyUI';
+import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface ConfigSchema {
@@ -244,12 +244,14 @@ const ComprehensiveConfigPanel: React.FC = () => {
                         <span className="label-text font-semibold">{key}</span>
                         {activeConfig.schema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{activeConfig.schema[key].env}</span>}
                       </label>
-                      <textarea
-                        className={`textarea textarea-bordered h-32 font-mono text-sm ${!isValidJson ? 'textarea-error' : ''}`}
+                      <Textarea
+                        className="h-32 font-mono text-sm"
                         value={currentValue}
                         onChange={(e) => setJsonState(prev => ({ ...prev, [stateKey]: e.target.value }))}
                         placeholder="{}"
-                      ></textarea>
+                        variant={!isValidJson ? 'error' : undefined}
+                        bordered
+                      />
                       <label className="label">
                         <span className="label-text-alt text-base-content/70">
                           {activeConfig.schema[key]?.doc || 'JSON Configuration Object'}
