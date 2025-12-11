@@ -1,37 +1,16 @@
 import React from 'react';
-import { useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Alert } from '../components/DaisyUI';
-import { useSelector, useDispatch } from 'react-redux';
-import { dismissAlert, selectAlerts } from '../store/slices/uiSlice';
+import { Outlet, useLocation } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
-import { hivemindNavItems, filterNavItemsByRole } from '../config/navigation';
+import { hivemindNavItems } from '../config/navigation';
 
 const UberLayout: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
-  const dispatch = useDispatch();
-  const alerts = useSelector(selectAlerts);
-
-  // Filter navigation items based on user role
-  const filteredNavItems = filterNavItemsByRole(hivemindNavItems, user?.role);
 
   return (
-    <ResponsiveNavigation navItems={filteredNavItems}>
-      {/* Alerts */}
-      <div className="space-y-2 mb-4">
-        {alerts.map((alert) => (
-          <Alert
-            key={alert.id}
-            status={alert.status}
-            message={alert.message}
-            icon={alert.icon}
-            onClose={() => dispatch(dismissAlert(alert.id))}
-          />
-        ))}
+    <ResponsiveNavigation navItems={hivemindNavItems}>
+      <div key={location.pathname}>
+        <Outlet />
       </div>
-      
-      <Outlet />
     </ResponsiveNavigation>
   );
 };

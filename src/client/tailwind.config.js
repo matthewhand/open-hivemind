@@ -5,7 +5,33 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+    },
   },
   plugins: [
     require('daisyui'),
@@ -13,45 +39,30 @@ export default {
   ],
   daisyui: {
     themes: [
+      "night",      // Premium dark theme - set first for default
+      "dracula",    // Alternative dark
+      "luxury",     // Elegant dark
+      "dark",
       "light",
-      "dark", 
       "cupcake",
-      "bumblebee",
       "emerald",
       "corporate",
       "synthwave",
-      "retro",
       "cyberpunk",
-      "valentine",
-      "halloween",
-      "garden",
       "forest",
       "aqua",
-      "lofi",
-      "pastel",
-      "fantasy",
-      "wireframe",
-      "black",
-      "luxury",
-      "dracula",
-      "cmyk",
-      "autumn",
       "business",
-      "acid",
-      "lemonade",
-      "night",
       "coffee",
-      "winter",
       "dim",
       "nord",
       "sunset",
     ],
-    darkTheme: "dark",
+    darkTheme: "night",
     base: true,
     styled: true,
     utils: true,
     rtl: false,
     prefix: "",
-    logs: true,
+    logs: false,  // Reduce console noise
   },
 }

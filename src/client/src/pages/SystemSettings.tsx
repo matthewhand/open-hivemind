@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
-import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
-import ComprehensiveConfigPanel from '../components/ComprehensiveConfigPanel';
 
 const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -14,9 +12,7 @@ const SystemSettings: React.FC = () => {
 
   const tabs = [
     { label: 'General', component: <SettingsGeneral /> },
-    { label: 'Security', component: <SettingsSecurity /> },
-    { label: 'Integrations', component: <SettingsIntegrations /> },
-    { label: 'Advanced Config', component: <ComprehensiveConfigPanel /> }
+    { label: 'Security', component: <SettingsSecurity /> }
   ];
 
   return (

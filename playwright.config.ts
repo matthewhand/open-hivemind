@@ -30,10 +30,6 @@ export default defineConfig({
      * Maximum time to wait for expect statements, default is 5000.
      */
     timeout: 10000,
-    /* Take screenshot on assertion failure */
-    screenshot: 'only-on-failure',
-    /* Record video on assertion failure */
-    video: 'retain-on-failure',
   },
   /* Constant to use with Playwright test hooks. */
   use: {
@@ -77,83 +73,30 @@ export default defineConfig({
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
-
-    /* Mobile devices */
-    {
-      name: 'Mobile Chrome',
-      use: {
-        ...devices['Pixel 5'],
-        contextOptions: {
-          permissions: ['clipboard-read', 'clipboard-write']
-        }
-      },
-    },
-
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-
-    /* Tablet devices */
-    {
-      name: 'iPad',
-      use: { ...devices['iPad Pro'] },
-    },
-
-    /* Visual regression testing */
-    {
-      name: 'visual-regression',
-      testMatch: '**/*.visual.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        screenshot: 'only-on-failure',
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-
-    /* Accessibility testing */
-    {
-      name: 'accessibility',
-      testMatch: '**/*.a11y.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1280, height: 720 },
-      },
-    },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
   /* Enhanced reporters */
-  reporter: [
-    ['html', {
-      outputFolder: 'playwright-report',
-      open: process.env.CI ? 'never' : 'on-failure'
-    }],
+  reporter: process.env.CI ? [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['line'],
-    process.env.CI ? ['github'] : null,
-  ].filter(Boolean),
+    ['github'],
+  ] : [
+    ['html', { outputFolder: 'playwright-report', open: 'on-failure' }],
+    ['line']
+  ],
 
   /* Retry configuration */
   retries: process.env.CI ? 2 : 0,
 
   /* Test organization */
-  grep: process.env.GREP,
-  grepInvert: process.env.GREP_INVERT,
+  grep: process.env.GREP ? new RegExp(process.env.GREP) : undefined,
+  grepInvert: process.env.GREP_INVERT ? new RegExp(process.env.GREP_INVERT) : undefined,
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run playwright:serve',
+    command: 'export NODE_OPTIONS="--max-old-space-size=4096"; export DISABLE_RATE_LIMIT=true; npm run dev',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

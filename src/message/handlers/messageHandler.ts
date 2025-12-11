@@ -13,6 +13,7 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import processingLocks from '../processing/processingLocks';
+import { AuditLogger } from '@src/common/auditLogger';
 
 const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
@@ -46,6 +47,27 @@ const idleResponseManager = IdleResponseManager.getInstance();
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(async () => {
     const channelId = message.getChannelId();
+
+    // Log received message
+    const userId = message.getAuthorId();
+    const text = message.getText();
+    if (text) { // Only log if text exists (check logic inside later handles empty text, but we need text for log)
+        AuditLogger.getInstance().logBotAction(
+          userId,
+          'UPDATE',
+          botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+          'success',
+          `Received message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+          {
+            metadata: {
+              type: 'MESSAGE_RECEIVED',
+              channelId: channelId,
+              botId: botConfig.BOT_ID || 'unknown-bot',
+              content: text
+            }
+          }
+        );
+    }
 
     // Concurrency guard: prevent processing multiple messages from the same channel simultaneously
     if (processingLocks.isLocked(channelId)) {
@@ -165,6 +187,23 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         const activeAgentName = rawBotName.replace('MadgwickAI', 'Madgwick AI');
         const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
         logger(`Sent message from ${activeAgentName}: ${text}`);
+
+        // Log sent response
+        AuditLogger.getInstance().logBotAction(
+          'bot',
+          'UPDATE',
+          botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+          'success',
+          `Sent response: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+          {
+            metadata: {
+              type: 'RESPONSE_SENT',
+              channelId: message.getChannelId(),
+              botId: botConfig.BOT_ID || 'unknown-bot',
+              content: text
+            }
+          }
+        );
 
         // Record bot response for idle response tracking
         idleResponseManager.recordBotResponse(serviceName, message.getChannelId());

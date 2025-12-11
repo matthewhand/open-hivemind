@@ -9,9 +9,9 @@ export const ResponsiveContainer: React.FC<{ children: React.ReactNode; breakpoi
 
 // Adaptive Grid
 export const AdaptiveGrid: React.FC<{ children: React.ReactNode; spacing?: number; itemSpacing?: number; breakpoints?: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number } }> = ({ children, spacing = 2, itemSpacing = 2, breakpoints = { xs: 12, sm: 6, md: 4, lg: 3 } }) => (
-  <div className={`grid gap-${spacing} grid-cols-${breakpoints.xs}`)}>
-    { children }
-  </div >
+  <div className={`grid gap-${spacing} grid-cols-${breakpoints.xs}`}>
+    {children}
+  </div>
 );
 
 // Responsive Card
@@ -39,7 +39,7 @@ export const ResponsiveTypography: React.FC<{ children: React.ReactNode; variant
 
 // Responsive Button Group
 export const ResponsiveButtonGroup: React.FC<{ children: React.ReactNode; orientation?: 'horizontal' | 'vertical'; spacing?: number; fullWidth?: boolean }> = ({ children, orientation = 'horizontal', spacing = 1, fullWidth = false }) => (
-  <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} space-${spacing} ${fullWidth ? 'w-full' : ''}`}> {children} </div>
+  <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} space-${spacing} ${fullWidth ? 'w-full' : ''}`}>{children}</div>
 );
 
 // Responsive Table

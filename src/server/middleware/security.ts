@@ -25,9 +25,9 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for WebSocket connections
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https:",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' ws: wss:", // Allow WebSocket connections
     "media-src 'self'",
     "object-src 'none'",
@@ -190,7 +190,11 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction): 
     sanitizeObject(req.body);
   }
 
-  next();
+   // Sanitize headers and cookies
+   sanitizeHeaders(req);
+   sanitizeCookies(req);
+ 
+   next();
 }
 
 /**
@@ -217,6 +221,34 @@ function sanitizeObject(obj: any): void {
         });
     } else if (typeof value === 'object' && value !== null) {
       sanitizeObject(value);
+    }
+  }
+}
+
+/**
+ * Sanitize request headers
+ */
+function sanitizeHeaders(req: Request): void {
+  if (req.headers) {
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === 'string') {
+        // Remove potentially dangerous characters from headers
+        req.headers[key] = value.replace(/[<>'"&]/g, '');
+      }
+    }
+  }
+}
+
+/**
+ * Sanitize request cookies
+ */
+function sanitizeCookies(req: Request): void {
+  if (req.cookies) {
+    for (const [key, value] of Object.entries(req.cookies)) {
+      if (typeof value === 'string') {
+        // Remove potentially dangerous characters from cookies
+        req.cookies[key] = value.replace(/[<>'"&]/g, '');
+      }
     }
   }
 }

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 export interface ChatMessage {
   id: string;
   content: string;
-  timestamp: Date;
+  timestamp: Date | string;
   sender: {
     id: string;
     name: string;
@@ -85,12 +85,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const isCurrentUser = message.sender.id === currentUserId;
     const isBot = message.sender.type === 'bot';
     const isSystem = message.sender.type === 'system';
-    
+
     // Check if this message should be grouped with the previous one
     const prevMessage = messages[index - 1];
-    const isGrouped = prevMessage && 
-      prevMessage.sender.id === message.sender.id && 
-      (message.timestamp.getTime() - prevMessage.timestamp.getTime()) < 60000; // 1 minute
+    const isGrouped = prevMessage &&
+      prevMessage.sender.id === message.sender.id &&
+      (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime()) < 60000; // 1 minute
 
     if (isSystem) {
       return (
@@ -113,7 +113,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <div className={`avatar placeholder`}>
                   <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
                     <span className="text-xs">
-                      {isBot ? '🤖' : message.sender.name.charAt(0).toUpperCase()}
+                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
                     </span>
                   </div>
                 </div>
@@ -121,12 +121,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           </div>
         )}
-        
+
         {!isGrouped && (
           <div className="chat-header">
             {message.sender.name}
             <time className="text-xs opacity-50 ml-2">
-              {formatTime(message.timestamp)}
+              {formatTime(new Date(message.timestamp))}
             </time>
             {message.metadata?.platform && (
               <div className="badge badge-xs badge-ghost ml-2">
@@ -135,14 +135,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             )}
           </div>
         )}
-        
-        <div className={`chat-bubble ${
-          isCurrentUser 
-            ? 'chat-bubble-primary' 
-            : isBot 
-              ? 'chat-bubble-secondary' 
-              : 'chat-bubble-accent'
-        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+
+        <div className={`chat-bubble ${isCurrentUser
+          ? 'chat-bubble-primary'
+          : isBot
+            ? 'chat-bubble-secondary'
+            : 'chat-bubble-accent'
+          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -152,7 +151,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {message.content}
             </div>
           )}
-          
+
           {/* Message status indicators */}
           {message.metadata?.status === 'sending' && (
             <div className="flex items-center mt-2 text-xs opacity-60">
@@ -160,10 +159,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               Sending...
             </div>
           )}
-          
+
           {message.metadata?.status === 'failed' && onRetryMessage && (
             <div className="flex items-center mt-2">
-              <button 
+              <button
                 className="btn btn-xs btn-error btn-outline"
                 onClick={() => onRetryMessage(message.id)}
               >
@@ -171,14 +170,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </button>
             </div>
           )}
-          
+
           {message.metadata?.edited && (
             <div className="text-xs opacity-50 mt-1">
               (edited)
             </div>
           )}
         </div>
-        
+
         {/* Reactions */}
         {message.metadata?.reactions && message.metadata.reactions.length > 0 && (
           <div className="chat-footer">
@@ -212,7 +211,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
@@ -240,7 +239,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ) : (
           <>
             {messages.map((message, index) => renderMessage(message, index))}
-            
+
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
@@ -258,7 +257,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </>
         )}
@@ -277,7 +276,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             className="input input-bordered flex-1"
             disabled={isLoading}
           />
-          
+
           <div className="flex gap-1">
             <button
               type="button"
@@ -286,7 +285,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             >
               📎
             </button>
-            
+
             <button
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
@@ -296,7 +295,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </button>
           </div>
         </form>
-        
+
         <div className="text-xs text-base-content/60 mt-2 text-center">
           Press Enter to send, Shift+Enter for new line
         </div>
@@ -357,19 +356,19 @@ export const ChatStats: React.FC<ChatStatsProps> = ({
         <div className="stat-value text-primary">{totalMessages.toLocaleString()}</div>
         <div className="stat-desc">Total processed</div>
       </div>
-      
+
       <div className="stat">
         <div className="stat-title">Active Users</div>
         <div className="stat-value text-secondary">{activeUsers}</div>
         <div className="stat-desc">Currently chatting</div>
       </div>
-      
+
       <div className="stat">
         <div className="stat-title">Uptime</div>
         <div className="stat-value text-accent">{uptime}</div>
         <div className="stat-desc">System running</div>
       </div>
-      
+
       <div className="stat">
         <div className="stat-title">Response Time</div>
         <div className="stat-value text-info">{responseTime}</div>

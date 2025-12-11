@@ -83,10 +83,12 @@ export class AuthMiddleware {
       next();
     } catch (error) {
       debug('Authentication error:', error);
+      // Pass error to Express error handler instead of throwing
       if (error instanceof AuthenticationError) {
-        throw error;
+        next(error);
+        return;
       }
-      throw new AuthenticationError('Invalid or expired token', undefined, 'expired_token');
+      next(new AuthenticationError('Invalid or expired token', undefined, 'expired_token'));
     }
   };
 
@@ -98,7 +100,8 @@ export class AuthMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
-        throw new AuthenticationError('User not authenticated', undefined, 'missing_token');
+        next(new AuthenticationError('User not authenticated', undefined, 'missing_token'));
+        return;
       }
 
       const roleHierarchy: Record<string, number> = {
@@ -111,12 +114,13 @@ export class AuthMiddleware {
       const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
 
       if (userRoleLevel < requiredRoleLevel) {
-        throw new AuthorizationError(
+        next(new AuthorizationError(
           `Required role: ${requiredRole}, your role: ${authReq.user.role}`,
           'role_check',
           'access',
           requiredRole
-        );
+        ));
+        return;
       }
 
       debug(`Role check passed: ${authReq.user.username} has max level ${userRoleLevel} >= ${requiredRoleLevel} for ${requiredRole}`);
@@ -132,16 +136,18 @@ export class AuthMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
-        throw new AuthenticationError('User not authenticated', undefined, 'missing_token');
+        next(new AuthenticationError('User not authenticated', undefined, 'missing_token'));
+        return;
       }
   
       if (!authReq.permissions?.includes(permission)) {
-        throw new AuthorizationError(
+        next(new AuthorizationError(
           `Required permission: ${permission}`,
           'permission_check',
           'access',
           permission
-        );
+        ));
+        return;
       }
   
       debug(`Permission check passed: ${authReq.user.username} has ${permission}`);

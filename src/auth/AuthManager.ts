@@ -60,7 +60,7 @@ export class AuthManager {
    */
   private generateSecureSecret(prefix: string): string {
     const secret = crypto.randomBytes(64).toString('hex');
-    
+
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
       const secureConfig = SecureConfigManager.getInstance();
@@ -137,13 +137,13 @@ export class AuthManager {
     if (!data.password || data.password.length < 6) {
       throw new ValidationError('Password must be at least 6 characters long', 'PASSWORD_TOO_SHORT');
     }
-    
+
     // Check if user already exists by username
     const existingUserByUsername = Array.from(this.users.values()).find(u => u.username === data.username);
     if (existingUserByUsername) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
-    
+
     // Check if user already exists by email
     const existingUserByEmail = Array.from(this.users.values()).find(u => u.email === data.email);
     if (existingUserByEmail) {
@@ -252,7 +252,7 @@ export class AuthManager {
   /**
    * Generate JWT access token
    */
-  private generateAccessToken(user: User): string {
+  public generateAccessToken(user: User): string {
     return jwt.sign(
       {
         userId: user.id,

@@ -162,3 +162,15 @@ test-results/archive/
 
 test-results/
 .last-run*
+# Low-value generated markdown files
+*.md
+# Keep important documentation files tracked
+!README.md
+!docs/**
+!docs/README.md
+!docs/ARCHITECTURE.md
+!docs/reference/**
+!docs/configuration/**
+!docs/webui/**
+!docs/operations/**
+!docs/getting-started/**

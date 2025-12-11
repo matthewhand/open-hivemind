@@ -11,6 +11,7 @@ import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
 
 const Login = lazy(() => import('../components/Login'));
+import { useAuth } from '../contexts/AuthContext';
 
 // Standalone pages
 const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
@@ -35,9 +36,11 @@ const SystemManagement = lazy(() => import('../pages/SystemManagement'));
 const ExportPage = lazy(() => import('../pages/ExportPage'));
 const SystemSettings = lazy(() => import('../pages/SystemSettings'));
 const BotConfigurationPage = lazy(() => import('../pages/BotConfigurationPage'));
+const ConfigPage = lazy(() => import('../pages/ConfigPage'));
 const StaticPagesPage = lazy(() => import('../pages/StaticPagesPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('../pages/DaisyUIShowcase'));
+const IntegrationsPage = lazy(() => import('../pages/IntegrationsPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 
@@ -62,111 +65,144 @@ const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...
   </div>
 );
 
-// Simplified ProtectedRoute that always allows access (for localhost development)
+// ProtectedRoute enforces authentication
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // For localhost development, always allow access
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingFallback message="Verifying authentication..." />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <>{children}</>;
 };
 
 const AppRouter: React.FC = () => {
   return (
-    <MainLayout>
-      <Suspense fallback={<LoadingFallback message="Loading page..." />}>
-        <Routes>
-          <Route path="/" element={<LoadingPage />} />
+    <Suspense fallback={<LoadingFallback message="Loading page..." />}>
+      <Routes>
+        <Route path="/" element={<LoadingPage />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* User Dashboard Routes - Wrapped in MainLayout */}
+        <Route element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Outlet />
+            </MainLayout>
+          </ProtectedRoute>
+        }>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/activity" element={<StandaloneActivity />} />
-          <Route path="/login" element={<Login />} />
+        </Route>
 
-          {/* Admin routes (unified interface) */}
-          <Route path="/admin" element={<UberLayout />}>
-            <Route index element={<Navigate to="/admin/overview" replace />} />
-            <Route path="overview" element={<OverviewPage />} />
+        {/* Admin routes (unified interface) - UberLayout handles its own navigation */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <UberLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Navigate to="/admin/overview" replace />} />
+          <Route path="overview" element={<OverviewPage />} />
 
-            {/* Bot Management Routes */}
-            <Route path="bots" element={<BotsPage />} />
-            <Route path="bots/create" element={<BotCreatePage />} />
-            <Route path="bots/templates" element={<BotTemplatesPage />} />
+          {/* Bot Management Routes */}
+          <Route path="bots" element={<BotsPage />} />
+          <Route path="bots/create" element={<BotCreatePage />} />
+          <Route path="bots/templates" element={<BotTemplatesPage />} />
 
-            <Route path="personas" element={<PersonasPage />} />
+          {/* Integrations Routes */}
+          <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />
+          <Route path="integrations/:type" element={<IntegrationsPage />} />
 
-            {/* MCP Routes */}
-            <Route
-              path="mcp"
-              element={
-                <ProtectedRoute>
-                  <MCPServerManager />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="mcp/servers"
-              element={
-                <ProtectedRoute>
-                  <MCPServersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="mcp/tools"
-              element={
-                <ProtectedRoute>
-                  <MCPToolsPage />
-                </ProtectedRoute>
-              }
-            />
+          <Route path="personas" element={<PersonasPage />} />
 
-            <Route
-              path="guards"
-              element={
-                <ProtectedRoute>
-                  <GuardsPage />
-                </ProtectedRoute>
-              }
-            />
+          {/* MCP Routes */}
+          <Route
+            path="mcp"
+            element={
+              <ProtectedRoute>
+                <MCPServerManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="mcp/servers"
+            element={
+              <ProtectedRoute>
+                <MCPServersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="mcp/tools"
+            element={
+              <ProtectedRoute>
+                <MCPToolsPage />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Monitoring Routes */}
-            <Route path="monitoring" element={<MonitoringPage />} />
-            <Route path="activity" element={<ActivityPage />} />
+          <Route
+            path="guards"
+            element={
+              <ProtectedRoute>
+                <GuardsPage />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* New Monitoring Dashboard Routes */}
-            <Route path="monitoring-dashboard" element={<MonitoringDashboard />} />
-            <Route path="analytics" element={<AnalyticsDashboard />} />
-            <Route path="system-management" element={<SystemManagement />} />
+          {/* Monitoring Routes */}
+          <Route path="monitoring" element={<MonitoringPage />} />
+          <Route path="activity" element={<ActivityPage />} />
 
-            <Route path="export" element={<ExportPage />} />
-            <Route path="settings" element={<SystemSettings />} />
-            <Route
-              path="configuration"
-              element={
-                <ProtectedRoute>
-                  <BotConfigurationPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="static" element={<StaticPagesPage />} />
-            <Route path="sitemap" element={<SitemapPage />} />
-            <Route path="showcase" element={<DaisyUIShowcase />} />
-            <Route path="specs" element={<SpecsPage />} />
-            <Route path="specs/:id" element={<SpecDetailPage />} />
+          {/* New Monitoring Dashboard Routes */}
+          <Route path="monitoring-dashboard" element={<MonitoringDashboard />} />
+          <Route path="analytics" element={<AnalyticsDashboard />} />
+          <Route path="system-management" element={<SystemManagement />} />
 
-            {/* AI Features Routes */}
-            <Route path="ai/dashboard" element={<IntelligentDashboard />} />
-            <Route path="ai/insights" element={<AIInsightsPanel />} />
-            <Route path="ai/analytics" element={<PredictiveAnalytics />} />
-            <Route path="ai/anomalies" element={<AnomalyDetection />} />
-            <Route path="ai/chat" element={<NaturalLanguageInterface />} />
-            <Route path="ai/training" element={<BotTrainingDashboard />} />
-          </Route>
+          <Route path="export" element={<ExportPage />} />
+          <Route path="settings" element={<SystemSettings />} />
+          <Route
+            path="configuration"
+            element={
+              <ProtectedRoute>
+                <BotConfigurationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="config"
+            element={
+              <ProtectedRoute>
+                <ConfigPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="static" element={<StaticPagesPage />} />
+          <Route path="sitemap" element={<SitemapPage />} />
+          <Route path="showcase" element={<DaisyUIShowcase />} />
+          <Route path="specs" element={<SpecsPage />} />
+          <Route path="specs/:id" element={<SpecDetailPage />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </MainLayout>
+          {/* AI Features Routes */}
+          <Route path="ai/dashboard" element={<IntelligentDashboard />} />
+          <Route path="ai/insights" element={<AIInsightsPanel />} />
+          <Route path="ai/analytics" element={<PredictiveAnalytics />} />
+          <Route path="ai/anomalies" element={<AnomalyDetection />} />
+          <Route path="ai/chat" element={<NaturalLanguageInterface />} />
+          <Route path="ai/training" element={<BotTrainingDashboard />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 

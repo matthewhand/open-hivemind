@@ -1,16 +1,6 @@
-import React, { useState } from 'react';
-import {
-  Alert,
-  Button,
-  Divider,
-  Input,
-  Toggle
-} from '../DaisyUI';
-import {
-  TrashIcon,
-  PlusIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Alert, Button, Input, Toggle } from '../DaisyUI';
+import { Shield, Plus, Trash2 } from 'lucide-react';
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -24,13 +14,41 @@ const SettingsSecurity: React.FC = () => {
     rateLimitWindow: 60,
     rateLimitMax: 100,
     enableCors: true,
-    corsOrigins: ['http://localhost:3000', 'https://yourdomain.com'],
+    corsOrigins: ['http://localhost:3000'],
     enableSecurityHeaders: true,
     enableApiKeyAuth: true
   });
   const [newOrigin, setNewOrigin] = useState('');
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/config/global');
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      const data = await response.json();
+      
+      const config = data.config || {};
+      setSettings(prev => ({
+        ...prev,
+        enableAuthentication: config.auth?.enabled?.value !== false,
+        enableRateLimit: config.rateLimit?.enabled?.value !== false,
+        rateLimitMax: config.rateLimit?.maxRequests?.value || 100,
+        rateLimitWindow: config.rateLimit?.windowMs?.value ? config.rateLimit.windowMs.value / 1000 : 60,
+        corsOrigins: config.cors?.origins?.value || ['http://localhost:3000']
+      }));
+    } catch (error) {
+      console.error('Failed to load security settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleChange = (field: string, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
@@ -56,138 +74,124 @@ const SettingsSecurity: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setAlert({ type: 'success', message: 'Security settings saved successfully!' });
+      const response = await fetch('/api/config/global', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'auth.enabled': settings.enableAuthentication,
+          'rateLimit.enabled': settings.enableRateLimit,
+          'rateLimit.maxRequests': settings.rateLimitMax,
+          'rateLimit.windowMs': settings.rateLimitWindow * 1000
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to save settings');
+      setAlert({ type: 'success', message: 'Security settings saved!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to save security settings' });
+      setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
     } finally {
       setIsSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <ShieldCheckIcon className="w-8 h-8 text-primary" />
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-4">
+        <Shield className="w-5 h-5 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">Security Settings</h2>
-          <p className="text-base-content/70">
-            Configure authentication, authorization, and security policies
-          </p>
+          <h5 className="text-lg font-bold">Security Settings</h5>
+          <p className="text-sm text-base-content/70">Configure authentication and security policies</p>
         </div>
       </div>
 
       {alert && (
-        <div className="mb-6">
-          <Alert
-            status={alert.type === 'success' ? 'success' : 'error'}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
       )}
 
-      <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Authentication */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">Authentication</h3>
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-primary rounded-full"></span>
+            Authentication
+          </h6>
 
-          <Toggle
-            label="Enable user authentication"
-            checked={settings.enableAuthentication}
-            onChange={(e) => handleChange('enableAuthentication', e.target.checked)}
-            color="primary"
-          />
-
-          <div className="form-control w-full max-w-md">
-            <label className="label">
-              <span className="label-text">Session Timeout (seconds)</span>
-            </label>
-            <Input
-              type="number"
-              value={settings.sessionTimeout}
-              onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
-              disabled={!settings.enableAuthentication}
-              min={300}
-              max={86400}
-            />
-            <label className="label">
-              <span className="label-text-alt">How long user sessions remain active</span>
-            </label>
-          </div>
-
-          <Toggle
-            label="Enable two-factor authentication"
-            checked={settings.enableTwoFactor}
-            onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
-            disabled={!settings.enableAuthentication}
-            color="primary"
-          />
-
-          <Toggle
-            label="Enable API key authentication"
-            checked={settings.enableApiKeyAuth}
-            onChange={(e) => handleChange('enableApiKeyAuth', e.target.checked)}
-            color="primary"
-          />
-        </section>
-
-        {/* Brute Force Protection */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">Brute Force Protection</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Max Login Attempts</span>
-              </label>
-              <Input
-                type="number"
-                value={settings.maxLoginAttempts}
-                onChange={(e) => handleChange('maxLoginAttempts', parseInt(e.target.value))}
-                min={3}
-                max={20}
-              />
-              <label className="label">
-                <span className="label-text-alt">Failed attempts before lockout</span>
+          <div className="space-y-3">
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Enable authentication</span>
+                <Toggle
+                  checked={settings.enableAuthentication}
+                  onChange={(e) => handleChange('enableAuthentication', e.target.checked)}
+                  size="sm"
+                />
               </label>
             </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Lockout Duration (seconds)</span>
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
               </label>
               <Input
                 type="number"
-                value={settings.lockoutDuration}
-                onChange={(e) => handleChange('lockoutDuration', parseInt(e.target.value))}
-                min={60}
-                max={3600}
+                value={settings.sessionTimeout}
+                onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
+                disabled={!settings.enableAuthentication}
+                min={300}
+                max={86400}
+                size="sm"
               />
-              <label className="label">
-                <span className="label-text-alt">Lockout duration</span>
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Two-factor authentication</span>
+                <Toggle
+                  checked={settings.enableTwoFactor}
+                  onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
+                  disabled={!settings.enableAuthentication}
+                  size="sm"
+                />
               </label>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* Rate Limiting */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">Rate Limiting</h3>
+        <div className="card bg-base-200/50 p-4">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-warning rounded-full"></span>
+            Rate Limiting
+          </h6>
 
-          <Toggle
-            label="Enable API rate limiting"
-            checked={settings.enableRateLimit}
-            onChange={(e) => handleChange('enableRateLimit', e.target.checked)}
-            color="primary"
-          />
+          <div className="space-y-3">
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Enable rate limiting</span>
+                <Toggle
+                  checked={settings.enableRateLimit}
+                  onChange={(e) => handleChange('enableRateLimit', e.target.checked)}
+                  size="sm"
+                />
+              </label>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Rate Limit Window (seconds)</span>
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Time Window (seconds)</span>
               </label>
               <Input
                 type="number"
@@ -196,15 +200,13 @@ const SettingsSecurity: React.FC = () => {
                 disabled={!settings.enableRateLimit}
                 min={10}
                 max={3600}
+                size="sm"
               />
-              <label className="label">
-                <span className="label-text-alt">Time window for calculations</span>
-              </label>
             </div>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">Max Requests per Window</span>
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Max Requests per Window</span>
               </label>
               <Input
                 type="number"
@@ -213,109 +215,109 @@ const SettingsSecurity: React.FC = () => {
                 disabled={!settings.enableRateLimit}
                 min={10}
                 max={10000}
+                size="sm"
               />
-              <label className="label">
-                <span className="label-text-alt">Maximum requests allowed</span>
-              </label>
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* CORS Configuration */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">CORS Configuration</h3>
+        {/* CORS */}
+        <div className="card bg-base-200/50 p-4 lg:col-span-2">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-accent rounded-full"></span>
+            CORS Configuration
+          </h6>
 
-          <Toggle
-            label="Enable CORS (Cross-Origin Resource Sharing)"
-            checked={settings.enableCors}
-            onChange={(e) => handleChange('enableCors', e.target.checked)}
-            color="primary"
-          />
-
-          <div className="flex gap-2 items-end">
-            <div className="form-control flex-grow">
-              <label className="label">
-                <span className="label-text">Add Allowed Origin</span>
-              </label>
-              <Input
-                value={newOrigin}
-                onChange={(e) => setNewOrigin(e.target.value)}
-                placeholder="https://example.com"
-                disabled={!settings.enableCors}
-              />
-            </div>
+          <div className="flex gap-2 mb-3">
+            <Input
+              value={newOrigin}
+              onChange={(e) => setNewOrigin(e.target.value)}
+              placeholder="https://example.com"
+              size="sm"
+              className="flex-grow"
+            />
             <Button
               variant="secondary"
-              buttonStyle="outline"
+              size="sm"
               onClick={handleAddOrigin}
-              disabled={!settings.enableCors || !newOrigin}
-              className="mb-0.5"
+              disabled={!newOrigin}
             >
-              <PlusIcon className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Add
             </Button>
           </div>
 
-          <div className="bg-base-200 rounded-box p-2">
-            <ul className="space-y-1">
-              {settings.corsOrigins.map((origin, index) => (
-                <li key={index} className="flex justify-between items-center p-2 hover:bg-base-300 rounded transition-colors">
-                  <span>{origin}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-error btn-circle"
-                    onClick={() => handleRemoveOrigin(origin)}
-                    disabled={!settings.enableCors}
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </Button>
-                </li>
-              ))}
-              {settings.corsOrigins.length === 0 && (
-                <li className="p-4 text-center text-base-content/50 italic">
-                  No origins configured
-                </li>
-              )}
-            </ul>
+          <div className="flex flex-wrap gap-2">
+            {settings.corsOrigins.map((origin, index) => (
+              <div key={index} className="badge badge-lg gap-2 bg-base-300">
+                {origin}
+                <button 
+                  onClick={() => handleRemoveOrigin(origin)}
+                  className="hover:text-error"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            {settings.corsOrigins.length === 0 && (
+              <span className="text-base-content/50 text-sm italic">No origins configured</span>
+            )}
           </div>
-        </section>
-
-        {/* Security Headers */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">Security Headers</h3>
-
-          <Toggle
-            label="Enable security headers (HSTS, CSP, X-Frame-Options, etc.)"
-            checked={settings.enableSecurityHeaders}
-            onChange={(e) => handleChange('enableSecurityHeaders', e.target.checked)}
-            color="primary"
-          />
-        </section>
-
-        {/* Audit Logging */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold border-b border-base-300 pb-2">Audit Logging</h3>
-
-          <Toggle
-            label="Enable audit logging for security events"
-            checked={settings.enableAuditLogging}
-            onChange={(e) => handleChange('enableAuditLogging', e.target.checked)}
-            color="primary"
-          />
-        </section>
-
-        <div className="flex justify-end pt-6">
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={isSaving}
-            size="lg"
-            loading={isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save Security Settings'}
-          </Button>
         </div>
+
+        {/* Security Features */}
+        <div className="card bg-base-200/50 p-4 lg:col-span-2">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-success rounded-full"></span>
+            Security Features
+          </h6>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Security headers</span>
+                <Toggle
+                  checked={settings.enableSecurityHeaders}
+                  onChange={(e) => handleChange('enableSecurityHeaders', e.target.checked)}
+                  size="sm"
+                />
+              </label>
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Audit logging</span>
+                <Toggle
+                  checked={settings.enableAuditLogging}
+                  onChange={(e) => handleChange('enableAuditLogging', e.target.checked)}
+                  size="sm"
+                />
+              </label>
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">API key auth</span>
+                <Toggle
+                  checked={settings.enableApiKeyAuth}
+                  onChange={(e) => handleChange('enableApiKeyAuth', e.target.checked)}
+                  size="sm"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button
+          variant="primary"
+          onClick={handleSave}
+          disabled={isSaving}
+          loading={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save Security Settings'}
+        </Button>
       </div>
     </div>
   );

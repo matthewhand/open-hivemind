@@ -3,6 +3,16 @@ import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { LoginCredentials, RegisterData, AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  LoginSchema,
+  RegisterSchema,
+  RefreshTokenSchema,
+  LogoutSchema,
+  ChangePasswordSchema,
+  UpdateUserSchema,
+  UserIdParamSchema
+} from '../../validation/schemas/authSchema';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -12,7 +22,7 @@ const authManager = AuthManager.getInstance();
  * POST /webui/api/auth/login
  * User login endpoint
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
   try {
     const credentials: LoginCredentials = req.body;
     const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
@@ -102,12 +112,6 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     // Normal authentication flow
-    if (!credentials.username || !credentials.password) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Username and password are required'
-      });
-    }
 
     const authResult = await authManager.login(credentials);
 
@@ -129,34 +133,11 @@ router.post('/login', async (req: Request, res: Response) => {
  * POST /webui/api/auth/register
  * User registration endpoint (admin only)
  */
-router.post('/register', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.post('/register', authenticate, requireAdmin, validateRequest(RegisterSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const registerData: RegisterData = req.body;
 
-    if (!registerData.username || !registerData.email || !registerData.password) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Username, email, and password are required'
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(registerData.email)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Invalid email format'
-      });
-    }
-
-    // Validate password strength
-    if (registerData.password.length < 8) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Password must be at least 8 characters long'
-      });
-    }
 
     const user = await authManager.register(registerData);
 
@@ -178,16 +159,10 @@ router.post('/register', authenticate, requireAdmin, async (req: Request, res: R
  * POST /webui/api/auth/refresh
  * Refresh access token
  */
-router.post('/refresh', async (req: Request, res: Response) => {
+router.post('/refresh', validateRequest(RefreshTokenSchema), async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Refresh token is required'
-      });
-    }
 
     const authResult = await authManager.refreshToken(refreshToken);
 
@@ -209,7 +184,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * POST /webui/api/auth/logout
  * User logout endpoint
  */
-router.post('/logout', authenticate, async (req: Request, res: Response) => {
+router.post('/logout', authenticate, validateRequest(LogoutSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { refreshToken } = req.body;
@@ -247,7 +222,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
  * PUT /webui/api/auth/password
  * Change user password
  */
-router.put('/password', authenticate, async (req: Request, res: Response) => {
+router.put('/password', authenticate, validateRequest(ChangePasswordSchema), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { currentPassword, newPassword } = req.body;
@@ -336,7 +311,7 @@ router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) =
  * GET /webui/api/auth/users/:userId
  * Get specific user (admin only)
  */
-router.get('/users/:userId', authenticate, requireAdmin, (req: Request, res: Response) => {
+router.get('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
@@ -366,7 +341,7 @@ router.get('/users/:userId', authenticate, requireAdmin, (req: Request, res: Res
  * PUT /webui/api/auth/users/:userId
  * Update user (admin only)
  */
-router.put('/users/:userId', authenticate, requireAdmin, async (req: Request, res: Response) => {
+router.put('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema.merge(UpdateUserSchema)), async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;
@@ -403,7 +378,7 @@ router.put('/users/:userId', authenticate, requireAdmin, async (req: Request, re
  * DELETE /webui/api/auth/users/:userId
  * Delete user (admin only)
  */
-router.delete('/users/:userId', authenticate, requireAdmin, (req: Request, res: Response) => {
+router.delete('/users/:userId', authenticate, requireAdmin, validateRequest(UserIdParamSchema), (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { userId } = req.params;

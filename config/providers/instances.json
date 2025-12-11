@@ -1,0 +1,37 @@
+{
+  "message": [
+    {
+      "id": "discord-default",
+      "type": "discord",
+      "category": "message",
+      "name": "Default Discord Bot",
+      "enabled": true,
+      "config": {
+        "token": ""
+      }
+    },
+    {
+      "id": "discord-3e1bb1e0-5bcb-46ab-ab00-82f46451fff4",
+      "type": "discord",
+      "category": "message",
+      "name": "Discord Bot 3",
+      "enabled": true,
+      "config": {
+        "token": ""
+      }
+    }
+  ],
+  "llm": [
+    {
+      "id": "openai-default",
+      "type": "openai",
+      "category": "llm",
+      "name": "Default OpenAI",
+      "enabled": true,
+      "config": {
+        "apiKey": "",
+        "model": "university"
+      }
+    }
+  ]
+}

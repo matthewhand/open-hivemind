@@ -1,19 +1,23 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react({
-    jsxRuntime: 'automatic',
-    babel: {
-      presets: [
-        [
-          '@babel/preset-react',
-          { runtime: 'automatic', importSource: 'react', development: false }
+  plugins: [
+    react({
+      jsxRuntime: 'automatic',
+      babel: {
+        presets: [
+          [
+            '@babel/preset-react',
+            { runtime: 'automatic', importSource: 'react', development: false }
+          ]
         ]
-      ]
-    }
-  })],
+      }
+    }),
+    tailwindcss()
+  ],
   server: {
     port: 5173
   },

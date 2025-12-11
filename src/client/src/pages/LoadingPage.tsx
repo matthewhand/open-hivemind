@@ -17,7 +17,7 @@ const LoadingPage: React.FC = () => {
         if (next >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            navigate('/dashboard');
+            navigate('/admin/overview');
           }, 200); // Small delay after reaching 100%
           return 100;
         }

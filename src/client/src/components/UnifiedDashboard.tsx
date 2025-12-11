@@ -12,6 +12,7 @@ import {
   LoadingSpinner,
 } from './DaisyUI';
 import { apiService, Bot, StatusResponse } from '../services/api';
+import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity } from 'lucide-react';
 
 type DashboardTab = 'overview' | 'performance';
 
@@ -112,6 +113,12 @@ const UnifiedDashboard: React.FC = () => {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   const [selectedBots, setSelectedBots] = useState<BotTableRow[]>([]);
+  
+  // Memoized callback to prevent infinite re-renders in DataTable
+  const handleBotSelectionChange = useCallback((rows: BotTableRow[]) => {
+    setSelectedBots(rows);
+  }, []);
+  
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -392,28 +399,28 @@ const UnifiedDashboard: React.FC = () => {
         label: 'CPU Utilisation',
         value: `${performanceMetrics.cpuUsage}%`,
         helper: `${bots.length} worker nodes`,
-        icon: '🧠',
+        icon: <Cpu className="w-5 h-5" />,
       },
       {
         id: 'memory',
         label: 'Memory Usage',
         value: `${performanceMetrics.memoryUsage}%`,
         helper: `${activeConnections} active sockets`,
-        icon: '💾',
+        icon: <HardDrive className="w-5 h-5" />,
       },
       {
         id: 'response',
         label: 'Response Time',
         value: `${performanceMetrics.responseTime} ms`,
         helper: 'p95 latency',
-        icon: '⚡',
+        icon: <Clock className="w-5 h-5" />,
       },
       {
         id: 'stability',
         label: 'Stability Score',
         value: `${performanceMetrics.stabilityScore}%`,
         helper: `${totalErrors} incidents tracked`,
-        icon: '🛡️',
+        icon: <Activity className="w-5 h-5" />,
       },
     ],
     [performanceMetrics, bots.length, activeConnections, totalErrors],
@@ -476,66 +483,81 @@ const UnifiedDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1
-            className="text-3xl font-bold"
-            data-testid="dashboard-title"
-          >
-            Open-Hivemind Dashboard
-          </h1>
-          <p className="text-base-content/60">
-            Unified control centre for your multi-agent deployments.
-          </p>
-        </div>
+      {/* Dashboard Header with Gradient */}
+      <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-2xl p-6 border border-primary/20">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/20 rounded-xl">
+              <LayoutDashboard className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h1
+                className="text-2xl font-bold tracking-tight"
+                data-testid="dashboard-title"
+              >
+                Open-Hivemind Dashboard
+              </h1>
+              <p className="text-sm text-base-content/60">
+                Unified control centre for your multi-agent deployments
+              </p>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <ToastNotification.Notifications />
-          <Button
-            variant="secondary"
-            onClick={() => setIsCreateModalOpen(true)}
-            aria-label="Create new bot"
-          >
-            ➕ Create Bot
-          </Button>
-          <Button
-            variant="primary"
-            data-testid="refresh-button"
-            onClick={handleRefresh}
-            loading={refreshing}
-            loadingText="Refreshing"
-            aria-label="Refresh dashboard"
-          >
-            🔄 Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <ToastNotification.Notifications />
+            <Button
+              variant="secondary"
+              onClick={() => setIsCreateModalOpen(true)}
+              aria-label="Create new bot"
+              className="gap-2"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Create Bot
+            </Button>
+            <Button
+              variant="primary"
+              data-testid="refresh-button"
+              onClick={handleRefresh}
+              loading={refreshing}
+              loadingText="Refreshing"
+              aria-label="Refresh dashboard"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Tabs */}
       <div
         role="tablist"
-        className="tabs tabs-boxed w-fit"
+        className="tabs tabs-boxed w-fit bg-base-200/50 p-1 rounded-xl"
         aria-label="Dashboard sections"
       >
         <button
           id="dashboard-tab-overview"
           role="tab"
           data-testid="overview-tab"
-          className={`tab ${activeTab === 'overview' ? 'tab-active' : ''}`}
+          className={`tab gap-2 ${activeTab === 'overview' ? 'tab-active' : ''}`}
           aria-selected={activeTab === 'overview'}
           aria-controls="dashboard-panel-overview"
           onClick={() => setActiveTab('overview')}
         >
+          <Activity className="w-4 h-4" />
           Overview
         </button>
         <button
           id="dashboard-tab-performance"
           role="tab"
           data-testid="performance-tab"
-          className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
+          className={`tab gap-2 ${activeTab === 'performance' ? 'tab-active' : ''}`}
           aria-selected={activeTab === 'performance'}
           aria-controls="dashboard-panel-performance"
           onClick={() => setActiveTab('performance')}
         >
+          <Gauge className="w-4 h-4" />
           Performance
         </button>
       </div>
@@ -636,7 +658,7 @@ const UnifiedDashboard: React.FC = () => {
                   searchable
                   exportable
                   pagination={{ pageSize: 6, pageSizeOptions: [6, 12, 24] }}
-                  onSelectionChange={rows => setSelectedBots(rows)}
+                  onSelectionChange={handleBotSelectionChange}
                   className="mt-6"
                 />
 
@@ -688,33 +710,46 @@ const UnifiedDashboard: React.FC = () => {
                   </p>
 
                   <div
-                    className="space-y-4"
+                    className="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center py-6"
                     data-testid="performance-metrics"
                   >
-                    <ProgressBar
-                      value={performanceMetrics.cpuUsage}
-                      color="primary"
-                      label="CPU Usage"
-                      showPercentage
-                    />
-                    <ProgressBar
-                      value={performanceMetrics.memoryUsage}
-                      color="secondary"
-                      label="Memory Usage"
-                      showPercentage
-                    />
-                    <ProgressBar
-                      value={performanceMetrics.throughput}
-                      color="accent"
-                      label="Throughput"
-                      showPercentage
-                    />
-                    <ProgressBar
-                      value={Math.min(100, performanceMetrics.stabilityScore)}
-                      color="success"
-                      label="Stability"
-                      showPercentage
-                    />
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="radial-progress text-primary" style={{ "--value": performanceMetrics.cpuUsage, "--size": "6rem" } as React.CSSProperties} role="progressbar">
+                        {Math.round(performanceMetrics.cpuUsage)}%
+                      </div>
+                      <span className="text-sm font-medium">CPU Usage</span>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-2">
+                       {/* Memory: Green at low, Red at high */}
+                      <div 
+                        className={`radial-progress ${performanceMetrics.memoryUsage > 80 ? 'text-error' : performanceMetrics.memoryUsage > 50 ? 'text-warning' : 'text-success'}`} 
+                        style={{ "--value": performanceMetrics.memoryUsage, "--size": "6rem" } as React.CSSProperties} 
+                        role="progressbar"
+                      >
+                        {Math.round(performanceMetrics.memoryUsage)}%
+                      </div>
+                      <span className="text-sm font-medium">Memory Usage</span>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="radial-progress text-accent" style={{ "--value": performanceMetrics.throughput, "--size": "6rem" } as React.CSSProperties} role="progressbar">
+                        {Math.round(performanceMetrics.throughput)}%
+                      </div>
+                      <span className="text-sm font-medium">Throughput</span>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-2">
+                      {/* Stability: Green at 100, Red at 0 */}
+                      <div 
+                        className={`radial-progress ${performanceMetrics.stabilityScore >= 95 ? 'text-success' : performanceMetrics.stabilityScore >= 70 ? 'text-warning' : 'text-error'}`} 
+                        style={{ "--value": performanceMetrics.stabilityScore, "--size": "6rem" } as React.CSSProperties} 
+                        role="progressbar"
+                      >
+                       {Math.round(performanceMetrics.stabilityScore)}%
+                      </div>
+                      <span className="text-sm font-medium">Stability</span>
+                    </div>
                   </div>
                 </div>
               </Card>

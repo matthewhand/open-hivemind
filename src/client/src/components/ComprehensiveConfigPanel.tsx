@@ -100,25 +100,34 @@ const ComprehensiveConfigPanel: React.FC = () => {
     };
 
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
+    const label = (key === 'LLM_PROVIDER' || key === 'MESSAGE_PROVIDER') ? `Default ${key}` : key;
+    const displayLabel = schema.doc || label;
+    const tooltip = `Key: ${key}${schema.env ? `\nEnv: ${schema.env}` : ''}`;
 
     let type = 'text';
     if (typeof value === 'boolean' || schema.format === 'Boolean') type = 'boolean';
     else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'port' || schema.format === 'Number') type = 'number';
     else if (Array.isArray(value) || schema.format === 'Array') type = 'array';
 
+    const LabelComponent = () => (
+      <label className="label py-1">
+        <div className="tooltip tooltip-right z-10 text-left whitespace-pre-line" data-tip={tooltip}>
+          <span className="label-text font-semibold flex items-center gap-1 border-b border-dashed border-base-content/30 cursor-help">
+            {displayLabel}
+          </span>
+        </div>
+      </label>
+    );
+
     if (Array.isArray(schema.format)) {
       return (
         <div className="form-control w-full" key={key}>
-          <label className="label">
-            <span className="label-text font-semibold">{key}</span>
-            {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
-          </label>
+          <LabelComponent />
           <Select
             value={value}
             onChange={(e) => handleChange(e.target.value)}
             options={schema.format.map((opt: string) => ({ value: opt, label: opt }))}
           />
-          {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
         </div>
       );
     }
@@ -127,11 +136,11 @@ const ComprehensiveConfigPanel: React.FC = () => {
       return (
         <div className="form-control w-full" key={key}>
           <label className="label cursor-pointer justify-start gap-4">
-            <span className="label-text font-semibold">{key}</span>
+            <div className="tooltip tooltip-right z-10 text-left whitespace-pre-line" data-tip={tooltip}>
+              <span className="label-text font-semibold border-b border-dashed border-base-content/30 cursor-help">{displayLabel}</span>
+            </div>
             <Toggle checked={value} onChange={(e) => handleChange(e.target.checked)} />
-            {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
           </label>
-          {schema.doc && <div className="pl-1"><span className="label-text-alt text-base-content/70">{schema.doc}</span></div>}
         </div>
       );
     }
@@ -139,16 +148,12 @@ const ComprehensiveConfigPanel: React.FC = () => {
     if (type === 'number') {
       return (
         <div className="form-control w-full" key={key}>
-          <label className="label">
-            <span className="label-text font-semibold">{key}</span>
-            {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
-          </label>
+          <LabelComponent />
           <Input
             type="number"
             value={value}
             onChange={(e) => handleChange(Number(e.target.value))}
           />
-          {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
         </div>
       );
     }
@@ -156,33 +161,25 @@ const ComprehensiveConfigPanel: React.FC = () => {
     if (type === 'array') {
       return (
         <div className="form-control w-full" key={key}>
-          <label className="label">
-            <span className="label-text font-semibold">{key}</span>
-            {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
-          </label>
+          <LabelComponent />
           <Input
             value={Array.isArray(value) ? value.join(', ') : value}
             onChange={(e) => handleChange(e.target.value.split(',').map((s: string) => s.trim()))}
             placeholder="Comma separated values"
           />
-          {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
         </div>
       );
     }
 
     return (
       <div className="form-control w-full" key={key}>
-        <label className="label">
-          <span className="label-text font-semibold">{key}</span>
-          {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
-        </label>
+        <LabelComponent />
         <Input
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           disabled={isReadOnly}
           placeholder={isReadOnly ? '********' : ''}
         />
-        {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
       </div>
     );
   };

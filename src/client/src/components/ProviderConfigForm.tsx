@@ -319,19 +319,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     };
 
     return (
-      <div key={field.name} className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">
-          {field.label}
-          {field.required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+    return (
+      <div className="space-y-1">
         {renderInput()}
-        {field.description && (
-          <p className="text-xs text-gray-500">{field.description}</p>
-        )}
         {error && (
-          <p className="text-xs text-red-500">{error}</p>
+          <p className="text-xs text-red-500 mt-1">{error}</p>
         )}
       </div>
+    );
     );
   };
 
@@ -348,12 +343,43 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       {/* Form Fields by Group */}
       {Object.entries(groupedFields).map(([groupName, fields]) => (
-        <div key={groupName} className="space-y-4">
-          <h4 className="text-md font-medium text-gray-800 border-b pb-2">
-            {groupName}
-          </h4>
-          <div className="grid grid-cols-1 gap-4">
-            {fields.map(renderField)}
+        <div key={groupName} className="card bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-6">
+            <h3 className="card-title text-lg border-b border-base-200 pb-3 mb-4">
+              {groupName}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
+                    <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fields.map(field => (
+                    <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
+                      <td className="align-top py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold text-base-content/90">
+                            {field.label}
+                            {field.required && <span className="text-error ml-1">*</span>}
+                          </span>
+                          {field.description && (
+                            <span className="text-xs text-base-content/60 leading-tight">
+                              {field.description}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="align-top py-4">
+                        {renderField(field)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ))}

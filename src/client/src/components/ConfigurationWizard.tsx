@@ -131,7 +131,7 @@ const ConfigurationWizard: React.FC = () => {
         openai: wizardData.llmProvider === 'openai' ? { apiKey: wizardData.openaiKey } : undefined,
       };
 
-      const response = await fetch('/webui/api/config/hot-reload', {
+      const response = await fetch('/api/config/hot-reload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'create', botName: wizardData.botName, changes: botConfig })

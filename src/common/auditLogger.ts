@@ -209,6 +209,14 @@ export class AuditLogger {
       .slice(0, limit);
   }
 
+  public getBotActivity(botId: string, limit: number = 50): AuditEvent[] {
+    const allEvents = this.getAuditEvents(2000); 
+    const resourceKey = `bots/${botId}`;
+    return allEvents
+      .filter(event => event.resource === resourceKey || (event.metadata && event.metadata.botId === botId))
+      .slice(0, limit);
+  }
+
   private generateId(): string {
     return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

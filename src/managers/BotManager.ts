@@ -91,6 +91,16 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+   * Generate a stable ID for configured bots based on name
+   */
+  private getStableId(name: string): string {
+    return crypto.createHash('md5').update(name).digest('hex').substring(0, 8);
+  }
+
+  /**
+   * Load custom bots from file
+
+  /**
    * Load custom bots from file
    */
   private loadCustomBots(): void {

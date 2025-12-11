@@ -18,6 +18,7 @@ import { connectToVoiceChannel } from './interaction/connectToVoiceChannel';
 // import { VoiceActivityDetection } from './voice/voiceActivityDetection';
 import * as fs from 'fs';
 import * as path from 'path';
+import ProviderConfigManager from '../../config/ProviderConfigManager';
 // Optional channel routing feature flag and router
 import messageConfig from '../../config/messageConfig';
 // ChannelRouter exports functions, not a class
@@ -112,103 +113,80 @@ export const Discord = {
      */
     public constructor() {
       super();
+      // Initialize is now async/called explicitly, but constructor prepares the bots array.
+      // We defer full loading to initialize() or do it here?
+      // Constructor used to load legacy sync.
+      // We will load synchronously here for compatibility, but using ProviderConfigManager.
+      this.loadBotsFromConfig();
+    }
 
-      // Prefer the new BotConfigurationManager for multi-bot configuration (also in tests)
+    private loadBotsFromConfig(): void {
       const configManager = BotConfigurationManager.getInstance();
+      const providerManager = ProviderConfigManager.getInstance();
+      
       const botConfigs = configManager.getDiscordBotConfigs();
+      const providers = providerManager.getAllProviders('message').filter(p => p.type === 'discord' && p.enabled);
+
+      if (providers.length === 0) {
+        log('No Discord providers configured.');
+        return; // No tokens, no bots.
+      }
 
       if (botConfigs.length > 0) {
-        // Use new configuration system
-        botConfigs.forEach((botConfig) => {
-          const client = new Client({ intents: Discord.DiscordService.intents });
-          this.bots.push({
-            client,
-            botUserId: '',
-            botUserName: botConfig.name,
-            config: botConfig
-          });
-        });
-        return;
-      }
+        // Mode A: Logical Bots Defined (Match to Providers)
+        botConfigs.forEach(botConfig => {
+           // Find matching provider by ID, or fallback to first/default
+           let provider = providers.find(p => p.id === botConfig.messageProviderId);
+           if (!provider) {
+             // Heuristic: If only 1 provider exists, use it.
+             if (providers.length === 1) provider = providers[0];
+             // Heuristic: If multiple, maybe match by name? Or default?
+             // For now, if no ID match and >1 providers, we might skip or default.
+             // Defaulting to first is unsafe if they are different identities.
+             // But for backward compat (migration), if bot has no ID, and we have migrated 1 provider...
+           }
 
-      // Fall back to legacy configuration with validation
-      this.loadLegacyConfigurationWithValidation();
+           if (provider && provider.config.token) {
+             this.addBotToPool(provider.config.token, botConfig.name, botConfig);
+           } else {
+             log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
+           }
+        });
+      } else {
+        // Mode B: No Logical Bots (Ad-Hoc / Legacy Mode / Test Mode)
+        // Create one bot per Provider Instance
+        providers.forEach((provider, index) => {
+           if (provider.config.token) {
+              const name = provider.name || `Discord Bot ${index + 1}`;
+              // Create a dummy bot config
+              const dummyConfig = {
+                  name,
+                  messageProvider: 'discord',
+                  // Default to first available LLM or flowise as fallback
+                  llmProvider: 'flowise', 
+                  ...provider.config 
+              };
+              this.addBotToPool(provider.config.token, name, dummyConfig);
+           }
+        });
+      }
     }
 
-    private loadLegacyConfigurationWithValidation(): void {
-      // Legacy comma-separated tokens from environment variable
-      const legacyTokens = process.env.DISCORD_BOT_TOKEN;
-      if (legacyTokens) {
-        const tokens = legacyTokens.split(',').map(token => token.trim());
-        
-        tokens.forEach((token, index) => {
-          if (!token) {
-            throw new ValidationError(
-              `Empty token at position ${index + 1}`,
-              'DISCORD_EMPTY_TOKEN',
-              { position: index + 1 }
-            );
-          }
-          
-          const client = new Client({ intents: Discord.DiscordService.intents });
-          this.bots.push({
+    private addBotToPool(token: string, name: string, config: any): void {
+        const client = new Client({ intents: Discord.DiscordService.intents });
+        this.bots.push({
             client,
             botUserId: '',
-            botUserName: `Bot${index + 1}`,
+            botUserName: name,
             config: {
-              name: `Bot${index + 1}`,
-              token: token,
-              discord: { token },
-              llmProvider: 'flowise' // Default for legacy
+                ...config,
+                discord: { token, ...config.discord },
+                token // Ensure root token property exists for legacy checks
             }
-          });
         });
-        return;
-      }
-
-      // Legacy configuration from config file
-      // Check both possible config paths (test and production)
-      const configPaths = [
-        path.join(__dirname, '../../../config/messengers.json'),
-        path.join(__dirname, '../../../config/test/messengers.json')
-      ];
-      
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-          if (config.discord && config.discord.instances) {
-            config.discord.instances.forEach((instance: any, index: number) => {
-              if (!instance.token) {
-                throw new ValidationError(
-                  `Empty token at position ${index + 1} in config file`,
-                  'DISCORD_EMPTY_TOKEN_CONFIG',
-                  { position: index + 1, configPath }
-                );
-              }
-              
-              const client = new Client({ intents: Discord.DiscordService.intents });
-              this.bots.push({
-                client,
-                botUserId: '',
-                botUserName: instance.name || `Bot${index + 1}`,
-                config: {
-                  name: instance.name || `Bot${index + 1}`,
-                  token: instance.token,
-                  discord: { token: instance.token },
-                  llmProvider: 'flowise' // Default for legacy
-                }
-              });
-            });
-            return;
-          }
-        }
-      }
-
-      throw new ConfigurationError(
-        'No Discord bot tokens provided in configuration',
-        'DISCORD_NO_TOKENS_CONFIGURED'
-      );
     }
+
+
 
     public static getInstance(): DiscordService {
       if (!Discord.DiscordService.instance) {

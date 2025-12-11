@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login, isServerless } = useAuth();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -28,15 +31,14 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock authentication
-      if (formData.username === 'admin' && formData.password === 'admin') {
+      const success = await login(formData.username, formData.password);
+      if (success) {
         navigate('/dashboard', { replace: true });
       } else {
         setError('Invalid username or password');
       }
+    } catch (err) {
+      setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +50,13 @@ const Login: React.FC = () => {
         <div className="p-8">
           <h1 className="text-3xl font-bold text-center mb-2">Open-Hivemind</h1>
           <h2 className="text-xl text-center mb-6">Sign In</h2>
+
+          {isServerless && (
+            <div className="alert alert-warning mb-6 text-sm py-2">
+              <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
+              <span>Serverless Mode: Use ADMIN_PASSWORD or check logs for generated credentials.</span>
+            </div>
+          )}
 
           {error && (
             <Alert status="error" message={error} className="mb-4" />
@@ -79,7 +88,7 @@ const Login: React.FC = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Enter 'admin'"
+                placeholder="Enter password"
                 disabled={isLoading}
                 required
                 autoComplete="current-password"
@@ -102,7 +111,7 @@ const Login: React.FC = () => {
 
             <div className="text-center mt-4">
               <p className="text-sm text-base-content/70">
-                Demo credentials: admin / admin
+                {isServerless ? 'Check deployment logs for password if not configured' : 'Enter your credentials'}
               </p>
             </div>
           </form>

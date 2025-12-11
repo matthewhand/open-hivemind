@@ -12,37 +12,7 @@ const buildUrl = (endpoint: string): string => {
   return `${baseUrl}${endpoint}`;
 };
 
-// Mock data for demo mode
-const mockConfigResponse = {
-  bots: [
-    {
-      name: "Demo Bot",
-      messageProvider: "discord",
-      llmProvider: "openai",
-      persona: "helpful-assistant",
-      systemInstruction: "You are a helpful assistant",
-      discord: { channelId: "demo-channel" }
-    }
-  ],
-  warnings: ["Running in demo mode - no backend connection"],
-  legacyMode: false,
-  environment: "production"
-};
 
-const mockStatusResponse = {
-  bots: [
-    {
-      name: "Demo Bot",
-      provider: "discord",
-      llmProvider: "openai",
-      status: "online",
-      connected: true,
-      messageCount: 42,
-      errorCount: 0
-    }
-  ],
-  uptime: 86400
-};
 
 export interface FieldMetadata {
   source: 'env' | 'user' | 'default';
@@ -290,51 +260,26 @@ class ApiService {
 
       return response.json();
     } catch (error) {
-      // Log error with proper typing
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const typedError = error as { response?: { status?: number } };
-
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`API request failed for ${endpoint}, using mock data:`, {
-          message: errorMessage,
-          status: typedError.response?.status,
-          endpoint
-        });
-      }
-
-      // Return mock data for specific endpoints
-      if (endpoint.includes('/config')) {
-        return mockConfigResponse as T;
-      } else if (endpoint.includes('/status')) {
-        return mockStatusResponse as T;
-      } else if (endpoint.includes('/activity')) {
-        return {
-          events: [],
-          filters: { agents: [], messageProviders: [], llmProviders: [] },
-          timeline: [],
-          agentMetrics: []
-        } as T;
-      } else {
-        // Return empty/default responses for other endpoints
-        return { success: false, message: 'Demo mode - backend not available' } as T;
-      }
+      console.error(`API request failed for ${endpoint}:`, errorMessage);
+      throw error;
     }
   }
 
   async getConfig(): Promise<ConfigResponse> {
-    return this.request<ConfigResponse>('/webui/api/config');
+    return this.request<ConfigResponse>('/api/config');
   }
 
   async getStatus(): Promise<StatusResponse> {
-    return this.request<StatusResponse>('/dashboard/api/status');
+    return this.request<StatusResponse>('/api/dashboard/api/status');
   }
 
   async getConfigSources(): Promise<ConfigSourcesResponse> {
-    return this.request<ConfigSourcesResponse>('/webui/api/config/sources');
+    return this.request<ConfigSourcesResponse>('/api/config/sources');
   }
 
   async reloadConfig(): Promise<{ success: boolean; message: string; timestamp: string }> {
-    return this.request('/webui/api/config/reload', { method: 'POST' });
+    return this.request('/api/config/reload', { method: 'POST' });
   }
 
   async createBot(botData: {
@@ -343,7 +288,7 @@ class ApiService {
     llmProvider: string;
     config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
-    return this.request('/webui/api/bots', {
+    return this.request('/api/bots', {
       method: 'POST',
       body: JSON.stringify(botData)
     });
@@ -357,49 +302,49 @@ class ApiService {
     systemInstruction?: string;
     config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
-    return this.request(`/webui/api/bots/${botId}`, {
+    return this.request(`/api/bots/${botId}`, {
       method: 'PUT',
       body: JSON.stringify(updates)
     });
   }
 
   async cloneBot(name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> {
-    return this.request(`/webui/api/bots/${name}/clone`, {
+    return this.request(`/api/bots/${name}/clone`, {
       method: 'POST',
       body: JSON.stringify({ newName })
     });
   }
 
   async deleteBot(name: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/webui/api/bots/${name}`, { method: 'DELETE' });
+    return this.request(`/api/bots/${name}`, { method: 'DELETE' });
   }
 
   // Secure Configuration Methods
   async getSecureConfigs(): Promise<{ configs: SecureConfig[] }> {
-    return this.request('/webui/api/secure-configs');
+    return this.request('/api/secure-configs');
   }
 
   async getSecureConfig(name: string): Promise<{ config: SecureConfig }> {
-    return this.request(`/webui/api/secure-configs/${name}`);
+    return this.request(`/api/secure-configs/${name}`);
   }
 
   async saveSecureConfig(name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
-    return this.request('/webui/api/secure-configs', {
+    return this.request('/api/secure-configs', {
       method: 'POST',
       body: JSON.stringify({ name, data, encryptSensitive })
     });
   }
 
   async deleteSecureConfig(name: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/webui/api/secure-configs/${name}`, { method: 'DELETE' });
+    return this.request(`/api/secure-configs/${name}`, { method: 'DELETE' });
   }
 
   async backupSecureConfigs(): Promise<{ success: boolean; message: string; backupFile: string }> {
-    return this.request('/webui/api/secure-configs/backup', { method: 'POST' });
+    return this.request('/api/secure-configs/backup', { method: 'POST' });
   }
 
   async restoreSecureConfigs(backupFile: string): Promise<{ success: boolean; message: string }> {
-    return this.request('/webui/api/secure-configs/restore', {
+    return this.request('/api/secure-configs/restore', {
       method: 'POST',
       body: JSON.stringify({ backupFile })
     });
@@ -411,7 +356,7 @@ class ApiService {
     directorySize: number;
     lastModified: string;
   }> {
-    return this.request('/webui/api/secure-configs/info');
+    return this.request('/api/secure-configs/info');
   }
 
   async getActivity(params: {
@@ -426,16 +371,16 @@ class ApiService {
       if (value) query.append(key, value);
     });
     const search = query.toString();
-    const endpoint = `/dashboard/api/activity${search ? `?${search}` : ''}`;
+    const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
     return this.request<ActivityResponse>(endpoint);
   }
 
   async clearCache(): Promise<{ success: boolean; message: string }> {
-    return this.request('/webui/api/cache/clear', { method: 'POST' });
+    return this.request('/api/cache/clear', { method: 'POST' });
   }
 
   async exportConfig(): Promise<Blob> {
-    const response = await fetch(buildUrl('/webui/api/config/export'), {
+    const response = await fetch(buildUrl('/api/config/export'), {
       method: 'GET',
       headers: {
         'Accept': 'application/json',

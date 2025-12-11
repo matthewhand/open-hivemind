@@ -26,7 +26,7 @@ const Mockup: React.FC<MockupProps> = ({
   ariaLabel = 'Mockup component',
 }) => {
   const baseClasses = 'mockup-';
-  const themeClass = theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black';
+  const themeClass = theme === 'dark' ? 'bg-base-300 text-base-content' : 'bg-base-100 text-base-content';
   const colorClass = colorScheme ? `bg-${colorScheme}` : '';
 
   const containerStyle: React.CSSProperties = {

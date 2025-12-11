@@ -21,7 +21,7 @@ const healthRouteModule = require('./routes/health');
 const webhookServiceModule = require('@webhook/webhookService');
 import swarmRouter from '@src/admin/swarmRoutes';
 import dashboardRouter from '@src/server/routes/dashboard';
-import webuiConfigRouter from '@src/webui/routes/config';
+import webuiConfigRouter from '@src/server/routes/config';
 import botsRouter from '@src/server/routes/bots';
 import botConfigRouter from '@src/server/routes/botConfig';
 import validationRouter from '@src/server/routes/validation';
@@ -31,7 +31,9 @@ import enterpriseRouter from '@src/server/routes/enterprise';
 import secureConfigRouter from '@src/server/routes/secureConfig';
 import authRouter from '@src/server/routes/auth';
 import adminApiRouter from '@src/server/routes/admin';
+import integrationsRouter from '@src/server/routes/integrations';
 import { authenticateToken } from '@src/server/middleware/auth';
+import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import openapiRouter from '@src/server/routes/openapi';
 import WebSocketService from '@src/server/services/WebSocketService';
 import path from 'path';
@@ -43,7 +45,7 @@ import startupDiagnostics from './utils/startupDiagnostics';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 
 import { Message } from './types/messages';
- 
+
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
@@ -100,13 +102,16 @@ const webhookConfig = webhookConfigModule.default || webhookConfigModule;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rate limiting middleware
+app.use(applyRateLimiting);
+
 // CORS middleware for localhost development
 app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
     const isLocalhost = origin?.includes('localhost') ||
-                       origin?.includes('127.0.0.1') ||
-                       req.hostname === 'localhost' ||
-                       req.hostname === '127.0.0.1';
+        origin?.includes('127.0.0.1') ||
+        req.hostname === 'localhost' ||
+        req.hostname === '127.0.0.1';
 
     if (isLocalhost) {
         res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
@@ -139,7 +144,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data:; object-src 'none'; frame-ancestors 'none';"
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
     );
 
     next();
@@ -185,7 +190,7 @@ app.use('/uber/*', (req: Request, res: Response) => {
 // Unified API routes - all on same port, no separation
 app.use('/api/swarm', swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
-app.use('/api/config', authenticateToken, webuiConfigRouter);
+app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
 app.use('/api/bot-config', botConfigRouter);
 app.use('/api/validation', validationRouter);
@@ -195,11 +200,14 @@ app.use('/api/enterprise', enterpriseRouter);
 app.use('/api/secure-config', secureConfigRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
+app.use('/api/integrations', integrationsRouter);
 app.use('/api/openapi', openapiRouter);
 
 // Legacy route redirects - everything now unified under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
-app.use('/admin', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
+app.get('/admin*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 // Deprecated /admin static serve (commented out)
 // app.use('/admin', express.static(path.join(process.cwd(), 'public/admin')));
@@ -264,7 +272,7 @@ async function main() {
 
     // Run comprehensive startup diagnostics
     await startupDiagnostics.logStartupDiagnostics();
-    
+
     // Initialize the StartupGreetingService
     await StartupGreetingService.initialize();
 
@@ -282,8 +290,8 @@ async function main() {
         const messageProviders = (typeof rawMessageProviders === 'string'
             ? rawMessageProviders.split(',').map((v: string) => v.trim())
             : Array.isArray(rawMessageProviders)
-            ? rawMessageProviders
-            : ['slack']) as string[];
+                ? rawMessageProviders
+                : ['slack']) as string[];
         appLogger.info('📡 Message providers configured', { providers: messageProviders });
 
         messengerServices = messengerProviderModule.getMessengerProvider();
@@ -357,7 +365,7 @@ async function main() {
     // Startup complete
     appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
 }
- 
+
 main().catch((error) => {
     appLogger.error('Unexpected error in main execution', { error });
     process.exit(1);

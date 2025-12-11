@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
 
 interface MainLayoutProps {
@@ -7,20 +7,32 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const location = useLocation();
-  
   // Simple navigation items for main layout
   const navItems = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
-      icon: '📊',
+      label: 'User Dashboard',
+      icon: '🏠',
       path: '/dashboard',
       visible: true,
     },
     {
-      id: 'admin',
-      label: 'Admin Panel',
+      id: 'admin-overview',
+      label: 'Admin Overview',
+      icon: '📊',
+      path: '/admin/overview',
+      visible: true,
+    },
+    {
+      id: 'admin-bots',
+      label: 'Bot Management',
+      icon: '🤖',
+      path: '/admin/bots',
+      visible: true,
+    },
+    {
+      id: 'admin-panel',
+      label: 'All Admin Tools',
       icon: '⚙️',
       path: '/admin',
       visible: true,

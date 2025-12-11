@@ -4,6 +4,8 @@ import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { auditMiddleware, AuditedRequest, logConfigChange } from '../middleware/audit';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { HivemindError, ErrorUtils } from '../../types/errors';
+import { validateRequest } from '../../validation/validateRequest';
+import { ConfigUpdateSchema, ConfigRestoreSchema, ConfigBackupSchema } from '../../validation/schemas/configSchema';
 import fs from 'fs';
 import path from 'path';
 
@@ -14,6 +16,7 @@ import discordConfig from '../../config/discordConfig';
 import slackConfig from '../../config/slackConfig';
 import openaiConfig from '../../config/openaiConfig';
 import flowiseConfig from '../../config/flowiseConfig';
+import ollamaConfig from '../../config/ollamaConfig';
 import mattermostConfig from '../../config/mattermostConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
 import webhookConfig from '../../config/webhookConfig';
@@ -22,26 +25,76 @@ console.log('Config router module loaded');
 const router = Router();
 console.log('Config router created');
 
-// Map of config names to their convict objects
-const globalConfigs: Record<string, any> = {
+// Map of base config types to their convict objects (used as schema sources)
+const schemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
   discord: discordConfig,
   slack: slackConfig,
   openai: openaiConfig,
   flowise: flowiseConfig,
+  ollama: ollamaConfig,
   mattermost: mattermostConfig,
   openwebui: openWebUIConfig,
   webhook: webhookConfig
 };
+
+// Map of all active config instances
+const globalConfigs: Record<string, any> = { ...schemaSources };
+
+// Helper to load dynamic configs from files
+const loadDynamicConfigs = () => {
+    try {
+        const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+        const providersDir = path.join(configDir, 'providers');
+        
+        if (fs.existsSync(providersDir)) {
+            const files = fs.readdirSync(providersDir);
+            
+            files.forEach(file => {
+                // Match pattern: type-name.json e.g. openai-dev.json
+                const match = file.match(/^([a-z]+)-(.+)\.json$/);
+                if (match) {
+                    const type = match[1];
+                    const name = match[0].replace('.json', ''); // e.g. openai-dev
+                    
+                    if (schemaSources[type] && !globalConfigs[name]) {
+                        console.log(`Loading dynamic config: ${name} (type: ${type})`);
+                        // Create new convict instance using the base type's schema
+                        const convict = require('convict'); // Require local to avoid module caching issues if any
+                        const newConfig = convict(schemaSources[type].getSchema());
+                        
+                        // Load file
+                        newConfig.loadFile(path.join(providersDir, file));
+                        try {
+                             newConfig.validate({ allowed: 'warn' });
+                        } catch(e) { console.warn(`Validation warning for ${name}:`, e); }
+
+                        globalConfigs[name] = newConfig;
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Failed to load dynamic configs:', e);
+    }
+};
+
+// Initial load
+loadDynamicConfigs();
 
 // Apply audit middleware to all config routes (except in test)
 if (process.env.NODE_ENV !== 'test') {
   router.use(auditMiddleware);
 }
 
+// GET /api/config/ping - Diagnostic endpoint
+router.get('/ping', (req, res) => {
+  res.json({ message: 'pong', timestamp: new Date().toISOString() });
+});
+
 // GET /api/config/global - Get all global configurations (schema + values)
-router.get('/api/config/global', (req, res) => {
+router.get('/global', (req, res) => {
   try {
     const response: Record<string, any> = {};
 
@@ -49,12 +102,24 @@ router.get('/api/config/global', (req, res) => {
       // Get properties (values)
       const props = config.getProperties();
 
-      // Get schema (if available via internal API or we need to reconstruct it)
-      // Convict doesn't expose the raw schema easily after init, but we can try to get it
-      // or we just send the values and rely on the frontend to infer types or use a shared schema.
-      // However, for a "comprehensive" panel, we ideally want the doc strings too.
-      // config.getSchema() returns the schema with current values, but let's see.
-      const schema = config.getSchema();
+      // Get schema and deep clone it to avoid mutating the source
+      const schema = JSON.parse(JSON.stringify(config.getSchema()));
+
+      // Check for environment variable overrides and mark as locked
+      // Handle both nested 'properties' (valid JSON schema) and flat (convict internal) structure
+      const properties = schema.properties || schema;
+      
+      for (const propKey in properties) {
+          const prop = properties[propKey];
+          // Ensure it's an object description
+          if (typeof prop === 'object' && prop !== null) {
+            // Check if ENV var is actually set in process.env
+            // Note: convict schema 'env' property tells us WHICH env var map to.
+            if (prop.env && process.env[prop.env] !== undefined && process.env[prop.env] !== '') {
+                prop.locked = true;
+            }
+          }
+      }
 
       // Redact sensitive values in props
       const redactedProps = JSON.parse(JSON.stringify(props)); // Deep copy
@@ -93,69 +158,58 @@ router.get('/api/config/global', (req, res) => {
 });
 
 // PUT /api/config/global - Update global configuration
-router.put('/api/config/global', async (req, res) => {
+router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates } = req.body;
 
-    if (!configName || !globalConfigs[configName]) {
-      return res.status(400).json({ error: `Invalid or missing configName. Valid options: ${Object.keys(globalConfigs).join(', ')}` });
+    if (!configName) {
+        return res.status(400).json({ error: 'configName is required' });
     }
 
-    const config = globalConfigs[configName];
+    let config = globalConfigs[configName];
+    let createdNew = false;
 
-    // Validate updates against schema
-    // We can use config.load(updates) and then validate, but we don't want to pollute the in-memory config 
-    // if validation fails, although convict is mutable.
-    // For now, we'll try to load and validate.
-
-    // Note: This only updates the in-memory config. To persist, we need to write to a file.
-    // We'll write to config/local.json or similar.
+    // Handle creation of new dynamic config if it doesn't exist but matches pattern
+    if (!config) {
+        const match = configName.match(/^([a-z]+)-.+$/);
+        if (match && schemaSources[match[1]]) {
+             const type = match[1];
+             console.log(`Creating new dynamic config: ${configName} (type: ${type})`);
+             const convict = require('convict');
+             config = convict(schemaSources[type].getSchema());
+             globalConfigs[configName] = config;
+             createdNew = true;
+        } else {
+             return res.status(400).json({ error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}` });
+        }
+    }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const localConfigPath = path.join(configDir, 'local.json');
-
-    // Load existing local config if it exists
-    let localConfig: any = {};
-    if (fs.existsSync(localConfigPath)) {
-      try {
-        localConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
-      } catch (e) {
-        console.warn('Failed to parse local.json, starting fresh');
-      }
-    }
-
-    // Update local config
-    // We assume the structure in local.json matches the config structure
-    // But since we have multiple convict instances, we might need to namespace them in local.json 
-    // OR we write to specific files like `config/providers/message.json` if that's how they are loaded.
-    // `messageConfig.ts` loads from `config/providers/message.json`.
-
-    // Let's check where each config loads from.
-    // messageConfig: config/providers/message.json
-    // We should probably write back to that file or a local override.
-
-    // For simplicity and safety, let's write to `config/local-{configName}.json` and ensure the app loads it.
-    // BUT, the app code needs to be aware of this new file.
-    // `messageConfig.ts` only loads `providers/message.json`.
-
-    // Alternative: We update the specific provider file.
+    
+    // Determine target file
     let targetFile = '';
-    switch (configName) {
-      case 'message': targetFile = 'providers/message.json'; break;
-      case 'llm': targetFile = 'providers/llm.json'; break;
-      case 'discord': targetFile = 'providers/discord.json'; break;
-      case 'slack': targetFile = 'providers/slack.json'; break;
-      case 'openai': targetFile = 'providers/openai.json'; break;
-      case 'flowise': targetFile = 'providers/flowise.json'; break;
-      case 'mattermost': targetFile = 'providers/mattermost.json'; break;
-      case 'openwebui': targetFile = 'providers/openwebui.json'; break;
-      case 'webhook': targetFile = 'providers/webhook.json'; break;
-      default: targetFile = `providers/${configName}.json`;
+    // If it's one of the base sources, use its standard file, else use dynamic name
+    if (schemaSources[configName] && !createdNew) {
+        switch (configName) {
+            case 'message': targetFile = 'providers/message.json'; break;
+            case 'llm': targetFile = 'providers/llm.json'; break;
+            case 'discord': targetFile = 'providers/discord.json'; break;
+            case 'slack': targetFile = 'providers/slack.json'; break;
+            case 'openai': targetFile = 'providers/openai.json'; break;
+            case 'flowise': targetFile = 'providers/flowise.json'; break;
+            case 'mattermost': targetFile = 'providers/mattermost.json'; break;
+            case 'openwebui': targetFile = 'providers/openwebui.json'; break;
+            case 'webhook': targetFile = 'providers/webhook.json'; break;
+            default: targetFile = `providers/${configName}.json`;
+        }
+    } else {
+        // Dynamic named config
+        targetFile = `providers/${configName}.json`;
     }
 
     const targetPath = path.join(configDir, targetFile);
 
-    // Read existing file
+    // Read existing file if not creating new
     let fileContent: any = {};
     if (fs.existsSync(targetPath)) {
       try {
@@ -169,7 +223,6 @@ router.put('/api/config/global', async (req, res) => {
     const newContent = { ...fileContent, ...updates };
 
     // Write back
-    // Ensure directory exists
     const targetDir = path.dirname(targetPath);
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
@@ -198,7 +251,7 @@ router.put('/api/config/global', async (req, res) => {
 });
 
 // Get all configuration with sensitive data redacted
-router.get('/api/config', (req, res) => {
+router.get('/', (req, res) => {
   console.log('GET /api/config called');
   try {
     const manager = BotConfigurationManager.getInstance();
@@ -266,7 +319,7 @@ router.get('/api/config', (req, res) => {
 });
 
 // Get configuration sources (env vars vs config files)
-router.get('/api/config/sources', (req, res) => {
+router.get('/sources', (req, res) => {
   try {
     const envVars = Object.keys(process.env)
       .filter(key =>
@@ -372,7 +425,7 @@ router.get('/api/config/sources', (req, res) => {
 });
 
 // Reload configuration
-router.post('/api/config/reload', (req, res) => {
+router.post('/reload', (req, res) => {
   try {
     console.log('POST /api/config/reload called');
     const manager = BotConfigurationManager.getInstance();
@@ -466,7 +519,7 @@ router.post('/api/cache/clear', (req, res) => {
 });
 
 // Export configuration
-router.get('/api/config/export', (req, res) => {
+router.get('/export', (req, res) => {
   try {
     console.log('GET /api/config/export called');
     const manager = BotConfigurationManager.getInstance();
@@ -514,7 +567,7 @@ router.get('/api/config/export', (req, res) => {
 });
 
 // Validate configuration
-router.get('/api/config/validate', (req, res) => {
+router.get('/validate', (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -561,7 +614,7 @@ router.get('/api/config/validate', (req, res) => {
 });
 
 // Create configuration backup
-router.post('/api/config/backup', (req: any, res) => {
+router.post('/backup', validateRequest(ConfigBackupSchema), (req: any, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const bots = manager.getAllBots();
@@ -597,7 +650,7 @@ router.post('/api/config/backup', (req: any, res) => {
 });
 
 // Restore configuration from backup
-router.post('/api/config/restore', (req: any, res) => {
+router.post('/restore', validateRequest(ConfigRestoreSchema), (req: any, res) => {
   try {
     const { backupId } = req.body;
 

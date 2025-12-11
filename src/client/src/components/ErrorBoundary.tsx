@@ -23,7 +23,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Lightweight client-side logging; keep it simple to avoid recursion
-     
+
     console.error('ErrorBoundary caught an error', { error, info });
   }
 
@@ -65,7 +65,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
               Reload
             </button>
             {process.env.NODE_ENV !== 'production' && this.state.error && (
-              <details style={{ marginTop: '1rem', maxWidth: 800 }}>
+              <details open style={{ marginTop: '1rem', maxWidth: 800 }}>
                 <summary style={{ cursor: 'pointer' }}>Error details</summary>
                 <pre style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}>
                   {this.state.error?.message}\n{this.state.error?.stack}

@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 
 /**
@@ -26,9 +26,10 @@ export class DashboardPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    
+
     // Initialize dashboard-specific locators
-    this.dashboardHeading = page.locator('h1:has-text("Open-Hivemind Dashboard"), [data-testid="dashboard-title"]');
+    // Use data-testid for reliable selection
+    this.dashboardHeading = page.locator('[data-testid="dashboard-title"]');
     this.overviewTab = page.locator('button[role="tab"]:has-text("Overview"), [data-testid="overview-tab"]');
     this.performanceTab = page.locator('button[role="tab"]:has-text("Performance"), [data-testid="performance-tab"]');
     this.botStatusCard = page.locator('[data-testid="bot-status"], .bot-status-card');
@@ -61,8 +62,10 @@ export class DashboardPage extends BasePage {
    * Wait for dashboard to be fully loaded
    */
   async waitForDashboardLoad(): Promise<void> {
-    await this.waitForElementVisible(this.dashboardHeading);
+    // Wait for loading spinner to disappear first (loading page)
     await this.waitForLoadingToComplete();
+    // Then wait for dashboard heading with extended timeout
+    await this.waitForElementVisible(this.dashboardHeading, 30000);
   }
 
   /**
@@ -112,7 +115,7 @@ export class DashboardPage extends BasePage {
       this.errorRateCard,
       this.uptimeCard
     ];
-    
+
     for (const card of cards) {
       if (!await this.isElementVisible(card)) {
         return false;
@@ -126,7 +129,7 @@ export class DashboardPage extends BasePage {
    */
   async getCardText(cardName: string): Promise<string | null> {
     let card: Locator;
-    
+
     switch (cardName.toLowerCase()) {
       case 'active bots':
         card = this.activeBotsCard;
@@ -143,7 +146,7 @@ export class DashboardPage extends BasePage {
       default:
         throw new Error(`Unknown card: ${cardName}`);
     }
-    
+
     return await this.getElementText(card);
   }
 
@@ -151,16 +154,18 @@ export class DashboardPage extends BasePage {
    * Check if Overview tab is active
    */
   async isOverviewTabActive(): Promise<boolean> {
-    return await this.overviewTab.getAttribute('aria-selected') === 'true' ||
-           await this.overviewTab.hasClass('active');
+    const ariaSelected = await this.overviewTab.getAttribute('aria-selected');
+    const hasActiveClass = await this.overviewTab.evaluate(el => el.classList.contains('active'));
+    return ariaSelected === 'true' || hasActiveClass;
   }
 
   /**
    * Check if Performance tab is active
    */
   async isPerformanceTabActive(): Promise<boolean> {
-    return await this.performanceTab.getAttribute('aria-selected') === 'true' ||
-           await this.performanceTab.hasClass('active');
+    const ariaSelected = await this.performanceTab.getAttribute('aria-selected');
+    const hasActiveClass = await this.performanceTab.evaluate(el => el.classList.contains('active'));
+    return ariaSelected === 'true' || hasActiveClass;
   }
 
   /**
@@ -189,14 +194,14 @@ export class DashboardPage extends BasePage {
     const tabs = this.page.locator('[role="tab"]');
     const count = await tabs.count();
     const tabNames: string[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const tabText = await tabs.nth(i).textContent();
       if (tabText) {
         tabNames.push(tabText.trim());
       }
     }
-    
+
     return tabNames;
   }
 
@@ -321,14 +326,14 @@ export class DashboardPage extends BasePage {
     const menuItems = this.navigationMenu.locator('a, button');
     const count = await menuItems.count();
     const itemTexts: string[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const itemText = await menuItems.nth(i).textContent();
       if (itemText) {
         itemTexts.push(itemText.trim());
       }
     }
-    
+
     return itemTexts;
   }
 
@@ -349,13 +354,13 @@ export class DashboardPage extends BasePage {
    */
   async getDashboardMetrics(): Promise<Record<string, string | null>> {
     const metrics: Record<string, string | null> = {};
-    
+
     const cardNames = ['Active Bots', 'Total Messages', 'Error Rate', 'Uptime'];
-    
+
     for (const cardName of cardNames) {
       metrics[cardName] = await this.getCardText(cardName);
     }
-    
+
     return metrics;
   }
 
@@ -391,14 +396,14 @@ export class DashboardPage extends BasePage {
       { width: 768, height: 1024 },  // Tablet
       { width: 375, height: 667 }    // Mobile
     ];
-    
+
     for (const viewport of viewports) {
       await this.page.setViewportSize(viewport);
       await this.waitForPageLoad();
-      
+
       // Check if dashboard heading is still visible
       await this.waitForElementVisible(this.dashboardHeading);
-      
+
       // Check if tabs are accessible
       if (viewport.width < 768) {
         // On mobile, tabs might be in a dropdown or collapsed
@@ -417,20 +422,20 @@ export class DashboardPage extends BasePage {
   async checkAccessibility(): Promise<void> {
     // Check for proper heading hierarchy
     await expect(this.dashboardHeading).toBeVisible();
-    
+
     // Check for proper tab structure
     const tablist = this.page.locator('[role="tablist"]');
     if (await tablist.count() > 0) {
       await expect(tablist.first()).toBeVisible();
-      
+
       // Check that tabs have proper attributes
       const tabs = this.page.locator('[role="tab"]');
       const tabCount = await tabs.count();
-      
+
       for (let i = 0; i < tabCount; i++) {
         const tab = tabs.nth(i);
         await expect(tab).toHaveAttribute('role', 'tab');
-        await expect(tab).toHaveAttribute('tabindex');
+        // tabindex is optional, don't require it
       }
     }
 

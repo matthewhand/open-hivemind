@@ -102,6 +102,15 @@ export class BasePage {
   }
 
   /**
+   * Waits for an element to be visible.
+   * @param locator The Locator to wait for.
+   * @param timeout Optional timeout in milliseconds.
+   */
+  async waitForElementVisible(locator: Locator, timeout = 15000): Promise<void> {
+    await expect(locator).toBeVisible({ timeout });
+  }
+
+  /**
    * Waits for the URL to contain a specific string.
    * @param urlSubstring The substring to find in the URL.
    */
@@ -116,5 +125,22 @@ export class BasePage {
     // This is a placeholder for a more robust a11y check.
     // Consider integrating a library like axe-playwright.
     await expect(this.page.locator('body')).toBeVisible();
+  }
+
+  /**
+   * Waits for an element to be hidden.
+   * @param locator The Locator to wait for.
+   * @param timeout Optional timeout in milliseconds.
+   */
+  async waitForElementHidden(locator: Locator, timeout = 15000): Promise<void> {
+    await expect(locator).not.toBeVisible({ timeout });
+  }
+
+  /**
+   * Takes a screenshot of the current page.
+   * @param name The name for the screenshot file.
+   */
+  async takeScreenshot(name: string): Promise<void> {
+    await this.page.screenshot({ path: `test-results/${name}.png`, fullPage: true });
   }
 }

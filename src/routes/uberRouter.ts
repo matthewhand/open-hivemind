@@ -16,6 +16,8 @@ import openapiRouter from '@src/server/routes/openapi';
 import { ipWhitelist } from '@src/server/middleware/security';
 import { authenticate } from '@src/auth/middleware';
 import { auditMiddleware } from '@src/server/middleware/audit';
+import { validateRequest } from '@src/validation/validateRequest';
+import { GuardSchema } from '@src/validation/schemas/guardSchema';
 import fs from 'fs';
 import path from 'path';
 
@@ -43,14 +45,9 @@ uberRouter.use('/adminApi', adminApiRouter);
 uberRouter.use('/openapi', openapiRouter);
 
 // POST /guards endpoint
-uberRouter.post('/guards', (req: Request, res: Response) => {
+uberRouter.post('/guards', validateRequest(GuardSchema), (req: Request, res: Response) => {
     const { type, users, ips } = req.body;
-    if (!type || !['owner', 'users', 'ip'].includes(type)) {
-        return res.status(400).json({ error: 'Invalid type. Must be owner, users, or ip.' });
-    }
-    // For now, log the update. In real implementation, update config/personas or db.
     console.log(`[GUARDS] Updated guards: type=${type}, users=${users}, ips=${ips}`);
-    // Example: Update a persona config (assuming a guards.json in personas)
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const guardsPath = path.join(configDir, 'personas', 'guards.json');
     try {

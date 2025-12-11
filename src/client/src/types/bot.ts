@@ -1,12 +1,19 @@
 export interface BotInstance {
   id: string;
   name: string;
+  description?: string;
   status: BotStatus;
   provider: MessageProvider | LLMProvider;
+  messageProviders: MessageProvider[];
+  llmProviders: LLMProvider[];
   persona?: Persona;
+  personaId?: string;
   createdAt: string;
   updatedAt: string;
+  lastActive?: string;
+  error?: string | null;
   config: Record<string, any>;
+  envOverrides?: Record<string, any>;
 }
 
 export enum BotStatus {
@@ -94,9 +101,11 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType;
+  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
+  botId?: string | null;
+  isEdit?: boolean;
 }
 
 export interface ProviderTypeConfig {

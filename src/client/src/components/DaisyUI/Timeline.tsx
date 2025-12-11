@@ -4,7 +4,7 @@ export type EventType = 'success' | 'error' | 'warning' | 'info' | 'neutral';
 
 export interface TimelineEvent {
   id: string;
-  timestamp: Date;
+  timestamp: Date | string;
   title: string;
   description?: string;
   type: EventType;
@@ -56,7 +56,8 @@ const getEventColorClass = (type: EventType): string => {
 
 const formatTimestamp = (date: Date): string => {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -83,7 +84,7 @@ const Timeline: React.FC<TimelineProps> = ({
 
   // Sort events chronologically (newest first)
   const sortedEvents = [...events]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, maxEvents);
 
   // Auto-scroll to top when new events are added
@@ -131,9 +132,8 @@ const Timeline: React.FC<TimelineProps> = ({
             {/* Event content */}
             <div className="timeline-end">
               <div
-                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
-                  viewMode === 'compact' ? 'p-3' : 'p-4'
-                }`}
+                className={`card bg-base-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${viewMode === 'compact' ? 'p-3' : 'p-4'
+                  }`}
                 onClick={() => handleEventClick(event)}
               >
                 <div className="card-body p-0">
@@ -145,7 +145,7 @@ const Timeline: React.FC<TimelineProps> = ({
                       </h3>
                       {showTimestamps && (
                         <div className="text-xs text-base-content/60 mt-1">
-                          {formatTimestamp(event.timestamp)}
+                          {formatTimestamp(new Date(event.timestamp))}
                         </div>
                       )}
                     </div>

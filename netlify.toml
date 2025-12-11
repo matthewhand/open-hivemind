@@ -1,31 +1,19 @@
 [build]
-  command = "npm run build:netlify"
-  functions = "dist/netlify/functions"
-  publish = "dist/client/dist"
+  command = "npm run build:serverless"
+  functions = "api"
+  publish = "src/client/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
 
 [dev]
-  command = "echo 'Dev server disabled for Netlify testing'"
-  functions = "dist/netlify/functions"
-  publish = "dist/client/dist"
+  command = "npm run dev:frontend-only"
+  functions = "api"
+  publish = "src/client/dist"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/webui/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/health/*"
-  to = "/.netlify/functions/server"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard/*"
-  to = "/.netlify/functions/server"
+  to = "/.netlify/functions/index/:splat"
   status = 200
 
 [[redirects]]

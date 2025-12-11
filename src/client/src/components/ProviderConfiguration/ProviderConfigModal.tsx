@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   ProviderModalState,
-  MessageProvider,
-  LLMProvider,
   MessageProviderType,
   LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
@@ -10,7 +8,7 @@ import {
   ProviderTypeConfig,
   FieldConfig
 } from '../../types/bot';
-import { Button, Badge } from '../DaisyUI';
+import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
 
 interface ProviderConfigModalProps {
@@ -25,7 +23,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onSubmit
 }) => {
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? 'discord' : 'openai'
+    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -42,8 +40,31 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         });
       } else {
         // Add mode: start with empty form
+        const defaultType = modalState.providerType === 'message'
+          ? MessageProviderType.DISCORD
+          : LLMProviderType.OPENAI;
+
+        // Only update selectedType if it mismatch or just to be safe (safest to always reset on open/type change)
+        // But we need to handle if user changes type via tab. 
+        // Actually, this effect runs on [modalState.isOpen, modalState.providerType]. 
+        // If user clicks tab, only selectedType changes (which is not in deps? No, selectedType IS in deps).
+        // Wait, if selectedType is in deps, setting it triggers effect loop?
+        // Let's remove selectedType from deps if we set it?
+        // Or conditionally set it if it's invalid for current providerType.
+
+        let newType = selectedType;
+        const isCurrentTypeValid = modalState.providerType === 'message'
+          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
+          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
+
+        if (!isCurrentTypeValid) {
+          newType = defaultType;
+          setSelectedType(newType);
+        }
+
+        const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm');
         setFormData({
-          name: getDefaultName(selectedType, modalState.providerType)
+          name: defaultName
         });
         setErrors({});
       }
@@ -52,13 +73,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
   const getDefaultName = (type: string, providerType: 'message' | 'llm'): string => {
     const configs = providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-    const config = configs[type as keyof typeof configs];
+    const config = (configs as any)[type];
     return config?.name || 'New Provider';
   };
 
   const getCurrentConfig = (): ProviderTypeConfig => {
     const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-    return configs[selectedType as keyof typeof configs];
+    return (configs as any)[selectedType];
   };
 
   const validateField = (field: FieldConfig, value: any): string | null => {
@@ -67,22 +88,22 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     if (field.validation && value) {
-      const { min, max, pattern, message } = field.validation;
+      const { min, max, pattern } = field.validation;
 
       if (field.type === 'number') {
         const numValue = Number(value);
         if (min !== undefined && numValue < min) {
-          return message || `${field.label} must be at least ${min}`;
+          return `${field.label} must be at least ${min}`;
         }
         if (max !== undefined && numValue > max) {
-          return message || `${field.label} must be at most ${max}`;
+          return `${field.label} must be at most ${max}`;
         }
       }
 
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
-          return message || `${field.label} format is invalid`;
+          return `${field.label} format is invalid`;
         }
       }
     }
@@ -102,11 +123,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     // Validate required fields
-    const allFields = [...config.requiredFields, ...config.optionalFields];
+    const allFields = config.fields || [];
     allFields.forEach(field => {
-      const error = validateField(field, formData[field.key]);
+      const error = validateField(field, formData[field.name]);
       if (error) {
-        newErrors[field.key] = error;
+        newErrors[field.name] = error;
         isValid = false;
       }
     });
@@ -118,19 +139,20 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    const isValid = validateForm();
+    if (!isValid) {
       return;
     }
 
     const config = getCurrentConfig();
-    const allFields = [...config.requiredFields, ...config.optionalFields];
+    const allFields = config.fields || [];
     const providerConfig: Record<string, any> = {};
 
     // Only include fields that have values
     allFields.forEach(field => {
-      const value = formData[field.key];
+      const value = formData[field.name];
       if (value !== undefined && value !== '') {
-        providerConfig[field.key] = field.type === 'number' ? Number(value) : value;
+        providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
       }
     });
 
@@ -158,8 +180,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const renderField = (field: FieldConfig) => {
-    const error = errors[field.key];
-    const value = formData[field.key] || '';
+    const error = errors[field.name];
+    const value = formData[field.name] || '';
 
     const fieldClasses = `
       w-full
@@ -171,7 +193,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     switch (field.type) {
       case 'password':
         return (
-          <div key={field.key}>
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -181,7 +203,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
             />
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
@@ -189,7 +211,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'number':
         return (
-          <div key={field.key}>
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -199,10 +221,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
               min={field.validation?.min}
               max={field.validation?.max}
-              step={field.key === 'temperature' ? '0.1' : '1'}
+              step={field.name === 'temperature' ? '0.1' : '1'}
             />
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
@@ -210,7 +232,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'select':
         return (
-          <div key={field.key}>
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -218,11 +240,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <select
               className={`${fieldClasses} select`}
               value={value}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
             >
               <option value="">Select {field.label.toLowerCase()}</option>
               {field.options?.map(option => (
-                <option key={option} value={option}>{option}</option>
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
@@ -231,7 +253,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
       case 'textarea':
         return (
-          <div key={field.key}>
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -240,23 +262,23 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
               rows={4}
             />
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
         );
 
-      case 'toggle':
+      case 'checkbox':
         return (
-          <div key={field.key} className="form-control">
+          <div key={field.name} className="form-control">
             <label className="label cursor-pointer">
               <span className="label-text font-medium">{field.label}</span>
               <input
                 type="checkbox"
                 className="toggle toggle-primary"
-                checked={value || false}
-                onChange={(e) => handleFieldChange(field.key, e.target.checked)}
+                checked={!!value}
+                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
               />
             </label>
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
@@ -264,8 +286,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         );
 
       default:
+        // text and others
         return (
-          <div key={field.key}>
+          <div key={field.name}>
             <label className="label">
               <span className="label-text font-medium">{field.label}</span>
               {field.required && <span className="label-text-alt text-error">*</span>}
@@ -275,7 +298,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               className={fieldClasses}
               placeholder={field.placeholder}
               value={value}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
             />
             {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
           </div>
@@ -285,9 +308,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
   if (!modalState.isOpen) return null;
 
-  const config = getCurrentConfig();
-  const allFields = [...config.requiredFields, ...config.optionalFields];
-  const providerTypes = Object.keys(config);
+  // Get ALL configs to iterate types for tabs
+  const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
+  const providerTypes = Object.keys(configs);
+  // Safe config access: if selectedType mismatch, fallback to first in list
+  const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
+  const allFields = config?.fields || [];
 
   return (
     <div className="modal modal-open">
@@ -308,7 +334,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         {/* Provider Type Tabs */}
         <div className="tabs tabs-boxed mb-6">
           {providerTypes.map(type => {
-            const typeConfig = config[type as keyof typeof config];
+            const typeConfig = (configs as any)[type];
             return (
               <a
                 key={type}
@@ -316,7 +342,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
               >
                 <span>{typeConfig.icon}</span>
-                {typeConfig.name}
+                {typeConfig.displayName || typeConfig.name}
               </a>
             );
           })}
@@ -332,6 +358,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             </label>
             <input
               type="text"
+              name="name"
               className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
               placeholder="Enter a descriptive name for this provider"
               value={formData.name || ''}
@@ -357,8 +384,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             <Button
               type="submit"
               variant="primary"
+              onClick={(e: any) => handleSubmit(e)}
             >
-              {modalState.isEdit ? 'Update' : 'Add'} Provider
+              {modalState.isEdit ? 'Update' : 'Submit'} Provider
             </Button>
           </div>
         </form>

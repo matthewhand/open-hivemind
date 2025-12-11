@@ -72,10 +72,38 @@ export class WebUIServer {
 
     // Security middleware
     this.app.use(securityHeaders);
-    this.app.use(cors({
-      origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
-      credentials: true
-    }));
+    // Production-grade CORS configuration
+    const corsOptions = {
+      origin: (origin: string | undefined, callback: (err: Error | null, origin?: string) => void) => {
+        const allowedOrigins = process.env.CORS_ORIGIN
+          ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+          : [];
+        
+        // In production, only allow specific origins
+        if (process.env.NODE_ENV === 'production') {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, origin);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        } else {
+          // In development, allow localhost origins
+          if (!origin || allowedOrigins.includes(origin) ||
+              origin.includes('localhost') || origin.includes('127.0.1')) {
+            callback(null, origin);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        }
+      },
+      credentials: true,
+      optionsSuccessStatus: 200,
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      maxAge: 86400
+    };
+    
+    this.app.use(cors(corsOptions));
 
     // Rate limiting (basic implementation)
     this.app.use('/api', (req, res, next) => {
