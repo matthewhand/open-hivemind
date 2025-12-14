@@ -123,11 +123,24 @@ export const Discord = {
     private loadBotsFromConfig(): void {
       const configManager = BotConfigurationManager.getInstance();
       const providerManager = ProviderConfigManager.getInstance();
-      
+
       const botConfigs = configManager.getDiscordBotConfigs();
       const providers = providerManager.getAllProviders('message').filter(p => p.type === 'discord' && p.enabled);
 
       if (providers.length === 0) {
+        // Fallback: Check for legacy DISCORD_BOT_TOKEN environment variable
+        const legacyToken = process.env.DISCORD_BOT_TOKEN;
+        if (legacyToken) {
+          log('Found DISCORD_BOT_TOKEN env var, using as single provider');
+          // Create an ad-hoc provider config
+          this.addBotToPool(legacyToken, 'Discord Bot', {
+            name: 'Discord Bot',
+            messageProvider: 'discord',
+            discord: { token: legacyToken }
+          });
+          return;
+        }
+
         log('No Discord providers configured.');
         return; // No tokens, no bots.
       }
@@ -135,55 +148,55 @@ export const Discord = {
       if (botConfigs.length > 0) {
         // Mode A: Logical Bots Defined (Match to Providers)
         botConfigs.forEach(botConfig => {
-           // Find matching provider by ID, or fallback to first/default
-           let provider = providers.find(p => p.id === botConfig.messageProviderId);
-           if (!provider) {
-             // Heuristic: If only 1 provider exists, use it.
-             if (providers.length === 1) provider = providers[0];
-             // Heuristic: If multiple, maybe match by name? Or default?
-             // For now, if no ID match and >1 providers, we might skip or default.
-             // Defaulting to first is unsafe if they are different identities.
-             // But for backward compat (migration), if bot has no ID, and we have migrated 1 provider...
-           }
+          // Find matching provider by ID, or fallback to first/default
+          let provider = providers.find(p => p.id === botConfig.messageProviderId);
+          if (!provider) {
+            // Heuristic: If only 1 provider exists, use it.
+            if (providers.length === 1) provider = providers[0];
+            // Heuristic: If multiple, maybe match by name? Or default?
+            // For now, if no ID match and >1 providers, we might skip or default.
+            // Defaulting to first is unsafe if they are different identities.
+            // But for backward compat (migration), if bot has no ID, and we have migrated 1 provider...
+          }
 
-           if (provider && provider.config.token) {
-             this.addBotToPool(provider.config.token, botConfig.name, botConfig);
-           } else {
-             log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
-           }
+          if (provider && provider.config.token) {
+            this.addBotToPool(provider.config.token, botConfig.name, botConfig);
+          } else {
+            console.log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
+          }
         });
       } else {
         // Mode B: No Logical Bots (Ad-Hoc / Legacy Mode / Test Mode)
         // Create one bot per Provider Instance
         providers.forEach((provider, index) => {
-           if (provider.config.token) {
-              const name = provider.name || `Discord Bot ${index + 1}`;
-              // Create a dummy bot config
-              const dummyConfig = {
-                  name,
-                  messageProvider: 'discord',
-                  // Default to first available LLM or flowise as fallback
-                  llmProvider: 'flowise', 
-                  ...provider.config 
-              };
-              this.addBotToPool(provider.config.token, name, dummyConfig);
-           }
+          if (provider.config.token) {
+            const name = provider.name || `Discord Bot ${index + 1}`;
+            // Create a dummy bot config
+            const dummyConfig = {
+              name,
+              messageProvider: 'discord',
+              // Default to first available LLM or flowise as fallback
+              llmProvider: 'flowise',
+              ...provider.config
+            };
+            this.addBotToPool(provider.config.token, name, dummyConfig);
+          }
         });
       }
     }
 
     private addBotToPool(token: string, name: string, config: any): void {
-        const client = new Client({ intents: Discord.DiscordService.intents });
-        this.bots.push({
-            client,
-            botUserId: '',
-            botUserName: name,
-            config: {
-                ...config,
-                discord: { token, ...config.discord },
-                token // Ensure root token property exists for legacy checks
-            }
-        });
+      const client = new Client({ intents: Discord.DiscordService.intents });
+      this.bots.push({
+        client,
+        botUserId: '',
+        botUserName: name,
+        config: {
+          ...config,
+          discord: { token, ...config.discord },
+          token // Ensure root token property exists for legacy checks
+        }
+      });
     }
 
 
@@ -285,7 +298,7 @@ export const Discord = {
 
       // Set up interaction handler for slash commands
       this.setInteractionHandler();
-      
+
       console.log('!!! EMITTING service-ready FOR DiscordService !!!');
       console.log('!!! DiscordService EMITTER INSTANCE:', this);
       const startupGreetingService = require('../../services/StartupGreetingService').default;
@@ -315,7 +328,7 @@ export const Discord = {
                 contentLength: (message.content || '').length,
                 status: 'success'
               });
-            } catch {}
+            } catch { }
 
             const wrappedMessage = new DiscordMessage(message);
             const history = await this.getMessagesFromChannel(message.channelId);
@@ -501,7 +514,7 @@ export const Discord = {
             contentLength: (text || '').length,
             status: 'success'
           });
-        } catch {}
+        } catch { }
         return message.id;
       } catch (error: unknown) {
         if (error instanceof ValidationError) {
@@ -515,7 +528,7 @@ export const Discord = {
               botName: botInfo.botUserName,
               metadata: { channelId: selectedChannelId, errorType: 'ValidationError' }
             });
-          } catch {}
+          } catch { }
           return '';
         }
 
@@ -535,9 +548,13 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId: selectedChannelId, errorType: 'NetworkError' }
           });
-        } catch {}
+        } catch { }
         return '';
       }
+    }
+
+    public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
+      return this.sendMessageToChannel(channelId, text, senderName);
     }
 
     public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
@@ -546,6 +563,10 @@ export const Discord = {
       const cap = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
       const limited = rawMessages.slice(0, cap);
       return limited.map(msg => new DiscordMessage(msg));
+    }
+
+    public async getMessages(channelId: string): Promise<IMessage[]> {
+      return this.getMessagesFromChannel(channelId);
     }
 
     public async fetchMessages(channelId: string): Promise<Message[]> {
@@ -579,7 +600,7 @@ export const Discord = {
             botName: botInfo.botUserName,
             metadata: { channelId, errorType: 'NetworkError' }
           });
-        } catch {}
+        } catch { }
 
         return [];
       }
@@ -601,7 +622,7 @@ export const Discord = {
 
       // Check cache first
       if (this.configCache.has(cacheKey) &&
-          (now - this.lastConfigCheck) < this.CONFIG_CACHE_TTL) {
+        (now - this.lastConfigCheck) < this.CONFIG_CACHE_TTL) {
         return this.configCache.get(cacheKey);
       }
 

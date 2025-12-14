@@ -27,7 +27,7 @@ const MattermostMgr = (() => {
  */
 // Ensure CommonJS require compatibility for tests using jest.mock()
 function __require(modulePath: string): any {
-   
+
   return require(modulePath);
 }
 
@@ -51,8 +51,8 @@ export function getMessengerProvider() {
   const providerFilter: string[] = typeof rawProviders === 'string'
     ? rawProviders.split(',').map((v: string) => v.trim().toLowerCase()).filter(Boolean)
     : Array.isArray(rawProviders)
-    ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
-    : [];
+      ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
+      : [];
 
   const wantProvider = (name: string) => {
     return providerFilter.length === 0 || providerFilter.includes(name.toLowerCase());
@@ -67,9 +67,9 @@ export function getMessengerProvider() {
     providersArray.some((p) => String(p.type).toLowerCase() === type.toLowerCase());
 
   const LOW_MEMORY = process.env.LOW_MEMORY_MODE === 'true';
-  const hasDiscord = hasType('discord');
-  const hasSlack = hasType('slack');
-  const hasMattermost = hasType('mattermost');
+  const hasDiscord = hasType('discord') || providerFilter.includes('discord');
+  const hasSlack = hasType('slack') || providerFilter.includes('slack');
+  const hasMattermost = hasType('mattermost') || providerFilter.includes('mattermost');
 
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (hasDiscord && wantProvider('discord')) {
@@ -126,10 +126,10 @@ export function getMessengerProvider() {
       const svc = MattermostMgr.MattermostService?.getInstance
         ? MattermostMgr.MattermostService.getInstance()
         : MattermostMgr.default?.getInstance
-        ? MattermostMgr.default.getInstance()
-        : MattermostMgr.getInstance
-        ? MattermostMgr.getInstance()
-        : null;
+          ? MattermostMgr.default.getInstance()
+          : MattermostMgr.getInstance
+            ? MattermostMgr.getInstance()
+            : null;
       if (svc) {
         messengerServices.push(svc);
         gmpDebug(`Initialized Mattermost provider`);
@@ -172,14 +172,14 @@ export function getMessengerProvider() {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',
-          sendMessageToChannel: () => {},
+          sendMessageToChannel: () => { },
           getClientId: () => 'SLACK_CLIENT_ID',
         });
       }
     }
   }
 
-  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p:any)=>p?.provider).join(',')}`);
+  gmpDebug(`Returning ${messengerServices.length} provider(s): ${messengerServices.map((p: any) => p?.provider).join(',')}`);
   return messengerServices;
 }
 

@@ -363,6 +363,7 @@ async function main() {
 
         // Initialize Vite in Development Mode (with HMR)
         if (process.env.NODE_ENV === 'development') {
+            // @ts-ignore - Vite is a dev dependency using dynamic import
             const { createServer: createViteServer } = await import('vite');
             appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
             viteServer = await createViteServer({
