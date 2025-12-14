@@ -319,14 +319,12 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     };
 
     return (
-    return (
       <div className="space-y-1">
         {renderInput()}
         {error && (
           <p className="text-xs text-red-500 mt-1">{error}</p>
         )}
       </div>
-    );
     );
   };
 
