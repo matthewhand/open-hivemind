@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
 
 interface ConfigSchema {
@@ -230,20 +231,17 @@ const BotConfigurationPage: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500 rounded-lg">
-            <Settings className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Configuration</h1>
-            <p className="text-gray-500">System and provider settings (convict configs)</p>
-          </div>
-        </div>
-        <button onClick={fetchConfigs} className="btn btn-ghost gap-2" disabled={loading}>
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
-        </button>
-      </div>
+      <PageHeader
+        title="Global Defaults"
+        description="System and provider settings (convict configs)"
+        icon={Settings}
+        gradient="accent"
+        actions={
+          <button onClick={fetchConfigs} className="btn btn-ghost gap-2" disabled={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
+          </button>
+        }
+      />
 
       {/* Stats */}
       <div className="stats stats-horizontal bg-base-200 w-full">

@@ -271,6 +271,9 @@ const IntegrationsPanel: React.FC = () => {
                     <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide text-base-content/70">
                         {category === 'llm' ? <CpuChipIcon className="w-5 h-5" /> : <ChatBubbleLeftRightIcon className="w-5 h-5" />}
                         {title}
+                        <div className="tooltip tooltip-right font-normal normal-case text-sm" data-tip={category === 'llm' ? "Manage AI models and API keys" : "Connect to messaging platforms"}>
+                            <AlertCircle className="w-4 h-4 cursor-help opacity-50 hover:opacity-100" />
+                        </div>
                     </h2>
                     <Button
                         variant="neutral"

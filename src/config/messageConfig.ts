@@ -440,8 +440,9 @@ const messageConfig = convict({
     doc: 'Greeting message configuration',
     format: Object,
     default: {
-      disabled: true,
-      message: 'Hello! I am online.'
+      disabled: false,
+      message: 'Hello! I am online.',
+      use_llm: true
     },
     env: 'GREETING'
   }

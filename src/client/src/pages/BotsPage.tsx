@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield } from 'lucide-react';
+import { Bot, Plus, Play, Square, Trash2, Copy, MessageSquare, Cpu, Eye, AlertCircle, RefreshCw, Activity, Settings, ExternalLink, User, Edit2, Shield, Info } from 'lucide-react';
 
 import Modal from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
 
 interface BotData {
   id: string;
@@ -22,9 +23,83 @@ import { PROVIDER_CATEGORIES } from '../config/providers';
 const API_BASE = '/api';
 
 const BotsPage: React.FC = () => {
-  // ... state ...
+  const [bots, setBots] = useState<BotData[]>([]);
+  const [personas, setPersonas] = useState<any[]>([]); // added personas state
+  const [globalConfig, setGlobalConfig] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // ... useEffects ...
+  // Modals
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, bot: BotData | null }>({ isOpen: false, bot: null });
+  const [previewBot, setPreviewBot] = useState<BotData | null>(null);
+
+  // Create Form
+  const [newBotName, setNewBotName] = useState('');
+  const [newBotDesc, setNewBotDesc] = useState('');
+  const [newBotPersona, setNewBotPersona] = useState('default');
+  const [newBotMessageProvider, setNewBotMessageProvider] = useState('');
+  const [newBotLlmProvider, setNewBotLlmProvider] = useState('');
+
+  // Validation for Create Bot form
+  const canCreateBot = newBotName.trim() && newBotPersona && newBotMessageProvider && newBotLlmProvider;
+
+  // Preview Data
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [configResponse, globalResponse, personasResponse] = await Promise.all([
+        fetch(`${API_BASE}/config`),
+        fetch(`${API_BASE}/config/global`),
+        fetch(`${API_BASE}/personas`)
+      ]);
+
+      if (!configResponse.ok) throw new Error('Failed to fetch bot config');
+      const configData = await configResponse.json();
+      setBots(configData.bots || []);
+
+      if (personasResponse.ok) {
+        const personasData = await personasResponse.json();
+        setPersonas(personasData);
+      }
+
+      if (globalResponse.ok) {
+        const globalData = await globalResponse.json();
+        const simplifiedConfig: any = {};
+        // Flatten global config for easy key access
+        Object.keys(globalData).forEach(key => {
+          simplifiedConfig[key] = globalData[key].values;
+        });
+        setGlobalConfig(simplifiedConfig);
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Fetch logs when previewing a bot
+  useEffect(() => {
+    if (previewBot) {
+      // Mock logs for now or fetch if endpoint exists
+      setActivityLogs([
+        { id: 1, timestamp: new Date().toISOString(), details: 'Bot started', metadata: { type: 'SYSTEM' } },
+        { id: 2, timestamp: new Date(Date.now() - 1000 * 60).toISOString(), details: 'Message received from user', metadata: { type: 'MESSAGE_RECEIVED' } },
+        { id: 3, timestamp: new Date(Date.now() - 1000 * 58).toISOString(), details: 'Response sent', metadata: { type: 'RESPONSE_SENT' } }
+      ]);
+    }
+  }, [previewBot]);
 
   const getIntegrationOptions = (category: 'llm' | 'message') => {
     const allKeys = Object.keys(globalConfig);
@@ -66,7 +141,7 @@ const BotsPage: React.FC = () => {
 
 
   const handleCreateBot = async () => {
-    if (!newBotName.trim()) return;
+    if (!canCreateBot) return;
 
     try {
       setActionLoading('create');
@@ -76,8 +151,9 @@ const BotsPage: React.FC = () => {
         body: JSON.stringify({
           name: newBotName,
           description: newBotDesc,
-          messageProvider: 'discord', // Default
-          llmProvider: 'openai'       // Default
+          messageProvider: newBotMessageProvider,
+          llmProvider: newBotLlmProvider,
+          persona: newBotPersona
         })
       });
 
@@ -86,8 +162,12 @@ const BotsPage: React.FC = () => {
         throw new Error(data.error || 'Failed to create bot');
       }
 
+      // Reset form
       setNewBotName('');
       setNewBotDesc('');
+      setNewBotPersona('default');
+      setNewBotMessageProvider('');
+      setNewBotLlmProvider('');
       setShowCreateModal(false);
       await fetchData();
     } catch (err) {
@@ -216,25 +296,22 @@ const BotsPage: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500 rounded-lg">
-            <Bot className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Bot Management</h1>
-            <p className="text-gray-500">Manage your AI bot instances</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={fetchData} className="btn btn-ghost gap-2" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-          </button>
-          <button onClick={() => setShowCreateModal(true)} className="btn btn-primary gap-2">
-            <Plus className="w-4 h-4" /> Create Bot
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Bot Management"
+        description="Manage your AI bot instances"
+        icon={Bot}
+        gradient="primary"
+        actions={
+          <>
+            <button onClick={fetchData} className="btn btn-ghost gap-2" disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+            <button onClick={() => setShowCreateModal(true)} className="btn btn-primary gap-2">
+              <Plus className="w-4 h-4" /> Create Bot
+            </button>
+          </>
+        }
+      />
 
       {/* Stats */}
       <div className="stats stats-horizontal bg-base-200 w-full">
@@ -312,12 +389,22 @@ const BotsPage: React.FC = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pt-4 pb-2">
                       {/* Column 1: Integrations */}
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Integrations</h4>
+                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
+                          Integrations
+                          <div className="tooltip tooltip-right" data-tip="Configure external services this bot connects to.">
+                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
+                          </div>
+                        </h4>
 
                         {/* Message Provider */}
                         <div className="form-control w-full">
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70"><MessageSquare className="w-3 h-3" /> Messenger</span>
+                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
+                              <MessageSquare className="w-3 h-3" /> Messenger
+                              <div className="tooltip tooltip-top" data-tip="The platform where this bot sends and receives messages (e.g., Discord, Slack).">
+                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
+                              </div>
+                            </span>
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
@@ -344,7 +431,12 @@ const BotsPage: React.FC = () => {
                         {/* LLM Provider */}
                         <div className="form-control w-full" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70"><Cpu className="w-3 h-3" /> LLM</span>
+                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
+                              <Cpu className="w-3 h-3" /> LLM
+                              <div className="tooltip tooltip-top" data-tip="The AI model provider used to generate responses (e.g., OpenAI, Ollama).">
+                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
+                              </div>
+                            </span>
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
@@ -371,12 +463,22 @@ const BotsPage: React.FC = () => {
 
                       {/* Column 2: Settings (Persona & Guards) */}
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Settings</h4>
+                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
+                          Settings
+                          <div className="tooltip tooltip-right" data-tip="Configure behavior and safety rules.">
+                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
+                          </div>
+                        </h4>
 
                         {/* Persona Selector */}
                         <div className="form-control w-full">
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-medium flex items-center gap-1 opacity-70"><User className="w-3 h-3" /> Persona</span>
+                            <span className="text-xs font-medium flex items-center gap-1 opacity-70">
+                              <User className="w-3 h-3" /> Persona
+                              <div className="tooltip tooltip-top" data-tip="Defines the bot's personality and system instructions.">
+                                <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
+                              </div>
+                            </span>
                           </div>
                           <div className="dropdown w-full">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border border-base-300 w-full justify-between font-normal">
@@ -403,7 +505,7 @@ const BotsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Guards (Mocked/Placeholder for now) */}
+                        {/* Guards */}
                         <div className="collapse collapse-arrow border border-base-200 bg-base-100 rounded-lg">
                           <input type="checkbox" className="min-h-0 h-8" />
                           <div className="collapse-title min-h-0 h-8 p-2 flex items-center gap-2 text-sm font-medium">
@@ -411,7 +513,12 @@ const BotsPage: React.FC = () => {
                           </div>
                           <div className="collapse-content text-xs space-y-2 pt-2">
                             <label className="flex items-center justify-between cursor-pointer">
-                              <span>Access Control</span>
+                              <span className="flex items-center gap-1">
+                                Access Control
+                                <div className="tooltip tooltip-right" data-tip="Limit who can interact with this bot.">
+                                  <Info className="w-3 h-3 cursor-help opacity-50 hover:opacity-100" />
+                                </div>
+                              </span>
                               <input type="checkbox" className="toggle toggle-xs toggle-success" disabled checked={!!bot.config?.mcpGuard?.enabled} />
                             </label>
                             <label className="flex items-center justify-between cursor-pointer opacity-50">
@@ -428,7 +535,12 @@ const BotsPage: React.FC = () => {
 
                       {/* Column 3: Management */}
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Management</h4>
+                        <h4 className="text-xs font-bold text-base-content/50 uppercase tracking-wider flex items-center gap-2">
+                          Management
+                          <div className="tooltip tooltip-right" data-tip="Administrative actions for this bot.">
+                            <Info className="w-3 h-3 cursor-help opacity-70 hover:opacity-100" />
+                          </div>
+                        </h4>
                         <div className="grid grid-cols-1 gap-2">
                           <button
                             className="btn btn-sm btn-ghost border border-base-300 w-full justify-start gap-2"
@@ -493,20 +605,46 @@ const BotsPage: React.FC = () => {
                 onChange={(e) => setNewBotDesc(e.target.value)}
               />
             </div>
+
+            <div className="form-control md:col-span-2">
+              <label className="label"><span className="label-text">Initial Persona</span></label>
+              <select
+                className="select select-bordered w-full"
+                value={newBotPersona}
+                onChange={(e) => setNewBotPersona(e.target.value)}
+              >
+                <option value="default">Default (Helpful Assistant)</option>
+                {personas.filter(p => p.id !== 'default').map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.isBuiltIn ? '(Built-in)' : ''}
+                  </option>
+                ))}
+              </select>
+              <label className="label">
+                <span className="label-text-alt text-base-content/60">
+                  {personas.find(p => p.id === newBotPersona || p.name === newBotPersona)?.systemPrompt?.substring(0, 100)}...
+                </span>
+              </label>
+            </div>
           </div>
 
           <div className="divider">Integrations</div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Message Provider</span></label>
+              <label className="label"><span className="label-text">Message Provider <span className="text-error">*</span></span></label>
               <div className="flex gap-2">
-                <select className="select select-bordered w-full">
-                  <option disabled selected>Select Provider</option>
+                <select
+                  className={`select select-bordered w-full ${!newBotMessageProvider ? 'select-error' : ''}`}
+                  value={newBotMessageProvider}
+                  onChange={(e) => setNewBotMessageProvider(e.target.value)}
+                >
+                  <option value="">Select Provider</option>
                   <option value="discord">Discord</option>
                   <option value="slack">Slack</option>
                 </select>
                 <button
+                  type="button"
                   className="btn btn-square btn-outline"
                   onClick={() => window.location.href = '/admin/integrations/message'}
                   title="Create New Message Provider"
@@ -515,27 +653,25 @@ const BotsPage: React.FC = () => {
                 </button>
               </div>
               <label className="label">
-                <span className="label-text-alt text-warning">Only one message provider allowed per bot.</span>
+                <span className="label-text-alt text-base-content/60">Multiple message providers can be added after creation.</span>
               </label>
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">LLM Provider</span></label>
-              <div className="flex gap-2">
-                <select className="select select-bordered w-full">
-                  <option disabled selected>Select Provider</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="flowise">Flowise</option>
-                  <option value="ollama">Ollama</option>
-                </select>
-                <button
-                  className="btn btn-square btn-outline"
-                  onClick={() => window.location.href = '/admin/integrations/llm'}
-                  title="Create New LLM Provider"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
+              <label className="label"><span className="label-text">LLM Provider <span className="text-error">*</span></span></label>
+              <select
+                className={`select select-bordered w-full ${!newBotLlmProvider ? 'select-error' : ''}`}
+                value={newBotLlmProvider}
+                onChange={(e) => setNewBotLlmProvider(e.target.value)}
+              >
+                <option value="">Select Provider</option>
+                <option value="openai">OpenAI</option>
+                <option value="flowise">Flowise</option>
+                <option value="ollama">Ollama</option>
+              </select>
+              <label className="label">
+                <span className="label-text-alt text-warning">Only one LLM provider allowed per bot.</span>
+              </label>
             </div>
           </div>
 
@@ -544,7 +680,7 @@ const BotsPage: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={handleCreateBot}
-              disabled={actionLoading === 'create'}
+              disabled={actionLoading === 'create' || !canCreateBot}
             >
               {actionLoading === 'create' ? <span className="loading loading-spinner loading-xs" /> : 'Create Bot'}
             </button>

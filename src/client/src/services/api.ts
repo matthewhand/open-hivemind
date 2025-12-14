@@ -6,7 +6,7 @@ const buildUrl = (endpoint: string): string => {
   if (!API_BASE_URL && import.meta.env.DEV) {
     return endpoint;
   }
-  
+
   // In production or when API_BASE_URL is set, use the full URL
   const baseUrl = API_BASE_URL || (import.meta.env.DEV ? '' : 'https://open-hivemind.fly.dev');
   return `${baseUrl}${endpoint}`;
@@ -95,6 +95,18 @@ export interface N8nConfig {
   apiUrl?: string;
   apiKey?: string;
   workflowId?: string;
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  description: string;
+  category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
+  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
+  systemPrompt: string;
+  isBuiltIn?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Union type for all provider configs
@@ -317,6 +329,35 @@ class ApiService {
 
   async deleteBot(name: string): Promise<{ success: boolean; message: string }> {
     return this.request(`/api/bots/${name}`, { method: 'DELETE' });
+  }
+
+  // Persona Methods
+  async getPersonas(): Promise<Persona[]> {
+    return this.request<Persona[]>('/api/personas');
+  }
+
+  async getPersona(id: string): Promise<Persona> {
+    return this.request<Persona>(`/api/personas/${id}`);
+  }
+
+  async createPersona(data: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>): Promise<Persona> {
+    return this.request<Persona>('/api/personas', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updatePersona(id: string, data: Partial<Persona>): Promise<Persona> {
+    return this.request<Persona>(`/api/personas/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deletePersona(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/api/personas/${id}`, {
+      method: 'DELETE'
+    });
   }
 
   // Secure Configuration Methods

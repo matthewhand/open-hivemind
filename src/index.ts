@@ -75,6 +75,9 @@ const resolveFrontendDistPath = (): string => {
 const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
+// Vite Dev Server Instance (only used in dev)
+let viteServer: any;
+
 if (!fs.existsSync(frontendDistPath)) {
     frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
 }
@@ -152,40 +155,65 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(healthRoute);
 
 // Serve unified dashboard at root
-app.get('/', (req: Request, res: Response) => {
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
+if (process.env.NODE_ENV !== 'development') {
+    app.get('/', (req: Request, res: Response) => {
+        const indexPath = path.join(frontendDistPath, 'index.html');
+        appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
 
-    if (fs.existsSync(indexPath)) {
-        appLogger.debug('Serving frontend index.html');
-        res.sendFile(indexPath, (err) => {
-            if (err) {
-                appLogger.error('Error sending frontend file', { error: err });
-                res.status(500).send('Error serving frontend');
-            } else {
-                appLogger.info('Frontend served successfully');
-            }
-        });
-    } else {
-        appLogger.error('Frontend index.html not found', { indexPath });
-        res.status(404).send('Frontend not found - please run npm run build:frontend');
-    }
-});
+        if (fs.existsSync(indexPath)) {
+            appLogger.debug('Serving frontend index.html');
+            res.sendFile(indexPath, (err) => {
+                if (err) {
+                    appLogger.error('Error sending frontend file', { error: err });
+                    res.status(500).send('Error serving frontend');
+                } else {
+                    appLogger.info('Frontend served successfully');
+                }
+            });
+        } else {
+            appLogger.error('Frontend index.html not found', { indexPath });
+            res.status(404).send('Frontend not found - please run npm run build:frontend');
+        }
+    });
+}
 
 // Serve static files from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Serve static files from webui dist directory
-app.use(express.static(frontendDistPath));
+// Serve static files from webui dist directory (Production Only)
+if (process.env.NODE_ENV !== 'development') {
+    app.use(express.static(frontendDistPath));
+    // Global assets static for root-relative asset paths
+    app.use('/assets', express.static(frontendAssetsPath));
 
-// Global assets static for root-relative asset paths
-app.use('/assets', express.static(frontendAssetsPath));
+    // Uber UI (unified dashboard)
+    app.use('/uber', express.static(frontendDistPath));
+    app.use('/uber/*', (req: Request, res: Response) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+} else {
+    // Development Mode Handlers - Proxy to Vite
 
-// Uber UI (unified dashboard)
-app.use('/uber', express.static(frontendDistPath));
-app.use('/uber/*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
+    // Config for HTML serving
+    const serveDevHtml = async (req: Request, res: Response) => {
+        try {
+            const url = req.originalUrl;
+            let template = fs.readFileSync(path.join(process.cwd(), 'src/client/index.html'), 'utf-8');
+            template = await viteServer.transformIndexHtml(url, template);
+            res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+        } catch (e: any) {
+            viteServer.ssrFixStacktrace(e);
+            appLogger.error('Vite SSR Error', e);
+            res.status(500).end(e.message);
+        }
+    };
+
+    app.get('/', serveDevHtml);
+    app.get('/uber/*', serveDevHtml);
+    app.get('/admin/*', serveDevHtml);
+    app.get('/webui/*', serveDevHtml);
+}
 
 // Unified API routes - all on same port, no separation
 app.use('/api/swarm', swarmRouter);
@@ -220,7 +248,16 @@ app.get('/admin*', (req: Request, res: Response) => {
 // import uberRouter from './routes/uberRouter';
 // app.use('/api/uber', uberRouter);
 
-// Catch-all handler for React Router (must be AFTER all API routes)
+// React Router catch-all handler (must be AFTER all API routes)
+
+// Vite Proxy Middleware for Development (Must be before 404 handler)
+app.use((req: Request, res: Response, next: NextFunction) => {
+    if (process.env.NODE_ENV === 'development' && viteServer) {
+        viteServer.middlewares(req, res, next);
+    } else {
+        next();
+    }
+});
 // Return 404 for all non-existent routes
 app.get('*', (req: Request, res: Response) => {
     httpLogger.debug('No matching route for request', { path: req.path });
@@ -269,6 +306,7 @@ async function startBot(messengerService: any) {
 async function main() {
     // Unified application startup with enhanced diagnostics
     appLogger.info('🚀 Starting Open Hivemind Unified Server');
+
 
     // Run comprehensive startup diagnostics
     await startupDiagnostics.logStartupDiagnostics();
@@ -322,6 +360,23 @@ async function main() {
     if (httpEnabled) {
         const port = parseInt(process.env.PORT || '3028', 10);
         const server = createServer(app);
+
+        // Initialize Vite in Development Mode (with HMR)
+        if (process.env.NODE_ENV === 'development') {
+            const { createServer: createViteServer } = await import('vite');
+            appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
+            viteServer = await createViteServer({
+                server: {
+                    middlewareMode: true,
+                    hmr: { server } // Pass the http server to Vite for HMR
+                },
+                appType: 'custom',
+                configFile: path.join(process.cwd(), 'src/client/vite.config.ts'),
+                root: path.join(process.cwd(), 'src/client')
+            });
+
+            appLogger.info('⚡ Vite Middleware Active');
+        }
 
         // Initialize WebSocket service
         const wsService = WebSocketService.getInstance();

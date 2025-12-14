@@ -4,8 +4,15 @@ import messageConfig from '@config/messageConfig';
 import Logger from '@common/logger';
 import { Message } from '@src/types/messages';
 import { IMessengerService } from '@message/interfaces/IMessengerService';
+import { getLlmProvider } from '@llm/getLlmProvider';
 
 const appLogger = Logger.withContext('StartupGreetingService');
+
+interface GreetingConfig {
+    disabled: boolean;
+    message: string;
+    use_llm?: boolean;
+}
 
 class StartupGreetingService extends EventEmitter {
     private static instance: StartupGreetingService;
@@ -13,10 +20,8 @@ class StartupGreetingService extends EventEmitter {
 
     private constructor() {
         super();
-        console.log('!!! StartupGreetingService CONSTRUCTOR CALLED !!!');
-        console.log('!!! StartupGreetingService EMITTER INSTANCE:', this);
+        appLogger.info('StartupGreetingService initialized');
         this.greetingStateManager = GreetingStateManager.getInstance();
-        console.log('!!! REGISTERING service-ready LISTENER ON StartupGreetingService INSTANCE !!!');
         this.on('service-ready', this.handleServiceReady.bind(this));
     }
 
@@ -32,12 +37,52 @@ class StartupGreetingService extends EventEmitter {
         appLogger.info('StartupGreetingService initialized');
     }
 
+    /**
+     * Generate a fun welcome message using LLM
+     */
+    private async generateLlmGreeting(): Promise<string> {
+        try {
+            const providers = getLlmProvider();
+            if (providers.length === 0) {
+                appLogger.warn('No LLM providers available for greeting generation');
+                return 'Hello! I am online and ready to assist.';
+            }
+
+            const provider = providers[0];
+            const prompt = `Generate a short, friendly, and fun welcome message for a Discord channel. 
+The message should be welcoming, slightly playful, and indicate that the bot is now online and ready to help. 
+Keep it under 200 characters. Do not include any formatting or markdown. Just the message text.`;
+
+            appLogger.info('Generating LLM greeting message...');
+
+            if (provider.supportsChatCompletion()) {
+                const response = await provider.generateChatCompletion(prompt, []);
+                if (response) {
+                    appLogger.info('LLM greeting generated successfully');
+                    return response.trim();
+                }
+            } else if (provider.supportsCompletion()) {
+                const response = await provider.generateCompletion(prompt);
+                if (response) {
+                    appLogger.info('LLM greeting generated successfully');
+                    return response.trim();
+                }
+            }
+
+            return 'Hello! I am online and ready to assist.';
+        } catch (error) {
+            appLogger.error('Failed to generate LLM greeting', { error });
+            return 'Hello! I am online and ready to assist.';
+        }
+    }
+
     private async handleServiceReady(service: IMessengerService) {
         try {
-            // Get service name from constructor name or use a fallback
             const serviceName = service.constructor.name || 'UnknownService';
-            console.log('!!! service-ready EVENT RECEIVED FOR:', serviceName);
-            const greetingConfig = messageConfig.get('greeting') as { disabled: boolean; message: string };
+            appLogger.info('Service ready event received', { provider: serviceName });
+
+            const greetingConfig = messageConfig.get('greeting') as GreetingConfig;
+
             if (greetingConfig.disabled) {
                 appLogger.info('Greeting message is disabled by configuration.');
                 return;
@@ -55,14 +100,23 @@ class StartupGreetingService extends EventEmitter {
                 return;
             }
 
-            // Use sendMessageToChannel instead of sendMessage
-            await service.sendMessageToChannel(defaultChannel, greetingConfig.message);
+            // Determine the greeting message
+            let greetingMessage: string;
+            if (greetingConfig.use_llm) {
+                appLogger.info('Using LLM to generate greeting message');
+                greetingMessage = await this.generateLlmGreeting();
+            } else {
+                greetingMessage = greetingConfig.message || 'Hello! I am online.';
+            }
+
+            // Send the greeting
+            appLogger.info('Sending greeting message', { provider: serviceName, channel: defaultChannel, message: greetingMessage });
+            await service.sendMessageToChannel(defaultChannel, greetingMessage);
             await this.greetingStateManager.markGreetingAsSent(serviceId, defaultChannel);
-            appLogger.info('Greeting message sent successfully', { provider: serviceName, channel: defaultChannel });
+            appLogger.info('✅ Greeting message sent successfully', { provider: serviceName, channel: defaultChannel });
         } catch (error) {
             const serviceName = service.constructor.name || 'UnknownService';
             const defaultChannel = service.getDefaultChannel() || 'unknown';
-            console.error('!!! ERROR IN handleServiceReady !!!', error);
             appLogger.error('Failed to send greeting message', { provider: serviceName, channel: defaultChannel, error });
         }
     }

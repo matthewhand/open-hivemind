@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { Cog } from 'lucide-react';
 
 const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -19,14 +21,12 @@ const SystemSettings: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-4 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          Settings
-        </h1>
-        <p className="text-base-content/70">
-          Configure your Open-Hivemind instance settings and preferences
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Configure your Open-Hivemind instance settings and preferences"
+        icon={Cog}
+        gradient="primary"
+      />
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">

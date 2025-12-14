@@ -121,7 +121,7 @@ export const hivemindNavItems: NavItem[] = [
     },
     {
         id: 'configuration',
-        label: 'Environment Variables',
+        label: 'Global Defaults',
         icon: <NavIcon><Settings className="w-4 h-4" /></NavIcon>,
         path: '/admin/configuration',
         visible: true,
