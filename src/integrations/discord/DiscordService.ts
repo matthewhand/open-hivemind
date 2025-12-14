@@ -183,6 +183,17 @@ export const Discord = {
           }
         });
       }
+
+      // Final Fallback: If no bots were added (due to mismatch or empty config), try env var
+      if (this.bots.length === 0 && process.env.DISCORD_BOT_TOKEN) {
+        const legacyToken = process.env.DISCORD_BOT_TOKEN;
+        console.log('Fallback: No bots matched config, using DISCORD_BOT_TOKEN env var as "Discord Bot"');
+        this.addBotToPool(legacyToken, 'Discord Bot', {
+          name: 'Discord Bot',
+          messageProvider: 'discord',
+          discord: { token: legacyToken }
+        });
+      }
     }
 
     private addBotToPool(token: string, name: string, config: any): void {
