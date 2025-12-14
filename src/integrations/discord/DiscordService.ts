@@ -186,13 +186,20 @@ export const Discord = {
 
       // Final Fallback: If no bots were added (due to mismatch or empty config), try env var
       if (this.bots.length === 0 && process.env.DISCORD_BOT_TOKEN) {
-        const legacyToken = process.env.DISCORD_BOT_TOKEN;
-        console.log('Fallback: No bots matched config, using DISCORD_BOT_TOKEN env var as "Discord Bot"');
-        this.addBotToPool(legacyToken, 'Discord Bot', {
-          name: 'Discord Bot',
-          messageProvider: 'discord',
-          discord: { token: legacyToken }
-        });
+        const legacyTokens = process.env.DISCORD_BOT_TOKEN.split(',').map(t => t.trim()).filter(Boolean);
+
+        if (legacyTokens.length > 0) {
+          console.log(`Fallback: Found ${legacyTokens.length} token(s) in DISCORD_BOT_TOKEN env var`);
+          legacyTokens.forEach((token, index) => {
+            const botName = `Discord Bot ${index + 1}`;
+            console.log(`Fallback: Adding ${botName}`);
+            this.addBotToPool(token, botName, {
+              name: botName,
+              messageProvider: 'discord',
+              discord: { token }
+            });
+          });
+        }
       }
     }
 
