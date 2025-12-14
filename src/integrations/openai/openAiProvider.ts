@@ -49,11 +49,14 @@ export class OpenAiProvider implements ILlmProvider {
     const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
     const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
 
+    const systemPrompt = this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
+
     debug('OpenAI Config:', {
       baseURL,
       model,
       apiKeyPresent: !!apiKey,
-      organization
+      organization,
+      systemPrompt
     });
 
     if (!apiKey) {
@@ -70,7 +73,7 @@ export class OpenAiProvider implements ILlmProvider {
     const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
 
     const messages = [
-      { role: 'system' as const, content: this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.' },
+      { role: 'system' as const, content: systemPrompt },
       ...historyMessages.map(msg => ({
         role: msg.role as 'user' | 'assistant' | 'system',
         content: msg.getText() || ''
@@ -89,7 +92,12 @@ export class OpenAiProvider implements ILlmProvider {
         });
 
         debug('OpenAI Response:', JSON.stringify(response, null, 2));
-        return response.choices[0]?.message?.content || 'Sorry, I couldn’t generate a response.';
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          debug('LLM returned empty content, failing silently');
+          return '';
+        }
+        return content;
 
       } catch (error: unknown) {
         this.handleError(error, attempt);

@@ -175,7 +175,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       }
       logger(`LLM response: ${llmResponse}`);
 
-      const reply = llmResponse || 'No response'; // Assume string response
+      // If LLM returned empty response, fail silently - don't spam Discord with error messages
+      if (!llmResponse || llmResponse.trim() === '') {
+        logger('LLM returned empty response, skipping reply to avoid spamming Discord');
+        return null;
+      }
+
+      const reply = llmResponse;
       await timingManager.scheduleMessage(
         message.getChannelId(),
         message.getMessageId(),
