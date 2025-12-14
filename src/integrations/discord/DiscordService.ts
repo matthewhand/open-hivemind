@@ -161,6 +161,9 @@ export const Discord = {
 
           if (provider && provider.config.token) {
             this.addBotToPool(provider.config.token, botConfig.name, botConfig);
+          } else if (botConfig.discord?.token) {
+            // Legacy/Manual Mode: Bot config has token directly (e.g. from loadLegacyConfiguration)
+            this.addBotToPool(botConfig.discord.token, botConfig.name, botConfig);
           } else {
             console.log(`Bot ${botConfig.name} has no matching/valid Discord provider. Skipping.`);
           }
@@ -182,24 +185,6 @@ export const Discord = {
             this.addBotToPool(provider.config.token, name, dummyConfig);
           }
         });
-      }
-
-      // Final Fallback: If no bots were added (due to mismatch or empty config), try env var
-      if (this.bots.length === 0 && process.env.DISCORD_BOT_TOKEN) {
-        const legacyTokens = process.env.DISCORD_BOT_TOKEN.split(',').map(t => t.trim()).filter(Boolean);
-
-        if (legacyTokens.length > 0) {
-          console.log(`Fallback: Found ${legacyTokens.length} token(s) in DISCORD_BOT_TOKEN env var`);
-          legacyTokens.forEach((token, index) => {
-            const botName = `Discord Bot ${index + 1}`;
-            console.log(`Fallback: Adding ${botName}`);
-            this.addBotToPool(token, botName, {
-              name: botName,
-              messageProvider: 'discord',
-              discord: { token }
-            });
-          });
-        }
       }
     }
 
