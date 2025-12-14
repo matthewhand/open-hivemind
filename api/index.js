@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+const crypto = require('crypto');
 
 // Vercel Serverless Function - Native API Handler
 // No external dependencies to avoid cold start timeouts
@@ -19,7 +19,7 @@ if (!runtimePassword) {
     // console.log("ADMIN_PASSWORD is configured.");
 }
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
     const url = req.url || '/api';
     const path = url.split('?')[0];
     const method = req.method || 'GET';
