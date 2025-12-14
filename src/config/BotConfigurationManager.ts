@@ -42,7 +42,7 @@ const botSchema = {
     default: 'discord',
     env: 'BOTS_{name}_MESSAGE_PROVIDER'
   },
-  
+
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
@@ -50,7 +50,7 @@ const botSchema = {
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER'
   },
-  
+
   // Persona configuration
   PERSONA: {
     doc: 'Bot persona key',
@@ -58,28 +58,28 @@ const botSchema = {
     default: 'default',
     env: 'BOTS_{name}_PERSONA'
   },
-  
+
   SYSTEM_INSTRUCTION: {
     doc: 'Bot system instruction/prompt',
     format: String,
     default: '',
     env: 'BOTS_{name}_SYSTEM_INSTRUCTION'
   },
-  
+
   MCP_SERVERS: {
     doc: 'MCP servers configuration (JSON array)',
     format: Array,
     default: [],
     env: 'BOTS_{name}_MCP_SERVERS'
   },
-  
+
   MCP_GUARD: {
     doc: 'MCP tool usage guard configuration (JSON)',
     format: Object,
     default: { enabled: false, type: 'owner' },
     env: 'BOTS_{name}_MCP_GUARD'
   },
-  
+
   // Discord-specific configuration
   DISCORD_BOT_TOKEN: {
     doc: 'Discord bot token',
@@ -87,28 +87,28 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_DISCORD_BOT_TOKEN'
   },
-  
+
   DISCORD_CLIENT_ID: {
     doc: 'Discord client ID',
     format: String,
     default: '',
     env: 'BOTS_{name}_DISCORD_CLIENT_ID'
   },
-  
+
   DISCORD_GUILD_ID: {
     doc: 'Discord guild ID',
     format: String,
     default: '',
     env: 'BOTS_{name}_DISCORD_GUILD_ID'
   },
-  
+
   DISCORD_CHANNEL_ID: {
     doc: 'Default Discord channel ID',
     format: String,
     default: '',
     env: 'BOTS_{name}_DISCORD_CHANNEL_ID'
   },
-  
+
   DISCORD_VOICE_CHANNEL_ID: {
     doc: 'Discord voice channel ID',
     format: String,
@@ -123,35 +123,35 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_SLACK_BOT_TOKEN'
   },
-  
+
   SLACK_APP_TOKEN: {
     doc: 'Slack app token for Socket Mode',
     format: String,
     default: '',
     env: 'BOTS_{name}_SLACK_APP_TOKEN'
   },
-  
+
   SLACK_SIGNING_SECRET: {
     doc: 'Slack signing secret for verifying requests',
     format: String,
     default: '',
     env: 'BOTS_{name}_SLACK_SIGNING_SECRET'
   },
-  
+
   SLACK_JOIN_CHANNELS: {
     doc: 'Comma-separated Slack channel IDs to join',
     format: String,
     default: '',
     env: 'BOTS_{name}_SLACK_JOIN_CHANNELS'
   },
-  
+
   SLACK_DEFAULT_CHANNEL_ID: {
     doc: 'Default Slack channel ID for messages',
     format: String,
     default: '',
     env: 'BOTS_{name}_SLACK_DEFAULT_CHANNEL_ID'
   },
-  
+
   SLACK_MODE: {
     doc: 'Slack connection mode (socket or rtm)',
     format: ['socket', 'rtm'],
@@ -166,21 +166,21 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_MATTERMOST_SERVER_URL'
   },
-  
+
   MATTERMOST_TOKEN: {
     doc: 'Mattermost authentication token',
     format: String,
     default: '',
     env: 'BOTS_{name}_MATTERMOST_TOKEN'
   },
-  
+
   MATTERMOST_CHANNEL: {
     doc: 'Default Mattermost channel for messages',
     format: String,
     default: '',
     env: 'BOTS_{name}_MATTERMOST_CHANNEL'
   },
-  
+
   // OpenAI configuration
   OPENAI_API_KEY: {
     doc: 'OpenAI API key',
@@ -188,21 +188,21 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_OPENAI_API_KEY'
   },
-  
+
   OPENAI_MODEL: {
     doc: 'OpenAI model name',
     format: String,
     default: 'gpt-4',
     env: 'BOTS_{name}_OPENAI_MODEL'
   },
-  
+
   OPENAI_BASE_URL: {
     doc: 'OpenAI API base URL',
     format: String,
     default: 'https://api.openai.com/v1',
     env: 'BOTS_{name}_OPENAI_BASE_URL'
   },
-  
+
   // Flowise configuration
   FLOWISE_API_KEY: {
     doc: 'Flowise API key',
@@ -210,14 +210,14 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_FLOWISE_API_KEY'
   },
-  
+
   FLOWISE_API_BASE_URL: {
     doc: 'Flowise API base URL',
     format: String,
     default: 'http://localhost:3000/api/v1',
     env: 'BOTS_{name}_FLOWISE_API_BASE_URL'
   },
-  
+
   // OpenWebUI configuration
   OPENWEBUI_API_KEY: {
     doc: 'OpenWebUI API key',
@@ -225,14 +225,14 @@ const botSchema = {
     default: '',
     env: 'BOTS_{name}_OPENWEBUI_API_KEY'
   },
-  
+
   OPENWEBUI_API_URL: {
     doc: 'OpenWebUI API URL',
     format: String,
     default: 'http://localhost:3000/api/',
     env: 'BOTS_{name}_OPENWEBUI_API_URL'
   },
-  
+
   // OpenSwarm configuration
   OPENSWARM_BASE_URL: {
     doc: 'OpenSwarm API base URL',
@@ -240,14 +240,14 @@ const botSchema = {
     default: 'http://localhost:8000/v1',
     env: 'BOTS_{name}_OPENSWARM_BASE_URL'
   },
-  
+
   OPENSWARM_API_KEY: {
     doc: 'OpenSwarm API key',
     format: String,
     default: 'dummy-key',
     env: 'BOTS_{name}_OPENSWARM_API_KEY'
   },
-  
+
   OPENSWARM_TEAM: {
     doc: 'OpenSwarm team name (used as model)',
     format: String,
@@ -285,14 +285,15 @@ export class BotConfigurationManager {
 
     // Check for new BOTS configuration
     const botsEnv = process.env.BOTS;
-    
+
     if (botsEnv) {
       debug('Loading multi-bot configuration from BOTS environment variable');
       this.loadMultiBotConfiguration(botsEnv);
-    } else {
-      debug('Checking for legacy configuration');
-      this.loadLegacyConfiguration();
     }
+
+    // Always check for legacy configuration to support dual mode
+    debug('Checking for legacy configuration (Dual Mode)');
+    this.loadLegacyConfiguration();
 
     // Validate configuration
     this.validateConfigurationInternal();
@@ -303,7 +304,7 @@ export class BotConfigurationManager {
    */
   private loadMultiBotConfiguration(botsEnv: string): void {
     const botNames = botsEnv.split(',').map(name => name.trim()).filter(name => name);
-    
+
     for (const botName of botNames) {
       const config = this.createBotConfig(botName);
       if (config) {
@@ -317,18 +318,18 @@ export class BotConfigurationManager {
    */
   private createBotConfig(botName: string): BotConfig | null {
     const upperName = botName.toUpperCase();
-    
+
     // Create a convict instance for this bot
     const botConfig = convict(botSchema);
-    
+
     // Replace {name} placeholders with actual bot name
     const envVars = Object.keys(process.env);
     const botEnvVars = envVars.filter(key => key.startsWith(`BOTS_${upperName}_`));
-    
+
     for (const envVar of botEnvVars) {
       const configKey = envVar.replace(`BOTS_${upperName}_`, '');
       const value = process.env[envVar];
-      
+
       if (value !== undefined) {
         try {
           botConfig.set(configKey, value);
@@ -352,18 +353,18 @@ export class BotConfigurationManager {
         }
       }
     }
-    
+
     // Load bot-specific config file if exists
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const botConfigPath = path.join(configDir, `bots/${botName}.json`);
-    
+
     if (fs.existsSync(botConfigPath)) {
       debug(`Loading bot-specific config for ${botName} from ${botConfigPath}`);
       botConfig.loadFile(botConfigPath);
     }
-    
+
     botConfig.validate({ allowed: 'warn' });
-    
+
     // Build the bot configuration object
     const config: BotConfig = {
       name: botName,
@@ -374,7 +375,7 @@ export class BotConfigurationManager {
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
       mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' }
     };
-    
+
     // Add Discord configuration if token is provided
     const discordToken = botConfig.get('DISCORD_BOT_TOKEN');
     if (discordToken) {
@@ -386,7 +387,7 @@ export class BotConfigurationManager {
         voiceChannelId: botConfig.get('DISCORD_VOICE_CHANNEL_ID'),
       };
     }
-    
+
     // Add OpenAI configuration if API key is provided
     const openaiApiKey = botConfig.get('OPENAI_API_KEY');
     if (openaiApiKey) {
@@ -396,7 +397,7 @@ export class BotConfigurationManager {
         baseUrl: botConfig.get('OPENAI_BASE_URL'),
       };
     }
-    
+
     // Add Flowise configuration if API key is provided
     const flowiseApiKey = botConfig.get('FLOWISE_API_KEY');
     if (flowiseApiKey) {
@@ -405,7 +406,7 @@ export class BotConfigurationManager {
         apiBaseUrl: botConfig.get('FLOWISE_API_BASE_URL'),
       };
     }
-    
+
     // Add OpenWebUI configuration if API key is provided
     const openwebuiApiKey = botConfig.get('OPENWEBUI_API_KEY');
     if (openwebuiApiKey) {
@@ -414,7 +415,7 @@ export class BotConfigurationManager {
         apiUrl: botConfig.get('OPENWEBUI_API_URL'),
       };
     }
-    
+
     // Add OpenSwarm configuration
     const openswarmBaseUrl = botConfig.get('OPENSWARM_BASE_URL');
     if (config.llmProvider === 'openswarm' || openswarmBaseUrl !== 'http://localhost:8001/v1') {
@@ -424,9 +425,9 @@ export class BotConfigurationManager {
         team: botConfig.get('OPENSWARM_TEAM'),
       };
     }
-    
+
     this.applyUserOverrides(botName, config);
-    
+
     return config;
   }
 
@@ -484,13 +485,13 @@ export class BotConfigurationManager {
    */
   private loadLegacyConfiguration(): void {
     const legacyTokens = process.env.DISCORD_BOT_TOKEN;
-    
+
     if (legacyTokens && legacyTokens.trim()) {
       debug('Loading legacy configuration from DISCORD_BOT_TOKEN');
       this.legacyMode = true;
-      
+
       const tokens = legacyTokens.split(',').map(token => token.trim());
-      
+
       tokens.forEach((token, index) => {
         const botName = `Bot${index + 1}`;
         const config: BotConfig = {
@@ -505,7 +506,7 @@ export class BotConfigurationManager {
             voiceChannelId: process.env.DISCORD_VOICE_CHANNEL_ID,
           },
         };
-        
+
         this.bots.set(botName, config);
       });
     }
@@ -528,13 +529,11 @@ export class BotConfigurationManager {
   private validateConfigurationInternal(): void {
     const hasBotsConfig = !!process.env.BOTS;
     const hasLegacyConfig = !!process.env.DISCORD_BOT_TOKEN;
-    
+
     if (hasBotsConfig && hasLegacyConfig) {
-      const warning = 'WARNING: Both BOTS and DISCORD_BOT_TOKEN environment variables are set. Using BOTS configuration.';
-      console.warn(warning);
-      this.warnings.push(warning);
+      debug('Both BOTS and DISCORD_BOT_TOKEN environment variables are set. Dual mode enabled.');
     }
-    
+
     if (this.bots.size === 0) {
       debug('No bot configuration found');
     }
@@ -589,27 +588,27 @@ export class BotConfigurationManager {
    */
   public validateConfiguration(config: unknown): ConfigurationValidationResult {
     const errors: string[] = [];
-    
+
     const configObj = config as Record<string, unknown>;
-    
+
     if (!configObj.name) {
       errors.push('Bot name is required');
     }
-    
+
     if (!configObj.discord && !configObj.slack && !configObj.mattermost) {
       errors.push('At least one platform configuration is required');
     }
-    
+
     const discordConfig = configObj.discord as Record<string, unknown>;
     if (discordConfig && !discordConfig.botToken) {
       errors.push('Discord bot token is required');
     }
-    
+
     const slackConfig = configObj.slack as Record<string, unknown>;
     if (slackConfig && !slackConfig.botToken) {
       errors.push('Slack bot token is required');
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
