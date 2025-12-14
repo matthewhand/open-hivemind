@@ -30,7 +30,7 @@
       "enabled": true,
       "config": {
         "apiKey": "",
-        "model": "university"
+        "model": "free-small"
       }
     }
   ]

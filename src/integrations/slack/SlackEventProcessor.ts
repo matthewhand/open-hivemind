@@ -48,7 +48,7 @@ export class SlackEventProcessor {
           res.status(400).send('Bad Request');
           return;
         }
-        
+
         // Get the first available bot manager for handling interactive actions
         const botManagers = this.slackService.getBotManager();
         if (botManagers) {
@@ -92,7 +92,7 @@ export class SlackEventProcessor {
 
         if (event.type === 'message' && !event.subtype) {
           debug(`Processing message event: text="${event.text}", channel=${event.channel}`);
-          
+
           // Route message to appropriate bot manager
           const botManager = this.slackService.getBotManager();
           if (botManager) {
@@ -179,7 +179,7 @@ export class SlackEventProcessor {
               channel: userId,
               text: helpText,
               blocks: helpBlocks,
-              username: 'Madgwick AI',
+              username: 'Bot',
               icon_emoji: ':robot_face:'
             });
             debug(`Sent DM help message with buttons to user ${userId}`);
@@ -206,7 +206,7 @@ export class SlackEventProcessor {
       debug('No bot manager available');
       return;
     }
-    
+
     const bots = botManager.getAllBots();
     debug(`Checking permissions for ${bots.length} bots`);
 

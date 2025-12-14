@@ -122,7 +122,7 @@ export class SlackWelcomeHandler {
 
     const resourceUrl = process.env.RESOURCE_URL || 'https://university.example.com/resources';
     const defaultMessage = `# Welcome, ${userName}, to the #${channelName} channel! :wave:\n\n## Purpose\nThis channel is designed to help you achieve your learning objectives through interactive discussions and AI-powered assistance.\n\n## How to Use\n- **Ask Questions**: Post your questions here and I'll respond in threads to keep discussions organized\n- **Get Help**: Request private assistance and I'll DM you directly\n- **Track Progress**: Ask for assessments to monitor your learning journey\n\n## Resources\n- [Learning Portal](${resourceUrl})\n- [Documentation](${resourceUrl}/docs)\n- [Support](${resourceUrl}/support)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_${channel})\n- [How-To](action:how_to_${channel})\n- [Contact Support](action:contact_support_${channel})\n- [Report Issue](action:report_issue_${channel})`;
-    
+
     const welcomeMessage = slackConfig.get('SLACK_USER_JOIN_CHANNEL_MESSAGE') || defaultMessage;
     const processedMessage = welcomeMessage
       .replace(/{user}/g, userName)
@@ -156,7 +156,7 @@ export class SlackWelcomeHandler {
 
     const [content, buttonsPart] = markdown.split('\n## Actions\n');
     let blocks: KnownBlock[] = [];
-    
+
     if (content) {
       try {
         const contentBlocks = await markdownToBlocks(content, {
@@ -172,7 +172,7 @@ export class SlackWelcomeHandler {
     if (buttonsPart) {
       const buttonLines = buttonsPart.trim().split('\n').filter(line => line.trim().startsWith('- ['));
       const actionsBlock: KnownBlock = { type: 'actions', elements: [] };
-      
+
       for (const line of buttonLines) {
         const actionMatch = line.match(/-\s*\[([^\]]+)\]\(action:([^)]+)\)/);
         if (actionMatch) {
@@ -184,7 +184,7 @@ export class SlackWelcomeHandler {
           });
         }
       }
-      
+
       if (actionsBlock.elements.length > 0) {
         blocks.push(actionsBlock);
       }
@@ -215,7 +215,7 @@ export class SlackWelcomeHandler {
     const learnMoreDefault = `Here's more info about this channel!`;
     const learnMoreMessage = slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault;
     const buttonMappingsRaw = process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
-    
+
     let buttonMappings: { [key: string]: string };
     try {
       buttonMappings = JSON.parse(buttonMappingsRaw);
@@ -259,9 +259,9 @@ export class SlackWelcomeHandler {
     debug('Entering joinConfiguredChannelsForBot', { botUserId: botInfo.botUserId });
     const channelsConfig = slackConfig.get('SLACK_JOIN_CHANNELS') || '';
     const channelList = channelsConfig.split(',').map(c => c.trim()).filter(Boolean);
-    
+
     debug(`Joining ${channelList.length} channels: ${channelList.join(', ')}`);
-    
+
     for (const channel of channelList) {
       try {
         await botInfo.webClient.conversations.join({ channel });
@@ -294,11 +294,11 @@ export class SlackWelcomeHandler {
     threadId?: string,
     blocks?: KnownBlock[]
   ): Promise<string> {
-    debug('Entering sendMessageToChannel (internal)', { 
-      channelId, 
-      text: text.substring(0, 50) + '...', 
-      senderName, 
-      threadId 
+    debug('Entering sendMessageToChannel (internal)', {
+      channelId,
+      text: text.substring(0, 50) + '...',
+      senderName,
+      threadId
     });
 
     // Clean up any HTML entities in the text
@@ -310,7 +310,7 @@ export class SlackWelcomeHandler {
       .replace(/</g, '<')
       .replace(/>/g, '>');
 
-    const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Madgwick AI';
+    const displayName = senderName || messageConfig.get('MESSAGE_USERNAME_OVERRIDE') || 'Bot';
     const botInfo = this.botManager.getBotByName(displayName) || this.botManager.getAllBots()[0];
 
     if (!botInfo) {

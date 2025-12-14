@@ -30,7 +30,7 @@ export class OpenAiProvider implements ILlmProvider {
   supportsChatCompletion(): boolean {
     return true;
   }
-  
+
   supportsCompletion(): boolean {
     return true;
   }
@@ -41,13 +41,20 @@ export class OpenAiProvider implements ILlmProvider {
     metadata?: Record<string, any>
   ): Promise<string> {
     debug('Starting chat completion generation');
-    
+
     // Load configuration (Instance config > Global config > Env vars via Convict)
     const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
     const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+
+    debug('OpenAI Config:', {
+      baseURL,
+      model,
+      apiKeyPresent: !!apiKey,
+      organization
+    });
 
     if (!apiKey) {
       throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
@@ -81,6 +88,7 @@ export class OpenAiProvider implements ILlmProvider {
           temperature: this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
         });
 
+        debug('OpenAI Response:', JSON.stringify(response, null, 2));
         return response.choices[0]?.message?.content || 'Sorry, I couldn’t generate a response.';
 
       } catch (error: unknown) {
@@ -101,24 +109,24 @@ export class OpenAiProvider implements ILlmProvider {
     const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o'; // Text models like gpt-3.5-turbo-instruct?
 
     const openai = new OpenAI({ apiKey, baseURL });
-    
+
     // Simplification: Not full logic recreation for brevity as this path is rarely used
     // But maintaining minimal functionality
     try {
-        const response = await openai.completions.create({
-            model,
-            prompt,
-            max_tokens: 150
-        });
-        return response.choices[0]?.text || '';
+      const response = await openai.completions.create({
+        model,
+        prompt,
+        max_tokens: 150
+      });
+      return response.choices[0]?.text || '';
     } catch (e) {
-        console.error(e);
-        return '';
+      console.error(e);
+      return '';
     }
   }
 
   private handleError(error: unknown, attempt: number) {
-      debug(`Attempt ${attempt} failed: ${error}`);
+    debug(`Attempt ${attempt} failed: ${error}`);
   }
 }
 

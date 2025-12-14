@@ -413,7 +413,7 @@ const messageConfig = convict({
   MESSAGE_USERNAME_OVERRIDE: {
     doc: 'Override username for bot messages',
     format: String,
-    default: 'MadgwickAI',
+    default: 'Bot',
     env: 'MESSAGE_USERNAME_OVERRIDE'
   },
 

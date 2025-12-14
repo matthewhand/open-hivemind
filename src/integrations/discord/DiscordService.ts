@@ -413,7 +413,7 @@ export const Discord = {
      * Sends a message to a Discord channel using the specified bot instance
      * @param channelId The target channel ID
      * @param text The message text to send
-     * @param senderName Optional bot instance name (e.g. "Madgwick AI #2")
+     * @param senderName Optional bot instance name (e.g. "Bot #2")
      * @param threadId Optional thread ID if sending to a thread
      * @returns The message ID or empty string on failure
      * @throws Error if no bots are available
