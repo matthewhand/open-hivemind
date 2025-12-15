@@ -52,12 +52,18 @@ export class OpenAiProvider implements ILlmProvider {
 
     const systemPrompt = (this.config.systemPrompt && this.config.systemPrompt.trim()) || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 
-    debug('OpenAI Config:', {
+    // Helper to redact secrets but show first/last 2 chars for debugging
+    const partialRedact = (s: string | undefined) => {
+      if (!s || s.length < 6) return s ? '****' : '(empty)';
+      return `${s.slice(0, 2)}...${s.slice(-2)}`;
+    };
+
+    debug('OpenAI Config (resolved):', {
       baseURL,
       model,
-      apiKeyPresent: !!apiKey,
-      organization,
-      systemPrompt
+      apiKey: partialRedact(apiKey),
+      organization: organization || '(none)',
+      systemPrompt: systemPrompt.length > 50 ? systemPrompt.slice(0, 50) + '...' : systemPrompt
     });
 
     if (!apiKey) {
