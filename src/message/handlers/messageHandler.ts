@@ -199,10 +199,22 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         return null;
       }
 
-      // Calculate delay based on message length (reading time) - scaled (default: 3x slower)
+      // Calculate delay based on message length (reading time) - scaled.
+      // Keep short messages snappy while allowing longer messages to feel "read".
       const msgText = message.getText() || '';
-      const readingDelay = Math.min(8000 * delayScale, Math.max(1000 * delayScale, msgText.length * 50 * delayScale));
-      const jitter = Math.floor(Math.random() * 500 * delayScale); // scaled
+      const baseReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_BASE_MS')) || 200;
+      const perCharRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_PER_CHAR_MS')) || 25;
+      const minReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_MIN_MS')) || 500;
+      const maxReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_MAX_MS')) || 6000;
+
+      const baseReadingMs = baseReadingRaw * delayScale;
+      const perCharMs = perCharRaw * delayScale;
+      const minReadingMs = minReadingRaw * delayScale;
+      const maxReadingMs = maxReadingRaw * delayScale;
+
+      const computedReading = baseReadingMs + (msgText.length * perCharMs);
+      const readingDelay = Math.min(maxReadingMs, Math.max(minReadingMs, computedReading));
+      const jitter = Math.floor(Math.random() * 350 * delayScale); // scaled
 
       // Token usage multiplier (slower if channel is hot)
       const usageMultiplier = tokenTracker.getDelayMultiplier(channelId);
