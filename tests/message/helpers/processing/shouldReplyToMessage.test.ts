@@ -198,4 +198,15 @@ describe('shouldReplyToMessage', () => {
         mockMessage.getText.mockReturnValue('bot please help');
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
+
+    it('should treat bot name in text as spoken-to when MESSAGE_ONLY_WHEN_SPOKEN_TO=true', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            return null;
+        });
+
+        mockMessage.getText.mockReturnValue('MyBot: can you help?');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).toBe(true);
+    });
 });
