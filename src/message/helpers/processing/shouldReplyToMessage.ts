@@ -13,7 +13,7 @@ export function shouldReplyToMessage(
   message: any,
   botId: string,
   platform: 'discord' | 'generic',
-  botName?: string
+  botNameOrNames?: string | string[]
 ): boolean {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -45,7 +45,19 @@ export function shouldReplyToMessage(
 
   const isWakeword = wakewords.some((word: string) => word && text.startsWith(String(word).toLowerCase()));
 
-  const isNameAddressed = Boolean(botName) && isBotNameInText(rawText, String(botName));
+  const namesRaw = Array.isArray(botNameOrNames) ? botNameOrNames : [botNameOrNames].filter(Boolean);
+  const nameCandidates = Array.from(new Set(
+    namesRaw
+      .flatMap((n) => {
+        const name = String(n || '').trim();
+        if (!name) return [];
+        // If the configured name includes an instance suffix like "Name #1", allow matching the base too.
+        const base = name.replace(/\s*#\d+\s*$/i, '').trim();
+        return base && base !== name ? [name, base] : [name];
+      })
+      .filter(Boolean)
+  ));
+  const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
   const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed;
 
   // Never respond to our own messages.
