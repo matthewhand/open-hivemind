@@ -26,7 +26,6 @@ import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManage
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 import TypingActivity from '../helpers/processing/TypingActivity';
 
-const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 const duplicateDetector = DuplicateMessageDetector.getInstance();
@@ -71,6 +70,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let typingInterval: NodeJS.Timeout | null = null;
     let typingTimeout: NodeJS.Timeout | null = null;
     let stopTyping = false;
+    // Use a per-bot debug namespace so logs are easily attributable in swarm mode.
+    const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
     // Log received message
     const userId = message.getAuthorId();
@@ -131,7 +132,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       processedMessage = addUserHint(processedMessage, userId, botId);
 
       logger(`Processing message in channel ${message.getChannelId()} from user ${userId}: "${processedMessage}"`);
-      console.log(`Processed message: "${processedMessage}"`);
+      logger(`Processed message: "${processedMessage}"`);
 
       // Command processing
       let commandProcessed = false;
