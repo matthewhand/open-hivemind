@@ -286,6 +286,42 @@ async function startBot(messengerService: any) {
         );
         indexLog('[DEBUG] Message handler set up successfully.');
 
+        // Operator-friendly startup summary (INFO-level).
+        // By default we only log a preview of the system prompt to avoid accidental leakage; set
+        // STARTUP_LOG_SYSTEM_PROMPT=full to print it verbatim.
+        try {
+            const mode = String(process.env.STARTUP_LOG_SYSTEM_PROMPT || 'preview').toLowerCase();
+            const maxPreview = Number(process.env.STARTUP_LOG_SYSTEM_PROMPT_PREVIEW_CHARS || 280);
+            const summaries = typeof messengerService.getAgentStartupSummaries === 'function'
+                ? messengerService.getAgentStartupSummaries()
+                : [];
+
+            const renderPrompt = (p: string | undefined) => {
+                const text = String(p || '').trim();
+                if (!text) return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: 0 };
+                if (mode === 'off') return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: text.length };
+                if (mode === 'full') return { systemPromptMode: 'full', systemPrompt: text, systemPromptLength: text.length };
+                const preview = text.length > maxPreview ? `${text.slice(0, maxPreview)}…` : text;
+                return { systemPromptMode: 'preview', systemPromptPreview: preview, systemPromptLength: text.length };
+            };
+
+            for (const s of summaries) {
+                const promptInfo = renderPrompt(s.systemPrompt);
+                appLogger.info('🤖 Bot instance', {
+                    name: s.name,
+                    provider: s.provider,
+                    botId: s.botId,
+                    messageProvider: s.messageProvider,
+                    llmProvider: s.llmProvider,
+                    llmModel: s.llmModel,
+                    llmEndpoint: s.llmEndpoint,
+                    ...promptInfo
+                });
+            }
+        } catch (e) {
+            appLogger.warn('Failed to log bot startup summaries', { error: e instanceof Error ? e.message : String(e) });
+        }
+
         // Log successful provider initialization
         startupDiagnostics.logProviderInitialized(providerType, {
             providerName: messengerService.providerName,

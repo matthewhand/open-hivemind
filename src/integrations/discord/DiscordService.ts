@@ -774,6 +774,62 @@ export const Discord = {
       return this.bots[0].botUserId || '';
     }
 
+    public getAgentStartupSummaries() {
+      const safePrompt = (cfg: any): string => {
+        const p =
+          cfg?.OPENAI_SYSTEM_PROMPT ??
+          cfg?.openai?.systemPrompt ??
+          cfg?.SYSTEM_INSTRUCTION ??
+          cfg?.systemInstruction ??
+          cfg?.llm?.systemPrompt ??
+          '';
+        return typeof p === 'string' ? p : String(p || '');
+      };
+
+      const safeLlm = (cfg: any): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
+        const llmProvider =
+          cfg?.LLM_PROVIDER ??
+          cfg?.llmProvider ??
+          cfg?.llm?.provider ??
+          undefined;
+
+        const llmModel =
+          cfg?.OPENAI_MODEL ??
+          cfg?.openai?.model ??
+          cfg?.llm?.model ??
+          undefined;
+
+        const llmEndpoint =
+          cfg?.OPENAI_BASE_URL ??
+          cfg?.openai?.baseUrl ??
+          cfg?.openwebui?.apiUrl ??
+          cfg?.OPENSWARM_BASE_URL ??
+          cfg?.openswarm?.baseUrl ??
+          undefined;
+
+        return {
+          llmProvider: llmProvider ? String(llmProvider) : undefined,
+          llmModel: llmModel ? String(llmModel) : undefined,
+          llmEndpoint: llmEndpoint ? String(llmEndpoint) : undefined
+        };
+      };
+
+      return (this.bots || []).map((b) => {
+        const cfg = b?.config || {};
+        const { llmProvider, llmModel, llmEndpoint } = safeLlm(cfg);
+        return {
+          name: String(b?.botUserName || cfg?.name || 'DiscordBot'),
+          provider: 'discord',
+          botId: b?.botUserId ? String(b.botUserId) : undefined,
+          messageProvider: 'discord',
+          llmProvider,
+          llmModel,
+          llmEndpoint,
+          systemPrompt: safePrompt(cfg)
+        };
+      });
+    }
+
     public resolveAgentContext(params: { botConfig: any; agentDisplayName: string }) {
       try {
         const botConfig = params?.botConfig || {};
