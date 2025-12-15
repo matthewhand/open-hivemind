@@ -678,6 +678,31 @@ export class SlackService extends EventEmitter implements IMessengerService {
     return '';
   }
 
+  public resolveAgentContext(params: { botConfig: any; agentDisplayName: string }) {
+    try {
+      const botConfig = params?.botConfig || {};
+      const agentDisplayName = String(params?.agentDisplayName || '').trim();
+      const agentInstanceName = String(botConfig?.name || '').trim();
+
+      // Slack selects bot instances by their configured bot name key.
+      const senderKey = agentInstanceName || agentDisplayName;
+
+      let botId = '';
+      try {
+        const mgr = this.getBotManager(senderKey);
+        const bots = mgr?.getAllBots?.() || [];
+        botId = String(bots[0]?.botUserId || '');
+      } catch {
+        botId = '';
+      }
+
+      const nameCandidates = Array.from(new Set([agentDisplayName, agentInstanceName].filter(Boolean)));
+      return { botId, senderKey, nameCandidates };
+    } catch {
+      return null;
+    }
+  }
+
   public getDefaultChannel(): string {
     debug('Entering getDefaultChannel');
     const firstBot = Array.from(this.botManagers.keys())[0];

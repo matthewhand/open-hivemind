@@ -1,5 +1,4 @@
 import messageConfig from '@config/messageConfig';
-import discordConfig from '@config/discordConfig';
 import Debug from 'debug';
 import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 
@@ -35,9 +34,7 @@ export function shouldReplyToMessage(
   const isDirectMention =
     (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
     (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
-    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
-    text.includes(`<@${botId}>`) ||
-    text.includes(`<@!${botId}>`);
+    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId));
 
   const isReplyToBot =
     (typeof message.isReplyToBot === 'function' && message.isReplyToBot()) ||
@@ -60,11 +57,13 @@ export function shouldReplyToMessage(
   const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
   const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed;
 
-  // Never respond to our own messages.
-  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
-    debug(`Message from bot itself. Not replying.`);
-    return false;
-  }
+  // Never respond to our own messages (provider-agnostic).
+  try {
+    if (typeof message.getAuthorId === 'function' && message.getAuthorId() === botId) {
+      debug('Message from bot itself. Not replying.');
+      return false;
+    }
+  } catch { }
 
   // Extra safety: never auto-reply to other bots unless directly addressed.
   try {
@@ -196,25 +195,13 @@ function applyModifiers(
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }
 
-  if (platform === 'discord') {
-    chance = applyDiscordBonuses(message, chance);
-    debug(`After applying Discord-specific bonuses, chance: ${chance}`);
+  // Provider-agnostic channel bonus multiplier.
+  const channelBonuses: Record<string, number> = (messageConfig.get as any)('CHANNEL_BONUSES') || {};
+  const bonus = typeof channelBonuses?.[message.getChannelId()] === 'number' ? channelBonuses[message.getChannelId()] : 1.0;
+  if (bonus !== 1.0) {
+    chance *= bonus;
+    debug(`Applied channel bonus multiplier: ${bonus}. New chance: ${chance}`);
   }
 
   return chance;
-}
-
-function applyDiscordBonuses(message: any, chance: number): number {
-  const priorityChannel = discordConfig.get('DISCORD_PRIORITY_CHANNEL');
-  if (priorityChannel && message.getChannelId() === priorityChannel) {
-    const bonus = discordConfig.get('DISCORD_PRIORITY_CHANNEL_BONUS');
-    chance += bonus;
-    debug(`Priority channel detected. Applied bonus: ${bonus}. New chance: ${chance}`);
-  }
-
-  const channelBonuses: Record<string, number> = discordConfig.get('DISCORD_CHANNEL_BONUSES') || {};
-  const channelBonus = channelBonuses[message.getChannelId()] ?? 1.0;
-  debug(`Applied channel bonus: ${channelBonus}. Final chance: ${chance * channelBonus}`);
-
-  return chance * channelBonus;
 }

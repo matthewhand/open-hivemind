@@ -190,6 +190,23 @@ export class MattermostService extends EventEmitter implements IMessengerService
     return firstBot || 'mattermost-bot';
   }
 
+  public resolveAgentContext(params: { botConfig: any; agentDisplayName: string }) {
+    try {
+      const botConfig = params?.botConfig || {};
+      const agentDisplayName = String(params?.agentDisplayName || '').trim();
+      const agentInstanceName = String(botConfig?.name || '').trim();
+
+      // MattermostService selects bot instances by their configured bot name key.
+      const senderKey = agentInstanceName || agentDisplayName;
+      const botId = senderKey;
+      const nameCandidates = Array.from(new Set([agentDisplayName, agentInstanceName].filter(Boolean)));
+
+      return { botId, senderKey, nameCandidates };
+    } catch {
+      return null;
+    }
+  }
+
   public getDefaultChannel(): string {
     const firstBot = Array.from(this.channels.keys())[0];
     return this.channels.get(firstBot) || 'town-square';

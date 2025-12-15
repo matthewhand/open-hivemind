@@ -774,6 +774,48 @@ export const Discord = {
       return this.bots[0].botUserId || '';
     }
 
+    public resolveAgentContext(params: { botConfig: any; agentDisplayName: string }) {
+      try {
+        const botConfig = params?.botConfig || {};
+        const agentDisplayName = String(params?.agentDisplayName || '').trim();
+        const agentInstanceName = String(botConfig?.name || '').trim();
+
+        const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
+
+        const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
+        const byDisplayName = agentDisplayName ? this.getBotByName(agentDisplayName) : undefined;
+        const bot = byInstanceName || byDisplayName;
+
+        const botId =
+          String(
+            bot?.botUserId ||
+            (isSnowflake(botConfig?.BOT_ID) ? botConfig.BOT_ID : '') ||
+            (isSnowflake(botConfig?.discord?.clientId) ? botConfig.discord.clientId : '') ||
+            this.getClientId() ||
+            ''
+          );
+
+        // In Discord swarm mode, use the snowflake id as a stable sender key to pick the correct instance.
+        const senderKey = botId || agentInstanceName || agentDisplayName;
+
+        const nameCandidates = Array.from(new Set(
+          [
+            agentDisplayName,
+            agentInstanceName,
+            bot?.botUserName,
+            bot?.client?.user?.username,
+            bot?.client?.user?.globalName
+          ]
+            .filter(Boolean)
+            .map((v) => String(v))
+        ));
+
+        return { botId, senderKey, nameCandidates };
+      } catch {
+        return null;
+      }
+    }
+
     public getDefaultChannel(): string {
       const cacheKey = 'DISCORD_DEFAULT_CHANNEL_ID';
       const now = Date.now();

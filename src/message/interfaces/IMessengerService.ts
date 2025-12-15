@@ -23,6 +23,32 @@ import { IMessage } from './IMessage';
  */
 export interface IMessengerService {
   /**
+   * Optional integration hook: resolve per-agent identity and routing hints.
+   *
+   * This allows platform-specific logic (multi-bot identity, sender selection, name aliases)
+   * to live inside the integration rather than in the message handler.
+   *
+   * Implementations that don't need this can omit it (or return null).
+   */
+  resolveAgentContext?(params: {
+    botConfig: any;
+    agentDisplayName: string;
+  }): null | {
+    /**
+     * Bot/user id for this agent instance (used for mention detection and self-filtering).
+     */
+    botId?: string;
+    /**
+     * Provider-specific sender key passed to sendMessageToChannel/sendTyping to select the correct bot instance.
+     */
+    senderKey?: string;
+    /**
+     * Candidate names that should count as "spoken to" when typed in plain text.
+     */
+    nameCandidates?: string[];
+  };
+
+  /**
    * Initializes the messaging service.
    *
    * This method should handle authentication, connection setup,
