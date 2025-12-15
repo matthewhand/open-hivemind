@@ -69,6 +69,18 @@ describe('MentionDetector', () => {
         expect(result.contextHint).toContain('addressing UserA, UserB');
     });
 
+    it('should provide a default context hint when no mentions/reply target is detected', () => {
+        const msg = {
+            getText: () => 'Hello there'
+        };
+        const result = detectMentions(msg, botId, botName);
+        expect(result.isMentioningBot).toBe(false);
+        expect(result.isReplyToBot).toBe(false);
+        expect(result.mentionedUsernames).toHaveLength(0);
+        expect(result.contextHint).toContain('unclear');
+        expect(result.contextHint).toContain('Infer from recent conversation history');
+    });
+
     it('should detect reply to other user', () => {
         const msg = {
             getText: () => 'I disagree',
