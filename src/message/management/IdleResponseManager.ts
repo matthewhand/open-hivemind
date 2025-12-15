@@ -13,6 +13,7 @@ interface ChannelActivity {
   interactionCount: number;
   timer?: NodeJS.Timeout;
   lastMessageId?: string;
+  idleResponseSentSinceLastInteraction?: boolean;
 }
 
 interface ServiceActivity {
@@ -213,7 +214,8 @@ export class IdleResponseManager {
         lastInteractionTime: now,
         lastBotResponseTime: 0,
         interactionCount: 0,
-        lastMessageId: messageId
+        lastMessageId: messageId,
+        idleResponseSentSinceLastInteraction: false,
       });
     }
 
@@ -223,6 +225,7 @@ export class IdleResponseManager {
     if (messageId) {
       activity.lastMessageId = messageId;
     }
+    activity.idleResponseSentSinceLastInteraction = false;
 
     serviceActivity.lastInteractedChannelId = channelId;
 
@@ -262,6 +265,12 @@ export class IdleResponseManager {
 
     const activity = serviceActivity.channels.get(channelId);
     if (!activity) return;
+
+    // Only one idle response per interaction window.
+    if (activity.idleResponseSentSinceLastInteraction) {
+      log(`Skipping idle response scheduling for ${serviceName}:${channelId} - already sent since last interaction`);
+      return;
+    }
 
     // Skip if this is the first interaction (interactionCount <= 1)
     if (activity.interactionCount <= 1) {
@@ -346,6 +355,12 @@ export class IdleResponseManager {
         return;
       }
 
+      // Enforce at-most-once idle response per interaction window.
+      if (activity.idleResponseSentSinceLastInteraction) {
+        log(`Aborting idle response for ${serviceName}:${channelId} - already sent since last interaction`);
+        return;
+      }
+
       // Check if channel is still idle
       const now = Date.now();
       const timeSinceLastInteraction = now - activity.lastInteractionTime;
@@ -359,8 +374,7 @@ export class IdleResponseManager {
 
       // Prevent rapid consecutive idle responses
       if (timeSinceLastBotResponse < this.minDelay) {
-        log(`Bot responded too recently to ${serviceName}:${channelId}, rescheduling`);
-        this.scheduleIdleResponse(serviceName, channelId);
+        log(`Bot responded too recently to ${serviceName}:${channelId}, aborting idle response`);
         return;
       }
 
@@ -439,6 +453,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
       );
 
       this.recordBotResponse(serviceName, channelId);
+      activity.idleResponseSentSinceLastInteraction = true;
       log(`Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`);
 
       // Don't immediately reschedule - wait for next interaction
