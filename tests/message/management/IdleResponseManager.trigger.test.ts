@@ -191,7 +191,7 @@ describe('IdleResponseManager Triggers', () => {
         // Mock history to trigger LLM path
         const oldMsg = {
             getText: () => 'Old interesting topic',
-            getTimestamp: () => Date.now() - 100000,
+            getTimestamp: () => new Date(Date.now() - 100000),
             isFromBot: () => false
         };
         mockMessengerService.getMessagesFromChannel.mockResolvedValue([oldMsg] as any);

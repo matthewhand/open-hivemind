@@ -295,6 +295,40 @@ export class IdleResponseManager {
     return Math.floor(Math.random() * (this.maxDelay - this.minDelay + 1)) + this.minDelay;
   }
 
+  private getBotDisplayName(serviceName: string, botConfig: any): string {
+    const override = botConfig?.MESSAGE_USERNAME_OVERRIDE;
+    if (override && typeof override === 'string' && override.trim()) return override.trim();
+
+    // Discord multi-bot service names look like "discord-<BotName>"
+    if (typeof serviceName === 'string' && serviceName.startsWith('discord-')) {
+      const inferred = serviceName.slice('discord-'.length).trim();
+      if (inferred) return inferred;
+    }
+
+    const name = botConfig?.name;
+    if (name && typeof name === 'string' && name.trim()) return name.trim();
+
+    return 'Assistant';
+  }
+
+  private getTimestampMs(msg: IMessage): number | null {
+    try {
+      const ts = (msg as any)?.getTimestamp?.();
+      if (!ts) return null;
+      if (typeof ts === 'number') return ts;
+      if (ts instanceof Date) return ts.getTime();
+      if (typeof ts === 'string') {
+        const parsed = Date.parse(ts);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      // Support common mock shapes
+      const maybe = (ts as any)?.getTime?.();
+      return typeof maybe === 'number' ? maybe : null;
+    } catch {
+      return null;
+    }
+  }
+
   private async triggerIdleResponse(serviceName: string, channelId: string): Promise<void> {
     try {
       const serviceActivity = this.serviceActivities.get(serviceName);
@@ -344,9 +378,8 @@ export class IdleResponseManager {
         const history = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
         const olderMessages = history.filter((msg: IMessage) => {
           // Exclude very recent messages and bot's own messages
-          const msgTimestamp = msg.getTimestamp ? msg.getTimestamp() : null;
-          const msgTime = typeof msgTimestamp === 'number' ? msgTimestamp : Date.now();
-          const isOld = (now - msgTime) > 60000; // At least 1 minute old
+          const msgTime = this.getTimestampMs(msg);
+          const isOld = typeof msgTime === 'number' && (now - msgTime) > 60000; // At least 1 minute old
           return isOld && !msg.isFromBot();
         });
 
@@ -355,11 +388,21 @@ export class IdleResponseManager {
           const randomIndex = Math.floor(Math.random() * Math.min(olderMessages.length, 5));
           const oldMessage = olderMessages[randomIndex];
           const oldContent = oldMessage.getText().substring(0, 100);
+          const oldAuthor = (() => {
+            try {
+              const n = oldMessage.getAuthorName?.();
+              return n ? String(n) : 'someone';
+            } catch {
+              return 'someone';
+            }
+          })();
+          const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
 
           // Generate an LLM-based response referencing the old message
-          const contextPrompt = `You're in a conversation that has gone quiet. Someone earlier said: "${oldContent}". 
-Generate a short, natural follow-up question or comment to reignite the conversation. 
-Be brief (under 50 words), curious, and conversational. Don't be robotic or say "I noticed" or "the conversation went quiet".`;
+          const contextPrompt = `You are ${botName}. Earlier ${oldAuthor} said: "${oldContent}".
+Write a short, natural follow-up (<= 35 words) that either playfully challenges a claim or asks a sharp, curiosity-driven question.
+Be engaging and a little provocative, but not rude: no insults, no harassment, no sensitive traits.
+Do not mention that the channel was quiet/idle and do not say "I noticed".`;
 
           try {
             const { getLlmProvider } = require('@src/llm/getLlmProvider');
@@ -388,7 +431,7 @@ Be brief (under 50 words), curious, and conversational. Don't be robotic or say 
       }
 
       // Send the idle response directly without going through message processing
-      const botName = serviceActivity.botConfig.MESSAGE_USERNAME_OVERRIDE || 'Assistant';
+      const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
       await serviceActivity.messengerService.sendMessageToChannel(
         channelId,
         idlePrompt,
