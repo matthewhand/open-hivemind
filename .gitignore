@@ -7,6 +7,16 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+# Local test artifacts
+security_test_output.txt
+test_debug*.out
+test_final*.out
+test_run*.out
+test_output*.txt
+
+# Test runtime-generated provider instances
+config/test/providers/instances.json
+
 # Configuration files with sensitive data
 config/user/
 .env.real

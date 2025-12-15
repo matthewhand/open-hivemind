@@ -27,7 +27,10 @@ class MessageDelayScheduler {
     sendFn: (text: string, threadId?: string) => Promise<string>,
     useThread: boolean
   ): Promise<void> {
-    const minDelay = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
+    const minDelayRaw = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
+    const delayScaleRaw = messageConfig.get('MESSAGE_DELAY_MULTIPLIER');
+    const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
+    const minDelay = (typeof minDelayRaw === 'number' ? minDelayRaw : Number(minDelayRaw) || 1000) * delayScale;
     await new Promise(resolve => setTimeout(resolve, minDelay));
     await sendFn(text);
     debug(`Scheduled message in channel ${channelId} for user ${userId}: ${text}`);

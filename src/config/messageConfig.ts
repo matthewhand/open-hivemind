@@ -201,10 +201,34 @@ const messageConfig = convict({
     env: 'MESSAGE_PROVIDER'
   },
   MESSAGE_IGNORE_BOTS: {
-    doc: 'Whether to ignore messages from bots',
+    doc: 'Whether to ignore messages from bots entirely',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_IGNORE_BOTS'
+  },
+  MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL: {
+    doc: 'When responding to bots, limit responses to the default channel only (prevents spam in other channels)',
     format: Boolean,
     default: true,
-    env: 'MESSAGE_IGNORE_BOTS'
+    env: 'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'
+  },
+  MESSAGE_SUPPRESS_DUPLICATES: {
+    doc: 'Suppress duplicate/repetitive bot responses (enabled by default)',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_SUPPRESS_DUPLICATES'
+  },
+  MESSAGE_DUPLICATE_WINDOW_MS: {
+    doc: 'Time window in milliseconds to check for duplicate messages (default: 5 minutes)',
+    format: 'int',
+    default: 300000,
+    env: 'MESSAGE_DUPLICATE_WINDOW_MS'
+  },
+  MESSAGE_DUPLICATE_HISTORY_SIZE: {
+    doc: 'Number of recent messages to track for duplicate detection',
+    format: 'int',
+    default: 10,
+    env: 'MESSAGE_DUPLICATE_HISTORY_SIZE'
   },
   MESSAGE_ADD_USER_HINT: {
     doc: 'Whether to add user hint to messages',
@@ -229,6 +253,30 @@ const messageConfig = convict({
     format: 'int',
     default: 10000,
     env: 'MESSAGE_MAX_DELAY'
+  },
+  MESSAGE_COMPOUNDING_DELAY_BASE_MS: {
+    doc: 'Base delay per message for compounding delay (ms). New messages during pre-typing extend this delay.',
+    format: 'int',
+    default: 1500,
+    env: 'MESSAGE_COMPOUNDING_DELAY_BASE_MS'
+  },
+  MESSAGE_COMPOUNDING_DELAY_MAX_MS: {
+    doc: 'Maximum compounding delay before responding (ms). Prevents infinite wait.',
+    format: 'int',
+    default: 15000,
+    env: 'MESSAGE_COMPOUNDING_DELAY_MAX_MS'
+  },
+  MESSAGE_DELAY_MULTIPLIER: {
+    doc: 'Multiplier applied to artificial delays (pre-inference, line delays, scheduler delays)',
+    format: Number,
+    default: 3,
+    env: 'MESSAGE_DELAY_MULTIPLIER'
+  },
+  MESSAGE_UNSOLICITED_BASE_CHANCE: {
+    doc: 'Base probability for replying when not explicitly addressed (only used when MESSAGE_ONLY_WHEN_SPOKEN_TO=false)',
+    format: Number,
+    default: 0.05,
+    env: 'MESSAGE_UNSOLICITED_BASE_CHANCE'
   },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',

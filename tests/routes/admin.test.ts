@@ -4,13 +4,38 @@ import adminRoutes from '../../src/server/routes/admin';
 
 // Mock dependencies
 jest.mock('../../src/storage/webUIStorage', () => ({
+  __esModule: true,
   webUIStorage: {
+    // In-memory provider stores for route tests
+    _llmProviders: [{ id: 'llm1', name: 'LLM 1', type: 'openai', config: {}, isActive: true }],
+    _messengerProviders: [{ id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true }],
+
     getPersonas: jest.fn(() => []),
     savePersona: jest.fn(),
     deletePersona: jest.fn(),
     getMcps: jest.fn(() => []),
     saveMcp: jest.fn(),
     deleteMcp: jest.fn(),
+
+    getLlmProviders: jest.fn(function () { return this._llmProviders; }),
+    saveLlmProvider: jest.fn(function (provider: any) {
+      const idx = this._llmProviders.findIndex((p: any) => p.id === provider.id);
+      if (idx >= 0) this._llmProviders[idx] = provider;
+      else this._llmProviders.push(provider);
+    }),
+    deleteLlmProvider: jest.fn(function (id: string) {
+      this._llmProviders = this._llmProviders.filter((p: any) => p.id !== id);
+    }),
+
+    getMessengerProviders: jest.fn(function () { return this._messengerProviders; }),
+    saveMessengerProvider: jest.fn(function (provider: any) {
+      const idx = this._messengerProviders.findIndex((p: any) => p.id === provider.id);
+      if (idx >= 0) this._messengerProviders[idx] = provider;
+      else this._messengerProviders.push(provider);
+    }),
+    deleteMessengerProvider: jest.fn(function (id: string) {
+      this._messengerProviders = this._messengerProviders.filter((p: any) => p.id !== id);
+    }),
   },
 }));
 
@@ -36,6 +61,9 @@ app.use(adminRoutes);
 describe('Admin Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { webUIStorage } = require('../../src/storage/webUIStorage');
+    webUIStorage._llmProviders = [{ id: 'llm1', name: 'LLM 1', type: 'openai', config: {}, isActive: true }];
+    webUIStorage._messengerProviders = [{ id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true }];
   });
 
   describe('LLM Providers', () => {
@@ -203,7 +231,7 @@ describe('Admin Routes', () => {
 
     test('POST /api/admin/personas should validate key format', async () => {
       const invalidData = {
-        key: 'invalid-key-with-dashes',
+        key: 'invalid key with spaces',
         name: 'Test Persona',
         systemPrompt: 'You are a helpful test assistant.',
       };

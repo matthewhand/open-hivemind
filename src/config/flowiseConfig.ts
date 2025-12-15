@@ -29,10 +29,12 @@ const flowiseConfig = convict({
   FLOWISE_USE_REST: {
     doc: 'Flag to use REST client instead of SDK',
     format: (val: any) => {
+      if (val === undefined || val === null) return true; // Default
       if (typeof val === 'boolean') return val;
       if (typeof val === 'string') {
         const trimmed = val.trim();
-        if (trimmed === '' || trimmed === 'false' || trimmed === 'FALSE' || trimmed === '0' || trimmed === 'no' || trimmed === 'NO') return false;
+        if (trimmed === 'false' || trimmed === 'FALSE' || trimmed === '0' || trimmed === 'no' || trimmed === 'NO') return false;
+        if (trimmed === '') return true; // Default to true for empty string
         return true;
       }
       return Boolean(val);

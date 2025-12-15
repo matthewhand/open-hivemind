@@ -38,6 +38,21 @@ class StartupGreetingService extends EventEmitter {
     }
 
     /**
+     * Strip surrounding quotes from a string if both leading and trailing quotes exist
+     */
+    private stripSurroundingQuotes(text: string): string {
+        // Check if text starts and ends with the same quote character
+        if (text.length >= 2) {
+            const first = text[0];
+            const last = text[text.length - 1];
+            if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+                return text.slice(1, -1);
+            }
+        }
+        return text;
+    }
+
+    /**
      * Generate a fun welcome message using LLM
      */
     private async generateLlmGreeting(): Promise<string> {
@@ -51,7 +66,8 @@ class StartupGreetingService extends EventEmitter {
             const provider = providers[0];
             const prompt = `Generate a short, friendly, and fun welcome message for a Discord channel. 
 The message should be welcoming, slightly playful, and indicate that the bot is now online and ready to help. 
-Keep it under 200 characters. Do not include any formatting or markdown. Just the message text.`;
+Keep it under 200 characters. You may use action words or emotes. 
+IMPORTANT: Do not wrap any part of your response in quotation marks. Just output the plain message text directly.`;
 
             appLogger.info('Generating LLM greeting message...');
 
@@ -59,13 +75,13 @@ Keep it under 200 characters. Do not include any formatting or markdown. Just th
                 const response = await provider.generateChatCompletion(prompt, []);
                 if (response) {
                     appLogger.info('LLM greeting generated successfully');
-                    return response.trim();
+                    return this.stripSurroundingQuotes(response.trim());
                 }
             } else if (provider.supportsCompletion()) {
                 const response = await provider.generateCompletion(prompt);
                 if (response) {
                     appLogger.info('LLM greeting generated successfully');
-                    return response.trim();
+                    return this.stripSurroundingQuotes(response.trim());
                 }
             }
 

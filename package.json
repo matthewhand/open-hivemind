@@ -99,6 +99,7 @@
     "express": "^4.21.2",
     "express-handlebars": "^8.0.3",
     "express-rate-limit": "^7.4.0",
+    "express-session": "^1.18.2",
     "express-sitemap-xml": "^3.1.0",
     "express-validator": "^7.3.1",
     "ffmpeg-static": "^5.2.0",

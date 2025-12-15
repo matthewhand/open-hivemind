@@ -203,6 +203,13 @@ const botSchema = {
     env: 'BOTS_{name}_OPENAI_BASE_URL'
   },
 
+  OPENAI_SYSTEM_PROMPT: {
+    doc: 'OpenAI system prompt for this bot',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_OPENAI_SYSTEM_PROMPT'
+  },
+
   // Flowise configuration
   FLOWISE_API_KEY: {
     doc: 'Flowise API key',
@@ -395,6 +402,7 @@ export class BotConfigurationManager {
         apiKey: openaiApiKey,
         model: botConfig.get('OPENAI_MODEL'),
         baseUrl: botConfig.get('OPENAI_BASE_URL'),
+        systemPrompt: botConfig.get('OPENAI_SYSTEM_PROMPT'),
       };
     }
 
@@ -532,10 +540,12 @@ export class BotConfigurationManager {
 
     if (hasBotsConfig && hasLegacyConfig) {
       debug('Both BOTS and DISCORD_BOT_TOKEN environment variables are set. Dual mode enabled.');
+      this.warnings.push('Both BOTS and DISCORD_BOT_TOKEN environment variables are set. Dual mode enabled.');
     }
 
     if (this.bots.size === 0) {
       debug('No bot configuration found');
+      this.warnings.push('No bot configuration found');
     }
   }
 

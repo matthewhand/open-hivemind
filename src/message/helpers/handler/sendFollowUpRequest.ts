@@ -5,16 +5,20 @@ import discordConfig from '@config/discordConfig';
 
 const debug = Debug('app:sendFollowUpRequest');
 
+import { IMessageProvider } from '@message/interfaces/IMessageProvider';
+
 /**
  * Sends an AI-generated follow-up message using chat completions.
  * @param msg - The message to follow up on.
  * @param channelId - The channel where the follow-up should be sent.
  * @param followUpText - The follow-up text to send.
+ * @param messageProvider - The provider to use for sending the message.
  */
 export async function sendFollowUpRequest(
   msg: IMessage,
   channelId: string,
-  followUpText: string
+  followUpText: string,
+  messageProvider: IMessageProvider
 ): Promise<void> {
   const llmProvider = getLlmProvider();
   if (!llmProvider.length) {
@@ -45,10 +49,10 @@ export async function sendFollowUpRequest(
     const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
     const followUpMessage = followUpText + ' ' + response;
     debug('Sending follow-up message:', followUpMessage);
-    // In a real implementation, we would send the message to the channel here
-    // For now, we're just logging it as the actual sending mechanism would depend on the platform
-    // Example: await sendMessageToChannel(channelId, followUpMessage);
+
+    await messageProvider.sendMessageToChannel(channelId, followUpMessage);
   } catch (error) {
     debug('Error generating follow-up:', error);
   }
 }
+

@@ -97,4 +97,10 @@ export interface IMessageProvider {
    * @returns {Promise<string>} A promise that resolves to the user ID of the forum owner
    */
   getForumOwner(forumId: string): Promise<string>;
+
+  /**
+   * Triggers a typing indicator in the channel.
+   * Optional method, as not all providers support it.
+   */
+  sendTyping?(channelId: string): Promise<void>;
 }

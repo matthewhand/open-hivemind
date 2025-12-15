@@ -85,7 +85,7 @@ export const Discord = {
     private readonly CONFIG_CACHE_TTL = 60000; // 1 minute
     private messageRateLimit = new Map<string, number[]>();
     private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
-    private readonly RATE_LIMIT_MAX = 10; // 10 messages per minute
+    private readonly RATE_LIMIT_MAX = 3; // 3 messages per minute (lower to prevent runaway bot-to-bot conversations)
 
     // Channel prioritization parity hooks (gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
     public supportsChannelPrioritization: boolean = true;
@@ -316,9 +316,42 @@ export const Discord = {
       this.bots.forEach((bot) => {
         bot.client.on('messageCreate', async (message) => {
           try {
-            // Defensive guards for malformed events and bots
-            if (!message || !message.author || message.author.bot) return;
+            // Defensive guards for malformed events
+            if (!message || !message.author) return;
             if (!message.channelId) return;
+
+            // Config-based bot message handling
+            if (message.author.bot) {
+              // Check if bots should be ignored entirely
+              let ignoreBots = false;
+              let limitToDefaultChannel = true;
+
+              try {
+                ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+              } catch {
+                ignoreBots = false; // Default: don't ignore bots
+              }
+
+              try {
+                const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
+                limitToDefaultChannel = limitConfig === undefined ? true : Boolean(limitConfig);
+              } catch {
+                limitToDefaultChannel = true; // Default: limit to default channel
+              }
+
+              // If ignoring all bots, skip
+              if (ignoreBots) {
+                return;
+              }
+
+              // If limiting bot replies to default channel, check channel
+              if (limitToDefaultChannel) {
+                const defaultChannelId = this.getDefaultChannel();
+                if (!defaultChannelId || message.channelId !== defaultChannelId) {
+                  return;
+                }
+              }
+            }
 
             // Emit incoming message flow event
             try {
@@ -333,7 +366,17 @@ export const Discord = {
               });
             } catch { }
 
-            const wrappedMessage = new DiscordMessage(message);
+            let repliedMessage: any = null;
+            try {
+              const refId = (message as any)?.reference?.messageId;
+              if (refId && message.channel && (message.channel as any).messages?.fetch) {
+                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+              }
+            } catch {
+              repliedMessage = null;
+            }
+
+            const wrappedMessage = new DiscordMessage(message, repliedMessage);
             const history = await this.getMessagesFromChannel(message.channelId);
             await handler(wrappedMessage, history, bot.config);
           } catch {
@@ -388,9 +431,48 @@ export const Discord = {
       if (this.currentHandler) {
         client.on('messageCreate', async (message) => {
           try {
-            if (!message || !message.author || message.author.bot) return;
+            if (!message || !message.author) return;
             if (!message.channelId) return;
-            const wrappedMessage = new DiscordMessage(message);
+
+            // Config-based bot message handling (same as main handler)
+            if (message.author.bot) {
+              let ignoreBots = false;
+              let limitToDefaultChannel = true;
+
+              try {
+                ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+              } catch {
+                ignoreBots = false;
+              }
+
+              try {
+                const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
+                limitToDefaultChannel = limitConfig === undefined ? true : Boolean(limitConfig);
+              } catch {
+                limitToDefaultChannel = true;
+              }
+
+              if (ignoreBots) return;
+
+              if (limitToDefaultChannel) {
+                const defaultChannelId = this.getDefaultChannel();
+                if (!defaultChannelId || message.channelId !== defaultChannelId) {
+                  return;
+                }
+              }
+            }
+
+            let repliedMessage: any = null;
+            try {
+              const refId = (message as any)?.reference?.messageId;
+              if (refId && message.channel && (message.channel as any).messages?.fetch) {
+                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+              }
+            } catch {
+              repliedMessage = null;
+            }
+
+            const wrappedMessage = new DiscordMessage(message, repliedMessage);
             const history = await this.getMessagesFromChannel(message.channelId);
             await this.currentHandler!(wrappedMessage, history, newBot.config);
           } catch {
@@ -418,22 +500,36 @@ export const Discord = {
      * @returns The message ID or empty string on failure
      * @throws Error if no bots are available
      */
+
+    /**
+     * Triggers a typing indicator in the channel.
+     * Useful for long-running operations like LLM inference.
+     */
+    public async sendTyping(channelId: string): Promise<void> {
+      try {
+        const botInfo = this.bots[0];
+        const channel = await botInfo.client.channels.fetch(channelId);
+        if (channel && (channel.isTextBased())) {
+          await (channel as TextChannel | NewsChannel).sendTyping();
+        }
+      } catch (e) {
+        log(`Error sending typing indicator to ${channelId}: ${e}`);
+      }
+    }
+
     public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
       // Input validation for security
       if (!channelId || typeof channelId !== 'string') {
-        throw new ValidationError('Invalid channel ID provided', 'DISCORD_INVALID_CHANNEL_ID');
+        throw new ValidationError('Invalid channelId provided', 'DISCORD_INVALID_CHANNEL_ID');
       }
 
-      if (!text || typeof text !== 'string') {
-        throw new ValidationError('Invalid message text provided', 'DISCORD_INVALID_MESSAGE_TEXT');
+      if (!text || typeof text !== 'string' || text.trim().length === 0) {
+        // Empty messages are rejected by Discord
+        log(`Attempted to send empty message to ${channelId}`);
+        return '';
       }
 
-      // Security: Limit message length to prevent abuse
-      if (text.length > 2000) {
-        throw new ValidationError('Message text exceeds maximum length of 2000 characters', 'DISCORD_MESSAGE_TOO_LONG');
-      }
-
-      // Security: Basic content filtering (can be enhanced)
+      // Sanitize malicious content patterns (basic XSS/Injection prevention)
       const suspiciousPatterns = [
         /<script/i,
         /javascript:/i,
@@ -452,9 +548,11 @@ export const Discord = {
         throw new ConfigurationError('No Discord bot instances available', 'DISCORD_NO_BOTS_AVAILABLE');
       }
 
-      // Rate limiting check
-      if (!this.checkRateLimit(channelId)) {
-        throw new RateLimitError('Rate limit exceeded. Please wait before sending more messages.', 60);
+      // Rate limiting check - delay instead of error
+      const rateLimitResult = this.checkRateLimitWithDelay(channelId);
+      if (rateLimitResult.shouldWait) {
+        log(`Rate limit: waiting ${rateLimitResult.waitMs}ms before sending to ${channelId}`);
+        await new Promise(resolve => setTimeout(resolve, rateLimitResult.waitMs));
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
@@ -492,6 +590,8 @@ export const Discord = {
         if (!channel || !channel.isTextBased()) {
           throw new ValidationError(`Channel ${selectedChannelId} is not text-based or was not found`, 'DISCORD_INVALID_CHANNEL');
         }
+
+        // Removed legacy typing delay logic to allow messageHandler to control pacing.
 
         let message;
         if (threadId) {
@@ -582,8 +682,8 @@ export const Discord = {
         const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
         const messages = await (channel as TextChannel).messages.fetch({ limit });
         const arr = Array.from(messages.values());
-        // Enforce hard cap as an extra safety to satisfy test expectation even if fetch ignores limit
-        return arr.slice(0, limit);
+        // Enforce hard cap and reverse to oldest-first order (Discord returns newest-first)
+        return arr.slice(0, limit).reverse();
       } catch (error: unknown) {
         const networkError = new NetworkError(
           `Failed to fetch messages from ${channelId}: ${error instanceof Error ? error.message : String(error)}`,
@@ -710,6 +810,38 @@ export const Discord = {
       // Add current timestamp
       validTimestamps.push(now);
       return true;
+    }
+
+    /**
+     * Enhanced rate limit check that returns wait time instead of just boolean
+     * @param channelId The channel ID to check
+     * @returns Object with shouldWait boolean and waitMs milliseconds to wait
+     */
+    private checkRateLimitWithDelay(channelId: string): { shouldWait: boolean; waitMs: number } {
+      const now = Date.now();
+      const channelKey = `channel_${channelId}`;
+
+      if (!this.messageRateLimit.has(channelKey)) {
+        this.messageRateLimit.set(channelKey, []);
+      }
+
+      const timestamps = this.messageRateLimit.get(channelKey)!;
+
+      // Remove timestamps outside the window
+      const validTimestamps = timestamps.filter(ts => (now - ts) < this.RATE_LIMIT_WINDOW);
+      this.messageRateLimit.set(channelKey, validTimestamps);
+
+      // Check if under limit
+      if (validTimestamps.length >= this.RATE_LIMIT_MAX) {
+        // Calculate how long to wait until oldest timestamp expires
+        const oldestTimestamp = Math.min(...validTimestamps);
+        const waitMs = this.RATE_LIMIT_WINDOW - (now - oldestTimestamp) + 1000; // +1s buffer
+        return { shouldWait: true, waitMs: Math.max(1000, waitMs) };
+      }
+
+      // Add current timestamp
+      validTimestamps.push(now);
+      return { shouldWait: false, waitMs: 0 };
     }
 
     public async joinVoiceChannel(channelId: string): Promise<void> {

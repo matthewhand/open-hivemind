@@ -1,19 +1,12 @@
 import messageConfig from '@config/messageConfig';
 import discordConfig from '@config/discordConfig';
 import Debug from 'debug';
+import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
+
+import { IncomingMessageDensity } from './IncomingMessageDensity';
+import { getLastBotActivity } from './ChannelActivity';
 
 const debug = Debug('app:shouldReplyToMessage');
-
-const channelsWithBotInteraction = new Map<string, number>();
-
-let recentActivityDecayRate = messageConfig.get('MESSAGE_RECENT_ACTIVITY_DECAY_RATE');
-let activityTimeWindow = messageConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW');
-
-export function setDecayConfig(newDecayRate: number, newTimeWindow: number): void {
-  recentActivityDecayRate = newDecayRate;
-  activityTimeWindow = newTimeWindow;
-  debug(`Updated decay config: rate = ${recentActivityDecayRate}, window = ${activityTimeWindow}ms`);
-}
 
 export function shouldReplyToMessage(
   message: any,
@@ -28,21 +21,97 @@ export function shouldReplyToMessage(
   const channelId = message.getChannelId();
   debug(`Evaluating message in channel: ${channelId}`);
 
-  const lastInteractionTime = channelsWithBotInteraction.get(channelId) || 0;
+  const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
+  const text = (message.getText?.() || '').toLowerCase();
+
+  const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
+  const wakewords = Array.isArray(wakewordsRaw)
+    ? wakewordsRaw
+    : String(wakewordsRaw).split(',').map(s => s.trim());
+
+  const isDirectMention =
+    (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
+    (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
+    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
+    text.includes(`<@${botId}>`);
+
+  const isReplyToBot =
+    (typeof message.isReplyToBot === 'function' && message.isReplyToBot()) ||
+    ((message as any)?.metadata?.replyTo?.userId === botId);
+
+  const isWakeword = wakewords.some((word: string) => word && text.startsWith(String(word).toLowerCase()));
+
+  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword;
+
+  // Never respond to our own messages.
+  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
+    debug(`Message from bot itself. Not replying.`);
+    return false;
+  }
+
+  // Extra safety: never auto-reply to other bots unless directly addressed.
+  try {
+    if (typeof message.isFromBot === 'function' && message.isFromBot() && !isDirectlyAddressed) {
+      debug('Message from another bot and not directly addressed; not replying.');
+      return false;
+    }
+  } catch { }
+
+  // If configured to only respond when spoken to, do it deterministically (no randomness).
+  if (onlyWhenSpokenTo) {
+    if (!isDirectlyAddressed) {
+      debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
+      return false;
+    }
+    debug('Directly addressed; replying.');
+    return true;
+  }
+
+  // If directly addressed, reply deterministically (mentions/wakewords/replies should always work).
+  if (isDirectlyAddressed) {
+    debug('Directly addressed; replying.');
+    return true;
+  }
+
+  // Integrate Unsolicited Message Handler
+  try {
+    if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
+      debug('Unsolicited message handler rejected reply (bot inactive in channel & no direct mention)');
+      return false;
+    }
+  } catch (err) {
+    // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
+    debug('Error in unsolicited message handler; not replying:', err);
+    return false;
+  }
+
+  // 1. Long Silence Penalty Logic
+  const lastInteractionTime = getLastBotActivity(channelId);
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
-  debug(`Time since last activity: ${timeSinceLastActivity}ms`);
+  const SILENCE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
-  let chance = 0.2;
-  debug(`Initial base chance: ${chance}`);
+  const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
+  let chance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw) || 0.05;
 
-  const decayFactor = Math.max(
-    0.5,
-    Math.exp(-recentActivityDecayRate * (timeSinceLastActivity / activityTimeWindow))
-  );
-  chance *= decayFactor;
-  debug(`Chance after decay: ${chance} (decay factor: ${decayFactor})`);
+  if (timeSinceLastActivity > SILENCE_THRESHOLD) {
+    chance = 0.005; // 0.5% if silent for > 5 mins
+    debug(`Long silence detected (>5m). Chance dropped to 0.5%.`);
+  } else {
+    debug(`Recent activity detected (<5m). Using base chance ${chance}.`);
+  }
+
+  // 2. Incoming Message Density Logic (1/N scaling)
+  // "If 5 messages in a minute, chance is 1/5 of current chance?"
+  // User said: "after say 5 messages ina minute it is like 1/5 chance"
+  // If base is 0.2, then 0.2 * 0.2 = 0.04.
+  // We record this message as part of the density check
+  const densityModifier = IncomingMessageDensity.getInstance().recordMessageAndGetModifier(channelId);
+  chance *= densityModifier;
+  debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
   chance = applyModifiers(message, botId, platform, chance);
+  // Clamp to [0, 1] to avoid pathological configs/modifiers.
+  chance = Math.max(0, Math.min(1, chance));
   debug(`Final chance after applying all modifiers: ${chance}`);
 
   const decision = Math.random() < chance;
@@ -57,34 +126,19 @@ function applyModifiers(
   platform: 'discord' | 'generic',
   chance: number
 ): number {
-  const text = message.getText().toLowerCase();
+  const text = (message.getText?.() || '').toLowerCase();
 
-  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
-    debug(`Message from bot itself. Chance set to 0.`);
-    return 0;
+  // NOTE: Direct mention / wakeword / reply-to-bot are handled deterministically in shouldReplyToMessage().
+
+  if (text.length < 10) {
+    const penalty = messageConfig.get('MESSAGE_SHORT_LENGTH_PENALTY') || 0;
+    chance -= penalty;
+    debug(`Short message detected (<10 chars). Applied penalty: ${penalty}. New chance: ${chance}`);
   }
 
-  if (message.mentionsUsers(botId)) {
-    debug(`Bot ID ${botId} mentioned. Responding.`);
-    return 1;
-  }
-
-  const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
-  const wakewords = Array.isArray(wakewordsRaw) ? wakewordsRaw : String(wakewordsRaw).split(',').map(s => s.trim())
-;
-  if (wakewords.some((word: string) => text.startsWith(word))) {
-    debug(`Wakeword detected. Chance set to 1.`);
-    return 1;
-  }
-
-  if (/[!?]/.test(text.slice(-1))) {
-    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS');
-    chance += interrobangBonus;
-    debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
-  }
-
-  if (message.isFromBot()) {
-    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER');
+  if (typeof message.isFromBot === 'function' && message.isFromBot()) {
+    // Never auto-reply to bots at 100%; treat as an unsolicited opportunity unless directly addressed.
+    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || 0;
     chance += botModifier;
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }

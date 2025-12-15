@@ -116,7 +116,7 @@ export const adminRateLimiter = rateLimit({
 // Middleware to apply rate limiting based on route type
 export const applyRateLimiting = (req: Request, res: Response, next: NextFunction) => {
   // Skip rate limiting entirely in development
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV === 'development') {
     return next();
   }
 
@@ -128,7 +128,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   // Skip rate limiting for localhost requests (any variant)
   const ip = req.ip || req.socket?.remoteAddress || req.headers['x-forwarded-for'] || '';
   const ipStr = Array.isArray(ip) ? ip[0] : ip;
-  if (ipStr.includes('127.0.0.1') || ipStr.includes('::1') || ipStr.includes('localhost') || ipStr === '') {
+  if ((ipStr.includes('127.0.0.1') || ipStr.includes('::1') || ipStr.includes('localhost') || ipStr === '') && process.env.NODE_ENV !== 'test') {
     return next();
   }
 

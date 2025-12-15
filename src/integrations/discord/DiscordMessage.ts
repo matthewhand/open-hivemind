@@ -315,6 +315,30 @@ export class DiscordMessage implements IMessage {
   }
 
   /**
+   * Checks whether this message is a reply (to any message).
+   * Useful for generic reply-aware logic across providers.
+   */
+  isReply(): boolean {
+    try {
+      return Boolean(this.message?.reference?.messageId);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if this message is mentioning a specific user ID.
+   * This is a convenience wrapper used by some helper modules.
+   */
+  isMentioning(userId: string): boolean {
+    try {
+      return this.mentionsUsers(userId);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Checks if this Discord message is a reply to a bot message.
    * 
    * @returns {boolean} True if this message is a reply to a bot

@@ -20,24 +20,24 @@ const schema = convict({
     VITE_API_BASE_URL: {
         doc: 'API base URL for Vite frontend',
         format: (val: any) => {
-          if (typeof val !== 'string') {
-            throw new ValidationError(
-              'Value must be a string',
-              'VITE_API_BASE_URL',
-              val,
-              'string',
-              ['Must be a valid string']
-            );
-          }
-          if (!isValidUrl(val)) {
-            throw new ValidationError(
-              'Value must be a valid URL',
-              'VITE_API_BASE_URL',
-              val,
-              'valid URL',
-              ['Must be a properly formatted URL']
-            );
-          }
+            if (typeof val !== 'string') {
+                throw new ValidationError(
+                    'Value must be a string',
+                    'VITE_API_BASE_URL',
+                    val,
+                    'string',
+                    ['Must be a valid string']
+                );
+            }
+            if (!isValidUrl(val)) {
+                throw new ValidationError(
+                    'Value must be a valid URL',
+                    'VITE_API_BASE_URL',
+                    val,
+                    'valid URL',
+                    ['Must be a properly formatted URL']
+                );
+            }
         },
         default: 'http://localhost:3000/api',
         env: 'VITE_API_BASE_URL',
@@ -45,24 +45,24 @@ const schema = convict({
     PLAYWRIGHT_BASE_URL: {
         doc: 'Base URL for Playwright E2E tests',
         format: (val: any) => {
-          if (typeof val !== 'string') {
-            throw new ValidationError(
-              'Value must be a string',
-              'PLAYWRIGHT_BASE_URL',
-              val,
-              'string',
-              ['Must be a valid string']
-            );
-          }
-          if (!isValidUrl(val)) {
-            throw new ValidationError(
-              'Value must be a valid URL',
-              'PLAYWRIGHT_BASE_URL',
-              val,
-              'valid URL',
-              ['Must be a properly formatted URL']
-            );
-          }
+            if (typeof val !== 'string') {
+                throw new ValidationError(
+                    'Value must be a string',
+                    'PLAYWRIGHT_BASE_URL',
+                    val,
+                    'string',
+                    ['Must be a valid string']
+                );
+            }
+            if (!isValidUrl(val)) {
+                throw new ValidationError(
+                    'Value must be a valid URL',
+                    'PLAYWRIGHT_BASE_URL',
+                    val,
+                    'valid URL',
+                    ['Must be a properly formatted URL']
+                );
+            }
         },
         default: 'http://localhost:3000',
         env: 'PLAYWRIGHT_BASE_URL',
@@ -93,22 +93,24 @@ export class ConfigurationManager {
      * @throws {Error} If schema validation fails
      */
     private constructor() {
-        schema.validate({ allowed: 'strict' });
-        
+        // Validate schema before loading files - use 'warn' to allow extra params from config files
+        schema.validate({ allowed: 'warn' });
+
         const secureManager = SecureConfigManager.getInstance();
         const env = process.env.NODE_ENV || 'default';
         const fileConfig = secureManager.getDecryptedMainConfig(env);
         if (fileConfig) {
-          schema.load(fileConfig);
-          schema.validate({ allowed: 'strict' });
+            schema.load(fileConfig);
+            // Use 'warn' to allow extra config params that aren't in the minimal schema
+            schema.validate({ allowed: 'warn' });
         }
-        
-        // Validate schema after loading environment variables
-        schema.validate({ allowed: 'strict' });
-        
+
+        // Final validation with warnings for undeclared params
+        schema.validate({ allowed: 'warn' });
+
         // Access all configuration values to trigger env var loading
         const configValues = schema.getProperties();
-        
+
         this.configs['environment'] = schema;
         debug('ConfigurationManager initialized in development environment');
     }
