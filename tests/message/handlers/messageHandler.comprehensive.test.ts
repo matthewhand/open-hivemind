@@ -190,6 +190,26 @@ describe('messageHandler Configuration and Features', () => {
         expect(metadata.botId).toBe('bot-id');
     });
 
+    it('should strip system prompt if it appears verbatim in the LLM response', async () => {
+        const botConfig = {
+            name: 'PhilosopherBot',
+            OPENAI_SYSTEM_PROMPT: 'You are a wise philosopher.',
+            MESSAGE_PROVIDER: 'discord',
+        };
+
+        (mockLlmProvider.generateChatCompletion as jest.Mock).mockResolvedValueOnce('You are a wise philosopher.\n\nMain response');
+
+        const promise = handleMessage(mockMessage, [], botConfig);
+        await jest.advanceTimersByTimeAsync(50000);
+        await promise;
+
+        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
+            'channel-123',
+            'Main response',
+            expect.any(String)
+        );
+    });
+
     it('should wait for reading delay then refetch history before inference', async () => {
         const botConfig = {
             name: 'DelayBot',
