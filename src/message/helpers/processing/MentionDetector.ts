@@ -13,6 +13,9 @@ export interface MentionContext {
     contextHint: string; // Ready-to-use hint for system prompt
 }
 
+const DEFAULT_CONTEXT_HINT =
+    '[CONTEXT: It is unclear whether you are the target of this message. Infer from recent conversation history; if still unclear, ask a brief clarifying question.]';
+
 function escapeRegExp(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -92,6 +95,9 @@ export function detectMentions(
         contextHint = `[CONTEXT: The user is replying to a message from ${replyToUsername}. You are observing this conversation.]`;
     } else if (mentions.length > 0) {
         contextHint = `[CONTEXT: The user is addressing ${mentions.join(', ')}. You are observing unless you have something relevant to add.]`;
+    }
+    if (!contextHint) {
+        contextHint = DEFAULT_CONTEXT_HINT;
     }
 
     debug(`Mention detection: mentioningBot=${isMentioningBot}, replyToBot=${isReplyToBot}, mentions=${mentions.join(',')}, hint="${contextHint}"`);
