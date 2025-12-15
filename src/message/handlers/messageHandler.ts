@@ -67,6 +67,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let didLock = false;
     const activeAgentName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
     let typingInterval: NodeJS.Timeout | null = null;
+    let typingTimeout: NodeJS.Timeout | null = null;
+    let stopTyping = false;
 
     // Log received message
     const userId = message.getAuthorId();
@@ -216,6 +218,30 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const preTypingDelayMs = Math.min(2500, Math.max(900, Math.floor(readingDelay * 0.35)));
       const typingStartAt = Date.now() + preTypingDelayMs;
 
+      const randInt = (min: number, max: number): number =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const scheduleNextTypingPulse = (): void => {
+        if (stopTyping || !typingStarted || !messageProvider.sendTyping) return;
+
+        // Discord typing lasts ~10s. To emulate "thinking pauses", sometimes refresh *after* it expires,
+        // leaving short gaps where typing disappears, then returns.
+        const pauseChance = 0.25;
+        const nextDelayMs =
+          Math.random() < pauseChance
+            ? randInt(11500, 17000) // will usually allow typing to briefly stop
+            : randInt(7000, 9500);  // keeps typing alive most of the time
+
+        typingTimeout = setTimeout(async () => {
+          if (stopTyping) return;
+          try {
+            await messageProvider.sendTyping!(channelId, activeAgentName).catch(() => { });
+          } finally {
+            scheduleNextTypingPulse();
+          }
+        }, nextDelayMs);
+      };
+
       // Wait in short increments so new messages can extend delay
       while (true) {
         const remaining = channelDelayManager.getRemainingDelayMs(delayKey);
@@ -224,9 +250,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingStartAt) {
           typingStarted = true;
           await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
-          typingInterval = setInterval(() => {
-            messageProvider.sendTyping!(channelId, activeAgentName).catch(() => { });
-          }, 8000);
+          // Start pulsed typing refreshes (with occasional gaps).
+          scheduleNextTypingPulse();
         }
 
         await new Promise(resolve => setTimeout(resolve, Math.min(remaining, 250)));
@@ -452,12 +477,19 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       ErrorHandler.handle(error, 'messageHandler.handleMessage');
       return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
+      stopTyping = true;
       // Stop typing indicator interval if running.
       if (typingInterval) {
         try {
           clearInterval(typingInterval);
         } catch { }
         typingInterval = null;
+      }
+      if (typingTimeout) {
+        try {
+          clearTimeout(typingTimeout);
+        } catch { }
+        typingTimeout = null;
       }
       // Always unlock the channel after processing
       if (didLock) {
