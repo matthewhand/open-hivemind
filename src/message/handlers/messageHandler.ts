@@ -129,33 +129,15 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const providerType = botConfig.integration || botConfig.MESSAGE_PROVIDER;
       const platform = providerType === 'discord' ? 'discord' : 'generic';
 
-      const isDiscordSnowflake = (id: unknown): boolean => /^\d{15,25}$/.test(String(id || ''));
-
-      // Resolve bot ID robustly (especially important in Discord swarm mode).
-      // Prefer the actual Discord user id for the current bot instance over legacy config values.
-      let botId: string = '';
-      const cfgBotId = botConfig?.BOT_ID;
-      if (platform === 'discord') {
-        const byName = typeof (messageProvider as any)?.getBotByName === 'function'
-          ? (messageProvider as any).getBotByName(activeAgentName)
+      // Delegate platform-specific identity/routing to the integration layer.
+      const resolvedAgentContext =
+        typeof (messageProvider as any)?.resolveAgentContext === 'function'
+          ? (messageProvider as any).resolveAgentContext({ botConfig, agentDisplayName: activeAgentName })
           : null;
-        if (byName?.botUserId) {
-          botId = String(byName.botUserId);
-        } else if (isDiscordSnowflake(cfgBotId)) {
-          botId = String(cfgBotId);
-        } else if (isDiscordSnowflake(botConfig?.discord?.clientId)) {
-          botId = String(botConfig.discord.clientId);
-        } else {
-          botId = String(messageProvider.getClientId() || '');
-        }
-      } else {
-        botId = String(cfgBotId || messageProvider.getClientId() || '');
-      }
 
-      resolvedBotId = botId;
-      // Provider sender key: for Discord, prefer a stable per-instance identifier to avoid
-      // selecting the wrong bot in swarm mode (MESSAGE_USERNAME_OVERRIDE may be shared).
-      providerSenderKey = platform === 'discord' ? botId : activeAgentName;
+      const botId = String(resolvedAgentContext?.botId || botConfig?.BOT_ID || messageProvider.getClientId() || '');
+      resolvedBotId = botId || resolvedBotId;
+      providerSenderKey = String(resolvedAgentContext?.senderKey || botConfig?.name || activeAgentName);
       const userId = message.getAuthorId();
       let processedMessage = stripBotId(text, botId);
       processedMessage = addUserHint(processedMessage, userId, botId);
@@ -192,19 +174,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
       }
 
-      // Name candidates matter for "spoken-to" detection: users may address a bot by its configured agent name,
-      // its internal swarm label, or its Discord username/display name.
-      const replyNameCandidates: string[] = Array.from(new Set([
-        activeAgentName,
-        botConfig?.name,
-        // If we resolved a Discord bot instance, include its configured label and actual Discord username.
-        platform === 'discord' && typeof (messageProvider as any)?.getBotByName === 'function'
-          ? ((messageProvider as any).getBotByName(activeAgentName)?.botUserName || undefined)
-          : undefined,
-        platform === 'discord' && typeof (messageProvider as any)?.getBotByName === 'function'
-          ? ((messageProvider as any).getBotByName(activeAgentName)?.client?.user?.username || undefined)
-          : undefined
-      ].filter(Boolean).map((v) => String(v))));
+      const replyNameCandidates: string[] = Array.from(new Set(
+        (resolvedAgentContext?.nameCandidates || [activeAgentName, botConfig?.name])
+          .filter(Boolean)
+          .map((v: any) => String(v))
+      ));
 
       if (!shouldReplyToMessage(message, botId, platform, replyNameCandidates)) {
         logger('Message not eligible for reply');

@@ -3,13 +3,11 @@ import { shouldReplyToMessage } from '../../../../src/message/helpers/processing
 import { recordBotActivity, clearBotActivity } from '../../../../src/message/helpers/processing/ChannelActivity';
 import { IncomingMessageDensity } from '../../../../src/message/helpers/processing/IncomingMessageDensity';
 import messageConfig from '../../../../src/config/messageConfig';
-import discordConfig from '../../../../src/config/discordConfig';
 import { shouldReplyToUnsolicitedMessage } from '../../../../src/message/helpers/unsolicitedMessageHandler';
 
 // Mocks
 jest.mock('../../../../src/message/helpers/processing/IncomingMessageDensity');
 jest.mock('../../../../src/config/messageConfig');
-jest.mock('../../../../src/config/discordConfig');
 jest.mock('../../../../src/message/helpers/unsolicitedMessageHandler');
 
 describe('shouldReplyToMessage', () => {
@@ -34,14 +32,6 @@ describe('shouldReplyToMessage', () => {
             return null;
         });
 
-        (discordConfig.get as jest.Mock).mockImplementation((key) => {
-            if (key === 'DISCORD_CLIENT_ID') return 'bot-client-id';
-            if (key === 'DISCORD_CHANNEL_BONUSES') return {};
-            if (key === 'DISCORD_PRIORITY_CHANNEL') return null;
-            if (key === 'DISCORD_PRIORITY_CHANNEL_BONUS') return 0;
-            return null;
-        });
-
         // Default Helper Mocks
         (shouldReplyToUnsolicitedMessage as jest.Mock).mockReturnValue(true);
         (IncomingMessageDensity.getInstance as jest.Mock).mockReturnValue({
@@ -55,6 +45,7 @@ describe('shouldReplyToMessage', () => {
             getText: jest.fn().mockReturnValue('Hello world this is a normal length message'),
             getAuthorId: jest.fn().mockReturnValue('user-1'),
             mentionsUsers: jest.fn().mockReturnValue(false),
+            getUserMentions: jest.fn().mockReturnValue([]),
             isFromBot: jest.fn().mockReturnValue(false)
         };
     });
@@ -134,7 +125,7 @@ describe('shouldReplyToMessage', () => {
     });
 
     it('should return 0 (false) if author is the bot itself', () => {
-        mockMessage.getAuthorId.mockReturnValue('bot-client-id');
+        mockMessage.getAuthorId.mockReturnValue('bot-id');
         // Even if random is 0
         jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
@@ -146,9 +137,9 @@ describe('shouldReplyToMessage', () => {
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
 
-    it('should treat <@!id> mention syntax as direct mention', () => {
+    it('should treat user mentions as direct mention', () => {
         mockMessage.mentionsUsers.mockReturnValue(false);
-        mockMessage.getText.mockReturnValue('hello <@!bot-id> are you there?');
+        (mockMessage.getUserMentions as jest.Mock).mockReturnValue(['bot-id']);
         jest.spyOn(Math, 'random').mockReturnValue(0.99);
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });

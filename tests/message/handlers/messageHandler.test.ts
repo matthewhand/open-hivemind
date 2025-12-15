@@ -88,7 +88,12 @@ describe('messageHandler', () => {
 
     mockMessengerProvider = {
       sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
-      getClientId: jest.fn().mockReturnValue('bot-123')
+      getClientId: jest.fn().mockReturnValue('bot-123'),
+      resolveAgentContext: jest.fn(() => ({
+        botId: 'bot-123',
+        senderKey: 'bot-123',
+        nameCandidates: ['Bot']
+      }))
     };
 
     mockBotConfig = {
@@ -212,10 +217,11 @@ describe('messageHandler', () => {
       const customMessengerProvider = {
         sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
         getClientId: jest.fn().mockReturnValue('bot-123'),
-        getBotByName: jest.fn((name: string) => {
-          if (name === 'Bot') return { botUserId: '555555555555555555' };
-          return null;
-        })
+        resolveAgentContext: jest.fn(() => ({
+          botId: '555555555555555555',
+          senderKey: '555555555555555555',
+          nameCandidates: ['Bot', 'FollowUpBot']
+        }))
       };
       mockGetMessengerProvider.mockReturnValue([customMessengerProvider]);
 

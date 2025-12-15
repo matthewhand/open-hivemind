@@ -63,7 +63,6 @@ export function detectMentions(
         (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
         (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
         (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
-        text.toLowerCase().includes(`<@${botId}>`) ||
         (botName && text.toLowerCase().includes(`@${botName.toLowerCase()}`)) ||
         botNameDetected;
 
