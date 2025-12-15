@@ -127,11 +127,10 @@ describe('shouldReplyToMessage', () => {
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
 
-    it('should apply interrobang bonus', () => {
+    it('should evaluate unsolicited chance without forcing on punctuation', () => {
         mockMessage.getText.mockReturnValue('Is this a question?');
-        // Base 0.2 + Bonus 0.2 = 0.4.
-        // Random 0.3 should pass.
-        jest.spyOn(Math, 'random').mockReturnValue(0.3);
+        // Base 0.2 (no extra punctuation bonus for unsolicited). Random 0.1 should pass.
+        jest.spyOn(Math, 'random').mockReturnValue(0.1);
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
 
@@ -141,5 +140,37 @@ describe('shouldReplyToMessage', () => {
         // Random 0.15 should fail.
         jest.spyOn(Math, 'random').mockReturnValue(0.15);
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
+    });
+
+    it('should always reply when message is a reply-to-bot', () => {
+        mockMessage.isReplyToBot = jest.fn().mockReturnValue(true);
+        (shouldReplyToUnsolicitedMessage as jest.Mock).mockImplementation(() => {
+            throw new Error('should not be called for direct replies');
+        });
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
+    });
+
+    it('should fail closed if unsolicited handler throws', () => {
+        (shouldReplyToUnsolicitedMessage as jest.Mock).mockImplementation(() => {
+            throw new Error('boom');
+        });
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
+    });
+
+    it('should deterministically honor MESSAGE_ONLY_WHEN_SPOKEN_TO', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_SHORT_LENGTH_PENALTY') return 0.1;
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.2;
+            return null;
+        });
+
+        // Not addressed -> false
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
+
+        // Wakeword -> true
+        mockMessage.getText.mockReturnValue('bot please help');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
 });

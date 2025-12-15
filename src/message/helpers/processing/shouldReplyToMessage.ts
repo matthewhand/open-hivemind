@@ -43,9 +43,34 @@ export function shouldReplyToMessage(
 
   const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword;
 
-  if (onlyWhenSpokenTo && !isDirectlyAddressed) {
-    debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
+  // Never respond to our own messages.
+  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
+    debug(`Message from bot itself. Not replying.`);
     return false;
+  }
+
+  // Extra safety: never auto-reply to other bots unless directly addressed.
+  try {
+    if (typeof message.isFromBot === 'function' && message.isFromBot() && !isDirectlyAddressed) {
+      debug('Message from another bot and not directly addressed; not replying.');
+      return false;
+    }
+  } catch { }
+
+  // If configured to only respond when spoken to, do it deterministically (no randomness).
+  if (onlyWhenSpokenTo) {
+    if (!isDirectlyAddressed) {
+      debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
+      return false;
+    }
+    debug('Directly addressed; replying.');
+    return true;
+  }
+
+  // If directly addressed, reply deterministically (mentions/wakewords/replies should always work).
+  if (isDirectlyAddressed) {
+    debug('Directly addressed; replying.');
+    return true;
   }
 
   // Integrate Unsolicited Message Handler
@@ -55,7 +80,9 @@ export function shouldReplyToMessage(
       return false;
     }
   } catch (err) {
-    debug('Error in unsolicited message handler, continuing with default logic:', err);
+    // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
+    debug('Error in unsolicited message handler; not replying:', err);
+    return false;
   }
 
   // 1. Long Silence Penalty Logic
@@ -83,6 +110,8 @@ export function shouldReplyToMessage(
   debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
   chance = applyModifiers(message, botId, platform, chance);
+  // Clamp to [0, 1] to avoid pathological configs/modifiers.
+  chance = Math.max(0, Math.min(1, chance));
   debug(`Final chance after applying all modifiers: ${chance}`);
 
   const decision = Math.random() < chance;
@@ -99,28 +128,7 @@ function applyModifiers(
 ): number {
   const text = (message.getText?.() || '').toLowerCase();
 
-  if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {
-    debug(`Message from bot itself. Chance set to 0.`);
-    return 0;
-  }
-
-  if (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) {
-    debug(`Bot ID ${botId} mentioned. Responding.`);
-    return 1;
-  }
-
-  const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
-  const wakewords = Array.isArray(wakewordsRaw) ? wakewordsRaw : String(wakewordsRaw).split(',').map(s => s.trim());
-  if (wakewords.some((word: string) => word && text.startsWith(String(word).toLowerCase()))) {
-    debug(`Wakeword detected. Chance set to 1.`);
-    return 1;
-  }
-
-  if (/[!?]/.test(text.slice(-1))) {
-    const interrobangBonus = messageConfig.get('MESSAGE_INTERROBANG_BONUS');
-    chance += interrobangBonus;
-    debug(`Interrobang detected. Applied bonus: ${interrobangBonus}. New chance: ${chance}`);
-  }
+  // NOTE: Direct mention / wakeword / reply-to-bot are handled deterministically in shouldReplyToMessage().
 
   if (text.length < 10) {
     const penalty = messageConfig.get('MESSAGE_SHORT_LENGTH_PENALTY') || 0;
@@ -128,7 +136,7 @@ function applyModifiers(
     debug(`Short message detected (<10 chars). Applied penalty: ${penalty}. New chance: ${chance}`);
   }
 
-  if (message.isFromBot()) {
+  if (typeof message.isFromBot === 'function' && message.isFromBot()) {
     // Never auto-reply to bots at 100%; treat as an unsolicited opportunity unless directly addressed.
     const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || 0;
     chance += botModifier;
