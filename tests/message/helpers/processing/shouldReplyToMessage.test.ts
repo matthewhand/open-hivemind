@@ -1,5 +1,6 @@
 
-import { shouldReplyToMessage, recordBotActivity } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
+import { shouldReplyToMessage } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
+import { recordBotActivity, clearBotActivity } from '../../../../src/message/helpers/processing/ChannelActivity';
 import { IncomingMessageDensity } from '../../../../src/message/helpers/processing/IncomingMessageDensity';
 import messageConfig from '../../../../src/config/messageConfig';
 import discordConfig from '../../../../src/config/discordConfig';
@@ -17,12 +18,15 @@ describe('shouldReplyToMessage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         process.env.FORCE_REPLY = 'false';
+        clearBotActivity();
 
         // Default Config Mocks
         (messageConfig.get as jest.Mock).mockImplementation((key) => {
             if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
             if (key === 'MESSAGE_INTERROBANG_BONUS') return 0.2;
             if (key === 'MESSAGE_SHORT_LENGTH_PENALTY') return 0.1;
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+            if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.2;
             return null;
         });
 

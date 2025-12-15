@@ -16,17 +16,22 @@ import processingLocks from '../processing/processingLocks';
 import { AuditLogger } from '@src/common/auditLogger';
 import DuplicateMessageDetector from '../helpers/processing/DuplicateMessageDetector';
 import { splitMessageContent } from '../helpers/processing/splitMessageContent';
+import messageConfig from '@config/messageConfig';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import { detectMentions } from '../helpers/processing/MentionDetector';
 import { splitOnNewlines, calculateLineDelay } from '../helpers/processing/LineByLineSender';
-import { recordBotActivity } from '../helpers/processing/shouldReplyToMessage';
+import { recordBotActivity } from '../helpers/processing/ChannelActivity';
+import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
+import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 
 const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 const duplicateDetector = DuplicateMessageDetector.getInstance();
 const tokenTracker = TokenTracker.getInstance();
+const channelDelayManager = ChannelDelayManager.getInstance();
+const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 
 /**
  * Main message handler for processing incoming messages from various platforms
@@ -56,6 +61,10 @@ const tokenTracker = TokenTracker.getInstance();
 export async function handleMessage(message: IMessage, historyMessages: IMessage[] = [], botConfig: any): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(async () => {
     const channelId = message.getChannelId();
+    let resolvedBotId = botConfig.BOT_ID || botConfig.name || 'unknown-bot';
+    let delayKey: string | null = null;
+    let isLeaderInvocation = false;
+    let didLock = false;
 
     // Log received message
     const userId = message.getAuthorId();
@@ -77,15 +86,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         }
       );
     }
-
-    // Concurrency guard: prevent processing multiple messages from the same channel simultaneously (per-bot)
-    const botId = botConfig.BOT_ID || botConfig.name || 'unknown-bot';
-    if (processingLocks.isLocked(channelId, botId)) {
-      logger(`Channel ${channelId} is currently processing another message for bot ${botId}, skipping.`);
-      return null;
-    }
-
-    processingLocks.lock(channelId, botId);
 
     try {
       const text = message.getText();
@@ -119,6 +119,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const messageProvider = messageProviders[0];
       const llmProvider = llmProviders[0];
       const botId = botConfig.BOT_ID || messageProvider.getClientId();
+      resolvedBotId = botId;
       const userId = message.getAuthorId();
       let processedMessage = stripBotId(text, botId);
       processedMessage = addUserHint(processedMessage, userId, botId);
@@ -163,37 +164,85 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         logger(`Mention context: ${mentionContext.contextHint}`);
       }
 
-      // Token-based spam prevention: check if we should respond based on recent token usage
-      // Bypass this check if the bot is directly mentioned or replied to
-      if (!mentionContext.isMentioningBot && !mentionContext.isReplyToBot) {
-        const tokenProbability = tokenTracker.getResponseProbabilityModifier(channelId);
-        if (tokenProbability < 1.0) {
-          const roll = Math.random();
-          if (roll > tokenProbability) {
-            logger(`Token usage high (${tokenTracker.getTokensInWindow(channelId)} tokens), skipping response (roll ${roll.toFixed(2)} > ${tokenProbability.toFixed(2)})`);
-            return null;
-          }
-        }
-      } else {
-        logger('Direct mention/reply detected - bypassing token probability check');
+      // -----------------------------------------------------------------------
+      // Delay Before Inference (Read + Rate Backoff + Coalesce Burst)
+      // -----------------------------------------------------------------------
+
+      const delayScaleRaw = messageConfig.get('MESSAGE_DELAY_MULTIPLIER');
+      const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
+
+      const baseCompoundDelayMs = (Number(messageConfig.get('MESSAGE_COMPOUNDING_DELAY_BASE_MS')) || 1500) * delayScale;
+      const maxCompoundDelayMs = (Number(messageConfig.get('MESSAGE_COMPOUNDING_DELAY_MAX_MS')) || 15000) * delayScale;
+
+      delayKey = channelDelayManager.getKey(channelId, botId);
+      isLeaderInvocation = channelDelayManager.registerMessage(
+        delayKey,
+        message.getMessageId(),
+        userId,
+        baseCompoundDelayMs,
+        maxCompoundDelayMs
+      ).isLeader;
+
+      if (!isLeaderInvocation) {
+        logger(`Coalescing burst: queued message ${message.getMessageId()} for ${delayKey}`);
+        return null;
       }
 
-      // -----------------------------------------------------------------------
-      // Delay Before Inference (Simulate Reading & Accumulate Context)
-      // -----------------------------------------------------------------------
-
-      // Calculate delay based on message length (reading time)
+      // Calculate delay based on message length (reading time) - scaled (default: 3x slower)
       const msgText = message.getText() || '';
-      const readingDelay = Math.min(8000, Math.max(1000, msgText.length * 50)); // 1s - 8s
-      const jitter = Math.floor(Math.random() * 500); // 0-500ms
+      const readingDelay = Math.min(8000 * delayScale, Math.max(1000 * delayScale, msgText.length * 50 * delayScale));
+      const jitter = Math.floor(Math.random() * 500 * delayScale); // scaled
 
       // Token usage multiplier (slower if channel is hot)
       const usageMultiplier = tokenTracker.getDelayMultiplier(channelId);
 
-      const totalPreDelay = Math.floor((readingDelay + jitter) * usageMultiplier);
+      // Outgoing message rate backoff (don't drop responses, just delay them)
+      const maxPerMinute = Number(messageConfig.get('MESSAGE_RATE_LIMIT_PER_CHANNEL')) || 5;
+      const outgoingBackoffMs = outgoingRateLimiter.getBackoffMs(channelId, maxPerMinute, 60000);
 
-      logger(`Waiting ${totalPreDelay}ms before inference (reading time + usage delay)...`);
-      await new Promise(resolve => setTimeout(resolve, totalPreDelay));
+      const totalPreDelay = Math.floor((readingDelay + jitter) * usageMultiplier + outgoingBackoffMs);
+
+      // Ensure our coalescing window waits at least the computed delay.
+      channelDelayManager.ensureMinimumDelay(delayKey, totalPreDelay, maxCompoundDelayMs);
+
+      logger(`Waiting ~${channelDelayManager.getRemainingDelayMs(delayKey)}ms before inference (coalesce + reading + backoff)...`);
+
+      // Sustained typing during the wait, when supported by provider
+      let typingInterval: NodeJS.Timeout | null = null;
+      if (messageProvider.sendTyping) {
+        await messageProvider.sendTyping(channelId).catch(() => { });
+        typingInterval = setInterval(() => {
+          messageProvider.sendTyping!(channelId).catch(() => { });
+        }, 8000);
+      }
+
+      // Wait in short increments so new messages can extend delay
+      while (true) {
+        const remaining = channelDelayManager.getRemainingDelayMs(delayKey);
+        if (remaining <= 0) break;
+        await new Promise(resolve => setTimeout(resolve, Math.min(remaining, 250)));
+      }
+
+      if (typingInterval) {
+        clearInterval(typingInterval);
+        typingInterval = null;
+      }
+
+      // Concurrency guard: lock only once we're actually about to do inference/send.
+      if (processingLocks.isLocked(channelId, botId)) {
+        logger(`Channel ${channelId} is currently processing another message for bot ${botId}, waiting...`);
+        const startWait = Date.now();
+        while (processingLocks.isLocked(channelId, botId) && (Date.now() - startWait) < 60000) {
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        if (processingLocks.isLocked(channelId, botId)) {
+          logger(`Timed out waiting for processing lock on ${channelId}:${botId}`);
+          return null;
+        }
+      }
+
+      processingLocks.lock(channelId, botId);
+      didLock = true;
 
       // Refetch history to capture any messages that arrived during the delay
       try {
@@ -326,7 +375,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         }
 
         // Calculate delay based on line length and token usage
-        const baseDelay = calculateLineDelay(line.length);
+        const lineBaseDelay = 2000 * delayScale;
+        const baseDelay = calculateLineDelay(line.length, lineBaseDelay);
         const adjustedDelay = Math.floor(baseDelay * delayMultiplier);
 
         // For lines after the first, wait with typing indicator BEFORE sending
@@ -353,6 +403,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
             // Record this message for duplicate detection
             duplicateDetector.recordMessage(message.getChannelId(), text);
+
+            // Record outgoing send for rate backoff
+            outgoingRateLimiter.recordSend(message.getChannelId());
 
             // Record bot activity to keep conversation alive (removes silence penalty)
             recordBotActivity(message.getChannelId());
@@ -397,7 +450,16 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
       // Always unlock the channel after processing
-      processingLocks.unlock(channelId, botId);
+      if (didLock) {
+        try {
+          processingLocks.unlock(channelId, resolvedBotId);
+        } catch { }
+      }
+      if (isLeaderInvocation && delayKey) {
+        try {
+          channelDelayManager.clear(delayKey);
+        } catch { }
+      }
     }
   }, 'handleMessage', 5000); // 5 second threshold for warnings
 }

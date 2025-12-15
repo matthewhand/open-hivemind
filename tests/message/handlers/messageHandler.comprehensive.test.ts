@@ -52,18 +52,14 @@ jest.mock('../../../src/message/helpers/handler/MessageDelayScheduler', () => ({
 }));
 
 // Mock ChannelDelayManager to bypass compounding delay
-jest.mock('../../../src/message/helpers/handler/ChannelDelayManager', () => ({
+jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
     ChannelDelayManager: {
         getInstance: jest.fn(() => ({
-            registerMessage: jest.fn().mockReturnValue(true), // Always first message
-            hasMessage: jest.fn().mockReturnValue(false),
-            getRemainingDelay: jest.fn().mockReturnValue(0), // No delay
-            startTyping: jest.fn(),
-            getReplyToMessageId: jest.fn().mockReturnValue(null),
-            getPendingMessageIds: jest.fn().mockReturnValue([]),
-            clearChannel: jest.fn(),
-            isTyping: jest.fn().mockReturnValue(false),
-            getTriggerUserId: jest.fn().mockReturnValue(null)
+            getKey: jest.fn((channelId: string, botId: string) => `${channelId}:${botId}`),
+            registerMessage: jest.fn(() => ({ isLeader: true })),
+            ensureMinimumDelay: jest.fn(),
+            getRemainingDelayMs: jest.fn(() => 0),
+            clear: jest.fn()
         }))
     }
 }));
@@ -270,7 +266,7 @@ describe('messageHandler Configuration and Features', () => {
         mockLlmProvider.generateChatCompletion.mockResolvedValue('Line 1\\nLine 2\nLine 3');
 
         const promise = handleMessage(mockMessage, [], botConfig);
-        await jest.advanceTimersByTimeAsync(10000);
+        await jest.advanceTimersByTimeAsync(60000);
         await promise;
 
         // Should send 3 separate messages
@@ -317,7 +313,9 @@ describe('messageHandler Configuration and Features', () => {
 
     it('should skip processing if channel is locked', async () => {
         (processingLocks.isLocked as jest.Mock).mockReturnValue(true);
-        const result = await handleMessage(mockMessage, [], { name: 'LockedBot' });
+        const promise = handleMessage(mockMessage, [], { name: 'LockedBot' });
+        await jest.advanceTimersByTimeAsync(61000);
+        const result = await promise;
         expect(result).toBeNull();
         expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
     });

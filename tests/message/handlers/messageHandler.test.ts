@@ -18,15 +18,11 @@ jest.mock('@config/messageConfig');
 jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
   ChannelDelayManager: {
     getInstance: jest.fn(() => ({
-      registerMessage: jest.fn().mockReturnValue(true),
-      hasMessage: jest.fn().mockReturnValue(false),
-      getRemainingDelay: jest.fn().mockReturnValue(0),
-      startTyping: jest.fn(),
-      getReplyToMessageId: jest.fn().mockReturnValue(null),
-      getPendingMessageIds: jest.fn().mockReturnValue([]),
-      clearChannel: jest.fn(),
-      isTyping: jest.fn().mockReturnValue(false),
-      getTriggerUserId: jest.fn().mockReturnValue(null)
+      getKey: jest.fn((channelId: string, botId: string) => `${channelId}:${botId}`),
+      registerMessage: jest.fn(() => ({ isLeader: true })),
+      ensureMinimumDelay: jest.fn(),
+      getRemainingDelayMs: jest.fn(() => 0),
+      clear: jest.fn()
     }))
   }
 }));

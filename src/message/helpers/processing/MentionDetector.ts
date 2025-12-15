@@ -23,11 +23,17 @@ export function detectMentions(
     const text = (message.getText?.() || message.content || '') as string;
 
     // Check if message is mentioning the bot
-    const isMentioningBot = (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
+    const isMentioningBot =
+        (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
+        (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
+        (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
+        text.toLowerCase().includes(`<@${botId}>`) ||
         (botUsername && text.toLowerCase().includes(`@${botUsername.toLowerCase()}`));
 
     // Check if message is a reply
-    const isReply = typeof message.isReply === 'function' ? message.isReply() : false;
+    const isReply =
+        (typeof message.isReply === 'function' && message.isReply()) ||
+        Boolean((message as any)?.data?.reference?.messageId);
 
     // Extract mentioned usernames from message (@username patterns)
     const mentionPattern = /@(\w+)/g;
@@ -45,13 +51,18 @@ export function detectMentions(
     let isReplyToOther = false;
 
     if (isReply) {
-        // Check if reply is to this bot (via metadata if available)
-        const replyMetadata = (message as any).metadata?.replyTo;
-        if (replyMetadata) {
-            replyToUsername = replyMetadata.username;
-            isReplyToBot = replyMetadata.userId === botId ||
-                (botUsername && replyMetadata.username === botUsername);
-            isReplyToOther = !isReplyToBot;
+        // Prefer explicit helper if provided by the message wrapper.
+        if (typeof message.isReplyToBot === 'function' && message.isReplyToBot()) {
+            isReplyToBot = true;
+        } else {
+            // Check if reply is to this bot (via metadata if available)
+            const replyMetadata = (message as any).metadata?.replyTo;
+            if (replyMetadata) {
+                replyToUsername = replyMetadata.username;
+                isReplyToBot = replyMetadata.userId === botId ||
+                    (botUsername && replyMetadata.username === botUsername);
+                isReplyToOther = !isReplyToBot;
+            }
         }
     }
 

@@ -366,7 +366,17 @@ export const Discord = {
               });
             } catch { }
 
-            const wrappedMessage = new DiscordMessage(message);
+            let repliedMessage: any = null;
+            try {
+              const refId = (message as any)?.reference?.messageId;
+              if (refId && message.channel && (message.channel as any).messages?.fetch) {
+                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+              }
+            } catch {
+              repliedMessage = null;
+            }
+
+            const wrappedMessage = new DiscordMessage(message, repliedMessage);
             const history = await this.getMessagesFromChannel(message.channelId);
             await handler(wrappedMessage, history, bot.config);
           } catch {
@@ -452,7 +462,17 @@ export const Discord = {
               }
             }
 
-            const wrappedMessage = new DiscordMessage(message);
+            let repliedMessage: any = null;
+            try {
+              const refId = (message as any)?.reference?.messageId;
+              if (refId && message.channel && (message.channel as any).messages?.fetch) {
+                repliedMessage = await (message.channel as any).messages.fetch(refId).catch(() => null);
+              }
+            } catch {
+              repliedMessage = null;
+            }
+
+            const wrappedMessage = new DiscordMessage(message, repliedMessage);
             const history = await this.getMessagesFromChannel(message.channelId);
             await this.currentHandler!(wrappedMessage, history, newBot.config);
           } catch {

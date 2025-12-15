@@ -266,6 +266,18 @@ const messageConfig = convict({
     default: 15000,
     env: 'MESSAGE_COMPOUNDING_DELAY_MAX_MS'
   },
+  MESSAGE_DELAY_MULTIPLIER: {
+    doc: 'Multiplier applied to artificial delays (pre-inference, line delays, scheduler delays)',
+    format: Number,
+    default: 3,
+    env: 'MESSAGE_DELAY_MULTIPLIER'
+  },
+  MESSAGE_UNSOLICITED_BASE_CHANCE: {
+    doc: 'Base probability for replying when not explicitly addressed (only used when MESSAGE_ONLY_WHEN_SPOKEN_TO=false)',
+    format: Number,
+    default: 0.05,
+    env: 'MESSAGE_UNSOLICITED_BASE_CHANCE'
+  },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
     format: 'int',

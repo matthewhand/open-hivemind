@@ -30,7 +30,11 @@ describe('MessageDelayScheduler', () => {
 
     it('should schedule and execute message with delay', async () => {
         const sendFn = jest.fn().mockResolvedValue('sent-id');
-        (messageConfig.get as jest.Mock).mockReturnValue(1000);
+        (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+            if (key === 'MESSAGE_MIN_DELAY') return 1000;
+            if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
+            return undefined;
+        });
 
         const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
 
@@ -47,7 +51,10 @@ describe('MessageDelayScheduler', () => {
 
     it('should use default delay if config missing', async () => {
         const sendFn = jest.fn().mockResolvedValue('sent-id');
-        (messageConfig.get as jest.Mock).mockReturnValue(undefined); // Simulate missing config
+        (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
+            if (key === 'MESSAGE_DELAY_MULTIPLIER') return 1;
+            return undefined;
+        }); // Simulate missing delay config
 
         const promise = scheduler.scheduleMessage('ch-1', 'msg-1', 'Hello', 'user-1', sendFn, false);
 
