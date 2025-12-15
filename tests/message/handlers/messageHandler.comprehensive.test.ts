@@ -186,6 +186,8 @@ describe('messageHandler Configuration and Features', () => {
         const metadata = callArgs[2] as any;
 
         expect(metadata).toBeDefined();
+        expect(metadata.systemPrompt).toContain('You are PhilosopherBot');
+        expect(metadata.systemPrompt).toContain('You are a wise philosopher.');
         // systemPrompt is passed via botConfig, check botId instead
         expect(metadata.botId).toBe('bot-id');
     });
