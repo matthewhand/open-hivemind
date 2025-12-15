@@ -43,13 +43,14 @@ export class OpenAiProvider implements ILlmProvider {
     debug('Starting chat completion generation');
 
     // Load configuration (Instance config > Global config > Env vars via Convict)
-    const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
-    let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    // Use nullish check to allow empty strings to fall back to env vars
+    const apiKey = (this.config.apiKey && this.config.apiKey.trim()) || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL = (this.config.baseUrl && this.config.baseUrl.trim()) || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
-    const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
-    const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+    const organization = (this.config.organization && this.config.organization.trim()) || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const model = (this.config.model && this.config.model.trim()) || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
 
-    const systemPrompt = this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
+    const systemPrompt = (this.config.systemPrompt && this.config.systemPrompt.trim()) || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 
     debug('OpenAI Config:', {
       baseURL,
