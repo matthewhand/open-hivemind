@@ -146,6 +146,13 @@ describe('shouldReplyToMessage', () => {
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
     });
 
+    it('should treat <@!id> mention syntax as direct mention', () => {
+        mockMessage.mentionsUsers.mockReturnValue(false);
+        mockMessage.getText.mockReturnValue('hello <@!bot-id> are you there?');
+        jest.spyOn(Math, 'random').mockReturnValue(0.99);
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
+    });
+
     it('should return 1 (true) if wakeword is detected', () => {
         mockMessage.getText.mockReturnValue('hey bot what is up');
         jest.spyOn(Math, 'random').mockReturnValue(0.99);

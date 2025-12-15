@@ -200,6 +200,25 @@ describe('messageHandler', () => {
 
       expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'discord', 'Bot');
     });
+
+    it('should resolve per-bot Discord client id when BOT_ID is invalid', async () => {
+      const customMessengerProvider = {
+        sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
+        getClientId: jest.fn().mockReturnValue('bot-123'),
+        getBotByName: jest.fn((name: string) => {
+          if (name === 'Bot') return { botUserId: '555555555555555555' };
+          return null;
+        })
+      };
+      mockGetMessengerProvider.mockReturnValue([customMessengerProvider]);
+
+      const badBotConfig = { ...mockBotConfig, BOT_ID: 'slack-bot' };
+      const message = new MockMessage('<@555555555555555555> hi');
+
+      await handleMessage(message, [], badBotConfig);
+
+      expect(mockShouldReply).toHaveBeenCalledWith(message, '555555555555555555', 'discord', 'Bot');
+    });
   });
 
   describe('error handling', () => {

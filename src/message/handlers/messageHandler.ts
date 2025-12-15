@@ -125,7 +125,32 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       const messageProvider = messageProviders[0];
       const llmProvider = llmProviders[0];
-      const botId = botConfig.BOT_ID || messageProvider.getClientId();
+      const providerType = botConfig.integration || botConfig.MESSAGE_PROVIDER;
+      const platform = providerType === 'discord' ? 'discord' : 'generic';
+
+      const isDiscordSnowflake = (id: unknown): boolean => /^\d{15,25}$/.test(String(id || ''));
+
+      // Resolve bot ID robustly (especially important in Discord swarm mode).
+      // Prefer the actual Discord user id for the current bot instance over legacy config values.
+      let botId: string = '';
+      const cfgBotId = botConfig?.BOT_ID;
+      if (platform === 'discord') {
+        const byName = typeof (messageProvider as any)?.getBotByName === 'function'
+          ? (messageProvider as any).getBotByName(activeAgentName)
+          : null;
+        if (byName?.botUserId) {
+          botId = String(byName.botUserId);
+        } else if (isDiscordSnowflake(cfgBotId)) {
+          botId = String(cfgBotId);
+        } else if (isDiscordSnowflake(botConfig?.discord?.clientId)) {
+          botId = String(botConfig.discord.clientId);
+        } else {
+          botId = String(messageProvider.getClientId() || '');
+        }
+      } else {
+        botId = String(cfgBotId || messageProvider.getClientId() || '');
+      }
+
       resolvedBotId = botId;
       const userId = message.getAuthorId();
       let processedMessage = stripBotId(text, botId);
@@ -153,8 +178,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       }
 
       // Reply eligibility
-      const providerType = botConfig.integration || botConfig.MESSAGE_PROVIDER;
-      const platform = providerType === 'discord' ? 'discord' : 'generic';
 
       // Record interaction for idle response tracking
       const serviceName = botConfig.MESSAGE_PROVIDER || 'generic';

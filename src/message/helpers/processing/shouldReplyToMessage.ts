@@ -36,7 +36,8 @@ export function shouldReplyToMessage(
     (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
     (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
     (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
-    text.includes(`<@${botId}>`);
+    text.includes(`<@${botId}>`) ||
+    text.includes(`<@!${botId}>`);
 
   const isReplyToBot =
     (typeof message.isReplyToBot === 'function' && message.isReplyToBot()) ||
