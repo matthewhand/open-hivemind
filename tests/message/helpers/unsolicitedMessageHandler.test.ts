@@ -1,6 +1,6 @@
 import { shouldReplyToUnsolicitedMessage } from '../../../src/message/helpers/unsolicitedMessageHandler';
 import messageConfig from '../../../src/config/messageConfig';
-import { recordBotActivity, clearBotActivity } from '../../../src/message/helpers/processing/ChannelActivity';
+import { clearBotActivity } from '../../../src/message/helpers/processing/ChannelActivity';
 
 jest.mock('../../../src/config/messageConfig', () => ({
   __esModule: true,
@@ -54,7 +54,6 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
       if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return true;
       if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
-      if (key === 'MESSAGE_ACTIVITY_TIME_WINDOW') return 300000;
       if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
       return null;
     });
@@ -67,11 +66,7 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       getUserMentions: () => [],
     };
 
-    // Not active yet -> no reply
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(false);
-
-    // Mark bot active, still no opportunity -> no reply
-    recordBotActivity('c1');
+    // No opportunity -> no reply (eligibility)
     expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(false);
 
     // Opportunity -> yes
@@ -84,12 +79,9 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
       if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
       if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
-      if (key === 'MESSAGE_ACTIVITY_TIME_WINDOW') return 300000;
       if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
       return null;
     });
-
-    recordBotActivity('c1');
 
     const addressed: any = {
       getChannelId: () => 'c1',
@@ -101,4 +93,3 @@ describe('shouldReplyToUnsolicitedMessage', () => {
     expect(shouldReplyToUnsolicitedMessage(addressed, botId, integration)).toBe(false);
   });
 });
-

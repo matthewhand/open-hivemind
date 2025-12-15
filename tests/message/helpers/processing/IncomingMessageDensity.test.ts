@@ -82,4 +82,20 @@ describe('IncomingMessageDensity', () => {
         const mod10 = density.recordMessageAndGetModifier('burst-channel');
         expect(mod10).toBe(0.1); // 1/10
     });
+
+    it('should count unique participants in a window', () => {
+        density.recordMessageAndGetModifier('channel-1', 'user-a');
+        density.recordMessageAndGetModifier('channel-1', 'user-b');
+        density.recordMessageAndGetModifier('channel-1', 'user-a'); // repeat
+        expect(density.getUniqueParticipantCount('channel-1', 5 * 60 * 1000)).toBe(2);
+    });
+
+    it('should prune participants outside the window', () => {
+        density.recordMessageAndGetModifier('channel-1', 'user-a');
+        jest.advanceTimersByTime(60000);
+        density.recordMessageAndGetModifier('channel-1', 'user-b');
+
+        // In the last 30s, only user-b should remain.
+        expect(density.getUniqueParticipantCount('channel-1', 30000)).toBe(1);
+    });
 });

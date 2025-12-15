@@ -10,6 +10,7 @@ const debug = Debug('app:IncomingMessageDensity');
 export class IncomingMessageDensity {
     private static instance: IncomingMessageDensity;
     private channelHistory: Map<string, number[]> = new Map();
+    private participantLastSeen: Map<string, Map<string, number>> = new Map();
     private readonly WINDOW_MS = 60000; // 1 minute
 
     public static getInstance(): IncomingMessageDensity {
@@ -25,7 +26,7 @@ export class IncomingMessageDensity {
      * e.g., 1 msg -> 1.0
      *       5 msgs -> 0.2
      */
-    public recordMessageAndGetModifier(channelId: string): number {
+    public recordMessageAndGetModifier(channelId: string, authorId?: string): number {
         const now = Date.now();
         let timestamps = this.channelHistory.get(channelId) || [];
 
@@ -35,6 +36,15 @@ export class IncomingMessageDensity {
         // Record new
         timestamps.push(now);
         this.channelHistory.set(channelId, timestamps);
+
+        if (authorId) {
+            let byParticipant = this.participantLastSeen.get(channelId);
+            if (!byParticipant) {
+                byParticipant = new Map();
+                this.participantLastSeen.set(channelId, byParticipant);
+            }
+            byParticipant.set(authorId, now);
+        }
 
         const count = timestamps.length;
 
@@ -50,8 +60,27 @@ export class IncomingMessageDensity {
         return modifier;
     }
 
+    /**
+     * Returns how many unique participants have been seen in the last window.
+     * Uses last-seen timestamps (not message counts).
+     */
+    public getUniqueParticipantCount(channelId: string, windowMs: number): number {
+        const now = Date.now();
+        const byParticipant = this.participantLastSeen.get(channelId);
+        if (!byParticipant) return 0;
+
+        // Prune old entries to prevent unbounded growth.
+        for (const [participantId, ts] of byParticipant.entries()) {
+            if (now - ts >= windowMs) {
+                byParticipant.delete(participantId);
+            }
+        }
+        return byParticipant.size;
+    }
+
     // For testing
     public clear() {
         this.channelHistory.clear();
+        this.participantLastSeen.clear();
     }
 }

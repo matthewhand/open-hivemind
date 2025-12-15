@@ -1,13 +1,12 @@
 import messageConfig from '@config/messageConfig';
-import { getLastBotActivity } from './processing/ChannelActivity';
 
 /**
  * Determines whether to reply to an unsolicited message.
  *
  * Design goals:
  * - If MESSAGE_ONLY_WHEN_SPOKEN_TO is enabled (default), only reply when directly addressed.
- * - Otherwise, allow selective unsolicited replies only when the bot has been recently active
- *   in the channel and the message looks like an "opportunity" (question/help/request).
+ * - Otherwise, allow selective unsolicited replies only when the message looks like an
+ *   "opportunity" (question/help/request). The actual probability is handled elsewhere.
  * 
  * @param {any} msg - The message object.
  * @param {string} botId - The ID of the bot.
@@ -21,7 +20,6 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
   const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
   const allowAddressed = Boolean(messageConfig.get('MESSAGE_UNSOLICITED_ADDRESSED'));
   const allowUnaddressed = Boolean(messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED'));
-  const activityWindowMs = Number(messageConfig.get('MESSAGE_ACTIVITY_TIME_WINDOW')) || (5 * 60 * 1000);
 
   const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
   const wakewords = Array.isArray(wakewordsRaw)
@@ -51,13 +49,6 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   if (onlyWhenSpokenTo) {
     return isDirectQuery;
-  }
-
-  // If not directly addressed, only consider responding when the bot has been recently active.
-  const lastBotActivity = channelId ? getLastBotActivity(channelId) : 0;
-  const recentlyActive = Boolean(lastBotActivity) && (Date.now() - lastBotActivity) <= activityWindowMs;
-  if (!recentlyActive) {
-    return false;
   }
 
   // Addressed vs unaddressed (rough heuristic)

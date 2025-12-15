@@ -73,6 +73,12 @@ export function shouldReplyToMessage(
     return true;
   }
 
+  // Record message traffic/participants (used for density + participant-aware unsolicited tuning).
+  const densityModifier = IncomingMessageDensity.getInstance().recordMessageAndGetModifier(
+    channelId,
+    typeof message.getAuthorId === 'function' ? message.getAuthorId() : undefined
+  );
+
   // Integrate Unsolicited Message Handler
   try {
     if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
@@ -96,6 +102,27 @@ export function shouldReplyToMessage(
   if (timeSinceLastActivity > SILENCE_THRESHOLD) {
     chance = 0.005; // 0.5% if silent for > 5 mins
     debug(`Long silence detected (>5m). Chance dropped to 0.5%.`);
+
+    // Participant-aware adjustment: if fewer unique participants are active, be more likely to join;
+    // if many participants are active, be less likely to interject.
+    const participantWindowMsRaw = messageConfig.get('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS');
+    const participantWindowMs = typeof participantWindowMsRaw === 'number'
+      ? participantWindowMsRaw
+      : Number(participantWindowMsRaw) || (5 * 60 * 1000);
+
+    const participantCount = IncomingMessageDensity.getInstance().getUniqueParticipantCount(channelId, participantWindowMs);
+
+    const refRaw = messageConfig.get('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE');
+    const reference = Math.max(1, Number(refRaw) || 2);
+
+    const minRaw = messageConfig.get('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR');
+    const maxRaw = messageConfig.get('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR');
+    const minFactor = Math.max(0, Number(minRaw) || 0.25);
+    const maxFactor = Math.max(minFactor, Number(maxRaw) || 3);
+
+    const factor = Math.max(minFactor, Math.min(maxFactor, reference / Math.max(1, participantCount)));
+    chance *= factor;
+    debug(`Silent participant factor: participants=${participantCount} factor=${factor.toFixed(2)} chance=${chance}`);
   } else {
     debug(`Recent activity detected (<5m). Using base chance ${chance}.`);
   }
@@ -105,7 +132,6 @@ export function shouldReplyToMessage(
   // User said: "after say 5 messages ina minute it is like 1/5 chance"
   // If base is 0.2, then 0.2 * 0.2 = 0.04.
   // We record this message as part of the density check
-  const densityModifier = IncomingMessageDensity.getInstance().recordMessageAndGetModifier(channelId);
   chance *= densityModifier;
   debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
