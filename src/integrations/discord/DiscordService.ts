@@ -276,6 +276,13 @@ export const Discord = {
               `Discord bot ready: name=${bot.botUserName}, tag=${user?.tag}, id=${user?.id}, username=${user?.username}`
             );
             bot.botUserId = user?.id || '';
+            // Persist resolved Discord client id back into the bot config so downstream
+            // reply eligibility (mentions/replies) uses the correct per-instance ID.
+            try {
+              if (!bot.config) bot.config = {};
+              bot.config.BOT_ID = bot.botUserId;
+              bot.config.discord = { ...(bot.config.discord || {}), clientId: bot.botUserId };
+            } catch { }
             log(`Initialized ${bot.botUserName} OK`);
             resolve();
           });
@@ -510,6 +517,11 @@ export const Discord = {
         client.once('ready', () => {
           log(`Discord ${name} logged in as ${client.user?.tag}`);
           newBot.botUserId = client.user?.id || '';
+          // Persist resolved client id into config for consistent downstream mention detection.
+          try {
+            newBot.config.BOT_ID = newBot.botUserId;
+            newBot.config.discord = { ...(newBot.config.discord || {}), clientId: newBot.botUserId };
+          } catch { }
           resolve();
         });
         client.login(token).catch(reject);
