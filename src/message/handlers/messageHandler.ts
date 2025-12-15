@@ -328,11 +328,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const adjustedMaxTokens = tokenTracker.getAdjustedMaxTokens(channelId, defaultMaxTokens);
 
       while (retryCount <= MAX_DUPLICATE_RETRIES) {
-        const systemPrompt =
+        const baseSystemPrompt =
           botConfig?.OPENAI_SYSTEM_PROMPT ??
           botConfig?.openai?.systemPrompt ??
           botConfig?.llm?.systemPrompt ??
           (message.metadata as any)?.systemPrompt;
+
+        const systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
 
         const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
 
@@ -340,6 +342,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           ...message.metadata,
           channelId: message.getChannelId(),
           botId: botId,
+          botName: activeAgentName,
           // Increase temperature on retries to get more varied responses
           temperatureBoost: (retryCount * 0.2) + repetitionBoost,
           // Use adjusted max tokens based on recent usage
@@ -372,7 +375,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         try {
           const llm = botConfig?.llm;
           if (llm && String(llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
-            const sys = llm.systemPrompt || metadata.systemPrompt || '';
+            const sys = systemPrompt || llm.systemPrompt || metadata.systemPrompt || '';
             llmResponse = await generateChatCompletionDirect(
               { apiUrl: llm.apiUrl, authHeader: llm.authHeader, model: llm.model },
               prompt,
@@ -602,4 +605,16 @@ function stripSystemPromptLeak(response: string, systemPrompt: string): string {
     out = out.split(trimmed).join('');
   }
   return out.trim();
+}
+
+function buildSystemPromptWithBotName(baseSystemPrompt: unknown, botName: string): string {
+  const base = typeof baseSystemPrompt === 'string' ? baseSystemPrompt.trim() : '';
+  const name = String(botName || '').trim();
+  const hint = name
+    ? `You are ${name}. Your display name in chat is "${name}".`
+    : 'You are an assistant operating inside a multi-user chat.';
+
+  if (!base) return hint;
+  // Put the hint first so models see it early.
+  return `${hint}\n\n${base}`;
 }
