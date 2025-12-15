@@ -27,6 +27,7 @@ import WebSocketService from '../../server/services/WebSocketService';
 import { handleSpeckitSpecify } from './handlers/speckit/specifyHandler';
 import { SpecifyCommand } from './commands/speckit/specify';
 import { EventEmitter } from 'events';
+import TypingActivity from '@message/helpers/processing/TypingActivity';
 
 // Defensive fallback for environments where GatewayIntentBits may be undefined (e.g., partial mocks)
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
@@ -314,6 +315,18 @@ export const Discord = {
       this.currentHandler = handler;
 
       this.bots.forEach((bot) => {
+        // Track other users typing (used for pre-typing delay heuristics).
+        bot.client.on('typingStart', (typing: any) => {
+          try {
+            const user = (typing as any)?.user;
+            const channel = (typing as any)?.channel;
+            const channelId = (typing as any)?.channelId ?? channel?.id;
+            if (!channelId || !user) return;
+            if (user.bot) return;
+            TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
+          } catch { }
+        });
+
         bot.client.on('messageCreate', async (message) => {
           try {
             // Defensive guards for malformed events
@@ -429,6 +442,18 @@ export const Discord = {
       this.bots.push(newBot);
 
       if (this.currentHandler) {
+        // Track other users typing (used for pre-typing delay heuristics).
+        client.on('typingStart', (typing: any) => {
+          try {
+            const user = (typing as any)?.user;
+            const channel = (typing as any)?.channel;
+            const channelId = (typing as any)?.channelId ?? channel?.id;
+            if (!channelId || !user) return;
+            if (user.bot) return;
+            TypingActivity.getInstance().recordTyping(String(channelId), String(user.id));
+          } catch { }
+        });
+
         client.on('messageCreate', async (message) => {
           try {
             if (!message || !message.author) return;

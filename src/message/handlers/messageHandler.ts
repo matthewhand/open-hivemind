@@ -24,6 +24,7 @@ import { splitOnNewlines, calculateLineDelay } from '../helpers/processing/LineB
 import { recordBotActivity } from '../helpers/processing/ChannelActivity';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
+import TypingActivity from '../helpers/processing/TypingActivity';
 
 const logger = Debug('app:messageHandler');
 const timingManager = MessageDelayScheduler.getInstance();
@@ -32,6 +33,7 @@ const duplicateDetector = DuplicateMessageDetector.getInstance();
 const tokenTracker = TokenTracker.getInstance();
 const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
+const typingActivity = TypingActivity.getInstance();
 
 /**
  * Main message handler for processing incoming messages from various platforms
@@ -216,7 +218,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // - Keep typing running through inference so there's no "typing stopped, then long pause" gap.
       let typingStarted = false;
       const preTypingDelayMs = Math.min(2500, Math.max(900, Math.floor(readingDelay * 0.35)));
-      const typingStartAt = Date.now() + preTypingDelayMs;
+      const typingEligibleAt = Date.now() + preTypingDelayMs;
 
       const randInt = (min: number, max: number): number =>
         Math.floor(Math.random() * (max - min + 1)) + min;
@@ -247,7 +249,18 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         const remaining = channelDelayManager.getRemainingDelayMs(delayKey);
         if (remaining <= 0) break;
 
-        if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingStartAt) {
+        if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingEligibleAt) {
+          // If other users are actively typing, wait a bit longer before showing our typing indicator
+          // (to feel less like we are interrupting). Never wait indefinitely.
+          const othersTypingWindowMs = (Number(messageConfig.get('MESSAGE_OTHERS_TYPING_WINDOW_MS')) || 8000);
+          const othersTypingMaxWaitMs = (Number(messageConfig.get('MESSAGE_OTHERS_TYPING_MAX_WAIT_MS')) || 5000);
+          const waitedSinceEligible = Date.now() - typingEligibleAt;
+
+          if (waitedSinceEligible < othersTypingMaxWaitMs && typingActivity.isOthersTyping(channelId, othersTypingWindowMs)) {
+            await new Promise(resolve => setTimeout(resolve, 250));
+            continue;
+          }
+
           typingStarted = true;
           await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
           // Start pulsed typing refreshes (with occasional gaps).
