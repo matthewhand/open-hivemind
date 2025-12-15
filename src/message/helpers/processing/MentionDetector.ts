@@ -14,7 +14,7 @@ export interface MentionContext {
 }
 
 const DEFAULT_CONTEXT_HINT =
-    '[CONTEXT: It is unclear whether you are the target of this message. Infer from recent conversation history; if still unclear, ask a brief clarifying question.]';
+    '[CONTEXT: It is unclear whether you are being directly addressed. Speak to the topic generally if you respond. Infer intent from recent conversation history; if still unclear, ask one brief clarifying question.]';
 
 function escapeRegExp(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
