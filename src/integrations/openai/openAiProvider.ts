@@ -42,15 +42,14 @@ export class OpenAiProvider implements ILlmProvider {
   ): Promise<string> {
     debug('Starting chat completion generation');
 
-    // Load configuration (Instance config > Global config > Env vars via Convict)
-    // Use nullish check to allow empty strings to fall back to env vars
-    const apiKey = (this.config.apiKey && this.config.apiKey.trim()) || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
-    let baseURL = (this.config.baseUrl && this.config.baseUrl.trim()) || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    // Load configuration - ENV VARS FIRST, then other sources, then defaults
+    const apiKey = process.env.OPENAI_API_KEY || (this.config.apiKey && this.config.apiKey.trim()) || openaiConfig.get('OPENAI_API_KEY');
+    let baseURL = process.env.OPENAI_BASE_URL || (this.config.baseUrl && this.config.baseUrl.trim()) || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
-    const organization = (this.config.organization && this.config.organization.trim()) || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
-    const model = (this.config.model && this.config.model.trim()) || openaiConfig.get('OPENAI_MODEL') || 'gpt-5.2';
+    const organization = process.env.OPENAI_ORGANIZATION || (this.config.organization && this.config.organization.trim()) || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const model = process.env.OPENAI_MODEL || (this.config.model && this.config.model.trim()) || openaiConfig.get('OPENAI_MODEL') || 'gpt-5.2';
 
-    const systemPrompt = (this.config.systemPrompt && this.config.systemPrompt.trim()) || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
+    const systemPrompt = process.env.OPENAI_SYSTEM_PROMPT || (this.config.systemPrompt && this.config.systemPrompt.trim()) || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 
     // Helper to redact secrets but show first/last 2 chars for debugging
     const partialRedact = (s: string | undefined) => {
