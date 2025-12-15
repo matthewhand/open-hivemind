@@ -48,7 +48,7 @@ export class OpenAiProvider implements ILlmProvider {
     let baseURL = (this.config.baseUrl && this.config.baseUrl.trim()) || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = (this.config.organization && this.config.organization.trim()) || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
-    const model = (this.config.model && this.config.model.trim()) || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+    const model = (this.config.model && this.config.model.trim()) || openaiConfig.get('OPENAI_MODEL') || 'gpt-5.2';
 
     const systemPrompt = (this.config.systemPrompt && this.config.systemPrompt.trim()) || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 
