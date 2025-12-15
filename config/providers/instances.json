@@ -29,8 +29,9 @@
       "name": "Default OpenAI",
       "enabled": true,
       "config": {
-        "apiKey": "",
-        "model": "free-small"
+        "apiKey": "${OPENAI_API_KEY}",
+        "model": "${OPENAI_MODEL}",
+        "baseUrl": "${OPENAI_BASE_URL}"
       }
     }
   ]

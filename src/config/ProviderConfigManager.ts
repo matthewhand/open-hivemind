@@ -34,7 +34,7 @@ class ProviderConfigManager {
     }
     this.configPath = path.join(providersDir, 'instances.json');
     this.loadConfig();
-    
+
     // Migration: If empty, try to populate from legacy sources (one-time)
     if (this.store.message.length === 0 && this.store.llm.length === 0) {
       this.migrateLegacyConfigs();
@@ -48,11 +48,35 @@ class ProviderConfigManager {
     return ProviderConfigManager.instance;
   }
 
+  /**
+   * Interpolate ${ENV_VAR} patterns in config values with actual environment variables
+   */
+  private interpolateEnvVars(obj: any): any {
+    if (typeof obj === 'string') {
+      return obj.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
+        return process.env[envVar] || '';
+      });
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.interpolateEnvVars(item));
+    }
+    if (typeof obj === 'object' && obj !== null) {
+      const result: any = {};
+      for (const key of Object.keys(obj)) {
+        result[key] = this.interpolateEnvVars(obj[key]);
+      }
+      return result;
+    }
+    return obj;
+  }
+
   private loadConfig(): void {
     try {
       if (fs.existsSync(this.configPath)) {
         const raw = fs.readFileSync(this.configPath, 'utf-8');
-        this.store = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        // Interpolate ${ENV_VAR} patterns with actual env values
+        this.store = this.interpolateEnvVars(parsed);
         debug(`Loaded ${this.store.message.length} message and ${this.store.llm.length} llm providers`);
       } else {
         this.store = { message: [], llm: [] };
@@ -87,15 +111,15 @@ class ProviderConfigManager {
       const tokens = discordToken.split(',');
       tokens.forEach((token, idx) => {
         if (token.trim()) {
-           this.store.message.push({
-             id: `discord-${idx === 0 ? 'default' : uuidv4()}`,
-             type: 'discord',
-             category: 'message',
-             name: idx === 0 ? 'Default Discord Bot' : `Discord Bot ${idx + 2}`,
-             enabled: true,
-             config: { token: token.trim() }
-           });
-           changed = true;
+          this.store.message.push({
+            id: `discord-${idx === 0 ? 'default' : uuidv4()}`,
+            type: 'discord',
+            category: 'message',
+            name: idx === 0 ? 'Default Discord Bot' : `Discord Bot ${idx + 2}`,
+            enabled: true,
+            config: { token: token.trim() }
+          });
+          changed = true;
         }
       });
     }
@@ -109,9 +133,9 @@ class ProviderConfigManager {
         category: 'llm',
         name: 'Default OpenAI',
         enabled: true,
-        config: { 
-            apiKey: openAiKey,
-            model: process.env.OPENAI_MODEL || 'gpt-4'
+        config: {
+          apiKey: openAiKey,
+          model: process.env.OPENAI_MODEL || 'gpt-4'
         }
       });
       changed = true;
@@ -120,18 +144,18 @@ class ProviderConfigManager {
     // Ollama
     const ollamaUrl = process.env.OLLAMA_BASE_URL;
     if (ollamaUrl) {
-        this.store.llm.push({
-            id: 'ollama-default',
-            type: 'ollama',
-            category: 'llm',
-            name: 'Local Ollama',
-            enabled: true,
-            config: {
-                baseUrl: ollamaUrl,
-                model: process.env.OLLAMA_MODEL || 'llama2'
-            }
-        });
-        changed = true;
+      this.store.llm.push({
+        id: 'ollama-default',
+        type: 'ollama',
+        category: 'llm',
+        name: 'Local Ollama',
+        enabled: true,
+        config: {
+          baseUrl: ollamaUrl,
+          model: process.env.OLLAMA_MODEL || 'llama2'
+        }
+      });
+      changed = true;
     }
 
     if (changed) {
@@ -174,8 +198,8 @@ class ProviderConfigManager {
     let category: 'message' | 'llm' = 'message';
 
     if (!target) {
-        target = this.store.llm.find(p => p.id === id);
-        category = 'llm';
+      target = this.store.llm.find(p => p.id === id);
+      category = 'llm';
     }
 
     if (!target) return null;
@@ -183,7 +207,7 @@ class ProviderConfigManager {
     // Merge updates
     Object.assign(target, updates);
     // Ensure category/id/type are immutable if needed? For now allow update except ID
-    target.id = id; 
+    target.id = id;
 
     this.saveConfig();
     return target;
