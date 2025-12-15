@@ -54,7 +54,9 @@ class ProviderConfigManager {
   private interpolateEnvVars(obj: any): any {
     if (typeof obj === 'string') {
       return obj.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
-        return process.env[envVar] || '';
+        const value = process.env[envVar] || '';
+        debug(`Interpolating \${${envVar}} -> "${value}" (env available: ${!!process.env[envVar]})`);
+        return value;
       });
     }
     if (Array.isArray(obj)) {

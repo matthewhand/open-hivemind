@@ -28,11 +28,7 @@
       "category": "llm",
       "name": "Default OpenAI",
       "enabled": true,
-      "config": {
-        "apiKey": "${OPENAI_API_KEY}",
-        "model": "${OPENAI_MODEL}",
-        "baseUrl": "${OPENAI_BASE_URL}"
-      }
+      "config": {}
     }
   ]
 }
