@@ -158,7 +158,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // Record interaction for idle response tracking
       const serviceName = botConfig.MESSAGE_PROVIDER || 'generic';
-      idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
+      // Only record non-bot messages as "interactions" to avoid bots (including our own idle replies)
+      // continuously rescheduling idle responses.
+      if (!message.isFromBot()) {
+        idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
+      }
 
       if (!shouldReplyToMessage(message, botId, platform)) {
         logger('Message not eligible for reply');
