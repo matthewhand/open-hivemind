@@ -42,12 +42,12 @@ export class OpenAiProvider implements ILlmProvider {
   ): Promise<string> {
     debug('Starting chat completion generation');
 
-    // Load configuration (Instance config > Global config > Env vars via Convict)
+    // Load configuration - prioritize env vars for critical settings
     const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
-    let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
-    const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+    const model = this.config.model || process.env.OPENAI_MODEL || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
 
     const systemPrompt = this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 
