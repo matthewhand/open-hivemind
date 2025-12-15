@@ -216,4 +216,28 @@ describe('shouldReplyToMessage', () => {
         mockMessage.getText.mockReturnValue('MyBot: can you help?');
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).toBe(true);
     });
+
+    it('should treat unicode punctuation around bot name as spoken-to', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            return null;
+        });
+
+        mockMessage.getText.mockReturnValue('seneca—can you help?'); // em dash
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'seneca')).toBe(true);
+        mockMessage.getText.mockReturnValue('seneca’s idea?'); // curly apostrophe
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'seneca')).toBe(true);
+    });
+
+    it('should accept a list of candidate bot names', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            return null;
+        });
+
+        mockMessage.getText.mockReturnValue('seneca: hi');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', ['MyBot', 'Seneca'])).toBe(true);
+    });
 });

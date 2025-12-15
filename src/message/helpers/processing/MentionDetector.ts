@@ -20,11 +20,25 @@ function escapeRegExp(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizeForNameMatch(input: string): string {
+    const s = String(input || '');
+    // Normalize common unicode punctuation that appears in chat clients.
+    // This helps match "seneca’s" / "seneca—" / quoted variants reliably.
+    return s
+        .normalize('NFKC')
+        .replace(/[\u2018\u2019\u2032]/g, "'")
+        .replace(/[\u201C\u201D\u2033]/g, '"')
+        .replace(/[\u2013\u2014]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function isBotNameInText(text: string, botName: string): boolean {
-    const t = String(text || '');
-    const name = String(botName || '').trim();
+    const t = normalizeForNameMatch(text || '');
+    const name = normalizeForNameMatch(botName || '');
     if (!t || !name) return false;
     const namePattern = escapeRegExp(name).replace(/\s+/g, '\\s+');
+    // Boundary chars include common punctuation and both ASCII and normalized unicode quotes/dashes.
     const re = new RegExp(`(^|[\\s"'\\(\\[\\{*])${namePattern}([\\s"'\\)\\]\\}*:,.!?\\-]|$)`, 'i');
     return re.test(t);
 }

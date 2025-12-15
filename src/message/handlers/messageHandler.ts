@@ -190,7 +190,21 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
       }
 
-      if (!shouldReplyToMessage(message, botId, platform, activeAgentName)) {
+      // Name candidates matter for "spoken-to" detection: users may address a bot by its configured agent name,
+      // its internal swarm label, or its Discord username/display name.
+      const replyNameCandidates: string[] = Array.from(new Set([
+        activeAgentName,
+        botConfig?.name,
+        // If we resolved a Discord bot instance, include its configured label and actual Discord username.
+        platform === 'discord' && typeof (messageProvider as any)?.getBotByName === 'function'
+          ? ((messageProvider as any).getBotByName(activeAgentName)?.botUserName || undefined)
+          : undefined,
+        platform === 'discord' && typeof (messageProvider as any)?.getBotByName === 'function'
+          ? ((messageProvider as any).getBotByName(activeAgentName)?.client?.user?.username || undefined)
+          : undefined
+      ].filter(Boolean).map((v) => String(v))));
+
+      if (!shouldReplyToMessage(message, botId, platform, replyNameCandidates)) {
         logger('Message not eligible for reply');
         return null;
       }
