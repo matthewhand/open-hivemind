@@ -18,7 +18,8 @@ export async function sendFollowUpRequest(
   msg: IMessage,
   channelId: string,
   followUpText: string,
-  messageProvider: IMessageProvider
+  messageProvider: IMessageProvider,
+  senderKey?: string
 ): Promise<void> {
   const llmProvider = getLlmProvider();
   if (!llmProvider.length) {
@@ -50,9 +51,8 @@ export async function sendFollowUpRequest(
     const followUpMessage = followUpText + ' ' + response;
     debug('Sending follow-up message:', followUpMessage);
 
-    await messageProvider.sendMessageToChannel(channelId, followUpMessage);
+    await messageProvider.sendMessageToChannel(channelId, followUpMessage, senderKey);
   } catch (error) {
     debug('Error generating follow-up:', error);
   }
 }
-

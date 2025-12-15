@@ -390,6 +390,7 @@ describe('messageHandler Configuration and Features', () => {
         expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
             expect.any(String),
             expect.stringContaining('Anything else I can help with'),
+            expect.any(String)
         );
 
         jest.spyOn(Math, 'random').mockRestore();

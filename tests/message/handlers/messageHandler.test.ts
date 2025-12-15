@@ -77,6 +77,7 @@ class MockMessage implements IMessage {
 describe('messageHandler', () => {
   let mockLlmProvider: any;
   let mockBotConfig: any;
+  let mockMessengerProvider: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -85,7 +86,7 @@ describe('messageHandler', () => {
       generateChatCompletion: jest.fn().mockResolvedValue('AI response')
     };
 
-    const mockMessengerProvider = {
+    mockMessengerProvider = {
       sendMessageToChannel: jest.fn().mockResolvedValue('msg-123'),
       getClientId: jest.fn().mockReturnValue('bot-123')
     };
@@ -134,6 +135,12 @@ describe('messageHandler', () => {
       const response = await handleMessage(message, historyMessages, mockBotConfig);
 
       expect(response).toBe('AI response');
+      // For Discord, we route outgoing messages by bot id (stable per-instance) rather than MESSAGE_USERNAME_OVERRIDE.
+      expect(mockMessengerProvider.sendMessageToChannel).toHaveBeenCalledWith(
+        'test-channel',
+        expect.any(String),
+        'bot-123'
+      );
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Hello AI'),
         historyMessages,

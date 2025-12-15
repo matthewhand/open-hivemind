@@ -544,7 +544,11 @@ export const Discord = {
      */
     public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
       try {
-        const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
+        const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
+        const botInfo =
+          (senderName && isSnowflake(senderName)
+            ? this.bots.find((b) => b.botUserId === senderName || b.config?.BOT_ID === senderName || b.config?.discord?.clientId === senderName)
+            : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
 
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
@@ -601,8 +605,12 @@ export const Discord = {
         await new Promise(resolve => setTimeout(resolve, rateLimitResult.waitMs));
       }
 
-      const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
-      const effectiveSenderName = senderName || botInfo.botUserName;
+      const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
+      const botInfo =
+        (senderName && isSnowflake(senderName)
+          ? this.bots.find((b) => b.botUserId === senderName || b.config?.BOT_ID === senderName || b.config?.discord?.clientId === senderName)
+          : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
+      const effectiveSenderName = botInfo.botUserName;
 
       // Feature-flagged channel routing: select best channel among candidates
       let selectedChannelId = channelId;

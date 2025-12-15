@@ -67,6 +67,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let isLeaderInvocation = false;
     let didLock = false;
     const activeAgentName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
+    let providerSenderKey = activeAgentName;
     let typingInterval: NodeJS.Timeout | null = null;
     let typingTimeout: NodeJS.Timeout | null = null;
     let stopTyping = false;
@@ -152,6 +153,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       }
 
       resolvedBotId = botId;
+      // Provider sender key: for Discord, prefer a stable per-instance identifier to avoid
+      // selecting the wrong bot in swarm mode (MESSAGE_USERNAME_OVERRIDE may be shared).
+      providerSenderKey = platform === 'discord' ? botId : activeAgentName;
       const userId = message.getAuthorId();
       let processedMessage = stripBotId(text, botId);
       processedMessage = addUserHint(processedMessage, userId, botId);
@@ -165,13 +169,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         await processCommand(message, async (result: string): Promise<void> => {
           const authorisedUsers = botConfig.MESSAGE_COMMAND_AUTHORISED_USERS || '';
           const allowedUsers = authorisedUsers.split(',').map((user: string) => user.trim());
-          const botName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
           if (!allowedUsers.includes(userId)) {
             logger('User not authorized:', userId);
-            await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', botName);
+            await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', providerSenderKey);
             return;
           }
-          await messageProvider.sendMessageToChannel(message.getChannelId(), result, botName);
+          await messageProvider.sendMessageToChannel(message.getChannelId(), result, providerSenderKey);
           commandProcessed = true;
         });
         if (commandProcessed) return null;
@@ -282,7 +285,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         typingTimeout = setTimeout(async () => {
           if (stopTyping) return;
           try {
-            await messageProvider.sendTyping!(channelId, activeAgentName).catch(() => { });
+            await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => { });
           } finally {
             scheduleNextTypingPulse();
           }
@@ -313,7 +316,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           }
 
           typingStarted = true;
-          await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
+          await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
           // Start pulsed typing refreshes (with occasional gaps).
           scheduleNextTypingPulse();
         }
@@ -509,7 +512,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         if (i > 0) {
           logger(`Waiting ${adjustedDelay}ms with typing before line ${i + 1}...`);
           if (messageProvider.sendTyping) {
-            await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
+            await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
           }
           await new Promise(resolve => setTimeout(resolve, adjustedDelay));
         }
@@ -523,8 +526,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           userId,
           async (text: string): Promise<string> => {
             logger(`SENDING to Discord: "${text.substring(0, 50)}..."`);
-            const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
-            logger(`Sent message from ${activeAgentName}, response: ${sentTs}`);
+            const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, providerSenderKey);
+            logger(`Sent message via ${providerSenderKey}, response: ${sentTs}`);
 
             // Record this message for duplicate detection
             duplicateDetector.recordMessage(message.getChannelId(), text);
@@ -557,7 +560,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
             if (botConfig.MESSAGE_LLM_FOLLOW_UP) {
               const followUpText = `Anything else I can help with after: "${text}"?`;
-              await sendFollowUpRequest(message, message.getChannelId(), followUpText, messageProvider);
+              await sendFollowUpRequest(message, message.getChannelId(), followUpText, messageProvider, providerSenderKey);
               logger('Sent follow-up request.');
             }
             return sentTs;
