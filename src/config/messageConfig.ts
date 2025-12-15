@@ -248,6 +248,30 @@ const messageConfig = convict({
     default: 1000,
     env: 'MESSAGE_MIN_DELAY'
   },
+  MESSAGE_READING_DELAY_BASE_MS: {
+    doc: 'Base pre-typing/pre-inference "reading" delay (ms) before scaling',
+    format: 'int',
+    default: 200,
+    env: 'MESSAGE_READING_DELAY_BASE_MS'
+  },
+  MESSAGE_READING_DELAY_PER_CHAR_MS: {
+    doc: 'Per-character component for pre-typing/pre-inference "reading" delay (ms per char) before scaling',
+    format: Number,
+    default: 25,
+    env: 'MESSAGE_READING_DELAY_PER_CHAR_MS'
+  },
+  MESSAGE_READING_DELAY_MIN_MS: {
+    doc: 'Minimum pre-typing/pre-inference "reading" delay (ms) before scaling',
+    format: 'int',
+    default: 500,
+    env: 'MESSAGE_READING_DELAY_MIN_MS'
+  },
+  MESSAGE_READING_DELAY_MAX_MS: {
+    doc: 'Maximum pre-typing/pre-inference "reading" delay (ms) before scaling',
+    format: 'int',
+    default: 6000,
+    env: 'MESSAGE_READING_DELAY_MAX_MS'
+  },
   MESSAGE_MAX_DELAY: {
     doc: 'Maximum delay between messages (ms)',
     format: 'int',
