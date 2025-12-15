@@ -215,10 +215,15 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // Typing behavior:
       // - Wait a bit before showing typing (simulates reading).
+      // - Start typing closer to inference time (especially when rate-backoff is large) so we don't "type for a minute".
       // - Keep typing running through inference so there's no "typing stopped, then long pause" gap.
       let typingStarted = false;
       const preTypingDelayMs = Math.min(2500, Math.max(900, Math.floor(readingDelay * 0.35)));
       const typingEligibleAt = Date.now() + preTypingDelayMs;
+      // Only show typing in the final "lead" window before inference, to leave earlier time as silent reading/thinking.
+      const typingLeadBaseMs = Math.min(9000, Math.max(2500, Math.floor(readingDelay * 0.8)));
+      // If we're rate-backed off, reduce typing lead so we don't sit "typing" through the whole backoff.
+      const typingLeadMs = outgoingBackoffMs > 10000 ? Math.min(4000, typingLeadBaseMs) : typingLeadBaseMs;
 
       const randInt = (min: number, max: number): number =>
         Math.floor(Math.random() * (max - min + 1)) + min;
@@ -250,6 +255,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         if (remaining <= 0) break;
 
         if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingEligibleAt) {
+          // Don't start typing too early if we still have a long delay remaining.
+          if (remaining > typingLeadMs) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(remaining, 250)));
+            continue;
+          }
+
           // If other users are actively typing, wait a bit longer before showing our typing indicator
           // (to feel less like we are interrupting). Never wait indefinitely.
           const othersTypingWindowMs = (Number(messageConfig.get('MESSAGE_OTHERS_TYPING_WINDOW_MS')) || 8000);
@@ -409,6 +420,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // Get delay multiplier based on recent token usage
       const delayMultiplier = tokenTracker.getDelayMultiplier(channelId);
+
+      // Stop sustained typing once we have the response and are transitioning into "sending" mode.
+      // (Avoids looking like we type continuously while waiting on per-message rate limits.)
+      stopTyping = true;
+      if (typingTimeout) {
+        try { clearTimeout(typingTimeout); } catch { }
+        typingTimeout = null;
+      }
 
       // Send each line with typing and delays
       for (let i = 0; i < lines.length; i++) {
