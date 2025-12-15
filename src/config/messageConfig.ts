@@ -302,6 +302,30 @@ const messageConfig = convict({
     default: 3,
     env: 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR'
   },
+  MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST: {
+    doc: 'Max temperature boost applied when the bot is repeating the same words across recent responses',
+    format: Number,
+    default: 0.4,
+    env: 'MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST'
+  },
+  MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY: {
+    doc: 'Minimum number of recent bot messages required before repetition-based temperature boosting is applied',
+    format: 'int',
+    default: 3,
+    env: 'MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY'
+  },
+  MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD: {
+    doc: 'Doc-frequency ratio threshold (0-1) for a word to be considered overused (e.g., 0.6 means in >=60% of recent bot messages)',
+    format: Number,
+    default: 0.6,
+    env: 'MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD'
+  },
+  MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ: {
+    doc: 'Minimum number of distinct recent bot messages a word must appear in to be considered overused',
+    format: 'int',
+    default: 3,
+    env: 'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ'
+  },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
     format: 'int',
