@@ -102,5 +102,5 @@ export interface IMessageProvider {
    * Triggers a typing indicator in the channel.
    * Optional method, as not all providers support it.
    */
-  sendTyping?(channelId: string): Promise<void>;
+  sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
 }

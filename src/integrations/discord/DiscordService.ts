@@ -505,11 +505,20 @@ export const Discord = {
      * Triggers a typing indicator in the channel.
      * Useful for long-running operations like LLM inference.
      */
-    public async sendTyping(channelId: string): Promise<void> {
+    public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
       try {
-        const botInfo = this.bots[0];
+        const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
+
+        if (threadId) {
+          const thread = await botInfo.client.channels.fetch(threadId);
+          if (thread && (thread as any).isTextBased?.()) {
+            await (thread as any).sendTyping();
+          }
+          return;
+        }
+
         const channel = await botInfo.client.channels.fetch(channelId);
-        if (channel && (channel.isTextBased())) {
+        if (channel && channel.isTextBased()) {
           await (channel as TextChannel | NewsChannel).sendTyping();
         }
       } catch (e) {

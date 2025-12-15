@@ -65,6 +65,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let delayKey: string | null = null;
     let isLeaderInvocation = false;
     let didLock = false;
+    const activeAgentName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
+    let typingInterval: NodeJS.Timeout | null = null;
 
     // Log received message
     const userId = message.getAuthorId();
@@ -207,25 +209,27 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       logger(`Waiting ~${channelDelayManager.getRemainingDelayMs(delayKey)}ms before inference (coalesce + reading + backoff)...`);
 
-      // Sustained typing during the wait, when supported by provider
-      let typingInterval: NodeJS.Timeout | null = null;
-      if (messageProvider.sendTyping) {
-        await messageProvider.sendTyping(channelId).catch(() => { });
-        typingInterval = setInterval(() => {
-          messageProvider.sendTyping!(channelId).catch(() => { });
-        }, 8000);
-      }
+      // Typing behavior:
+      // - Wait a bit before showing typing (simulates reading).
+      // - Keep typing running through inference so there's no "typing stopped, then long pause" gap.
+      let typingStarted = false;
+      const preTypingDelayMs = Math.min(2500, Math.max(900, Math.floor(readingDelay * 0.35)));
+      const typingStartAt = Date.now() + preTypingDelayMs;
 
       // Wait in short increments so new messages can extend delay
       while (true) {
         const remaining = channelDelayManager.getRemainingDelayMs(delayKey);
         if (remaining <= 0) break;
-        await new Promise(resolve => setTimeout(resolve, Math.min(remaining, 250)));
-      }
 
-      if (typingInterval) {
-        clearInterval(typingInterval);
-        typingInterval = null;
+        if (!typingStarted && messageProvider.sendTyping && Date.now() >= typingStartAt) {
+          typingStarted = true;
+          await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
+          typingInterval = setInterval(() => {
+            messageProvider.sendTyping!(channelId, activeAgentName).catch(() => { });
+          }, 8000);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, Math.min(remaining, 250)));
       }
 
       // Concurrency guard: lock only once we're actually about to do inference/send.
@@ -383,7 +387,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         if (i > 0) {
           logger(`Waiting ${adjustedDelay}ms with typing before line ${i + 1}...`);
           if (messageProvider.sendTyping) {
-            await messageProvider.sendTyping(channelId).catch(() => { });
+            await messageProvider.sendTyping(channelId, activeAgentName).catch(() => { });
           }
           await new Promise(resolve => setTimeout(resolve, adjustedDelay));
         }
@@ -396,7 +400,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           line,
           userId,
           async (text: string): Promise<string> => {
-            const activeAgentName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
             logger(`SENDING to Discord: "${text.substring(0, 50)}..."`);
             const sentTs = await messageProvider.sendMessageToChannel(message.getChannelId(), text, activeAgentName);
             logger(`Sent message from ${activeAgentName}, response: ${sentTs}`);
@@ -449,6 +452,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       ErrorHandler.handle(error, 'messageHandler.handleMessage');
       return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
+      // Stop typing indicator interval if running.
+      if (typingInterval) {
+        try {
+          clearInterval(typingInterval);
+        } catch { }
+        typingInterval = null;
+      }
       // Always unlock the channel after processing
       if (didLock) {
         try {
