@@ -24,6 +24,25 @@ describe('MentionDetector', () => {
         expect(result.isMentioningBot).toBe(true);
     });
 
+    it('should treat plain bot name in text as being addressed', () => {
+        const msg = {
+            getText: () => 'MyBot: can you help me with this?'
+        };
+        const result = detectMentions(msg, botId, botName);
+        expect(result.isMentioningBot).toBe(true);
+        expect(result.isBotNameInText).toBe(true);
+        expect(result.contextHint).toContain('directly addressed');
+    });
+
+    it('should treat bot name with comma as being addressed', () => {
+        const msg = {
+            getText: () => 'Hey MyBot, what do you think?'
+        };
+        const result = detectMentions(msg, botId, botName);
+        expect(result.isMentioningBot).toBe(true);
+        expect(result.isBotNameInText).toBe(true);
+    });
+
     it('should detect replies to bot', () => {
         const msg = {
             getText: () => 'Yes I agree',
