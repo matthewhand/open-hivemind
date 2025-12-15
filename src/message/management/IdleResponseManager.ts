@@ -4,6 +4,7 @@ import { IMessengerService } from '@message/interfaces/IMessengerService';
 import { handleMessage } from '@message/handlers/messageHandler';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { SyntheticMessage } from './SyntheticMessage';
+import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
 
 const log = Debug('app:idleResponseManager');
 
@@ -451,6 +452,9 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         idlePrompt,
         botName
       );
+      try {
+        recordBotActivity(channelId, serviceActivity.messengerService.getClientId?.());
+      } catch { }
 
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;

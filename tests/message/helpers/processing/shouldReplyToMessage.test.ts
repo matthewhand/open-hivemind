@@ -240,4 +240,24 @@ describe('shouldReplyToMessage', () => {
         mockMessage.getText.mockReturnValue('seneca: hi');
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', ['MyBot', 'Seneca'])).toBe(true);
     });
+
+    it('should allow unaddressed replies within the MESSAGE_ONLY_WHEN_SPOKEN_TO grace window', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS') return 300000;
+            return null;
+        });
+
+        const RealDate = Date;
+        global.Date.now = jest.fn(() => 1000);
+        recordBotActivity('channel-1', 'bot-id');
+
+        global.Date.now = jest.fn(() => 1000 + 10000);
+        // Not directly addressed, but bot was active recently => should reply.
+        mockMessage.getText.mockReturnValue('ok cool');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'SomeOtherName')).toBe(true);
+
+        global.Date.now = RealDate.now;
+    });
 });
