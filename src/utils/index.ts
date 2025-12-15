@@ -13,4 +13,4 @@ export * from './parsers';
 export * from './types';
 
 // Re-export existing utilities that weren't consolidated
-export { parse as originalCommandParser } from '../message/helpers/commands/commandParser';
+export { parseCommand as originalCommandParser } from '../message/helpers/commands/parseCommand';

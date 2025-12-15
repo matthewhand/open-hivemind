@@ -101,8 +101,8 @@ const ComprehensiveConfigPanel: React.FC = () => {
 
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
     const label = (key === 'LLM_PROVIDER' || key === 'MESSAGE_PROVIDER') ? `Default ${key}` : key;
-    const displayLabel = schema.doc || label;
-    const tooltip = `Key: ${key}${schema.env ? `\nEnv: ${schema.env}` : ''}`;
+    const docString = schema.doc || '';
+    const envHint = schema.env ? `Env: ${schema.env}` : '';
 
     let type = 'text';
     if (typeof value === 'boolean' || schema.format === 'Boolean') type = 'boolean';
@@ -110,12 +110,14 @@ const ComprehensiveConfigPanel: React.FC = () => {
     else if (Array.isArray(value) || schema.format === 'Array') type = 'array';
 
     const LabelComponent = () => (
-      <label className="label py-1">
-        <div className="tooltip tooltip-right z-10 text-left whitespace-pre-line" data-tip={tooltip}>
-          <span className="label-text font-semibold flex items-center gap-1 border-b border-dashed border-base-content/30 cursor-help">
-            {displayLabel}
-          </span>
+      <label className="label py-1 flex-col items-start gap-0">
+        <div className="flex items-center gap-2 w-full">
+          <span className="label-text font-semibold">{label}</span>
+          {envHint && <span className="badge badge-ghost badge-xs opacity-60">{envHint}</span>}
         </div>
+        {docString && (
+          <span className="label-text-alt text-base-content/60 text-xs mt-0.5">{docString}</span>
+        )}
       </label>
     );
 
@@ -136,8 +138,14 @@ const ComprehensiveConfigPanel: React.FC = () => {
       return (
         <div className="form-control w-full" key={key}>
           <label className="label cursor-pointer justify-start gap-4">
-            <div className="tooltip tooltip-right z-10 text-left whitespace-pre-line" data-tip={tooltip}>
-              <span className="label-text font-semibold border-b border-dashed border-base-content/30 cursor-help">{displayLabel}</span>
+            <div className="flex flex-col items-start">
+              <div className="flex items-center gap-2">
+                <span className="label-text font-semibold">{label}</span>
+                {envHint && <span className="badge badge-ghost badge-xs opacity-60">{envHint}</span>}
+              </div>
+              {docString && (
+                <span className="label-text-alt text-base-content/60 text-xs">{docString}</span>
+              )}
             </div>
             <Toggle checked={value} onChange={(e) => handleChange(e.target.checked)} />
           </label>

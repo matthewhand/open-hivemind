@@ -3,34 +3,52 @@ class ProcessingLocks {
     constructor() {
         this.locks = new Map<string, boolean>();
     }
+
     /**
-     * Checks if the channel is currently locked.
+     * Creates a unique lock key from channel and optional bot ID
+     * @param channelId - The channel ID
+     * @param botId - Optional bot ID for per-bot locking
+     */
+    private getKey(channelId: string, botId?: string): string {
+        return botId ? `${channelId}:${botId}` : channelId;
+    }
+
+    /**
+     * Checks if the channel is currently locked for this bot.
      * 
      * @param channelId - The ID of the channel to check.
+     * @param botId - Optional bot ID for per-bot locking.
      * @returns True if the channel is locked, false otherwise.
      */
-    isLocked(channelId: string): boolean {
-        const locked = this.locks.has(channelId);
-        console.debug('isLocked: Channel ' + channelId + ' locked status: ' + locked);
+    isLocked(channelId: string, botId?: string): boolean {
+        const key = this.getKey(channelId, botId);
+        const locked = this.locks.has(key);
+        console.debug(`isLocked: ${key} locked status: ${locked}`);
         return locked;
     }
+
     /**
-     * Locks the specified channel.
+     * Locks the specified channel for this bot.
      * 
      * @param channelId - The ID of the channel to lock.
+     * @param botId - Optional bot ID for per-bot locking.
      */
-    lock(channelId: string): void {
-        this.locks.set(channelId, true);
-        console.debug('lock: Channel ' + channelId + ' is now locked.');
+    lock(channelId: string, botId?: string): void {
+        const key = this.getKey(channelId, botId);
+        this.locks.set(key, true);
+        console.debug(`lock: ${key} is now locked.`);
     }
+
     /**
-     * Unlocks the specified channel.
+     * Unlocks the specified channel for this bot.
      * 
      * @param channelId - The ID of the channel to unlock.
+     * @param botId - Optional bot ID for per-bot locking.
      */
-    unlock(channelId: string): void {
-        this.locks.delete(channelId);
-        console.debug('unlock: Channel ' + channelId + ' is now unlocked.');
+    unlock(channelId: string, botId?: string): void {
+        const key = this.getKey(channelId, botId);
+        this.locks.delete(key);
+        console.debug(`unlock: ${key} is now unlocked.`);
     }
 }
 const processingLocks = new ProcessingLocks();
