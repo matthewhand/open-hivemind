@@ -434,6 +434,12 @@ const messageConfig = convict({
     default: 0.1,
     env: 'MESSAGE_BOT_RESPONSE_MODIFIER'
   },
+  MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: {
+    doc: 'Allow replying to bot-authored messages even when not explicitly addressed (risk: bot loops); addressed replies still work regardless',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'
+  },
   MESSAGE_COMMAND_INLINE: {
     doc: 'Enable inline command processing',
     format: Boolean,
