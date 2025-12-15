@@ -5,13 +5,15 @@ import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
+import { isBotNameInText } from './MentionDetector';
 
 const debug = Debug('app:shouldReplyToMessage');
 
 export function shouldReplyToMessage(
   message: any,
   botId: string,
-  platform: 'discord' | 'generic'
+  platform: 'discord' | 'generic',
+  botName?: string
 ): boolean {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -22,7 +24,8 @@ export function shouldReplyToMessage(
   debug(`Evaluating message in channel: ${channelId}`);
 
   const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
-  const text = (message.getText?.() || '').toLowerCase();
+  const rawText = String(message.getText?.() || '');
+  const text = rawText.toLowerCase();
 
   const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
   const wakewords = Array.isArray(wakewordsRaw)
@@ -41,7 +44,8 @@ export function shouldReplyToMessage(
 
   const isWakeword = wakewords.some((word: string) => word && text.startsWith(String(word).toLowerCase()));
 
-  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword;
+  const isNameAddressed = Boolean(botName) && isBotNameInText(rawText, String(botName));
+  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed;
 
   // Never respond to our own messages.
   if (message.getAuthorId() === discordConfig.get('DISCORD_CLIENT_ID')) {

@@ -20,6 +20,15 @@ function escapeRegExp(input: string): string {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function isBotNameInText(text: string, botName: string): boolean {
+    const t = String(text || '');
+    const name = String(botName || '').trim();
+    if (!t || !name) return false;
+    const namePattern = escapeRegExp(name).replace(/\s+/g, '\\s+');
+    const re = new RegExp(`(^|[\\s"'\\(\\[\\{*])${namePattern}([\\s"'\\)\\]\\}*:,.!?\\-]|$)`, 'i');
+    return re.test(t);
+}
+
 /**
  * Detect mentions and replies in a message to provide context hints to the LLM
  */
@@ -33,12 +42,7 @@ export function detectMentions(
 
     // Heuristic: bot name appears in text (not necessarily a platform mention).
     // Useful for "BotName: ..." or "hey BotName, ..." style addressing.
-    let isBotNameInText = false;
-    if (botName) {
-        const namePattern = escapeRegExp(botName).replace(/\s+/g, '\\s+');
-        const re = new RegExp(`(^|[\\s"'\\(\\[\\{*])${namePattern}([\\s"'\\)\\]\\}*:,.!?\\-]|$)`, 'i');
-        isBotNameInText = re.test(text);
-    }
+    const botNameDetected = isBotNameInText(text, botName);
 
     // Check if message is mentioning the bot
     const isMentioningBot =
@@ -47,7 +51,7 @@ export function detectMentions(
         (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
         text.toLowerCase().includes(`<@${botId}>`) ||
         (botName && text.toLowerCase().includes(`@${botName.toLowerCase()}`)) ||
-        isBotNameInText;
+        botNameDetected;
 
     // Check if message is a reply
     const isReply =
@@ -104,7 +108,7 @@ export function detectMentions(
 
     return {
         isMentioningBot,
-        isBotNameInText,
+        isBotNameInText: botNameDetected,
         isReplyToBot,
         mentionedUsernames: mentions,
         isReplyToOther,

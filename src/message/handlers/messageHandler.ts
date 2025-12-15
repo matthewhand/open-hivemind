@@ -164,7 +164,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         idleResponseManager.recordInteraction(serviceName, message.getChannelId(), message.getMessageId());
       }
 
-      if (!shouldReplyToMessage(message, botId, platform)) {
+      if (!shouldReplyToMessage(message, botId, platform, activeAgentName)) {
         logger('Message not eligible for reply');
         return null;
       }
