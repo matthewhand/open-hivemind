@@ -590,6 +590,7 @@ export const Discord = {
       }
 
       const botInfo = this.bots.find((b) => b.botUserName === senderName) || this.bots[0];
+      const effectiveSenderName = senderName || botInfo.botUserName;
 
       // Feature-flagged channel routing: select best channel among candidates
       let selectedChannelId = channelId;
@@ -619,7 +620,7 @@ export const Discord = {
       }
 
       try {
-        log(`Sending to channel ${selectedChannelId} as ${senderName}`);
+        log(`Sending to channel ${selectedChannelId} as ${effectiveSenderName}`);
         const channel = await botInfo.client.channels.fetch(selectedChannelId);
         if (!channel || !channel.isTextBased()) {
           throw new ValidationError(`Channel ${selectedChannelId} is not text-based or was not found`, 'DISCORD_INVALID_CHANNEL');
@@ -635,7 +636,7 @@ export const Discord = {
           }
           message = await thread.send(text);
         } else {
-          log(`Attempting send to channel ${selectedChannelId}: *${senderName}*: ${text}`);
+          log(`Attempting send to channel ${selectedChannelId}: *${effectiveSenderName}*: ${text}`);
           message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
         }
 
@@ -656,7 +657,7 @@ export const Discord = {
       } catch (error: unknown) {
         if (error instanceof ValidationError) {
           log(`Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${error.message}`);
-          console.error('Discord send message validation error:', error);
+          console.error(`[${effectiveSenderName}] Discord send message validation error:`, error);
           try {
             WebSocketService.getInstance().recordAlert({
               level: 'error',
@@ -676,7 +677,7 @@ export const Discord = {
         );
 
         log(`Network error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${networkError.message}`);
-        console.error('Discord send message network error:', networkError);
+        console.error(`[${effectiveSenderName}] Discord send message network error:`, networkError);
         try {
           WebSocketService.getInstance().recordAlert({
             level: 'error',
