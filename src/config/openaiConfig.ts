@@ -122,18 +122,13 @@ function interpolateEnvVars(config: typeof openaiConfig): void {
   }
 }
 
-// Note: Removed JSON file loading - convict reads from env vars via schema's `env:` property
-// The JSON file was overriding env vars. If you need JSON overrides, uncomment below:
-// try {
-//   openaiConfig.loadFile(configPath);
-//   interpolateEnvVars(openaiConfig);
-//   openaiConfig.validate({ allowed: 'strict' });
-//   debug(`Successfully loaded OpenAI config from ${configPath}`);
-// } catch {
-//   debug(`Warning: Could not load openai config from ${configPath}, using defaults`);
-// }
-
-openaiConfig.validate({ allowed: 'strict' });
-debug('OpenAI config loaded from env vars and defaults');
+try {
+  openaiConfig.loadFile(configPath);
+  openaiConfig.validate({ allowed: 'strict' });
+  debug(`Successfully loaded OpenAI config from ${configPath}`);
+} catch {
+  // Fallback to defaults/env vars if config file is missing or invalid
+  debug(`Warning: Could not load openai config from ${configPath}, using env vars and defaults`);
+}
 
 export default openaiConfig;
