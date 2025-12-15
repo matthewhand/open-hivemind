@@ -56,19 +56,18 @@ export function shouldReplyToMessage(
   ));
   const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
   const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed;
+  const isFromBot = (() => {
+    try {
+      return typeof message.isFromBot === 'function' ? Boolean(message.isFromBot()) : false;
+    } catch {
+      return false;
+    }
+  })();
 
   // Never respond to our own messages (provider-agnostic).
   try {
     if (typeof message.getAuthorId === 'function' && message.getAuthorId() === botId) {
       debug('Message from bot itself. Not replying.');
-      return false;
-    }
-  } catch { }
-
-  // Extra safety: never auto-reply to other bots unless directly addressed.
-  try {
-    if (typeof message.isFromBot === 'function' && message.isFromBot() && !isDirectlyAddressed) {
-      debug('Message from another bot and not directly addressed; not replying.');
       return false;
     }
   } catch { }
@@ -97,6 +96,24 @@ export function shouldReplyToMessage(
   if (isDirectlyAddressed) {
     debug('Directly addressed; replying.');
     return true;
+  }
+
+  // Safety by default: avoid bot-to-bot loops unless explicitly allowed.
+  // This only affects unaddressed bot messages. If a bot pings/replies/wakewords/names us, we reply normally.
+  if (isFromBot) {
+    // If the bot has spoken recently in this channel, allow continued interactivity even under conservative settings.
+    // (This mirrors the "floodgates open" behavior for human users.)
+    const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+    const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
+    const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
+    const timeSinceLastActivity = lastActivityTime > 0 ? (Date.now() - lastActivityTime) : Number.POSITIVE_INFINITY;
+    const withinGrace = graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs;
+
+    const allowUnaddressedBots = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
+    if (!allowUnaddressedBots && !withinGrace) {
+      debug('Message from another bot and bot-to-bot unaddressed replies are disabled (and not within grace); not replying.');
+      return false;
+    }
   }
 
   // Record message traffic/participants (used for density + participant-aware unsolicited tuning).

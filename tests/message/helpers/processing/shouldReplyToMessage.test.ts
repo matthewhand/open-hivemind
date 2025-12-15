@@ -251,4 +251,41 @@ describe('shouldReplyToMessage', () => {
 
         global.Date.now = RealDate.now;
     });
+
+    it('should allow unaddressed bot messages within the grace window (floodgates stay open)', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS') return 300000;
+            if (key === 'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED') return false;
+            return null;
+        });
+
+        mockMessage.isFromBot.mockReturnValue(true);
+
+        const RealDate = Date;
+        global.Date.now = jest.fn(() => 1000);
+        recordBotActivity('channel-1', 'bot-id');
+
+        global.Date.now = jest.fn(() => 1000 + 10000);
+        mockMessage.getText.mockReturnValue('some other bot said something');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).toBe(true);
+
+        global.Date.now = RealDate.now;
+    });
+
+    it('should not reply to unaddressed bot messages when not within grace and MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED=false', () => {
+        (messageConfig.get as jest.Mock).mockImplementation((key) => {
+            if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+            if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS') return 0;
+            if (key === 'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED') return false;
+            if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 1.0; // would otherwise always reply
+            return null;
+        });
+
+        mockMessage.isFromBot.mockReturnValue(true);
+        mockMessage.getText.mockReturnValue('unaddressed bot message');
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).toBe(false);
+    });
 });
