@@ -27,6 +27,10 @@ describe('shouldReplyToMessage', () => {
             if (key === 'MESSAGE_SHORT_LENGTH_PENALTY') return 0.1;
             if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
             if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.2;
+            if (key === 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS') return 300000;
+            if (key === 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE') return 2;
+            if (key === 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR') return 0.25;
+            if (key === 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR') return 3;
             return null;
         });
 
@@ -41,7 +45,8 @@ describe('shouldReplyToMessage', () => {
         // Default Helper Mocks
         (shouldReplyToUnsolicitedMessage as jest.Mock).mockReturnValue(true);
         (IncomingMessageDensity.getInstance as jest.Mock).mockReturnValue({
-            recordMessageAndGetModifier: jest.fn().mockReturnValue(1.0)
+            recordMessageAndGetModifier: jest.fn().mockReturnValue(1.0),
+            getUniqueParticipantCount: jest.fn().mockReturnValue(1)
         });
 
         // Default Message Mock
@@ -80,6 +85,26 @@ describe('shouldReplyToMessage', () => {
         expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
 
         // Restore Date
+        global.Date.now = RealDate.now;
+    });
+
+    it('should scale silence penalty based on participant count', () => {
+        const RealDate = Date;
+        global.Date.now = jest.fn(() => 1000);
+        recordBotActivity('channel-1');
+
+        global.Date.now = jest.fn(() => 1000 + 300001);
+
+        // participants=1 => factor=2 => chance=0.01. Random 0.009 should pass.
+        (IncomingMessageDensity.getInstance().getUniqueParticipantCount as jest.Mock).mockReturnValue(1);
+        jest.spyOn(Math, 'random').mockReturnValue(0.009);
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(true);
+
+        // participants=6 => factor=2/6 => chance≈0.00166. Random 0.009 should fail.
+        (IncomingMessageDensity.getInstance().getUniqueParticipantCount as jest.Mock).mockReturnValue(6);
+        jest.spyOn(Math, 'random').mockReturnValue(0.009);
+        expect(shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).toBe(false);
+
         global.Date.now = RealDate.now;
     });
 

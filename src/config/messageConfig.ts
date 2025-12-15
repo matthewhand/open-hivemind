@@ -278,6 +278,30 @@ const messageConfig = convict({
     default: 0.05,
     env: 'MESSAGE_UNSOLICITED_BASE_CHANCE'
   },
+  MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS: {
+    doc: 'Window for counting unique participants when the bot has been silent (ms)',
+    format: 'int',
+    default: 300000,
+    env: 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS'
+  },
+  MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE: {
+    doc: 'Participant reference point (factor=reference/participants) when the bot has been silent',
+    format: 'int',
+    default: 2,
+    env: 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE'
+  },
+  MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR: {
+    doc: 'Minimum multiplier applied to silent-chance based on participant count',
+    format: Number,
+    default: 0.25,
+    env: 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR'
+  },
+  MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR: {
+    doc: 'Maximum multiplier applied to silent-chance based on participant count',
+    format: Number,
+    default: 3,
+    env: 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR'
+  },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
     format: 'int',
