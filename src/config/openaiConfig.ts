@@ -106,8 +106,25 @@ const configPath = path.join(configDir, 'providers/openai.json');
 import Debug from 'debug';
 const debug = Debug('app:openaiConfig');
 
+/**
+ * Interpolate ${ENV_VAR} patterns in loaded config values
+ */
+function interpolateEnvVars(config: typeof openaiConfig): void {
+  const props = config.getProperties();
+  for (const key of Object.keys(props)) {
+    const value = (props as Record<string, unknown>)[key];
+    if (typeof value === 'string' && value.includes('${')) {
+      const interpolated = value.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
+        return process.env[envVar] || '';
+      });
+      config.set(key as keyof typeof props, interpolated as any);
+    }
+  }
+}
+
 try {
   openaiConfig.loadFile(configPath);
+  interpolateEnvVars(openaiConfig);
   openaiConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded OpenAI config from ${configPath}`);
 } catch {
