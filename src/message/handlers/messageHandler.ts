@@ -172,9 +172,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           if (!allowedUsers.includes(userId)) {
             logger('User not authorized:', userId);
             await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', providerSenderKey);
+            recordBotActivity(message.getChannelId(), resolvedBotId);
             return;
           }
           await messageProvider.sendMessageToChannel(message.getChannelId(), result, providerSenderKey);
+          recordBotActivity(message.getChannelId(), resolvedBotId);
           commandProcessed = true;
         });
         if (commandProcessed) return null;
@@ -550,7 +552,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
             outgoingRateLimiter.recordSend(message.getChannelId());
 
             // Record bot activity to keep conversation alive (removes silence penalty)
-            recordBotActivity(message.getChannelId());
+            recordBotActivity(message.getChannelId(), resolvedBotId);
 
             // Log sent response
             AuditLogger.getInstance().logBotAction(

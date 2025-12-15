@@ -380,6 +380,12 @@ const messageConfig = convict({
     default: true,
     env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO'
   },
+  MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: {
+    doc: 'When MESSAGE_ONLY_WHEN_SPOKEN_TO=true, allow unaddressed replies if the bot has spoken in this channel within this window (ms); set 0 to disable',
+    format: 'int',
+    default: 300000,
+    env: 'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS'
+  },
   MESSAGE_INTERACTIVE_FOLLOWUPS: {
     doc: 'Allow interactive follow-up questions',
     format: Boolean,

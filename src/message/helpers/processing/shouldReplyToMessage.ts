@@ -77,6 +77,16 @@ export function shouldReplyToMessage(
   // If configured to only respond when spoken to, do it deterministically (no randomness).
   if (onlyWhenSpokenTo) {
     if (!isDirectlyAddressed) {
+      const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+      const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
+      if (graceMs > 0) {
+        const lastActivityTime = getLastBotActivity(channelId, botId);
+        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        if (lastActivityTime > 0 && timeSinceLastActivity <= graceMs) {
+          debug(`MESSAGE_ONLY_WHEN_SPOKEN_TO grace window active (${timeSinceLastActivity}ms <= ${graceMs}ms); replying.`);
+          return true;
+        }
+      }
       debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
       return false;
     }
@@ -109,7 +119,7 @@ export function shouldReplyToMessage(
   }
 
   // 1. Long Silence Penalty Logic
-  const lastInteractionTime = getLastBotActivity(channelId);
+  const lastInteractionTime = getLastBotActivity(channelId, botId);
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
   const SILENCE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
