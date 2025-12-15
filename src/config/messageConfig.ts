@@ -326,6 +326,18 @@ const messageConfig = convict({
     default: 3,
     env: 'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ'
   },
+  MESSAGE_OTHERS_TYPING_WINDOW_MS: {
+    doc: 'Window to consider other users as "currently typing" (ms)',
+    format: 'int',
+    default: 8000,
+    env: 'MESSAGE_OTHERS_TYPING_WINDOW_MS'
+  },
+  MESSAGE_OTHERS_TYPING_MAX_WAIT_MS: {
+    doc: 'Max additional wait before starting typing even if others keep typing (ms)',
+    format: 'int',
+    default: 5000,
+    env: 'MESSAGE_OTHERS_TYPING_MAX_WAIT_MS'
+  },
   MESSAGE_ACTIVITY_TIME_WINDOW: {
     doc: 'Time window to consider for activity (ms)',
     format: 'int',
