@@ -164,8 +164,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         return null;
       }
 
-      // Detect mentions and replies for context hints
-      const mentionContext = detectMentions(message, botId, botConfig.name);
+      // Detect mentions and replies for context hints (use active agent name, not just botConfig.name)
+      const mentionContext = detectMentions(message, botId, activeAgentName);
       if (mentionContext.contextHint) {
         logger(`Mention context: ${mentionContext.contextHint}`);
       }

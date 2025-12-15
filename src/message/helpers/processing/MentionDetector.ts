@@ -5,11 +5,16 @@ const debug = Debug('app:MentionDetector');
 
 export interface MentionContext {
     isMentioningBot: boolean;
+    isBotNameInText: boolean;
     isReplyToBot: boolean;
     mentionedUsernames: string[];
     isReplyToOther: boolean;
     replyToUsername?: string;
     contextHint: string; // Ready-to-use hint for system prompt
+}
+
+function escapeRegExp(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
@@ -21,6 +26,16 @@ export function detectMentions(
     botUsername?: string
 ): MentionContext {
     const text = (message.getText?.() || message.content || '') as string;
+    const botName = (botUsername || '').trim();
+
+    // Heuristic: bot name appears in text (not necessarily a platform mention).
+    // Useful for "BotName: ..." or "hey BotName, ..." style addressing.
+    let isBotNameInText = false;
+    if (botName) {
+        const namePattern = escapeRegExp(botName).replace(/\s+/g, '\\s+');
+        const re = new RegExp(`(^|[\\s"'\\(\\[\\{*])${namePattern}([\\s"'\\)\\]\\}*:,.!?\\-]|$)`, 'i');
+        isBotNameInText = re.test(text);
+    }
 
     // Check if message is mentioning the bot
     const isMentioningBot =
@@ -28,7 +43,8 @@ export function detectMentions(
         (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
         (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
         text.toLowerCase().includes(`<@${botId}>`) ||
-        (botUsername && text.toLowerCase().includes(`@${botUsername.toLowerCase()}`));
+        (botName && text.toLowerCase().includes(`@${botName.toLowerCase()}`)) ||
+        isBotNameInText;
 
     // Check if message is a reply
     const isReply =
@@ -40,9 +56,10 @@ export function detectMentions(
     const mentions: string[] = [];
     let match;
     while ((match = mentionPattern.exec(text)) !== null) {
-        if (match[1] !== botUsername) {
-            mentions.push(match[1]);
-        }
+        const u = match[1];
+        if (!u) continue;
+        if (botName && u.toLowerCase() === botName.toLowerCase()) continue;
+        mentions.push(u);
     }
 
     // Try to get reply target info if available
@@ -81,6 +98,7 @@ export function detectMentions(
 
     return {
         isMentioningBot,
+        isBotNameInText,
         isReplyToBot,
         mentionedUsernames: mentions,
         isReplyToOther,
