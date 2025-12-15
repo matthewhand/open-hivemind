@@ -38,6 +38,7 @@ jest.mock('../../../src/message/helpers/processing/DuplicateMessageDetector', ()
     const mockInstance = {
         isDuplicate: jest.fn().mockReturnValue(false),
         recordMessage: jest.fn(),
+        getRepetitionTemperatureBoost: jest.fn().mockReturnValue(0),
     };
     return {
         getInstance: jest.fn(() => mockInstance)

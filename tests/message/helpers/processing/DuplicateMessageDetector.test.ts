@@ -20,6 +20,10 @@ describe('DuplicateMessageDetector', () => {
             if (key === 'MESSAGE_SUPPRESS_DUPLICATES') return true;
             if (key === 'MESSAGE_DUPLICATE_WINDOW_MS') return 60000;
             if (key === 'MESSAGE_DUPLICATE_HISTORY_SIZE') return 10;
+            if (key === 'MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST') return 0.4;
+            if (key === 'MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY') return 3;
+            if (key === 'MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD') return 0.6;
+            if (key === 'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ') return 3;
             return null;
         });
 
@@ -89,5 +93,25 @@ describe('DuplicateMessageDetector', () => {
         // I'll assume it does or just checking if `msg3` is recorded.
 
         expect(detector.isDuplicate(channelId, 'msg3')).toBe(true);
+    });
+
+    it('should return 0 repetition boost when history is too small', () => {
+        detector.recordMessage(channelId, 'shrug one');
+        detector.recordMessage(channelId, 'shrug two');
+        expect(detector.getRepetitionTemperatureBoost(channelId)).toBe(0);
+    });
+
+    it('should boost temperature when a word is repeated across most recent messages', () => {
+        detector.recordMessage(channelId, 'shrug I can help');
+        detector.recordMessage(channelId, 'shrug here is another idea');
+        detector.recordMessage(channelId, 'shrug final thought');
+        expect(detector.getRepetitionTemperatureBoost(channelId)).toBeCloseTo(0.4, 5);
+    });
+
+    it('should not boost for common stopwords', () => {
+        detector.recordMessage(channelId, 'the the the and and');
+        detector.recordMessage(channelId, 'and the');
+        detector.recordMessage(channelId, 'the and');
+        expect(detector.getRepetitionTemperatureBoost(channelId)).toBe(0);
     });
 });

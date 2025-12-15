@@ -308,12 +308,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           botConfig?.llm?.systemPrompt ??
           (message.metadata as any)?.systemPrompt;
 
+        const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
+
         const metadata = {
           ...message.metadata,
           channelId: message.getChannelId(),
           botId: botId,
           // Increase temperature on retries to get more varied responses
-          temperatureBoost: retryCount * 0.2,
+          temperatureBoost: (retryCount * 0.2) + repetitionBoost,
           // Use adjusted max tokens based on recent usage
           maxTokensOverride: adjustedMaxTokens,
           ...(systemPrompt ? { systemPrompt } : {})
@@ -327,6 +329,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         if (retryCount > 0) {
           prompt = `${prompt}\n\n(Please respond differently than before - be creative!)`;
           logger(`Retry ${retryCount}/${MAX_DUPLICATE_RETRIES} with temperature boost: +${metadata.temperatureBoost}`);
+        } else if (repetitionBoost > 0) {
+          logger(`Applying repetition temperature boost: +${repetitionBoost.toFixed(2)} (total +${metadata.temperatureBoost.toFixed(2)})`);
         }
 
         const payload = {
