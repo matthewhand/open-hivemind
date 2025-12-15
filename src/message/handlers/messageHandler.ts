@@ -379,7 +379,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       let retryCount = 0;
       let avoidSystemPromptLeak = false;
 
-      const historyForLlm = historyMessages.map(createTimestampedProxy);
+      // Do not inject timestamps into chat history content; models may echo them back.
+      const historyForLlm = historyMessages;
 
       // Adjust max tokens based on recent usage to prevent walls of text
       const defaultMaxTokens = botConfig.openai?.maxTokens || 150;
@@ -620,34 +621,6 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       }
     }
   }, 'handleMessage', 5000); // 5 second threshold for warnings
-}
-
-/**
- * Creates a Proxy around an IMessage to inject timestamps into getText() output.
- * This ensures the LLM receives context-aware time data without modifying the original object.
- */
-function createTimestampedProxy(message: IMessage): IMessage {
-  return new Proxy(message, {
-    get(target, prop, receiver) {
-      if (prop === 'getText') {
-        return () => {
-          const ts =
-            typeof (target as any).getTimestamp === 'function'
-              ? (target as any).getTimestamp()?.toISOString?.() ?? new Date().toISOString()
-              : new Date().toISOString();
-
-          const author =
-            typeof (target as any).getAuthorName === 'function'
-              ? String((target as any).getAuthorName() ?? 'Unknown')
-              : (typeof (target as any).getAuthorId === 'function' ? String((target as any).getAuthorId() ?? 'Unknown') : 'Unknown');
-
-          const text = typeof (target as any).getText === 'function' ? String((target as any).getText() ?? '') : '';
-          return `[${ts}] ${author}: ${text}`;
-        };
-      }
-      return Reflect.get(target, prop, receiver);
-    }
-  });
 }
 
 function stripSystemPromptLeak(response: string, systemPrompt: string): string {
