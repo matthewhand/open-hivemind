@@ -782,15 +782,26 @@ export const Discord = {
 
         const isSnowflake = (v: unknown) => /^\d{15,25}$/.test(String(v || ''));
 
+        const cfgId = isSnowflake(botConfig?.BOT_ID)
+          ? String(botConfig.BOT_ID)
+          : (isSnowflake(botConfig?.discord?.clientId) ? String(botConfig.discord.clientId) : '');
+
+        const byId = cfgId
+          ? this.bots.find((b) =>
+            b.botUserId === cfgId ||
+            b.config?.BOT_ID === cfgId ||
+            b.config?.discord?.clientId === cfgId
+          )
+          : undefined;
+
         const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
         const byDisplayName = agentDisplayName ? this.getBotByName(agentDisplayName) : undefined;
-        const bot = byInstanceName || byDisplayName;
+        const bot = byId || byInstanceName || byDisplayName;
 
         const botId =
           String(
             bot?.botUserId ||
-            (isSnowflake(botConfig?.BOT_ID) ? botConfig.BOT_ID : '') ||
-            (isSnowflake(botConfig?.discord?.clientId) ? botConfig.discord.clientId : '') ||
+            cfgId ||
             this.getClientId() ||
             ''
           );

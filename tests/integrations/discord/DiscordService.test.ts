@@ -230,6 +230,28 @@ describe('DiscordService', () => {
     expect(service.supportsChannelPrioritization).toBe(true);
   });
 
+  it('resolveAgentContext can use per-bot id to include discord username as a name candidate', () => {
+    // Arrange: simulate a swarm bot whose config includes the resolved Discord user id.
+    (service as any).bots = [
+      {
+        botUserId: '555555555555555555',
+        botUserName: 'SomeInternalLabel',
+        client: { user: { username: 'seneca', globalName: 'Seneca' }, destroy: jest.fn().mockResolvedValue(undefined) },
+        config: { BOT_ID: '555555555555555555', discord: { clientId: '555555555555555555' }, name: 'NotSeneca' }
+      }
+    ];
+
+    const ctx = service.resolveAgentContext({
+      botConfig: { BOT_ID: '555555555555555555', name: 'NotSeneca', discord: { clientId: '555555555555555555' } },
+      agentDisplayName: 'Madgwick AI'
+    });
+
+    expect(ctx).toBeTruthy();
+    expect(ctx.botId).toBe('555555555555555555');
+    expect(ctx.senderKey).toBe('555555555555555555');
+    expect(ctx.nameCandidates).toEqual(expect.arrayContaining(['seneca', 'Seneca']));
+  });
+
   // TODO: Fix mock issues - legacy token parsing and bot management
   it.skip('handles configuration and bot management', async () => {
     // Test legacy configuration with comma-separated tokens
