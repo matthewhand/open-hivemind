@@ -23,6 +23,21 @@ import { IMessage } from './IMessage';
  */
 export interface IMessengerService {
   /**
+   * Optional: return per-instance startup summaries for operator-friendly logging.
+   * Implementations that don't support per-instance introspection can omit this.
+   */
+  getAgentStartupSummaries?: () => Array<{
+    name: string;
+    provider: string;
+    botId?: string;
+    messageProvider?: string;
+    llmProvider?: string;
+    llmModel?: string;
+    llmEndpoint?: string;
+    systemPrompt?: string;
+  }>;
+
+  /**
    * Optional integration hook: resolve per-agent identity and routing hints.
    *
    * This allows platform-specific logic (multi-bot identity, sender selection, name aliases)
