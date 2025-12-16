@@ -315,9 +315,10 @@ export class DiscordMessage implements IMessage {
    */
   isFromBot(): boolean {
     const isBot = this.message.author?.bot || false;
-    debug(`isFromBot check: author=${this.message.author?.username}, author.bot=${this.message.author?.bot}, result=${isBot}`);
-    // Also log to console for visibility
-    console.debug(`🔍 isFromBot | author: ${this.message.author?.username} (${this.message.author?.id}) | author.bot: ${this.message.author?.bot} | returning: ${isBot}`);
+    // ASCII-ify author name for clean terminal output (strip emojis/non-ASCII)
+    const cleanName = (this.message.author?.username || 'unknown').replace(/[^\x20-\x7E]/g, '').substring(0, 20);
+    debug(`isFromBot check: author=${cleanName}, author.bot=${this.message.author?.bot}, result=${isBot}`);
+    console.debug(`🔍 isFromBot | author: ${cleanName} (${this.message.author?.id}) | author.bot: ${this.message.author?.bot} | returning: ${isBot}`);
     return isBot;
   }
 
