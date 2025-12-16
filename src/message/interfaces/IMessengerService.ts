@@ -97,7 +97,7 @@ export interface IMessengerService {
    * );
    * ```
    */
-  sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string): Promise<string>;
+  sendMessageToChannel(channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string): Promise<string>;
 
   /**
    * Retrieves messages from a specific channel.

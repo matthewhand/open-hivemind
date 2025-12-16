@@ -459,6 +459,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;
       log(`Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`);
+      console.info(`✅ IDLE RESPONSE SENT | bot: ${botName} | channel: ${channelId} | content: "${idlePrompt.substring(0, 50)}..."`);
 
       // Don't immediately reschedule - wait for next interaction
       log(`Idle response completed for ${serviceName}:${channelId}, waiting for next interaction`);

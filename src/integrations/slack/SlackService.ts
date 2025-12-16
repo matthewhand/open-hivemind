@@ -487,6 +487,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
             fallbackText,
             botName,
             threadTs,
+            undefined, // replyToMessageId
             blocks
           );
 
@@ -509,6 +510,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     text: string,
     senderName?: string,
     threadId?: string,
+    replyToMessageId?: string,
     blocks?: KnownBlock[]
   ): Promise<string> {
     debug('Entering sendMessageToChannel (delegated)', {
@@ -527,7 +529,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
         debug(`Attempting to send message (attempt ${attempt})`);
 
         try {
-          const result = await this.messageIO.sendMessageToChannel(channelId, text, senderName, threadId, blocks);
+          const result = await this.messageIO.sendMessageToChannel(channelId, text, senderName, threadId, replyToMessageId, blocks);
           metrics.incrementMessages();
           return result;
         } catch (error: any) {

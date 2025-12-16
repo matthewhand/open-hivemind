@@ -290,12 +290,24 @@ export class BotConfigurationManager {
     this.bots.clear();
     this.warnings = [];
 
-    // Check for new BOTS configuration
+    // Check for new BOTS configuration and Auto-Discovery
     const botsEnv = process.env.BOTS;
 
-    if (botsEnv) {
-      debug('Loading multi-bot configuration from BOTS environment variable');
-      this.loadMultiBotConfiguration(botsEnv);
+    // Auto-discover unique bot names from BOTS_ prefixes
+    const discoveredBots = this.discoverBotNamesFromEnv();
+
+    // Merge explicit list with discovered list
+    const explicitBots = botsEnv ? botsEnv.split(',').map(n => n.trim()).filter(Boolean) : [];
+    const allBotNames = Array.from(new Set([...explicitBots, ...discoveredBots])); // Deduplicate
+
+    if (allBotNames.length > 0) {
+      debug(`Loading multi-bot configuration for: ${allBotNames.join(', ')}`);
+      for (const botName of allBotNames) {
+        const config = this.createBotConfig(botName);
+        if (config) {
+          this.bots.set(botName, config);
+        }
+      }
     }
 
     // Always check for legacy configuration to support dual mode
@@ -307,17 +319,33 @@ export class BotConfigurationManager {
   }
 
   /**
-   * Load multi-bot configuration from BOTS environment variable
+   * Auto-discover bot names by scanning environment variables for BOTS_<NAME>_ prefix
    */
-  private loadMultiBotConfiguration(botsEnv: string): void {
-    const botNames = botsEnv.split(',').map(name => name.trim()).filter(name => name);
+  private discoverBotNamesFromEnv(): string[] {
+    const envVars = Object.keys(process.env);
+    const botNames = new Set<string>();
+    const prefixRegex = /^BOTS_([A-Za-z0-9]+)_/;
 
-    for (const botName of botNames) {
-      const config = this.createBotConfig(botName);
-      if (config) {
-        this.bots.set(botName, config);
+    for (const key of envVars) {
+      const match = key.match(prefixRegex);
+      if (match) {
+        // match[1] is the Name (e.g. SENECA)
+        botNames.add(match[1].toLowerCase());
       }
     }
+
+    if (botNames.size > 0) {
+      debug(`Auto-discovered potential bots from env: ${Array.from(botNames).join(', ')}`);
+    }
+    return Array.from(botNames);
+  }
+
+  /**
+   * Load multi-bot configuration from BOTS environment variable
+   * (Now deprecated/internal helper for explicit list if needed, but logic is merged above)
+   */
+  private loadMultiBotConfiguration(botsEnv: string): void {
+    // Deprecated implementation - logic moved to loadConfiguration
   }
 
   /**
@@ -331,15 +359,39 @@ export class BotConfigurationManager {
 
     // Replace {name} placeholders with actual bot name
     const envVars = Object.keys(process.env);
-    const botEnvVars = envVars.filter(key => key.startsWith(`BOTS_${upperName}_`));
+    const prefix = `BOTS_${upperName}_`;
+
+    // Find all env vars that start with the prefix (case-insensitive check for prefix)
+    const botEnvVars = envVars.filter(key => key.toUpperCase().startsWith(prefix));
 
     for (const envVar of botEnvVars) {
-      const configKey = envVar.replace(`BOTS_${upperName}_`, '');
+      // Extract the config key by removing the prefix (case-insensitive substring)
+      // and preserving the case of the config key itself (though convict keys are usually matched loosely or mapped)
+      // Actually, standard keys are UPPERCASE e.g. DISCORD_BOT_TOKEN.
+      // We'll rely on envVar's actual casing for the suffix part, or normalize it? 
+      // Convict schema keys are defined. 
+      // Let's just strip the length of the prefix.
+      const configKey = envVar.substring(prefix.length); // This might be wrong if envVar was mixed case prefix
+
+      // More robust extraction: get the part after the matched prefix length, but from the original string
+      // NOTE: We verified valid keys start with prefix (case-insensitive).
+      // If we use standard variable naming, we assume suffixes match schema keys (UPPERCASE).
+
+      // Let's assume the user matches the schema key casing (usually UPPER).
+      // We will try to set it.
+
+      // Fix: we need to handle the fact that we matched case-insensitively
+      // If user had BOTS_MyBot_TOKEN, and we matched BOTS_MYBOT_, 
+      // we want to extract TOKEN.
+      // But prefix length is same.
+      // So we strip the FIRST N chars.
+
+      const suffix = envVar.slice(prefix.length);
       const value = process.env[envVar];
 
       if (value !== undefined) {
         try {
-          botConfig.set(configKey, value);
+          botConfig.set(suffix, value);
         } catch (error: unknown) {
           if (error instanceof Error) {
             debug(`Warning: Invalid value for ${envVar}:`, {
@@ -514,6 +566,32 @@ export class BotConfigurationManager {
             voiceChannelId: process.env.DISCORD_VOICE_CHANNEL_ID,
           },
         };
+
+        // Populate LLM config from environment variables
+        if (config.llmProvider === 'openai' && process.env.OPENAI_API_KEY) {
+          config.openai = {
+            apiKey: process.env.OPENAI_API_KEY,
+            model: process.env.OPENAI_MODEL || 'gpt-4',
+            baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+            systemPrompt: process.env.OPENAI_SYSTEM_PROMPT || '',
+          };
+        } else if (config.llmProvider === 'flowise' && process.env.FLOWISE_API_KEY) {
+          config.flowise = {
+            apiKey: process.env.FLOWISE_API_KEY,
+            apiBaseUrl: process.env.FLOWISE_API_BASE_URL || 'http://localhost:3000/api/v1',
+          };
+        } else if (config.llmProvider === 'openwebui' && process.env.OPENWEBUI_API_KEY) {
+          config.openwebui = {
+            apiKey: process.env.OPENWEBUI_API_KEY,
+            apiUrl: process.env.OPENWEBUI_API_URL || 'http://localhost:3000/api/',
+          };
+        } else if (config.llmProvider === 'openswarm') {
+          config.openswarm = {
+            baseUrl: process.env.OPENSWARM_BASE_URL || 'http://localhost:8000/v1',
+            apiKey: process.env.OPENSWARM_API_KEY || 'dummy-key',
+            team: process.env.OPENSWARM_TEAM || 'default-team',
+          };
+        }
 
         this.bots.set(botName, config);
       });

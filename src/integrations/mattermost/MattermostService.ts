@@ -34,7 +34,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
    */
   private initializeFromConfiguration(): void {
     const configManager = BotConfigurationManager.getInstance();
-    const mattermostBotConfigs = configManager.getAllBots().filter(bot => 
+    const mattermostBotConfigs = configManager.getAllBots().filter(bot =>
       bot.messageProvider === 'mattermost' && bot.mattermost?.token
     );
 
@@ -44,7 +44,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
 
     console.log(`Initializing ${mattermostBotConfigs.length} Mattermost bot instances`);
-    
+
     for (const botConfig of mattermostBotConfigs) {
       this.initializeBotInstance(botConfig);
     }
@@ -55,7 +55,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
    */
   private initializeBotInstance(botConfig: any): void {
     const botName = botConfig.name;
-    
+
     if (!botConfig.mattermost?.serverUrl || !botConfig.mattermost?.token) {
       console.error(`Invalid Mattermost configuration for bot: ${botName}`);
       return;
@@ -87,7 +87,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public async initialize(): Promise<void> {
     console.log('Initializing Mattermost connections...');
-    
+
     for (const [botName, client] of this.clients) {
       try {
         await client.connect();
@@ -97,7 +97,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         throw error;
       }
     }
-    
+
     const startupGreetingService = require('../../services/StartupGreetingService').default;
     startupGreetingService.emit('service-ready', this);
   }
@@ -110,10 +110,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
     console.log('Setting message handler for Mattermost bots');
   }
 
-  public async sendMessageToChannel(channelId: string, text: string, senderName?: string): Promise<string> {
+  public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string, replyToMessageId?: string): Promise<string> {
     const botName = senderName || Array.from(this.clients.keys())[0];
     const client = this.clients.get(botName);
-    
+
     if (!client) {
       throw new Error(`Bot ${botName} not found`);
     }
@@ -123,7 +123,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         channel: channelId,
         text: text
       });
-      
+
       console.log(`[${botName}] Sent message to channel ${channelId}`);
       return post.id;
     } catch (error) {
@@ -139,7 +139,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   public async fetchMessages(channelId: string, limit: number = 10, botName?: string): Promise<IMessage[]> {
     const targetBot = botName || Array.from(this.clients.keys())[0];
     const client = this.clients.get(targetBot);
-    
+
     if (!client) {
       console.error(`Bot ${targetBot} not found`);
       return [];
@@ -148,16 +148,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
     try {
       const posts = await client.getChannelPosts(channelId, 0, limit);
       const messages: IMessage[] = [];
-      
+
       for (const post of posts.slice(0, limit)) {
         const user = await client.getUser(post.user_id);
         const username = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : 'Unknown';
-        
+
         const { MattermostMessage } = await import('./MattermostMessage');
         const mattermostMsg = new MattermostMessage(post, username);
         messages.push(mattermostMsg);
       }
-      
+
       return messages.reverse(); // Most recent first
     } catch (error) {
       console.error(`[${targetBot}] Failed to fetch messages:`, error);
@@ -167,7 +167,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
     const text = typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
-    
+
     for (const [botName, client] of this.clients) {
       try {
         await client.postMessage({

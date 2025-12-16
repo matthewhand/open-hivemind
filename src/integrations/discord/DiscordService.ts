@@ -399,8 +399,9 @@ export const Discord = {
             const wrappedMessage = new DiscordMessage(message, repliedMessage);
             const history = await this.getMessagesFromChannel(message.channelId);
             await handler(wrappedMessage, history, bot.config);
-          } catch {
-            // Swallow malformed events to avoid crashing handler loop
+          } catch (error) {
+            // Log error but don't crash handler loop
+            console.error(`Error in Discord message handler for bot ${bot.botUserName}:`, error);
             return;
           }
         });
@@ -550,6 +551,8 @@ export const Discord = {
             ? this.bots.find((b) => b.botUserId === senderName || b.config?.BOT_ID === senderName || b.config?.discord?.clientId === senderName)
             : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
 
+        log(`sendTyping: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`);
+
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
           if (thread && (thread as any).isTextBased?.()) {
@@ -567,7 +570,7 @@ export const Discord = {
       }
     }
 
-    public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string): Promise<string> {
+    public async sendMessageToChannel(channelId: string, text: string, senderName?: string, threadId?: string, replyToMessageId?: string): Promise<string> {
       // Input validation for security
       if (!channelId || typeof channelId !== 'string') {
         throw new ValidationError('Invalid channelId provided', 'DISCORD_INVALID_CHANNEL_ID');
@@ -612,6 +615,8 @@ export const Discord = {
           : this.bots.find((b) => b.botUserName === senderName || b.config?.name === senderName)) || this.bots[0];
       const effectiveSenderName = botInfo.botUserName;
 
+      log(`sendMessageToChannel: senderName="${senderName}" -> selected bot "${botInfo.botUserName}" (id: ${botInfo.botUserId})`);
+
       // Feature-flagged channel routing: select best channel among candidates
       let selectedChannelId = channelId;
       try {
@@ -649,15 +654,22 @@ export const Discord = {
         // Removed legacy typing delay logic to allow messageHandler to control pacing.
 
         let message;
+
+        // Prepare message payload
+        const payload: any = { content: text };
+        if (replyToMessageId) {
+          payload.reply = { messageReference: replyToMessageId, failIfNotExists: false };
+        }
+
         if (threadId) {
           const thread = await botInfo.client.channels.fetch(threadId);
           if (!thread || !thread.isThread()) {
             throw new ValidationError(`Thread ${threadId} is not a valid thread or was not found`, 'DISCORD_INVALID_THREAD');
           }
-          message = await thread.send(text);
+          message = await thread.send(payload);
         } else {
-          log(`Attempting send to channel ${selectedChannelId}: *${effectiveSenderName}*: ${text}`);
-          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(text);
+          log(`Attempting send to channel ${selectedChannelId}: *${effectiveSenderName}*: ${text} ${replyToMessageId ? `(replying to ${replyToMessageId})` : ''}`);
+          message = await (channel as TextChannel | NewsChannel | ThreadChannel).send(payload);
         }
 
         log(`Sent message ${message.id} to channel ${selectedChannelId}${threadId ? `/${threadId}` : ''}`);

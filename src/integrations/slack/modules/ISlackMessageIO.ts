@@ -17,6 +17,7 @@ export interface ISlackMessageIO {
     text: string,
     botName?: string,
     threadId?: string,
+    replyToMessageId?: string,
     blocks?: KnownBlock[]
   ): Promise<string>;
 
@@ -34,8 +35,8 @@ export class SlackMessageIO implements ISlackMessageIO {
   private sendTails: Map<string, Promise<any>> = new Map();
 
   constructor(private readonly getBotManager: (botName?: string) => SlackBotManager | undefined,
-              private readonly getDefaultBotName: () => string,
-              private readonly lastSentEventTs: Map<string, string>) {}
+    private readonly getDefaultBotName: () => string,
+    private readonly lastSentEventTs: Map<string, string>) { }
 
   private async withQueue<T>(botName: string, fn: () => Promise<T>): Promise<T> {
     const prev = this.sendTails.get(botName) || Promise.resolve();
@@ -53,7 +54,7 @@ export class SlackMessageIO implements ISlackMessageIO {
 
   private async sendWithRetry(botInfo: any, options: any, maxRetries = 3): Promise<any> {
     let attempt = 0;
-     
+
     while (true) {
       try {
         attempt += 1;
@@ -78,6 +79,7 @@ export class SlackMessageIO implements ISlackMessageIO {
     text: string,
     botName?: string,
     threadId?: string,
+    replyToMessageId?: string,
     blocks?: KnownBlock[]
   ): Promise<string> {
     debug('sendMessageToChannel()', { channelId, textPreview: text?.substring(0, 50), botName, threadId });
@@ -139,7 +141,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           processingTime: Date.now() - t0,
           status: 'success'
         });
-      } catch {}
+      } catch { }
       return result.ts || '';
     } catch (error) {
       debug(`Failed to send message: ${error}`);
@@ -153,7 +155,7 @@ export class SlackMessageIO implements ISlackMessageIO {
           botName: botName || this.getDefaultBotName(),
           metadata: { channelId }
         });
-      } catch {}
+      } catch { }
       throw new Error(`Message send failed: ${error}`);
     }
   }

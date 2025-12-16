@@ -1,3 +1,7 @@
+import Debug from 'debug';
+
+const debug = Debug('app:processingLocks');
+
 class ProcessingLocks {
     private locks: Map<string, boolean>;
     constructor() {
@@ -23,7 +27,7 @@ class ProcessingLocks {
     isLocked(channelId: string, botId?: string): boolean {
         const key = this.getKey(channelId, botId);
         const locked = this.locks.has(key);
-        console.debug(`isLocked: ${key} locked status: ${locked}`);
+        debug(`isLocked: ${key} locked status: ${locked}`);
         return locked;
     }
 
@@ -36,7 +40,7 @@ class ProcessingLocks {
     lock(channelId: string, botId?: string): void {
         const key = this.getKey(channelId, botId);
         this.locks.set(key, true);
-        console.debug(`lock: ${key} is now locked.`);
+        debug(`lock: ${key} is now locked.`);
     }
 
     /**
@@ -48,7 +52,7 @@ class ProcessingLocks {
     unlock(channelId: string, botId?: string): void {
         const key = this.getKey(channelId, botId);
         this.locks.delete(key);
-        console.debug(`unlock: ${key} is now unlocked.`);
+        debug(`unlock: ${key} is now unlocked.`);
     }
 }
 const processingLocks = new ProcessingLocks();

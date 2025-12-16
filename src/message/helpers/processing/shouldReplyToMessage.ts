@@ -8,15 +8,21 @@ import { isBotNameInText } from './MentionDetector';
 
 const debug = Debug('app:shouldReplyToMessage');
 
+export interface ReplyDecision {
+  shouldReply: boolean;
+  reason: string;
+  meta?: Record<string, any>;
+}
+
 export function shouldReplyToMessage(
   message: any,
   botId: string,
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[]
-): boolean {
+): ReplyDecision {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
-    return true;
+    return { shouldReply: true, reason: 'FORCE_REPLY env var enabled' };
   }
 
   const channelId = message.getChannelId();
@@ -68,7 +74,7 @@ export function shouldReplyToMessage(
   try {
     if (typeof message.getAuthorId === 'function' && message.getAuthorId() === botId) {
       debug('Message from bot itself. Not replying.');
-      return false;
+      return { shouldReply: false, reason: 'Message from self' };
     }
   } catch { }
 
@@ -77,25 +83,45 @@ export function shouldReplyToMessage(
     if (!isDirectlyAddressed) {
       const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
       const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
+
+      let lastActivityTime = -1;
+      let timeSinceLastActivity = -1;
+
       if (graceMs > 0) {
-        const lastActivityTime = getLastBotActivity(channelId, botId);
-        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        lastActivityTime = getLastBotActivity(channelId, botId);
+        timeSinceLastActivity = Date.now() - lastActivityTime;
         if (lastActivityTime > 0 && timeSinceLastActivity <= graceMs) {
           debug(`MESSAGE_ONLY_WHEN_SPOKEN_TO grace window active (${timeSinceLastActivity}ms <= ${graceMs}ms); replying.`);
-          return true;
+          return {
+            shouldReply: true,
+            reason: 'Grace window active',
+            meta: {
+              timeSinceLastActivity: `${(timeSinceLastActivity / 1000).toFixed(1)}s`,
+              graceDuration: `${(graceMs / 1000).toFixed(0)}s`
+            }
+          };
         }
       }
       debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
-      return false;
+      return {
+        shouldReply: false,
+        reason: 'Not directly addressed (OnlyWhenSpokenTo)',
+        meta: {
+          graceDuration: `${(graceMs / 1000).toFixed(0)}s`,
+          timeSinceLastActivity: timeSinceLastActivity >= 0 ? `${(timeSinceLastActivity / 1000).toFixed(1)}s` : 'never',
+          lastActivityTime: typeof lastActivityTime !== 'undefined' ? lastActivityTime : -1,
+          withinGraceWindow: false
+        }
+      };
     }
     debug('Directly addressed; replying.');
-    return true;
+    return { shouldReply: true, reason: 'Directly addressed' };
   }
 
   // If directly addressed, reply deterministically (mentions/wakewords/replies should always work).
   if (isDirectlyAddressed) {
     debug('Directly addressed; replying.');
-    return true;
+    return { shouldReply: true, reason: 'Directly addressed' };
   }
 
   // Safety by default: avoid bot-to-bot loops unless explicitly allowed.
@@ -112,7 +138,7 @@ export function shouldReplyToMessage(
     const allowUnaddressedBots = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
     if (!allowUnaddressedBots && !withinGrace) {
       debug('Message from another bot and bot-to-bot unaddressed replies are disabled (and not within grace); not replying.');
-      return false;
+      return { shouldReply: false, reason: 'Unaddressed bot message disabled' };
     }
   }
 
@@ -126,23 +152,25 @@ export function shouldReplyToMessage(
   try {
     if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
       debug('Unsolicited message handler rejected reply (bot inactive in channel & no direct mention)');
-      return false;
+      return { shouldReply: false, reason: 'Unsolicited handler rejected (inactive channel)' };
     }
   } catch (err) {
     // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
     debug('Error in unsolicited message handler; not replying:', err);
-    return false;
+    return { shouldReply: false, reason: 'Unsolicited handler error', meta: { error: String(err) } };
   }
 
   // 1. Long Silence Penalty Logic
   const lastInteractionTime = getLastBotActivity(channelId, botId);
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
   const SILENCE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+  const hasPostedRecently = timeSinceLastActivity <= SILENCE_THRESHOLD;
 
   const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
   let chance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw) || 0.05;
+  const baseChance = chance; // Store for meta logs
 
-  if (timeSinceLastActivity > SILENCE_THRESHOLD) {
+  if (!hasPostedRecently) {
     chance = 0.005; // 0.5% if silent for > 5 mins
     debug(`Long silence detected (>5m). Chance dropped to 0.5%.`);
 
@@ -183,10 +211,22 @@ export function shouldReplyToMessage(
   chance = Math.max(0, Math.min(1, chance));
   debug(`Final chance after applying all modifiers: ${chance}`);
 
-  const decision = Math.random() < chance;
+  const roll = Math.random();
+  const decision = roll < chance;
   debug(`Decision: ${decision} (chance = ${chance})`);
 
-  return decision;
+  return {
+    shouldReply: decision,
+    reason: decision ? 'Chance roll success' : 'Chance roll failure',
+    meta: {
+      chance,
+      roll,
+      baseChance,
+      densityModifier,
+      timeSinceLastActivity: isNaN(timeSinceLastActivity) ? 'never' : `${(timeSinceLastActivity / 1000).toFixed(1)}s`,
+      hasPostedRecently
+    }
+  };
 }
 
 function applyModifiers(

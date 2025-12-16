@@ -40,10 +40,18 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
 
-  // Extra safety: never reply to other bots unless directly addressed.
+  // Extra safety: never reply to other bots unless directly addressed OR explicitly allowed.
   try {
-    if (typeof msg.isFromBot === 'function' && msg.isFromBot() && !isDirectQuery) {
-      return false;
+    const isFromBot = typeof msg.isFromBot === 'function' && msg.isFromBot();
+    const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
+
+    if (isFromBot && !isDirectQuery) {
+      if (!allowBotToBot) {
+        return false;
+      }
+      // If allowed, we bypass "looksLikeOpportunity" for bots to allow conversational flow,
+      // relying on the main chance logic (5%) to prevent infinite loops.
+      return true;
     }
   } catch { }
 

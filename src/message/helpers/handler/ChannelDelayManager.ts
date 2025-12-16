@@ -5,7 +5,8 @@ const debug = Debug('app:ChannelDelayManager');
 interface ChannelDelayState {
   delayUntil: number;
   isLeaderAssigned: boolean;
-  leaderMessageId?: string;
+  leaderMessageId?: string; // Kept for reference
+  latestMessageId?: string; // The most recent message in the burst
   pendingMessageIds: Set<string>;
   lastMessageIdFromTrigger?: string;
   triggerUserId?: string;
@@ -49,6 +50,7 @@ export class ChannelDelayManager {
         delayUntil: now + baseDelayMs,
         isLeaderAssigned: true,
         leaderMessageId: messageId,
+        latestMessageId: messageId,
         pendingMessageIds: new Set([messageId]),
         triggerUserId: userId,
         lastMessageIdFromTrigger: messageId,
@@ -59,6 +61,7 @@ export class ChannelDelayManager {
     }
 
     existing.pendingMessageIds.add(messageId);
+    existing.latestMessageId = messageId; // Update latest
     if (existing.triggerUserId === userId) {
       existing.lastMessageIdFromTrigger = messageId;
     }
@@ -69,6 +72,7 @@ export class ChannelDelayManager {
       const extended = Math.min(maxDelayMs, remaining + baseDelayMs);
       existing.delayUntil = now + extended;
       debug(`[${key}] extended delayUntil=${existing.delayUntil} pending=${existing.pendingMessageIds.size}`);
+      console.info(`⏳ DELAY EXTENDED | key: ${key} | added: ${baseDelayMs}ms | total_pending: ${existing.pendingMessageIds.size}`);
     }
 
     return { isLeader: false };
@@ -87,6 +91,26 @@ export class ChannelDelayManager {
     const state = this.states.get(key);
     if (!state) return 0;
     return Math.max(0, state.delayUntil - Date.now());
+  }
+
+  public getReplyToMessageId(key: string): string | undefined {
+    const state = this.states.get(key);
+    if (!state) return undefined;
+
+    // User requested: only reply-to if delay was extended (i.e. compounding happened).
+    // If only 1 message, it implies direct response, so no explicit reply needed.
+    if (state.pendingMessageIds.size <= 1) return undefined;
+
+    // User requested: "reply to the most recent message" if more messages came in.
+    return state.latestMessageId || state.leaderMessageId;
+  }
+
+  public async waitForDelay(key: string): Promise<void> {
+    const remaining = this.getRemainingDelayMs(key);
+    if (remaining > 0) {
+      debug(`[${key}] Enforcing delay: sleeping for ${remaining}ms`);
+      await new Promise(resolve => setTimeout(resolve, remaining));
+    }
   }
 
   public clear(key: string): void {
