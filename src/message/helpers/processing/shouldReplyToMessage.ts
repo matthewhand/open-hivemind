@@ -167,12 +167,20 @@ export function shouldReplyToMessage(
   const hasPostedRecently = timeSinceLastActivity <= SILENCE_THRESHOLD;
 
   const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
-  let chance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw) || 0.50; // Default 50%
-  const baseChance = chance; // Store for meta logs
+  // Default: 95% if bot has been active recently, 1% if silent
+  const configuredChance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw);
 
-  if (!hasPostedRecently) {
-    chance = 0.01; // 1% if silent for > 5 mins (down from base, modified by participants below)
+  let chance: number;
+  if (hasPostedRecently) {
+    // Bot was active in last 5 minutes - high chance to continue conversation
+    chance = configuredChance || 0.95; // 95% default when active
+    debug(`Recent activity detected (<5m). Using high engagement chance: ${(chance * 100).toFixed(0)}%`);
+    console.info(`🔥 ACTIVE CHANNEL | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | lastActivity: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
+  } else {
+    // Bot has been silent - low chance to re-engage
+    chance = 0.01; // 1% if silent for > 5 mins
     debug(`Long silence detected (>5m). Chance dropped to 1%.`);
+    console.debug(`💤 INACTIVE CHANNEL | bot: ${botId} | chance: 1% | lastActivity: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
 
     // Participant-aware adjustment: if fewer unique participants are active, be more likely to join;
     // if many participants are active, be less likely to interject.
@@ -194,9 +202,8 @@ export function shouldReplyToMessage(
     const factor = Math.max(minFactor, Math.min(maxFactor, reference / Math.max(1, participantCount)));
     chance *= factor;
     debug(`Silent participant factor: participants=${participantCount} factor=${factor.toFixed(2)} chance=${chance}`);
-  } else {
-    debug(`Recent activity detected (<5m). Using base chance ${chance}.`);
   }
+  const baseChance = chance; // Store for meta logs
 
   // 2. Incoming Message Density Logic (1/N scaling)
   // "If 5 messages in a minute, chance is 1/5 of current chance?"

@@ -218,7 +218,7 @@ export class DiscordMessage implements IMessage {
 
       // Handle mock objects that might be plain arrays or objects
       const usersAny = users as unknown;
-      
+
       // Plain array of users or IDs
       if (Array.isArray(usersAny)) {
         return (usersAny as Array<User | string>)
@@ -239,7 +239,7 @@ export class DiscordMessage implements IMessage {
       return [];
     }
   }
-  
+
   /**
    * Gets all users in the Discord channel.
    * 
@@ -255,7 +255,7 @@ export class DiscordMessage implements IMessage {
       const guildChannel = channel as TextChannel & {
         members?: Collection<string, GuildMember> | Array<GuildMember | string> | Record<string, GuildMember | string>
       };
-      
+
       const members = guildChannel.members;
       if (!members) return [];
 
@@ -314,8 +314,11 @@ export class DiscordMessage implements IMessage {
    * @returns {boolean} True if the message is from a bot user
    */
   isFromBot(): boolean {
-    debug('Checking if message is from a bot');
-    return this.message.author?.bot || false;
+    const isBot = this.message.author?.bot || false;
+    debug(`isFromBot check: author=${this.message.author?.username}, author.bot=${this.message.author?.bot}, result=${isBot}`);
+    // Also log to console for visibility
+    console.debug(`🔍 isFromBot | author: ${this.message.author?.username} (${this.message.author?.id}) | author.bot: ${this.message.author?.bot} | returning: ${isBot}`);
+    return isBot;
   }
 
   /**
@@ -366,7 +369,7 @@ export class DiscordMessage implements IMessage {
   mentionsUsers(userId: string): boolean {
     debug('Checking if message mentions user: ' + userId);
     if (!this.message.mentions || !this.message.mentions.users) {
-        return false;
+      return false;
     }
     return this.message.mentions.users.has(userId);
   }
