@@ -40,21 +40,33 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
 
-  // Extra safety: never reply to other bots unless directly addressed OR explicitly allowed.
+  // ─────────────────────────────────────────────────────────────────────────
+  // Bot-to-Bot Logic (MUST COME BEFORE onlyWhenSpokenTo check)
+  // ─────────────────────────────────────────────────────────────────────────
+  // When MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED=true, bot messages bypass all
+  // other checks (including onlyWhenSpokenTo) to enable multi-bot conversations.
   try {
     const isFromBot = typeof msg.isFromBot === 'function' && msg.isFromBot();
     const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
 
-    if (isFromBot && !isDirectQuery) {
-      if (!allowBotToBot) {
-        return false;
+    if (isFromBot) {
+      if (isDirectQuery) {
+        // Bot directly addressed us - always reply
+        return true;
       }
-      // If allowed, we bypass "looksLikeOpportunity" for bots to allow conversational flow,
-      // relying on the main chance logic (5%) to prevent infinite loops.
-      return true;
+      if (allowBotToBot) {
+        // Bot message + bot-to-bot enabled → bypass all other checks
+        console.info(`🤖 BOT-TO-BOT | Allowing unaddressed bot message (MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED=true)`);
+        return true;
+      }
+      // Bot message but bot-to-bot disabled → reject
+      return false;
     }
   } catch { }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Human Message Checks
+  // ─────────────────────────────────────────────────────────────────────────
   if (onlyWhenSpokenTo) {
     return isDirectQuery;
   }
