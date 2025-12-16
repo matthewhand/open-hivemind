@@ -781,8 +781,6 @@ router.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found in config router' });
 });
 
-export default router;
-
 function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.getInstance>): Record<string, any> {
   const botName: string = bot?.name || 'unknown';
   const overrides = store.getBotOverride(botName) || {};
@@ -861,14 +859,6 @@ router.put('/messaging', async (req, res) => {
       messageConfig.loadFile(targetPath);
     } catch { /* validation may fail, ignore */ }
 
-    // Audit log if available
-    if ((req as AuditedRequest).auditLog) {
-      logConfigChange(req as AuditedRequest, {
-        action: 'messaging_config_update',
-        updates
-      });
-    }
-
     res.json({
       success: true,
       message: 'Messaging settings updated. Restart may be required for some settings.',
@@ -885,4 +875,5 @@ router.put('/messaging', async (req, res) => {
 });
 
 export default router;
+
 
