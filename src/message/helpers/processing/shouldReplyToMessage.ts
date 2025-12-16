@@ -167,12 +167,12 @@ export function shouldReplyToMessage(
   const hasPostedRecently = timeSinceLastActivity <= SILENCE_THRESHOLD;
 
   const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
-  let chance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw) || 0.05;
+  let chance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw) || 0.50; // Default 50%
   const baseChance = chance; // Store for meta logs
 
   if (!hasPostedRecently) {
-    chance = 0.005; // 0.5% if silent for > 5 mins
-    debug(`Long silence detected (>5m). Chance dropped to 0.5%.`);
+    chance = 0.01; // 1% if silent for > 5 mins (down from base, modified by participants below)
+    debug(`Long silence detected (>5m). Chance dropped to 1%.`);
 
     // Participant-aware adjustment: if fewer unique participants are active, be more likely to join;
     // if many participants are active, be less likely to interject.
