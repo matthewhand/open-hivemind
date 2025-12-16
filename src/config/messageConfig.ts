@@ -512,6 +512,48 @@ const messageConfig = convict({
     default: 10,
     env: 'MESSAGE_HISTORY_LIMIT'
   },
+  MESSAGE_HISTORY_ADAPTIVE_ENABLED: {
+    doc: 'Enable adaptive history fetch sizing (per-channel)',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_HISTORY_ADAPTIVE_ENABLED'
+  },
+  MESSAGE_HISTORY_ADAPTIVE_MIN_LIMIT: {
+    doc: 'Minimum history fetch limit when adaptive sizing is enabled',
+    format: 'int',
+    default: 6,
+    env: 'MESSAGE_HISTORY_ADAPTIVE_MIN_LIMIT'
+  },
+  MESSAGE_HISTORY_ADAPTIVE_MAX_LIMIT: {
+    doc: 'Maximum history fetch limit when adaptive sizing is enabled',
+    format: 'int',
+    default: 60,
+    env: 'MESSAGE_HISTORY_ADAPTIVE_MAX_LIMIT'
+  },
+  MESSAGE_HISTORY_ADAPTIVE_STEP: {
+    doc: 'Step size for adaptive history fetch sizing',
+    format: 'int',
+    default: 5,
+    env: 'MESSAGE_HISTORY_ADAPTIVE_STEP'
+  },
+  MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION: {
+    doc: 'Target input token budget utilization for adaptive history sizing (0-1)',
+    format: Number,
+    default: 0.75,
+    env: 'MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION'
+  },
+  MESSAGE_LLM_CONTEXT_WINDOW_TOKENS: {
+    doc: 'Approximate model context window (input+output) used for token-budgeted history trimming',
+    format: 'int',
+    default: 8000,
+    env: 'MESSAGE_LLM_CONTEXT_WINDOW_TOKENS'
+  },
+  MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS: {
+    doc: 'Safety margin reserved from the context window for hidden/system overhead',
+    format: 'int',
+    default: 400,
+    env: 'MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS'
+  },
   MESSAGE_DECAY_RATE: {
     doc: 'Decay rate for message processing',
     format: Number,

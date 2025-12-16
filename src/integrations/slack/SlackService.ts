@@ -559,7 +559,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     }
   }
 
-  public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
+  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
     debug('Entering getMessagesFromChannel', { channelId });
     if (!channelId) {
       debug('Error: No channelId provided');
@@ -568,7 +568,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
     // Default to first bot for backward compatibility
     const firstBot = Array.from(this.botManagers.keys())[0];
-    return this.fetchMessages(channelId, 10, firstBot);
+    return this.fetchMessages(channelId, limit, firstBot);
   }
 
   public async fetchMessages(channelId: string, limit: number = 10, botName?: string): Promise<IMessage[]> {

@@ -60,6 +60,8 @@ jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
             registerMessage: jest.fn(() => ({ isLeader: true })),
             ensureMinimumDelay: jest.fn(),
             getRemainingDelayMs: jest.fn(() => 0),
+            waitForDelay: jest.fn(() => Promise.resolve()),
+            getReplyToMessageId: jest.fn(() => undefined),
             clear: jest.fn()
         }))
     }
@@ -130,8 +132,12 @@ describe('messageHandler Configuration and Features', () => {
             isReplyToBot: jest.fn().mockReturnValue(false),
         } as unknown as jest.Mocked<IMessage>;
 
-        // Default: should reply
-        (shouldReplyToMessage as jest.Mock).mockReturnValue(true);
+        // Default: should reply (new API returns a decision object)
+        (shouldReplyToMessage as jest.Mock).mockReturnValue({
+            shouldReply: true,
+            reason: 'Directly addressed',
+            meta: {}
+        });
 
         // Mock Providers
         mockMessageProvider = {
@@ -155,7 +161,11 @@ describe('messageHandler Configuration and Features', () => {
         // Mock Unsolicited Handler default to ALLOW
         (shouldReplyToUnsolicitedMessage as jest.Mock).mockReturnValue(true);
         // Mock shouldReplyToMessage to verify handler logic directly
-        (shouldReplyToMessage as jest.Mock).mockReturnValue(true);
+        (shouldReplyToMessage as jest.Mock).mockReturnValue({
+            shouldReply: true,
+            reason: 'Directly addressed',
+            meta: {}
+        });
     });
 
     afterEach(() => {
@@ -208,7 +218,9 @@ describe('messageHandler Configuration and Features', () => {
         expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
             'channel-123',
             'Main response',
-            expect.any(String)
+            expect.any(String),
+            undefined,
+            undefined
         );
     });
 
@@ -235,7 +247,7 @@ describe('messageHandler Configuration and Features', () => {
         await promise;
 
         // Verify getMessages was called to refetch history
-        expect(mockMessageProvider.getMessages).toHaveBeenCalledWith('channel-123');
+        expect(mockMessageProvider.getMessages).toHaveBeenCalledWith('channel-123', expect.any(Number));
 
         // Verify LLM called with refetched history
         const callArgs = mockLlmProvider.generateChatCompletion.mock.calls[0];
@@ -279,7 +291,7 @@ describe('messageHandler Configuration and Features', () => {
         // Should have called LLM twice
         expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledTimes(2);
         // Should send the fresh answer
-        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(expect.any(String), 'Fresh Answer', expect.any(String));
+        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith('channel-123', 'Fresh Answer', expect.any(String), undefined, undefined);
     });
 
     it('should handle escaped newlines in LLM response and split correctly', async () => {
@@ -295,9 +307,9 @@ describe('messageHandler Configuration and Features', () => {
         // Should send 3 separate messages
         expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledTimes(3);
 
-        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(1, 'channel-123', 'Line 1', expect.any(String));
-        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(2, 'channel-123', 'Line 2', expect.any(String));
-        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(3, 'channel-123', 'Line 3', expect.any(String));
+        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(1, 'channel-123', 'Line 1', expect.any(String), undefined, undefined);
+        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(2, 'channel-123', 'Line 2', expect.any(String), undefined, undefined);
+        expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(3, 'channel-123', 'Line 3', expect.any(String), undefined, undefined);
     });
 
     it('should bypass spam probability check if mentioned', async () => {
@@ -383,7 +395,9 @@ describe('messageHandler Configuration and Features', () => {
         expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
             expect.any(String),
             'Main response',
-            expect.any(String)
+            expect.any(String),
+            undefined,
+            undefined
         );
 
         // Verify Follow-up

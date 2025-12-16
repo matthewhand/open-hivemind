@@ -132,8 +132,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
-  public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
-    return this.fetchMessages(channelId, 10);
+  public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
+    return this.fetchMessages(channelId, limit);
   }
 
   public async fetchMessages(channelId: string, limit: number = 10, botName?: string): Promise<IMessage[]> {

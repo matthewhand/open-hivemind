@@ -34,6 +34,7 @@ import adminApiRouter from '@src/server/routes/admin';
 import integrationsRouter from '@src/server/routes/integrations';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { ipWhitelist } from '@src/server/middleware/security';
 import openapiRouter from '@src/server/routes/openapi';
 import WebSocketService from '@src/server/services/WebSocketService';
 import path from 'path';
@@ -213,6 +214,17 @@ if (process.env.NODE_ENV !== 'development') {
     app.get('/uber/*', serveDevHtml);
     app.get('/admin/*', serveDevHtml);
     app.get('/webui/*', serveDevHtml);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IP Filtering Security (when auth is disabled)
+// ─────────────────────────────────────────────────────────────────────────────
+const allowAllIPs = process.env.HTTP_ALLOW_ALL_IPS === 'true';
+if (!allowAllIPs) {
+    appLogger.info('🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)');
+    app.use('/api', ipWhitelist);
+} else {
+    appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
 }
 
 // Unified API routes - all on same port, no separation
