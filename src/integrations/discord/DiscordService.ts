@@ -344,7 +344,7 @@ export const Discord = {
             if (message.author.bot) {
               // Check if bots should be ignored entirely
               let ignoreBots = false;
-              let limitToDefaultChannel = true;
+              let limitToDefaultChannel = false; // Changed default to false for bot-to-bot
 
               try {
                 ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
@@ -354,13 +354,14 @@ export const Discord = {
 
               try {
                 const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
-                limitToDefaultChannel = limitConfig === undefined ? true : Boolean(limitConfig);
+                limitToDefaultChannel = limitConfig === undefined ? false : Boolean(limitConfig); // Default: false
               } catch {
-                limitToDefaultChannel = true; // Default: limit to default channel
+                limitToDefaultChannel = false; // Default: allow bot replies in all channels
               }
 
               // If ignoring all bots, skip
               if (ignoreBots) {
+                console.debug(`🚫 BOT-FILTER | Ignoring bot message (MESSAGE_IGNORE_BOTS=true) | author: ${message.author.username}`);
                 return;
               }
 
@@ -368,6 +369,7 @@ export const Discord = {
               if (limitToDefaultChannel) {
                 const defaultChannelId = this.getDefaultChannel();
                 if (!defaultChannelId || message.channelId !== defaultChannelId) {
+                  console.debug(`🚫 BOT-FILTER | Bot message filtered (not default channel) | channel: ${message.channelId} | default: ${defaultChannelId || 'not set'}`);
                   return;
                 }
               }
