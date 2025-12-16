@@ -16,13 +16,17 @@ export class SlackMessageProvider implements IMessageProvider {
     return await this.slackService.sendMessageToChannel(channelId, message, senderName);
   }
 
-  public async getMessages(channelId: string, limit: number = 10): Promise<IMessage[]> {
+  public async getMessages(channelId: string, limit?: number): Promise<IMessage[]> {
     if (!channelId) {
       return [];
     }
     try {
-      // Tests expect provider to delegate with only (channelId)
-      return await this.slackService.fetchMessages(channelId);
+      // Keep backwards-compatibility: when no limit is provided, delegate with only (channelId)
+      // to satisfy existing tests/mocks.
+      if (typeof limit !== 'number') {
+        return await this.slackService.fetchMessages(channelId);
+      }
+      return await this.slackService.fetchMessages(channelId, limit);
     } catch (error) {
       // Assuming error is of type Error
       const err = error as Error;

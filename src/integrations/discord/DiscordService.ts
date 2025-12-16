@@ -727,26 +727,28 @@ export const Discord = {
       return this.sendMessageToChannel(channelId, text, senderName);
     }
 
-    public async getMessagesFromChannel(channelId: string): Promise<IMessage[]> {
-      const rawMessages = await this.fetchMessages(channelId);
+    public async getMessagesFromChannel(channelId: string, limit?: number): Promise<IMessage[]> {
+      const rawMessages = await this.fetchMessages(channelId, limit);
       // Enforce global cap from config to satisfy tests expecting hard cap
       const cap = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
-      const limited = rawMessages.slice(0, cap);
+      const effective = typeof limit === 'number' && limit > 0 ? Math.min(limit, cap) : cap;
+      const limited = rawMessages.slice(0, effective);
       return limited.map(msg => new DiscordMessage(msg));
     }
 
-    public async getMessages(channelId: string): Promise<IMessage[]> {
-      return this.getMessagesFromChannel(channelId);
+    public async getMessages(channelId: string, limit?: number): Promise<IMessage[]> {
+      return this.getMessagesFromChannel(channelId, limit);
     }
 
-    public async fetchMessages(channelId: string): Promise<Message[]> {
+    public async fetchMessages(channelId: string, limitOverride?: number): Promise<Message[]> {
       const botInfo = this.bots[0];
       try {
         const channel = await botInfo.client.channels.fetch(channelId);
         if (!channel || (typeof (channel as any).isTextBased === 'function' && !(channel as any).isTextBased())) {
           throw new Error('Channel is not text-based or was not found');
         }
-        const limit = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
+        const cap = (discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT') as number | undefined) || 10;
+        const limit = typeof limitOverride === 'number' && limitOverride > 0 ? Math.min(limitOverride, cap) : cap;
         const messages = await (channel as TextChannel).messages.fetch({ limit });
         const arr = Array.from(messages.values());
         // Enforce hard cap and reverse to oldest-first order (Discord returns newest-first)

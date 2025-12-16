@@ -20,6 +20,8 @@ import messageConfig from '@config/messageConfig';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import { detectMentions } from '../helpers/processing/MentionDetector';
+import AdaptiveHistoryTuner from '../helpers/processing/AdaptiveHistoryTuner';
+import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
 import { splitOnNewlines, calculateLineDelayWithOptions } from '../helpers/processing/LineByLineSender';
 import { recordBotActivity, getLastBotActivity } from '../helpers/processing/ChannelActivity';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
@@ -34,6 +36,7 @@ const tokenTracker = TokenTracker.getInstance();
 const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 const typingActivity = TypingActivity.getInstance();
+const historyTuner = AdaptiveHistoryTuner.getInstance();
 
 /**
  * Main message handler for processing incoming messages from various platforms
@@ -367,14 +370,31 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // Refetch history to capture any messages that arrived during the delay
       try {
-        const freshHistory = await messageProvider.getMessages(channelId);
+        const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 10;
+        const historyKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
+        const requestedLimit = historyTuner.getDesiredLimit(historyKey, baseHistoryLimit);
+
+        const fetchHistory = async () => {
+          // Prefer getMessages (used in tests), but fall back to the IMessengerService shape.
+          if (typeof (messageProvider as any).getMessages === 'function') {
+            return await (messageProvider as any).getMessages(channelId, requestedLimit);
+          }
+          if (typeof (messageProvider as any).getMessagesFromChannel === 'function') {
+            return await (messageProvider as any).getMessagesFromChannel(channelId, requestedLimit);
+          }
+          // Last resort: attempt a no-limit call
+          return await (messageProvider as any).getMessagesFromChannel(channelId);
+        };
+
+        const freshHistory = await fetchHistory();
 
         // Sort oldest-first for LLM context (A -> B -> C)
         // Discord fetch usually returns newest-first or mixed, so explicit sort is safest
         freshHistory.sort((a, b) => a.getTimestamp().getTime() - b.getTimestamp().getTime());
 
         // Filter out the current message to avoid duplication (as it's added as 'userMessage' in prompt)
-        historyMessages = freshHistory.filter(m => m.getMessageId() !== message.getMessageId());
+        const filtered = freshHistory.filter(m => m.getMessageId() !== message.getMessageId());
+        historyMessages = filtered;
 
         logger(`Refetched history: ${historyMessages.length} messages (latest context)`);
       } catch (err) {
@@ -388,22 +408,51 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       let retryCount = 0;
       let avoidSystemPromptLeak = false;
 
-      // Do not inject timestamps into chat history content; models may echo them back.
-      const historyForLlm = historyMessages;
+      const baseSystemPrompt =
+        botConfig?.OPENAI_SYSTEM_PROMPT ??
+        botConfig?.openai?.systemPrompt ??
+        botConfig?.llm?.systemPrompt ??
+        (message.metadata as any)?.systemPrompt;
+
+      const systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
 
       // Adjust max tokens based on recent usage to prevent walls of text
       const defaultMaxTokens = botConfig.openai?.maxTokens || 150;
       const adjustedMaxTokens = tokenTracker.getAdjustedMaxTokens(channelId, defaultMaxTokens);
 
+      // Token-budgeted history trimming: fetch more, then keep only what fits.
+      // Use a configurable approximate context window and reserve a safety margin.
+      const ctxWindow = Number(messageConfig.get('MESSAGE_LLM_CONTEXT_WINDOW_TOKENS')) || 8000;
+      const ctxSafety = Number(messageConfig.get('MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS')) || 400;
+      const inputBudget = Math.max(500, ctxWindow - adjustedMaxTokens - ctxSafety);
+
+      const promptForBudget = mentionContext.contextHint
+        ? `${mentionContext.contextHint}\n\n${processedMessage}`
+        : processedMessage;
+
+      const budgeted = trimHistoryToTokenBudget(historyMessages, {
+        inputBudgetTokens: inputBudget,
+        promptText: promptForBudget,
+        systemPromptText: systemPrompt,
+        minKeepMessages: 2
+      });
+
+      const historyForLlm = budgeted.trimmed;
+
+      try {
+        const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 10;
+        const historyKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
+        const requestedLimit = historyTuner.getDesiredLimit(historyKey, baseHistoryLimit);
+        historyTuner.recordResult(historyKey, {
+          requestedLimit,
+          receivedCount: historyMessages.length,
+          keptCount: historyForLlm.length,
+          estimatedTotalTokens: budgeted.meta.estimatedTotalTokens,
+          inputBudgetTokens: budgeted.meta.inputBudgetTokens
+        });
+      } catch { }
+
       while (retryCount <= MAX_DUPLICATE_RETRIES) {
-        const baseSystemPrompt =
-          botConfig?.OPENAI_SYSTEM_PROMPT ??
-          botConfig?.openai?.systemPrompt ??
-          botConfig?.llm?.systemPrompt ??
-          (message.metadata as any)?.systemPrompt;
-
-        const systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
-
         const repetitionBoost = duplicateDetector.getRepetitionTemperatureBoost(channelId);
 
         const metadata = {

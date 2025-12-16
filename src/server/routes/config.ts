@@ -44,40 +44,40 @@ const globalConfigs: Record<string, any> = { ...schemaSources };
 
 // Helper to load dynamic configs from files
 const loadDynamicConfigs = () => {
-    try {
-        const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-        const providersDir = path.join(configDir, 'providers');
-        
-        if (fs.existsSync(providersDir)) {
-            const files = fs.readdirSync(providersDir);
-            
-            files.forEach(file => {
-                // Match pattern: type-name.json e.g. openai-dev.json
-                const match = file.match(/^([a-z]+)-(.+)\.json$/);
-                if (match) {
-                    const type = match[1];
-                    const name = match[0].replace('.json', ''); // e.g. openai-dev
-                    
-                    if (schemaSources[type] && !globalConfigs[name]) {
-                        console.log(`Loading dynamic config: ${name} (type: ${type})`);
-                        // Create new convict instance using the base type's schema
-                        const convict = require('convict'); // Require local to avoid module caching issues if any
-                        const newConfig = convict(schemaSources[type].getSchema());
-                        
-                        // Load file
-                        newConfig.loadFile(path.join(providersDir, file));
-                        try {
-                             newConfig.validate({ allowed: 'warn' });
-                        } catch(e) { console.warn(`Validation warning for ${name}:`, e); }
+  try {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const providersDir = path.join(configDir, 'providers');
 
-                        globalConfigs[name] = newConfig;
-                    }
-                }
-            });
+    if (fs.existsSync(providersDir)) {
+      const files = fs.readdirSync(providersDir);
+
+      files.forEach(file => {
+        // Match pattern: type-name.json e.g. openai-dev.json
+        const match = file.match(/^([a-z]+)-(.+)\.json$/);
+        if (match) {
+          const type = match[1];
+          const name = match[0].replace('.json', ''); // e.g. openai-dev
+
+          if (schemaSources[type] && !globalConfigs[name]) {
+            console.log(`Loading dynamic config: ${name} (type: ${type})`);
+            // Create new convict instance using the base type's schema
+            const convict = require('convict'); // Require local to avoid module caching issues if any
+            const newConfig = convict(schemaSources[type].getSchema());
+
+            // Load file
+            newConfig.loadFile(path.join(providersDir, file));
+            try {
+              newConfig.validate({ allowed: 'warn' });
+            } catch (e) { console.warn(`Validation warning for ${name}:`, e); }
+
+            globalConfigs[name] = newConfig;
+          }
         }
-    } catch (e) {
-        console.error('Failed to load dynamic configs:', e);
+      });
     }
+  } catch (e) {
+    console.error('Failed to load dynamic configs:', e);
+  }
 };
 
 // Initial load
@@ -108,17 +108,17 @@ router.get('/global', (req, res) => {
       // Check for environment variable overrides and mark as locked
       // Handle both nested 'properties' (valid JSON schema) and flat (convict internal) structure
       const properties = schema.properties || schema;
-      
+
       for (const propKey in properties) {
-          const prop = properties[propKey];
-          // Ensure it's an object description
-          if (typeof prop === 'object' && prop !== null) {
-            // Check if ENV var is actually set in process.env
-            // Note: convict schema 'env' property tells us WHICH env var map to.
-            if (prop.env && process.env[prop.env] !== undefined && process.env[prop.env] !== '') {
-                prop.locked = true;
-            }
+        const prop = properties[propKey];
+        // Ensure it's an object description
+        if (typeof prop === 'object' && prop !== null) {
+          // Check if ENV var is actually set in process.env
+          // Note: convict schema 'env' property tells us WHICH env var map to.
+          if (prop.env && process.env[prop.env] !== undefined && process.env[prop.env] !== '') {
+            prop.locked = true;
           }
+        }
       }
 
       // Redact sensitive values in props
@@ -163,7 +163,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     const { configName, updates } = req.body;
 
     if (!configName) {
-        return res.status(400).json({ error: 'configName is required' });
+      return res.status(400).json({ error: 'configName is required' });
     }
 
     let config = globalConfigs[configName];
@@ -171,40 +171,40 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Handle creation of new dynamic config if it doesn't exist but matches pattern
     if (!config) {
-        const match = configName.match(/^([a-z]+)-.+$/);
-        if (match && schemaSources[match[1]]) {
-             const type = match[1];
-             console.log(`Creating new dynamic config: ${configName} (type: ${type})`);
-             const convict = require('convict');
-             config = convict(schemaSources[type].getSchema());
-             globalConfigs[configName] = config;
-             createdNew = true;
-        } else {
-             return res.status(400).json({ error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}` });
-        }
+      const match = configName.match(/^([a-z]+)-.+$/);
+      if (match && schemaSources[match[1]]) {
+        const type = match[1];
+        console.log(`Creating new dynamic config: ${configName} (type: ${type})`);
+        const convict = require('convict');
+        config = convict(schemaSources[type].getSchema());
+        globalConfigs[configName] = config;
+        createdNew = true;
+      } else {
+        return res.status(400).json({ error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern (e.g. openai-test). Valid types: ${Object.keys(schemaSources).join(', ')}` });
+      }
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    
+
     // Determine target file
     let targetFile = '';
     // If it's one of the base sources, use its standard file, else use dynamic name
     if (schemaSources[configName] && !createdNew) {
-        switch (configName) {
-            case 'message': targetFile = 'providers/message.json'; break;
-            case 'llm': targetFile = 'providers/llm.json'; break;
-            case 'discord': targetFile = 'providers/discord.json'; break;
-            case 'slack': targetFile = 'providers/slack.json'; break;
-            case 'openai': targetFile = 'providers/openai.json'; break;
-            case 'flowise': targetFile = 'providers/flowise.json'; break;
-            case 'mattermost': targetFile = 'providers/mattermost.json'; break;
-            case 'openwebui': targetFile = 'providers/openwebui.json'; break;
-            case 'webhook': targetFile = 'providers/webhook.json'; break;
-            default: targetFile = `providers/${configName}.json`;
-        }
+      switch (configName) {
+        case 'message': targetFile = 'providers/message.json'; break;
+        case 'llm': targetFile = 'providers/llm.json'; break;
+        case 'discord': targetFile = 'providers/discord.json'; break;
+        case 'slack': targetFile = 'providers/slack.json'; break;
+        case 'openai': targetFile = 'providers/openai.json'; break;
+        case 'flowise': targetFile = 'providers/flowise.json'; break;
+        case 'mattermost': targetFile = 'providers/mattermost.json'; break;
+        case 'openwebui': targetFile = 'providers/openwebui.json'; break;
+        case 'webhook': targetFile = 'providers/webhook.json'; break;
+        default: targetFile = `providers/${configName}.json`;
+      }
     } else {
-        // Dynamic named config
-        targetFile = `providers/${configName}.json`;
+      // Dynamic named config
+      targetFile = `providers/${configName}.json`;
     }
 
     const targetPath = path.join(configDir, targetFile);
@@ -809,3 +809,80 @@ function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.g
     mcpGuard: describeField('mcpGuard', 'MCP_GUARD'),
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Messaging Behavior Configuration Endpoints
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/config/messaging - Get messaging behavior settings
+router.get('/messaging', (req, res) => {
+  try {
+    res.json({
+      MESSAGE_ONLY_WHEN_SPOKEN_TO: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'),
+      MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'),
+      MESSAGE_UNSOLICITED_ADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_ADDRESSED'),
+      MESSAGE_UNSOLICITED_UNADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED'),
+      MESSAGE_UNSOLICITED_BASE_CHANCE: messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE'),
+      MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGING_CONFIG_GET_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/messaging - Update messaging behavior settings
+router.put('/messaging', async (req, res) => {
+  try {
+    const updates = req.body;
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const targetPath = path.join(configDir, 'providers', 'message.json');
+
+    // Load existing file or start fresh
+    let existing: Record<string, any> = {};
+    if (fs.existsSync(targetPath)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
+      } catch { /* ignore parse errors, start fresh */ }
+    }
+
+    // Merge updates
+    const merged = { ...existing, ...updates };
+
+    // Write back
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, JSON.stringify(merged, null, 2));
+
+    // Reload config (convict will pick up new values on next get, but we force load here)
+    try {
+      messageConfig.loadFile(targetPath);
+    } catch { /* validation may fail, ignore */ }
+
+    // Audit log if available
+    if ((req as AuditedRequest).auditLog) {
+      logConfigChange(req as AuditedRequest, {
+        action: 'messaging_config_update',
+        updates
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Messaging settings updated. Restart may be required for some settings.',
+      savedTo: targetPath,
+      values: merged
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGING_CONFIG_PUT_ERROR'
+    });
+  }
+});
+
+export default router;
+
