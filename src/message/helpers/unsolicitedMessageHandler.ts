@@ -79,8 +79,26 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
   // ─────────────────────────────────────────────────────────────────────────
   // Human Message Checks
   // ─────────────────────────────────────────────────────────────────────────
+
+  // Import activity tracker to check if bot was recently active
+  const { getLastBotActivity } = require('../handler/ChannelActivity');
+  const GRACE_WINDOW_MS = Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || (5 * 60 * 1000);
+  const lastActivity = channelId ? getLastBotActivity(channelId, botId) : 0;
+  const timeSinceActivity = lastActivity > 0 ? (Date.now() - lastActivity) : Number.POSITIVE_INFINITY;
+  const withinGraceWindow = timeSinceActivity <= GRACE_WINDOW_MS;
+
   if (onlyWhenSpokenTo) {
-    return isDirectQuery;
+    if (isDirectQuery) {
+      return true;
+    }
+    // If bot was recently active in this channel, allow continued conversation
+    if (withinGraceWindow) {
+      console.info(`🔥 GRACE WINDOW | Bot active ${(timeSinceActivity / 1000).toFixed(0)}s ago - bypassing onlyWhenSpokenTo`);
+      // Fall through to opportunity check below
+    } else {
+      console.debug(`💤 NO GRACE | Bot last active ${(timeSinceActivity / 1000).toFixed(0)}s ago - requiring direct address`);
+      return false;
+    }
   }
 
   // Addressed vs unaddressed (rough heuristic)
