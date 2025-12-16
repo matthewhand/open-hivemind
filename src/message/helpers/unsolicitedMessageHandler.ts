@@ -46,12 +46,17 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
   // When MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED=true, bot messages bypass all
   // other checks (including onlyWhenSpokenTo) to enable multi-bot conversations.
   try {
-    const isFromBot = typeof msg.isFromBot === 'function' && msg.isFromBot();
+    const hasIsFromBot = typeof msg.isFromBot === 'function';
+    const isFromBot = hasIsFromBot && msg.isFromBot();
     const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
+
+    // Diagnostic logging
+    console.debug(`🔍 BOT-CHECK | hasIsFromBot: ${hasIsFromBot}, isFromBot: ${isFromBot}, allowBotToBot: ${allowBotToBot}, isDirectQuery: ${isDirectQuery}`);
 
     if (isFromBot) {
       if (isDirectQuery) {
         // Bot directly addressed us - always reply
+        console.info(`🤖 BOT-TO-BOT | Bot directly addressed us - allowing`);
         return true;
       }
       if (allowBotToBot) {
@@ -60,9 +65,12 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
         return true;
       }
       // Bot message but bot-to-bot disabled → reject
+      console.info(`🤖 BOT-TO-BOT | Rejecting - bot-to-bot is disabled`);
       return false;
     }
-  } catch { }
+  } catch (err) {
+    console.warn(`🔍 BOT-CHECK | Error in bot detection:`, err);
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // Human Message Checks
