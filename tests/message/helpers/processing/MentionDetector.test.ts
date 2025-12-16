@@ -77,9 +77,8 @@ describe('MentionDetector', () => {
         expect(result.isMentioningBot).toBe(false);
         expect(result.isReplyToBot).toBe(false);
         expect(result.mentionedUsernames).toHaveLength(0);
-        expect(result.contextHint).toContain('unclear');
-        expect(result.contextHint).toContain('topic');
-        expect(result.contextHint).toContain('room');
+        expect(result.contextHint).toContain('not specifically mentioned');
+        expect(result.contextHint).toContain('topic/room');
         expect(result.contextHint).toContain('Infer');
     });
 

@@ -111,7 +111,11 @@ export class DiscordMessage implements IMessage {
    * @returns {string} The message text content
    */
   getText(): string {
-    debug('Getting message text: ' + this.content);
+    const text = String(this.content ?? '');
+    const previewMax = 60;
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    const preview = normalized.length > previewMax ? `${normalized.slice(0, previewMax)}...` : normalized;
+    debug(`Getting message text (len=${text.length}): ${preview}`);
     return this.content;
   }
 

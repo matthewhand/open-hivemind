@@ -35,9 +35,22 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
  * @returns Delay in milliseconds
  */
 export function calculateLineDelay(lineLength: number, baseDelay = 2000): number {
-    // ~30ms per character, capped at 8 seconds
-    const readingDelay = Math.min(lineLength * 30, 8000);
-    return baseDelay + readingDelay;
+    // Backwards-compatible defaults: ~30ms per character, capped at 8 seconds.
+    return calculateLineDelayWithOptions(lineLength, baseDelay);
+}
+
+export function calculateLineDelayWithOptions(
+    lineLength: number,
+    baseDelay = 2000,
+    opts?: { perCharMs?: number; maxReadingMs?: number }
+): number {
+    const safeLen = Math.max(0, Number(lineLength) || 0);
+    const safeBase = Math.max(0, Number(baseDelay) || 0);
+    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 30));
+    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 8000));
+
+    const readingDelay = Math.min(safeLen * perCharMs, maxReadingMs);
+    return safeBase + readingDelay;
 }
 
 /**

@@ -1,5 +1,5 @@
 
-import { splitOnNewlines, calculateLineDelay } from '../../../../src/message/helpers/processing/LineByLineSender';
+import { splitOnNewlines, calculateLineDelay, calculateLineDelayWithOptions } from '../../../../src/message/helpers/processing/LineByLineSender';
 
 describe('LineByLineSender', () => {
 
@@ -62,6 +62,14 @@ describe('LineByLineSender', () => {
         it('should handle zero length line', () => {
             // 0 * 30 = 0. Base 2000. Total 2000.
             expect(calculateLineDelay(0)).toBe(2000);
+        });
+    });
+
+    describe('calculateLineDelayWithOptions', () => {
+        it('should scale per-char and max cap via options', () => {
+            // perCharMs=90, maxReadingMs=24000, baseDelay=6000 (typical delayScale=3)
+            // 1000 chars => 90000ms capped to 24000. Total 30000.
+            expect(calculateLineDelayWithOptions(1000, 6000, { perCharMs: 90, maxReadingMs: 24000 })).toBe(30000);
         });
     });
 });

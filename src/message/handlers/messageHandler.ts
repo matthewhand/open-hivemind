@@ -20,7 +20,7 @@ import messageConfig from '@config/messageConfig';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import { detectMentions } from '../helpers/processing/MentionDetector';
-import { splitOnNewlines, calculateLineDelay } from '../helpers/processing/LineByLineSender';
+import { splitOnNewlines, calculateLineDelayWithOptions } from '../helpers/processing/LineByLineSender';
 import { recordBotActivity, getLastBotActivity } from '../helpers/processing/ChannelActivity';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
@@ -538,7 +538,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
         // Calculate delay based on line length and token usage
         const lineBaseDelay = 2000 * delayScale;
-        const baseDelay = calculateLineDelay(line.length, lineBaseDelay);
+        // Scale "typing time" with the configured delay multiplier so long single-line responses
+        // don't appear instantly after a brief typing indicator.
+        const baseDelay = calculateLineDelayWithOptions(line.length, lineBaseDelay, {
+          perCharMs: 30 * delayScale,
+          maxReadingMs: 8000 * delayScale
+        });
         const adjustedDelay = Math.floor(baseDelay * delayMultiplier);
 
         // Wait with typing indicator BEFORE sending (applies to ALL lines now, including the first)
