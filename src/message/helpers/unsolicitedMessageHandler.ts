@@ -40,6 +40,10 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
 
+  // Diagnostic: Log mention detection
+  const userMentions = typeof msg.getUserMentions === 'function' ? msg.getUserMentions() : [];
+  console.debug(`🔍 MENTION-CHECK | botId: ${botId} | mentions: [${userMentions?.join(', ')}] | text contains <@${botId}>: ${text.includes(`<@${botId}>`)} | isDirectMention: ${isDirectMention} | isDirectQuery: ${isDirectQuery}`);
+
   // ─────────────────────────────────────────────────────────────────────────
   // Bot-to-Bot Logic (MUST COME BEFORE onlyWhenSpokenTo check)
   // ─────────────────────────────────────────────────────────────────────────
