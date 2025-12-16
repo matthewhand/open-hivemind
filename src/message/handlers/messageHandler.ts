@@ -75,6 +75,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
     let typingInterval: NodeJS.Timeout | null = null;
     let typingTimeout: NodeJS.Timeout | null = null;
     let stopTyping = false;
+    let historyTuneKey: string | null = null;
+    let historyTuneRequestedLimit: number | null = null;
     // Use a per-bot debug namespace so logs are easily attributable in swarm mode.
     const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
@@ -371,16 +373,16 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // Refetch history to capture any messages that arrived during the delay
       try {
         const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 10;
-        const historyKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
-        const requestedLimit = historyTuner.getDesiredLimit(historyKey, baseHistoryLimit);
+        historyTuneKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
+        historyTuneRequestedLimit = historyTuner.getDesiredLimit(historyTuneKey, baseHistoryLimit);
 
         const fetchHistory = async () => {
           // Prefer getMessages (used in tests), but fall back to the IMessengerService shape.
           if (typeof (messageProvider as any).getMessages === 'function') {
-            return await (messageProvider as any).getMessages(channelId, requestedLimit);
+            return await (messageProvider as any).getMessages(channelId, historyTuneRequestedLimit);
           }
           if (typeof (messageProvider as any).getMessagesFromChannel === 'function') {
-            return await (messageProvider as any).getMessagesFromChannel(channelId, requestedLimit);
+            return await (messageProvider as any).getMessagesFromChannel(channelId, historyTuneRequestedLimit);
           }
           // Last resort: attempt a no-limit call
           return await (messageProvider as any).getMessagesFromChannel(channelId);
@@ -414,6 +416,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         botConfig?.llm?.systemPrompt ??
         (message.metadata as any)?.systemPrompt;
 
+      const baseSystemPromptText = typeof baseSystemPrompt === 'string' ? baseSystemPrompt.trim() : '';
       const systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
 
       // Adjust max tokens based on recent usage to prevent walls of text
@@ -441,9 +444,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       try {
         const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 10;
-        const historyKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
-        const requestedLimit = historyTuner.getDesiredLimit(historyKey, baseHistoryLimit);
-        historyTuner.recordResult(historyKey, {
+        const key = historyTuneKey || `${channelId}:${botId || resolvedBotId || activeAgentName}`;
+        const requestedLimit = typeof historyTuneRequestedLimit === 'number'
+          ? historyTuneRequestedLimit
+          : historyTuner.getDesiredLimit(key, baseHistoryLimit);
+
+        historyTuner.recordResult(key, {
           requestedLimit,
           receivedCount: historyMessages.length,
           keptCount: historyForLlm.length,
@@ -510,7 +516,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
         // Strip system prompt leakage if it appears verbatim in the model output.
         const sysText = typeof systemPrompt === 'string' ? systemPrompt : '';
-        const stripped = stripSystemPromptLeak(llmResponse, sysText);
+        const stripped = stripSystemPromptLeak(llmResponse, sysText, baseSystemPromptText);
         if (stripped !== llmResponse) {
           avoidSystemPromptLeak = true;
           llmResponse = stripped;
@@ -697,18 +703,23 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
   }, 'handleMessage', 5000); // 5 second threshold for warnings
 }
 
-function stripSystemPromptLeak(response: string, systemPrompt: string): string {
-  const resp = String(response ?? '');
-  const sys = String(systemPrompt ?? '');
-  if (!resp || !sys) return resp;
-  if (!resp.includes(sys) && !resp.includes(sys.trim())) return resp;
+function stripSystemPromptLeak(response: string, ...promptTexts: string[]): string {
+  let out = String(response ?? '');
+  if (!out) return out;
 
-  // Remove exact occurrences. Also try trimmed variant if different to handle minor trailing whitespace.
-  let out = resp.split(sys).join('');
-  const trimmed = sys.trim();
-  if (trimmed && trimmed !== sys) {
-    out = out.split(trimmed).join('');
+  const prompts = (promptTexts || [])
+    .map((p) => String(p || ''))
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (prompts.length === 0) return out;
+
+  for (const p of prompts) {
+    if (!p) continue;
+    if (!out.includes(p)) continue;
+    out = out.split(p).join('');
   }
+
   return out.trim();
 }
 

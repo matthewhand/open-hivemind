@@ -298,7 +298,13 @@ export class BotConfigurationManager {
 
     // Merge explicit list with discovered list
     const explicitBots = botsEnv ? botsEnv.split(',').map(n => n.trim()).filter(Boolean) : [];
-    const allBotNames = Array.from(new Set([...explicitBots, ...discoveredBots])); // Deduplicate
+    const canonical = (n: string) => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+
+    // Deduplicate bots while preferring explicitly listed names from BOTS.
+    const byCanonical = new Map<string, string>();
+    for (const name of discoveredBots) byCanonical.set(canonical(name), name);
+    for (const name of explicitBots) byCanonical.set(canonical(name), name);
+    const allBotNames = Array.from(byCanonical.values());
 
     if (allBotNames.length > 0) {
       debug(`Loading multi-bot configuration for: ${allBotNames.join(', ')}`);
@@ -324,13 +330,24 @@ export class BotConfigurationManager {
   private discoverBotNamesFromEnv(): string[] {
     const envVars = Object.keys(process.env);
     const botNames = new Set<string>();
-    const prefixRegex = /^BOTS_([A-Za-z0-9]+)_/;
+    const schemaKeys = Object.keys(botSchema)
+      .map((k) => String(k || '').toUpperCase())
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
 
-    for (const key of envVars) {
-      const match = key.match(prefixRegex);
-      if (match) {
-        // match[1] is the Name (e.g. SENECA)
-        botNames.add(match[1].toLowerCase());
+    const prefix = 'BOTS_';
+    for (const rawKey of envVars) {
+      const key = String(rawKey || '');
+      const upper = key.toUpperCase();
+      if (!upper.startsWith(prefix)) continue;
+
+      for (const schemaKey of schemaKeys) {
+        const suffix = `_${schemaKey}`;
+        if (!upper.endsWith(suffix)) continue;
+        const namePart = upper.slice(prefix.length, upper.length - suffix.length);
+        if (!namePart) break;
+        botNames.add(namePart.toLowerCase().replace(/_+/g, '-'));
+        break;
       }
     }
 
@@ -353,16 +370,22 @@ export class BotConfigurationManager {
    */
   private createBotConfig(botName: string): BotConfig | null {
     const upperName = botName.toUpperCase();
+    const upperEnvName = upperName.replace(/[^A-Z0-9]/g, '_');
 
     // Create a convict instance for this bot
     const botConfig = convict(botSchema);
 
     // Replace {name} placeholders with actual bot name
     const envVars = Object.keys(process.env);
-    const prefix = `BOTS_${upperName}_`;
+    const prefixA = `BOTS_${upperName}_`;
+    const prefixB = `BOTS_${upperEnvName}_`;
 
-    // Find all env vars that start with the prefix (case-insensitive check for prefix)
-    const botEnvVars = envVars.filter(key => key.toUpperCase().startsWith(prefix));
+    // Find all env vars that start with a bot prefix (case-insensitive check).
+    // Supports env-safe bot names (e.g. "reload-bot" -> "RELOAD_BOT").
+    const botEnvVars = envVars.filter(key => {
+      const k = key.toUpperCase();
+      return k.startsWith(prefixA.toUpperCase()) || k.startsWith(prefixB.toUpperCase());
+    });
 
     for (const envVar of botEnvVars) {
       // Extract the config key by removing the prefix (case-insensitive substring)
@@ -371,22 +394,9 @@ export class BotConfigurationManager {
       // We'll rely on envVar's actual casing for the suffix part, or normalize it? 
       // Convict schema keys are defined. 
       // Let's just strip the length of the prefix.
-      const configKey = envVar.substring(prefix.length); // This might be wrong if envVar was mixed case prefix
-
-      // More robust extraction: get the part after the matched prefix length, but from the original string
-      // NOTE: We verified valid keys start with prefix (case-insensitive).
-      // If we use standard variable naming, we assume suffixes match schema keys (UPPERCASE).
-
-      // Let's assume the user matches the schema key casing (usually UPPER).
-      // We will try to set it.
-
-      // Fix: we need to handle the fact that we matched case-insensitively
-      // If user had BOTS_MyBot_TOKEN, and we matched BOTS_MYBOT_, 
-      // we want to extract TOKEN.
-      // But prefix length is same.
-      // So we strip the FIRST N chars.
-
-      const suffix = envVar.slice(prefix.length);
+      const envUpper = envVar.toUpperCase();
+      const prefixToUse = envUpper.startsWith(prefixA.toUpperCase()) ? prefixA : prefixB;
+      const suffix = envVar.slice(prefixToUse.length);
       const value = process.env[envVar];
 
       if (value !== undefined) {
@@ -492,7 +502,8 @@ export class BotConfigurationManager {
   }
 
   private getEnvVarName(botName: string, key: string): string {
-    return `BOTS_${botName.toUpperCase()}_${key}`;
+    const envName = String(botName || '').toUpperCase().replace(/[^A-Z0-9]/g, '_');
+    return `BOTS_${envName}_${key}`;
   }
 
   private hasEnvOverride(botName: string, key: string): boolean {

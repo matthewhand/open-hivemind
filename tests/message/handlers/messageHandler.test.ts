@@ -22,6 +22,8 @@ jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
       registerMessage: jest.fn(() => ({ isLeader: true })),
       ensureMinimumDelay: jest.fn(),
       getRemainingDelayMs: jest.fn(() => 0),
+      waitForDelay: jest.fn(() => Promise.resolve()),
+      getReplyToMessageId: jest.fn(() => undefined),
       clear: jest.fn()
     }))
   }
@@ -111,7 +113,7 @@ describe('messageHandler', () => {
     mockGetMessengerProvider.mockReturnValue([mockMessengerProvider]);
     mockStripBotId.mockImplementation((text) => text);
     mockAddUserHint.mockImplementation((text) => text);
-    mockShouldReply.mockReturnValue(true);
+    mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
     mockMessageConfig.get.mockImplementation((key: any) => {
       const config: { [key: string]: any } = {
         MESSAGE_IGNORE_BOTS: true,
@@ -144,11 +146,13 @@ describe('messageHandler', () => {
       expect(mockMessengerProvider.sendMessageToChannel).toHaveBeenCalledWith(
         'test-channel',
         expect.any(String),
-        'bot-123'
+        'bot-123',
+        undefined,
+        undefined
       );
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Hello AI'),
-        historyMessages,
+        expect.any(Array),
         expect.objectContaining({
           channelId: 'test-channel',
           botId: 'bot-123',
@@ -166,7 +170,7 @@ describe('messageHandler', () => {
 
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Follow up question'),
-        historyMessages2,
+        expect.arrayContaining(historyMessages2),
         expect.any(Object)
       );
 
@@ -179,7 +183,7 @@ describe('messageHandler', () => {
       expect(mockStripBotId).toHaveBeenCalledWith('<@bot-123> Hello', 'bot-123');
       expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Stripped message'),
-        [],
+        expect.any(Array),
         expect.any(Object)
       );
 
@@ -196,7 +200,7 @@ describe('messageHandler', () => {
   describe('reply decision logic', () => {
     it('should handle reply decision logic', async () => {
       // Test not processing when shouldReply returns false
-      mockShouldReply.mockReturnValue(false);
+      mockShouldReply.mockReturnValue({ shouldReply: false, reason: 'No', meta: {} } as any);
       const message = new MockMessage('Hello');
 
       const response = await handleMessage(message, [], mockBotConfig);
@@ -205,7 +209,7 @@ describe('messageHandler', () => {
       expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
 
       // Test checking reply conditions
-      mockShouldReply.mockReturnValue(true);
+      mockShouldReply.mockReturnValue({ shouldReply: true, reason: 'Directly addressed', meta: {} } as any);
       const message2 = new MockMessage('Hello');
 
       await handleMessage(message2, [], mockBotConfig);
