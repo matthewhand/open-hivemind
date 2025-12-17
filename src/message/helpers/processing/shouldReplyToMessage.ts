@@ -177,12 +177,12 @@ export async function shouldReplyToMessage(
     // Bot was active in last 5 minutes - high chance to continue conversation
     chance = configuredChance || 0.95; // 95% default when active
     debug(`Recent activity detected (<5m). Using high engagement chance: ${(chance * 100).toFixed(0)}%`);
-    console.info(`🔥 ACTIVE CHANNEL | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | lastActivity: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
+    console.info(`🔥 ACTIVE | channel: ${channelId} | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | last: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
   } else {
     // Bot has been silent - low chance to re-engage
     chance = 0.01; // 1% if silent for > 5 mins
     debug(`Long silence detected (>5m). Chance dropped to 1%.`);
-    console.debug(`💤 INACTIVE CHANNEL | bot: ${botId} | chance: 1% | lastActivity: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
+    console.info(`💤 INACTIVE | channel: ${channelId} | bot: ${botId} | chance: 1% | last: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
 
     // Participant-aware adjustment: if fewer unique participants are active, be more likely to join;
     // if many participants are active, be less likely to interject.

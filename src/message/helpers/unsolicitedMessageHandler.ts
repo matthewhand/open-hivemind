@@ -84,10 +84,10 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
     }
     // If bot was recently active in this channel, allow continued conversation
     if (withinGraceWindow) {
-      console.info(`🔥 GRACE WINDOW | Bot active ${(timeSinceActivity / 1000).toFixed(0)}s ago - bypassing onlyWhenSpokenTo`);
+      console.info(`🔥 GRACE | channel: ${channelId} | active ${(timeSinceActivity / 1000).toFixed(0)}s ago → bypassing onlyWhenSpokenTo`);
       // Fall through to opportunity check below
     } else {
-      console.debug(`💤 NO GRACE | Bot last active ${(timeSinceActivity / 1000).toFixed(0)}s ago - requiring direct address`);
+      console.info(`💤 NO GRACE | channel: ${channelId} | last active ${(timeSinceActivity / 1000).toFixed(0)}s ago → requiring direct address`);
       return false;
     }
   }
