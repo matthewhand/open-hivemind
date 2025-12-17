@@ -6,19 +6,28 @@ const lastBotActivityByChannel = new Map<string, number>();
 const lastBotActivityByChannelAndBot = new Map<string, number>();
 
 export function recordBotActivity(channelId: string, botId?: string): void {
-  lastBotActivityByChannel.set(channelId, Date.now());
+  const now = Date.now();
+  lastBotActivityByChannel.set(channelId, now);
   if (botId) {
-    lastBotActivityByChannelAndBot.set(`${channelId}:${botId}`, Date.now());
+    lastBotActivityByChannelAndBot.set(`${channelId}:${botId}`, now);
   }
   debug(`Recorded bot activity in ${channelId}`);
+  console.info(`📝 ACTIVITY | Recorded bot activity | channel: ${channelId} | bot: ${botId || 'any'} | time: ${new Date(now).toISOString()}`);
 }
 
 export function getLastBotActivity(channelId: string, botId?: string): number {
   if (botId) {
     const byBot = lastBotActivityByChannelAndBot.get(`${channelId}:${botId}`);
-    if (byBot) return byBot;
+    if (byBot) {
+      console.debug(`📖 ACTIVITY | Retrieved bot activity | channel: ${channelId} | bot: ${botId} | age: ${((Date.now() - byBot) / 1000).toFixed(1)}s`);
+      return byBot;
+    }
   }
-  return lastBotActivityByChannel.get(channelId) || 0;
+  const byChannel = lastBotActivityByChannel.get(channelId) || 0;
+  if (byChannel > 0) {
+    console.debug(`📖 ACTIVITY | Retrieved channel activity | channel: ${channelId} | age: ${((Date.now() - byChannel) / 1000).toFixed(1)}s`);
+  }
+  return byChannel;
 }
 
 // For tests
