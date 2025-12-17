@@ -221,7 +221,6 @@ export async function shouldReplyToMessage(
   // This gives +0.9 flat bonus for continuing a conversation the bot is already in
   let isSemanticRelevant = false;
   const mods: string[] = [];
-  if (hasPostedRecently) mods.push('+Recent');
 
   if (hasPostedRecently && historyMessages && historyMessages.length > 0) {
     try {
@@ -241,7 +240,7 @@ export async function shouldReplyToMessage(
       if (isSemanticRelevant) {
         // +0.9 flat bonus for on-topic + recently posted (continuing a conversation)
         chance += 0.9;
-        mods.push('+OnTopic');
+        mods.push('+OnTopic(+0.9)');
         debug(`On-topic + recent: applied +0.9 bonus. Chance: ${chance}`);
       }
     } catch (err) {
@@ -288,21 +287,21 @@ function applyModifiers(
   // Direct mention bonus (+1.0 = guaranteed response)
   if (isDirectlyAddressed) {
     chance += 1.0;
-    mods.push('+Mention');
+    mods.push('+Mention(+1.0)');
     debug(`Direct mention/wakeword detected. Applied +1.0 bonus. New chance: ${chance}`);
   }
 
   // Question mark bonus (+0.2)
   if (text.includes('?')) {
     chance += 0.2;
-    mods.push('+Q');
+    mods.push('+Q(+0.2)');
     debug(`Question mark detected. Applied +0.2 bonus. New chance: ${chance}`);
   }
 
   // Exclamation mark bonus (+0.1)
   if (text.includes('!')) {
     chance += 0.1;
-    mods.push('+!');
+    mods.push('+!(+0.1)');
     debug(`Exclamation mark detected. Applied +0.1 bonus. New chance: ${chance}`);
   }
 
