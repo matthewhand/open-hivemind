@@ -64,7 +64,8 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
         result.push(bulletGroup.join('\n'));
     }
 
-    return result;
+    // Filter out consecutive duplicate lines to prevent LLM stutter loops
+    return result.filter((line, i) => i === 0 || line !== result[i - 1]);
 }
 
 /**
