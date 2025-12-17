@@ -148,7 +148,13 @@ export async function shouldReplyToMessage(
   try {
     if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
       debug('Unsolicited message handler rejected reply (bot inactive in channel & no direct mention)');
-      return { shouldReply: false, reason: 'Unsolicited handler rejected (inactive channel)' };
+      const lastActivity = getLastBotActivity(channelId);
+      const lastStr = lastActivity > 0 ? `${Math.round((Date.now() - lastActivity) / 1000)}s` : 'never';
+      return {
+        shouldReply: false,
+        reason: 'Unsolicited handler rejected (inactive channel)',
+        meta: { mods: 'none', last: lastStr }
+      };
     }
   } catch (err) {
     // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
