@@ -585,6 +585,17 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
 
+        // Strip self-mentions from response (bot shouldn't @mention itself)
+        const allowSelfMention = Boolean(messageConfig.get('MESSAGE_ALLOW_SELF_MENTION'));
+        if (!allowSelfMention && resolvedBotId) {
+          const selfMentionPattern = new RegExp(`<@!?${resolvedBotId}>`, 'gi');
+          const beforeStrip = line;
+          line = line.replace(selfMentionPattern, '').replace(/\s+/g, ' ').trim();
+          if (beforeStrip !== line) {
+            logger(`Stripped self-mention from response: "${beforeStrip.substring(0, 50)}..." → "${line.substring(0, 50)}..."`);
+          }
+        }
+
         // Apply Discord character limit if line is too long
         if (line.length > 1997) {
           const parts = splitMessageContent(line, 1997);

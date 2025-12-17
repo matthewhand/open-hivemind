@@ -73,7 +73,8 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
   // Check if bot was recently active (reuse channelId from line 17)
   const { getLastBotActivity } = require('./processing/ChannelActivity');
   const GRACE_WINDOW_MS = Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || (5 * 60 * 1000);
-  const lastActivity = channelId ? getLastBotActivity(channelId, botId) : 0;
+  // Use channel-wide activity (no botId) - if ANY bot posted recently, allow grace window
+  const lastActivity = channelId ? getLastBotActivity(channelId) : 0;
   const timeSinceActivity = lastActivity > 0 ? (Date.now() - lastActivity) : Number.POSITIVE_INFINITY;
   const withinGraceWindow = timeSinceActivity <= GRACE_WINDOW_MS;
 
