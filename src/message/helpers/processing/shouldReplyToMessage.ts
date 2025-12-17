@@ -264,8 +264,8 @@ export async function shouldReplyToMessage(
     shouldReply: decision,
     reason: decision ? 'Chance roll success' : 'Chance roll failure',
     meta: {
-      chance: Number(chance.toPrecision(3)),
-      roll: Number(roll.toPrecision(3)),
+      chanceToBeat: Number(chance.toPrecision(3)),
+      rolled: Number(roll.toPrecision(3)),
       mods: allMods,
       base: Number(baseChance.toPrecision(2)),
       density: Number(densityModifier.toPrecision(2)),
