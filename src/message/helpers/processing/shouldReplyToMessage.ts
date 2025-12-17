@@ -165,7 +165,9 @@ export async function shouldReplyToMessage(
   // 1. Long Silence Penalty Logic
   const lastInteractionTime = getLastBotActivity(channelId, botId);
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
-  const SILENCE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+  // Use grace window config if set, otherwise default 5 minutes
+  const thresholdRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+  const SILENCE_THRESHOLD = typeof thresholdRaw === 'number' ? thresholdRaw : Number(thresholdRaw) || (5 * 60 * 1000);
   const hasPostedRecently = timeSinceLastActivity <= SILENCE_THRESHOLD;
 
   const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
