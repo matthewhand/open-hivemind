@@ -278,14 +278,16 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       if (replyDecision.reason !== 'Directly addressed') {
         const isAnyoneTyping = TypingMonitor.getInstance().isAnyoneTyping(channelId, [botId]); // Exclude self
 
-        // Also check if anyone posted recently (e.g. during our wait)
-        const lastActivity = getLastBotActivity(channelId, botId);
-        const someonePostedDuringWait = lastActivity > waitStart;
+        // Check if ANY bot (not this one) posted during our wait - use channel-wide activity
+        const channelActivity = getLastBotActivity(channelId); // No botId = channel-wide
+        const someonePostedDuringWait = channelActivity > waitStart;
 
         if (isAnyoneTyping || someonePostedDuringWait) {
-          logger(`Collision detected: Typing=${isAnyoneTyping}, RecentPost=${someonePostedDuringWait}. Aborting.`);
-          console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: Collision Avoidance (Crosstalk) | stats: { isAnyoneTyping: ${isAnyoneTyping}, someonePostedDuringWait: ${someonePostedDuringWait} }`);
-          return null;
+          // Instead of skipping, add a small additional delay and continue
+          const additionalDelay = 2000 + Math.random() * 3000;
+          logger(`Collision detected: Typing=${isAnyoneTyping}, RecentPost=${someonePostedDuringWait}. Adding ${Math.round(additionalDelay)}ms delay.`);
+          console.debug(`⏳ CROSSTALK DELAY | bot: ${botConfig.name} | typing: ${isAnyoneTyping} | posted: ${someonePostedDuringWait} | delay: ${Math.round(additionalDelay)}ms`);
+          await new Promise(resolve => setTimeout(resolve, additionalDelay));
         }
       }
 
