@@ -163,6 +163,7 @@ export async function shouldReplyToMessage(
   }
 
   // 1. Long Silence Penalty Logic
+  const mods: string[] = [];
   const lastInteractionTime = getLastBotActivity(channelId, botId);
   const timeSinceLastActivity = Date.now() - lastInteractionTime;
   // Use grace window config if set, otherwise default 5 minutes
@@ -208,6 +209,8 @@ export async function shouldReplyToMessage(
     debug(`Silent participant factor: participants=${participantCount} factor=${factor.toFixed(2)} chance=${chance}`);
   }
   const baseChance = chance; // Store for meta logs
+  const lastStr = isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`;
+  mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
 
   // 2. Incoming Message Density Logic (1/N scaling)
   // "If 5 messages in a minute, chance is 1/5 of current chance?"
@@ -215,12 +218,14 @@ export async function shouldReplyToMessage(
   // If base is 0.2, then 0.2 * 0.2 = 0.04.
   // We record this message as part of the density check
   chance *= densityModifier;
+  if (Math.abs(densityModifier - 1) > 0.01) {
+    mods.push(`*Density(${densityModifier.toFixed(2)})`);
+  }
   debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
   // 3. Semantic Relevance Bonus (only when bot has posted recently AND message is on-topic)
   // This gives +0.9 flat bonus for continuing a conversation the bot is already in
   let isSemanticRelevant = false;
-  const mods: string[] = [];
 
   if (hasPostedRecently && historyMessages && historyMessages.length > 0) {
     try {
@@ -266,10 +271,7 @@ export async function shouldReplyToMessage(
     meta: {
       chanceToBeat: Number(chance.toPrecision(3)),
       rolled: Number(roll.toPrecision(3)),
-      mods: allMods,
-      base: Number(baseChance.toPrecision(2)),
-      density: Number(densityModifier.toPrecision(2)),
-      last: isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`
+      mods: allMods
     }
   };
 }
