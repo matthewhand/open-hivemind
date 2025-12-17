@@ -28,6 +28,7 @@ import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManage
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 import TypingActivity from '../helpers/processing/TypingActivity';
 import TypingMonitor from '../helpers/monitoring/TypingMonitor';
+import { isOnTopic, isNonsense } from '../helpers/processing/SemanticRelevanceChecker';
 
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
@@ -197,7 +198,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       const replyDecision = await shouldReplyToMessage(message, botId, platform, replyNameCandidates, historyMessages, defaultChannelId);
       if (!replyDecision.shouldReply) {
         logger(`Message not eligible for reply: ${replyDecision.reason}`);
-        console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
+        if (replyDecision.reason !== 'Message from self') {
+          console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
+        }
         return null;
       }
 
@@ -378,7 +381,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // Refetch history to capture any messages that arrived during the delay
       try {
-        const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 10;
+        const baseHistoryLimit = Number(messageConfig.get('MESSAGE_HISTORY_LIMIT')) || 30;
         historyTuneKey = `${channelId}:${botId || resolvedBotId || activeAgentName}`;
         historyTuneRequestedLimit = historyTuner.getDesiredLimit(historyTuneKey, baseHistoryLimit);
 
@@ -411,7 +414,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       // LLM processing with retry for duplicates
       const startTime = Date.now();
-      const MAX_DUPLICATE_RETRIES = 3;
+      const MAX_DUPLICATE_RETRIES = Number(messageConfig.get('MESSAGE_MAX_GENERATION_RETRIES')) || 3;
       let llmResponse: string = '';
       let retryCount = 0;
       let avoidSystemPromptLeak = false;
@@ -552,15 +555,34 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           continue;
         }
 
+
+
         // Check for duplicate response (internal history OR external recent history)
         const historyContents = historyForLlm.map(m => m.getText());
         if (duplicateDetector.isDuplicate(message.getChannelId(), llmResponse, historyContents)) {
           retryCount++;
           if (retryCount > MAX_DUPLICATE_RETRIES) {
-            logger(`Still duplicate after ${MAX_DUPLICATE_RETRIES} retries, sending anyway`);
-            break; // Send it anyway after max retries
+            logger(`Still duplicate after ${MAX_DUPLICATE_RETRIES} retries, giving up on this reply.`);
+            return null; // Don't send duplicate
           }
           logger(`Duplicate response detected, retrying with higher temperature...`);
+          continue;
+        }
+
+        // Check for nonsense / corruption / loops
+        const nonsense = await isNonsense(llmResponse);
+        if (nonsense) {
+          retryCount++;
+          if (retryCount > MAX_DUPLICATE_RETRIES) {
+            const sendAnyway = Boolean(messageConfig.get('MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION'));
+            if (sendAnyway) {
+              logger(`Still nonsense after ${MAX_DUPLICATE_RETRIES} retries, but config says SEND ANYWAY.`);
+              break; // Break loop to send
+            }
+            logger(`Still nonsense after ${MAX_DUPLICATE_RETRIES} retries, giving up on this reply.`);
+            return null; // Don't send nonsense
+          }
+          logger(`Nonsense/corruption detected in response, retrying...`);
           continue;
         }
 

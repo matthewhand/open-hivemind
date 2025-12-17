@@ -397,10 +397,10 @@ Be engaging and a little provocative, but not rude: no insults, no harassment, n
 Do not mention that the channel was quiet/idle and do not say "I noticed".`;
 
           try {
-            const { getLlmProvider } = require('@src/llm/getLlmProvider');
-            const providers = getLlmProvider();
-            if (providers.length > 0) {
-              const response = await providers[0].generateChatCompletion(contextPrompt, [], {});
+            const { getTaskLlm } = require('@src/llm/taskLlmRouter');
+            const sel = getTaskLlm('idle', { baseMetadata: { maxTokensOverride: 120 } });
+            if (sel?.provider) {
+              const response = await sel.provider.generateChatCompletion(contextPrompt, [], sel.metadata);
               if (response && response.trim()) {
                 idlePrompt = response.trim();
                 log(`Generated LLM idle response referencing old message`);

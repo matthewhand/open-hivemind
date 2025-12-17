@@ -6,8 +6,8 @@
  */
 
 import Debug from 'debug';
-import { getLlmProvider } from '@llm/getLlmProvider';
 import messageConfig from '../../../config/messageConfig';
+import { getTaskLlm } from '@llm/taskLlmRouter';
 
 const debug = Debug('app:SemanticRelevanceChecker');
 
@@ -48,19 +48,15 @@ export async function isOnTopic(
     }
 
     try {
-        const providers = getLlmProvider();
-        if (!providers || providers.length === 0) {
-            debug('No LLM provider available for semantic check');
-            return false;
-        }
-
-        const provider = providers[0];
+        const { provider, metadata } = getTaskLlm('semantic', {
+            baseMetadata: { maxTokensOverride: 5 }
+        });
 
         // Build the prompt - focussing on pivoting vs continuation
         const prompt = `You are a conversation flow analyzer. Determine if the new message continues the current topic or pivots to a new, unrelated topic.\n\nContext:\n${conversationContext}\n\nNew Message:\n"${newMessage}"\n\nHas the topic pivoted? Answer with one word: "Pivoted" or "Continuing".`;
 
         // Use the correct interface: generateChatCompletion(userMessage, historyMessages, metadata)
-        const response = await provider.generateChatCompletion(prompt, [], { maxTokens: 5 });
+        const response = await provider.generateChatCompletion(prompt, [], metadata);
 
         const answer = typeof response === 'string' ? response.toLowerCase() : '';
 
@@ -102,3 +98,37 @@ export default {
     getSemanticBonus,
     AFFIRMATIVES
 };
+
+/**
+ * Check if the message is nonsense, corrupted, or largely repetitive/gibberish.
+ * 
+ * @param message - The message text to analyze
+ * @returns true if nonsense/corrupted, false if coherent
+ */
+export async function isNonsense(message: string): Promise<boolean> {
+    // Skip short messages (e.g. "ok", "hi") - hard to judge as nonsense without context
+    if (!message || message.length < 5) return false;
+
+    const enabled = Boolean(messageConfig.get('MESSAGE_SEMANTIC_RELEVANCE_ENABLED'));
+    // We reuse the semantic enabled flag or could add a specific one. 
+    // If semantic checks are off, likely this expensive check should be off too.
+    if (!enabled) return false;
+
+    try {
+        const { provider, metadata } = getTaskLlm('semantic', {
+            baseMetadata: { maxTokensOverride: 5 }
+        });
+
+        const prompt = `Analyze this message. Is it nonsense, corrupted text, a repetition loop, or does it cut off unexpectedly mid-sentence? Answer "Nonsense" or "Coherent".\n\nMessage: "${message}"`;
+        const response = await provider.generateChatCompletion(prompt, [], metadata);
+        const answer = typeof response === 'string' ? response.toLowerCase() : '';
+
+        const isNonsense = answer.includes('nonsense') || answer.includes('corrupt') || answer.includes('loop');
+        debug(`Nonsense check: "${message.substring(0, 30)}..." → ${isNonsense ? 'NONSENSE' : 'COHERENT'} (raw: "${answer}")`);
+
+        return isNonsense;
+    } catch (err) {
+        debug('Nonsense check failed:', err);
+        return false; // Fail safe
+    }
+}

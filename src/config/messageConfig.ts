@@ -456,8 +456,20 @@ const messageConfig = convict({
   MESSAGE_BOT_RESPONSE_MODIFIER: {
     doc: 'Modifier for bot response probability',
     format: Number,
-    default: 0.1,
+    default: -0.1,
     env: 'MESSAGE_BOT_RESPONSE_MODIFIER'
+  },
+  MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION: {
+    doc: 'If true, send the message even if it fails coherence/nonsense checks after retries (prevents blocking on false positives)',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION'
+  },
+  MESSAGE_MAX_GENERATION_RETRIES: {
+    doc: 'Maximum number of retries for bad generation / duplicates / nonsense',
+    format: 'int',
+    default: 3,
+    env: 'MESSAGE_MAX_GENERATION_RETRIES'
   },
   MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: {
     doc: 'Allow replying to bot-authored messages even when not explicitly addressed (risk: bot loops); addressed replies still work regardless',
@@ -534,7 +546,7 @@ const messageConfig = convict({
   MESSAGE_HISTORY_LIMIT: {
     doc: 'Limit for message history',
     format: 'int',
-    default: 10,
+    default: 30,
     env: 'MESSAGE_HISTORY_LIMIT'
   },
   MESSAGE_HISTORY_ADAPTIVE_ENABLED: {

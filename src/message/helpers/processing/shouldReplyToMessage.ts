@@ -160,6 +160,7 @@ export async function shouldReplyToMessage(
   const uniqueUsers = new Set<string>();
   const uniqueBots = new Set<string>();
   let selfMsgCount = 0;
+  let selfTokenCount = 0;
 
   for (const msg of recentHistory) {
     try {
@@ -168,6 +169,9 @@ export async function shouldReplyToMessage(
 
       if (aid === botId) {
         selfMsgCount++;
+        const content = msg.getText?.() || '';
+        // Approximate tokens: char count / 4
+        selfTokenCount += Math.ceil(content.length / 4);
       } else if (isBot) {
         uniqueBots.add(aid);
       } else {
@@ -180,13 +184,17 @@ export async function shouldReplyToMessage(
   // Penalty: -0.05 per message (if we are spamming, stop)
   const msgDensityPenalty = Math.max(0, selfMsgCount * 0.05) * -1;
 
+  // "TokenDensity" = Total tokens *this* instance has sent recently
+  // Penalty: -0.0001 per token (at 1000 tokens = -0.1)
+  const tokenDensityPenalty = Math.max(0, selfTokenCount * 0.0001) * -1;
+
   // "UserDensity" = How many unique users are talking
   // Penalty: -0.02 per extra user > 1 (if >1 user talking, let them talk)
   const userDensityPenalty = uniqueUsers.size > 1 ? (Math.max(0, (uniqueUsers.size - 1) * 0.02) * -1) : 0;
 
   // "BotDensity" = How many unique OTHER bots are talking
-  // Penalty: -0.05 per bot
-  const botDensityPenalty = Math.max(0, uniqueBots.size * 0.05) * -1;
+  // Penalty: -0.1 per bot (Increased to prevent bot storms)
+  const botDensityPenalty = Math.max(0, uniqueBots.size * 0.1) * -1;
 
   // Integrate Unsolicited Message Handler (only for unaddressed messages).
   // If the user directly addressed the bot (mention/reply/wakeword/name), we allow the pipeline to proceed.
@@ -334,7 +342,44 @@ export async function shouldReplyToMessage(
     debug(`No opportunity detected. Applied penalty: ${penalty}. New chance: ${chance}`);
   }
 
-  const modResult = applyModifiers(message, botId, platform, chance, isDirectlyAddressed);
+  // Calculate Leading Address Bonus (Refined: Support lists of mentions)
+  let isLeadingAddress = false;
+  if (isDirectlyAddressed) {
+    // 1. Identify "My Address" patterns
+    const myPatterns: RegExp[] = [
+      new RegExp(`<@!?${botId}>`, 'i'), // My ID
+      ...nameCandidates.map(n => new RegExp(`${escapeRegExp(n)}\\b`, 'i')) // My Names
+    ];
+
+    // 2. Find the *earliest* match index for any of my patterns
+    let firstMatchIndex = Infinity;
+    for (const pat of myPatterns) {
+      const m = text.match(pat); // Case-insensitive match on full text
+      if (m && m.index !== undefined && m.index < firstMatchIndex) {
+        firstMatchIndex = m.index;
+      }
+    }
+
+    if (firstMatchIndex !== Infinity) {
+      // 3. Extract preceding text
+      let preceding = text.substring(0, firstMatchIndex);
+
+      // 4. Strip out *other* mention patterns from the preceding text
+      //    (We assume generic <@...> or <!...> syntax for mentions)
+      preceding = preceding.replace(/<(@|!|#|&|a:)[^>]+>/g, '');
+
+      // 5. Check for any remaining alphanumeric content
+      //    (If only symbols/whitespace remain, we are part of the "Header")
+      //    Use [a-z0-9] because 'text' is already lowercased at start of function
+      const hasContentBefore = /[a-z0-9]/.test(preceding);
+      isLeadingAddress = !hasContentBefore;
+    } else if (isWakeword) {
+      // Wakewords are by definition prefix-based in our check `text.startsWith`
+      isLeadingAddress = true;
+    }
+  }
+
+  const modResult = applyModifiers(message, botId, platform, chance, isDirectlyAddressed, isLeadingAddress);
   chance = modResult.chance;
   const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
 
@@ -357,12 +402,17 @@ export async function shouldReplyToMessage(
   };
 }
 
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function applyModifiers(
   message: any,
   botId: string,
   platform: 'discord' | 'generic',
   chance: number,
-  isDirectlyAddressed: boolean = false
+  isDirectlyAddressed: boolean = false,
+  isLeadingAddress: boolean = false
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
@@ -372,6 +422,13 @@ function applyModifiers(
     chance += 1.0;
     mods.push('+Mention(+1.0)');
     debug(`Direct mention/wakeword detected. Applied +1.0 bonus. New chance: ${chance}`);
+
+    // Leading mention double bonus
+    if (isLeadingAddress) {
+      chance += 1.0;
+      mods.push('+Leading(+1.0)');
+      debug(`Leading mention/wakeword detected. Applied additional +1.0 bonus (Double). New chance: ${chance}`);
+    }
   }
 
   // Question mark bonus (+0.2)
