@@ -220,6 +220,9 @@ export async function shouldReplyToMessage(
   // 3. Semantic Relevance Bonus (only when bot has posted recently)
   let semanticBonus = 1;
   let isSemanticRelevant = false;
+  const mods: string[] = [];
+  if (hasPostedRecently) mods.push('+Recent');
+
   if (hasPostedRecently && historyMessages && historyMessages.length > 0) {
     try {
       // Build context from last few messages
@@ -238,6 +241,7 @@ export async function shouldReplyToMessage(
       if (isSemanticRelevant) {
         semanticBonus = getSemanticBonus();
         chance *= semanticBonus;
+        mods.push(`×Sem(${semanticBonus})`);
         debug(`Semantic relevance bonus applied: ${semanticBonus}x. Chance: ${chance}`);
       }
     } catch (err) {
@@ -245,7 +249,10 @@ export async function shouldReplyToMessage(
     }
   }
 
-  chance = applyModifiers(message, botId, platform, chance);
+  const modResult = applyModifiers(message, botId, platform, chance, isDirectlyAddressed);
+  chance = modResult.chance;
+  const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
+
   // Clamp to [0, 1] to avoid pathological configs/modifiers.
   chance = Math.max(0, Math.min(1, chance));
   debug(`Final chance after applying all modifiers: ${chance}`);
@@ -260,11 +267,10 @@ export async function shouldReplyToMessage(
     meta: {
       chance: Number(chance.toPrecision(3)),
       roll: Number(roll.toPrecision(3)),
-      baseChance: Number(baseChance.toPrecision(3)),
-      densityModifier: Number(densityModifier.toPrecision(3)),
-      semanticBonus: semanticBonus > 1 ? semanticBonus : undefined,
-      timeSinceLastActivity: isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`,
-      hasPostedRecently
+      mods: allMods,
+      base: Number(baseChance.toPrecision(2)),
+      density: Number(densityModifier.toPrecision(2)),
+      last: isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`
     }
   };
 }
@@ -273,44 +279,61 @@ function applyModifiers(
   message: any,
   botId: string,
   platform: 'discord' | 'generic',
-  chance: number
-): number {
+  chance: number,
+  isDirectlyAddressed: boolean = false
+): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
+  const mods: string[] = [];
 
-  // NOTE: Direct mention / wakeword / reply-to-bot are handled deterministically in shouldReplyToMessage().
-
-  if (text.length < 10) {
-    const penalty = messageConfig.get('MESSAGE_SHORT_LENGTH_PENALTY') || 0;
-    chance -= penalty;
-    debug(`Short message detected (<10 chars). Applied penalty: ${penalty}. New chance: ${chance}`);
+  // Direct mention bonus (+1.0 = guaranteed response)
+  if (isDirectlyAddressed) {
+    chance += 1.0;
+    mods.push('+Mention');
+    debug(`Direct mention/wakeword detected. Applied +1.0 bonus. New chance: ${chance}`);
   }
 
-  // Question mark bonus (+0.2) - message is asking something, likely wants response
+  // Question mark bonus (+0.2)
   if (text.includes('?')) {
     chance += 0.2;
+    mods.push('+Q');
     debug(`Question mark detected. Applied +0.2 bonus. New chance: ${chance}`);
   }
 
-  // Exclamation mark bonus (+0.1) - message shows engagement/excitement
+  // Exclamation mark bonus (+0.1)
   if (text.includes('!')) {
     chance += 0.1;
+    mods.push('+!');
     debug(`Exclamation mark detected. Applied +0.1 bonus. New chance: ${chance}`);
   }
 
+  // Short message penalty
+  if (text.length < 10) {
+    const penalty = Number(messageConfig.get('MESSAGE_SHORT_LENGTH_PENALTY')) || 0;
+    if (penalty > 0) {
+      chance -= penalty;
+      mods.push(`-Short(${penalty})`);
+      debug(`Short message detected (<10 chars). Applied penalty: ${penalty}. New chance: ${chance}`);
+    }
+  }
+
+  // Bot message modifier
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
-    // Never auto-reply to bots at 100%; treat as an unsolicited opportunity unless directly addressed.
-    const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || 0;
-    chance += botModifier;
-    debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
+    const botModifier = Number(messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER')) || 0;
+    if (botModifier !== 0) {
+      chance += botModifier;
+      mods.push(`${botModifier >= 0 ? '+' : ''}Bot(${botModifier})`);
+      debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
+    }
   }
 
-  // Provider-agnostic channel bonus multiplier.
+  // Channel bonus multiplier
   const channelBonuses: Record<string, number> = (messageConfig.get as any)('CHANNEL_BONUSES') || {};
-  const bonus = typeof channelBonuses?.[message.getChannelId()] === 'number' ? channelBonuses[message.getChannelId()] : 1.0;
-  if (bonus !== 1.0) {
-    chance *= bonus;
-    debug(`Applied channel bonus multiplier: ${bonus}. New chance: ${chance}`);
+  const channelBonus = typeof channelBonuses?.[message.getChannelId()] === 'number' ? channelBonuses[message.getChannelId()] : 1.0;
+  if (channelBonus !== 1.0) {
+    chance *= channelBonus;
+    mods.push(`×Chan(${channelBonus})`);
+    debug(`Applied channel bonus multiplier: ${channelBonus}. New chance: ${chance}`);
   }
 
-  return chance;
+  return { chance, modifiers: mods.join('') || 'none' };
 }
