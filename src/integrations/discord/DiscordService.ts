@@ -310,6 +310,27 @@ export const Discord = {
       // Set up interaction handler for slash commands
       this.setInteractionHandler();
 
+      // ───────────────────────────────────────────────────────────────────────
+      // Startup Banner: Bot-to-Bot Configuration
+      // ───────────────────────────────────────────────────────────────────────
+      const defaultChannel = this.getDefaultChannel();
+      const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+      const limitToDefault = Boolean(messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'));
+      const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
+      const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
+      const graceWindowMs = Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || 300000;
+
+      console.info('\n╔══════════════════════════════════════════════════════════════╗');
+      console.info('║                 🤖 DISCORD BOT-TO-BOT CONFIG                 ║');
+      console.info('╠══════════════════════════════════════════════════════════════╣');
+      console.info(`║  MESSAGE_IGNORE_BOTS                    : ${ignoreBots ? '❌ true (BLOCKS ALL)' : '✅ false'}`);
+      console.info(`║  MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT   : ${limitToDefault ? '⚠️  true' : '✅ false'}`);
+      console.info(`║  MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED   : ${allowBotToBot ? '✅ true' : '❌ false'}`);
+      console.info(`║  MESSAGE_ONLY_WHEN_SPOKEN_TO            : ${onlyWhenSpokenTo ? '⚠️  true' : '✅ false'}`);
+      console.info(`║  GRACE_WINDOW_MS                        : ${graceWindowMs}ms (${(graceWindowMs / 60000).toFixed(1)}min)`);
+      console.info(`║  DEFAULT_CHANNEL_ID                     : ${defaultChannel || '(not set)'}`);
+      console.info('╚══════════════════════════════════════════════════════════════╝\n');
+
       console.log('!!! EMITTING service-ready FOR DiscordService !!!');
       console.log('!!! DiscordService EMITTER INSTANCE:', this);
       const startupGreetingService = require('../../services/StartupGreetingService').default;
