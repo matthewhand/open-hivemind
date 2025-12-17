@@ -40,10 +40,6 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
 
-  // Diagnostic: Log mention detection
-  const userMentions = typeof msg.getUserMentions === 'function' ? msg.getUserMentions() : [];
-  console.debug(`🔍 MENTION-CHECK | botId: ${botId} | mentions: [${userMentions?.join(', ')}] | text contains <@${botId}>: ${text.includes(`<@${botId}>`)} | isDirectMention: ${isDirectMention} | isDirectQuery: ${isDirectQuery}`);
-
   // ─────────────────────────────────────────────────────────────────────────
   // Bot-to-Bot Logic (MUST COME BEFORE onlyWhenSpokenTo check)
   // ─────────────────────────────────────────────────────────────────────────
@@ -54,26 +50,20 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
     const isFromBot = hasIsFromBot && msg.isFromBot();
     const allowBotToBot = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
 
-    // Diagnostic logging
-    console.debug(`🔍 BOT-CHECK | hasIsFromBot: ${hasIsFromBot}, isFromBot: ${isFromBot}, allowBotToBot: ${allowBotToBot}, isDirectQuery: ${isDirectQuery}`);
-
     if (isFromBot) {
       if (isDirectQuery) {
-        // Bot directly addressed us - always reply
-        console.info(`🤖 BOT-TO-BOT | Bot directly addressed us - allowing`);
+        console.info(`🤖 BOT | from bot, directly addressed → allowing`);
         return true;
       }
       if (allowBotToBot) {
-        // Bot message + bot-to-bot enabled → bypass all other checks
-        console.info(`🤖 BOT-TO-BOT | Allowing unaddressed bot message (MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED=true)`);
+        console.info(`🤖 BOT | from bot, unaddressed, allowBotToBot=true → allowing`);
         return true;
       }
-      // Bot message but bot-to-bot disabled → reject
-      console.info(`🤖 BOT-TO-BOT | Rejecting - bot-to-bot is disabled`);
+      console.info(`🤖 BOT | from bot, unaddressed, allowBotToBot=false → rejecting`);
       return false;
     }
   } catch (err) {
-    console.warn(`🔍 BOT-CHECK | Error in bot detection:`, err);
+    console.warn(`🤖 BOT | Error in detection:`, err);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

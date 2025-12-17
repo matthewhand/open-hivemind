@@ -317,8 +317,7 @@ export class DiscordMessage implements IMessage {
     const isBot = this.message.author?.bot || false;
     // ASCII-ify author name for clean terminal output (strip emojis/non-ASCII)
     const cleanName = (this.message.author?.username || 'unknown').replace(/[^\x20-\x7E]/g, '').substring(0, 20);
-    debug(`isFromBot check: author=${cleanName}, author.bot=${this.message.author?.bot}, result=${isBot}`);
-    console.debug(`🔍 isFromBot | author: ${cleanName} (${this.message.author?.id}) | author.bot: ${this.message.author?.bot} | returning: ${isBot}`);
+    debug(`isFromBot: ${cleanName} → ${isBot}`);
     return isBot;
   }
 
