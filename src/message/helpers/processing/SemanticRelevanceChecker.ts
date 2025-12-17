@@ -66,7 +66,7 @@ export async function isOnTopic(
         const result = isAffirmative(answer);
 
         debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'ON-TOPIC' : 'OFF-TOPIC'} (raw: "${answer}")`);
-        console.info(`🎯 SEMANTIC | ${result ? '✅ on-topic' : '❌ off-topic'} | response: "${answer.trim()}"`);
+        console.debug(`🎯 SEMANTIC | ${result ? '✅ on-topic' : '❌ off-topic'} | response: "${answer.trim()}"`);
 
         return result;
     } catch (err) {

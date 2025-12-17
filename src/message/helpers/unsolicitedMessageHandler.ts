@@ -44,7 +44,7 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
   // Debug: Log if direct query detected
   if (isDirectQuery) {
-    console.info(`📢 DIRECT | bot: ${botId} | mention: ${isDirectMention} | reply: ${isReplyToBot} | wakeword: ${isWakeword}`);
+    console.debug(`📢 DIRECT | bot: ${botId} | mention: ${isDirectMention} | reply: ${isReplyToBot} | wakeword: ${isWakeword}`);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -59,14 +59,14 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
 
     if (isFromBot) {
       if (isDirectQuery) {
-        console.info(`🤖 BOT | from bot, directly addressed → allowing`);
+        console.debug(`🤖 BOT | from bot, directly addressed → allowing`);
         return true;
       }
       if (allowBotToBot) {
-        console.info(`🤖 BOT | from bot, unaddressed, allowBotToBot=true → allowing`);
+        console.debug(`🤖 BOT | from bot, unaddressed, allowBotToBot=true → allowing`);
         return true;
       }
-      console.info(`🤖 BOT | from bot, unaddressed, allowBotToBot=false → rejecting`);
+      console.debug(`🤖 BOT | from bot, unaddressed, allowBotToBot=false → rejecting`);
       return false;
     }
   } catch (err) {
@@ -90,17 +90,17 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
     }
     // If bot was recently active in this channel, allow continued conversation
     if (withinGraceWindow) {
-      console.info(`🔥 GRACE | channel: ${channelId} | active ${(timeSinceActivity / 1000).toFixed(0)}s ago → bypassing onlyWhenSpokenTo`);
+      console.debug(`🔥 GRACE | channel: ${channelId} | active ${(timeSinceActivity / 1000).toFixed(0)}s ago → bypassing onlyWhenSpokenTo`);
       // Fall through to opportunity check below
     } else {
-      console.info(`💤 NO GRACE | channel: ${channelId} | last active ${(timeSinceActivity / 1000).toFixed(0)}s ago → requiring direct address`);
+      console.debug(`💤 NO GRACE | channel: ${channelId} | last active ${(timeSinceActivity / 1000).toFixed(0)}s ago → requiring direct address`);
       return false;
     }
   }
 
   // Direct mentions to THIS bot should always respond (regardless of onlyWhenSpokenTo setting)
   if (isDirectQuery) {
-    console.info(`📢 DIRECT QUERY | bot: ${botId} → allowing`);
+    console.debug(`📢 DIRECT QUERY | bot: ${botId} → allowing`);
     return true;
   }
 

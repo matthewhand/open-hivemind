@@ -12,7 +12,7 @@ export function recordBotActivity(channelId: string, botId?: string): void {
     lastBotActivityByChannelAndBot.set(`${channelId}:${botId}`, now);
   }
   debug(`Recorded bot activity in ${channelId}`);
-  console.info(`📝 ACTIVITY | Recorded bot activity | channel: ${channelId} | bot: ${botId || 'any'} | time: ${new Date(now).toISOString()}`);
+  console.debug(`📝 ACTIVITY | Recorded bot activity | channel: ${channelId} | bot: ${botId || 'any'} | time: ${new Date(now).toISOString()}`);
 }
 
 export function getLastBotActivity(channelId: string, botId?: string): number {
