@@ -1,6 +1,6 @@
 import messageConfig from '@config/messageConfig';
 import Debug from 'debug';
-import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
+import { shouldReplyToUnsolicitedMessage, looksLikeOpportunity } from '../unsolicitedMessageHandler';
 
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
@@ -253,6 +253,27 @@ export async function shouldReplyToMessage(
     }
   }
 
+  // Addressed to Someone Else Penalty
+  const isAddressedToSomeone =
+    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).length > 0) ||
+    /^@\w+/.test(text);
+
+  if (isAddressedToSomeone && !isDirectlyAddressed) {
+    const penalty = -0.5;
+    chance += penalty;
+    mods.push(`AddressedToOther(${penalty})`);
+    debug(`Addressed to someone else. Applied penalty: ${penalty}. New chance: ${chance}`);
+  }
+
+  // No Opportunity Penalty
+  const isOpportunity = looksLikeOpportunity(text);
+  if (!isOpportunity && !isDirectlyAddressed && !isSemanticRelevant) {
+    const penalty = -0.5;
+    chance += penalty;
+    mods.push(`NoOpportunity(${penalty})`);
+    debug(`No opportunity detected. Applied penalty: ${penalty}. New chance: ${chance}`);
+  }
+
   const modResult = applyModifiers(message, botId, platform, chance, isDirectlyAddressed);
   chance = modResult.chance;
   const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
@@ -269,7 +290,7 @@ export async function shouldReplyToMessage(
     shouldReply: decision,
     reason: decision ? 'Chance roll success' : 'Chance roll failure',
     meta: {
-      chanceToBeat: Number(chance.toPrecision(3)),
+      probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),
       mods: allMods
     }
@@ -324,6 +345,8 @@ function applyModifiers(
     mods.push(`${botModifier >= 0 ? '+' : ''}Bot(${botModifier})`);
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }
+
+
 
   // Channel bonus multiplier
   const channelBonuses: Record<string, number> = (messageConfig.get as any)('CHANNEL_BONUSES') || {};
