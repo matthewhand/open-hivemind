@@ -98,7 +98,13 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
     }
   }
 
-  // Addressed vs unaddressed (rough heuristic)
+  // Direct mentions to THIS bot should always respond (regardless of onlyWhenSpokenTo setting)
+  if (isDirectQuery) {
+    console.info(`📢 DIRECT QUERY | bot: ${botId} → allowing`);
+    return true;
+  }
+
+  // Addressed vs unaddressed (rough heuristic for messages addressed to OTHER users)
   const isAddressedToSomeone =
     (typeof msg.getUserMentions === 'function' && (msg.getUserMentions() || []).length > 0) ||
     /^@\w+/.test(text);
