@@ -42,7 +42,9 @@ export async function shouldReplyToMessage(
   const isDirectMention =
     (typeof message.mentionsUsers === 'function' && message.mentionsUsers(botId)) ||
     (typeof message.isMentioning === 'function' && message.isMentioning(botId)) ||
-    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId));
+    (typeof message.getUserMentions === 'function' && (message.getUserMentions() || []).includes(botId)) ||
+    text.includes(`<@${botId}>`) ||
+    text.includes(`<@!${botId}>`);  // Discord nickname mention format
 
   const isReplyToBot =
     (typeof message.isReplyToBot === 'function' && message.isReplyToBot()) ||

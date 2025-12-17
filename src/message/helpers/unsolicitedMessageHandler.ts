@@ -31,7 +31,8 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
     (typeof msg.mentionsUsers === 'function' && msg.mentionsUsers(botId)) ||
     (typeof msg.isMentioning === 'function' && msg.isMentioning(botId)) ||
     (typeof msg.getUserMentions === 'function' && (msg.getUserMentions() || []).includes(botId)) ||
-    text.toLowerCase().includes(`<@${botId}>`);
+    text.includes(`<@${botId}>`) ||
+    text.includes(`<@!${botId}>`);  // Discord nickname mention format
 
   const isReplyToBot =
     (typeof msg.isReplyToBot === 'function' && msg.isReplyToBot()) ||
@@ -40,6 +41,11 @@ export function shouldReplyToUnsolicitedMessage(msg: any, botId: string, integra
   const isWakeword = wakewords.some((word: string) => word && text.toLowerCase().startsWith(String(word).toLowerCase()));
 
   const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
+
+  // Debug: Log if direct query detected
+  if (isDirectQuery) {
+    console.info(`📢 DIRECT | bot: ${botId} | mention: ${isDirectMention} | reply: ${isReplyToBot} | wakeword: ${isWakeword}`);
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // Bot-to-Bot Logic (MUST COME BEFORE onlyWhenSpokenTo check)
