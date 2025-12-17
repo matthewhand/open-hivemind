@@ -495,6 +495,15 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         };
         logger(`Sending to LLM: ${JSON.stringify(payload)}`);
 
+        // Start recurring typing indicator during inference
+        let inferenceTypingInterval: NodeJS.Timeout | null = null;
+        if (messageProvider.sendTyping) {
+          await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
+          inferenceTypingInterval = setInterval(async () => {
+            await messageProvider.sendTyping!(channelId, providerSenderKey).catch(() => { });
+          }, 8000);
+        }
+
         try {
           const llm = botConfig?.llm;
           if (llm && String(llm.provider || '').toLowerCase() === 'openwebui' && (llm.apiUrl || llm.model)) {
@@ -511,6 +520,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         } catch (e) {
           logger('Per-bot LLM override failed, falling back:', e instanceof Error ? e.message : String(e));
           llmResponse = await llmProvider.generateChatCompletion(prompt, historyForLlm, metadata);
+        } finally {
+          // Stop typing indicator after inference completes
+          if (inferenceTypingInterval) clearInterval(inferenceTypingInterval);
         }
         logger(`LLM response: ${llmResponse}`);
 
