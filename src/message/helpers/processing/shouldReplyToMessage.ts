@@ -5,7 +5,7 @@ import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
 import { isBotNameInText } from './MentionDetector';
-import { isOnTopic, getSemanticBonus } from './SemanticRelevanceChecker';
+import { isOnTopic } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -209,8 +209,8 @@ export async function shouldReplyToMessage(
   chance *= densityModifier;
   debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
-  // 3. Semantic Relevance Bonus (only when bot has posted recently)
-  let semanticBonus = 1;
+  // 3. Semantic Relevance Bonus (only when bot has posted recently AND message is on-topic)
+  // This gives +0.9 flat bonus for continuing a conversation the bot is already in
   let isSemanticRelevant = false;
   const mods: string[] = [];
   if (hasPostedRecently) mods.push('+Recent');
@@ -231,10 +231,10 @@ export async function shouldReplyToMessage(
       isSemanticRelevant = await isOnTopic(recentContext, newMessage);
 
       if (isSemanticRelevant) {
-        semanticBonus = getSemanticBonus();
-        chance *= semanticBonus;
-        mods.push(`×Sem(${semanticBonus})`);
-        debug(`Semantic relevance bonus applied: ${semanticBonus}x. Chance: ${chance}`);
+        // +0.9 flat bonus for on-topic + recently posted (continuing a conversation)
+        chance += 0.9;
+        mods.push('+OnTopic');
+        debug(`On-topic + recent: applied +0.9 bonus. Chance: ${chance}`);
       }
     } catch (err) {
       debug(`Semantic relevance check error:`, err);
@@ -308,14 +308,12 @@ function applyModifiers(
     }
   }
 
-  // Bot message modifier
+  // Bot-to-bot penalty (-0.1 by default to taper out discussions, resurrected by idle response)
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
-    const botModifier = Number(messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER')) || 0;
-    if (botModifier !== 0) {
-      chance += botModifier;
-      mods.push(`${botModifier >= 0 ? '+' : ''}Bot(${botModifier})`);
-      debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
-    }
+    const botModifier = Number(messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER')) || -0.1;
+    chance += botModifier;
+    mods.push(`${botModifier >= 0 ? '+' : ''}Bot(${botModifier})`);
+    debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
   }
 
   // Channel bonus multiplier
