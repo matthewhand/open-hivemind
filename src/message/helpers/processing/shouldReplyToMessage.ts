@@ -283,6 +283,18 @@ function applyModifiers(
     debug(`Short message detected (<10 chars). Applied penalty: ${penalty}. New chance: ${chance}`);
   }
 
+  // Question mark bonus (+0.2) - message is asking something, likely wants response
+  if (text.includes('?')) {
+    chance += 0.2;
+    debug(`Question mark detected. Applied +0.2 bonus. New chance: ${chance}`);
+  }
+
+  // Exclamation mark bonus (+0.1) - message shows engagement/excitement
+  if (text.includes('!')) {
+    chance += 0.1;
+    debug(`Exclamation mark detected. Applied +0.1 bonus. New chance: ${chance}`);
+  }
+
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
     // Never auto-reply to bots at 100%; treat as an unsolicited opportunity unless directly addressed.
     const botModifier = messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER') || 0;

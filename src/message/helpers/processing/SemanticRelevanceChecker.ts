@@ -56,14 +56,13 @@ export async function isOnTopic(
 
         const provider = providers[0];
 
-        const prompt = `Given this conversation:\n${conversationContext}\n\nIs this new message on topic or relevant to the conversation?\n"${newMessage}"\n\nAnswer with just one word: Yes or No`;
+        // Build the prompt - combining system instruction and user query
+        const prompt = `You are a relevance checker. Answer only with Yes or No.\n\nGiven this conversation:\n${conversationContext}\n\nIs this new message on topic or relevant to the conversation?\n"${newMessage}"\n\nAnswer with just one word: Yes or No`;
 
-        const response = await provider.generateChatCompletion([
-            { role: 'system', content: 'You are a relevance checker. Answer only with Yes or No.' },
-            { role: 'user', content: prompt }
-        ], { maxTokens: 1, temperature: 0 });
+        // Use the correct interface: generateChatCompletion(userMessage, historyMessages, metadata)
+        const response = await provider.generateChatCompletion(prompt, [], { maxTokens: 1 });
 
-        const answer = typeof response === 'string' ? response : response?.content || '';
+        const answer = typeof response === 'string' ? response : '';
         const result = isAffirmative(answer);
 
         debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'ON-TOPIC' : 'OFF-TOPIC'} (raw: "${answer}")`);
