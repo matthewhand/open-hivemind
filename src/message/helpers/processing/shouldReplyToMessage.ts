@@ -226,11 +226,11 @@ export function shouldReplyToMessage(
     shouldReply: decision,
     reason: decision ? 'Chance roll success' : 'Chance roll failure',
     meta: {
-      chance,
-      roll,
-      baseChance,
-      densityModifier,
-      timeSinceLastActivity: isNaN(timeSinceLastActivity) ? 'never' : `${(timeSinceLastActivity / 1000).toFixed(1)}s`,
+      chance: Number(chance.toPrecision(3)),
+      roll: Number(roll.toPrecision(3)),
+      baseChance: Number(baseChance.toPrecision(3)),
+      densityModifier: Number(densityModifier.toPrecision(3)),
+      timeSinceLastActivity: isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`,
       hasPostedRecently
     }
   };
