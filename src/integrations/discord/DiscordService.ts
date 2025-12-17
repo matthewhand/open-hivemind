@@ -354,7 +354,8 @@ export const Discord = {
 
               try {
                 const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
-                limitToDefaultChannel = limitConfig === undefined ? false : Boolean(limitConfig); // Default: false
+                console.debug(`🔧 CONFIG | MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL = ${limitConfig} (type: ${typeof limitConfig})`);
+                limitToDefaultChannel = limitConfig === undefined ? false : Boolean(limitConfig);
               } catch {
                 limitToDefaultChannel = false; // Default: allow bot replies in all channels
               }

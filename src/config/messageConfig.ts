@@ -209,7 +209,7 @@ const messageConfig = convict({
   MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL: {
     doc: 'When responding to bots, limit responses to the default channel only (prevents spam in other channels)',
     format: Boolean,
-    default: true,
+    default: false,
     env: 'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'
   },
   MESSAGE_SUPPRESS_DUPLICATES: {
