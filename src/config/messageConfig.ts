@@ -212,6 +212,18 @@ const messageConfig = convict({
     default: false,
     env: 'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'
   },
+  MESSAGE_SEMANTIC_RELEVANCE_ENABLED: {
+    doc: 'Enable semantic relevance check - uses 1-token LLM call to boost reply chance if message is on-topic',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_SEMANTIC_RELEVANCE_ENABLED'
+  },
+  MESSAGE_SEMANTIC_RELEVANCE_BONUS: {
+    doc: 'Multiplier to apply when message is semantically relevant and bot has posted recently (default: 10x)',
+    format: Number,
+    default: 10,
+    env: 'MESSAGE_SEMANTIC_RELEVANCE_BONUS'
+  },
   MESSAGE_SUPPRESS_DUPLICATES: {
     doc: 'Suppress duplicate/repetitive bot responses (enabled by default)',
     format: Boolean,

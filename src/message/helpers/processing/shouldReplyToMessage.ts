@@ -5,6 +5,7 @@ import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
 import { isBotNameInText } from './MentionDetector';
+import { isOnTopic, getSemanticBonus } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -14,12 +15,13 @@ export interface ReplyDecision {
   meta?: Record<string, any>;
 }
 
-export function shouldReplyToMessage(
+export async function shouldReplyToMessage(
   message: any,
   botId: string,
   platform: 'discord' | 'generic',
-  botNameOrNames?: string | string[]
-): ReplyDecision {
+  botNameOrNames?: string | string[],
+  historyMessages?: any[]
+): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
     return { shouldReply: true, reason: 'FORCE_REPLY env var enabled' };
@@ -213,6 +215,34 @@ export function shouldReplyToMessage(
   chance *= densityModifier;
   debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
 
+  // 3. Semantic Relevance Bonus (only when bot has posted recently)
+  let semanticBonus = 1;
+  let isSemanticRelevant = false;
+  if (hasPostedRecently && historyMessages && historyMessages.length > 0) {
+    try {
+      // Build context from last few messages
+      const recentContext = historyMessages
+        .slice(-5)
+        .map((m: any) => {
+          const author = m.getAuthorId?.() || 'unknown';
+          const text = m.getText?.() || '';
+          return `${author}: ${text}`;
+        })
+        .join('\n');
+
+      const newMessage = message.getText?.() || '';
+      isSemanticRelevant = await isOnTopic(recentContext, newMessage);
+
+      if (isSemanticRelevant) {
+        semanticBonus = getSemanticBonus();
+        chance *= semanticBonus;
+        debug(`Semantic relevance bonus applied: ${semanticBonus}x. Chance: ${chance}`);
+      }
+    } catch (err) {
+      debug(`Semantic relevance check error:`, err);
+    }
+  }
+
   chance = applyModifiers(message, botId, platform, chance);
   // Clamp to [0, 1] to avoid pathological configs/modifiers.
   chance = Math.max(0, Math.min(1, chance));
@@ -230,6 +260,7 @@ export function shouldReplyToMessage(
       roll: Number(roll.toPrecision(3)),
       baseChance: Number(baseChance.toPrecision(3)),
       densityModifier: Number(densityModifier.toPrecision(3)),
+      semanticBonus: semanticBonus > 1 ? semanticBonus : undefined,
       timeSinceLastActivity: isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`,
       hasPostedRecently
     }

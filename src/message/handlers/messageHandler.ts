@@ -190,7 +190,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           .map((v: any) => String(v))
       ));
 
-      const replyDecision = shouldReplyToMessage(message, botId, platform, replyNameCandidates);
+      const replyDecision = await shouldReplyToMessage(message, botId, platform, replyNameCandidates, historyMessages);
       if (!replyDecision.shouldReply) {
         logger(`Message not eligible for reply: ${replyDecision.reason}`);
         console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
