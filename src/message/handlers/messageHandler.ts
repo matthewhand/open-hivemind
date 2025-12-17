@@ -190,7 +190,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           .map((v: any) => String(v))
       ));
 
-      const replyDecision = await shouldReplyToMessage(message, botId, platform, replyNameCandidates, historyMessages);
+      const defaultChannelId = (typeof (messageProvider as any).getDefaultChannel === 'function')
+        ? (messageProvider as any).getDefaultChannel()
+        : undefined;
+
+      const replyDecision = await shouldReplyToMessage(message, botId, platform, replyNameCandidates, historyMessages, defaultChannelId);
       if (!replyDecision.shouldReply) {
         logger(`Message not eligible for reply: ${replyDecision.reason}`);
         console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
@@ -548,8 +552,9 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           continue;
         }
 
-        // Check for duplicate response
-        if (duplicateDetector.isDuplicate(message.getChannelId(), llmResponse)) {
+        // Check for duplicate response (internal history OR external recent history)
+        const historyContents = historyForLlm.map(m => m.getText());
+        if (duplicateDetector.isDuplicate(message.getChannelId(), llmResponse, historyContents)) {
           retryCount++;
           if (retryCount > MAX_DUPLICATE_RETRIES) {
             logger(`Still duplicate after ${MAX_DUPLICATE_RETRIES} retries, sending anyway`);

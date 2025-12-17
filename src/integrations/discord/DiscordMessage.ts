@@ -398,6 +398,27 @@ export class DiscordMessage implements IMessage {
   }
 
   /**
+   * Checks if this message was sent in a direct message (DM) context.
+   * 
+   * @returns {boolean} True if the message is a DM
+   */
+  isDirectMessage(): boolean {
+    try {
+      // In Discord.js v13/v14, ChannelType.DM is 1. 
+      // We can also check if guild is null/undefined.
+      if (!this.message.guildId && !this.message.guild) {
+        return true;
+      }
+      // Or check typestring if available (older djs) or type enum
+      const type = (this.message.channel as any).type;
+      // 1 is DM, 3 is GroupDM.
+      return type === 1 || type === 3 || type === 'DM';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Retrieves the Discord message being referenced (e.g., in replies).
    * 
    * @returns {Promise<IMessage | null>} The referenced message as an IMessage, or null if none exists

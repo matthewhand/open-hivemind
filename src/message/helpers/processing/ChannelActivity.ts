@@ -12,20 +12,19 @@ export function recordBotActivity(channelId: string, botId?: string): void {
     lastBotActivityByChannelAndBot.set(`${channelId}:${botId}`, now);
   }
   debug(`Recorded bot activity in ${channelId}`);
-  console.debug(`📝 ACTIVITY | Recorded bot activity | channel: ${channelId} | bot: ${botId || 'any'} | time: ${new Date(now).toISOString()}`);
+  debug(`Recorded bot activity in ${channelId}`);
 }
 
 export function getLastBotActivity(channelId: string, botId?: string): number {
   if (botId) {
     const byBot = lastBotActivityByChannelAndBot.get(`${channelId}:${botId}`);
     if (byBot) {
-      console.debug(`📖 ACTIVITY | Retrieved bot activity | channel: ${channelId} | bot: ${botId} | age: ${((Date.now() - byBot) / 1000).toFixed(1)}s`);
       return byBot;
     }
   }
   const byChannel = lastBotActivityByChannel.get(channelId) || 0;
   if (byChannel > 0) {
-    console.debug(`📖 ACTIVITY | Retrieved channel activity | channel: ${channelId} | age: ${((Date.now() - byChannel) / 1000).toFixed(1)}s`);
+    debug(`Retrieved channel activity: age ${((Date.now() - byChannel) / 1000).toFixed(1)}s`);
   }
   return byChannel;
 }

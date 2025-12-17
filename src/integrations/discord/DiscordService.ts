@@ -362,39 +362,7 @@ export const Discord = {
             if (!message.channelId) return;
 
             // Config-based bot message handling
-            if (message.author.bot) {
-              // Check if bots should be ignored entirely
-              let ignoreBots = false;
-              let limitToDefaultChannel = false; // Changed default to false for bot-to-bot
-
-              try {
-                ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
-              } catch {
-                ignoreBots = false; // Default: don't ignore bots
-              }
-
-              try {
-                const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
-                limitToDefaultChannel = limitConfig === undefined ? false : Boolean(limitConfig);
-              } catch {
-                limitToDefaultChannel = false; // Default: allow bot replies in all channels
-              }
-
-              // If ignoring all bots, skip
-              if (ignoreBots) {
-                console.debug(`🚫 BOT-FILTER | Ignoring bot message (MESSAGE_IGNORE_BOTS=true) | author: ${message.author.username}`);
-                return;
-              }
-
-              // If limiting bot replies to default channel, check channel
-              if (limitToDefaultChannel) {
-                const defaultChannelId = this.getDefaultChannel();
-                if (!defaultChannelId || message.channelId !== defaultChannelId) {
-                  console.debug(`🚫 BOT-FILTER | Bot message filtered (not default channel) | channel: ${message.channelId} | default: ${defaultChannelId || 'not set'}`);
-                  return;
-                }
-              }
-            }
+            // Logic moved to centralized handler (shouldReplyToMessage)
 
             // Emit incoming message flow event
             try {
@@ -492,32 +460,7 @@ export const Discord = {
             if (!message.channelId) return;
 
             // Config-based bot message handling (same as main handler)
-            if (message.author.bot) {
-              let ignoreBots = false;
-              let limitToDefaultChannel = true;
-
-              try {
-                ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
-              } catch {
-                ignoreBots = false;
-              }
-
-              try {
-                const limitConfig = messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL');
-                limitToDefaultChannel = limitConfig === undefined ? true : Boolean(limitConfig);
-              } catch {
-                limitToDefaultChannel = true;
-              }
-
-              if (ignoreBots) return;
-
-              if (limitToDefaultChannel) {
-                const defaultChannelId = this.getDefaultChannel();
-                if (!defaultChannelId || message.channelId !== defaultChannelId) {
-                  return;
-                }
-              }
-            }
+            // Logic moved to centralized handler (shouldReplyToMessage)
 
             let repliedMessage: any = null;
             try {
@@ -1063,6 +1006,54 @@ export const Discord = {
 
     public getVoiceChannels(): string[] {
       return this.voiceManager?.getActiveChannels() || [];
+    }
+
+    /**
+     * Returns individual service wrappers for each managed Discord bot.
+     * This allows consumers to interact with specific bots without knowing about the multi-bot implementation.
+     */
+    public getDelegatedServices(): Array<{
+      serviceName: string;
+      messengerService: IMessengerService;
+      botConfig: any;
+    }> {
+      return this.bots.map((bot, index) => {
+        const botServiceName = `discord-${bot.botUserName || `bot${index + 1}`}`;
+
+        // Create a lightweight wrapper that binds methods to this specific bot
+        const serviceWrapper: IMessengerService = {
+          initialize: async () => { /* Already initialized by parent */ },
+          shutdown: async () => { /* Managed by parent */ },
+
+          sendMessageToChannel: async (channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string) => {
+            // Force the specific bot's identity
+            return this.sendMessageToChannel(channelId, message, bot.botUserName, threadId, replyToMessageId);
+          },
+
+          getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+
+          sendPublicAnnouncement: async (channelId: string, announcement: any) => this.sendPublicAnnouncement(channelId, announcement),
+
+          getClientId: () => bot.botUserId,
+
+          getDefaultChannel: () => this.getDefaultChannel(),
+
+          setMessageHandler: (handler) => {
+            // Setup a specific handler? 
+            // Currently DiscordService has one global handler. 
+            // This method might be a no-op if handlers are global, or we could support per-bot handlers later.
+          },
+
+          supportsChannelPrioritization: this.supportsChannelPrioritization,
+          scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined
+        };
+
+        return {
+          serviceName: botServiceName,
+          messengerService: serviceWrapper,
+          botConfig: bot.config
+        };
+      });
     }
   }
 };

@@ -20,7 +20,8 @@ export async function shouldReplyToMessage(
   botId: string,
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[],
-  historyMessages?: any[]
+  historyMessages?: any[],
+  defaultChannelId?: string
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -65,7 +66,8 @@ export async function shouldReplyToMessage(
       .filter(Boolean)
   ));
   const isNameAddressed = nameCandidates.some((n) => isBotNameInText(rawText, n));
-  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed;
+  const isDM = typeof message.isDirectMessage === 'function' && message.isDirectMessage();
+  const isDirectlyAddressed = isDirectMention || isReplyToBot || isWakeword || isNameAddressed || isDM;
   const isFromBot = (() => {
     try {
       return typeof message.isFromBot === 'function' ? Boolean(message.isFromBot()) : false;
@@ -81,6 +83,21 @@ export async function shouldReplyToMessage(
       return { shouldReply: false, reason: 'Message from self' };
     }
   } catch { }
+
+  // 1. Global Ignore Bots (Check first)
+  if (isFromBot) {
+    const ignoreBots = Boolean(messageConfig.get('MESSAGE_IGNORE_BOTS'));
+    if (ignoreBots) {
+      debug('Ignoring bot message (MESSAGE_IGNORE_BOTS=true)');
+      return { shouldReply: false, reason: 'Bots ignored via config' };
+    }
+
+    const limitToDefault = Boolean(messageConfig.get('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL'));
+    if (limitToDefault && defaultChannelId && channelId !== defaultChannelId) {
+      debug(`Bot message not in default channel (${defaultChannelId}); not replying.`);
+      return { shouldReply: false, reason: 'Bot replies limited to default channel' };
+    }
+  }
 
   // If configured to only respond when spoken to, check grace window for non-addressed messages
   if (onlyWhenSpokenTo && !isDirectlyAddressed) {
@@ -138,28 +155,58 @@ export async function shouldReplyToMessage(
     }
   }
 
-  // Record message traffic/participants (used for density + participant-aware unsolicited tuning).
-  const densityModifier = IncomingMessageDensity.getInstance().recordMessageAndGetModifier(
-    channelId,
-    typeof message.getAuthorId === 'function' ? message.getAuthorId() : undefined
-  );
+  // Calculate densities based on provided history (User Request: "user density is how many users are in the chat history provided")
+  const recentHistory = historyMessages ? historyMessages.slice(-15) : []; // Look at last 15 messages
+  const uniqueUsers = new Set<string>();
+  const uniqueBots = new Set<string>();
+  let selfMsgCount = 0;
 
-  // Integrate Unsolicited Message Handler
-  try {
-    if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
-      debug('Unsolicited message handler rejected reply (bot inactive in channel & no direct mention)');
-      const lastActivity = getLastBotActivity(channelId);
-      const lastStr = lastActivity > 0 ? `${Math.round((Date.now() - lastActivity) / 1000)}s` : 'never';
-      return {
-        shouldReply: false,
-        reason: 'Unsolicited handler rejected (inactive channel)',
-        meta: { mods: 'none', last: lastStr }
-      };
+  for (const msg of recentHistory) {
+    try {
+      const aid = msg.getAuthorId?.() || 'unknown';
+      const isBot = msg.isFromBot?.() || false;
+
+      if (aid === botId) {
+        selfMsgCount++;
+      } else if (isBot) {
+        uniqueBots.add(aid);
+      } else {
+        uniqueUsers.add(aid);
+      }
+    } catch { }
+  }
+
+  // "MsgDensity" = Messages *this* instance has sent
+  // Penalty: -0.05 per message (if we are spamming, stop)
+  const msgDensityPenalty = Math.max(0, selfMsgCount * 0.05) * -1;
+
+  // "UserDensity" = How many unique users are talking
+  // Penalty: -0.02 per extra user > 1 (if >1 user talking, let them talk)
+  const userDensityPenalty = uniqueUsers.size > 1 ? (Math.max(0, (uniqueUsers.size - 1) * 0.02) * -1) : 0;
+
+  // "BotDensity" = How many unique OTHER bots are talking
+  // Penalty: -0.05 per bot
+  const botDensityPenalty = Math.max(0, uniqueBots.size * 0.05) * -1;
+
+  // Integrate Unsolicited Message Handler (only for unaddressed messages).
+  // If the user directly addressed the bot (mention/reply/wakeword/name), we allow the pipeline to proceed.
+  if (!isDirectlyAddressed) {
+    try {
+      if (!shouldReplyToUnsolicitedMessage(message, botId, platform)) {
+        debug('Unsolicited message handler rejected reply (bot inactive in channel & no direct mention)');
+        const lastActivity = getLastBotActivity(channelId);
+        const lastStr = lastActivity > 0 ? `${Math.round((Date.now() - lastActivity) / 1000)}s` : 'never';
+        return {
+          shouldReply: false,
+          reason: 'Unsolicited handler rejected (inactive channel)',
+          meta: { mods: 'none', last: lastStr }
+        };
+      }
+    } catch (err) {
+      // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
+      debug('Error in unsolicited message handler; not replying:', err);
+      return { shouldReply: false, reason: 'Unsolicited handler error', meta: { error: String(err) } };
     }
-  } catch (err) {
-    // Fail closed: unsolicited gating errors should never cause the bot to start replying broadly.
-    debug('Error in unsolicited message handler; not replying:', err);
-    return { shouldReply: false, reason: 'Unsolicited handler error', meta: { error: String(err) } };
   }
 
   // 1. Long Silence Penalty Logic
@@ -171,21 +218,29 @@ export async function shouldReplyToMessage(
   const SILENCE_THRESHOLD = typeof thresholdRaw === 'number' ? thresholdRaw : Number(thresholdRaw) || (5 * 60 * 1000);
   const hasPostedRecently = timeSinceLastActivity <= SILENCE_THRESHOLD;
 
+  const lastStr = isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`;
   const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
-  // Default: 95% if bot has been active recently, 1% if silent
-  const configuredChance = typeof baseChanceRaw === 'number' ? baseChanceRaw : Number(baseChanceRaw);
+  const configuredBaseChance = typeof baseChanceRaw === 'number'
+    ? baseChanceRaw
+    : (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '' ? Number(baseChanceRaw) : Number.NaN);
 
-  let chance: number;
+  // "infact we should set the base chance to 0%"
+  let chance = 0.0;
+  if (Number.isFinite(configuredBaseChance)) {
+    chance = configuredBaseChance;
+  }
+
+  const baseChance = chance; // Store for meta logs (pre-recency + pre-modifiers)
+  mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
+
   if (hasPostedRecently) {
-    // Bot was active in last 5 minutes - high chance to continue conversation
-    chance = configuredChance || 0.95; // 95% default when active
-    debug(`Recent activity detected (<5m). Using high engagement chance: ${(chance * 100).toFixed(0)}%`);
-    console.debug(`🔥 ACTIVE | channel: ${channelId} | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | last: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
+    chance += 0.5;
+    mods.push('+Recent(+0.5)');
+    debug(`Recent activity detected (${lastStr}). Applied +0.5 bonus. Chance: ${chance}`);
+    debug(`ACTIVE | channel: ${channelId} | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | last: ${lastStr}`);
   } else {
-    // Bot has been silent - low chance to re-engage
-    chance = 0.01; // 1% if silent for > 5 mins
-    debug(`Long silence detected (>5m). Chance dropped to 1%.`);
-    console.debug(`💤 INACTIVE | channel: ${channelId} | bot: ${botId} | chance: 1% | last: ${(timeSinceLastActivity / 1000).toFixed(0)}s ago`);
+    debug(`Long silence detected (> threshold). Using base chance: ${(chance * 100).toFixed(0)}%`);
+    debug(`INACTIVE | channel: ${channelId} | bot: ${botId} | chance: ${(chance * 100).toFixed(0)}% | last: ${lastStr}`);
 
     // Participant-aware adjustment: if fewer unique participants are active, be more likely to join;
     // if many participants are active, be less likely to interject.
@@ -208,20 +263,20 @@ export async function shouldReplyToMessage(
     chance *= factor;
     debug(`Silent participant factor: participants=${participantCount} factor=${factor.toFixed(2)} chance=${chance}`);
   }
-  const baseChance = chance; // Store for meta logs
-  const lastStr = isNaN(timeSinceLastActivity) ? 'never' : `${Math.round(timeSinceLastActivity / 1000)}s`;
-  mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
 
-  // 2. Incoming Message Density Logic (1/N scaling)
-  // "If 5 messages in a minute, chance is 1/5 of current chance?"
-  // User said: "after say 5 messages ina minute it is like 1/5 chance"
-  // If base is 0.2, then 0.2 * 0.2 = 0.04.
-  // We record this message as part of the density check
-  chance *= densityModifier;
-  if (Math.abs(densityModifier - 1) > 0.01) {
-    mods.push(`*Density(${densityModifier.toFixed(2)})`);
+  // 2. Density Logic (Additive Penalties based on History)
+  if (msgDensityPenalty < 0) {
+    chance += msgDensityPenalty;
+    mods.push(`MsgDensity(${msgDensityPenalty.toFixed(2)})`);
   }
-  debug(`Applied density modifier: ${densityModifier.toFixed(2)}. Chance: ${chance}`);
+  if (userDensityPenalty < 0) {
+    chance += userDensityPenalty;
+    mods.push(`UserDensity(${userDensityPenalty.toFixed(2)})`);
+  }
+  if (botDensityPenalty < 0) {
+    chance += botDensityPenalty;
+    mods.push(`BotDensity(${botDensityPenalty.toFixed(2)})`);
+  }
 
   // 3. Semantic Relevance Bonus (only when bot has posted recently AND message is on-topic)
   // This gives +0.9 flat bonus for continuing a conversation the bot is already in
@@ -243,10 +298,15 @@ export async function shouldReplyToMessage(
       isSemanticRelevant = await isOnTopic(recentContext, newMessage);
 
       if (isSemanticRelevant) {
-        // +0.9 flat bonus for on-topic + recently posted (continuing a conversation)
-        chance += 0.9;
-        mods.push('+OnTopic(+0.9)');
-        debug(`On-topic + recent: applied +0.9 bonus. Chance: ${chance}`);
+        // +0.4 bonus for on-topic (reduced from 0.9 since Recent is now +0.5)
+        chance += 0.4;
+        mods.push('+OnTopic(+0.4)');
+        debug(`On-topic + recent: applied +0.4 bonus. Chance: ${chance}`);
+      } else {
+        // -0.1 penalty for off-topic (switching context while active)
+        chance -= 0.1;
+        mods.push('-OffTopic(-0.1)');
+        debug(`Off-topic + recent: applied -0.1 penalty. Chance: ${chance}`);
       }
     } catch (err) {
       debug(`Semantic relevance check error:`, err);
@@ -338,12 +398,18 @@ function applyModifiers(
     }
   }
 
-  // Bot-to-bot penalty (-0.1 by default to taper out discussions, resurrected by idle response)
+  // Bot-to-bot penalty vs User bonus
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
     const botModifier = Number(messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER')) || -0.1;
     chance += botModifier;
-    mods.push(`${botModifier >= 0 ? '+' : ''}Bot(${botModifier})`);
+    mods.push(`${botModifier >= 0 ? '+' : ''}BotResponse(${botModifier})`);
     debug(`Message from another bot. Applied modifier: ${botModifier}. New chance: ${chance}`);
+  } else {
+    // If NOT from a bot (i.e. from a User), add +0.05 bonus
+    // "set +User(0.05)"
+    const userModifier = 0.05;
+    chance += userModifier;
+    mods.push(`+UserResponse(${userModifier})`);
   }
 
 

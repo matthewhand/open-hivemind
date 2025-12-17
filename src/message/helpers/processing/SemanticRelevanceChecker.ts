@@ -56,17 +56,29 @@ export async function isOnTopic(
 
         const provider = providers[0];
 
-        // Build the prompt - combining system instruction and user query
-        const prompt = `You are a relevance checker. Answer only with Yes or No.\n\nGiven this conversation:\n${conversationContext}\n\nIs this new message on topic or relevant to the conversation?\n"${newMessage}"\n\nAnswer with just one word: Yes or No`;
+        // Build the prompt - focussing on pivoting vs continuation
+        const prompt = `You are a conversation flow analyzer. Determine if the new message continues the current topic or pivots to a new, unrelated topic.\n\nContext:\n${conversationContext}\n\nNew Message:\n"${newMessage}"\n\nHas the topic pivoted? Answer with one word: "Pivoted" or "Continuing".`;
 
         // Use the correct interface: generateChatCompletion(userMessage, historyMessages, metadata)
-        const response = await provider.generateChatCompletion(prompt, [], { maxTokens: 1 });
+        const response = await provider.generateChatCompletion(prompt, [], { maxTokens: 5 });
 
-        const answer = typeof response === 'string' ? response : '';
-        const result = isAffirmative(answer);
+        const answer = typeof response === 'string' ? response.toLowerCase() : '';
 
-        debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'ON-TOPIC' : 'OFF-TOPIC'} (raw: "${answer}")`);
-        console.debug(`🎯 SEMANTIC | ${result ? '✅ on-topic' : '❌ off-topic'} | response: "${answer.trim()}"`);
+        // "Continuing" or "No" (has not pivoted) = On Topic
+        const isOnTopic = answer.includes('continu') || answer.includes('no');
+
+        // "Pivoted" or "Yes" (has pivoted) = Off Topic
+        const isPivoted = answer.includes('pivot') || answer.includes('yes');
+
+        // Logic: specific "continuing" signal is best, but if neither, assume off-topic (pivot) for strictness?
+        // User wants pivoted = penalty. So result=true means "Good/Bonus" (Continuing).
+
+        let result = false;
+        if (isOnTopic) result = true;
+        else if (isPivoted) result = false;
+        else result = false; // Default failure case
+
+        debug(`Semantic relevance check: "${newMessage.substring(0, 30)}..." → ${result ? 'CONTINUING' : 'PIVOTED'} (raw: "${answer}")`);
 
         return result;
     } catch (err) {

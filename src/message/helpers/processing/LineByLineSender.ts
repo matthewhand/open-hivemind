@@ -11,6 +11,17 @@ function isBulletPoint(line: string): boolean {
     return /^[-*•](?:\s|$)/.test(trimmed) || /^\d+\.\s/.test(trimmed);
 }
 
+function normalizeForDedupe(text: string): string {
+    return String(text || '')
+        .trim()
+        .replace(/\r\n/g, '\n')
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\s+([.,!?;:])/g, '$1')
+        .toLowerCase();
+}
+
 /**
  * Split LLM response on newlines and return lines for sequential sending
  * Each line gets sent with typing indicator and delay before the next
@@ -64,8 +75,24 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
         result.push(bulletGroup.join('\n'));
     }
 
-    // Filter out consecutive duplicate lines to prevent LLM stutter loops
-    return result.filter((line, i) => i === 0 || line !== result[i - 1]);
+    if (preserveEmpty) return result;
+
+    // Filter out duplicate lines to prevent LLM stutter loops (normalized + non-consecutive).
+    const seen = new Set<string>();
+    const deduped: string[] = [];
+    let lastKey = '';
+
+    for (const line of result) {
+        const key = normalizeForDedupe(line);
+        if (!key) continue;
+        if (key === lastKey) continue;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        lastKey = key;
+        deduped.push(line);
+    }
+
+    return deduped;
 }
 
 /**

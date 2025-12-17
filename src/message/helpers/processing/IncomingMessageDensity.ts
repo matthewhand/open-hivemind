@@ -9,7 +9,7 @@ const debug = Debug('app:IncomingMessageDensity');
  */
 export class IncomingMessageDensity {
     private static instance: IncomingMessageDensity;
-    private channelHistory: Map<string, number[]> = new Map();
+    private channelHistory: Map<string, Array<{ ts: number, isBot: boolean }>> = new Map();
     private participantLastSeen: Map<string, Map<string, number>> = new Map();
     private readonly WINDOW_MS = 60000; // 1 minute
 
@@ -21,21 +21,18 @@ export class IncomingMessageDensity {
     }
 
     /**
-     * Records an incoming message and returns the density modifier.
-     * Modifier = 1 / (MessageCount in last 60s)
-     * e.g., 1 msg -> 1.0
-     *       5 msgs -> 0.2
+     * Records an incoming message.
      */
-    public recordMessageAndGetModifier(channelId: string, authorId?: string): number {
+    public recordMessage(channelId: string, authorId: string | undefined, isBot: boolean): void {
         const now = Date.now();
-        let timestamps = this.channelHistory.get(channelId) || [];
+        let history = this.channelHistory.get(channelId) || [];
 
         // Prune old
-        timestamps = timestamps.filter(t => (now - t) < this.WINDOW_MS);
+        history = history.filter(item => (now - item.ts) < this.WINDOW_MS);
 
         // Record new
-        timestamps.push(now);
-        this.channelHistory.set(channelId, timestamps);
+        history.push({ ts: now, isBot });
+        this.channelHistory.set(channelId, history);
 
         if (authorId) {
             let byParticipant = this.participantLastSeen.get(channelId);
@@ -45,19 +42,31 @@ export class IncomingMessageDensity {
             }
             byParticipant.set(authorId, now);
         }
+    }
 
-        const count = timestamps.length;
+    /**
+     * Returns the message counts for users and bots in the last window.
+     */
+    public getDensity(channelId: string): { userCount: number, botCount: number, total: number } {
+        const now = Date.now();
+        const history = this.channelHistory.get(channelId) || [];
+        // Just in case we access without recording first, though usually we request after recording.
+        // We filter again to be safe on read.
+        const recent = history.filter(item => (now - item.ts) < this.WINDOW_MS);
 
-        // Calculate Modifier
-        // If count <= 1 (just this message), modifier is 1.0
-        // If count = 5, modifier = 1/5 = 0.2
+        const userCount = recent.filter(x => !x.isBot).length;
+        const botCount = recent.filter(x => x.isBot).length;
 
-        // We ensure a minimum count of 1 to avoid division by zero (impossible here as we just pushed)
-        const modifier = 1 / Math.max(1, count);
+        return { userCount, botCount, total: recent.length };
+    }
 
-        debug(`Channel ${channelId}: ${count} messages in last 60s. Density modifier: ${modifier.toFixed(2)}`);
-
-        return modifier;
+    /**
+     * (Deprecated) Legacy multiplier getter, kept for transitional safety if needed.
+     * Uses total count.
+     */
+    public getDensityModifier(channelId: string): number {
+        const { total } = this.getDensity(channelId);
+        return 1 / Math.max(1, total);
     }
 
     /**

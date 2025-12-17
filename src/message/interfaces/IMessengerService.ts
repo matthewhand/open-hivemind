@@ -207,4 +207,15 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+
+  /**
+   * Optional: Returns extended sub-services managed by this provider.
+   * Useful for services like Discord that manage multiple bot instances under one connection.
+   * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
+   */
+  getDelegatedServices?(): Array<{
+    serviceName: string;
+    messengerService: IMessengerService;
+    botConfig: any;
+  }>;
 }

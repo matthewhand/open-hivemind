@@ -135,46 +135,23 @@ export class IdleResponseManager {
       for (const service of messengerServices) {
         let serviceName = (service as any).providerName || 'generic';
 
-        // Handle Discord service with multiple bot instances
-        if (serviceName === 'discord' && (service as any).getAllBots) {
-          const discordService = service as any;
-          const bots = discordService.getAllBots();
+        // Check if the service supports delegation (e.g. multi-bot Discord)
+        if (typeof service.getDelegatedServices === 'function') {
+          const delegates = service.getDelegatedServices();
 
-          // Create separate service entries for each Discord bot instance
-          bots.forEach((bot: any, index: number) => {
-            const botServiceName = `${serviceName}-${bot.botUserName || `bot${index + 1}`}`;
-
-            if (!this.serviceActivities.has(botServiceName)) {
-              // Create a wrapper that uses the specific bot instance
-              const botWrapper: IMessengerService = {
-                sendMessageToChannel: async (channelId: string, text: string, senderName?: string) => {
-                  return await discordService.sendMessageToChannel(channelId, text, bot.botUserName || senderName);
-                },
-                getMessagesFromChannel: async (channelId: string) => {
-                  return await discordService.getMessagesFromChannel(channelId);
-                },
-                getClientId: () => bot.botUserId || discordService.getClientId(),
-                initialize: async () => { },
-                sendPublicAnnouncement: async (channelId: string, announcement: string, threadId?: string) => {
-                  return await discordService.sendPublicAnnouncement(channelId, announcement, threadId);
-                },
-                getDefaultChannel: () => discordService.getDefaultChannel(),
-                shutdown: async () => { },
-                setMessageHandler: (handler: any) => { }
-              };
-
-              this.serviceActivities.set(botServiceName, {
+          for (const delegate of delegates) {
+            if (!this.serviceActivities.has(delegate.serviceName)) {
+              this.serviceActivities.set(delegate.serviceName, {
                 channels: new Map(),
                 lastInteractedChannelId: null,
-                messengerService: botWrapper,
-                botConfig: this.getBotConfig(serviceName)
+                messengerService: delegate.messengerService,
+                botConfig: delegate.botConfig || this.getBotConfig(serviceName)
               });
-
-              log(`Initialized idle response tracking for Discord bot: ${botServiceName}`);
+              log(`Initialized idle response tracking for delegated bot: ${delegate.serviceName}`);
             }
-          });
+          }
         } else {
-          // Handle other services normally
+          // Handle standard services
           if (!this.serviceActivities.has(serviceName)) {
             this.serviceActivities.set(serviceName, {
               channels: new Map(),

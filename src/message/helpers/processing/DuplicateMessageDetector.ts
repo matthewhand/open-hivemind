@@ -34,7 +34,14 @@ export default class DuplicateMessageDetector {
      * @param content The message content to check
      * @returns true if the message is a duplicate and should be suppressed
      */
-    public isDuplicate(channelId: string, content: string): boolean {
+    /**
+     * Check if a message is a duplicate
+     * @param channelId The channel ID
+     * @param content The message content to check
+     * @param externalHistory Optional list of recent message contents from the channel (to check against other users/bots)
+     * @returns true if the message is a duplicate and should be suppressed
+     */
+    public isDuplicate(channelId: string, content: string, externalHistory: string[] = []): boolean {
         try {
             const suppressEnabled = messageConfig.get('MESSAGE_SUPPRESS_DUPLICATES');
             if (!suppressEnabled) {
@@ -53,12 +60,18 @@ export default class DuplicateMessageDetector {
             // Normalize content for comparison (trim, lowercase, remove extra whitespace)
             const normalizedContent = this.normalizeContent(content);
 
-            // Check for duplicates
-            const isDupe = recentHistory.some(msg =>
+            // Check for duplicates in internal history (what WE sent recently)
+            const isInternalDupe = recentHistory.some(msg =>
                 this.normalizeContent(msg.content) === normalizedContent
             );
 
-            if (isDupe) {
+            // Check for duplicates in external history (what OTHERS sent recently)
+            // Limit to last 5 messages to check for immediate mirroring
+            const isExternalDupe = externalHistory.slice(-5).some(msgContent =>
+                this.normalizeContent(msgContent) === normalizedContent
+            );
+
+            if (isInternalDupe || isExternalDupe) {
                 debug(`Duplicate message detected in channel ${channelId}: "${content.substring(0, 50)}..."`);
                 return true;
             }

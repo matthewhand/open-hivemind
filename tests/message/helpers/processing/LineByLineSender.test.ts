@@ -40,6 +40,11 @@ describe('LineByLineSender', () => {
             const input = "  Line 1  \n  Line 2  ";
             expect(splitOnNewlines(input)).toEqual(["Line 1", "Line 2"]);
         });
+
+        it('should dedupe repeated lines using normalization', () => {
+            const input = "Line 1\nLine 1 \n line   1\nLine 2\nLINE 1";
+            expect(splitOnNewlines(input)).toEqual(["Line 1", "Line 2"]);
+        });
     });
 
     describe('calculateLineDelay', () => {

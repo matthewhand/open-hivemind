@@ -302,6 +302,13 @@ const messageConfig = convict({
     default: 1500,
     env: 'MESSAGE_COMPOUNDING_DELAY_BASE_MS'
   },
+  MESSAGE_SHORT_LENGTH_PENALTY: {
+    doc: 'Penalty to apply to probability for very short messages (<10 chars) to discourage responding to "ok", "lol"',
+    format: Number,
+    default: 0.1,
+    env: 'MESSAGE_SHORT_LENGTH_PENALTY'
+  },
+
   MESSAGE_COMPOUNDING_DELAY_MAX_MS: {
     doc: 'Maximum compounding delay before responding (ms). Prevents infinite wait.',
     format: 'int',
@@ -317,7 +324,7 @@ const messageConfig = convict({
   MESSAGE_UNSOLICITED_BASE_CHANCE: {
     doc: 'Base probability for replying when not explicitly addressed (only used when MESSAGE_ONLY_WHEN_SPOKEN_TO=false)',
     format: Number,
-    default: 0.05,
+    default: 0.01,
     env: 'MESSAGE_UNSOLICITED_BASE_CHANCE'
   },
   MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS: {
