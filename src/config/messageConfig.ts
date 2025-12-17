@@ -224,6 +224,12 @@ const messageConfig = convict({
     default: 10,
     env: 'MESSAGE_SEMANTIC_RELEVANCE_BONUS'
   },
+  MESSAGE_ALLOW_SELF_MENTION: {
+    doc: 'Allow bot to @mention itself in responses (default: false, strips self-mentions)',
+    format: Boolean,
+    default: false,
+    env: 'MESSAGE_ALLOW_SELF_MENTION'
+  },
   MESSAGE_SUPPRESS_DUPLICATES: {
     doc: 'Suppress duplicate/repetitive bot responses (enabled by default)',
     format: Boolean,
