@@ -82,51 +82,43 @@ export async function shouldReplyToMessage(
     }
   } catch { }
 
-  // If configured to only respond when spoken to, do it deterministically (no randomness).
-  if (onlyWhenSpokenTo) {
-    if (!isDirectlyAddressed) {
-      const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
-      const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
+  // If configured to only respond when spoken to, check grace window for non-addressed messages
+  if (onlyWhenSpokenTo && !isDirectlyAddressed) {
+    const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+    const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
 
-      let lastActivityTime = -1;
-      let timeSinceLastActivity = -1;
+    let lastActivityTime = -1;
+    let timeSinceLastActivity = -1;
 
-      if (graceMs > 0) {
-        lastActivityTime = getLastBotActivity(channelId, botId);
-        timeSinceLastActivity = Date.now() - lastActivityTime;
-        if (lastActivityTime > 0 && timeSinceLastActivity <= graceMs) {
-          debug(`MESSAGE_ONLY_WHEN_SPOKEN_TO grace window active (${timeSinceLastActivity}ms <= ${graceMs}ms); replying.`);
-          return {
-            shouldReply: true,
-            reason: 'Grace window active',
-            meta: {
-              timeSinceLastActivity: `${(timeSinceLastActivity / 1000).toFixed(1)}s`,
-              graceDuration: `${(graceMs / 1000).toFixed(0)}s`
-            }
-          };
-        }
+    if (graceMs > 0) {
+      lastActivityTime = getLastBotActivity(channelId, botId);
+      timeSinceLastActivity = Date.now() - lastActivityTime;
+      if (lastActivityTime > 0 && timeSinceLastActivity <= graceMs) {
+        debug(`MESSAGE_ONLY_WHEN_SPOKEN_TO grace window active; proceeding to probability check.`);
+        // Fall through to probability check
+      } else {
+        debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and not addressed, no grace; not replying.');
+        return {
+          shouldReply: false,
+          reason: 'Not addressed (OnlyWhenSpokenTo)',
+          meta: {
+            mods: 'none',
+            last: timeSinceLastActivity >= 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never'
+          }
+        };
       }
-      debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and message is not directly addressed; not replying.');
+    } else {
+      debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and not addressed; not replying.');
       return {
         shouldReply: false,
-        reason: 'Not directly addressed (OnlyWhenSpokenTo)',
-        meta: {
-          graceDuration: `${(graceMs / 1000).toFixed(0)}s`,
-          timeSinceLastActivity: timeSinceLastActivity >= 0 ? `${(timeSinceLastActivity / 1000).toFixed(1)}s` : 'never',
-          lastActivityTime: typeof lastActivityTime !== 'undefined' ? lastActivityTime : -1,
-          withinGraceWindow: false
-        }
+        reason: 'Not addressed (OnlyWhenSpokenTo)',
+        meta: { mods: 'none' }
       };
     }
-    debug('Directly addressed; replying.');
-    return { shouldReply: true, reason: 'Directly addressed' };
   }
 
-  // If directly addressed, reply deterministically (mentions/wakewords/replies should always work).
-  if (isDirectlyAddressed) {
-    debug('Directly addressed; replying.');
-    return { shouldReply: true, reason: 'Directly addressed' };
-  }
+  // Note: Direct mentions will get +1.0 bonus via applyModifiers, guaranteeing response
+
 
   // Safety by default: avoid bot-to-bot loops unless explicitly allowed.
   // This only affects unaddressed bot messages. If a bot pings/replies/wakewords/names us, we reply normally.
