@@ -463,10 +463,11 @@ export const Discord = {
         botUserId: '',
         botUserName: name,
         config: {
+          ...botConfig,  // Copy all config including system prompts
           name,
           token,
-          discord: { token },
-          llmProvider: 'flowise',
+          discord: { ...botConfig?.discord, token },
+          llmProvider: botConfig?.llmProvider || 'flowise',
           llm: botConfig?.llm || undefined
         }
       };
