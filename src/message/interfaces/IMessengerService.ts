@@ -141,11 +141,20 @@ export interface IMessengerService {
   getClientId(): string;
 
   /**
+   * Gets the topic/description of a channel.
+   * 
+   * @param {string} channelId - The channel identifier
+   * @returns {Promise<string | null>} The channel topic or null if not available
+   */
+  getChannelTopic?(channelId: string): Promise<string | null>;
+
+  /**
    * Gets the default channel identifier for this service.
    *
    * @returns {string} The default channel ID
    */
   getDefaultChannel(): string;
+
 
   /**
    * Shuts down the messaging service gracefully.

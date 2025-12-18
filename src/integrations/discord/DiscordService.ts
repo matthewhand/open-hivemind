@@ -745,7 +745,28 @@ export const Discord = {
       }
     }
 
+    /**
+     * Gets the topic/description of a Discord channel.
+     * @param channelId The channel to get the topic from
+     * @returns The channel topic or null if not available
+     */
+    public async getChannelTopic(channelId: string): Promise<string | null> {
+      try {
+        const botInfo = this.bots[0];
+        if (!botInfo) return null;
+        const channel = await botInfo.client.channels.fetch(channelId);
+        if (channel && 'topic' in channel && typeof (channel as any).topic === 'string') {
+          return (channel as any).topic || null;
+        }
+        return null;
+      } catch (error) {
+        log(`Error fetching channel topic for ${channelId}: ${error}`);
+        return null;
+      }
+    }
+
     public async sendPublicAnnouncement(channelId: string, announcement: string, threadId?: string): Promise<void> {
+
       const botInfo = this.bots[0];
       const text = `**Announcement**: ${announcement}`;
       await this.sendMessageToChannel(channelId, text, botInfo.botUserName, threadId);

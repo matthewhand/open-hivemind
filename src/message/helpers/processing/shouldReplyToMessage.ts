@@ -318,15 +318,51 @@ export async function shouldReplyToMessage(
   chance = modResult.chance;
 
   try {
-    if (density && typeof (density as any).getDensity === 'function') {
-      const { total } = (density as any).getDensity(channelId);
-      const burstPenalty = Math.max(-0.5, (total - 1) * 0.10 * -1);
-      if (burstPenalty !== 0) {
-        chance += burstPenalty;
-        mods.push(`BurstTraffic(${burstPenalty.toFixed(2)})`);
-      }
+    // BurstTraffic: Per-bot - only count messages AFTER this bot's last post
+    let msgsSinceLastPost = 0;
+    let userPostedRecently = false;
+    const oneMinuteAgo = Date.now() - 60000;
 
-      // Quiet Channel Bonus (5 min window)
+    if (historyMessages && historyMessages.length > 0 && lastPostTime > 0) {
+      for (const msg of historyMessages) {
+        const ts = (msg as any).timestamp || (msg as any).createdAt || 0;
+        const msgTime = ts instanceof Date ? ts.getTime() : ts;
+        const aid = msg.getAuthorId?.() || '';
+        const isBot = msg.isFromBot?.() || false;
+
+        if (msgTime > lastPostTime && aid !== botId) {
+          msgsSinceLastPost++;
+        }
+        // Check if a USER (not bot) posted in last minute
+        if (!isBot && msgTime > oneMinuteAgo) {
+          userPostedRecently = true;
+        }
+      }
+    } else if (!lastPostTime || lastPostTime === 0) {
+      // Bot has never posted - use full history count (capped)
+      msgsSinceLastPost = historyMessages ? Math.min(historyMessages.length, 5) : 0;
+    }
+
+    // Check if current message is from a user (not bot)
+    if (!isFromBot) {
+      userPostedRecently = true;
+    }
+
+    // BurstTraffic penalty - HALVED from previous values
+    const burstPenalty = Math.max(-0.15, (msgsSinceLastPost - 1) * 0.025 * -1);
+    if (burstPenalty !== 0) {
+      chance += burstPenalty;
+      mods.push(`BurstTraffic(${burstPenalty.toFixed(2)})`);
+    }
+
+    // UserActive bonus - encourage engagement when users are present
+    if (userPostedRecently) {
+      chance += 0.20;
+      mods.push(`+UserActive(+0.20)`);
+    }
+
+    // Quiet Channel Bonus (5 min window) - still global as it's about channel activity
+    if (density && typeof (density as any).getDensity === 'function') {
       const quietWindow = 300000;
       const { total: total5m } = (density as any).getDensity(channelId, quietWindow);
       const quietBonus = 0.20 * Math.max(0, 1 - (total5m / 5));
@@ -336,6 +372,9 @@ export async function shouldReplyToMessage(
       }
     }
   } catch { }
+
+
+
 
   const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
   chance = Math.max(0, Math.min(1, chance));

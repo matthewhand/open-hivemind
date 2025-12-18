@@ -80,8 +80,9 @@ describe('shouldReplyToMessage', () => {
         // Mock Date.now() for the "current" check (> 5 mins later)
         global.Date.now = jest.fn(() => 1000 + 300001); // 1000 + 5m 1s
 
-        // Base chance is low when inactive; set random above it to ensure failure.
-        jest.spyOn(Math, 'random').mockReturnValue(0.1);
+        // Base chance is 0.01, +UserActive bonus adds 0.20 = 0.21
+        // Set random above 0.21 to ensure failure
+        jest.spyOn(Math, 'random').mockReturnValue(0.25);
 
         mockMessage.getText.mockReturnValue('help please');
         const res = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord');
@@ -99,14 +100,16 @@ describe('shouldReplyToMessage', () => {
         global.Date.now = jest.fn(() => 1000 + 300001);
         mockMessage.getText.mockReturnValue('help please');
 
-        // participants=1 => factor=2 => chance=0.01. Random 0.009 should pass.
+        // participants=1 => factor=2 => base chance=0.01, +UserActive=0.20, total=0.21
+        // Random 0.15 should pass (0.15 < 0.21)
         (IncomingMessageDensity.getInstance().getUniqueParticipantCount as jest.Mock).mockReturnValue(1);
-        jest.spyOn(Math, 'random').mockReturnValue(0.009);
+        jest.spyOn(Math, 'random').mockReturnValue(0.15);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
 
-        // participants=6 => factor=2/6 => chance≈0.00166. Random 0.009 should fail.
+        // participants=6 => factor=2/6 => chance≈0.00166 + UserActive 0.20 = ~0.20
+        // Random 0.25 should fail (0.25 > 0.20)
         (IncomingMessageDensity.getInstance().getUniqueParticipantCount as jest.Mock).mockReturnValue(6);
-        jest.spyOn(Math, 'random').mockReturnValue(0.009);
+        jest.spyOn(Math, 'random').mockReturnValue(0.25);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(false);
 
         global.Date.now = RealDate.now;
@@ -131,8 +134,10 @@ describe('shouldReplyToMessage', () => {
         (IncomingMessageDensity.getInstance().recordMessageAndGetModifier as jest.Mock).mockReturnValue(0.1);
         mockMessage.getText.mockReturnValue('help please');
 
-        // Random 0.03 -> should fail.
-        jest.spyOn(Math, 'random').mockReturnValue(0.03);
+        // With density 0.1, base chance is reduced drastically
+        // But +UserActive adds 0.20, so total is around 0.20
+        // Random 0.25 should fail (0.25 > 0.20)
+        jest.spyOn(Math, 'random').mockReturnValue(0.25);
 
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(false);
     });
