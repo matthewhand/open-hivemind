@@ -93,7 +93,10 @@ export class DiscordMessage implements IMessage {
     this.content = message.content || '[No content]'; // Ensure fallback for empty content
     this.channelId = message.channelId;
     this.data = message;
-    this.role = ''; // Customize based on application needs
+    // Role calculation:
+    // If the author is THIS bot (the client user), role is 'assistant'.
+    // Everyone else (humans AND other bots) is 'user'.
+    this.role = (message.author.id === message.client.user?.id) ? 'assistant' : 'user';
     this.platform = 'discord';
 
     // Populate metadata for reply detection

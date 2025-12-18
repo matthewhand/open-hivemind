@@ -188,7 +188,7 @@ describe('shouldReplyToMessage', () => {
         jest.spyOn(Math, 'random').mockReturnValue(0.0);
         const res = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord');
         expect(res.shouldReply).toBe(true);
-        expect(String(res.meta?.mods || '')).toContain('+Reply(+0.5)');
+        expect(res.meta?.mods?.Reply).toBe(0.5);
     });
 
     it('should fail closed if unsolicited handler throws', async () => {
@@ -295,7 +295,7 @@ describe('shouldReplyToMessage', () => {
         jest.spyOn(Math, 'random').mockReturnValue(0.0);
         const res = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot');
         expect(res.shouldReply).toBe(false);
-        expect(String(res.meta?.mods || '')).toContain('BotRatio(-0.50)');
+        expect(res.meta?.mods?.BotRatio).toBe(-0.5);
 
         global.Date.now = RealDate.now;
     });

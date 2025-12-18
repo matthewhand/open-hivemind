@@ -903,6 +903,37 @@ export const Discord = {
       return channelId;
     }
 
+    /**
+     * Updates the bot's presence/activity status with the current model ID.
+     * This shows as "Playing <modelId>" in Discord.
+     * 
+     * @param modelId - The model identifier to display
+     * @param senderKey - Optional sender key to identify which bot instance to update
+     */
+    public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
+      try {
+        // Find the bot to update
+        let bot: Bot | undefined;
+        if (senderKey) {
+          bot = this.bots.find(b =>
+            b.botUserName === senderKey ||
+            b.botUserId === senderKey ||
+            b.config?.name === senderKey
+          );
+        }
+        if (!bot && this.bots.length > 0) {
+          bot = this.bots[0]; // Default to first bot
+        }
+
+        if (bot?.client?.user) {
+          bot.client.user.setActivity(modelId, { type: 0 }); // 0 = Playing
+          log(`Set presence for ${bot.botUserName}: Playing ${modelId}`);
+        }
+      } catch (error) {
+        log(`Failed to set model activity: ${error}`);
+      }
+    }
+
     public async shutdown(): Promise<void> {
       for (const bot of this.bots) {
         await bot.client.destroy();
@@ -910,6 +941,7 @@ export const Discord = {
       }
       Discord.DiscordService.instance = undefined as any;
     }
+
 
     /**
      * Get health status for all Discord bot instances

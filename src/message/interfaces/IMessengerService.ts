@@ -227,4 +227,14 @@ export interface IMessengerService {
     messengerService: IMessengerService;
     botConfig: any;
   }>;
+
+  /**
+   * Optional: Updates the bot's presence/activity status with model info.
+   * For Discord, this updates the "Currently playing" status.
+   * 
+   * @param {string} modelId - The model identifier to display
+   * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
+   */
+  setModelActivity?(modelId: string, senderKey?: string): Promise<void>;
 }
+

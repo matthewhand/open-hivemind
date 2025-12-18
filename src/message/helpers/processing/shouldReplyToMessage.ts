@@ -4,8 +4,11 @@ import { shouldReplyToUnsolicitedMessage, looksLikeOpportunity } from '../unsoli
 
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
+import { GlobalActivityTracker } from './GlobalActivityTracker';
+
 import { isBotNameInText } from './MentionDetector';
 import { isOnTopic } from './SemanticRelevanceChecker';
+import TypingMonitor from '../monitoring/TypingMonitor';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -314,8 +317,9 @@ export async function shouldReplyToMessage(
   const modResult = applyModifiers(message, botId, platform, chance, (isDirectMention || isWakeword || isNameAddressed || isDM), isLeadingAddress, isReplyToBot);
   chance = modResult.chance;
 
+
+  // 5. BurstTraffic: Per-bot - only count messages AFTER this bot's last post
   try {
-    // BurstTraffic: Per-bot - only count messages AFTER this bot's last post
     let msgsSinceLastPost = 0;
     let userPostedRecently = false;
     const oneMinuteAgo = Date.now() - 60000;
@@ -371,12 +375,62 @@ export async function shouldReplyToMessage(
   } catch { }
 
 
+  // 6. Global Activity (Fatigue) Penalty
+  const activityScore = GlobalActivityTracker.getInstance().getScore(botId);
+  const fatigueThreshold = Number(process.env.BOT_GLOBAL_SCORE_LIMIT) || 2.0;
 
+  if (activityScore > fatigueThreshold) {
+    const excess = activityScore - fatigueThreshold;
+    const fatiguePenalty = Math.max(-0.9, -(excess * 0.05)); // Cap at -0.9
 
-  const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
+    // Only apply if significant
+    if (Math.abs(fatiguePenalty) >= 0.01) {
+      chance += fatiguePenalty;
+      mods.push(`GlobalFatigue(${fatiguePenalty.toFixed(2)})`);
+    }
+  }
+
+  const allModStrings = [...mods, ...extractModifierTokens(modResult.modifiers)].filter(Boolean);
+
+  // Convert mods array to JSON object for cleaner output
+  const modsObject: Record<string, number | string> = {};
+  for (const modStr of allModStrings) {
+    // Parse patterns like "Base(0.01 @ never)", "+Recent(+0.5)", "BotHistory(-0.10)"
+    const match = modStr.match(/^([+\-×]?)([\w!]+)\(([^)]+)\)$/);
+    if (match) {
+      const [, sign, name, value] = match;
+      const numValue = parseFloat(value.replace(/@.*/, '').trim());
+      if (!isNaN(numValue)) {
+        modsObject[name] = numValue;
+      } else {
+        modsObject[name] = value; // Keep as string if not purely numeric
+      }
+    }
+  }
+
+  // Crowded conversation multiplier: if bot hasn't posted recently and many others are typing,
+  // multiply probability down to avoid joining an already crowded conversation.
+  // 1 typer = 1.0x (no penalty), 2 typers = 0.75x, 3+ typers = 1/count
+  if (!hasPostedRecently) {
+    const channelId = message.getChannelId();
+    const allTypingUsers = TypingMonitor.getInstance().getTypingUsers(channelId);
+    const otherTypingCount = allTypingUsers.filter((uid: string) => uid !== botId).length;
+
+    if (otherTypingCount > 0) {
+      // Significant penalty: 1 typer = 0.5x, 2 typers = 0.33x, 3 typers = 0.25x
+      const crowdedMultiplier = 1.0 / (otherTypingCount + 1);
+      chance *= crowdedMultiplier;
+      modsObject['Crowded'] = crowdedMultiplier;
+    }
+
+  }
+
   chance = Math.max(0, Math.min(1, chance));
   const roll = Math.random();
   let decision = roll < chance;
+
+  // Generate human-readable prose explanation
+  const prose = generateProseExplanation(modsObject, decision, isDirectlyAddressed, hasPostedRecently);
 
   return {
     shouldReply: decision,
@@ -386,10 +440,191 @@ export async function shouldReplyToMessage(
     meta: {
       probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),
-      mods: allMods
+      mods: modsObject,
+      prose,
+      colorizedMods: generateColorizedModsSummary(modsObject)
     }
   };
 }
+
+// ANSI color codes for console output
+const COLORS = {
+  reset: '\x1b[0m',
+  // Greens (bonuses) - lighter to darker
+  greenLight: '\x1b[92m',    // Bright green (slight bonus)
+  greenMed: '\x1b[32m',      // Green (moderate bonus)
+  greenDark: '\x1b[32;1m',   // Bold green (strong bonus)
+  // Reds (penalties) - lighter to darker
+  redLight: '\x1b[91m',      // Bright red (slight penalty)
+  redMed: '\x1b[31m',        // Red (moderate penalty)
+  redDark: '\x1b[31;1m',     // Bold red (strong penalty)
+  gray: '\x1b[90m',          // Gray for neutral
+};
+
+/**
+ * Generate colorized modifier summary with adjectives for console output
+ */
+function generateColorizedModsSummary(mods: Record<string, number | string>): string {
+  const parts: string[] = [];
+
+  for (const [name, value] of Object.entries(mods)) {
+    if (typeof value !== 'number') continue;
+
+    const absVal = Math.abs(value);
+    const isBonus = value > 0;
+    const isNeutral = value === 0;
+
+    // Determine adjective and color based on magnitude
+    let adjective: string;
+    let color: string;
+
+    if (isNeutral) {
+      adjective = '';
+      color = COLORS.gray;
+    } else if (absVal <= 0.1) {
+      adjective = 'slight';
+      color = isBonus ? COLORS.greenLight : COLORS.redLight;
+    } else if (absVal <= 0.3) {
+      adjective = 'moderate';
+      color = isBonus ? COLORS.greenMed : COLORS.redMed;
+    } else if (absVal <= 0.5) {
+      adjective = 'strong';
+      color = isBonus ? COLORS.greenDark : COLORS.redDark;
+    } else {
+      adjective = 'very strong';
+      color = isBonus ? COLORS.greenDark : COLORS.redDark;
+    }
+
+    const sign = value >= 0 ? '+' : '';
+    const label = adjective ? `${adjective} ${name}` : name;
+    parts.push(`${color}${label}(${sign}${value.toFixed(2)})${COLORS.reset}`);
+  }
+
+  return parts.join(' ');
+}
+
+
+/**
+ * Generate a human-readable prose explanation of why the bot is responding/skipping
+ * Uses modifier magnitudes to add adjectives (slight/moderate/strong)
+ */
+function generateProseExplanation(
+  mods: Record<string, number | string>,
+  decided: boolean,
+  wasDirectlyAddressed: boolean,
+  hasPostedRecently: boolean
+): string {
+  // Helper to get adjective based on magnitude
+  const getAdjective = (value: number): string => {
+    const abs = Math.abs(value);
+    if (abs <= 0.1) return 'slightly';
+    if (abs <= 0.3) return '';  // No adjective for moderate
+    if (abs <= 0.5) return 'strongly';
+    return 'very strongly';
+  };
+
+  // Collect bonuses with magnitudes
+  const bonuses: { phrase: string; value: number }[] = [];
+
+  // Direct address reasons
+  if (wasDirectlyAddressed) {
+    if (typeof mods.Mention === 'number') {
+      bonuses.push({ phrase: 'mentioned', value: mods.Mention });
+    }
+    if (typeof mods.Leading === 'number') {
+      bonuses.push({ phrase: 'addressed first', value: mods.Leading });
+    }
+    if (typeof mods.Reply === 'number') {
+      bonuses.push({ phrase: 'replied to', value: mods.Reply });
+    }
+  }
+
+  // Other bonuses
+  if (typeof mods.Recent === 'number' && mods.Recent > 0) {
+    bonuses.push({ phrase: 'recently active in chat', value: mods.Recent });
+  }
+  if (typeof mods.UserActive === 'number' && mods.UserActive > 0) {
+    bonuses.push({ phrase: 'user activity', value: mods.UserActive });
+  }
+  if (typeof mods.OnTopic === 'number') {
+    bonuses.push({ phrase: 'on-topic conversation', value: mods.OnTopic });
+  }
+  if (typeof mods.Q === 'number') {
+    bonuses.push({ phrase: 'question asked', value: mods.Q });
+  }
+
+  // Collect penalties with magnitudes
+  const penalties: { phrase: string; value: number }[] = [];
+  if (typeof mods.BotHistory === 'number' && mods.BotHistory < 0) {
+    penalties.push({ phrase: 'talked too much', value: mods.BotHistory });
+  }
+  if (typeof mods.BurstTraffic === 'number' && mods.BurstTraffic < 0) {
+    penalties.push({ phrase: 'busy channel', value: mods.BurstTraffic });
+  }
+  if (typeof mods.Crowded === 'number' && mods.Crowded < 1) {
+    penalties.push({ phrase: 'crowded typing', value: 1 - mods.Crowded });
+  }
+  if (typeof mods.BotRatio === 'number' && mods.BotRatio < 0) {
+    penalties.push({ phrase: 'no human participants', value: mods.BotRatio });
+  }
+  if (typeof mods.AddressedToOther === 'number') {
+    penalties.push({ phrase: 'message for someone else', value: mods.AddressedToOther });
+  }
+  if (typeof mods.OffTopic === 'number') {
+    penalties.push({ phrase: 'off-topic', value: mods.OffTopic });
+  }
+
+  // Sort by magnitude (highest impact first)
+  bonuses.sort((a, b) => b.value - a.value);
+  penalties.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+  // Build final sentence with adjectives
+  if (decided) {
+    if (wasDirectlyAddressed) {
+      return bonuses.length > 0
+        ? `Responding to direct mention (plus ${bonuses.map(b => b.phrase).join(', ')}).`
+        : 'Responding to direct address.';
+    }
+
+    if (bonuses.length > 0) {
+      const all = bonuses.map(b => {
+        const adj = getAdjective(b.value);
+        return adj ? `${adj} ${b.phrase}` : b.phrase;
+      });
+      return `Responding due to ${formatList(all)}.`;
+    }
+    return hasPostedRecently
+      ? 'Responding to continue the conversation.'
+      : 'Responding based on chance.';
+  } else {
+
+    if (penalties.length > 0) {
+      const all = penalties.map(p => {
+        const adj = getAdjective(p.value);
+        return adj ? `${adj} ${p.phrase}` : p.phrase;
+      });
+      return `Skipping due to ${formatList(all)}.`;
+    }
+    return 'Skipping based on low probability.';
+  }
+}
+
+function formatList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+function extractModifierTokens(modifiers?: string): string[] {
+  if (!modifiers || modifiers === 'none') return [];
+  return modifiers.match(/[+\-×]?[\w!]+\([^)]+\)/g) || [];
+}
+
+
+
+
+
 
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
