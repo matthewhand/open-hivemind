@@ -135,11 +135,8 @@ export async function shouldReplyToMessage(
     }
   }
 
-  // If directly addressed (mention, reply, wakeword, DM, or name), always reply.
-  // This bypasses unsolicited gating and probability rolls.
-  if (isDirectlyAddressed) {
-    return { shouldReply: true, reason: 'Directly addressed', meta: { mods: '+Mention(+1.0)' } };
-  }
+  // If directly addressed (mention, reply, wakeword, DM, or name), skip unsolicited gating,
+  // but still use the probability roll with a bonus (see applyModifiers).
 
   // Track participation/density for probabilistic throttling.
   const authorId = (() => {
@@ -268,9 +265,9 @@ export async function shouldReplyToMessage(
     mods.push(`TokenDensity(${tokenDensityPenalty.toFixed(2)})`);
   }
 
-  // Prevent bot-to-bot storms when the room is only bots *and* we haven't been active recently.
-  // If we have been active recently (grace window), keep "floodgates" behavior and do not hard-penalize.
-  const botRatioPenalty = (!hasPostedRecently && uniqueBots.size > 0 && uniqueUsers.size === 0) ? -0.5 : 0;
+  // Prevent bot-to-bot storms when the provided context contains no user messages at all.
+  // Only apply when the triggering message is from a bot; do not penalize user-originated prompts.
+  const botRatioPenalty = (isFromBot && uniqueUsers.size === 0) ? -0.5 : 0;
   chance += botRatioPenalty;
   mods.push(`BotRatio(${botRatioPenalty >= 0 ? '+' : ''}${botRatioPenalty.toFixed(2)})`);
 
@@ -381,13 +378,11 @@ export async function shouldReplyToMessage(
   const roll = Math.random();
   let decision = roll < chance;
 
-  if (isDirectlyAddressed) {
-    decision = true;
-  }
-
   return {
     shouldReply: decision,
-    reason: isDirectlyAddressed ? 'Directly addressed' : (decision ? 'Chance roll success' : 'Chance roll failure'),
+    reason: isDirectlyAddressed
+      ? (decision ? 'Directly addressed (chance roll success)' : 'Directly addressed (chance roll failure)')
+      : (decision ? 'Chance roll success' : 'Chance roll failure'),
     meta: {
       probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),

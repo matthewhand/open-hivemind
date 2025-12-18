@@ -151,20 +151,20 @@ describe('shouldReplyToMessage', () => {
 
     it('should return 1 (true) if bot is mentioned', async () => {
         mockMessage.mentionsUsers.mockReturnValue(true);
-        jest.spyOn(Math, 'random').mockReturnValue(0.99); // High random
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
     });
 
     it('should treat user mentions as direct mention', async () => {
         mockMessage.mentionsUsers.mockReturnValue(false);
         (mockMessage.getUserMentions as jest.Mock).mockReturnValue(['bot-id']);
-        jest.spyOn(Math, 'random').mockReturnValue(0.99);
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
     });
 
     it('should return 1 (true) if wakeword is detected', async () => {
         mockMessage.getText.mockReturnValue('hey bot what is up');
-        jest.spyOn(Math, 'random').mockReturnValue(0.99);
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
     });
 
@@ -180,12 +180,15 @@ describe('shouldReplyToMessage', () => {
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(false);
     });
 
-    it('should always reply when message is a reply-to-bot', async () => {
+    it('should skip unsolicited handler when message is a reply-to-bot', async () => {
         mockMessage.isReplyToBot = jest.fn().mockReturnValue(true);
         (shouldReplyToUnsolicitedMessage as jest.Mock).mockImplementation(() => {
             throw new Error('should not be called for direct replies');
         });
-        expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
+        const res = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord');
+        expect(res.shouldReply).toBe(true);
+        expect(String(res.meta?.mods || '')).toContain('+Reply(+0.5)');
     });
 
     it('should fail closed if unsolicited handler throws', async () => {
@@ -209,6 +212,7 @@ describe('shouldReplyToMessage', () => {
 
         // Wakeword -> true
         mockMessage.getText.mockReturnValue('bot please help');
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord')).shouldReply).toBe(true);
     });
 
@@ -220,6 +224,7 @@ describe('shouldReplyToMessage', () => {
         });
 
         mockMessage.getText.mockReturnValue('MyBot: can you help?');
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).shouldReply).toBe(true);
     });
 
@@ -230,6 +235,7 @@ describe('shouldReplyToMessage', () => {
             return null;
         });
 
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         mockMessage.getText.mockReturnValue('seneca—can you help?'); // em dash
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'seneca')).shouldReply).toBe(true);
         mockMessage.getText.mockReturnValue('seneca’s idea?'); // curly apostrophe
@@ -244,6 +250,7 @@ describe('shouldReplyToMessage', () => {
         });
 
         mockMessage.getText.mockReturnValue('seneca: hi');
+        jest.spyOn(Math, 'random').mockReturnValue(0.0);
         expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', ['MyBot', 'Seneca'])).shouldReply).toBe(true);
     });
 
@@ -268,7 +275,7 @@ describe('shouldReplyToMessage', () => {
         global.Date.now = RealDate.now;
     });
 
-    it('should allow unaddressed bot messages within the grace window (floodgates stay open)', async () => {
+    it('should dampen unaddressed bot messages within the grace window when no users are present', async () => {
         (messageConfig.get as jest.Mock).mockImplementation((key) => {
             if (key === 'MESSAGE_WAKEWORDS') return ['hey bot', 'bot'];
             if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
@@ -286,7 +293,9 @@ describe('shouldReplyToMessage', () => {
         global.Date.now = jest.fn(() => 1000 + 10000);
         mockMessage.getText.mockReturnValue('help please');
         jest.spyOn(Math, 'random').mockReturnValue(0.0);
-        expect((await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).shouldReply).toBe(true);
+        const res = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot');
+        expect(res.shouldReply).toBe(false);
+        expect(String(res.meta?.mods || '')).toContain('BotRatio(-0.50)');
 
         global.Date.now = RealDate.now;
     });
