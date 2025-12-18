@@ -49,24 +49,24 @@ describe('LineByLineSender', () => {
 
     describe('calculateLineDelay', () => {
         it('should use default base delay', () => {
-            // 10 chars * 30ms = 300ms. Base 2000. Total 2300.
-            expect(calculateLineDelay(10)).toBe(2300);
+            // 10 chars * 15ms = 150ms. Base 1000. Total 1150.
+            expect(calculateLineDelay(10)).toBe(1150);
         });
 
         it('should allow custom base delay', () => {
-            // 10 chars * 30ms = 300ms. Base 1000. Total 1300.
-            expect(calculateLineDelay(10, 1000)).toBe(1300);
+            // 10 chars * 15ms = 150ms. Base 1000. Total 1150.
+            expect(calculateLineDelay(10, 1000)).toBe(1150);
         });
 
         it('should cap reading delay at 8000ms', () => {
-            // 1000 chars * 30ms = 30000ms. Capped at 8000.
-            // Base 2000. Total 10000.
-            expect(calculateLineDelay(1000)).toBe(10000);
+            // 1000 chars * 15ms = 15000ms. Capped at 4000.
+            // Base 1000. Total 5000.
+            expect(calculateLineDelay(1000)).toBe(5000);
         });
 
         it('should handle zero length line', () => {
-            // 0 * 30 = 0. Base 2000. Total 2000.
-            expect(calculateLineDelay(0)).toBe(2000);
+            // 0 * 15 = 0. Base 1000. Total 1000.
+            expect(calculateLineDelay(0)).toBe(1000);
         });
     });
 
