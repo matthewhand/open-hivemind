@@ -312,7 +312,7 @@ export class UsageTracker {
 
       // Clean up old metrics (keep last 30 days)
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      for (const [date, _] of this.dailyMetrics.entries()) {
+      for (const [date] of this.dailyMetrics.entries()) {
         if (date < thirtyDaysAgo) {
           this.dailyMetrics.delete(date);
         }

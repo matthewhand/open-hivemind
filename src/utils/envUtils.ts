@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 /**
  * Utility functions for detecting and handling environment variable overrides
  */

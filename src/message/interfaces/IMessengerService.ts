@@ -141,11 +141,20 @@ export interface IMessengerService {
   getClientId(): string;
 
   /**
+   * Gets the topic/description of a channel.
+   * 
+   * @param {string} channelId - The channel identifier
+   * @returns {Promise<string | null>} The channel topic or null if not available
+   */
+  getChannelTopic?(channelId: string): Promise<string | null>;
+
+  /**
    * Gets the default channel identifier for this service.
    *
    * @returns {string} The default channel ID
    */
   getDefaultChannel(): string;
+
 
   /**
    * Shuts down the messaging service gracefully.
@@ -207,4 +216,25 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+
+  /**
+   * Optional: Returns extended sub-services managed by this provider.
+   * Useful for services like Discord that manage multiple bot instances under one connection.
+   * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
+   */
+  getDelegatedServices?(): Array<{
+    serviceName: string;
+    messengerService: IMessengerService;
+    botConfig: any;
+  }>;
+
+  /**
+   * Optional: Updates the bot's presence/activity status with model info.
+   * For Discord, this updates the "Currently playing" status.
+   * 
+   * @param {string} modelId - The model identifier to display
+   * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
+   */
+  setModelActivity?(modelId: string, senderKey?: string): Promise<void>;
 }
+

@@ -6,7 +6,6 @@
  */
 
 import { BaseHivemindError, TimeoutError } from '../types/errorClasses';
-import { ErrorLogger } from './errorLogger';
 import Debug from 'debug';
 
 const debug = Debug('app:error:recovery');
@@ -167,6 +166,7 @@ export class RetryHandler {
     operation: () => Promise<T>,
     context?: Record<string, unknown>
   ): Promise<RecoveryResult<T>> {
+    void context;
     const startTime = Date.now();
     let lastError: Error | undefined;
 
@@ -317,6 +317,7 @@ export class FallbackManager {
     primaryOperation: () => Promise<T>,
     context?: Record<string, unknown>
   ): Promise<RecoveryResult<T>> {
+    void context;
     const startTime = Date.now();
     const fallbacks = this.fallbacks.get(operationKey) || [];
     

@@ -197,11 +197,9 @@ class ProviderConfigManager {
 
   public updateProvider(id: string, updates: Partial<ProviderInstance>): ProviderInstance | null {
     let target = this.store.message.find(p => p.id === id);
-    let category: 'message' | 'llm' = 'message';
 
     if (!target) {
       target = this.store.llm.find(p => p.id === id);
-      category = 'llm';
     }
 
     if (!target) return null;

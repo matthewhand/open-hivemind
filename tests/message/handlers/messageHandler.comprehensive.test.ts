@@ -84,7 +84,8 @@ jest.mock('../../../src/message/management/IdleResponseManager', () => ({
 jest.mock('../../../src/utils/InputSanitizer', () => ({
     InputSanitizer: {
         sanitizeMessage: jest.fn(t => t),
-        validateMessage: jest.fn(() => ({ isValid: true }))
+        validateMessage: jest.fn(() => ({ isValid: true })),
+        stripSurroundingQuotes: jest.fn((t: string) => t)
     }
 }));
 jest.mock('../../../src/message/helpers/unsolicitedMessageHandler');
@@ -191,9 +192,13 @@ describe('messageHandler Configuration and Features', () => {
 
         await promise;
 
-        expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledTimes(1);
-        const callArgs = mockLlmProvider.generateChatCompletion.mock.calls[0];
-        const metadata = callArgs[2] as any;
+        expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
+        const systemPromptCall = mockLlmProvider.generateChatCompletion.mock.calls.find((call) => {
+            const metadata = call[2] as any;
+            return metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.length > 0;
+        });
+        expect(systemPromptCall).toBeDefined();
+        const metadata = (systemPromptCall as any)[2] as any;
 
         expect(metadata).toBeDefined();
         expect(metadata.systemPrompt).toContain('You are PhilosopherBot');
@@ -288,8 +293,11 @@ describe('messageHandler Configuration and Features', () => {
         await jest.advanceTimersByTimeAsync(50000);
         await promise;
 
-        // Should have called LLM twice
-        expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalledTimes(2);
+        // Should have called the inference LLM twice (duplicate then fresh). Ignore any semantic/nonsense checks.
+        const inferenceCalls = mockLlmProvider.generateChatCompletion.mock.calls.filter(([prompt]) => {
+            return typeof prompt === 'string' && !prompt.startsWith('Analyze this message.');
+        });
+        expect(inferenceCalls).toHaveLength(2);
         // Should send the fresh answer
         expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith('channel-123', 'Fresh Answer', expect.any(String), undefined, undefined);
     });

@@ -13,21 +13,13 @@ interface BotOverride {
   mcpServers?: unknown[];
   mcpGuard?: unknown;
 }
-import {
+import type {
   BotConfig,
   MessageProvider,
   LlmProvider,
   McpServerConfig,
   McpGuardConfig,
-  DiscordConfig,
-  SlackConfig,
-  MattermostConfig,
-  OpenAIConfig,
-  FlowiseConfig,
-  OpenWebUIConfig,
-  OpenSwarmConfig,
-  ConfigurationValidationResult,
-  isBotConfig
+  ConfigurationValidationResult
 } from '@src/types/config';
 import { ConfigurationError, ValidationError } from '../types/errorClasses';
 
@@ -361,7 +353,7 @@ export class BotConfigurationManager {
    * Load multi-bot configuration from BOTS environment variable
    * (Now deprecated/internal helper for explicit list if needed, but logic is merged above)
    */
-  private loadMultiBotConfiguration(botsEnv: string): void {
+  private loadMultiBotConfiguration(): void {
     // Deprecated implementation - logic moved to loadConfiguration
   }
 
@@ -434,16 +426,28 @@ export class BotConfigurationManager {
 
     botConfig.validate({ allowed: 'warn' });
 
+    const llmProvider = botConfig.get('LLM_PROVIDER') as LlmProvider;
+    let llmModel: string | undefined;
+
+    // Resolve model based on provider
+    if (llmProvider === 'openai') {
+      llmModel = botConfig.get('OPENAI_MODEL');
+    } else if (llmProvider === 'openswarm') {
+      llmModel = botConfig.get('OPENSWARM_TEAM');
+    }
+
     // Build the bot configuration object
     const config: BotConfig = {
       name: botName,
       messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
-      llmProvider: botConfig.get('LLM_PROVIDER') as LlmProvider,
+      llmProvider,
+      llmModel,
       persona: botConfig.get('PERSONA') as string || 'default',
       systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
       mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' }
     };
+
 
     // Add Discord configuration if token is provided
     const discordToken = botConfig.get('DISCORD_BOT_TOKEN');

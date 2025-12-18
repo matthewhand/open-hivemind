@@ -375,10 +375,10 @@ export class StartupDiagnostics {
       // Count users from secure configuration (if available)
       try {
         const SecureConfigManager = require('../config/SecureConfigManager');
-        const secureConfig = SecureConfigManager.getInstance();
+        SecureConfigManager.getInstance();
         // Note: This would need to be implemented in SecureConfigManager
         // status.secureConfigUsers = secureConfig.getUserCount();
-      } catch (e) {
+      } catch {
         // SecureConfigManager not available or doesn't have user counting
       }
 
@@ -397,7 +397,7 @@ export class StartupDiagnostics {
       const AuthManager = require('../auth/AuthManager');
       const authManager = AuthManager.getInstance();
       return !!authManager;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
