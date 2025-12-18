@@ -201,13 +201,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       if (!replyDecision.shouldReply) {
         logger(`Message not eligible for reply: ${replyDecision.reason}`);
         if (replyDecision.reason !== 'Message from self') {
-          console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
+          console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason}\nstats: ${JSON.stringify(replyDecision.meta || {}, null, 2)}`);
         }
         return null;
       }
 
       const targetType = (typeof message.isFromBot === 'function' && message.isFromBot()) ? 'bot' : 'user';
-      console.info(`✅ RESPONDING | bot: ${botConfig.name} | platform: ${platform} | target_type: ${targetType} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})} | channel: ${channelId} | trigger: ${message.getMessageId()}`);
+      console.info(`✅ RESPONDING | bot: ${botConfig.name} | platform: ${platform} | target_type: ${targetType} | reason: ${replyDecision.reason} | channel: ${channelId}\nstats: ${JSON.stringify(replyDecision.meta || {}, null, 2)}`);
 
       // Detect mentions and replies for context hints (use active agent name, not just botConfig.name)
       const mentionContext = detectMentions(message, botId, activeAgentName);
@@ -287,35 +287,41 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       await channelDelayManager.waitForDelay(delayKey);
 
       // -----------------------------------------------------------------------
-      // Collision Avoidance (Anti-Crosstalk)
+      // Collision Avoidance (Anti-Crosstalk) - with probability-based bypass
       // -----------------------------------------------------------------------
-      // If we are replying based on CHANCE (not directly addressed), check if anyone else is typing
-      // or if another bot posted during our wait. This prevents bots from piling on.
-      if (replyDecision.reason !== 'Directly addressed') {
-        const isAnyoneTyping = TypingMonitor.getInstance().isAnyoneTyping(channelId, [botId]); // Exclude self
+      // Check if anyone else is typing or posted during our wait.
+      // Higher response probability = more likely to proceed despite crosstalk.
+      const isAnyoneTyping = TypingMonitor.getInstance().isAnyoneTyping(channelId, [botId]); // Exclude self
 
-        // Check if ANY bot (not this one) posted during our wait
-        // We check if ANY message was sent to the channel after our wait started
-        const channelActivityImport = require('@message/helpers/processing/ChannelActivity');
-        let someonePostedDuringWait = false;
+      // Check if ANY bot (not this one) posted during our wait
+      const channelActivityImport = require('@message/helpers/processing/ChannelActivity');
+      let someonePostedDuringWait = false;
+      try {
+        const otherBotsActivity = channelActivityImport.getRecentChannelActivity?.(channelId, waitStart) || [];
+        someonePostedDuringWait = otherBotsActivity.some((a: any) => a.botId !== botId && a.timestamp > waitStart);
+      } catch {
         try {
-          // Check recent activity from other sources
-          const otherBotsActivity = channelActivityImport.getRecentChannelActivity?.(channelId, waitStart) || [];
-          someonePostedDuringWait = otherBotsActivity.some((a: any) => a.botId !== botId && a.timestamp > waitStart);
-        } catch {
-          // Fallback: check if density tracker shows new messages
-          try {
-            const density = IncomingMessageDensity.getInstance();
-            const { total } = density.getDensity(channelId, Date.now() - waitStart);
-            someonePostedDuringWait = total > 1; // More than just the triggering message
-          } catch { }
-        }
+          const density = IncomingMessageDensity.getInstance();
+          const { total } = density.getDensity(channelId, Date.now() - waitStart);
+          someonePostedDuringWait = total > 1;
+        } catch { }
+      }
 
-        if (isAnyoneTyping || someonePostedDuringWait) {
-          // Add a small additional delay and continue
+      if (isAnyoneTyping || someonePostedDuringWait) {
+        // Extract probability from decision meta (format: "<0.XXX")
+        const probStr = String(replyDecision.meta?.probability || '0').replace('<', '');
+        const responseProbability = Number(probStr) || 0;
+
+        // Roll to see if we proceed despite crosstalk (higher prob = more likely to proceed)
+        const crosstalkRoll = Math.random();
+        if (crosstalkRoll < responseProbability) {
+          // High probability message - proceed despite crosstalk
+          console.debug(`⚡ CROSSTALK BYPASS | bot: ${botConfig.name} | prob: ${responseProbability.toFixed(2)} | roll: ${crosstalkRoll.toFixed(2)} | PROCEEDING`);
+        } else {
+          // Low probability - defer by adding delay
           const additionalDelay = 2000 + Math.random() * 3000;
-          logger(`Collision detected: Typing=${isAnyoneTyping}, RecentPost=${someonePostedDuringWait}. Adding ${Math.round(additionalDelay)}ms delay.`);
-          console.debug(`⏳ CROSSTALK DELAY | bot: ${botConfig.name} | typing: ${isAnyoneTyping} | posted: ${someonePostedDuringWait} | delay: ${Math.round(additionalDelay)}ms`);
+          logger(`Collision detected: Typing=${isAnyoneTyping}, Posted=${someonePostedDuringWait}. Adding ${Math.round(additionalDelay)}ms delay.`);
+          console.debug(`⏳ CROSSTALK DELAY | bot: ${botConfig.name} | prob: ${responseProbability.toFixed(2)} | roll: ${crosstalkRoll.toFixed(2)} | delay: ${Math.round(additionalDelay)}ms`);
           await new Promise(resolve => setTimeout(resolve, additionalDelay));
         }
       }
