@@ -46,7 +46,7 @@ export class SessionManager {
     const accessToken = this.authManager.generateAccessToken(user);
 
     // Store session in secure storage
-    const sessionId = await this.sessionStore.storeSession(userId, accessToken, role);
+    await this.sessionStore.storeSession(userId, accessToken, role);
 
     debug('Session created for user: %s', userId);
     return accessToken;

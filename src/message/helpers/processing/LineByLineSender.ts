@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { InputSanitizer } from '@src/utils/InputSanitizer';
 
 const debug = Debug('app:LineByLineSender');
 
@@ -29,6 +30,8 @@ function normalizeForDedupe(text: string): string {
  * Bullet point lists (lines starting with -, *, •, or numbers) are grouped
  * together and sent as a single message for better readability.
  * 
+ * Each line is also sanitized to remove surrounding quotes.
+ * 
  * @param response - The full LLM response
  * @param preserveEmpty - Whether to preserve empty lines (default: false)
  * @returns Array of non-empty lines to send sequentially
@@ -41,7 +44,10 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
 
     const lines = preserveEmpty
         ? rawLines
-        : rawLines.map(line => line.trim()).filter(line => line.length > 0);
+        : rawLines
+            .map(line => line.trim())
+            .map(line => InputSanitizer.stripSurroundingQuotes(line))
+            .filter(line => line.length > 0);
 
     // Group consecutive bullet points together
     const result: string[] = [];

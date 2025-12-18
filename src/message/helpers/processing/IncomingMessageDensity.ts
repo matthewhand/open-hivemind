@@ -11,7 +11,7 @@ export class IncomingMessageDensity {
     private static instance: IncomingMessageDensity;
     private channelHistory: Map<string, Array<{ ts: number, isBot: boolean }>> = new Map();
     private participantLastSeen: Map<string, Map<string, number>> = new Map();
-    private readonly WINDOW_MS = 60000; // 1 minute
+    private readonly WINDOW_MS = 300000; // 5 minutes
 
     public static getInstance(): IncomingMessageDensity {
         if (!IncomingMessageDensity.instance) {
@@ -27,7 +27,7 @@ export class IncomingMessageDensity {
         const now = Date.now();
         let history = this.channelHistory.get(channelId) || [];
 
-        // Prune old
+        // Prune old (use the class-level max window)
         history = history.filter(item => (now - item.ts) < this.WINDOW_MS);
 
         // Record new
@@ -45,14 +45,23 @@ export class IncomingMessageDensity {
     }
 
     /**
-     * Returns the message counts for users and bots in the last window.
+     * Backwards-compatible convenience method used by older call sites and tests.
+     * Records a message and returns the legacy 1/N density modifier (based on total messages in 1 min).
      */
-    public getDensity(channelId: string): { userCount: number, botCount: number, total: number } {
+    public recordMessageAndGetModifier(channelId: string, authorId?: string, isBot: boolean = false): number {
+        this.recordMessage(channelId, authorId, isBot);
+        const modifier = this.getDensityModifier(channelId);
+        debug(`recordMessageAndGetModifier channel=${channelId} isBot=${isBot} -> ${modifier.toFixed(3)}`);
+        return modifier;
+    }
+
+    /**
+     * Returns the message counts for users and bots in a specific window.
+     */
+    public getDensity(channelId: string, windowMs: number = 60000): { userCount: number, botCount: number, total: number } {
         const now = Date.now();
         const history = this.channelHistory.get(channelId) || [];
-        // Just in case we access without recording first, though usually we request after recording.
-        // We filter again to be safe on read.
-        const recent = history.filter(item => (now - item.ts) < this.WINDOW_MS);
+        const recent = history.filter(item => (now - item.ts) < windowMs);
 
         const userCount = recent.filter(x => !x.isBot).length;
         const botCount = recent.filter(x => x.isBot).length;

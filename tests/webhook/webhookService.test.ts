@@ -58,9 +58,10 @@ describe('webhookService', () => {
       expect(mockExpress).toHaveBeenCalledTimes(1);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
       
-      const [createdApp, passedMessageService] = mockConfigureWebhookRoutes.mock.calls[0];
+      const [createdApp, passedMessageService, passedChannel] = mockConfigureWebhookRoutes.mock.calls[0];
       expect(createdApp).toBe(mockApp);
       expect(passedMessageService).toBe(messageService);
+      expect(passedChannel).toBe('test-channel');
     });
 
     it('should reuse provided Express app', () => {
@@ -69,9 +70,10 @@ describe('webhookService', () => {
       webhookService.start(existingApp, messageService, 'channel-123');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
-      const [passedApp, passedMessageService] = mockConfigureWebhookRoutes.mock.calls[0];
+      const [passedApp, passedMessageService, passedChannel] = mockConfigureWebhookRoutes.mock.calls[0];
       expect(passedApp).toBe(existingApp);
       expect(passedMessageService).toBe(messageService);
+      expect(passedChannel).toBe('channel-123');
     });
 
     it('should handle undefined app parameter', () => {
@@ -90,7 +92,8 @@ describe('webhookService', () => {
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
-        messageService
+        messageService,
+        testChannel
       );
     });
 
@@ -104,7 +107,8 @@ describe('webhookService', () => {
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
           expect.any(Object),
-          messageService
+          messageService,
+          channel
         );
       });
     });
@@ -120,7 +124,8 @@ describe('webhookService', () => {
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
-        alternativeService
+        alternativeService,
+        'test-channel'
       );
     });
   });
@@ -153,7 +158,8 @@ describe('webhookService', () => {
       
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
-        null
+        null,
+        'test-channel'
       );
     });
   });
@@ -210,7 +216,7 @@ describe('webhookService', () => {
       
       webhookService.start(app, messageService, 'integration-channel');
 
-      expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(app, messageService);
+      expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(app, messageService, 'integration-channel');
     });
 
     it('should handle complex messenger service configurations', () => {
@@ -228,7 +234,8 @@ describe('webhookService', () => {
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
-        complexService
+        complexService,
+        'complex-channel'
       );
     });
 

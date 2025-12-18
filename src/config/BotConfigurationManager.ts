@@ -13,21 +13,13 @@ interface BotOverride {
   mcpServers?: unknown[];
   mcpGuard?: unknown;
 }
-import {
+import type {
   BotConfig,
   MessageProvider,
   LlmProvider,
   McpServerConfig,
   McpGuardConfig,
-  DiscordConfig,
-  SlackConfig,
-  MattermostConfig,
-  OpenAIConfig,
-  FlowiseConfig,
-  OpenWebUIConfig,
-  OpenSwarmConfig,
-  ConfigurationValidationResult,
-  isBotConfig
+  ConfigurationValidationResult
 } from '@src/types/config';
 import { ConfigurationError, ValidationError } from '../types/errorClasses';
 
@@ -361,7 +353,7 @@ export class BotConfigurationManager {
    * Load multi-bot configuration from BOTS environment variable
    * (Now deprecated/internal helper for explicit list if needed, but logic is merged above)
    */
-  private loadMultiBotConfiguration(botsEnv: string): void {
+  private loadMultiBotConfiguration(): void {
     // Deprecated implementation - logic moved to loadConfiguration
   }
 

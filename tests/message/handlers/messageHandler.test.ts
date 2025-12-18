@@ -214,7 +214,14 @@ describe('messageHandler', () => {
 
       await handleMessage(message2, [], mockBotConfig);
 
-      expect(mockShouldReply).toHaveBeenCalledWith(message2, 'bot-123', 'discord', expect.any(Array));
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message2,
+        'bot-123',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined
+      );
     });
 
     it('should resolve per-bot Discord client id when BOT_ID is invalid', async () => {
@@ -234,7 +241,14 @@ describe('messageHandler', () => {
 
       await handleMessage(message, [], badBotConfig);
 
-      expect(mockShouldReply).toHaveBeenCalledWith(message, '555555555555555555', 'discord', expect.any(Array));
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        message,
+        '555555555555555555',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined
+      );
     });
   });
 
@@ -289,7 +303,14 @@ describe('messageHandler', () => {
       await handleMessage(message2, [], slackConfig);
 
       // Platform is derived from message.platform, not botConfig.integration
-      expect(mockShouldReply).toHaveBeenCalledWith(expect.anything(), 'bot-123', expect.any(String), expect.any(Array));
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        expect.anything(),
+        'bot-123',
+        expect.any(String),
+        expect.any(Array),
+        expect.any(Array),
+        undefined
+      );
     });
   });
 

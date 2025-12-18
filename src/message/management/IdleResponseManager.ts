@@ -133,7 +133,7 @@ export class IdleResponseManager {
     } else {
       // Use actual messenger services with unique identification
       for (const service of messengerServices) {
-        let serviceName = (service as any).providerName || 'generic';
+        const baseServiceName = (service as any).providerName || 'generic';
 
         // Check if the service supports delegation (e.g. multi-bot Discord)
         if (typeof service.getDelegatedServices === 'function') {
@@ -145,22 +145,48 @@ export class IdleResponseManager {
                 channels: new Map(),
                 lastInteractedChannelId: null,
                 messengerService: delegate.messengerService,
-                botConfig: delegate.botConfig || this.getBotConfig(serviceName)
+                botConfig: delegate.botConfig || this.getBotConfig(baseServiceName)
               });
               log(`Initialized idle response tracking for delegated bot: ${delegate.serviceName}`);
             }
           }
+        } else if (typeof (service as any).getAllBots === 'function') {
+          // Backwards-compatible multi-bot support (older Discord implementation).
+          const bots = (service as any).getAllBots();
+          const providerPrefix = String(baseServiceName).toLowerCase();
+
+          if (Array.isArray(bots) && bots.length > 0) {
+            bots.forEach((bot: any, index: number) => {
+              const rawName = typeof bot?.botUserName === 'string' ? bot.botUserName.trim() : '';
+              const rawId = typeof bot?.botUserId === 'string' ? bot.botUserId.trim() : '';
+
+              const suffix = rawName
+                ? rawName
+                : (rawId ? rawId.split('-')[0].toLowerCase() : `bot${index + 1}`);
+
+              const serviceName = `${providerPrefix}-${suffix}`;
+              if (!this.serviceActivities.has(serviceName)) {
+                this.serviceActivities.set(serviceName, {
+                  channels: new Map(),
+                  lastInteractedChannelId: null,
+                  messengerService: service,
+                  botConfig: this.getBotConfig(baseServiceName)
+                });
+                log(`Initialized idle response tracking for multi-bot service: ${serviceName}`);
+              }
+            });
+          }
         } else {
           // Handle standard services
-          if (!this.serviceActivities.has(serviceName)) {
-            this.serviceActivities.set(serviceName, {
+          if (!this.serviceActivities.has(baseServiceName)) {
+            this.serviceActivities.set(baseServiceName, {
               channels: new Map(),
               lastInteractedChannelId: null,
               messengerService: service,
-              botConfig: this.getBotConfig(serviceName)
+              botConfig: this.getBotConfig(baseServiceName)
             });
 
-            log(`Initialized idle response tracking for service: ${serviceName}`);
+            log(`Initialized idle response tracking for service: ${baseServiceName}`);
           }
         }
       }
@@ -430,7 +456,8 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         botName
       );
       try {
-        recordBotActivity(channelId, serviceActivity.messengerService.getClientId?.());
+        const activityBotId = serviceActivity.messengerService.getClientId?.();
+        if (activityBotId) recordBotActivity(channelId, activityBotId);
       } catch { }
 
       this.recordBotResponse(serviceName, channelId);

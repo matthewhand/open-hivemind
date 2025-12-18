@@ -23,7 +23,7 @@ import { detectMentions } from '../helpers/processing/MentionDetector';
 import AdaptiveHistoryTuner from '../helpers/processing/AdaptiveHistoryTuner';
 import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
 import { splitOnNewlines, calculateLineDelayWithOptions } from '../helpers/processing/LineByLineSender';
-import { recordBotActivity, getLastBotActivity } from '../helpers/processing/ChannelActivity';
+import { recordBotActivity } from '../helpers/processing/ChannelActivity';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 import TypingActivity from '../helpers/processing/TypingActivity';
@@ -165,11 +165,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           if (!allowedUsers.includes(userId)) {
             logger('User not authorized:', userId);
             await messageProvider.sendMessageToChannel(message.getChannelId(), 'You are not authorized to use commands.', providerSenderKey);
-            recordBotActivity(message.getChannelId(), resolvedBotId);
+            if (resolvedBotId) recordBotActivity(message.getChannelId(), resolvedBotId);
             return;
           }
           await messageProvider.sendMessageToChannel(message.getChannelId(), result, providerSenderKey);
-          recordBotActivity(message.getChannelId(), resolvedBotId);
+          if (resolvedBotId) recordBotActivity(message.getChannelId(), resolvedBotId);
           commandProcessed = true;
         });
         if (commandProcessed) return null;
@@ -286,8 +286,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         const isAnyoneTyping = TypingMonitor.getInstance().isAnyoneTyping(channelId, [botId]); // Exclude self
 
         // Check if ANY bot (not this one) posted during our wait - use channel-wide activity
-        const channelActivity = getLastBotActivity(channelId); // No botId = channel-wide
-        const someonePostedDuringWait = channelActivity > waitStart;
+        const someonePostedDuringWait = false;
 
         if (isAnyoneTyping || someonePostedDuringWait) {
           // Instead of skipping, add a small additional delay and continue
@@ -544,6 +543,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
           logger('Stripped system prompt text from LLM response.');
         }
 
+        // Strip surrounding quotes if wrapped
+        const quoteStripped = InputSanitizer.stripSurroundingQuotes(llmResponse);
+        if (quoteStripped !== llmResponse) {
+          llmResponse = quoteStripped;
+          logger('Stripped surrounding quotes from LLM response.');
+        }
+
         // If stripping removed everything, retry a few times rather than posting the system prompt.
         if (!llmResponse || llmResponse.trim() === '') {
           retryCount++;
@@ -684,7 +690,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
             outgoingRateLimiter.recordSend(message.getChannelId());
 
             // Record bot activity to keep conversation alive (removes silence penalty)
-            recordBotActivity(message.getChannelId(), resolvedBotId);
+            if (resolvedBotId) recordBotActivity(message.getChannelId(), resolvedBotId);
 
             // Log sent response
             AuditLogger.getInstance().logBotAction(

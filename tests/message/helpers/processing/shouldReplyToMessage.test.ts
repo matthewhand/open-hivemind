@@ -75,7 +75,7 @@ describe('shouldReplyToMessage', () => {
         const RealDate = Date;
         // Mock Date.now() for the "past" interaction
         global.Date.now = jest.fn(() => 1000);
-        recordBotActivity('channel-1');
+        recordBotActivity('channel-1', 'bot-id');
 
         // Mock Date.now() for the "current" check (> 5 mins later)
         global.Date.now = jest.fn(() => 1000 + 300001); // 1000 + 5m 1s
@@ -94,7 +94,7 @@ describe('shouldReplyToMessage', () => {
     it('should scale silence penalty based on participant count', async () => {
         const RealDate = Date;
         global.Date.now = jest.fn(() => 1000);
-        recordBotActivity('channel-1');
+        recordBotActivity('channel-1', 'bot-id');
 
         global.Date.now = jest.fn(() => 1000 + 300001);
         mockMessage.getText.mockReturnValue('help please');
@@ -113,7 +113,7 @@ describe('shouldReplyToMessage', () => {
     });
 
     it('should NOT apply silence penalty if active < 5 minutes', async () => {
-        recordBotActivity('channel-1');
+        recordBotActivity('channel-1', 'bot-id');
 
         // Advance ONLY 1 minute
         const RealDate = Date;

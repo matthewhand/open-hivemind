@@ -350,7 +350,7 @@ export class AnalyticsCollector extends EventEmitter {
       const now = new Date().getTime();
       let cleanedCount = 0;
 
-      for (const [sessionId, session] of this.sessions.entries()) {
+      for (const [, session] of this.sessions.entries()) {
         if (!session.endTime) {
           const sessionAge = now - new Date(session.startTime).getTime();
 
