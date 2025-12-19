@@ -20,6 +20,7 @@ import LlmProfileManager from './LlmProfileManager';
 import TemplateManager from './TemplateManager';
 import GlobalConfigurationManager from './GlobalConfigurationManager';
 import BotListManager from './BotListManager';
+import MCPProfileManager from './MCPProfileManager';
 
 const ComprehensiveAdminDashboard: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
@@ -29,6 +30,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
     { label: 'Bot Status', icon: CpuChipIcon },
     { label: 'Agents', icon: CpuChipIcon },
     { label: 'LLM Profiles', icon: CommandLineIcon },
+    { label: 'MCP Profiles', icon: WrenchScrewdriverIcon },
     { label: 'Templates', icon: DocumentDuplicateIcon },
     { label: 'Global Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
@@ -106,12 +108,13 @@ const ComprehensiveAdminDashboard: React.FC = () => {
           {currentTab === 1 && <BotListManager />}
           {currentTab === 2 && <EnhancedAgentConfigurator />}
           {currentTab === 3 && <LlmProfileManager />}
-          {currentTab === 4 && <TemplateManager />}
-          {currentTab === 5 && <GlobalConfigurationManager />}
-          {currentTab === 6 && <MCPServerManager />}
-          {currentTab === 7 && <PersonaManager />}
-          {currentTab === 8 && <ActivityMonitor />}
-          {currentTab === 9 && <EnvMonitor />}
+          {currentTab === 4 && <MCPProfileManager />}
+          {currentTab === 5 && <TemplateManager />}
+          {currentTab === 6 && <GlobalConfigurationManager />}
+          {currentTab === 7 && <MCPServerManager />}
+          {currentTab === 8 && <PersonaManager />}
+          {currentTab === 9 && <ActivityMonitor />}
+          {currentTab === 10 && <EnvMonitor />}
         </div>
       </div>
     </div>

@@ -107,7 +107,7 @@ export class BotConfigService {
       this.ensureDatabaseEnabled('create bot configurations');
 
       // Validate configuration
-      const validationResult = this.configValidator.validateBotConfig(configData);
+      const validationResult = this.configValidator.validateBotConfig(configData as BotConfig);
       if (!validationResult.isValid) {
         throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
       }

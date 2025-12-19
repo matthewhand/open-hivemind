@@ -22,6 +22,15 @@ import openWebUIConfig from '../../config/openWebUIConfig';
 import webhookConfig from '../../config/webhookConfig';
 import { getGuardrailProfiles, saveGuardrailProfiles, GuardrailProfile } from '../../config/guardrailProfiles';
 import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
+import {
+  getMCPServerProfiles,
+  saveMCPServerProfiles,
+  getMCPServerProfileByKey,
+  addMCPServerProfile,
+  updateMCPServerProfile,
+  deleteMCPServerProfile,
+  MCPServerProfile
+} from '../../config/mcpServerProfiles';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
 import { testDiscordConnection } from '../../integrations/discord/DiscordConnectionTest';
@@ -1102,6 +1111,137 @@ router.put('/guardrails', (req, res) => {
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'GUARDRAIL_CONFIG_PUT_ERROR'
+    });
+  }
+});
+
+// ============================================================================
+// MCP Server Profiles API
+// ============================================================================
+
+// GET /api/config/mcp-profiles - List all MCP server profiles
+router.get('/mcp-profiles', (req, res) => {
+  try {
+    res.json({
+      profiles: getMCPServerProfiles()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILES_GET_ERROR'
+    });
+  }
+});
+
+// GET /api/config/mcp-profiles/:key - Get a specific MCP server profile
+router.get('/mcp-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profile = getMCPServerProfileByKey(key);
+    if (!profile) {
+      return res.status(404).json({ error: `MCP server profile "${key}" not found` });
+    }
+    res.json({ profile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILE_GET_ERROR'
+    });
+  }
+});
+
+// POST /api/config/mcp-profiles - Create a new MCP server profile
+router.post('/mcp-profiles', (req, res) => {
+  try {
+    const profile = req.body as MCPServerProfile;
+
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.name || typeof profile.name !== 'string') {
+      return res.status(400).json({ error: 'profile.name is required' });
+    }
+    if (!Array.isArray(profile.servers)) {
+      profile.servers = [];
+    }
+    if (profile.enabled === undefined) {
+      profile.enabled = true;
+    }
+
+    addMCPServerProfile(profile);
+    res.json({ success: true, profile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILE_CREATE_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/mcp-profiles/:key - Update an MCP server profile
+router.put('/mcp-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const updates = req.body as Partial<MCPServerProfile>;
+
+    updateMCPServerProfile(key, updates);
+    const updated = getMCPServerProfileByKey(key);
+    res.json({ success: true, profile: updated });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILE_UPDATE_ERROR'
+    });
+  }
+});
+
+// DELETE /api/config/mcp-profiles/:key - Delete an MCP server profile
+router.delete('/mcp-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    deleteMCPServerProfile(key);
+    res.json({ success: true, message: `MCP server profile "${key}" deleted` });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILE_DELETE_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/mcp-profiles - Bulk update all MCP server profiles
+router.put('/mcp-profiles-bulk', (req, res) => {
+  try {
+    const payload = req.body;
+    const profiles = payload?.profiles;
+    if (!Array.isArray(profiles)) {
+      return res.status(400).json({ error: 'profiles must be an array' });
+    }
+
+    for (const profile of profiles) {
+      if (!profile || typeof profile !== 'object') {
+        return res.status(400).json({ error: 'profile entries must be objects' });
+      }
+      if (!profile.key || typeof profile.key !== 'string') {
+        return res.status(400).json({ error: 'profile.key is required' });
+      }
+      if (!profile.name || typeof profile.name !== 'string') {
+        return res.status(400).json({ error: 'profile.name is required' });
+      }
+    }
+
+    saveMCPServerProfiles(profiles);
+    res.json({ success: true, profiles });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MCP_PROFILES_BULK_UPDATE_ERROR'
     });
   }
 });
