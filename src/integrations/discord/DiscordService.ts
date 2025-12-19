@@ -745,7 +745,28 @@ export const Discord = {
       }
     }
 
+    /**
+     * Gets the topic/description of a Discord channel.
+     * @param channelId The channel to get the topic from
+     * @returns The channel topic or null if not available
+     */
+    public async getChannelTopic(channelId: string): Promise<string | null> {
+      try {
+        const botInfo = this.bots[0];
+        if (!botInfo) return null;
+        const channel = await botInfo.client.channels.fetch(channelId);
+        if (channel && 'topic' in channel && typeof (channel as any).topic === 'string') {
+          return (channel as any).topic || null;
+        }
+        return null;
+      } catch (error) {
+        log(`Error fetching channel topic for ${channelId}: ${error}`);
+        return null;
+      }
+    }
+
     public async sendPublicAnnouncement(channelId: string, announcement: string, threadId?: string): Promise<void> {
+
       const botInfo = this.bots[0];
       const text = `**Announcement**: ${announcement}`;
       await this.sendMessageToChannel(channelId, text, botInfo.botUserName, threadId);
@@ -882,6 +903,37 @@ export const Discord = {
       return channelId;
     }
 
+    /**
+     * Updates the bot's presence/activity status with the current model ID.
+     * This shows as "Playing <modelId>" in Discord.
+     * 
+     * @param modelId - The model identifier to display
+     * @param senderKey - Optional sender key to identify which bot instance to update
+     */
+    public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
+      try {
+        // Find the bot to update
+        let bot: Bot | undefined;
+        if (senderKey) {
+          bot = this.bots.find(b =>
+            b.botUserName === senderKey ||
+            b.botUserId === senderKey ||
+            b.config?.name === senderKey
+          );
+        }
+        if (!bot && this.bots.length > 0) {
+          bot = this.bots[0]; // Default to first bot
+        }
+
+        if (bot?.client?.user) {
+          bot.client.user.setActivity(modelId, { type: 0 }); // 0 = Playing
+          log(`Set presence for ${bot.botUserName}: Playing ${modelId}`);
+        }
+      } catch (error) {
+        log(`Failed to set model activity: ${error}`);
+      }
+    }
+
     public async shutdown(): Promise<void> {
       for (const bot of this.bots) {
         await bot.client.destroy();
@@ -889,6 +941,7 @@ export const Discord = {
       }
       Discord.DiscordService.instance = undefined as any;
     }
+
 
     /**
      * Get health status for all Discord bot instances

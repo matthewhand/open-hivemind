@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Persona,
   PersonaCategory,
@@ -31,6 +31,35 @@ export const usePersonas = (): UsePersonasReturn => {
 
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPersonas = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/personas');
+        if (!response.ok) {
+          throw new Error('Failed to fetch personas');
+        }
+        const data = await response.json();
+        const next = Array.isArray(data) ? data : [];
+        if (isMounted && next.length > 0) {
+          setPersonas(next);
+        }
+      } catch {
+        // Keep built-in personas as fallback
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPersonas();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const createPersona = useCallback((request: CreatePersonaRequest): Persona => {

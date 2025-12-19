@@ -55,6 +55,13 @@ export class DiscordMessage implements IMessage {
   public platform: string;
 
   /**
+   * Metadata for cross-platform compatibility.
+   * Includes replyTo information for reply detection.
+   * @type {any}
+   */
+  public metadata: any;
+
+  /**
    * The underlying Discord.js Message object.
    * @private
    * @type {Message<boolean>}
@@ -86,13 +93,31 @@ export class DiscordMessage implements IMessage {
     this.content = message.content || '[No content]'; // Ensure fallback for empty content
     this.channelId = message.channelId;
     this.data = message;
-    this.role = ''; // Customize based on application needs
+    // Role calculation:
+    // If the author is THIS bot (the client user), role is 'assistant'.
+    // Everyone else (humans AND other bots) is 'user'.
+    this.role = (message.author.id === message.client?.user?.id) ? 'assistant' : 'user';
     this.platform = 'discord';
+
+    // Populate metadata for reply detection
+    if (repliedMessage) {
+      this.metadata = {
+        replyTo: {
+          userId: repliedMessage.author?.id || null,
+          username: repliedMessage.author?.username || null,
+          messageId: repliedMessage.id || null,
+          isBot: repliedMessage.author?.bot || false
+        }
+      };
+    } else {
+      this.metadata = {};
+    }
 
     const author = message.author;
     const authorString = `${author.username ?? 'unknown'}#${author.discriminator ?? '0000'} (${author.id ?? 'unknown'})`;
-    debug(`DiscordMessage: [ID: ${message.id}] by ${authorString}`); // Shortened log with author info
+    debug(`DiscordMessage: [ID: ${message.id}] by ${authorString}${repliedMessage ? ` (reply to ${repliedMessage.author?.id})` : ''}`);
   }
+
 
   /**
    * Gets the unique Discord message ID.

@@ -24,10 +24,13 @@ export interface FieldMetadata {
 export interface BotMetadata {
   messageProvider?: FieldMetadata;
   llmProvider?: FieldMetadata;
+  llmProfile?: FieldMetadata;
+  responseProfile?: FieldMetadata;
   persona?: FieldMetadata;
   systemInstruction?: FieldMetadata;
   mcpServers?: FieldMetadata;
   mcpGuard?: FieldMetadata;
+  mcpGuardProfile?: FieldMetadata;
 }
 
 // Provider-specific configuration interfaces
@@ -126,6 +129,9 @@ export interface Bot {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  mcpGuardProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
@@ -297,12 +303,16 @@ class ApiService {
   async createBot(botData: {
     name: string;
     messageProvider: string;
-    llmProvider: string;
+    llmProvider?: string;
     config?: ProviderConfig;
   }): Promise<{ success: boolean; message: string; bot: Bot }> {
+    const payload = {
+      ...botData,
+      ...(botData.llmProvider ? {} : { llmProvider: undefined }),
+    };
     return this.request('/api/bots', {
       method: 'POST',
-      body: JSON.stringify(botData)
+      body: JSON.stringify(payload)
     });
   }
 

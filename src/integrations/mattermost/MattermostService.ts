@@ -74,7 +74,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
       name: botName,
       serverUrl: botConfig.mattermost.serverUrl,
       token: botConfig.mattermost.token,
-      channel: botConfig.mattermost.channel || 'town-square'
+      channel: botConfig.mattermost.channel || 'town-square',
+      userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
+      username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || ''
     });
   }
 
@@ -92,6 +94,13 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         await client.connect();
         console.log(`Connected to Mattermost server for bot: ${botName}`);
+        // Cache identity for mention detection / self-filtering.
+        const botConfig = this.botConfigs.get(botName) || {};
+        this.botConfigs.set(botName, {
+          ...botConfig,
+          userId: client.getCurrentUserId?.() || botConfig.userId,
+          username: client.getCurrentUsername?.() || botConfig.username
+        });
       } catch (error) {
         console.error(`Failed to connect to Mattermost for bot ${botName}:`, error);
         throw error;
@@ -119,9 +128,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
 
     try {
+      const rootId = threadId || replyToMessageId;
       const post = await client.postMessage({
         channel: channelId,
-        text: text
+        text: text,
+        ...(rootId ? { root_id: rootId } : {})
       });
 
       console.log(`[${botName}] Sent message to channel ${channelId}`);
@@ -149,12 +160,21 @@ export class MattermostService extends EventEmitter implements IMessengerService
       const posts = await client.getChannelPosts(channelId, 0, limit);
       const messages: IMessage[] = [];
 
+      const botConfig = this.botConfigs.get(targetBot) || {};
+      const botUsername = botConfig.username;
+      const botUserId = botConfig.userId;
+
       for (const post of posts.slice(0, limit)) {
         const user = await client.getUser(post.user_id);
         const username = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : 'Unknown';
+        const isBot = Boolean(user?.is_bot);
 
         const { MattermostMessage } = await import('./MattermostMessage');
-        const mattermostMsg = new MattermostMessage(post, username);
+        const mattermostMsg = new MattermostMessage(post, username, {
+          isBot,
+          botUsername,
+          botUserId
+        });
         messages.push(mattermostMsg);
       }
 
@@ -187,7 +207,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public getClientId(): string {
     const firstBot = Array.from(this.clients.keys())[0];
-    return firstBot || 'mattermost-bot';
+    const client = this.clients.get(firstBot);
+    const botConfig = this.botConfigs.get(firstBot);
+    return client?.getCurrentUserId?.() || botConfig?.userId || firstBot || 'mattermost-bot';
   }
 
   public getAgentStartupSummaries() {
@@ -237,7 +259,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       return {
         name: String(name),
         provider: 'mattermost',
-        botId: String(name),
+        botId: String(cfg?.userId || name),
         messageProvider: 'mattermost',
         llmProvider,
         llmModel,
@@ -255,8 +277,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       // MattermostService selects bot instances by their configured bot name key.
       const senderKey = agentInstanceName || agentDisplayName;
-      const botId = senderKey;
-      const nameCandidates = Array.from(new Set([agentDisplayName, agentInstanceName].filter(Boolean)));
+      const client = this.clients.get(senderKey);
+      const botId = client?.getCurrentUserId?.() || botConfig?.userId || senderKey;
+      const botUsername = client?.getCurrentUsername?.() || botConfig?.username;
+      const nameCandidates = Array.from(new Set([agentDisplayName, agentInstanceName, botUsername].filter(Boolean)));
 
       return { botId, senderKey, nameCandidates };
     } catch {
@@ -267,6 +291,44 @@ export class MattermostService extends EventEmitter implements IMessengerService
   public getDefaultChannel(): string {
     const firstBot = Array.from(this.channels.keys())[0];
     return this.channels.get(firstBot) || 'town-square';
+  }
+
+  /**
+   * Best-effort channel topic lookup (purpose/header).
+   */
+  public async getChannelTopic(channelId: string): Promise<string | null> {
+    try {
+      const firstBot = Array.from(this.clients.keys())[0];
+      const client = this.clients.get(firstBot);
+      if (!client) return null;
+
+      const channel = await client.getChannelInfo(channelId);
+      return channel?.purpose || channel?.header || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Best-effort typing indicator (server dependent).
+   */
+  public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
+    try {
+      const botName = senderName || Array.from(this.clients.keys())[0];
+      const client = this.clients.get(botName);
+      if (!client) return;
+      await client.sendTyping(channelId, threadId);
+    } catch { }
+  }
+
+  /**
+   * Mattermost does not expose a reliable "activity status" for bot tokens across all servers.
+   * This is currently a no-op to avoid noisy failures.
+   */
+  public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
+    void modelId;
+    void senderKey;
+    return;
   }
 
   public async shutdown(): Promise<void> {
@@ -301,6 +363,57 @@ export class MattermostService extends EventEmitter implements IMessengerService
    */
   public getBotConfig(botName: string): any {
     return this.botConfigs.get(botName);
+  }
+
+  /**
+   * Returns individual service wrappers for each managed Mattermost bot.
+   */
+  public getDelegatedServices(): Array<{
+    serviceName: string;
+    messengerService: IMessengerService;
+    botConfig: any;
+  }> {
+    return Array.from(this.clients.keys()).map((name) => {
+      const cfg = this.botConfigs.get(name) || {};
+      const serviceName = `mattermost-${name}`;
+
+      const serviceWrapper: IMessengerService = {
+        initialize: async () => { /* managed by parent */ },
+        shutdown: async () => { /* managed by parent */ },
+
+        sendMessageToChannel: async (channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string) => {
+          return this.sendMessageToChannel(channelId, message, name, threadId, replyToMessageId);
+        },
+
+        getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+
+        sendPublicAnnouncement: async (channelId: string, announcement: any) => this.sendPublicAnnouncement(channelId, announcement),
+
+        getChannelTopic: async (channelId: string) => this.getChannelTopic(channelId),
+
+        getClientId: () => {
+          const client = this.clients.get(name);
+          return client?.getCurrentUserId?.() || cfg.userId || name;
+        },
+
+        getDefaultChannel: () => cfg.channel || 'town-square',
+
+        setMessageHandler: () => { /* global handler managed by parent */ },
+
+        setModelActivity: async (modelId: string, senderKey?: string) => this.setModelActivity(modelId, senderKey || name),
+
+        sendTyping: async (channelId: string, senderName?: string, threadId?: string) => this.sendTyping(channelId, senderName || name, threadId),
+
+        supportsChannelPrioritization: this.supportsChannelPrioritization,
+        scoreChannel: this.scoreChannel ? (cid) => this.scoreChannel!(cid) : undefined
+      };
+
+      return {
+        serviceName,
+        messengerService: serviceWrapper,
+        botConfig: cfg
+      };
+    });
   }
 }
 

@@ -103,30 +103,33 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
 
 /**
  * Calculate delay between lines based on line length
- * Longer lines = more "reading time" before next message
+ * POST-TYPING: Minimal delay - messages should send immediately after inference
+ * Pre-typing and during-typing are where delays should happen.
  * 
  * @param lineLength - Length of the current line
- * @param baseDelay - Base delay in ms (default: 2000)
+ * @param baseDelay - Base delay in ms (default: 0 for immediate sending)
  * @returns Delay in milliseconds
  */
-export function calculateLineDelay(lineLength: number, baseDelay = 2000): number {
-    // Backwards-compatible defaults: ~30ms per character, capped at 8 seconds.
+export function calculateLineDelay(lineLength: number, baseDelay = 0): number {
+    // Post-typing delay should be minimal - send immediately
     return calculateLineDelayWithOptions(lineLength, baseDelay);
 }
 
 export function calculateLineDelayWithOptions(
     lineLength: number,
-    baseDelay = 2000,
+    baseDelay = 0,
     opts?: { perCharMs?: number; maxReadingMs?: number }
 ): number {
     const safeLen = Math.max(0, Number(lineLength) || 0);
     const safeBase = Math.max(0, Number(baseDelay) || 0);
-    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 30));
-    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 8000));
+    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 0)); // No delay - send immediately
+    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 0)); // No cap needed
+
 
     const readingDelay = Math.min(safeLen * perCharMs, maxReadingMs);
     return safeBase + readingDelay;
 }
+
 
 /**
  * Configuration for line-by-line sending mode
@@ -143,7 +146,10 @@ export interface LineByLineConfig {
 export function getDefaultLineByLineConfig(): LineByLineConfig {
     return {
         enabled: true, // Default to enabled per user request
-        baseDelay: 4000, // 4 second base delay between lines (was 2s)
+        baseDelay: 0, // Immediate sending - delays happen pre-typing, not post-typing
         maxLinesPerResponse: 5 // Max 5 lines per response to prevent spam
     };
+
+
 }
+

@@ -49,24 +49,22 @@ describe('LineByLineSender', () => {
 
     describe('calculateLineDelay', () => {
         it('should use default base delay', () => {
-            // 10 chars * 30ms = 300ms. Base 2000. Total 2300.
-            expect(calculateLineDelay(10)).toBe(2300);
+            // Post-typing delay defaults to 0.
+            expect(calculateLineDelay(10)).toBe(0);
         });
 
         it('should allow custom base delay', () => {
-            // 10 chars * 30ms = 300ms. Base 1000. Total 1300.
-            expect(calculateLineDelay(10, 1000)).toBe(1300);
+            // Base delay is respected when provided.
+            expect(calculateLineDelay(10, 1000)).toBe(1000);
         });
 
         it('should cap reading delay at 8000ms', () => {
-            // 1000 chars * 30ms = 30000ms. Capped at 8000.
-            // Base 2000. Total 10000.
-            expect(calculateLineDelay(1000)).toBe(10000);
+            // Default per-char delay is 0, so no extra delay.
+            expect(calculateLineDelay(1000)).toBe(0);
         });
 
         it('should handle zero length line', () => {
-            // 0 * 30 = 0. Base 2000. Total 2000.
-            expect(calculateLineDelay(0)).toBe(2000);
+            expect(calculateLineDelay(0)).toBe(0);
         });
     });
 

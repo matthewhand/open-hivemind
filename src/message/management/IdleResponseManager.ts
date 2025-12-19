@@ -390,30 +390,34 @@ export class IdleResponseManager {
 
       log(`Triggering idle response for ${serviceName}:${channelId}`);
 
-      // Try to get an older message from history to reference
+      // Get the most recent message that isn't from THIS bot instance
       let idlePrompt: string;
       try {
         const history = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
-        const olderMessages = history.filter((msg: IMessage) => {
-          // Exclude very recent messages and bot's own messages
-          const msgTime = this.getTimestampMs(msg);
-          const isOld = typeof msgTime === 'number' && (now - msgTime) > 60000; // At least 1 minute old
-          return isOld && !msg.isFromBot();
+        const botClientId = serviceActivity.messengerService.getClientId?.() || '';
+
+        // Find messages NOT from this bot (can be from users or other bots)
+        const nonSelfMessages = history.filter((msg: IMessage) => {
+          const authorId = msg.getAuthorId?.() || '';
+          return authorId !== botClientId;
         });
 
-        if (olderMessages.length > 0) {
-          // Pick a random older message to reference
-          const randomIndex = Math.floor(Math.random() * Math.min(olderMessages.length, 5));
-          const oldMessage = olderMessages[randomIndex];
-          const oldContent = oldMessage.getText().substring(0, 100);
+        // Get the most recent one (history is oldest-first, so last element is most recent)
+        const mostRecentMessage = nonSelfMessages.length > 0
+          ? nonSelfMessages[nonSelfMessages.length - 1]
+          : null;
+
+        if (mostRecentMessage) {
+          const oldContent = mostRecentMessage.getText().substring(0, 100);
           const oldAuthor = (() => {
             try {
-              const n = oldMessage.getAuthorName?.();
+              const n = mostRecentMessage.getAuthorName?.();
               return n ? String(n) : 'someone';
             } catch {
               return 'someone';
             }
           })();
+
           const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
 
           // Generate an LLM-based response referencing the old message

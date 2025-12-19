@@ -4,8 +4,12 @@ import { shouldReplyToUnsolicitedMessage, looksLikeOpportunity } from '../unsoli
 
 import { IncomingMessageDensity } from './IncomingMessageDensity';
 import { getLastBotActivity } from './ChannelActivity';
+import { GlobalActivityTracker } from './GlobalActivityTracker';
+
 import { isBotNameInText } from './MentionDetector';
 import { isOnTopic } from './SemanticRelevanceChecker';
+import TypingMonitor from '../monitoring/TypingMonitor';
+import { getMessageSetting } from './ResponseProfile';
 
 const debug = Debug('app:shouldReplyToMessage');
 
@@ -21,7 +25,8 @@ export async function shouldReplyToMessage(
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[],
   historyMessages?: any[],
-  defaultChannelId?: string
+  defaultChannelId?: string,
+  botConfig?: Record<string, any>
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -31,7 +36,7 @@ export async function shouldReplyToMessage(
   const channelId = message.getChannelId();
   debug(`Evaluating message in channel: ${channelId}`);
 
-  const onlyWhenSpokenTo = Boolean(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO'));
+  const onlyWhenSpokenTo = Boolean(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO', botConfig));
   const rawText = String(message.getText?.() || '');
   const text = rawText.toLowerCase();
 
@@ -106,7 +111,7 @@ export async function shouldReplyToMessage(
 
   // If configured to only respond when spoken to, check grace window
   if (onlyWhenSpokenTo && !isDirectlyAddressed) {
-    const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+    const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
     const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
     const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
     const timeSinceLastActivity = lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
@@ -123,7 +128,7 @@ export async function shouldReplyToMessage(
 
   // Safety by default: avoid bot-to-bot loops unless explicitly allowed.
   if (isFromBot && !isDirectlyAddressed) {
-    const graceMsRaw = messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS');
+    const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
     const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
     const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
     const timeSinceLastActivity = lastActivityTime > 0 ? Math.max(0, (Date.now() - lastActivityTime)) : Infinity;
@@ -135,11 +140,8 @@ export async function shouldReplyToMessage(
     }
   }
 
-  // If directly addressed (mention, reply, wakeword, DM, or name), always reply.
-  // This bypasses unsolicited gating and probability rolls.
-  if (isDirectlyAddressed) {
-    return { shouldReply: true, reason: 'Directly addressed', meta: { mods: '+Mention(+1.0)' } };
-  }
+  // If directly addressed (mention, reply, wakeword, DM, or name), skip unsolicited gating,
+  // but still use the probability roll with a bonus (see applyModifiers).
 
   // Track participation/density for probabilistic throttling.
   const authorId = (() => {
@@ -206,7 +208,7 @@ export async function shouldReplyToMessage(
 
   const mods: string[] = [];
   let lastPostTime = getLastBotActivity(channelId, botId);
-  const SILENCE_THRESHOLD = Number(messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')) || (5 * 60 * 1000);
+  const SILENCE_THRESHOLD = Number(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig)) || (5 * 60 * 1000);
 
   if (historyMessages && historyMessages.length > 0) {
     for (let i = historyMessages.length - 1; i >= 0; i--) {
@@ -226,7 +228,7 @@ export async function shouldReplyToMessage(
   const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastActivity / 1000)}s ago` : 'never';
 
   let chance = 0.0;
-  const baseChanceRaw = messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE');
+  const baseChanceRaw = getMessageSetting('MESSAGE_UNSOLICITED_BASE_CHANCE', botConfig);
   if (typeof baseChanceRaw === 'number') chance = baseChanceRaw;
   else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') chance = Number(baseChanceRaw);
 
@@ -239,7 +241,7 @@ export async function shouldReplyToMessage(
     chance += recentBonus;
     mods.push(`+Recent(+${recentBonus.toFixed(2)})`);
   } else {
-    const windowRaw = messageConfig.get('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS');
+    const windowRaw = getMessageSetting('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS', botConfig);
     const windowMs = typeof windowRaw === 'number' ? windowRaw : Number(windowRaw) || (5 * 60 * 1000);
     let participants = 1;
     try {
@@ -268,9 +270,9 @@ export async function shouldReplyToMessage(
     mods.push(`TokenDensity(${tokenDensityPenalty.toFixed(2)})`);
   }
 
-  // Prevent bot-to-bot storms when the room is only bots *and* we haven't been active recently.
-  // If we have been active recently (grace window), keep "floodgates" behavior and do not hard-penalize.
-  const botRatioPenalty = (!hasPostedRecently && uniqueBots.size > 0 && uniqueUsers.size === 0) ? -0.5 : 0;
+  // Prevent bot-to-bot storms when the provided context contains no user messages at all.
+  // Only apply when the triggering message is from a bot; do not penalize user-originated prompts.
+  const botRatioPenalty = (isFromBot && uniqueUsers.size === 0) ? -0.5 : 0;
   chance += botRatioPenalty;
   mods.push(`BotRatio(${botRatioPenalty >= 0 ? '+' : ''}${botRatioPenalty.toFixed(2)})`);
 
@@ -314,19 +316,65 @@ export async function shouldReplyToMessage(
     }
   }
 
-  const modResult = applyModifiers(message, botId, platform, chance, (isDirectMention || isWakeword || isNameAddressed || isDM), isLeadingAddress, isReplyToBot);
+  const modResult = applyModifiers(
+    message,
+    botId,
+    platform,
+    chance,
+    (isDirectMention || isWakeword || isNameAddressed || isDM),
+    isLeadingAddress,
+    isReplyToBot,
+    botConfig
+  );
   chance = modResult.chance;
 
-  try {
-    if (density && typeof (density as any).getDensity === 'function') {
-      const { total } = (density as any).getDensity(channelId);
-      const burstPenalty = Math.max(-0.5, (total - 1) * 0.10 * -1);
-      if (burstPenalty !== 0) {
-        chance += burstPenalty;
-        mods.push(`BurstTraffic(${burstPenalty.toFixed(2)})`);
-      }
 
-      // Quiet Channel Bonus (5 min window)
+  // 5. BurstTraffic: Per-bot - only count messages AFTER this bot's last post
+  try {
+    let msgsSinceLastPost = 0;
+    let userPostedRecently = false;
+    const oneMinuteAgo = Date.now() - 60000;
+
+    if (historyMessages && historyMessages.length > 0 && lastPostTime > 0) {
+      for (const msg of historyMessages) {
+        const ts = (msg as any).timestamp || (msg as any).createdAt || 0;
+        const msgTime = ts instanceof Date ? ts.getTime() : ts;
+        const aid = msg.getAuthorId?.() || '';
+        const isBot = msg.isFromBot?.() || false;
+
+        if (msgTime > lastPostTime && aid !== botId) {
+          msgsSinceLastPost++;
+        }
+        // Check if a USER (not bot) posted in last minute
+        if (!isBot && msgTime > oneMinuteAgo) {
+          userPostedRecently = true;
+        }
+      }
+    } else if (!lastPostTime || lastPostTime === 0) {
+      // Bot has never posted - use full history count (capped)
+      msgsSinceLastPost = historyMessages ? Math.min(historyMessages.length, 5) : 0;
+    }
+
+    // Check if current message is from a user (not bot)
+    if (!isFromBot) {
+      userPostedRecently = true;
+    }
+
+    // BurstTraffic penalty - HALVED from previous values
+    const burstPenalty = Math.max(-0.15, (msgsSinceLastPost - 1) * 0.025 * -1);
+    if (burstPenalty !== 0) {
+      chance += burstPenalty;
+      mods.push(`BurstTraffic(${burstPenalty.toFixed(2)})`);
+    }
+
+    // UserActive bonus - encourage engagement when users are present
+    if (userPostedRecently) {
+      chance += 0.20;
+      mods.push(`+UserActive(+0.20)`);
+    }
+
+    // Quiet Channel Bonus (5 min window) - still global as it's about channel activity
+    if (density && typeof (density as any).getDensity === 'function') {
       const quietWindow = 300000;
       const { total: total5m } = (density as any).getDensity(channelId, quietWindow);
       const quietBonus = 0.20 * Math.max(0, 1 - (total5m / 5));
@@ -337,25 +385,257 @@ export async function shouldReplyToMessage(
     }
   } catch { }
 
-  const allMods = [...mods, modResult.modifiers !== 'none' ? modResult.modifiers : ''].filter(Boolean).join('') || 'none';
+
+  // 6. Global Activity (Fatigue) Penalty
+  const activityScore = GlobalActivityTracker.getInstance().getScore(botId);
+  const fatigueThreshold = Number(process.env.BOT_GLOBAL_SCORE_LIMIT) || 2.0;
+
+  if (activityScore > fatigueThreshold) {
+    const excess = activityScore - fatigueThreshold;
+    const fatiguePenalty = Math.max(-0.9, -(excess * 0.05)); // Cap at -0.9
+
+    // Only apply if significant
+    if (Math.abs(fatiguePenalty) >= 0.01) {
+      chance += fatiguePenalty;
+      mods.push(`GlobalFatigue(${fatiguePenalty.toFixed(2)})`);
+    }
+  }
+
+  const allModStrings = [...mods, ...extractModifierTokens(modResult.modifiers)].filter(Boolean);
+
+  // Convert mods array to JSON object for cleaner output
+  const modsObject: Record<string, number | string> = {};
+  for (const modStr of allModStrings) {
+    // Parse patterns like "Base(0.01 @ never)", "+Recent(+0.5)", "BotHistory(-0.10)"
+    const match = modStr.match(/^([+\-×]?)([\w!]+)\(([^)]+)\)$/);
+    if (match) {
+      const [, sign, name, value] = match;
+      const numValue = parseFloat(value.replace(/@.*/, '').trim());
+      if (!isNaN(numValue)) {
+        modsObject[name] = numValue;
+      } else {
+        modsObject[name] = value; // Keep as string if not purely numeric
+      }
+    }
+  }
+
+  // Crowded conversation multiplier: if bot hasn't posted recently and many others are typing,
+  // multiply probability down to avoid joining an already crowded conversation.
+  // 1 typer = 1.0x (no penalty), 2 typers = 0.75x, 3+ typers = 1/count
+  if (!hasPostedRecently) {
+    const channelId = message.getChannelId();
+    const allTypingUsers = TypingMonitor.getInstance().getTypingUsers(channelId);
+    const otherTypingCount = allTypingUsers.filter((uid: string) => uid !== botId).length;
+
+    if (otherTypingCount > 0) {
+      // Significant penalty: 1 typer = 0.5x, 2 typers = 0.33x, 3 typers = 0.25x
+      const crowdedMultiplier = 1.0 / (otherTypingCount + 1);
+      chance *= crowdedMultiplier;
+      modsObject['Crowded'] = crowdedMultiplier;
+    }
+
+  }
+
   chance = Math.max(0, Math.min(1, chance));
   const roll = Math.random();
   let decision = roll < chance;
 
-  if (isDirectlyAddressed) {
-    decision = true;
-  }
+  // Generate human-readable prose explanation
+  const prose = generateProseExplanation(modsObject, decision, isDirectlyAddressed, hasPostedRecently);
 
   return {
     shouldReply: decision,
-    reason: isDirectlyAddressed ? 'Directly addressed' : (decision ? 'Chance roll success' : 'Chance roll failure'),
+    reason: isDirectlyAddressed
+      ? (decision ? 'Directly addressed (chance roll success)' : 'Directly addressed (chance roll failure)')
+      : (decision ? 'Chance roll success' : 'Chance roll failure'),
     meta: {
       probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),
-      mods: allMods
+      mods: modsObject,
+      prose,
+      colorizedMods: generateColorizedModsSummary(modsObject)
     }
   };
 }
+
+// ANSI color codes for console output
+const COLORS = {
+  reset: '\x1b[0m',
+  // Greens (bonuses) - lighter to darker
+  greenLight: '\x1b[92m',    // Bright green (slight bonus)
+  greenMed: '\x1b[32m',      // Green (moderate bonus)
+  greenDark: '\x1b[32;1m',   // Bold green (strong bonus)
+  // Reds (penalties) - lighter to darker
+  redLight: '\x1b[91m',      // Bright red (slight penalty)
+  redMed: '\x1b[31m',        // Red (moderate penalty)
+  redDark: '\x1b[31;1m',     // Bold red (strong penalty)
+  gray: '\x1b[90m',          // Gray for neutral
+};
+
+/**
+ * Generate colorized modifier summary with adjectives for console output
+ */
+function generateColorizedModsSummary(mods: Record<string, number | string>): string {
+  const parts: string[] = [];
+
+  for (const [name, value] of Object.entries(mods)) {
+    if (typeof value !== 'number') continue;
+
+    const absVal = Math.abs(value);
+    const isBonus = value > 0;
+    const isNeutral = value === 0;
+
+    // Determine adjective and color based on magnitude
+    let adjective: string;
+    let color: string;
+
+    if (isNeutral) {
+      adjective = '';
+      color = COLORS.gray;
+    } else if (absVal <= 0.1) {
+      adjective = 'slight';
+      color = isBonus ? COLORS.greenLight : COLORS.redLight;
+    } else if (absVal <= 0.3) {
+      adjective = 'moderate';
+      color = isBonus ? COLORS.greenMed : COLORS.redMed;
+    } else if (absVal <= 0.5) {
+      adjective = 'strong';
+      color = isBonus ? COLORS.greenDark : COLORS.redDark;
+    } else {
+      adjective = 'very strong';
+      color = isBonus ? COLORS.greenDark : COLORS.redDark;
+    }
+
+    const sign = value >= 0 ? '+' : '';
+    const label = adjective ? `${adjective} ${name}` : name;
+    parts.push(`${color}${label}(${sign}${value.toFixed(2)})${COLORS.reset}`);
+  }
+
+  return parts.join(' ');
+}
+
+
+/**
+ * Generate a human-readable prose explanation of why the bot is responding/skipping
+ * Uses modifier magnitudes to add adjectives (slight/moderate/strong)
+ */
+function generateProseExplanation(
+  mods: Record<string, number | string>,
+  decided: boolean,
+  wasDirectlyAddressed: boolean,
+  hasPostedRecently: boolean
+): string {
+  // Helper to get adjective based on magnitude
+  const getAdjective = (value: number): string => {
+    const abs = Math.abs(value);
+    if (abs <= 0.1) return 'slightly';
+    if (abs <= 0.3) return '';  // No adjective for moderate
+    if (abs <= 0.5) return 'strongly';
+    return 'very strongly';
+  };
+
+  // Collect bonuses with magnitudes
+  const bonuses: { phrase: string; value: number }[] = [];
+
+  // Direct address reasons
+  if (wasDirectlyAddressed) {
+    if (typeof mods.Mention === 'number') {
+      bonuses.push({ phrase: 'mentioned', value: mods.Mention });
+    }
+    if (typeof mods.Leading === 'number') {
+      bonuses.push({ phrase: 'addressed first', value: mods.Leading });
+    }
+    if (typeof mods.Reply === 'number') {
+      bonuses.push({ phrase: 'replied to', value: mods.Reply });
+    }
+  }
+
+  // Other bonuses
+  if (typeof mods.Recent === 'number' && mods.Recent > 0) {
+    bonuses.push({ phrase: 'recently active in chat', value: mods.Recent });
+  }
+  if (typeof mods.UserActive === 'number' && mods.UserActive > 0) {
+    bonuses.push({ phrase: 'user activity', value: mods.UserActive });
+  }
+  if (typeof mods.OnTopic === 'number') {
+    bonuses.push({ phrase: 'on-topic conversation', value: mods.OnTopic });
+  }
+  if (typeof mods.Q === 'number') {
+    bonuses.push({ phrase: 'question asked', value: mods.Q });
+  }
+
+  // Collect penalties with magnitudes
+  const penalties: { phrase: string; value: number }[] = [];
+  if (typeof mods.BotHistory === 'number' && mods.BotHistory < 0) {
+    penalties.push({ phrase: 'talked too much', value: mods.BotHistory });
+  }
+  if (typeof mods.BurstTraffic === 'number' && mods.BurstTraffic < 0) {
+    penalties.push({ phrase: 'busy channel', value: mods.BurstTraffic });
+  }
+  if (typeof mods.Crowded === 'number' && mods.Crowded < 1) {
+    penalties.push({ phrase: 'crowded typing', value: 1 - mods.Crowded });
+  }
+  if (typeof mods.BotRatio === 'number' && mods.BotRatio < 0) {
+    penalties.push({ phrase: 'no human participants', value: mods.BotRatio });
+  }
+  if (typeof mods.AddressedToOther === 'number') {
+    penalties.push({ phrase: 'message for someone else', value: mods.AddressedToOther });
+  }
+  if (typeof mods.OffTopic === 'number') {
+    penalties.push({ phrase: 'off-topic', value: mods.OffTopic });
+  }
+
+  // Sort by magnitude (highest impact first)
+  bonuses.sort((a, b) => b.value - a.value);
+  penalties.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+  // Build final sentence with adjectives
+  if (decided) {
+    if (wasDirectlyAddressed) {
+      return bonuses.length > 0
+        ? `Responding to direct mention (plus ${bonuses.map(b => b.phrase).join(', ')}).`
+        : 'Responding to direct address.';
+    }
+
+    if (bonuses.length > 0) {
+      const all = bonuses.map(b => {
+        const adj = getAdjective(b.value);
+        return adj ? `${adj} ${b.phrase}` : b.phrase;
+      });
+      return `Responding due to ${formatList(all)}.`;
+    }
+    return hasPostedRecently
+      ? 'Responding to continue the conversation.'
+      : 'Responding based on chance.';
+  } else {
+
+    if (penalties.length > 0) {
+      const all = penalties.map(p => {
+        const adj = getAdjective(p.value);
+        return adj ? `${adj} ${p.phrase}` : p.phrase;
+      });
+      return `Skipping due to ${formatList(all)}.`;
+    }
+    return 'Skipping based on low probability.';
+  }
+}
+
+function formatList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+function extractModifierTokens(modifiers?: string): string[] {
+  if (!modifiers || modifiers === 'none') return [];
+  return modifiers.match(/[+\-×]?[\w!]+\([^)]+\)/g) || [];
+}
+
+
+
+
+
 
 function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -368,7 +648,8 @@ function applyModifiers(
   chance: number,
   isDirectlyAddressed: boolean = false,
   isLeadingAddress: boolean = false,
-  isReplyToBot: boolean = false
+  isReplyToBot: boolean = false,
+  botConfig?: Record<string, any>
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
@@ -393,14 +674,14 @@ function applyModifiers(
     mods.push('+!(+0.1)');
   }
   if (text.length < 10) {
-    const penalty = Number(messageConfig.get('MESSAGE_SHORT_LENGTH_PENALTY')) || 0;
+    const penalty = Number(getMessageSetting('MESSAGE_SHORT_LENGTH_PENALTY', botConfig)) || 0;
     if (penalty > 0) {
       chance -= penalty;
       mods.push(`-Short(${penalty})`);
     }
   }
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
-    const botModifier = Number(messageConfig.get('MESSAGE_BOT_RESPONSE_MODIFIER')) || -0.1;
+    const botModifier = Number(getMessageSetting('MESSAGE_BOT_RESPONSE_MODIFIER', botConfig)) || -0.1;
     chance += botModifier;
     mods.push(`${botModifier >= 0 ? '+' : ''}BotResponse(${botModifier})`);
   }

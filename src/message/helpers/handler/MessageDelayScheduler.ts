@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
+import { getMessageSetting } from '../processing/ResponseProfile';
 
 const debug = Debug('app:MessageDelayScheduler');
 
@@ -25,10 +26,11 @@ class MessageDelayScheduler {
     text: string,
     userId: string,
     sendFn: (text: string, threadId?: string) => Promise<string>,
-    useThread: boolean
+    useThread: boolean,
+    botConfig?: Record<string, any>
   ): Promise<void> {
-    const minDelayRaw = messageConfig.get('MESSAGE_MIN_DELAY') || 1000;
-    const delayScaleRaw = messageConfig.get('MESSAGE_DELAY_MULTIPLIER');
+    const minDelayRaw = getMessageSetting('MESSAGE_MIN_DELAY', botConfig) || 1000;
+    const delayScaleRaw = getMessageSetting('MESSAGE_DELAY_MULTIPLIER', botConfig);
     const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
     const minDelay = (typeof minDelayRaw === 'number' ? minDelayRaw : Number(minDelayRaw) || 1000) * delayScale;
     await new Promise(resolve => setTimeout(resolve, minDelay));

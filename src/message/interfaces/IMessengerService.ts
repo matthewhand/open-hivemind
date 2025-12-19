@@ -141,11 +141,20 @@ export interface IMessengerService {
   getClientId(): string;
 
   /**
+   * Gets the topic/description of a channel.
+   * 
+   * @param {string} channelId - The channel identifier
+   * @returns {Promise<string | null>} The channel topic or null if not available
+   */
+  getChannelTopic?(channelId: string): Promise<string | null>;
+
+  /**
    * Gets the default channel identifier for this service.
    *
    * @returns {string} The default channel ID
    */
   getDefaultChannel(): string;
+
 
   /**
    * Shuts down the messaging service gracefully.
@@ -218,4 +227,23 @@ export interface IMessengerService {
     messengerService: IMessengerService;
     botConfig: any;
   }>;
+
+  /**
+   * Optional: Updates the bot's presence/activity status with model info.
+   * For Discord, this updates the "Currently playing" status.
+   * 
+   * @param {string} modelId - The model identifier to display
+   * @param {string} [senderKey] - Optional sender key to identify which bot instance to update
+   */
+  setModelActivity?(modelId: string, senderKey?: string): Promise<void>;
+
+  /**
+   * Optional: Triggers a typing indicator in the channel.
+   * Not all platforms support this; implementations may no-op.
+   *
+   * @param {string} channelId - The channel identifier
+   * @param {string} [senderName] - Optional sender key to select a specific bot instance
+   * @param {string} [threadId] - Optional thread identifier
+   */
+  sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
 }

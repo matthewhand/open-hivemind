@@ -34,12 +34,33 @@ export const validateBotConfigCreation = [
     .isIn(['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'])
     .withMessage('LLM provider must be one of: openai, flowise, openwebui, perplexity, replicate, n8n, openswarm'),
 
+  // LLM profile validation
+  body('llmProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('LLM profile must be less than 100 characters'),
+
   // Persona validation
   body('persona')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('Persona must be less than 100 characters'),
+
+  // Response profile validation
+  body('responseProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Response profile must be less than 100 characters'),
+
+  // MCP guard profile validation
+  body('mcpGuardProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('MCP guard profile must be less than 100 characters'),
 
   // System instruction validation
   body('systemInstruction')
@@ -252,12 +273,33 @@ export const validateBotConfigUpdate = [
     .isIn(['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'])
     .withMessage('LLM provider must be one of: openai, flowise, openwebui, perplexity, replicate, n8n, openswarm'),
 
+  // LLM profile validation
+  body('llmProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('LLM profile must be less than 100 characters'),
+
   // Persona validation
   body('persona')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('Persona must be less than 100 characters'),
+
+  // Response profile validation
+  body('responseProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Response profile must be less than 100 characters'),
+
+  // MCP guard profile validation
+  body('mcpGuardProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('MCP guard profile must be less than 100 characters'),
 
   // System instruction validation
   body('systemInstruction')
@@ -457,7 +499,10 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
     if (data.name) data.name = data.name.trim();
     if (data.messageProvider) data.messageProvider = data.messageProvider.trim();
     if (data.llmProvider) data.llmProvider = data.llmProvider.trim();
+    if (data.llmProfile) data.llmProfile = data.llmProfile.trim();
     if (data.persona) data.persona = data.persona.trim();
+    if (data.responseProfile) data.responseProfile = data.responseProfile.trim();
+    if (data.mcpGuardProfile) data.mcpGuardProfile = data.mcpGuardProfile.trim();
     if (data.systemInstruction) data.systemInstruction = data.systemInstruction.trim();
     
     // Sanitize nested objects

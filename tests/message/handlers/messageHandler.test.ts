@@ -220,7 +220,8 @@ describe('messageHandler', () => {
         'discord',
         expect.any(Array),
         expect.any(Array),
-        undefined
+        undefined,
+        mockBotConfig
       );
     });
 
@@ -247,7 +248,8 @@ describe('messageHandler', () => {
         'discord',
         expect.any(Array),
         expect.any(Array),
-        undefined
+        undefined,
+        badBotConfig
       );
     });
   });
@@ -309,7 +311,8 @@ describe('messageHandler', () => {
         expect.any(String),
         expect.any(Array),
         expect.any(Array),
-        undefined
+        undefined,
+        expect.any(Object)
       );
     });
   });

@@ -144,10 +144,13 @@ export interface BotConfiguration {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
   mcpGuard?: MCPCGuardConfig;
+  mcpGuardProfile?: string;
   discord?: DiscordConfig;
   slack?: SlackConfig;
   mattermost?: MattermostConfig;
@@ -173,10 +176,13 @@ export interface BotConfigurationVersion {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
   mcpGuard?: MCPCGuardConfig;
+  mcpGuardProfile?: string;
   discord?: DiscordConfig;
   slack?: SlackConfig;
   mattermost?: MattermostConfig;
@@ -331,7 +337,7 @@ export class DatabaseManager {
 
       if (this.config.type === 'sqlite') {
         const dbPath = this.config.path || 'data/hivemind.db';
-        
+
         // Ensure directory exists
         if (dbPath !== ':memory:') {
           const dbDir = join(dbPath, '..');
@@ -733,7 +739,7 @@ export class DatabaseManager {
     try {
       // Ensure timestamp is a Date object
       const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp || Date.now());
-      
+
       const result = await this.db!.run(`
         INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, metadata)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -1455,9 +1461,9 @@ export class DatabaseManager {
       if (currentConfig) {
         const versionToDelete = versions.find(v => v.version === version);
         if (versionToDelete &&
-            versionToDelete.messageProvider === currentConfig.messageProvider &&
-            versionToDelete.llmProvider === currentConfig.llmProvider &&
-            versionToDelete.persona === currentConfig.persona) {
+          versionToDelete.messageProvider === currentConfig.messageProvider &&
+          versionToDelete.llmProvider === currentConfig.llmProvider &&
+          versionToDelete.persona === currentConfig.persona) {
           throw new Error('Cannot delete the currently active version');
         }
       }

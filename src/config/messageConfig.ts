@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import Debug from 'debug';
+import { RESPONSE_PROFILE_KEY_TYPES, RESPONSE_PROFILE_OVERRIDE_KEYS } from './responseProfiles';
 
 const debug = Debug('app:messageConfig');
 
@@ -166,6 +167,88 @@ convict.addFormat({
   }
 });
 
+const responseProfileKeySet = new Set(RESPONSE_PROFILE_OVERRIDE_KEYS);
+
+function coerceResponseProfileValue(key: string, value: unknown): number | boolean | undefined {
+  if (!responseProfileKeySet.has(key as any)) return undefined;
+  const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
+
+  if (expectedType === 'number') {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  }
+
+  if (expectedType === 'boolean') {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+  }
+
+  return undefined;
+}
+
+convict.addFormat({
+  name: 'response-profiles',
+  validate: (val: unknown) => {
+    if (val == null) return;
+    if (typeof val === 'string' && val.trim() === '') return;
+    const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error('MESSAGE_RESPONSE_PROFILES must be a JSON object');
+    }
+
+    for (const [profileName, profileValue] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!profileName) {
+        throw new Error('MESSAGE_RESPONSE_PROFILES profile names must be non-empty strings');
+      }
+      if (typeof profileValue !== 'object' || profileValue === null || Array.isArray(profileValue)) {
+        throw new Error(`Response profile "${profileName}" must be an object`);
+      }
+      for (const [key, value] of Object.entries(profileValue as Record<string, unknown>)) {
+        if (!responseProfileKeySet.has(key as any)) {
+          throw new Error(`Response profile "${profileName}" contains unknown key "${key}"`);
+        }
+        const coerced = coerceResponseProfileValue(key, value);
+        if (coerced === undefined) {
+          const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
+          throw new Error(`Response profile "${profileName}" key "${key}" must be ${expectedType}`);
+        }
+      }
+    }
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'string' && val.trim() === '') return {};
+    const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const out: Record<string, Record<string, number | boolean>> = {};
+    for (const [profileName, profileValue] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!profileName || typeof profileValue !== 'object' || profileValue === null || Array.isArray(profileValue)) {
+        continue;
+      }
+      const profileOut: Record<string, number | boolean> = {};
+      for (const [key, value] of Object.entries(profileValue as Record<string, unknown>)) {
+        const coerced = coerceResponseProfileValue(key, value);
+        if (coerced !== undefined) {
+          profileOut[key] = coerced;
+        }
+      }
+      out[profileName] = profileOut;
+    }
+    return out;
+  }
+});
+
 // After convict parses env and files, perform a second-pass normalization that can warn
 function normalizeChannelMaps(
   bonuses: Record<string, number>,
@@ -320,6 +403,24 @@ const messageConfig = convict({
     format: Number,
     default: 3,
     env: 'MESSAGE_DELAY_MULTIPLIER'
+  },
+  MESSAGE_RESPONSE_PROFILES: {
+    doc: 'Named response profiles for per-bot engagement tuning. JSON map of profileName -> {MESSAGE_* overrides}.',
+    format: 'response-profiles',
+    default: {
+      default: {},
+      eager: {
+        MESSAGE_DELAY_MULTIPLIER: 1.5,
+        MESSAGE_UNSOLICITED_BASE_CHANCE: 0.05,
+        MESSAGE_ONLY_WHEN_SPOKEN_TO: false
+      },
+      cautious: {
+        MESSAGE_DELAY_MULTIPLIER: 3.5,
+        MESSAGE_UNSOLICITED_BASE_CHANCE: 0.005,
+        MESSAGE_ONLY_WHEN_SPOKEN_TO: true
+      }
+    },
+    env: 'MESSAGE_RESPONSE_PROFILES'
   },
   MESSAGE_UNSOLICITED_BASE_CHANCE: {
     doc: 'Base probability for replying when not explicitly addressed (only used when MESSAGE_ONLY_WHEN_SPOKEN_TO=false)',

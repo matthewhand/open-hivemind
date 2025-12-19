@@ -12,7 +12,7 @@ export const CreateBotSchema = z.object({
   body: z.object({
     name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
     messageProvider: z.string().min(1, { message: 'Message provider is required' }),
-    llmProvider: z.string().min(1, { message: 'LLM provider is required' }),
+    llmProvider: z.string().min(1, { message: 'LLM provider is required' }).optional(),
     config: z.record(z.any()).optional(),
     description: z.string().optional(),
     enabled: z.boolean().optional(),

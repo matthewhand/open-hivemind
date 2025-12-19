@@ -11,6 +11,7 @@ import { MCPGuardConfig } from '../mcp/MCPGuard';
 import { webUIStorage } from '../storage/webUIStorage';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 import { HivemindError, ErrorUtils, AppError } from '../types/errors';
+import { getLlmDefaultStatus } from '../config/llmDefaultStatus';
 
 const debug = Debug('app:BotManager');
 
@@ -33,7 +34,7 @@ export interface BotInstance {
 export interface CreateBotRequest {
   name: string;
   messageProvider: 'discord' | 'slack' | 'mattermost';
-  llmProvider: 'openai' | 'flowise' | 'openwebui';
+  llmProvider?: 'openai' | 'flowise' | 'openwebui' | 'openswarm';
   config: {
     discord?: {
       token: string;
@@ -230,7 +231,7 @@ export class BotManager extends EventEmitter {
         id: botId,
         name: request.name,
         messageProvider: request.messageProvider,
-        llmProvider: request.llmProvider,
+        llmProvider: request.llmProvider?.trim() || '',
         isActive: false, // New bots start inactive
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
@@ -299,7 +300,7 @@ export class BotManager extends EventEmitter {
       const cloneRequest: CreateBotRequest = {
         name: newName,
         messageProvider: sourceBot.messageProvider as 'discord' | 'slack' | 'mattermost',
-        llmProvider: sourceBot.llmProvider as 'openai' | 'flowise' | 'openwebui',
+        llmProvider: (sourceBot.llmProvider || undefined) as 'openai' | 'flowise' | 'openwebui' | 'openswarm' | undefined,
         config: sourceBot.config as CreateBotRequest['config'],
         persona: sourceBot.persona,
         systemInstruction: sourceBot.systemInstruction,
@@ -510,8 +511,13 @@ export class BotManager extends EventEmitter {
       throw new Error('Valid message provider is required (discord, slack, or mattermost)');
     }
 
-    if (!request.llmProvider || !['openai', 'flowise', 'openwebui'].includes(request.llmProvider)) {
-      throw new Error('Valid LLM provider is required (openai, flowise, or openwebui)');
+    if (!request.llmProvider || request.llmProvider.trim() === '') {
+      const llmDefaults = getLlmDefaultStatus();
+      if (!llmDefaults.configured) {
+        throw new Error('LLM provider is required when no default LLM is configured');
+      }
+    } else if (!['openai', 'flowise', 'openwebui', 'openswarm'].includes(request.llmProvider)) {
+      throw new Error('Valid LLM provider is required (openai, flowise, openwebui, or openswarm)');
     }
 
     this.validateBotConfig(request.config);

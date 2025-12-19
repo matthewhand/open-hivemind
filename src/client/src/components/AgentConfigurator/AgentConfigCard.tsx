@@ -10,6 +10,9 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   status,
   pending,
   personaOptions,
+  responseProfileOptions,
+  guardrailProfileOptions,
+  llmProfileOptions,
   messageProviderOptions,
   llmProviderOptions,
   messageProviderInfo,
@@ -19,6 +22,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   availableMcpServers,
   guardOptions,
   guardInput,
+  onGuardrailProfileChange,
   onSelectionChange,
   onSystemInstructionBlur,
   onGuardToggle,
@@ -32,6 +36,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   const connection = connectionStatusLabel(status?.connected, status?.status);
   const selectedMessageInfo = uiState?.messageProvider ? messageProviderInfo[uiState.messageProvider] : undefined;
   const selectedLlmInfo = uiState?.llmProvider ? llmProviderInfo[uiState.llmProvider] : undefined;
+  const guardrailProfileActive = Boolean(uiState?.mcpGuardProfile);
 
   return (
     <div className="card bg-base-100 shadow-xl border border-base-300 h-full">
@@ -87,6 +92,24 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 />
               </div>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="LLM Profile"
+                  value={uiState?.llmProfile || ''}
+                  options={llmProfileOptions}
+                  metadata={metadata.llmProfile}
+                  disabled={pending}
+                  allowEmpty
+                  helperContent={(
+                    <label className="label">
+                      <span className="label-text-alt">Optional template for LLM settings.</span>
+                    </label>
+                  )}
+                  onChange={(value) => onSelectionChange(bot, 'llmProfile', value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -126,11 +149,56 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
           </div>
         </div>
 
+        {/* Engagement Profile Section */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Engagement Profile</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="Response Profile"
+                  value={uiState?.responseProfile || ''}
+                  options={responseProfileOptions}
+                  metadata={metadata.responseProfile}
+                  disabled={pending}
+                  allowEmpty
+                  onChange={(value) => onSelectionChange(bot, 'responseProfile', value)}
+                  helperContent={(
+                    <label className="label">
+                      <span className="label-text-alt">Uses global messaging settings unless a profile is selected.</span>
+                    </label>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* MCP Configuration Section */}
         <div className="card bg-base-200 shadow-sm mb-4">
           <div className="card-body">
             <h3 className="card-title text-lg">MCP Configuration</h3>
             
+            <div className="form-control mb-4">
+              <FieldSelect
+                label="Guardrail Profile"
+                value={uiState?.mcpGuardProfile || ''}
+                options={guardrailProfileOptions.map(option => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                metadata={metadata.mcpGuardProfile}
+                disabled={pending}
+                allowEmpty
+                helperContent={guardrailProfileActive && uiState?.mcpGuardProfile ? (
+                  <label className="label">
+                    <span className="label-text-alt">Guard settings are driven by the selected profile.</span>
+                  </label>
+                ) : undefined}
+                onChange={(value) => onGuardrailProfileChange(bot, value)}
+              />
+            </div>
+
             <div className="form-control mb-4">
               <label className="label">
                 <span className="label-text">MCP Servers</span>
@@ -162,7 +230,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                   className={`toggle ${uiState?.mcpGuard.enabled ? 'toggle-primary' : ''}`}
                   checked={uiState?.mcpGuard.enabled || false}
                   onChange={(e) => onGuardToggle(bot, e.target.checked)}
-                  disabled={metadata.mcpGuard?.locked || pending}
+                  disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                 />
               </label>
               <FieldHelper metadata={metadata.mcpGuard} fallback="Restrict who can trigger MCP tools" />
@@ -178,7 +246,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                     className="select select-bordered"
                     value={uiState.mcpGuard.type}
                     onChange={(e) => onGuardTypeChange(bot, e.target.value as GuardState['type'])}
-                    disabled={metadata.mcpGuard?.locked || pending}
+                    disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                   >
                     {guardOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -199,7 +267,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                       value={guardInput}
                       onChange={(e) => onGuardUsersChange(bot, e.target.value)}
                       onBlur={() => onGuardUsersBlur(bot)}
-                      disabled={metadata.mcpGuard?.locked || pending}
+                      disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                     />
                     <label className="label">
                       <span className="label-text-alt">Comma-separated list of user IDs permitted to invoke MCP tools.</span>

@@ -18,6 +18,7 @@ export interface BotConfig {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
   discord?: {
     token: string;
     clientId?: string;
@@ -61,6 +62,8 @@ export interface BotConfig {
     agentId?: string;
   };
   persona?: string;
+  mcpGuardProfile?: string;
+  responseProfile?: string;
   systemInstruction?: string;
   mcpServers?: string | string[];
   mcpGuard?: {
@@ -102,10 +105,25 @@ export class ConfigurationValidator {
         format: ['openai', 'flowise', 'openwebui', 'openswarm'],
         default: 'openai'
       },
+      llmProfile: {
+        doc: 'LLM provider profile',
+        format: String,
+        default: ''
+      },
       persona: {
         doc: 'Bot persona',
         format: String,
         default: 'default'
+      },
+      mcpGuardProfile: {
+        doc: 'MCP guardrail profile name',
+        format: String,
+        default: ''
+      },
+      responseProfile: {
+        doc: 'Response profile name',
+        format: String,
+        default: ''
       },
       systemInstruction: {
         doc: 'System instruction',

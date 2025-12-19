@@ -332,7 +332,7 @@ describe('messageHandler Configuration and Features', () => {
         (mockMessage as any).isMentioning.mockReturnValue(true);
 
         const promise = handleMessage(mockMessage, [], botConfig);
-        await jest.advanceTimersByTimeAsync(10000);
+        await jest.runAllTimersAsync();
         await promise;
 
         // Even with 0 probability, it should respond because of mention
@@ -357,7 +357,7 @@ describe('messageHandler Configuration and Features', () => {
     it('should skip processing if channel is locked', async () => {
         (processingLocks.isLocked as jest.Mock).mockReturnValue(true);
         const promise = handleMessage(mockMessage, [], { name: 'LockedBot' });
-        await jest.advanceTimersByTimeAsync(61000);
+        await jest.runAllTimersAsync();
         const result = await promise;
         expect(result).toBeNull();
         expect(mockLlmProvider.generateChatCompletion).not.toHaveBeenCalled();
@@ -396,7 +396,7 @@ describe('messageHandler Configuration and Features', () => {
         jest.spyOn(Math, 'random').mockReturnValue(0.0);
 
         const promise = handleMessage(mockMessage, [], botConfig);
-        await jest.advanceTimersByTimeAsync(10000);
+        await jest.runAllTimersAsync();
         await promise;
 
         // Verify Main Response

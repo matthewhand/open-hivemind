@@ -6,7 +6,12 @@ import { addUserHintFn as addUserHint } from '../helpers/processing/addUserHint'
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage';
+import { summarizeLogWithLlm } from '../helpers/logging/LogProseSummarizer';
+import { GlobalActivityTracker } from '../helpers/processing/GlobalActivityTracker';
+
+
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
+
 import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
@@ -28,6 +33,9 @@ import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManage
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
 import TypingActivity from '../helpers/processing/TypingActivity';
 import TypingMonitor from '../helpers/monitoring/TypingMonitor';
+import { IncomingMessageDensity } from '../helpers/processing/IncomingMessageDensity';
+import { getMessageSetting } from '../helpers/processing/ResponseProfile';
+
 import { isOnTopic, isNonsense } from '../helpers/processing/SemanticRelevanceChecker';
 
 const timingManager = MessageDelayScheduler.getInstance();
@@ -195,17 +203,60 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         ? (messageProvider as any).getDefaultChannel()
         : undefined;
 
-      const replyDecision = await shouldReplyToMessage(message, botId, platform, replyNameCandidates, historyMessages, defaultChannelId);
+      const replyDecision = await shouldReplyToMessage(
+        message,
+        botId,
+        platform,
+        replyNameCandidates,
+        historyMessages,
+        defaultChannelId,
+        botConfig
+      );
+      const decisionTimestamp = Date.now();
+
+      // Safely extract human-readable names for logging
+      const authorName = (() => {
+        try {
+          return (typeof message.getAuthorName === 'function' ? message.getAuthorName() : null) ||
+            (typeof message.getAuthorId === 'function' ? `user:${message.getAuthorId()}` : 'someone');
+        } catch { return 'someone'; }
+      })();
+      const channelName = (() => {
+        try {
+          // Try to get channel name from the original message if Discord
+          const orig = (message as any).getOriginalMessage?.();
+          if (orig?.channel?.name) return `#${orig.channel.name}`;
+          return `ch:${channelId.slice(-6)}`; // Truncated ID fallback
+        } catch { return `ch:${channelId.slice(-6)}`; }
+      })();
+
       if (!replyDecision.shouldReply) {
         logger(`Message not eligible for reply: ${replyDecision.reason}`);
         if (replyDecision.reason !== 'Message from self') {
-          console.info(`🚫 SKIPPING | bot: ${botConfig.name} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})}`);
+          // Prose explanation at info level with context
+          let prose = replyDecision.meta?.prose || replyDecision.reason;
+          prose = await summarizeLogWithLlm(prose);
+          console.info(`🚫 ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`);
+          // JSON stats at debug level
+          logger(`📊 ${botConfig.name} decision stats:`, JSON.stringify(replyDecision.meta || {}, null, 2));
         }
+
         return null;
       }
 
       const targetType = (typeof message.isFromBot === 'function' && message.isFromBot()) ? 'bot' : 'user';
-      console.info(`✅ RESPONDING | bot: ${botConfig.name} | platform: ${platform} | target_type: ${targetType} | reason: ${replyDecision.reason} | stats: ${JSON.stringify(replyDecision.meta || {})} | channel: ${channelId} | trigger: ${message.getMessageId()}`);
+      // Prose explanation at info level with context (clean output)
+      let prose = replyDecision.meta?.prose || replyDecision.reason;
+      prose = await summarizeLogWithLlm(prose);
+      console.info(`✅ ${botConfig.name} responds to @${authorName} in ${channelName}: ${prose}`);
+      // Detailed stats at debug level only
+      if (replyDecision.meta?.colorizedMods) {
+        logger(`   📈 ${botConfig.name} modifiers: ${replyDecision.meta.colorizedMods}`);
+      }
+      logger(`📊 ${botConfig.name} stats:`, JSON.stringify(replyDecision.meta || {}, null, 2));
+
+
+
 
       // Detect mentions and replies for context hints (use active agent name, not just botConfig.name)
       const mentionContext = detectMentions(message, botId, activeAgentName);
@@ -217,14 +268,14 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // Delay Before Inference (Read + Rate Backoff + Coalesce Burst)
       // -----------------------------------------------------------------------
 
-      const delayScaleRaw = messageConfig.get('MESSAGE_DELAY_MULTIPLIER');
+      const delayScaleRaw = getMessageSetting('MESSAGE_DELAY_MULTIPLIER', botConfig);
       const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
 
-      const baseDelayConfig = (Number(messageConfig.get('MESSAGE_COMPOUNDING_DELAY_BASE_MS')) || 1500) * delayScale;
+      const baseDelayConfig = (Number(getMessageSetting('MESSAGE_COMPOUNDING_DELAY_BASE_MS', botConfig)) || 1500) * delayScale;
       // Add chaos: 0.9x to 1.8x of base delay (e.g. 4500 -> 4050~8100ms)
       const baseCompoundDelayMs = randInt(Math.floor(baseDelayConfig * 0.9), Math.floor(baseDelayConfig * 1.8));
 
-      const maxCompoundDelayMs = (Number(messageConfig.get('MESSAGE_COMPOUNDING_DELAY_MAX_MS')) || 15000) * delayScale;
+      const maxCompoundDelayMs = (Number(getMessageSetting('MESSAGE_COMPOUNDING_DELAY_MAX_MS', botConfig)) || 15000) * delayScale;
 
       delayKey = channelDelayManager.getKey(channelId, botId);
       isLeaderInvocation = channelDelayManager.registerMessage(
@@ -244,10 +295,10 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // Calculate delay based on message length (reading time) - scaled.
       // Keep short messages snappy while allowing longer messages to feel "read".
       const msgText = message.getText() || '';
-      const baseReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_BASE_MS')) || 200;
-      const perCharRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_PER_CHAR_MS')) || 25;
-      const minReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_MIN_MS')) || 3000;
-      const maxReadingRaw = Number(messageConfig.get('MESSAGE_READING_DELAY_MAX_MS')) || 6000;
+      const baseReadingRaw = Number(getMessageSetting('MESSAGE_READING_DELAY_BASE_MS', botConfig)) || 50;
+      const perCharRaw = Number(getMessageSetting('MESSAGE_READING_DELAY_PER_CHAR_MS', botConfig)) || 6;
+      const minReadingRaw = Number(getMessageSetting('MESSAGE_READING_DELAY_MIN_MS', botConfig)) || 750;
+      const maxReadingRaw = Number(getMessageSetting('MESSAGE_READING_DELAY_MAX_MS', botConfig)) || 1500;
 
       const baseReadingMs = baseReadingRaw * delayScale;
       const perCharMs = perCharRaw * delayScale;
@@ -256,16 +307,59 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
       const computedReading = baseReadingMs + (msgText.length * perCharMs);
       const readingDelay = Math.min(maxReadingMs, Math.max(minReadingMs, computedReading));
-      const jitter = Math.floor(Math.random() * 350 * delayScale); // scaled
+      const jitter = Math.floor(Math.random() * 175 * delayScale); // scaled
+
+      console.info(`⏱️ [TIMING] Artificial delay calculated: ${readingDelay + jitter}ms (Reading: ${readingDelay}ms + Jitter: ${jitter}ms)`);
+
+
+      // Bot-specific jitter: deterministic offset based on botId to spread bots apart
+      // This ensures each bot has a unique delay offset that persists across invocations
+      // Using a better hash to reduce collisions between similar bot IDs
+      const botHash = botId.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+      const botSpecificJitter = (botHash % 2000); // 0-2000ms unique per bot (halved from 4000)
+
+
 
       // Token usage multiplier (slower if channel is hot)
       const usageMultiplier = tokenTracker.getDelayMultiplier(channelId);
 
       // Outgoing message rate backoff (don't drop responses, just delay them)
-      const maxPerMinute = Number(messageConfig.get('MESSAGE_RATE_LIMIT_PER_CHANNEL')) || 5;
+      const maxPerMinute = Number(getMessageSetting('MESSAGE_RATE_LIMIT_PER_CHANNEL', botConfig)) || 5;
       const outgoingBackoffMs = outgoingRateLimiter.getBackoffMs(channelId, maxPerMinute, 60000);
 
-      const totalPreDelay = Math.floor((readingDelay + jitter) * usageMultiplier + outgoingBackoffMs);
+      // DELAY CAPPING LOGIC :::::::::::::::::::::::::::::::::::::::::::::::::
+      // Target artificial delay based on reading time, jitter, and bot personality
+      const targetArtificialDelay = Math.floor((readingDelay + jitter + botSpecificJitter) * usageMultiplier);
+
+      // Calculate how much time has already passed since the message was created/received
+      // If message timestamp is available, use it; otherwise use start of processing
+      const messageTimestamp = (typeof message.getTimestamp === 'function')
+        ? message.getTimestamp().getTime()
+        : decisionTimestamp; // fallback to when we started processing decision
+
+      const elapsedSinceReceipt = Math.max(0, Date.now() - messageTimestamp);
+
+      // Subtract elapsed time from target delay to keep total latency consistent
+      // If we've already spent 2s processing and target is 3s, only wait 1s more.
+      const cappedArtificialDelay = Math.max(0, targetArtificialDelay - elapsedSinceReceipt);
+
+      // LOG A: Artificial delay begins
+      if (cappedArtificialDelay > 50) {
+        console.info(`⏱️ [TIMING] Starting artificial delay: ${cappedArtificialDelay}ms...`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, cappedArtificialDelay));
+
+      // LOG B: Decision made / Action starting (including time for A)
+      console.info(`⏱️ [TIMING] Decision committed. Ready to infer. (Elapsed since receipt: ${Date.now() - (messageTimestamp || decisionTimestamp)}ms)`);
+
+      if (elapsedSinceReceipt > 100) {
+        logger(`Delay cap applied: target=${targetArtificialDelay}ms, elapsed=${elapsedSinceReceipt}ms, new_delay=${cappedArtificialDelay}ms`);
+      }
+
+      const totalPreDelay = cappedArtificialDelay + outgoingBackoffMs;
+
+
 
       // Ensure our coalescing window waits at least the computed delay.
       channelDelayManager.ensureMinimumDelay(delayKey, totalPreDelay, maxCompoundDelayMs);
@@ -277,48 +371,106 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       await channelDelayManager.waitForDelay(delayKey);
 
       // -----------------------------------------------------------------------
-      // Collision Avoidance (Anti-Crosstalk)
+      // Collision Avoidance (Anti-Crosstalk) - with exponential backoff
       // -----------------------------------------------------------------------
-      // If we are replying based on CHANCE (not directly addressed), check if anyone else is typing.
-      // This prevents multiple bots from piling on if they both decided to reply.
-      // We check this AFTER the delay to catch late-breaking typists.
-      if (replyDecision.reason !== 'Directly addressed') {
-        const isAnyoneTyping = TypingMonitor.getInstance().isAnyoneTyping(channelId, [botId]); // Exclude self
+      // Check if anyone else is typing or posted during our wait.
+      // IMPORTANT: Typing delay only applies ONCE to prevent two typing bots from deadlocking.
+      // Posted messages continue to cause backoff in a loop.
+      const MAX_CROSSTALK_ITERATIONS = 5;
+      let crosstalkIterations = 0;
+      let typingDelayApplied = false; // Only delay for typing once
 
-        // Check if ANY bot (not this one) posted during our wait - use channel-wide activity
-        const someonePostedDuringWait = false;
+      while (crosstalkIterations < MAX_CROSSTALK_ITERATIONS) {
+        // Get count of OTHER users/bots typing (excluding self)
+        const allTypingUsers = TypingMonitor.getInstance().getTypingUsers(channelId);
+        const otherTypingCount = allTypingUsers.filter(uid => uid !== botId).length;
 
-        if (isAnyoneTyping || someonePostedDuringWait) {
-          // Instead of skipping, add a small additional delay and continue
-          const additionalDelay = 2000 + Math.random() * 3000;
-          logger(`Collision detected: Typing=${isAnyoneTyping}, RecentPost=${someonePostedDuringWait}. Adding ${Math.round(additionalDelay)}ms delay.`);
-          console.debug(`⏳ CROSSTALK DELAY | bot: ${botConfig.name} | typing: ${isAnyoneTyping} | posted: ${someonePostedDuringWait} | delay: ${Math.round(additionalDelay)}ms`);
-          await new Promise(resolve => setTimeout(resolve, additionalDelay));
+        // Compound typing penalty: 1=none, 2=slight, 3+=significant
+        // Only trigger delay if 2 or more others are typing
+        const shouldDelayForTyping = otherTypingCount >= 2 && !typingDelayApplied;
+
+        // Check if ANY bot (not this one) posted during our wait
+        const channelActivityImport = require('@message/helpers/processing/ChannelActivity');
+        let messagesPostedCount = 0;
+        try {
+          const otherBotsActivity = channelActivityImport.getRecentChannelActivity?.(channelId, waitStart) || [];
+          messagesPostedCount = otherBotsActivity.filter((a: any) => a.botId !== botId && a.timestamp > waitStart).length;
+        } catch {
+          try {
+            const density = IncomingMessageDensity.getInstance();
+            const { total } = density.getDensity(channelId, Date.now() - waitStart);
+            messagesPostedCount = total;
+          } catch { }
         }
+
+        // TIERED TRAFFIC: Only delay if traffic is significant (3+ messages)
+        const shouldDelayForTraffic = messagesPostedCount >= 3;
+
+        if (!shouldDelayForTyping && !shouldDelayForTraffic) {
+          // No collision detected (or typing already handled), proceed
+          break;
+        }
+
+
+        // Extract probability for bypass chance
+        const probStr = String(replyDecision.meta?.probability || '0').replace('<', '');
+        const responseProbability = Number(probStr) || 0;
+        const crosstalkRoll = Math.random();
+
+        // Higher probability = more likely to bypass and proceed
+        if (crosstalkRoll < responseProbability) {
+          console.debug(`⚡ CROSSTALK BYPASS | bot: ${botConfig.name} | prob: ${responseProbability.toFixed(2)} | roll: ${crosstalkRoll.toFixed(2)} | PROCEEDING`);
+          break; // Bypass delay and proceed
+        }
+
+        crosstalkIterations++;
+
+        // Track if we've delayed for typing (only do it once)
+        if (otherTypingCount > 0 && !typingDelayApplied) {
+          typingDelayApplied = true;
+        }
+
+        // Exponential backoff: base delay (500-1250ms) multiplied by iteration count
+        // Compound typing penalty: multiply by (1 + (typingCount-1)/2) when typing
+        // Traffic penalty: 3 msgs = 1x, 4 msgs = 1.5x, 5+ msgs = 2x
+        const baseDelay = 500 + Math.random() * 750;
+        const typingMultiplier = shouldDelayForTyping ? (1 + (otherTypingCount - 1) / 2) : 1;
+        const trafficMultiplier = shouldDelayForTraffic
+          ? (messagesPostedCount >= 5 ? 2.0 : (messagesPostedCount === 4 ? 1.5 : 1.0))
+          : 1.0;
+
+        const additionalDelay = baseDelay * crosstalkIterations * typingMultiplier * trafficMultiplier;
+        const reason = shouldDelayForTyping
+          ? `Typing(${otherTypingCount}x)`
+          : `Traffic(${messagesPostedCount} msgs)`;
+
+        logger(`Collision #${crosstalkIterations}: ${reason}. Delay=${Math.round(additionalDelay)}ms`);
+        console.debug(`⏳ CROSSTALK #${crosstalkIterations} | bot: ${botConfig.name} | reason: ${reason} | typers: ${otherTypingCount} | delay: ${Math.round(additionalDelay)}ms`);
+        await new Promise(resolve => setTimeout(resolve, additionalDelay));
       }
 
+
+      if (crosstalkIterations >= MAX_CROSSTALK_ITERATIONS) {
+        logger(`Max crosstalk iterations reached (${MAX_CROSSTALK_ITERATIONS}), proceeding anyway`);
+        console.debug(`⚠️ CROSSTALK MAX | bot: ${botConfig.name} | giving up after ${MAX_CROSSTALK_ITERATIONS} iterations`);
+      }
+
+
       // Typing behavior:
-      // - Wait a bit before showing typing (simulates reading).
-      // - Start typing closer to inference time (especially when rate-backoff is large) so we don't "type for a minute".
-      // - Keep typing running through inference so there's no "typing stopped, then long pause" gap.
+      // - Start typing immediately (minimal pre-delay).
+      // - Keep typing persistent through the entire wait.
       let typingStarted = false;
-      const preTypingDelayMs = Math.min(4500, Math.max(2000, Math.floor(readingDelay * 0.5)));
+      const preTypingDelayMs = Math.min(1500, Math.max(500, Math.floor(readingDelay * 0.2)));
       const typingEligibleAt = Date.now() + preTypingDelayMs;
-      // Only show typing in the final "lead" window before inference, to leave earlier time as silent reading/thinking.
-      const typingLeadBaseMs = Math.min(9000, Math.max(2500, Math.floor(readingDelay * 0.8)));
-      // If we're rate-backed off, reduce typing lead so we don't sit "typing" through the whole backoff.
-      const typingLeadMs = outgoingBackoffMs > 10000 ? Math.min(4000, typingLeadBaseMs) : typingLeadBaseMs;
+      // Start typing much sooner - minimal lead window.
+      const typingLeadBaseMs = Math.min(4500, Math.max(1500, Math.floor(readingDelay * 0.6)));
+      const typingLeadMs = outgoingBackoffMs > 10000 ? Math.min(2000, typingLeadBaseMs) : typingLeadBaseMs;
 
       const scheduleNextTypingPulse = (): void => {
         if (stopTyping || !typingStarted || !messageProvider.sendTyping) return;
 
-        // Discord typing lasts ~10s. To emulate "thinking pauses", sometimes refresh *after* it expires,
-        // leaving short gaps where typing disappears, then returns.
-        const pauseChance = 0.25;
-        const nextDelayMs =
-          Math.random() < pauseChance
-            ? randInt(11500, 17000) // will usually allow typing to briefly stop
-            : randInt(7000, 9500);  // keeps typing alive most of the time
+        // Keep typing alive consistently - refresh every 5-7s (Discord typing lasts ~10s).
+        const nextDelayMs = randInt(5000, 7000);
 
         typingTimeout = setTimeout(async () => {
           if (stopTyping) return;
@@ -344,8 +496,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
           // If other users are actively typing, wait a bit longer before showing our typing indicator
           // (to feel less like we are interrupting). Never wait indefinitely.
-          const othersTypingWindowMs = (Number(messageConfig.get('MESSAGE_OTHERS_TYPING_WINDOW_MS')) || 8000);
-          const othersTypingMaxWaitMs = (Number(messageConfig.get('MESSAGE_OTHERS_TYPING_MAX_WAIT_MS')) || 5000);
+          const othersTypingWindowMs = (Number(getMessageSetting('MESSAGE_OTHERS_TYPING_WINDOW_MS', botConfig)) || 8000);
+          const othersTypingMaxWaitMs = (Number(getMessageSetting('MESSAGE_OTHERS_TYPING_MAX_WAIT_MS', botConfig)) || 5000);
           const waitedSinceEligible = Date.now() - typingEligibleAt;
 
           if (waitedSinceEligible < othersTypingMaxWaitMs && typingActivity.isOthersTyping(channelId, othersTypingWindowMs)) {
@@ -411,6 +563,16 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         logger('Failed to refetch history, using original history:', err);
       }
 
+      // Fetch channel topic for context hint
+      let channelTopic: string | null = null;
+      try {
+        if (typeof (messageProvider as any).getChannelTopic === 'function') {
+          channelTopic = await (messageProvider as any).getChannelTopic(channelId);
+        }
+      } catch {
+        logger('Failed to fetch channel topic');
+      }
+
       // LLM processing with retry for duplicates
       const startTime = Date.now();
       const MAX_DUPLICATE_RETRIES = Number(messageConfig.get('MESSAGE_MAX_GENERATION_RETRIES')) || 3;
@@ -425,7 +587,13 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         (message.metadata as any)?.systemPrompt;
 
       const baseSystemPromptText = typeof baseSystemPrompt === 'string' ? baseSystemPrompt.trim() : '';
-      const systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
+      let systemPrompt = buildSystemPromptWithBotName(baseSystemPrompt, activeAgentName);
+
+      // Emphasize channel topic in system prompt if available
+      if (channelTopic && channelTopic.trim().length > 0) {
+        systemPrompt += `\n\nCHANNEL CONTEXT: The topic of this channel is "${channelTopic}". Use this to guide the relevance and tone of your responses.`;
+      }
+
 
       // Adjust max tokens based on recent usage to prevent walls of text
       const defaultMaxTokens = botConfig.openai?.maxTokens || 150;
@@ -483,6 +651,12 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
 
         // Build prompt with mention context and creativity hint on retry
         let prompt = processedMessage;
+
+        // Add channel topic context hint if available
+        if (channelTopic && channelTopic.trim()) {
+          prompt = `[Channel context: ${channelTopic.trim()}]\n\n${prompt}`;
+        }
+
         if (mentionContext.contextHint) {
           prompt = `${mentionContext.contextHint}\n\n${prompt}`;
         }
@@ -495,6 +669,7 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         } else if (repetitionBoost > 0) {
           logger(`Applying repetition temperature boost: +${repetitionBoost.toFixed(2)} (total +${metadata.temperatureBoost.toFixed(2)})`);
         }
+
 
         const payload = {
           text: prompt,
@@ -595,12 +770,33 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
         // Not a duplicate, we're good!
         break;
       }
-
       // Record tokens for this response
       const estimatedTokens = tokenTracker.estimateTokens(llmResponse);
       tokenTracker.recordTokens(channelId, estimatedTokens);
       logger(`Recorded ${estimatedTokens} tokens for channel ${channelId}`);
-      console.info(`✅ INFERENCE COMPLETE | bot: ${botConfig.name} | provider: ${botConfig.llmProvider} | tokens: ${estimatedTokens} | channel: ${channelId}`);
+
+      // Record global activity (fatigue)
+      GlobalActivityTracker.getInstance().recordActivity(botId);
+
+      const inferenceTime = Date.now() - decisionTimestamp;
+      const totalProcessTime = Date.now() - (messageTimestamp || decisionTimestamp);
+
+      // LOG C: Inference complete
+      console.info(`⏱️ [TIMING] Inference complete. Inf: ${inferenceTime}ms, Total: ${totalProcessTime}ms`);
+
+      console.info(`💭 ${botConfig.name} finished thinking in ${(inferenceTime / 1000).toFixed(1)}s (${estimatedTokens} tokens) using ${botConfig.llmModel || botConfig.llmProvider}`);
+      logger(`📊 ${botConfig.name} inference stats: tokens=${estimatedTokens}, time=${inferenceTime}ms, provider=${botConfig.llmProvider}, channel=${channelId}`);
+
+
+
+
+
+      // Update Discord presence with model info (if supported)
+      const modelId = botConfig.llmModel || botConfig.llmProvider || 'unknown';
+      if (typeof (messageProvider as any).setModelActivity === 'function') {
+        (messageProvider as any).setModelActivity(modelId, providerSenderKey).catch(() => { });
+      }
+
 
       // Split response on newlines for natural line-by-line sending
       let lines = splitOnNewlines(llmResponse);
@@ -614,8 +810,39 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // Get delay multiplier based on recent token usage
       const delayMultiplier = tokenTracker.getDelayMultiplier(channelId);
 
+      // SMART TYPING DELAY :::::::::::::::::::::::::::::::::::::::::::::::::
+      // If inference was too fast for the length of the response, wait a bit
+      // to simulate "reading/typing" so the user sees the indicator for a natural duration.
+      const typingPerCharMs = Number(process.env.MESSAGE_TYPING_PER_CHAR_MS) || 20;
+      const minTypingMs = Number(process.env.MESSAGE_TYPING_MIN_MS) || 1000;
+      const responseLen = llmResponse.length;
+
+      const targetTypingMs = Math.max(minTypingMs, responseLen * typingPerCharMs);
+
+      // Calculate total time elapsed since we committed to the decision (Decision Time + Delay + Inference)
+      // User Logic: "if [size delay] has already exceeded the time waited so far since b... immediately send"
+      // We compare TargetTyping vs (Now - DecisionTimestamp).
+      // Note: decisionTimestamp was set BEFORE the artificial delay, so (Now - Decision) includes Artificial Delay + Inference.
+      const timeSinceDecision = Date.now() - decisionTimestamp;
+      const remainingTypingWait = Math.max(0, targetTypingMs - timeSinceDecision);
+
+      if (remainingTypingWait > 100) {
+        logger(`Inference+Delay fast (${timeSinceDecision}ms) vs target size delay (${targetTypingMs}ms). Waiting ${remainingTypingWait}ms...`);
+        console.info(`⏱️ [TIMING] Wait for size/typing: ${remainingTypingWait}ms (Target: ${targetTypingMs}ms, Elapsed: ${timeSinceDecision}ms)`);
+
+        // Ensure typing indicator stays alive if we wait
+        if (remainingTypingWait > 4000 && messageProvider.sendTyping) {
+          await messageProvider.sendTyping(channelId, providerSenderKey).catch(() => { });
+        }
+        await new Promise(resolve => setTimeout(resolve, remainingTypingWait));
+      } else {
+        console.info(`⏱️ [TIMING] Size delay (${targetTypingMs}ms) already covered by elapsed time (${timeSinceDecision}ms). Sending immediately.`);
+      }
+
+
       // Stop sustained typing once we have the response and are transitioning into "sending" mode.
       // (Avoids looking like we type continuously while waiting on per-message rate limits.)
+
       stopTyping = true;
       if (typingTimeout) {
         try { clearTimeout(typingTimeout); } catch { }
@@ -681,7 +908,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
             logger(`Sent message via ${providerSenderKey}, response: ${sentTs}`);
 
             const contentSnippet = text.length > 20 ? text.substring(0, 20) + '...' : text;
-            console.info(`✅ SENT | bot: ${botConfig.name} | content: "${contentSnippet}" | channel: ${message.getChannelId()}`);
+            const totalDuration = Date.now() - ((typeof message.getTimestamp === 'function' && message.getTimestamp() ? message.getTimestamp().getTime() : 0) || decisionTimestamp);
+            console.info(`✅ SENT | bot: ${botConfig.name} | content: "${contentSnippet}" | channel: ${message.getChannelId()} | time: ${(totalDuration / 1000).toFixed(1)}s`);
 
             // Record this message for duplicate detection
             duplicateDetector.recordMessage(message.getChannelId(), text);
@@ -719,7 +947,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
             }
             return sentTs;
           },
-          false
+          false,
+          botConfig
         );
       } // End for loop
 
@@ -729,7 +958,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       return llmResponse;
     } catch (error: unknown) {
       ErrorHandler.handle(error, 'messageHandler.handleMessage');
-      console.info(`❌ INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}`);
+      const modelInfo = botConfig ? ` | provider: ${botConfig.llmProvider} | model: ${botConfig.llmModel || 'default'}` : '';
+      console.info(`❌ INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`);
       return `Error processing message: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
       stopTyping = true;
