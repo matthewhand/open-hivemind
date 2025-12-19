@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { executeCommand, readFile } from '../../src/utils/utils';
 describe('Utility Functions Comprehensive Tests', () => {
   describe('Math Operations', () => {
     test('should handle basic arithmetic operations correctly', () => {
@@ -94,11 +97,19 @@ describe('Utility Functions Comprehensive Tests', () => {
   });
 
   describe('Basic Assertions', () => {
-    test('should verify basic equality', () => {
-      expect(1).toBe(1);
-      expect(2).toBe(2);
-      expect('hello').toBe('hello');
-      expect(true).toBe(true);
+    test('should execute utility helpers for commands and file handling', async () => {
+      const commandOutput = await executeCommand('echo unit-test');
+      expect(commandOutput).toBe('unit-test\n');
+
+      const tempPath = path.join(__dirname, 'utility-sample.txt');
+      fs.writeFileSync(tempPath, 'utility file content');
+      const fileContent = await readFile(tempPath);
+      expect(fileContent).toBe('utility file content');
+      fs.unlinkSync(tempPath);
+    });
+
+    test('readFile should reject directories', async () => {
+      await expect(readFile(__dirname)).rejects.toThrow('Path is a directory');
     });
 
     test('should verify object equality', () => {

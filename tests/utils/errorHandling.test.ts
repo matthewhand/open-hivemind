@@ -45,10 +45,12 @@ const createMockResponse = () => {
 };
 
 const next = jest.fn();
+const logger = errorLogger;
 
 describe('Error Handling System', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    logger.clearStats();
   });
 
   describe('Error Classes', () => {
@@ -150,7 +152,7 @@ describe('Error Handling System', () => {
   });
 
   describe('Error Logger', () => {
-    test('should log error with context', async () => {
+    test('should log error with context', () => {
       const testError = new ValidationError('Test validation error');
       const context = {
         correlationId: 'test-correlation-123',
@@ -159,13 +161,18 @@ describe('Error Handling System', () => {
         method: 'POST'
       };
 
-      await errorLogger.logError(testError, context);
+      const statsBefore = logger.getErrorStats();
+      logger.logError(testError, context);
+      const statsAfter = logger.getErrorStats();
 
-      // Since we don't have access to the internal logger in tests, we'll just ensure the method executes
-      expect(true).toBe(true); // Test passes if no exception is thrown
+      expect(statsAfter.totalErrors).toBe(statsBefore.totalErrors + 2);
+      expect(statsAfter.errorTypes.validation).toBeGreaterThanOrEqual(1);
+      expect(logger.getRecentErrorCount()).toBeGreaterThanOrEqual(1);
+      const recent = logger.getRecentErrors(1);
+      expect(recent[0]?.context.correlationId).toBe(context.correlationId);
     });
 
-    test('should log error without context', async () => {
+    test('should log error without context', () => {
       const testError = new NetworkError('Test network error');
       const context = {
         correlationId: 'test-correlation-456',
@@ -173,35 +180,38 @@ describe('Error Handling System', () => {
         method: 'GET'
       };
 
-      await errorLogger.logError(testError, context);
+      const statsBefore = logger.getErrorStats();
+      logger.logError(testError, context);
+      const statsAfter = logger.getErrorStats();
 
-      expect(true).toBe(true); // Test passes if no exception is thrown
+      expect(statsAfter.totalErrors).toBe(statsBefore.totalErrors + 2);
+      expect(statsAfter.errorTypes.network).toBeGreaterThanOrEqual(1);
+      expect(logger.getRecentErrorCount()).toBeGreaterThanOrEqual(1);
     });
 
-    test('should log error with correlation ID', async () => {
+    test('should log error with correlation ID', () => {
       const testError = new ValidationError('Test error with correlation ID');
-      const correlationId = 'test-correlation-123';
+      const correlationId = 'test-correlation-789';
       const context = {
         correlationId,
         path: '/test',
         method: 'POST'
       };
 
-      await errorLogger.logError(testError, context);
-
-      expect(true).toBe(true); // Test passes if no exception is thrown
+      logger.logError(testError, context);
+      const recent = logger.getRecentErrors(5);
+      expect(recent.some(entry => entry.context.correlationId === correlationId)).toBe(true);
     });
 
-    test('should get error statistics', async () => {
-      const stats = await errorLogger.getErrorStats();
+    test('should get error statistics', () => {
+      const stats = logger.getErrorStats();
 
-      // The stats object contains error counts by type
       expect(typeof stats).toBe('object');
       expect(stats).toBeDefined();
     });
 
-    test('should get recent errors', async () => {
-      const recentErrors = await errorLogger.getRecentErrors(10);
+    test('should get recent errors', () => {
+      const recentErrors = logger.getRecentErrors(10);
 
       expect(Array.isArray(recentErrors)).toBe(true);
     });
