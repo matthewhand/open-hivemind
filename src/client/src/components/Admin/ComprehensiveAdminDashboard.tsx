@@ -6,25 +6,35 @@ import {
   ChartBarIcon,
   UserGroupIcon,
   Cog6ToothIcon,
-  BellIcon
+  BellIcon,
+  CommandLineIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 
 import EnhancedAgentConfigurator from './EnhancedAgentConfigurator';
-import MCPServerManager from './MCPServerManager';
+import MCPServerManager from '../MCPServerManager';
 import ActivityMonitor from './ActivityMonitor';
 import PersonaManager from './PersonaManager';
 import EnvMonitor from './EnvMonitor';
+import LlmProfileManager from './LlmProfileManager';
+import TemplateManager from './TemplateManager';
+import GlobalConfigurationManager from './GlobalConfigurationManager';
+import BotListManager from './BotListManager';
 
 const ComprehensiveAdminDashboard: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
 
   const tabs = [
     { label: 'Overview', icon: Squares2X2Icon },
+    { label: 'Bot Status', icon: CpuChipIcon },
     { label: 'Agents', icon: CpuChipIcon },
+    { label: 'LLM Profiles', icon: CommandLineIcon },
+    { label: 'Templates', icon: DocumentDuplicateIcon },
+    { label: 'Global Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
     { label: 'Personas', icon: UserGroupIcon },
     { label: 'Activity', icon: ChartBarIcon },
-    { label: 'Environment', icon: Cog6ToothIcon },
+    { label: 'Environment', icon: CommandLineIcon },
   ];
 
   return (
@@ -47,7 +57,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
       {/* Main Content */}
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Tabs */}
-        <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2">
+        <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2 overflow-x-auto">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             return (
@@ -58,7 +68,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
                 onClick={() => setCurrentTab(index)}
               >
                 <Icon className="w-4 h-4" />
-                {tab.label}
+                <span className="whitespace-nowrap">{tab.label}</span>
               </a>
             );
           })}
@@ -71,7 +81,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
               <h2 className="text-3xl font-bold mb-4">System Overview</h2>
               <p className="text-base-content/70 mb-6">
                 Welcome to the Hivemind Admin Dashboard. Use the tabs above to manage agents,
-                MCP servers, personas, and monitor system activity.
+                LLM profiles, templates, MCP servers, personas, and monitor system activity.
               </p>
               {/* Future: Add dashboard cards with system stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -93,11 +103,15 @@ const ComprehensiveAdminDashboard: React.FC = () => {
               </div>
             </div>
           )}
-          {currentTab === 1 && <EnhancedAgentConfigurator />}
-          {currentTab === 2 && <MCPServerManager />}
-          {currentTab === 3 && <PersonaManager />}
-          {currentTab === 4 && <ActivityMonitor />}
-          {currentTab === 5 && <EnvMonitor />}
+          {currentTab === 1 && <BotListManager />}
+          {currentTab === 2 && <EnhancedAgentConfigurator />}
+          {currentTab === 3 && <LlmProfileManager />}
+          {currentTab === 4 && <TemplateManager />}
+          {currentTab === 5 && <GlobalConfigurationManager />}
+          {currentTab === 6 && <MCPServerManager />}
+          {currentTab === 7 && <PersonaManager />}
+          {currentTab === 8 && <ActivityMonitor />}
+          {currentTab === 9 && <EnvMonitor />}
         </div>
       </div>
     </div>

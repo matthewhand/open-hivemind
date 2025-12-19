@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, ReactNode } from 'react';
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'url' | 'tel' | 'date' | 'time' | 'datetime-local';
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'url' | 'tel' | 'date' | 'time' | 'datetime-local' | 'key-value';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -404,6 +404,67 @@ export const Form: React.FC<FormProps> = ({
             autoComplete={field.autoComplete}
           />
         );
+
+      case 'key-value':
+        const pairs = (formData[field.name] as Record<string, string>) || {};
+        const entries = Object.entries(pairs);
+
+        return (
+          <div className="space-y-2">
+            {entries.map(([key, value], index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Key"
+                  className="input input-bordered input-sm flex-1"
+                  value={key}
+                  onChange={(e) => {
+                    const newPairs = { ...pairs };
+                    const val = newPairs[key];
+                    delete newPairs[key];
+                    newPairs[e.target.value] = val;
+                    handleInputChange(field.name, newPairs);
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Value"
+                  className="input input-bordered input-sm flex-1"
+                  value={value}
+                  onChange={(e) => {
+                    const newPairs = { ...pairs };
+                    newPairs[key] = e.target.value;
+                    handleInputChange(field.name, newPairs);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm text-error"
+                  onClick={() => {
+                    const newPairs = { ...pairs };
+                    delete newPairs[key];
+                    handleInputChange(field.name, newPairs);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm btn-block border-dashed border-base-300"
+              onClick={() => {
+                const newPairs = { ...pairs };
+                let i = 0;
+                while (newPairs[`NEW_KEY_${i}`]) i++;
+                newPairs[`NEW_KEY_${i}`] = '';
+                handleInputChange(field.name, newPairs);
+              }}
+            >
+              + Add Override
+            </button>
+          </div>
+        );
     }
   };
 
@@ -496,7 +557,7 @@ export const Form: React.FC<FormProps> = ({
 
   const renderFieldSet = (fieldSet: FormFieldSet) => {
     const fieldSetFields = fields.filter(field => fieldSet.fields.includes(field.name));
-    
+
     return (
       <fieldset key={fieldSet.legend} className={`border border-base-300 rounded-lg p-4 ${fieldSet.className || ''}`}>
         <legend className="text-lg font-semibold px-2">{fieldSet.legend}</legend>
@@ -574,7 +635,7 @@ export const Form: React.FC<FormProps> = ({
             )}
           </>
         )}
-        
+
         {submitButton || (
           <button
             type="submit"

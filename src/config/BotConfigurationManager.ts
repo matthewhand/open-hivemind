@@ -850,6 +850,75 @@ export class BotConfigurationManager {
     return [...this.warnings];
   }
 
+  public async addBot(config: BotConfig): Promise<void> {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots'); // Or wherever bots are stored
+
+    // Ensure unique name/ID
+    const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+    }
+
+    if (!fs.existsSync(botsDir)) {
+      fs.mkdirSync(botsDir, { recursive: true });
+    }
+
+    // Write config
+    fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+
+    // Reload to pick up new bot
+    this.reload();
+  }
+
+  /**
+   * Update an existing bot configuration
+   * For env-var bots, this creates/updates a JSON override file
+   */
+  public async updateBot(name: string, updates: Record<string, unknown>): Promise<void> {
+    const existingBot = this.bots.get(name);
+    if (!existingBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    // For env-var configured bots, we store overrides in a JSON file
+    // These overrides take precedence over env vars
+    let currentConfig: Record<string, unknown> = {};
+
+    if (fs.existsSync(filePath)) {
+      try {
+        currentConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      } catch (e) {
+        debug(`Failed to read existing bot config ${filePath}: ${e}`);
+      }
+    }
+
+    // Merge updates
+    const mergedConfig = {
+      ...currentConfig,
+      ...updates,
+      name, // Ensure name is preserved
+      _updatedAt: new Date().toISOString()
+    };
+
+    if (!fs.existsSync(botsDir)) {
+      fs.mkdirSync(botsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(mergedConfig, null, 2));
+    debug(`Updated bot config for ${name} at ${filePath}`);
+
+    // Reload to apply changes
+    this.reload();
+  }
+
   /**
    * Reload configuration
    */

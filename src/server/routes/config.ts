@@ -100,6 +100,188 @@ router.get('/ping', (req, res) => {
   res.json({ message: 'pong', timestamp: new Date().toISOString() });
 });
 
+// Sensitive key patterns for redaction
+const SENSITIVE_PATTERNS = [
+  /token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i
+];
+
+function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_PATTERNS.some(pattern => pattern.test(key));
+}
+
+function redactValue(value: unknown): string {
+  if (!value) return '';
+  const str = String(value);
+  if (str.length <= 8) return '••••••••';
+  return str.slice(0, 4) + '••••' + str.slice(-4);
+}
+
+function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = parentKey ? `${parentKey}.${key}` : key;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = redactObject(value as Record<string, unknown>, fullKey);
+    } else if (isSensitiveKey(key) && value) {
+      result[key] = {
+        isRedacted: true,
+        redactedValue: redactValue(value),
+        hasValue: true
+      };
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+// GET /api/config/bots - List all configured bots with redacted secrets
+router.get('/bots', (req, res) => {
+  try {
+    const manager = BotConfigurationManager.getInstance();
+    const bots = manager.getAllBots();
+
+    // Redact sensitive values before sending to frontend
+    const safeBots = bots.map((bot: any) => {
+      const redacted = redactObject(bot as Record<string, unknown>);
+      return {
+        ...redacted,
+        name: bot.name,
+        messageProvider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        isActive: true, // TODO: Add actual status tracking
+        source: bot._source || 'env' // Indicate where config came from
+      };
+    });
+
+    res.json({
+      bots: safeBots,
+      count: safeBots.length,
+      warnings: manager.getWarnings()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_BOTS_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/bots/:name - Update bot configuration (with secret handling)
+router.put('/bots/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const updates = req.body;
+
+    const manager = BotConfigurationManager.getInstance();
+    const existingBot = manager.getBot(name);
+
+    if (!existingBot) {
+      return res.status(404).json({ error: `Bot "${name}" not found` });
+    }
+
+    // Merge updates, but filter out redacted placeholders
+    const cleanUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      // Skip if it's a redacted placeholder object
+      if (value && typeof value === 'object' && (value as any).isRedacted) {
+        continue; // Don't update - keep existing value
+      }
+      cleanUpdates[key] = value;
+    }
+
+    // Apply updates via manager
+    await manager.updateBot(name, cleanUpdates);
+
+    res.json({ success: true, message: `Bot "${name}" updated` });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_BOT_UPDATE_ERROR'
+    });
+  }
+});
+
+// GET /api/config/templates - List available templates
+router.get('/templates', (req, res) => {
+  try {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const templatesDir = path.join(configDir, 'templates');
+
+    if (!fs.existsSync(templatesDir)) {
+      return res.json({ templates: [] });
+    }
+
+    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.json'));
+    const templates = files.map(file => {
+      try {
+        const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
+        return {
+          id: file.replace('.json', ''),
+          name: content.name || file.replace('.json', ''),
+          description: content.description || 'No description provided',
+          provider: content.provider || content.messageProvider || 'unknown',
+          content
+        };
+      } catch (e) {
+        console.warn(`Failed to parse template ${file}:`, e);
+        return null; // Skip invalid
+      }
+    }).filter(t => t !== null);
+
+    res.json({ templates });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_TEMPLATES_ERROR'
+    });
+  }
+});
+
+// POST /api/config/templates/:id/create - Create bot from template
+router.post('/templates/:id/create', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, overrides } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Bot name is required' });
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const templatePath = path.join(configDir, 'templates', `${id}.json`);
+
+    if (!fs.existsSync(templatePath)) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
+
+    // Create new bot config based on template
+    const newBotConfig = {
+      ...template,
+      name, // User provided name
+      ...overrides // Optional overrides provided by UI
+    };
+
+    // Use BotConfigurationManager to Add new bot
+    const manager = BotConfigurationManager.getInstance();
+    await manager.addBot(newBotConfig);
+
+    res.json({ success: true, message: `Bot "${name}" created from template "${id}"` });
+
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_TEMPLATE_CREATE_ERROR'
+    });
+  }
+});
+
 // GET /api/config/global - Get all global configurations (schema + values)
 router.get('/global', (req, res) => {
   try {
