@@ -548,6 +548,8 @@ export interface BotOverride {
   responseProfile?: string;
   /** MCP guardrail profile override */
   mcpGuardProfile?: string;
+  /** MCP server profile override */
+  mcpServerProfile?: string;
   /** Persona override */
   persona?: string;
   /** System instruction override */

@@ -5,6 +5,7 @@ import fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
+import { getMcpServerProfileByKey } from './mcpServerProfiles';
 
 // Define BotOverride interface locally since it's not exported
 interface BotOverride {
@@ -17,6 +18,7 @@ interface BotOverride {
   mcpServers?: unknown[];
   mcpGuard?: unknown;
   mcpGuardProfile?: string;
+  mcpServerProfile?: string;
 }
 import type {
   BotConfig,
@@ -97,6 +99,13 @@ const botSchema = {
     format: String,
     default: '',
     env: 'BOTS_{name}_MCP_GUARD_PROFILE'
+  },
+
+  MCP_SERVER_PROFILE: {
+    doc: 'MCP server profile name for predefined server bundles',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MCP_SERVER_PROFILE'
   },
 
   // Discord-specific configuration
@@ -579,6 +588,7 @@ export class BotConfigurationManager {
     assignIfAllowed('mcpServers', 'MCP_SERVERS');
     assignIfAllowed('mcpGuard', 'MCP_GUARD');
     assignIfAllowed('mcpGuardProfile', 'MCP_GUARD_PROFILE');
+    assignIfAllowed('mcpServerProfile', 'MCP_SERVER_PROFILE');
 
     if (!config.mcpGuard) {
       config.mcpGuard = { enabled: false, type: 'owner' };
@@ -589,6 +599,7 @@ export class BotConfigurationManager {
 
     this.applyLlmProfile(config);
     this.applyGuardrailProfile(config);
+    this.applyMcpServerProfile(config);
   }
 
   private applyLlmProfile(config: BotConfig): void {
@@ -724,6 +735,44 @@ export class BotConfigurationManager {
       allowedUsers: allowed,
       allowedUserIds: allowed
     } as any;
+  }
+
+  private applyMcpServerProfile(config: BotConfig): void {
+    const profileName = (config as any).mcpServerProfile as string | undefined;
+    if (!profileName) {
+      return;
+    }
+
+    const profile = getMcpServerProfileByKey(profileName);
+    if (!profile) {
+      debug(`Unknown MCP server profile "${profileName}"`);
+      return;
+    }
+
+    // Merge profile's mcpServers with existing ones (profile servers first, then explicit)
+    const profileServers = Array.isArray(profile.mcpServers) ? profile.mcpServers : [];
+    const existingServers = Array.isArray(config.mcpServers) ? config.mcpServers : [];
+
+    // Combine: profile servers + existing servers (dedup by name)
+    const seenNames = new Set<string>();
+    const merged: any[] = [];
+
+    for (const server of profileServers) {
+      if (server.name && !seenNames.has(server.name)) {
+        seenNames.add(server.name);
+        merged.push(server);
+      }
+    }
+    for (const server of existingServers) {
+      const name = (server as any).name;
+      if (name && !seenNames.has(name)) {
+        seenNames.add(name);
+        merged.push(server);
+      }
+    }
+
+    config.mcpServers = merged;
+    debug(`Applied MCP server profile "${profileName}": ${merged.length} servers`);
   }
 
   /**
