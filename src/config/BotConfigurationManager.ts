@@ -5,6 +5,7 @@ import fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
 import { getGuardrailProfileByKey } from './guardrailProfiles';
 import { getLlmProfileByKey } from './llmProfiles';
+import { resolveMCPServers } from './mcpServerProfiles';
 
 // Define BotOverride interface locally since it's not exported
 interface BotOverride {
@@ -15,6 +16,7 @@ interface BotOverride {
   persona?: string;
   systemInstruction?: string;
   mcpServers?: unknown[];
+  mcpServerProfile?: string;
   mcpGuard?: unknown;
   mcpGuardProfile?: string;
 }
@@ -83,6 +85,13 @@ const botSchema = {
     format: Array,
     default: [],
     env: 'BOTS_{name}_MCP_SERVERS'
+  },
+
+  MCP_SERVER_PROFILE: {
+    doc: 'MCP server profile name',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MCP_SERVER_PROFILE'
   },
 
   MCP_GUARD: {
@@ -474,6 +483,7 @@ export class BotConfigurationManager {
       persona: botConfig.get('PERSONA') as string || 'default',
       systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
+      mcpServerProfile: (botConfig.get('MCP_SERVER_PROFILE') as string) || undefined,
       mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
       mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined
     };
@@ -577,6 +587,7 @@ export class BotConfigurationManager {
     assignIfAllowed('persona', 'PERSONA');
     assignIfAllowed('systemInstruction', 'SYSTEM_INSTRUCTION');
     assignIfAllowed('mcpServers', 'MCP_SERVERS');
+    assignIfAllowed('mcpServerProfile', 'MCP_SERVER_PROFILE');
     assignIfAllowed('mcpGuard', 'MCP_GUARD');
     assignIfAllowed('mcpGuardProfile', 'MCP_GUARD_PROFILE');
 
@@ -588,6 +599,7 @@ export class BotConfigurationManager {
     }
 
     this.applyLlmProfile(config);
+    this.applyMCPServerProfile(config);
     this.applyGuardrailProfile(config);
   }
 
@@ -691,6 +703,45 @@ export class BotConfigurationManager {
       apiKey: this.readString(profileConfig, 'apiKey'),
       team: this.readString(profileConfig, 'team'),
     };
+  }
+
+  private applyMCPServerProfile(config: BotConfig): void {
+    const profileName = (config as any).mcpServerProfile as string | undefined;
+    if (profileName) {
+      const profileServers = resolveMCPServers([profileName]);
+      if (profileServers.length > 0) {
+        const existingServers = config.mcpServers || [];
+        const existingNames = new Set(existingServers.map(s => s.name));
+
+        const merged = [...existingServers];
+
+        for (const server of profileServers) {
+          if (!existingNames.has(server.name)) {
+            // Map MCPServerConfig (from profile) to McpServerConfig (expected by BotConfig)
+            // Profile uses command+args (stdio), BotConfig expects serverUrl.
+            // We construct a stdio:// URL.
+            let serverUrl = '';
+            if (server.command) {
+              serverUrl = `stdio://${server.command}`;
+              if (server.args && server.args.length > 0) {
+                serverUrl += ` ${server.args.join(' ')}`;
+              }
+            } else if ((server as any).url) {
+              serverUrl = (server as any).url;
+            }
+
+            if (serverUrl) {
+              merged.push({
+                name: server.name,
+                serverUrl: serverUrl,
+                enabled: server.enabled ?? true
+              });
+            }
+          }
+        }
+        config.mcpServers = merged;
+      }
+    }
   }
 
   private readString(profileConfig: Record<string, unknown>, key: string): string | undefined {

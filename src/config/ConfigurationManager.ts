@@ -66,6 +66,12 @@ const schema = convict({
         },
         default: 'http://localhost:3000',
         env: 'PLAYWRIGHT_BASE_URL',
+    },
+    AUTH_IP_WHITELIST: {
+        doc: 'Comma-separated list of IP addresses or CIDR ranges to allow without authentication',
+        format: String,
+        default: '',
+        env: 'AUTH_IP_WHITELIST'
     }
 });
 
