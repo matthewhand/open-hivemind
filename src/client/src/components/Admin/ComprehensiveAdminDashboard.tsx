@@ -32,7 +32,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
     { label: 'LLM Profiles', icon: CommandLineIcon },
     { label: 'MCP Profiles', icon: WrenchScrewdriverIcon },
     { label: 'Templates', icon: DocumentDuplicateIcon },
-    { label: 'General', icon: Cog6ToothIcon },
+    { label: 'Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
     { label: 'Personas', icon: UserGroupIcon },
     { label: 'Activity', icon: ChartBarIcon },
