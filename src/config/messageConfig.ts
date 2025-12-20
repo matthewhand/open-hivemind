@@ -358,7 +358,7 @@ const messageConfig = convict({
   MESSAGE_READING_DELAY_PER_CHAR_MS: {
     doc: 'Per-character component for pre-typing/pre-inference "reading" delay (ms per char) before scaling',
     format: Number,
-    default: 25,
+    default: 15,
     env: 'MESSAGE_READING_DELAY_PER_CHAR_MS'
   },
   MESSAGE_READING_DELAY_MIN_MS: {
@@ -370,7 +370,7 @@ const messageConfig = convict({
   MESSAGE_READING_DELAY_MAX_MS: {
     doc: 'Maximum pre-typing/pre-inference "reading" delay (ms) before scaling',
     format: 'int',
-    default: 6000,
+    default: 2000,
     env: 'MESSAGE_READING_DELAY_MAX_MS'
   },
   MESSAGE_MAX_DELAY: {
@@ -401,7 +401,7 @@ const messageConfig = convict({
   MESSAGE_DELAY_MULTIPLIER: {
     doc: 'Multiplier applied to artificial delays (pre-inference, line delays, scheduler delays)',
     format: Number,
-    default: 3,
+    default: 1,
     env: 'MESSAGE_DELAY_MULTIPLIER'
   },
   MESSAGE_RESPONSE_PROFILES: {
