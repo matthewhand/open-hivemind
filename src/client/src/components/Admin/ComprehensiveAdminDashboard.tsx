@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Squares2X2Icon,
   CpuChipIcon,
@@ -29,6 +29,33 @@ import BotListManager from './BotListManager';
 
 const ComprehensiveAdminDashboard: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
+  const [stats, setStats] = useState({ agents: 0, mcpServers: 0, personas: 0, loading: true });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [botsRes, mcpRes, personasRes] = await Promise.all([
+          fetch('/api/config/bots').catch(() => null),
+          fetch('/api/admin/mcp-servers').catch(() => null),
+          fetch('/api/config/personas').catch(() => null),
+        ]);
+
+        const bots = botsRes?.ok ? await botsRes.json() : null;
+        const mcp = mcpRes?.ok ? await mcpRes.json() : null;
+        const personas = personasRes?.ok ? await personasRes.json() : null;
+
+        setStats({
+          agents: Array.isArray(bots?.bots) ? bots.bots.length : 0,
+          mcpServers: Array.isArray(mcp?.servers) ? mcp.servers.length : 0,
+          personas: Array.isArray(personas) ? personas.length : (personas?.count ?? 0),
+          loading: false,
+        });
+      } catch {
+        setStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+    fetchStats();
+  }, []);
 
   const tabs = [
     { label: 'Overview', icon: Squares2X2Icon },
@@ -96,17 +123,17 @@ const ComprehensiveAdminDashboard: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">Total Agents</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.agents}</div>
                   <div className="stat-desc">Configure in Agents tab</div>
                 </div>
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">MCP Servers</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.mcpServers}</div>
                   <div className="stat-desc">Manage in MCP tab</div>
                 </div>
                 <div className="stat bg-base-200 rounded-box">
                   <div className="stat-title">Active Personas</div>
-                  <div className="stat-value">-</div>
+                  <div className="stat-value">{stats.loading ? <span className="loading loading-dots loading-sm"></span> : stats.personas}</div>
                   <div className="stat-desc">View in Personas tab</div>
                 </div>
               </div>
