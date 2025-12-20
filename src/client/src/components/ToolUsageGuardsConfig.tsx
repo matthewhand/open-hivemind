@@ -6,10 +6,8 @@ import {
   Input,
   Select,
   Alert,
-  ToastNotification,
   Chip,
   Badge,
-  Loading,
   Checkbox
 } from './DaisyUI';
 import {
@@ -199,7 +197,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
   };
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -216,9 +214,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-4">
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -232,11 +228,11 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     Tool: {guard.toolName}
                   </p>
                   <div className="mt-2">
-                    <Badge color="primary">{guard.guardType}</Badge>
+                    <Badge variant="primary">{guard.guardType}</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Badge color={guard.isActive ? 'success' : 'ghost'}>
+                  <Badge variant={guard.isActive ? 'success' : 'neutral'}>
                     {guard.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                   <Button
@@ -362,11 +358,12 @@ const ToolUsageGuardsConfig: React.FC = () => {
       </ModalForm>
 
       {toast.show && (
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );
