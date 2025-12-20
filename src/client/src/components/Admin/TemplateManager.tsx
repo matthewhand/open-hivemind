@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Loading, Button, Modal } from '../DaisyUI';
+import { Badge, Alert, Button, Modal } from '../DaisyUI';
 import {
     DocumentDuplicateIcon,
     PlusIcon,
@@ -77,7 +77,7 @@ const TemplateManager: React.FC = () => {
         }
     };
 
-    if (loading) return <Loading />;
+    if (loading) return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
 
     return (
         <div className="p-6">

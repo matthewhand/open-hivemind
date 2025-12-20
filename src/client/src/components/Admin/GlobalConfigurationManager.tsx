@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import GlobalConfigSection from '../GlobalConfigSection';
-import { Loading, Alert } from '../DaisyUI';
+import { Alert } from '../DaisyUI';
 
 const GlobalConfigurationManager: React.FC = () => {
     const [sections, setSections] = useState<string[]>([]);
@@ -31,7 +31,7 @@ const GlobalConfigurationManager: React.FC = () => {
         }
     };
 
-    if (loading) return <Loading />;
+    if (loading) return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
     if (error) return <Alert status="error" message={error} />;
 
     return (

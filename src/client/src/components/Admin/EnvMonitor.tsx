@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Loading } from '../DaisyUI';
-import { getEnvOverrides } from '../services/agentService';
+import { Badge, Alert } from '../DaisyUI';
+import { getEnvOverrides } from '../../services/agentService';
 
 const EnvMonitor: React.FC = () => {
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
@@ -23,11 +23,11 @@ const EnvMonitor: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   if (error) {
-    return <Alert type="error">{error}</Alert>;
+    return <Alert status="error" message={error} />;
   }
 
   return (
@@ -35,7 +35,7 @@ const EnvMonitor: React.FC = () => {
       <h2 className="text-xl font-bold mb-4">Environment Variable Overrides</h2>
 
       {Object.keys(envVars).length === 0 ? (
-        <Alert type="info">No environment variable overrides detected</Alert>
+        <Alert status="info" message="No environment variable overrides detected" />
       ) : (
         <div className="overflow-x-auto">
           <table className="table table-sm w-full">
@@ -52,7 +52,7 @@ const EnvMonitor: React.FC = () => {
                     <code className="badge badge-outline font-mono text-xs">{key}</code>
                   </td>
                   <td>
-                    <Badge color="primary">
+                    <Badge variant="primary">
                       <code className="font-mono text-xs">{value}</code>
                     </Badge>
                   </td>

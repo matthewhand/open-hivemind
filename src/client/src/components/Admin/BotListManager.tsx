@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Loading, Button, Modal } from '../DaisyUI';
+import { Badge, Alert, Button, Modal } from '../DaisyUI';
 import {
     CpuChipIcon,
     ArrowPathIcon,
@@ -98,7 +98,7 @@ const BotListManager: React.FC = () => {
         return <span>{String(value)}</span>;
     };
 
-    if (loading) return <Loading />;
+    if (loading) return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
 
     return (
         <div className="p-6">
@@ -165,7 +165,7 @@ const BotListManager: React.FC = () => {
                                     <td>{bot.llmProvider || '—'}</td>
                                     <td>{bot.persona || 'default'}</td>
                                     <td>
-                                        <Badge variant="ghost" className="text-xs">
+                                        <Badge variant="neutral" className="text-xs">
                                             {bot.source === 'env' ? 'ENV' : 'JSON'}
                                         </Badge>
                                     </td>
