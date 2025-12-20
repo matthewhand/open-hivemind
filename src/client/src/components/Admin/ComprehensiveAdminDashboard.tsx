@@ -8,7 +8,9 @@ import {
   Cog6ToothIcon,
   BellIcon,
   CommandLineIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  ShieldCheckIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 import EnhancedAgentConfigurator from './EnhancedAgentConfigurator';
@@ -17,6 +19,8 @@ import ActivityMonitor from './ActivityMonitor';
 import PersonaManager from './PersonaManager';
 import EnvMonitor from './EnvMonitor';
 import LlmProfileManager from './LlmProfileManager';
+import GuardrailProfileManager from './GuardrailProfileManager';
+import ResponseProfileManager from './ResponseProfileManager';
 import TemplateManager from './TemplateManager';
 import GlobalConfigurationManager from './GlobalConfigurationManager';
 import BotListManager from './BotListManager';
@@ -29,6 +33,8 @@ const ComprehensiveAdminDashboard: React.FC = () => {
     { label: 'Bot Status', icon: CpuChipIcon },
     { label: 'Agents', icon: CpuChipIcon },
     { label: 'LLM Profiles', icon: CommandLineIcon },
+    { label: 'Guardrails', icon: ShieldCheckIcon },
+    { label: 'Engagement', icon: ClockIcon },
     { label: 'Templates', icon: DocumentDuplicateIcon },
     { label: 'Global Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
@@ -106,12 +112,14 @@ const ComprehensiveAdminDashboard: React.FC = () => {
           {currentTab === 1 && <BotListManager />}
           {currentTab === 2 && <EnhancedAgentConfigurator />}
           {currentTab === 3 && <LlmProfileManager />}
-          {currentTab === 4 && <TemplateManager />}
-          {currentTab === 5 && <GlobalConfigurationManager />}
-          {currentTab === 6 && <MCPServerManager />}
-          {currentTab === 7 && <PersonaManager />}
-          {currentTab === 8 && <ActivityMonitor />}
-          {currentTab === 9 && <EnvMonitor />}
+          {currentTab === 4 && <GuardrailProfileManager />}
+          {currentTab === 5 && <ResponseProfileManager />}
+          {currentTab === 6 && <TemplateManager />}
+          {currentTab === 7 && <GlobalConfigurationManager />}
+          {currentTab === 8 && <MCPServerManager />}
+          {currentTab === 9 && <PersonaManager />}
+          {currentTab === 10 && <ActivityMonitor />}
+          {currentTab === 11 && <EnvMonitor />}
         </div>
       </div>
     </div>

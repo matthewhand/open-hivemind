@@ -21,7 +21,14 @@ import mattermostConfig from '../../config/mattermostConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
 import webhookConfig from '../../config/webhookConfig';
 import { getGuardrailProfiles, saveGuardrailProfiles, GuardrailProfile } from '../../config/guardrailProfiles';
-import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
+import { getLlmProfiles, saveLlmProfiles, ProviderProfile } from '../../config/llmProfiles';
+import {
+  getResponseProfiles,
+  createResponseProfile,
+  updateResponseProfile,
+  deleteResponseProfile,
+  ResponseProfile
+} from '../../config/responseProfileManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
 import { testDiscordConnection } from '../../integrations/discord/DiscordConnectionTest';
@@ -1106,6 +1113,137 @@ router.put('/guardrails', (req, res) => {
   }
 });
 
+// POST /api/config/guardrails - Create a guardrail profile
+router.post('/guardrails', (req, res) => {
+  try {
+    const profile = req.body as GuardrailProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.name || typeof profile.name !== 'string') {
+      return res.status(400).json({ error: 'profile.name is required' });
+    }
+    if (!profile.mcpGuard || typeof profile.mcpGuard !== 'object') {
+      return res.status(400).json({ error: 'profile.mcpGuard is required' });
+    }
+
+    const profiles = getGuardrailProfiles();
+    if (profiles.some(p => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    profiles.push(profile);
+    saveGuardrailProfiles(profiles);
+    res.status(201).json({ success: true, profile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'GUARDRAIL_CONFIG_POST_ERROR'
+    });
+  }
+});
+
+// DELETE /api/config/guardrails/:key - Delete a guardrail profile
+router.delete('/guardrails/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const profiles = getGuardrailProfiles();
+    const index = profiles.findIndex(p => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    profiles.splice(index, 1);
+    saveGuardrailProfiles(profiles);
+    res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'GUARDRAIL_CONFIG_DELETE_ERROR'
+    });
+  }
+});
+
+// GET /api/config/response-profiles - Get response/engagement profiles
+router.get('/response-profiles', (req, res) => {
+  try {
+    res.json({
+      profiles: getResponseProfiles()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'RESPONSE_PROFILE_GET_ERROR'
+    });
+  }
+});
+
+// POST /api/config/response-profiles - Create a response profile
+router.post('/response-profiles', (req, res) => {
+  try {
+    const profile = req.body as ResponseProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.name || typeof profile.name !== 'string') {
+      return res.status(400).json({ error: 'profile.name is required' });
+    }
+    if (!profile.settings || typeof profile.settings !== 'object') {
+      return res.status(400).json({ error: 'profile.settings is required' });
+    }
+
+    const created = createResponseProfile(profile);
+    res.status(201).json({ success: true, profile: created });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const statusCode = hivemindError.message?.includes('already exists') ? 409 : (hivemindError.statusCode || 500);
+    res.status(statusCode).json({
+      error: hivemindError.message,
+      code: 'RESPONSE_PROFILE_POST_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/response-profiles/:key - Update a response profile
+router.put('/response-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const updates = req.body as Partial<ResponseProfile>;
+
+    const updated = updateResponseProfile(key, updates);
+    res.json({ success: true, profile: updated });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const statusCode = hivemindError.message?.includes('not found') ? 404 : (hivemindError.statusCode || 500);
+    res.status(statusCode).json({
+      error: hivemindError.message,
+      code: 'RESPONSE_PROFILE_PUT_ERROR'
+    });
+  }
+});
+
+// DELETE /api/config/response-profiles/:key - Delete a response profile
+router.delete('/response-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    deleteResponseProfile(key);
+    res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const statusCode = hivemindError.message?.includes('not found') ? 404
+      : hivemindError.message?.includes('built-in') ? 403
+        : (hivemindError.statusCode || 500);
+    res.status(statusCode).json({
+      error: hivemindError.message,
+      code: 'RESPONSE_PROFILE_DELETE_ERROR'
+    });
+  }
+});
+
 // GET /api/config/llm-status - LLM default + missing provider summary
 router.get('/llm-status', async (req, res) => {
   try {
@@ -1244,6 +1382,65 @@ router.put('/llm-profiles', (req, res) => {
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_PUT_ERROR'
+    });
+  }
+});
+
+// POST /api/config/llm-profiles - Create an LLM profile
+router.post('/llm-profiles', (req, res) => {
+  try {
+    const profile = req.body as ProviderProfile;
+    if (!profile.key || typeof profile.key !== 'string') {
+      return res.status(400).json({ error: 'profile.key is required' });
+    }
+    if (!profile.provider || typeof profile.provider !== 'string') {
+      return res.status(400).json({ error: 'profile.provider is required' });
+    }
+
+    const allProfiles = getLlmProfiles();
+    if (allProfiles.llm.some(p => p.key === profile.key)) {
+      return res.status(409).json({ error: `Profile with key '${profile.key}' already exists` });
+    }
+
+    const newProfile: ProviderProfile = {
+      key: profile.key,
+      name: profile.name || profile.key,
+      description: profile.description,
+      provider: profile.provider,
+      config: profile.config || {}
+    };
+
+    allProfiles.llm.push(newProfile);
+    saveLlmProfiles(allProfiles);
+    res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_POST_ERROR'
+    });
+  }
+});
+
+// DELETE /api/config/llm-profiles/:key - Delete an LLM profile
+router.delete('/llm-profiles/:key', (req, res) => {
+  try {
+    const key = req.params.key;
+    const allProfiles = getLlmProfiles();
+    const index = allProfiles.llm.findIndex(p => p.key === key);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Profile with key '${key}' not found` });
+    }
+
+    allProfiles.llm.splice(index, 1);
+    saveLlmProfiles(allProfiles);
+    res.json({ success: true, deletedKey: key });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_DELETE_ERROR'
     });
   }
 });

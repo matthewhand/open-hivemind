@@ -4,42 +4,45 @@ import {
     PencilIcon,
     TrashIcon,
     ArrowPathIcon,
-    CpuChipIcon,
+    ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
-interface ProviderProfile {
+interface GuardrailProfile {
     key: string;
-    name?: string;
+    name: string;
     description?: string;
-    provider: string;
-    config: Record<string, unknown>;
+    mcpGuard: {
+        enabled: boolean;
+        type: 'owner' | 'custom';
+        allowedUserIds?: string[];
+    };
 }
 
-const LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
-
-const LlmProfileManager: React.FC = () => {
-    const [profiles, setProfiles] = useState<ProviderProfile[]>([]);
+const GuardrailProfileManager: React.FC = () => {
+    const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editingProfile, setEditingProfile] = useState<ProviderProfile | null>(null);
+    const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
     const [formData, setFormData] = useState({
         key: '',
         name: '',
         description: '',
-        provider: 'openai',
-        configJson: '{}',
+        enabled: true,
+        type: 'owner' as 'owner' | 'custom',
+        allowedUserIds: '',
     });
 
     const fetchProfiles = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/config/llm-profiles');
-            if (!response.ok) throw new Error('Failed to fetch profiles');
+            setError(null);
+            const response = await fetch('/api/config/guardrails');
+            if (!response.ok) throw new Error('Failed to fetch guardrail profiles');
             const data = await response.json();
-            setProfiles(data.profiles?.llm || []);
+            setProfiles(data.profiles || []);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch profiles');
         } finally {
@@ -53,49 +56,50 @@ const LlmProfileManager: React.FC = () => {
 
     const openCreateDialog = () => {
         setEditingProfile(null);
-        setFormData({ key: '', name: '', description: '', provider: 'openai', configJson: '{}' });
+        setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: '' });
         setEditDialogOpen(true);
     };
 
-    const openEditDialog = (profile: ProviderProfile) => {
+    const openEditDialog = (profile: GuardrailProfile) => {
         setEditingProfile(profile);
         setFormData({
             key: profile.key,
-            name: profile.name || '',
+            name: profile.name,
             description: profile.description || '',
-            provider: profile.provider,
-            configJson: JSON.stringify(profile.config || {}, null, 2),
+            enabled: profile.mcpGuard.enabled,
+            type: profile.mcpGuard.type,
+            allowedUserIds: profile.mcpGuard.allowedUserIds?.join(', ') || '',
         });
         setEditDialogOpen(true);
     };
 
     const handleSave = async () => {
         try {
-            let config: Record<string, unknown>;
-            try {
-                config = JSON.parse(formData.configJson);
-            } catch {
-                throw new Error('Invalid JSON in config');
-            }
-
-            const profileData: ProviderProfile = {
+            const profileData: GuardrailProfile = {
                 key: formData.key.trim().toLowerCase().replace(/\s+/g, '-'),
-                name: formData.name.trim() || undefined,
+                name: formData.name.trim(),
                 description: formData.description.trim() || undefined,
-                provider: formData.provider,
-                config,
+                mcpGuard: {
+                    enabled: formData.enabled,
+                    type: formData.type,
+                    allowedUserIds: formData.type === 'custom'
+                        ? formData.allowedUserIds.split(',').map(s => s.trim()).filter(Boolean)
+                        : undefined,
+                },
             };
 
             const method = editingProfile ? 'PUT' : 'POST';
-            const url = '/api/config/llm-profiles';
+            const url = editingProfile
+                ? `/api/config/guardrails`
+                : '/api/config/guardrails';
 
             if (editingProfile) {
-                // For PUT, update the entire profiles object
-                const allProfiles = profiles.map(p => p.key === editingProfile.key ? profileData : p);
+                // For PUT, we need to update entire profiles array
+                const updated = profiles.map(p => p.key === editingProfile.key ? profileData : p);
                 const response = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profiles: { llm: allProfiles } }),
+                    body: JSON.stringify({ profiles: updated }),
                 });
                 if (!response.ok) throw new Error('Failed to update profile');
             } else {
@@ -110,7 +114,7 @@ const LlmProfileManager: React.FC = () => {
                 }
             }
 
-            setSnackbar({ open: true, message: `Profile ${editingProfile ? 'updated' : 'created'}`, severity: 'success' });
+            setSnackbar({ open: true, message: `Profile ${editingProfile ? 'updated' : 'created'} successfully`, severity: 'success' });
             setEditDialogOpen(false);
             fetchProfiles();
         } catch (err) {
@@ -121,7 +125,7 @@ const LlmProfileManager: React.FC = () => {
     const handleDelete = async (key: string) => {
         if (!confirm(`Delete profile "${key}"?`)) return;
         try {
-            const response = await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
+            const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete profile');
             setSnackbar({ open: true, message: 'Profile deleted', severity: 'success' });
             fetchProfiles();
@@ -142,8 +146,8 @@ const LlmProfileManager: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <CpuChipIcon className="w-7 h-7" />
-                    LLM Profiles
+                    <ShieldCheckIcon className="w-7 h-7" />
+                    Guardrail Profiles
                 </h2>
                 <div className="flex gap-2">
                     <button className="btn btn-outline" onClick={fetchProfiles}>
@@ -161,11 +165,13 @@ const LlmProfileManager: React.FC = () => {
                 {profiles.map(profile => (
                     <div key={profile.key} className="card bg-base-200 shadow-sm">
                         <div className="card-body">
-                            <h3 className="card-title">{profile.name || profile.key}</h3>
+                            <h3 className="card-title">{profile.name}</h3>
                             <p className="text-sm text-base-content/70">{profile.description || 'No description'}</p>
                             <div className="flex gap-2 mt-2">
-                                <div className="badge badge-primary">{profile.provider}</div>
-                                <div className="badge badge-outline">{Object.keys(profile.config || {}).length} config keys</div>
+                                <div className={`badge ${profile.mcpGuard.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                                    {profile.mcpGuard.enabled ? 'Enabled' : 'Disabled'}
+                                </div>
+                                <div className="badge badge-outline">{profile.mcpGuard.type}</div>
                             </div>
                             <div className="card-actions justify-end mt-4">
                                 <button className="btn btn-ghost btn-sm" onClick={() => openEditDialog(profile)}>
@@ -180,42 +186,21 @@ const LlmProfileManager: React.FC = () => {
                 ))}
             </div>
 
-            {profiles.length === 0 && !error && (
-                <div className="text-center py-12 text-base-content/70">
-                    <CpuChipIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No LLM profiles yet. Create one to get started.</p>
-                </div>
-            )}
-
             {editDialogOpen && (
                 <div className="modal modal-open">
-                    <div className="modal-box max-w-2xl">
-                        <h3 className="font-bold text-lg">{editingProfile ? 'Edit' : 'Create'} LLM Profile</h3>
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">{editingProfile ? 'Edit' : 'Create'} Guardrail Profile</h3>
                         <div className="py-4 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Key</span></label>
-                                    <input
-                                        type="text"
-                                        className="input input-bordered"
-                                        value={formData.key}
-                                        onChange={e => setFormData({ ...formData, key: e.target.value })}
-                                        disabled={!!editingProfile}
-                                        placeholder="my-profile"
-                                    />
-                                </div>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Provider</span></label>
-                                    <select
-                                        className="select select-bordered"
-                                        value={formData.provider}
-                                        onChange={e => setFormData({ ...formData, provider: e.target.value })}
-                                    >
-                                        {LLM_PROVIDERS.map(p => (
-                                            <option key={p} value={p}>{p}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="form-control">
+                                <label className="label"><span className="label-text">Key</span></label>
+                                <input
+                                    type="text"
+                                    className="input input-bordered"
+                                    value={formData.key}
+                                    onChange={e => setFormData({ ...formData, key: e.target.value })}
+                                    disabled={!!editingProfile}
+                                    placeholder="my-profile"
+                                />
                             </div>
                             <div className="form-control">
                                 <label className="label"><span className="label-text">Name</span></label>
@@ -224,7 +209,6 @@ const LlmProfileManager: React.FC = () => {
                                     className="input input-bordered"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Friendly name"
                                 />
                             </div>
                             <div className="form-control">
@@ -236,18 +220,40 @@ const LlmProfileManager: React.FC = () => {
                                 />
                             </div>
                             <div className="form-control">
-                                <label className="label"><span className="label-text">Configuration (JSON)</span></label>
-                                <textarea
-                                    className="textarea textarea-bordered font-mono text-sm"
-                                    rows={8}
-                                    value={formData.configJson}
-                                    onChange={e => setFormData({ ...formData, configJson: e.target.value })}
-                                    placeholder='{"model": "gpt-4", "temperature": 0.7}'
-                                />
-                                <label className="label">
-                                    <span className="label-text-alt">Provider-specific settings (model, temperature, etc.)</span>
+                                <label className="label cursor-pointer">
+                                    <span className="label-text">Guard Enabled</span>
+                                    <input
+                                        type="checkbox"
+                                        className="toggle toggle-primary"
+                                        checked={formData.enabled}
+                                        onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
+                                    />
                                 </label>
                             </div>
+                            <div className="form-control">
+                                <label className="label"><span className="label-text">Guard Type</span></label>
+                                <select
+                                    className="select select-bordered"
+                                    value={formData.type}
+                                    onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
+                                >
+                                    <option value="owner">Owner Only</option>
+                                    <option value="custom">Custom Allow List</option>
+                                </select>
+                            </div>
+                            {formData.type === 'custom' && (
+                                <div className="form-control">
+                                    <label className="label"><span className="label-text">Allowed User IDs</span></label>
+                                    <input
+                                        type="text"
+                                        className="input input-bordered"
+                                        value={formData.allowedUserIds}
+                                        onChange={e => setFormData({ ...formData, allowedUserIds: e.target.value })}
+                                        placeholder="user1, user2"
+                                    />
+                                    <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>
+                                </div>
+                            )}
                         </div>
                         <div className="modal-action">
                             <button className="btn" onClick={() => setEditDialogOpen(false)}>Cancel</button>
@@ -269,4 +275,4 @@ const LlmProfileManager: React.FC = () => {
     );
 };
 
-export default LlmProfileManager;
+export default GuardrailProfileManager;
