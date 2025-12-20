@@ -17,6 +17,14 @@ interface AgentConfiguratorProps {
   title?: string;
 }
 
+interface ProviderProfile {
+  key: string;
+  name?: string;
+  description?: string;
+  provider: string;
+  config?: Record<string, unknown>;
+}
+
 const fallbackMessageProviders: ProviderInfo[] = [
   {
     key: 'discord',
@@ -117,6 +125,10 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [availableMcpServers, setAvailableMcpServers] = useState<string[]>([]);
   const [mcpError, setMcpError] = useState<string | null>(null);
+  const [responseProfileOptions, setResponseProfileOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [guardrailProfileOptions, setGuardrailProfileOptions] = useState<Array<{ value: string; label: string; description?: string }>>([]);
+  const [guardrailProfileMap, setGuardrailProfileMap] = useState<Record<string, GuardState>>({});
+  const [llmProfiles, setLlmProfiles] = useState<ProviderProfile[]>([]);
 
   const { personas, loading: personasLoading } = usePersonas();
   const {
@@ -140,6 +152,104 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     fetchMcpServers();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchResponseProfiles = async () => {
+      try {
+        const response = await fetch('/api/config/messaging');
+        if (!response.ok) return;
+        const data = await response.json();
+        const profiles = data?.MESSAGE_RESPONSE_PROFILES;
+        if (!profiles || typeof profiles !== 'object') return;
+
+        const options = Object.keys(profiles)
+          .sort((a, b) => a.localeCompare(b))
+          .map((name) => ({ value: name, label: formatProfileLabel(name) }));
+
+        if (isMounted) {
+          setResponseProfileOptions(options);
+        }
+      } catch {
+        // If unavailable, leave options empty and rely on env/defaults
+      }
+    };
+
+    fetchResponseProfiles();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchGuardrailProfiles = async () => {
+      try {
+        const response = await fetch('/api/config/guardrails');
+        if (!response.ok) return;
+        const data = await response.json();
+        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+
+        const options = profiles
+          .map((profile: any) => ({
+            value: String(profile.key || ''),
+            label: profile.name || profile.key,
+            description: profile.description,
+          }))
+          .filter(option => option.value.length > 0)
+          .sort((a, b) => a.label.localeCompare(b.label));
+
+        const map: Record<string, GuardState> = {};
+        for (const profile of profiles) {
+          if (!profile?.key || !profile?.mcpGuard) continue;
+          const guard = profile.mcpGuard;
+          map[String(profile.key)] = {
+            enabled: Boolean(guard.enabled),
+            type: guard.type === 'custom' ? 'custom' : 'owner',
+            allowedUserIds: Array.isArray(guard.allowedUserIds)
+              ? guard.allowedUserIds.filter((id: any) => typeof id === 'string' && id.trim().length > 0)
+              : [],
+          };
+        }
+
+        if (isMounted) {
+          setGuardrailProfileOptions(options);
+          setGuardrailProfileMap(map);
+        }
+      } catch {
+        // ignore guardrail profile load errors
+      }
+    };
+
+    fetchGuardrailProfiles();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLlmProfiles = async () => {
+      try {
+        const response = await fetch('/api/config/llm-profiles');
+        if (!response.ok) return;
+        const data = await response.json();
+        const profiles = data?.profiles;
+        if (!profiles || typeof profiles !== 'object') return;
+        const llmProfilesList = Array.isArray(profiles.llm) ? profiles.llm : [];
+        if (isMounted) {
+          setLlmProfiles(llmProfilesList);
+        }
+      } catch {
+        // ignore profile load errors
+      }
+    };
+
+    fetchLlmProfiles();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const bots = useMemo(() => configData?.bots ?? [], [configData]);
 
   useEffect(() => {
@@ -157,6 +267,9 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       nextState[bot.name] = {
         messageProvider: bot.messageProvider || '',
         llmProvider: bot.llmProvider || '',
+        llmProfile: (bot as any).llmProfile || '',
+        responseProfile: bot.responseProfile || '',
+        mcpGuardProfile: (bot as any).mcpGuardProfile || '',
         persona: bot.persona || '',
         systemInstruction: bot.systemInstruction || '',
         mcpServers: normalizeMcpServers(bot.mcpServers),
@@ -215,16 +328,29 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     value: BotUIState[K],
     commitImmediately = true,
   ) {
-    setSelectionState(prev => ({
-      ...prev,
-      [bot.name]: {
-        ...prev[bot.name],
-        [field]: value,
-      },
-    }));
+    setSelectionState(prev => {
+      const current = prev[bot.name];
+      const nextState = {
+        ...prev,
+        [bot.name]: {
+          ...current,
+          [field]: value,
+        },
+      } as typeof prev;
+
+      if (field === 'llmProvider' && current?.llmProvider !== value) {
+        nextState[bot.name].llmProfile = '';
+      }
+
+      return nextState;
+    });
 
     if (commitImmediately) {
-      commitChanges(bot.name, { [field]: value });
+      const payload: Partial<BotUIState> = { [field]: value } as Partial<BotUIState>;
+      if (field === 'llmProvider' && selectionState[bot.name]?.llmProvider !== value) {
+        payload.llmProfile = '';
+      }
+      commitChanges(bot.name, payload);
     }
   }
 
@@ -237,6 +363,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const handleGuardToggle = (bot: Bot, enabled: boolean) => {
     const current = selectionState[bot.name];
     if (!current) return;
+    if (current.mcpGuardProfile) return;
     const updatedGuard = { ...current.mcpGuard, enabled };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -245,6 +372,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const handleGuardTypeChange = (bot: Bot, type: GuardState['type']) => {
     const current = selectionState[bot.name];
     if (!current) return;
+    if (current.mcpGuardProfile) return;
     const updatedGuard = { ...current.mcpGuard, type };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -258,6 +386,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
     const current = selectionState[bot.name];
     if (!current) return;
+    if (current.mcpGuardProfile) return;
     const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
     setGuardInputState(prev => ({ ...prev, [bot.name]: value }));
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
@@ -266,7 +395,34 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const handleGuardUsersBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
     if (!current) return;
+    if (current.mcpGuardProfile) return;
     commitChanges(bot.name, { mcpGuard: current.mcpGuard });
+  };
+
+  const handleGuardrailProfileChange = (bot: Bot, profileKey: string) => {
+    const current = selectionState[bot.name];
+    if (!current) return;
+
+    const nextProfile = profileKey.trim();
+    const profileGuard = guardrailProfileMap[nextProfile];
+
+    setSelectionState(prev => ({
+      ...prev,
+      [bot.name]: {
+        ...prev[bot.name],
+        mcpGuardProfile: nextProfile,
+        mcpGuard: profileGuard ? { ...profileGuard } : prev[bot.name].mcpGuard,
+      },
+    }));
+
+    if (profileGuard) {
+      setGuardInputState(prev => ({
+        ...prev,
+        [bot.name]: profileGuard.allowedUserIds.join(', '),
+      }));
+    }
+
+    commitChanges(bot.name, { mcpGuardProfile: nextProfile });
   };
 
   const commitChanges = async (botName: string, changes: Partial<BotUIState>) => {
@@ -285,6 +441,15 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       }
       if (changes.llmProvider !== undefined) {
         payload.llmProvider = changes.llmProvider;
+      }
+      if (changes.llmProfile !== undefined) {
+        payload.llmProfile = changes.llmProfile;
+      }
+      if (changes.responseProfile !== undefined) {
+        payload.responseProfile = changes.responseProfile;
+      }
+      if (changes.mcpGuardProfile !== undefined) {
+        payload.mcpGuardProfile = changes.mcpGuardProfile;
       }
       if (changes.persona !== undefined) {
         payload.persona = changes.persona;
@@ -409,6 +574,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
               const uiState = selectionState[bot.name];
               const status = statusByName.get(bot.name);
               const metadata = bot.metadata || {};
+              const llmProfileOptions = buildProviderProfileOptions(llmProfiles, uiState?.llmProvider, uiState?.llmProfile);
 
               return (
                 <AgentConfigCard
@@ -419,6 +585,9 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
                   status={status}
                   pending={Boolean(pendingBots[bot.name])}
                   personaOptions={buildPersonaOptions(personas)}
+                  responseProfileOptions={responseProfileOptions}
+                  guardrailProfileOptions={guardrailProfileOptions}
+                  llmProfileOptions={llmProfileOptions}
                   messageProviderOptions={messageProviderOptions}
                   llmProviderOptions={llmProviderOptions}
                   messageProviderInfo={messageProviderInfoMap}
@@ -428,6 +597,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
                   availableMcpServers={availableMcpServers}
                   guardOptions={guardOptions}
                   guardInput={guardInputState[bot.name] || ''}
+                  onGuardrailProfileChange={handleGuardrailProfileChange}
                   onSelectionChange={handleSelectionChange}
                   onSystemInstructionBlur={handleSystemInstructionBlur}
                   onGuardToggle={handleGuardToggle}
@@ -455,11 +625,52 @@ const toOptionLabel = (info: ProviderInfo): { value: string; label: string } => 
         .join(' '),
 });
 
-const buildPersonaOptions = (personas: Array<{ key: string; name: string }> | undefined) => {
+const formatProfileLabel = (name: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  return trimmed
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+};
+
+const buildProviderProfileOptions = (
+  profiles: ProviderProfile[],
+  provider?: string,
+  selected?: string,
+): Array<{ value: string; label: string }> => {
+  const normalizedProvider = provider?.trim();
+  const filtered = normalizedProvider
+    ? profiles.filter(profile => profile.provider === normalizedProvider)
+    : profiles;
+  const options = filtered
+    .filter(profile => profile.key)
+    .map(profile => ({
+      value: profile.key,
+      label: profile.name || formatProfileLabel(profile.key),
+    }));
+
+  if (selected && !options.some(option => option.value === selected)) {
+    options.unshift({
+      value: selected,
+      label: formatProfileLabel(selected),
+    });
+  }
+
+  return options;
+};
+
+const buildPersonaOptions = (personas: Array<{ key?: string; id?: string; name: string }> | undefined) => {
   if (!personas || personas.length === 0) {
     return [] as Array<{ value: string; label: string }>;
   }
-  return personas.map(persona => ({ value: persona.key, label: persona.name }));
+  return personas
+    .map(persona => ({
+      value: persona.key || persona.id || '',
+      label: persona.name
+    }))
+    .filter(option => option.value);
 };
 
 const normalizeGuard = (guard: unknown): GuardState => {

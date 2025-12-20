@@ -1,7 +1,7 @@
 import Debug from "debug";
 import { Message } from 'discord.js';
 import { TextChannel, DMChannel } from "discord.js";
-import { splitMessage } from '@src/message/helpers/processing/splitMessage';
+import { splitMessageContent } from '@src/message/helpers/processing/splitMessageContent';
 import { HivemindError, ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:sendResponse');
@@ -39,9 +39,9 @@ export const sendResponse = async (
       );
     }
 
-    const responseParts = splitMessage(responseText);
+    const responseParts = splitMessageContent(responseText);
     for (const part of responseParts) {
-if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
+      if (!(message.channel instanceof TextChannel || message.channel instanceof DMChannel)) { throw new Error("Unsupported channel type for send method."); }
       await message.channel.send(part);
     }
     debug('Response message sent successfully: ' + responseText);
@@ -53,15 +53,15 @@ if (!(message.channel instanceof TextChannel || message.channel instanceof DMCha
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-        console.error('Discord send response error:', hivemindError);
+      console.error('Discord send response error:', hivemindError);
     }
 
     throw ErrorUtils.createError(
-        `Failed to send response: ${ErrorUtils.getMessage(hivemindError)}`,
-        classification.type,
-        'DISCORD_SEND_RESPONSE_ERROR',
-        ErrorUtils.getStatusCode(hivemindError),
-        { originalError: error }
+      `Failed to send response: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'DISCORD_SEND_RESPONSE_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error }
     );
   }
 };

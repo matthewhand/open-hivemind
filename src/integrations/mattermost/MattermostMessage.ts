@@ -21,8 +21,16 @@ export interface MattermostPost {
 export class MattermostMessage extends IMessage {
   private post: MattermostPost;
   private username: string;
+  private isBot: boolean;
+  private mentions: string[];
+  private botUsername?: string;
+  private botUserId?: string;
 
-  constructor(post: MattermostPost, username: string = 'Unknown') {
+  constructor(
+    post: MattermostPost,
+    username: string = 'Unknown',
+    options?: { isBot?: boolean; botUsername?: string; botUserId?: string }
+  ) {
     super(post, 'user', {
       edited: post.edit_at > 0,
       editedAt: post.edit_at > 0 ? new Date(post.edit_at) : undefined,
@@ -37,6 +45,10 @@ export class MattermostMessage extends IMessage {
     this.content = post.message;
     this.channelId = post.channel_id;
     this.platform = 'mattermost';
+    this.isBot = Boolean(options?.isBot);
+    this.botUsername = options?.botUsername;
+    this.botUserId = options?.botUserId;
+    this.mentions = this.extractMentions(this.content);
   }
 
   public getMessageId(): string {
@@ -64,7 +76,7 @@ export class MattermostMessage extends IMessage {
   }
 
   public getUserMentions(): string[] {
-    return [];
+    return [...this.mentions];
   }
 
   public getChannelUsers(): string[] {
@@ -72,15 +84,30 @@ export class MattermostMessage extends IMessage {
   }
 
   public mentionsUsers(userId: string): boolean {
+    if (!userId) return false;
+    if (this.mentions.includes(userId)) return true;
+    if (this.botUserId && userId === this.botUserId && this.botUsername) {
+      return this.mentions.includes(this.botUsername);
+    }
     return false;
   }
 
   public isFromBot(): boolean {
-    return false;
+    return this.isBot;
   }
 
   public getAuthorName(): string {
     return this.username;
   }
 
+  private extractMentions(text: string): string[] {
+    if (!text) return [];
+    const regex = /@([a-z0-9._-]+)/gi;
+    const matches = new Set<string>();
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      if (m[1]) matches.add(m[1]);
+    }
+    return Array.from(matches);
+  }
 }

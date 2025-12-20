@@ -1,4 +1,4 @@
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import Debug from 'debug';
 import { IMessage } from '@message/interfaces/IMessage';
 import discordConfig from '@config/discordConfig';
@@ -21,13 +21,8 @@ export async function sendFollowUpRequest(
   messageProvider: IMessageProvider,
   senderKey?: string
 ): Promise<void> {
-  const llmProvider = getLlmProvider();
-  if (!llmProvider.length) {
-    debug('No LLM providers available');
-    return;
-  }
-
-  if (!llmProvider[0].supportsChatCompletion()) {
+  const { provider, metadata } = getTaskLlm('followup', { baseMetadata: msg.metadata || {} });
+  if (!provider.supportsChatCompletion()) {
     debug(`LLM provider does not support chat completions for channel: ${channelId}`);
     return;
   }
@@ -47,7 +42,7 @@ export async function sendFollowUpRequest(
   debug(`Using LLM provider for follow-up in channel: ${channelId}`);
 
   try {
-    const response = await llmProvider[0].generateChatCompletion(followUpText, historyMessages, msg.metadata);
+    const response = await provider.generateChatCompletion(followUpText, historyMessages, metadata);
     const followUpMessage = followUpText + ' ' + response;
     debug('Sending follow-up message:', followUpMessage);
 

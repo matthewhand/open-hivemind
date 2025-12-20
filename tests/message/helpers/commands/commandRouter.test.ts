@@ -103,20 +103,17 @@ describe('commandRouter', () => {
             jest.clearAllMocks();
         });
 
-        it('should handle telemetry validation', async () => {
-            // Track successful command execution
-            (handleStatusCommand as jest.Mock).mockResolvedValue('Success');
+        it('should track command handler success and failure', async () => {
+            (handleStatusCommand as jest.Mock).mockResolvedValue('Telemetry success');
 
-            await routeCommand('!status');
+            const successResult = await routeCommand('!status');
+            expect(handleStatusCommand).toHaveBeenCalledTimes(1);
+            expect(successResult).toBe('Telemetry success');
 
-            expect(true).toBe(true); // Placeholder for telemetry assertions
-
-            // Track failed command execution
-            (handleStatusCommand as jest.Mock).mockRejectedValue(new Error('Failed'));
-
-            await routeCommand('!status');
-
-            expect(true).toBe(true); // Placeholder for telemetry assertions
+            (handleStatusCommand as jest.Mock).mockRejectedValue(new Error('Telemetry failure'));
+            const failureResult = await routeCommand('!status');
+            expect(handleStatusCommand).toHaveBeenCalledTimes(2);
+            expect(failureResult).toBe('Error: Telemetry failure');
         });
     });
 });

@@ -27,12 +27,15 @@ import {
 } from '../DaisyUI';
 import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
 import ProviderConfig from '../ProviderConfig';
+import { useLlmStatus } from '../../hooks/useLlmStatus';
 
 interface EnhancedBotManagerProps {
   onBotSelect?: (bot: Bot) => void;
 }
 
 const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) => {
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
   const [bots, setBots] = useState<Bot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -263,7 +266,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
   const getBotStatus = (bot: Bot) => {
     const hasMessageProvider = bot.messageProvider;
-    const hasLlmProvider = bot.llmProvider;
+    const hasLlmProvider = bot.llmProvider || defaultLlmConfigured;
     const hasOverrides = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     if (!hasMessageProvider || !hasLlmProvider) {
@@ -281,7 +284,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   const filteredBots = bots.filter(bot =>
     bot.name.toLowerCase().includes(filterText.toLowerCase()) ||
     bot.messageProvider.toLowerCase().includes(filterText.toLowerCase()) ||
-    bot.llmProvider.toLowerCase().includes(filterText.toLowerCase())
+    (bot.llmProvider || '').toLowerCase().includes(filterText.toLowerCase())
   );
 
   const handleToggleExpanded = (botId: string) => {
@@ -295,7 +298,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
   };
 
   const isFormValid = () => {
-    return botForm.name && botForm.messageProvider && botForm.llmProvider;
+    return botForm.name && botForm.messageProvider && (defaultLlmConfigured || botForm.llmProvider);
   };
 
   const renderBotForm = (isEdit = false) => (
@@ -334,19 +337,35 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
         <div className="form-control w-full">
           <label className="label">
-            <span className="label-text">LLM Provider *</span>
+            <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
           </label>
           <select
             className="select select-bordered w-full"
             value={botForm.llmProvider}
             onChange={(e) => setBotForm({ ...botForm, llmProvider: e.target.value })}
-            required
           >
-            <option value="">Select LLM provider</option>
+            {defaultLlmConfigured ? (
+              <option value="">Use default LLM</option>
+            ) : (
+              <option value="">Select LLM provider</option>
+            )}
             {providers.llmProviders.map((provider) => (
               <option key={provider.id} value={provider.id}>{provider.name}</option>
             ))}
           </select>
+          {!defaultLlmConfigured && (
+            <div className="alert alert-warning mt-2">
+              <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+              <a
+                className="btn btn-xs btn-outline ml-auto"
+                href="/admin/integrations/llm"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Configure LLM
+              </a>
+            </div>
+          )}
         </div>
 
         <div className="form-control w-full">

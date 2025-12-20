@@ -1,6 +1,7 @@
 import convict from 'convict';
 import path from 'path';
 import Debug from 'debug';
+import { RESPONSE_PROFILE_KEY_TYPES, RESPONSE_PROFILE_OVERRIDE_KEYS } from './responseProfiles';
 
 const debug = Debug('app:messageConfig');
 
@@ -166,6 +167,88 @@ convict.addFormat({
   }
 });
 
+const responseProfileKeySet = new Set(RESPONSE_PROFILE_OVERRIDE_KEYS);
+
+function coerceResponseProfileValue(key: string, value: unknown): number | boolean | undefined {
+  if (!responseProfileKeySet.has(key as any)) return undefined;
+  const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
+
+  if (expectedType === 'number') {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  }
+
+  if (expectedType === 'boolean') {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+  }
+
+  return undefined;
+}
+
+convict.addFormat({
+  name: 'response-profiles',
+  validate: (val: unknown) => {
+    if (val == null) return;
+    if (typeof val === 'string' && val.trim() === '') return;
+    const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error('MESSAGE_RESPONSE_PROFILES must be a JSON object');
+    }
+
+    for (const [profileName, profileValue] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!profileName) {
+        throw new Error('MESSAGE_RESPONSE_PROFILES profile names must be non-empty strings');
+      }
+      if (typeof profileValue !== 'object' || profileValue === null || Array.isArray(profileValue)) {
+        throw new Error(`Response profile "${profileName}" must be an object`);
+      }
+      for (const [key, value] of Object.entries(profileValue as Record<string, unknown>)) {
+        if (!responseProfileKeySet.has(key as any)) {
+          throw new Error(`Response profile "${profileName}" contains unknown key "${key}"`);
+        }
+        const coerced = coerceResponseProfileValue(key, value);
+        if (coerced === undefined) {
+          const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
+          throw new Error(`Response profile "${profileName}" key "${key}" must be ${expectedType}`);
+        }
+      }
+    }
+  },
+  coerce: (val: unknown) => {
+    if (val == null) return {};
+    if (typeof val === 'string' && val.trim() === '') return {};
+    const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const out: Record<string, Record<string, number | boolean>> = {};
+    for (const [profileName, profileValue] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!profileName || typeof profileValue !== 'object' || profileValue === null || Array.isArray(profileValue)) {
+        continue;
+      }
+      const profileOut: Record<string, number | boolean> = {};
+      for (const [key, value] of Object.entries(profileValue as Record<string, unknown>)) {
+        const coerced = coerceResponseProfileValue(key, value);
+        if (coerced !== undefined) {
+          profileOut[key] = coerced;
+        }
+      }
+      out[profileName] = profileOut;
+    }
+    return out;
+  }
+});
+
 // After convict parses env and files, perform a second-pass normalization that can warn
 function normalizeChannelMaps(
   bonuses: Record<string, number>,
@@ -302,6 +385,13 @@ const messageConfig = convict({
     default: 1500,
     env: 'MESSAGE_COMPOUNDING_DELAY_BASE_MS'
   },
+  MESSAGE_SHORT_LENGTH_PENALTY: {
+    doc: 'Penalty to apply to probability for very short messages (<10 chars) to discourage responding to "ok", "lol"',
+    format: Number,
+    default: 0.1,
+    env: 'MESSAGE_SHORT_LENGTH_PENALTY'
+  },
+
   MESSAGE_COMPOUNDING_DELAY_MAX_MS: {
     doc: 'Maximum compounding delay before responding (ms). Prevents infinite wait.',
     format: 'int',
@@ -314,10 +404,28 @@ const messageConfig = convict({
     default: 3,
     env: 'MESSAGE_DELAY_MULTIPLIER'
   },
+  MESSAGE_RESPONSE_PROFILES: {
+    doc: 'Named response profiles for per-bot engagement tuning. JSON map of profileName -> {MESSAGE_* overrides}.',
+    format: 'response-profiles',
+    default: {
+      default: {},
+      eager: {
+        MESSAGE_DELAY_MULTIPLIER: 1.5,
+        MESSAGE_UNSOLICITED_BASE_CHANCE: 0.05,
+        MESSAGE_ONLY_WHEN_SPOKEN_TO: false
+      },
+      cautious: {
+        MESSAGE_DELAY_MULTIPLIER: 3.5,
+        MESSAGE_UNSOLICITED_BASE_CHANCE: 0.005,
+        MESSAGE_ONLY_WHEN_SPOKEN_TO: true
+      }
+    },
+    env: 'MESSAGE_RESPONSE_PROFILES'
+  },
   MESSAGE_UNSOLICITED_BASE_CHANCE: {
     doc: 'Base probability for replying when not explicitly addressed (only used when MESSAGE_ONLY_WHEN_SPOKEN_TO=false)',
     format: Number,
-    default: 0.05,
+    default: 0.01,
     env: 'MESSAGE_UNSOLICITED_BASE_CHANCE'
   },
   MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS: {
@@ -449,8 +557,20 @@ const messageConfig = convict({
   MESSAGE_BOT_RESPONSE_MODIFIER: {
     doc: 'Modifier for bot response probability',
     format: Number,
-    default: 0.1,
+    default: -0.1,
     env: 'MESSAGE_BOT_RESPONSE_MODIFIER'
+  },
+  MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION: {
+    doc: 'If true, send the message even if it fails coherence/nonsense checks after retries (prevents blocking on false positives)',
+    format: Boolean,
+    default: true,
+    env: 'MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION'
+  },
+  MESSAGE_MAX_GENERATION_RETRIES: {
+    doc: 'Maximum number of retries for bad generation / duplicates / nonsense',
+    format: 'int',
+    default: 3,
+    env: 'MESSAGE_MAX_GENERATION_RETRIES'
   },
   MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: {
     doc: 'Allow replying to bot-authored messages even when not explicitly addressed (risk: bot loops); addressed replies still work regardless',
@@ -527,7 +647,7 @@ const messageConfig = convict({
   MESSAGE_HISTORY_LIMIT: {
     doc: 'Limit for message history',
     format: 'int',
-    default: 10,
+    default: 30,
     env: 'MESSAGE_HISTORY_LIMIT'
   },
   MESSAGE_HISTORY_ADAPTIVE_ENABLED: {

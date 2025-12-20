@@ -77,7 +77,7 @@ export const apiSlice = createApi({
     createBot: builder.mutation<{ success: boolean; message: string; bot: Bot }, {
       name: string;
       messageProvider: string;
-      llmProvider: string;
+      llmProvider?: string;
       config?: Record<string, unknown>;
     }>({
       query: (botData) => ({

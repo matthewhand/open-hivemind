@@ -367,6 +367,9 @@ export class HotReloadManager {
       const allowedFields: (keyof BotOverride)[] = [
         'messageProvider',
         'llmProvider',
+        'llmProfile',
+        'responseProfile',
+        'mcpGuardProfile',
         'persona',
         'systemInstruction',
         'mcpServers',

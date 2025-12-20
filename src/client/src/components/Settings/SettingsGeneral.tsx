@@ -42,7 +42,7 @@ const SettingsGeneral: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) throw new Error('Failed to fetch settings');
       const data = await response.json();
-      
+
       // Extract relevant settings from the config response
       const config = data.config || {};
       setSettings({
@@ -87,7 +87,7 @@ const SettingsGeneral: React.FC = () => {
           'logging.enabled': settings.enableLogging
         })
       });
-      
+
       if (!response.ok) throw new Error('Failed to save settings');
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
@@ -111,14 +111,14 @@ const SettingsGeneral: React.FC = () => {
       <div className="flex items-center gap-3 mb-4">
         <SettingsIcon className="w-5 h-5 text-primary" />
         <div>
-          <h5 className="text-lg font-bold">General Settings</h5>
+          <h5 className="text-lg font-bold">General</h5>
           <p className="text-sm text-base-content/70">Configure basic instance settings and preferences</p>
         </div>
       </div>
 
       {alert && (
-        <Alert 
-          status={alert.type === 'success' ? 'success' : 'error'} 
+        <Alert
+          status={alert.type === 'success' ? 'success' : 'error'}
           message={alert.message}
           onClose={() => setAlert(null)}
         />
@@ -131,7 +131,7 @@ const SettingsGeneral: React.FC = () => {
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
           </h6>
-          
+
           <div className="form-control mb-4">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Instance Name</span>
@@ -291,7 +291,7 @@ const SettingsGeneral: React.FC = () => {
               onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
               className="range range-xs"
             />
-             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>5s</span>
               <span>300s</span>
             </div>
@@ -299,7 +299,7 @@ const SettingsGeneral: React.FC = () => {
 
           {/* Health Check Interval: Range with Steps & Color (Accent) */}
           <div className="form-control">
-             <label className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Health Check Interval</span>
               <span className="badge badge-accent font-mono">{settings.healthCheckInterval}s</span>
             </label>

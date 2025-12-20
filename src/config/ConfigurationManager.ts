@@ -2,7 +2,7 @@ import convict from 'convict';
 import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
-import { ValidationError, ConfigurationError } from '../types/errorClasses';
+import { ValidationError } from '../types/errorClasses';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -66,6 +66,12 @@ const schema = convict({
         },
         default: 'http://localhost:3000',
         env: 'PLAYWRIGHT_BASE_URL',
+    },
+    AUTH_IP_WHITELIST: {
+        doc: 'Comma-separated list of IP addresses or CIDR ranges to allow without authentication',
+        format: String,
+        default: '',
+        env: 'AUTH_IP_WHITELIST'
     }
 });
 
@@ -109,7 +115,7 @@ export class ConfigurationManager {
         schema.validate({ allowed: 'warn' });
 
         // Access all configuration values to trigger env var loading
-        const configValues = schema.getProperties();
+        schema.getProperties();
 
         this.configs['environment'] = schema;
         debug('ConfigurationManager initialized in development environment');

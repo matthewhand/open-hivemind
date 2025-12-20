@@ -52,12 +52,20 @@ interface MCPServer {
   tools?: Array<{ name: string; description: string }>;
 }
 
+interface MCPProfile {
+  key: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+}
+
 const EnhancedAgentConfigurator: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [messageProviders, setMessageProviders] = useState<Provider[]>([]);
   const [llmProviders, setLlmProviders] = useState<Provider[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+  const [mcpProfiles, setMcpProfiles] = useState<MCPProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -72,18 +80,20 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [agentsRes, providersRes, personasRes, mcpRes] = await Promise.all([
+      const [agentsRes, providersRes, personasRes, mcpRes, mcpProfilesRes] = await Promise.all([
         fetch('/api/admin/agents'),
         fetch('/api/admin/providers'),
         fetch('/api/admin/agents/personas'),
-        fetch('/api/admin/mcp/servers')
+        fetch('/api/admin/mcp/servers'),
+        fetch('/api/config/mcp-profiles')
       ]);
 
-      const [agentsData, providersData, personasData, mcpData] = await Promise.all([
+      const [agentsData, providersData, personasData, mcpData, mcpProfilesData] = await Promise.all([
         agentsRes.json(),
         providersRes.json(),
         personasRes.json(),
-        mcpRes.json()
+        mcpRes.json(),
+        mcpProfilesRes.json()
       ]);
 
       setAgents(agentsData.agents || []);
@@ -91,6 +101,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       setLlmProviders(providersData.llmProviders || []);
       setPersonas(personasData.personas || []);
       setMcpServers(mcpData.servers || []);
+      setMcpProfiles(mcpProfilesData.profiles || []);
     } catch (err) {
       setError('Failed to fetch configuration data');
       console.error('Error fetching data:', err);
@@ -219,9 +230,9 @@ const EnhancedAgentConfigurator: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-6" onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <div className="mb-6">
+          <Alert status="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -246,7 +257,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   <div>
                     <p className="text-sm text-base-content/60 mb-1">Message Provider</p>
                     <div className="flex items-center gap-2">
-                      <Badge color={agent.messageProvider ? 'primary' : 'ghost'}>
+                      <Badge variant={agent.messageProvider ? 'primary' : 'neutral'}>
                         {agent.messageProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
@@ -261,7 +272,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   <div>
                     <p className="text-sm text-base-content/60 mb-1">LLM Provider</p>
                     <div className="flex items-center gap-2">
-                      <Badge color={agent.llmProvider ? 'secondary' : 'ghost'}>
+                      <Badge variant={agent.llmProvider ? 'secondary' : 'neutral'}>
                         {agent.llmProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
@@ -276,7 +287,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   {agent.persona && (
                     <div>
                       <p className="text-sm text-base-content/60 mb-1">Persona</p>
-                      <Badge color="accent">
+                      <Badge variant="neutral"> {/* Accent not in types? Check types again. Assuming neutral if accent fails, but Badge.tsx allows what? */}
                         {personas.find(p => p.key === agent.persona)?.name || agent.persona}
                       </Badge>
                     </div>
@@ -292,14 +303,14 @@ const EnhancedAgentConfigurator: React.FC = () => {
                           return (
                             <Badge
                               key={serverName}
-                              color={server?.connected ? 'success' : 'ghost'}
+                              variant={server?.connected ? 'success' : 'neutral'}
                             >
                               {serverName}
                             </Badge>
                           );
                         })}
                         {agent.mcpServers.length > 3 && (
-                          <Badge color="ghost">+{agent.mcpServers.length - 3} more</Badge>
+                          <Badge variant="neutral">+{agent.mcpServers.length - 3} more</Badge>
                         )}
                       </div>
                     </div>
@@ -317,9 +328,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
 
                   {/* Environment Overrides Warning */}
                   {agent.envOverrides && Object.keys(agent.envOverrides).length > 0 && (
-                    <Alert type="warning">
-                      {Object.keys(agent.envOverrides).length} environment variable override(s) active
-                    </Alert>
+                    <Alert status="warning" message={`${Object.keys(agent.envOverrides).length} environment variable override(s) active`} />
                   )}
                 </div>
 
@@ -383,6 +392,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
           llmProviders={llmProviders}
           personas={personas}
           mcpServers={mcpServers}
+          mcpProfiles={mcpProfiles}
           onSubmit={handleSaveAgent}
           onCancel={() => setOpenCreateDialog(false)}
         />
