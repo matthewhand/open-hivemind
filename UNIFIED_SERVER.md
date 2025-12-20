@@ -29,7 +29,7 @@ npm run start
 npm run start:dev
 
 # Or use the convenience script:
-./start-unified.sh
+./scripts/start-unified.sh
 ```
 
 ### Option 3: WebUI Only (No Bots)
