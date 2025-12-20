@@ -156,15 +156,19 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     let isMounted = true;
     const fetchResponseProfiles = async () => {
       try {
-        const response = await fetch('/api/config/messaging');
+        const response = await fetch('/api/config/response-profiles');
         if (!response.ok) return;
         const data = await response.json();
-        const profiles = data?.MESSAGE_RESPONSE_PROFILES;
-        if (!profiles || typeof profiles !== 'object') return;
+        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
-        const options = Object.keys(profiles)
-          .sort((a, b) => a.localeCompare(b))
-          .map((name) => ({ value: name, label: formatProfileLabel(name) }));
+        const options = profiles
+          .filter((p: any) => p.enabled !== false)
+          .map((profile: any) => ({
+            value: String(profile.key || ''),
+            label: profile.name || profile.key,
+          }))
+          .filter((option: any) => option.value.length > 0)
+          .sort((a: any, b: any) => a.label.localeCompare(b.label));
 
         if (isMounted) {
           setResponseProfileOptions(options);
@@ -619,10 +623,10 @@ const toOptionLabel = (info: ProviderInfo): { value: string; label: string } => 
   label: info.label
     ? info.label
     : info.key
-        .split(/[_\-\s]+/)
-        .filter(Boolean)
-        .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(' '),
+      .split(/[_\-\s]+/)
+      .filter(Boolean)
+      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' '),
 });
 
 const formatProfileLabel = (name: string): string => {
