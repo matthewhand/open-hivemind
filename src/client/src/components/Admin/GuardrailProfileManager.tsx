@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
 import {
     PlusIcon,
     PencilIcon,
@@ -24,7 +25,8 @@ const GuardrailProfileManager: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
-    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
     const [formData, setFormData] = useState({
         key: '',
@@ -88,22 +90,16 @@ const GuardrailProfileManager: React.FC = () => {
                 },
             };
 
-            const method = editingProfile ? 'PUT' : 'POST';
-            const url = editingProfile
-                ? `/api/config/guardrails`
-                : '/api/config/guardrails';
-
             if (editingProfile) {
-                // For PUT, we need to update entire profiles array
                 const updated = profiles.map(p => p.key === editingProfile.key ? profileData : p);
-                const response = await fetch(url, {
+                const response = await fetch('/api/config/guardrails', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ profiles: updated }),
                 });
                 if (!response.ok) throw new Error('Failed to update profile');
             } else {
-                const response = await fetch(url, {
+                const response = await fetch('/api/config/guardrails', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(profileData),
@@ -114,11 +110,13 @@ const GuardrailProfileManager: React.FC = () => {
                 }
             }
 
-            setSnackbar({ open: true, message: `Profile ${editingProfile ? 'updated' : 'created'} successfully`, severity: 'success' });
+            setToastMessage(`Profile ${editingProfile ? 'updated' : 'created'} successfully`);
+            setToastType('success');
             setEditDialogOpen(false);
             fetchProfiles();
         } catch (err) {
-            setSnackbar({ open: true, message: err instanceof Error ? err.message : 'Operation failed', severity: 'error' });
+            setToastMessage(err instanceof Error ? err.message : 'Operation failed');
+            setToastType('error');
         }
     };
 
@@ -127,151 +125,148 @@ const GuardrailProfileManager: React.FC = () => {
         try {
             const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete profile');
-            setSnackbar({ open: true, message: 'Profile deleted', severity: 'success' });
+            setToastMessage('Profile deleted');
+            setToastType('success');
             fetchProfiles();
         } catch (err) {
-            setSnackbar({ open: true, message: err instanceof Error ? err.message : 'Delete failed', severity: 'error' });
+            setToastMessage(err instanceof Error ? err.message : 'Delete failed');
+            setToastType('error');
         }
     };
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <span className="loading loading-spinner loading-lg"></span>
-            </div>
-        );
+        return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
     }
 
     return (
-        <div>
+        <Card title="Guardrail Profiles" className="p-4">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <ShieldCheckIcon className="w-7 h-7" />
-                    Guardrail Profiles
-                </h2>
+                    <h2 className="text-2xl font-bold">Guardrail Profiles</h2>
+                </div>
                 <div className="flex gap-2">
-                    <button className="btn btn-outline" onClick={fetchProfiles}>
-                        <ArrowPathIcon className="w-5 h-5 mr-2" />Refresh
-                    </button>
-                    <button className="btn btn-primary" onClick={openCreateDialog}>
-                        <PlusIcon className="w-5 h-5 mr-2" />Add Profile
-                    </button>
+                    <Button variant="ghost" onClick={fetchProfiles} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
+                        Refresh
+                    </Button>
+                    <Button variant="primary" onClick={openCreateDialog} startIcon={<PlusIcon className="w-5 h-5" />}>
+                        Add Profile
+                    </Button>
                 </div>
             </div>
 
-            {error && <div className="alert alert-error mb-4"><span>{error}</span></div>}
+            {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {profiles.map(profile => (
-                    <div key={profile.key} className="card bg-base-200 shadow-sm">
+                    <Card key={profile.key} className="bg-base-200 shadow-sm">
                         <div className="card-body">
                             <h3 className="card-title">{profile.name}</h3>
                             <p className="text-sm text-base-content/70">{profile.description || 'No description'}</p>
                             <div className="flex gap-2 mt-2">
-                                <div className={`badge ${profile.mcpGuard.enabled ? 'badge-success' : 'badge-ghost'}`}>
+                                <Badge variant={profile.mcpGuard.enabled ? 'success' : 'secondary'}>
                                     {profile.mcpGuard.enabled ? 'Enabled' : 'Disabled'}
-                                </div>
-                                <div className="badge badge-outline">{profile.mcpGuard.type}</div>
+                                </Badge>
+                                <Badge variant="neutral">{profile.mcpGuard.type}</Badge>
                             </div>
                             <div className="card-actions justify-end mt-4">
-                                <button className="btn btn-ghost btn-sm" onClick={() => openEditDialog(profile)}>
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}>
                                     <PencilIcon className="w-4 h-4" />
-                                </button>
-                                <button className="btn btn-ghost btn-sm text-error" onClick={() => handleDelete(profile.key)}>
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}>
                                     <TrashIcon className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 ))}
             </div>
 
-            {editDialogOpen && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg">{editingProfile ? 'Edit' : 'Create'} Guardrail Profile</h3>
-                        <div className="py-4 space-y-4">
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Key</span></label>
-                                <input
-                                    type="text"
-                                    className="input input-bordered"
-                                    value={formData.key}
-                                    onChange={e => setFormData({ ...formData, key: e.target.value })}
-                                    disabled={!!editingProfile}
-                                    placeholder="my-profile"
-                                />
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Name</span></label>
-                                <input
-                                    type="text"
-                                    className="input input-bordered"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Description</span></label>
-                                <textarea
-                                    className="textarea textarea-bordered"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-control">
-                                <label className="label cursor-pointer">
-                                    <span className="label-text">Guard Enabled</span>
-                                    <input
-                                        type="checkbox"
-                                        className="toggle toggle-primary"
-                                        checked={formData.enabled}
-                                        onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
-                                    />
-                                </label>
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Guard Type</span></label>
-                                <select
-                                    className="select select-bordered"
-                                    value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
-                                >
-                                    <option value="owner">Owner Only</option>
-                                    <option value="custom">Custom Allow List</option>
-                                </select>
-                            </div>
-                            {formData.type === 'custom' && (
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Allowed User IDs</span></label>
-                                    <input
-                                        type="text"
-                                        className="input input-bordered"
-                                        value={formData.allowedUserIds}
-                                        onChange={e => setFormData({ ...formData, allowedUserIds: e.target.value })}
-                                        placeholder="user1, user2"
-                                    />
-                                    <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>
-                                </div>
-                            )}
+            <Modal
+                isOpen={editDialogOpen}
+                onClose={() => setEditDialogOpen(false)}
+                title={editingProfile ? 'Edit Guardrail Profile' : 'Create Guardrail Profile'}
+            >
+                <div className="space-y-4">
+                    <div className="form-control">
+                        <label className="label"><span className="label-text">Key</span></label>
+                        <input
+                            type="text"
+                            className="input input-bordered"
+                            value={formData.key}
+                            onChange={e => setFormData({ ...formData, key: e.target.value })}
+                            disabled={!!editingProfile}
+                            placeholder="my-profile"
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label"><span className="label-text">Name</span></label>
+                        <input
+                            type="text"
+                            className="input input-bordered"
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label"><span className="label-text">Description</span></label>
+                        <textarea
+                            className="textarea textarea-bordered"
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label cursor-pointer">
+                            <span className="label-text">Guard Enabled</span>
+                            <input
+                                type="checkbox"
+                                className="toggle toggle-primary"
+                                checked={formData.enabled}
+                                onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
+                            />
+                        </label>
+                    </div>
+                    <div className="form-control">
+                        <label className="label"><span className="label-text">Guard Type</span></label>
+                        <select
+                            className="select select-bordered"
+                            value={formData.type}
+                            onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
+                        >
+                            <option value="owner">Owner Only</option>
+                            <option value="custom">Custom Allow List</option>
+                        </select>
+                    </div>
+                    {formData.type === 'custom' && (
+                        <div className="form-control">
+                            <label className="label"><span className="label-text">Allowed User IDs</span></label>
+                            <input
+                                type="text"
+                                className="input input-bordered"
+                                value={formData.allowedUserIds}
+                                onChange={e => setFormData({ ...formData, allowedUserIds: e.target.value })}
+                                placeholder="user1, user2"
+                            />
+                            <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>
                         </div>
-                        <div className="modal-action">
-                            <button className="btn" onClick={() => setEditDialogOpen(false)}>Cancel</button>
-                            <button className="btn btn-primary" onClick={handleSave}>Save</button>
-                        </div>
+                    )}
+                    <div className="modal-action">
+                        <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSave}>Save</Button>
                     </div>
                 </div>
-            )}
+            </Modal>
 
-            {snackbar.open && (
+            {toastMessage && (
                 <div className="toast toast-bottom toast-center z-50">
-                    <div className={`alert ${snackbar.severity === 'success' ? 'alert-success' : 'alert-error'}`}>
-                        <span>{snackbar.message}</span>
-                        <button className="btn btn-sm btn-ghost" onClick={() => setSnackbar({ ...snackbar, open: false })}>✕</button>
+                    <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
+                        <span>{toastMessage}</span>
+                        <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
                     </div>
                 </div>
             )}
-        </div>
+        </Card>
     );
 };
 
