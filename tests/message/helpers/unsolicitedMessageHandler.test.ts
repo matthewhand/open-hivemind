@@ -24,7 +24,7 @@ describe('shouldReplyToUnsolicitedMessage', () => {
     });
   });
 
-  it('returns true only for direct mention when MESSAGE_ONLY_WHEN_SPOKEN_TO=true', () => {
+  it('does not hard-block unsolicited messages (pipeline proceeds)', () => {
     const msg: any = {
       getChannelId: () => 'c1',
       getText: () => 'hello',
@@ -32,7 +32,7 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       isReplyToBot: () => false,
     };
 
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(false);
+    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
 
     const mentioned: any = { ...msg, mentionsUsers: () => true };
     expect(shouldReplyToUnsolicitedMessage(mentioned, botId, integration)).toBe(true);
@@ -49,7 +49,7 @@ describe('shouldReplyToUnsolicitedMessage', () => {
     expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
   });
 
-  it('when MESSAGE_ONLY_WHEN_SPOKEN_TO=false, requires recent activity and opportunity', () => {
+  it('when MESSAGE_ONLY_WHEN_SPOKEN_TO=false, does not hard-block (opportunity handled elsewhere)', () => {
     (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
       if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
       if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return true;
@@ -66,15 +66,15 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       getUserMentions: () => [],
     };
 
-    // No opportunity -> no reply (eligibility)
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(false);
+    // No hard blocks here; probability is handled elsewhere.
+    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
 
     // Opportunity -> yes
     const q: any = { ...msg, getText: () => 'anyone know how do i fix this?' };
     expect(shouldReplyToUnsolicitedMessage(q, botId, integration)).toBe(true);
   });
 
-  it('respects addressed/unaddressed config when MESSAGE_ONLY_WHEN_SPOKEN_TO=false', () => {
+  it('does not hard-block addressed/unaddressed config when MESSAGE_ONLY_WHEN_SPOKEN_TO=false', () => {
     (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
       if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
       if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
@@ -90,6 +90,6 @@ describe('shouldReplyToUnsolicitedMessage', () => {
       isReplyToBot: () => false,
       getUserMentions: () => ['someone'],
     };
-    expect(shouldReplyToUnsolicitedMessage(addressed, botId, integration)).toBe(false);
+    expect(shouldReplyToUnsolicitedMessage(addressed, botId, integration)).toBe(true);
   });
 });

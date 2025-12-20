@@ -6,6 +6,8 @@ export interface BotConfiguration {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];

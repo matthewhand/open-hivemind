@@ -222,4 +222,11 @@ export abstract class IMessage {
    * @returns {string} The author's display name
    */
   abstract getAuthorName(): string;
+
+  /**
+   * Checks if this message was sent in a direct message (DM) context.
+   * 
+   * @returns {boolean} True if the message is a DM
+   */
+  isDirectMessage(): boolean { return false; }
 }

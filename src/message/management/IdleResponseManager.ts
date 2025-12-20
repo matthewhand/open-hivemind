@@ -133,57 +133,60 @@ export class IdleResponseManager {
     } else {
       // Use actual messenger services with unique identification
       for (const service of messengerServices) {
-        let serviceName = (service as any).providerName || 'generic';
+        const baseServiceName = (service as any).providerName || 'generic';
 
-        // Handle Discord service with multiple bot instances
-        if (serviceName === 'discord' && (service as any).getAllBots) {
-          const discordService = service as any;
-          const bots = discordService.getAllBots();
+        // Check if the service supports delegation (e.g. multi-bot Discord)
+        if (typeof service.getDelegatedServices === 'function') {
+          const delegates = service.getDelegatedServices();
 
-          // Create separate service entries for each Discord bot instance
-          bots.forEach((bot: any, index: number) => {
-            const botServiceName = `${serviceName}-${bot.botUserName || `bot${index + 1}`}`;
-
-            if (!this.serviceActivities.has(botServiceName)) {
-              // Create a wrapper that uses the specific bot instance
-              const botWrapper: IMessengerService = {
-                sendMessageToChannel: async (channelId: string, text: string, senderName?: string) => {
-                  return await discordService.sendMessageToChannel(channelId, text, bot.botUserName || senderName);
-                },
-                getMessagesFromChannel: async (channelId: string) => {
-                  return await discordService.getMessagesFromChannel(channelId);
-                },
-                getClientId: () => bot.botUserId || discordService.getClientId(),
-                initialize: async () => { },
-                sendPublicAnnouncement: async (channelId: string, announcement: string, threadId?: string) => {
-                  return await discordService.sendPublicAnnouncement(channelId, announcement, threadId);
-                },
-                getDefaultChannel: () => discordService.getDefaultChannel(),
-                shutdown: async () => { },
-                setMessageHandler: (handler: any) => { }
-              };
-
-              this.serviceActivities.set(botServiceName, {
+          for (const delegate of delegates) {
+            if (!this.serviceActivities.has(delegate.serviceName)) {
+              this.serviceActivities.set(delegate.serviceName, {
                 channels: new Map(),
                 lastInteractedChannelId: null,
-                messengerService: botWrapper,
-                botConfig: this.getBotConfig(serviceName)
+                messengerService: delegate.messengerService,
+                botConfig: delegate.botConfig || this.getBotConfig(baseServiceName)
               });
-
-              log(`Initialized idle response tracking for Discord bot: ${botServiceName}`);
+              log(`Initialized idle response tracking for delegated bot: ${delegate.serviceName}`);
             }
-          });
+          }
+        } else if (typeof (service as any).getAllBots === 'function') {
+          // Backwards-compatible multi-bot support (older Discord implementation).
+          const bots = (service as any).getAllBots();
+          const providerPrefix = String(baseServiceName).toLowerCase();
+
+          if (Array.isArray(bots) && bots.length > 0) {
+            bots.forEach((bot: any, index: number) => {
+              const rawName = typeof bot?.botUserName === 'string' ? bot.botUserName.trim() : '';
+              const rawId = typeof bot?.botUserId === 'string' ? bot.botUserId.trim() : '';
+
+              const suffix = rawName
+                ? rawName
+                : (rawId ? rawId.split('-')[0].toLowerCase() : `bot${index + 1}`);
+
+              const serviceName = `${providerPrefix}-${suffix}`;
+              if (!this.serviceActivities.has(serviceName)) {
+                this.serviceActivities.set(serviceName, {
+                  channels: new Map(),
+                  lastInteractedChannelId: null,
+                  messengerService: service,
+                  botConfig: this.getBotConfig(baseServiceName)
+                });
+                log(`Initialized idle response tracking for multi-bot service: ${serviceName}`);
+              }
+            });
+          }
         } else {
-          // Handle other services normally
-          if (!this.serviceActivities.has(serviceName)) {
-            this.serviceActivities.set(serviceName, {
+          // Handle standard services
+          if (!this.serviceActivities.has(baseServiceName)) {
+            this.serviceActivities.set(baseServiceName, {
               channels: new Map(),
               lastInteractedChannelId: null,
               messengerService: service,
-              botConfig: this.getBotConfig(serviceName)
+              botConfig: this.getBotConfig(baseServiceName)
             });
 
-            log(`Initialized idle response tracking for service: ${serviceName}`);
+            log(`Initialized idle response tracking for service: ${baseServiceName}`);
           }
         }
       }
@@ -387,30 +390,34 @@ export class IdleResponseManager {
 
       log(`Triggering idle response for ${serviceName}:${channelId}`);
 
-      // Try to get an older message from history to reference
+      // Get the most recent message that isn't from THIS bot instance
       let idlePrompt: string;
       try {
         const history = await serviceActivity.messengerService.getMessagesFromChannel(channelId);
-        const olderMessages = history.filter((msg: IMessage) => {
-          // Exclude very recent messages and bot's own messages
-          const msgTime = this.getTimestampMs(msg);
-          const isOld = typeof msgTime === 'number' && (now - msgTime) > 60000; // At least 1 minute old
-          return isOld && !msg.isFromBot();
+        const botClientId = serviceActivity.messengerService.getClientId?.() || '';
+
+        // Find messages NOT from this bot (can be from users or other bots)
+        const nonSelfMessages = history.filter((msg: IMessage) => {
+          const authorId = msg.getAuthorId?.() || '';
+          return authorId !== botClientId;
         });
 
-        if (olderMessages.length > 0) {
-          // Pick a random older message to reference
-          const randomIndex = Math.floor(Math.random() * Math.min(olderMessages.length, 5));
-          const oldMessage = olderMessages[randomIndex];
-          const oldContent = oldMessage.getText().substring(0, 100);
+        // Get the most recent one (history is oldest-first, so last element is most recent)
+        const mostRecentMessage = nonSelfMessages.length > 0
+          ? nonSelfMessages[nonSelfMessages.length - 1]
+          : null;
+
+        if (mostRecentMessage) {
+          const oldContent = mostRecentMessage.getText().substring(0, 100);
           const oldAuthor = (() => {
             try {
-              const n = oldMessage.getAuthorName?.();
+              const n = mostRecentMessage.getAuthorName?.();
               return n ? String(n) : 'someone';
             } catch {
               return 'someone';
             }
           })();
+
           const botName = this.getBotDisplayName(serviceName, serviceActivity.botConfig);
 
           // Generate an LLM-based response referencing the old message
@@ -420,10 +427,10 @@ Be engaging and a little provocative, but not rude: no insults, no harassment, n
 Do not mention that the channel was quiet/idle and do not say "I noticed".`;
 
           try {
-            const { getLlmProvider } = require('@src/llm/getLlmProvider');
-            const providers = getLlmProvider();
-            if (providers.length > 0) {
-              const response = await providers[0].generateChatCompletion(contextPrompt, [], {});
+            const { getTaskLlm } = require('@src/llm/taskLlmRouter');
+            const sel = getTaskLlm('idle', { baseMetadata: { maxTokensOverride: 120 } });
+            if (sel?.provider) {
+              const response = await sel.provider.generateChatCompletion(contextPrompt, [], sel.metadata);
               if (response && response.trim()) {
                 idlePrompt = response.trim();
                 log(`Generated LLM idle response referencing old message`);
@@ -453,7 +460,8 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         botName
       );
       try {
-        recordBotActivity(channelId, serviceActivity.messengerService.getClientId?.());
+        const activityBotId = serviceActivity.messengerService.getClientId?.();
+        if (activityBotId) recordBotActivity(channelId, activityBotId);
       } catch { }
 
       this.recordBotResponse(serviceName, channelId);

@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { InputSanitizer } from '@src/utils/InputSanitizer';
 
 const debug = Debug('app:LineByLineSender');
 
@@ -11,12 +12,25 @@ function isBulletPoint(line: string): boolean {
     return /^[-*•](?:\s|$)/.test(trimmed) || /^\d+\.\s/.test(trimmed);
 }
 
+function normalizeForDedupe(text: string): string {
+    return String(text || '')
+        .trim()
+        .replace(/\r\n/g, '\n')
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\s+([.,!?;:])/g, '$1')
+        .toLowerCase();
+}
+
 /**
  * Split LLM response on newlines and return lines for sequential sending
  * Each line gets sent with typing indicator and delay before the next
  * 
  * Bullet point lists (lines starting with -, *, •, or numbers) are grouped
  * together and sent as a single message for better readability.
+ * 
+ * Each line is also sanitized to remove surrounding quotes.
  * 
  * @param response - The full LLM response
  * @param preserveEmpty - Whether to preserve empty lines (default: false)
@@ -30,7 +44,10 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
 
     const lines = preserveEmpty
         ? rawLines
-        : rawLines.map(line => line.trim()).filter(line => line.length > 0);
+        : rawLines
+            .map(line => line.trim())
+            .map(line => InputSanitizer.stripSurroundingQuotes(line))
+            .filter(line => line.length > 0);
 
     // Group consecutive bullet points together
     const result: string[] = [];
@@ -64,36 +81,55 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
         result.push(bulletGroup.join('\n'));
     }
 
-    // Filter out consecutive duplicate lines to prevent LLM stutter loops
-    return result.filter((line, i) => i === 0 || line !== result[i - 1]);
+    if (preserveEmpty) return result;
+
+    // Filter out duplicate lines to prevent LLM stutter loops (normalized + non-consecutive).
+    const seen = new Set<string>();
+    const deduped: string[] = [];
+    let lastKey = '';
+
+    for (const line of result) {
+        const key = normalizeForDedupe(line);
+        if (!key) continue;
+        if (key === lastKey) continue;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        lastKey = key;
+        deduped.push(line);
+    }
+
+    return deduped;
 }
 
 /**
  * Calculate delay between lines based on line length
- * Longer lines = more "reading time" before next message
+ * POST-TYPING: Minimal delay - messages should send immediately after inference
+ * Pre-typing and during-typing are where delays should happen.
  * 
  * @param lineLength - Length of the current line
- * @param baseDelay - Base delay in ms (default: 2000)
+ * @param baseDelay - Base delay in ms (default: 0 for immediate sending)
  * @returns Delay in milliseconds
  */
-export function calculateLineDelay(lineLength: number, baseDelay = 2000): number {
-    // Backwards-compatible defaults: ~30ms per character, capped at 8 seconds.
+export function calculateLineDelay(lineLength: number, baseDelay = 0): number {
+    // Post-typing delay should be minimal - send immediately
     return calculateLineDelayWithOptions(lineLength, baseDelay);
 }
 
 export function calculateLineDelayWithOptions(
     lineLength: number,
-    baseDelay = 2000,
+    baseDelay = 0,
     opts?: { perCharMs?: number; maxReadingMs?: number }
 ): number {
     const safeLen = Math.max(0, Number(lineLength) || 0);
     const safeBase = Math.max(0, Number(baseDelay) || 0);
-    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 30));
-    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 8000));
+    const perCharMs = Math.max(0, Number(opts?.perCharMs ?? 0)); // No delay - send immediately
+    const maxReadingMs = Math.max(0, Number(opts?.maxReadingMs ?? 0)); // No cap needed
+
 
     const readingDelay = Math.min(safeLen * perCharMs, maxReadingMs);
     return safeBase + readingDelay;
 }
+
 
 /**
  * Configuration for line-by-line sending mode
@@ -110,7 +146,10 @@ export interface LineByLineConfig {
 export function getDefaultLineByLineConfig(): LineByLineConfig {
     return {
         enabled: true, // Default to enabled per user request
-        baseDelay: 4000, // 4 second base delay between lines (was 2s)
+        baseDelay: 0, // Immediate sending - delays happen pre-typing, not post-typing
         maxLinesPerResponse: 5 // Max 5 lines per response to prevent spam
     };
+
+
 }
+

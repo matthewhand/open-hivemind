@@ -6,9 +6,7 @@ import {
   Input,
   Textarea,
   Alert,
-  ToastNotification,
   DataTable,
-  Loading
 } from './DaisyUI';
 import {
   PlusIcon,
@@ -173,7 +171,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   const columns = [
@@ -246,9 +244,7 @@ const PersonaManager: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-4">
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
       <DataTable
@@ -374,11 +370,12 @@ const PersonaManager: React.FC = () => {
 
       {/* Toast Notifications */}
       {toast.show && (
-        <ToastNotification
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, show: false })}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toast.message}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMediaQuery } from '../../hooks/useResponsive';
 import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
+import LlmStatusBanner from '../LlmStatusBanner';
 
 interface NavItem {
   id: string;
@@ -75,6 +76,9 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       >
         {/* White content card */}
         <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
+          <div className="mb-4">
+            <LlmStatusBanner />
+          </div>
           {children}
         </div>
       </main>

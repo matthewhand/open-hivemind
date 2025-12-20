@@ -19,6 +19,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  is_bot?: boolean;
 }
 
 interface Channel {
@@ -27,6 +28,8 @@ interface Channel {
   display_name: string;
   type: string;
   team_id: string;
+  purpose?: string;
+  header?: string;
 }
 
 export default class MattermostClient {
@@ -34,6 +37,7 @@ export default class MattermostClient {
   private token: string;
   private api: AxiosInstance;
   private connected: boolean = false;
+  private me: User | null = null;
 
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
@@ -54,6 +58,7 @@ export default class MattermostClient {
       const response = await this.api.get('/users/me');
       if (response.status === 200) {
         this.connected = true;
+        this.me = response.data;
         console.log(`Connected to Mattermost as ${response.data.username}`);
       }
     } catch (error: any) {
@@ -116,6 +121,15 @@ export default class MattermostClient {
     }
   }
 
+  async getChannelInfo(channel: string): Promise<Channel | null> {
+    try {
+      const channelId = await this.resolveChannelId(channel);
+      return await this.getChannel(channelId);
+    } catch {
+      return null;
+    }
+  }
+
   async getChannelByName(teamId: string, channelName: string): Promise<Channel | null> {
     try {
       const response = await this.api.get(`/teams/${teamId}/channels/name/${channelName}`);
@@ -153,5 +167,31 @@ export default class MattermostClient {
 
   disconnect(): void {
     this.connected = false;
+  }
+
+  getCurrentUserId(): string | null {
+    return this.me?.id || null;
+  }
+
+  getCurrentUsername(): string | null {
+    return this.me?.username || null;
+  }
+
+  /**
+   * Best-effort typing indicator (requires server support for /users/{id}/typing).
+   */
+  async sendTyping(channelId: string, parentId?: string): Promise<void> {
+    if (!this.connected) return;
+    const userId = this.getCurrentUserId();
+    if (!userId) return;
+    try {
+      await this.api.post(`/users/${userId}/typing`, {
+        channel_id: channelId,
+        parent_id: parentId || '',
+      });
+    } catch (error: any) {
+      // Suppress errors to avoid noisy logs on unsupported servers
+      console.debug(`Mattermost typing indicator failed: ${error?.message || error}`);
+    }
   }
 }

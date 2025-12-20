@@ -20,6 +20,7 @@ import {
   useCloneBotMutation,
   useDeleteBotMutation,
 } from '../store/slices/apiSlice';
+import { useLlmStatus } from '../hooks/useLlmStatus';
 
 interface UIBot {
   name: string;
@@ -63,7 +64,7 @@ const BotManager: React.FC = () => {
 
   const [botName, setBotName] = useState('');
   const [messageProvider, setMessageProvider] = useState('discord');
-  const [llmProvider, setLlmProvider] = useState('openai');
+  const [llmProvider, setLlmProvider] = useState('');
   const [discordToken, setDiscordToken] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [newBotName, setNewBotName] = useState('');
@@ -75,6 +76,8 @@ const BotManager: React.FC = () => {
   const [filterLlmProvider, setFilterLlmProvider] = useState<string>('all');
   const [toast, setToast] = useState<Toast | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
 
   const mutationInFlight = isCreating || isCloning || isDeleting;
   const selectedBot = useMemo(() => rawBots.find(bot => bot.name === selectedBotName) ?? null, [rawBots, selectedBotName]);
@@ -87,7 +90,7 @@ const BotManager: React.FC = () => {
   const resetForm = () => {
     setBotName('');
     setMessageProvider('discord');
-    setLlmProvider('openai');
+    setLlmProvider('');
     setDiscordToken('');
     setOpenaiApiKey('');
     setNewBotName('');
@@ -127,7 +130,7 @@ const BotManager: React.FC = () => {
       const config: Record<string, unknown> = {};
       if (messageProvider === 'discord' && discordToken.trim()) config.discord = { token: discordToken.trim() };
       if (llmProvider === 'openai' && openaiApiKey.trim()) config.openai = { apiKey: openaiApiKey.trim() };
-      await createBot({ name: botName.trim(), messageProvider, llmProvider, config }).unwrap();
+      await createBot({ name: botName.trim(), messageProvider, ...(llmProvider ? { llmProvider } : {}), config }).unwrap();
       showToast(`Bot '${botName}' created`, 'success');
       setCreateDialogOpen(false);
       resetForm();
@@ -369,7 +372,29 @@ const BotManager: React.FC = () => {
         <div className="space-y-4 py-4">
           <div className="form-control"><label className="label"><span className="label-text">Bot Name *</span></label><Input value={botName} onChange={(e) => setBotName(e.target.value)} /></div>
           <div className="form-control"><label className="label"><span className="label-text">Message Provider</span></label><Select value={messageProvider} onChange={(e) => setMessageProvider(e.target.value)} options={[{ value: 'discord', label: 'Discord' }, { value: 'slack', label: 'Slack' }, { value: 'mattermost', label: 'Mattermost' }]} /></div>
-          <div className="form-control"><label className="label"><span className="label-text">LLM Provider</span></label><Select value={llmProvider} onChange={(e) => setLlmProvider(e.target.value)} options={[{ value: 'openai', label: 'OpenAI' }, { value: 'flowise', label: 'Flowise' }, { value: 'openwebui', label: 'OpenWebUI' }]} /></div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : '*'}</span>
+            </label>
+            <Select
+              value={llmProvider}
+              onChange={(e) => setLlmProvider(e.target.value)}
+              options={[
+                ...(defaultLlmConfigured ? [{ value: '', label: 'Use default LLM' }] : []),
+                { value: 'openai', label: 'OpenAI' },
+                { value: 'flowise', label: 'Flowise' },
+                { value: 'openwebui', label: 'OpenWebUI' }
+              ]}
+            />
+            {!defaultLlmConfigured && (
+              <div className="alert alert-warning mt-3">
+                <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+                <a className="btn btn-xs btn-outline ml-auto" href="/admin/integrations/llm" target="_blank" rel="noreferrer">
+                  Configure LLM
+                </a>
+              </div>
+            )}
+          </div>
           {messageProvider === 'discord' && <div className="form-control"><label className="label"><span className="label-text">Discord Bot Token</span></label><Input type="password" value={discordToken} onChange={(e) => setDiscordToken(e.target.value)} /></div>}
           {llmProvider === 'openai' && <div className="form-control"><label className="label"><span className="label-text">OpenAI API Key</span></label><Input type="password" value={openaiApiKey} onChange={(e) => setOpenaiApiKey(e.target.value)} /></div>}
         </div>

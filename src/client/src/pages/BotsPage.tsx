@@ -19,6 +19,7 @@ interface BotData {
 }
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
+import { useLlmStatus } from '../hooks/useLlmStatus';
 
 const API_BASE = '/api';
 
@@ -41,9 +42,14 @@ const BotsPage: React.FC = () => {
   const [newBotPersona, setNewBotPersona] = useState('default');
   const [newBotMessageProvider, setNewBotMessageProvider] = useState('');
   const [newBotLlmProvider, setNewBotLlmProvider] = useState('');
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
 
   // Validation for Create Bot form
-  const canCreateBot = newBotName.trim() && newBotPersona && newBotMessageProvider && newBotLlmProvider;
+  const canCreateBot = newBotName.trim()
+    && newBotPersona
+    && newBotMessageProvider
+    && (defaultLlmConfigured || newBotLlmProvider);
 
   // Preview Data
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
@@ -152,7 +158,7 @@ const BotsPage: React.FC = () => {
           name: newBotName,
           description: newBotDesc,
           messageProvider: newBotMessageProvider,
-          llmProvider: newBotLlmProvider,
+          ...(newBotLlmProvider ? { llmProvider: newBotLlmProvider } : {}),
           persona: newBotPersona
         })
       });
@@ -658,13 +664,17 @@ const BotsPage: React.FC = () => {
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">LLM Provider <span className="text-error">*</span></span></label>
+              <label className="label"><span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span></label>
               <select
-                className={`select select-bordered w-full ${!newBotLlmProvider ? 'select-error' : ''}`}
+                className={`select select-bordered w-full ${(!newBotLlmProvider && !defaultLlmConfigured) ? 'select-error' : ''}`}
                 value={newBotLlmProvider}
                 onChange={(e) => setNewBotLlmProvider(e.target.value)}
               >
-                <option value="">Select Provider</option>
+                {defaultLlmConfigured ? (
+                  <option value="">Use default LLM</option>
+                ) : (
+                  <option value="">Select Provider</option>
+                )}
                 <option value="openai">OpenAI</option>
                 <option value="flowise">Flowise</option>
                 <option value="ollama">Ollama</option>
@@ -672,6 +682,19 @@ const BotsPage: React.FC = () => {
               <label className="label">
                 <span className="label-text-alt text-warning">Only one LLM provider allowed per bot.</span>
               </label>
+              {!defaultLlmConfigured && (
+                <div className="alert alert-warning mt-2">
+                  <span>No default LLM is configured. Configure one or select an LLM for this bot.</span>
+                  <a
+                    className="btn btn-xs btn-outline ml-auto"
+                    href="/admin/integrations/llm"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Configure LLM
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 

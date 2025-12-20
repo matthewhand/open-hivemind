@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 /**
  * Utility functions for detecting and handling environment variable overrides
  */
@@ -91,6 +88,7 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
   const configKeys = [
     `BOTS_${upperName}_MESSAGE_PROVIDER`,
     `BOTS_${upperName}_LLM_PROVIDER`,
+    `BOTS_${upperName}_LLM_PROFILE`,
     `BOTS_${upperName}_DISCORD_BOT_TOKEN`,
     `BOTS_${upperName}_SLACK_BOT_TOKEN`,
     `BOTS_${upperName}_MATTERMOST_TOKEN`,
@@ -98,7 +96,9 @@ export function checkBotEnvOverrides(botName: string): Record<string, {
     `BOTS_${upperName}_FLOWISE_API_KEY`,
     `BOTS_${upperName}_OPENWEBUI_API_KEY`,
     `BOTS_${upperName}_PERSONA`,
-    `BOTS_${upperName}_SYSTEM_INSTRUCTION`
+    `BOTS_${upperName}_SYSTEM_INSTRUCTION`,
+    `BOTS_${upperName}_RESPONSE_PROFILE`,
+    `BOTS_${upperName}_MCP_GUARD_PROFILE`
   ];
   
   configKeys.forEach(key => {

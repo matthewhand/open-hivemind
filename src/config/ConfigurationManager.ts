@@ -2,7 +2,7 @@ import convict from 'convict';
 import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
-import { ValidationError, ConfigurationError } from '../types/errorClasses';
+import { ValidationError } from '../types/errorClasses';
 const debug = Debug('app:ConfigurationManager');
 
 /**
@@ -109,7 +109,7 @@ export class ConfigurationManager {
         schema.validate({ allowed: 'warn' });
 
         // Access all configuration values to trigger env var loading
-        const configValues = schema.getProperties();
+        schema.getProperties();
 
         this.configs['environment'] = schema;
         debug('ConfigurationManager initialized in development environment');

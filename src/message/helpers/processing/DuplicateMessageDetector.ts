@@ -34,7 +34,14 @@ export default class DuplicateMessageDetector {
      * @param content The message content to check
      * @returns true if the message is a duplicate and should be suppressed
      */
-    public isDuplicate(channelId: string, content: string): boolean {
+    /**
+     * Check if a message is a duplicate
+     * @param channelId The channel ID
+     * @param content The message content to check
+     * @param externalHistory Optional list of recent message contents from the channel (to check against other users/bots)
+     * @returns true if the message is a duplicate and should be suppressed
+     */
+    public isDuplicate(channelId: string, content: string, externalHistory: string[] = []): boolean {
         try {
             const suppressEnabled = messageConfig.get('MESSAGE_SUPPRESS_DUPLICATES');
             if (!suppressEnabled) {
@@ -53,12 +60,18 @@ export default class DuplicateMessageDetector {
             // Normalize content for comparison (trim, lowercase, remove extra whitespace)
             const normalizedContent = this.normalizeContent(content);
 
-            // Check for duplicates
-            const isDupe = recentHistory.some(msg =>
+            // Check for duplicates in internal history (what WE sent recently)
+            const isInternalDupe = recentHistory.some(msg =>
                 this.normalizeContent(msg.content) === normalizedContent
             );
 
-            if (isDupe) {
+            // Check for duplicates in external history (what OTHERS sent recently)
+            // Increased to last 15 messages to catch wider mirroring
+            const isExternalDupe = externalHistory.slice(-15).some(msgContent =>
+                this.areMessagesDuplicate(msgContent, normalizedContent)
+            );
+
+            if (isInternalDupe || isExternalDupe) {
                 debug(`Duplicate message detected in channel ${channelId}: "${content.substring(0, 50)}..."`);
                 return true;
             }
@@ -68,6 +81,42 @@ export default class DuplicateMessageDetector {
             debug(`Error checking for duplicates: ${error}`);
             return false; // On error, don't suppress
         }
+    }
+
+    private areMessagesDuplicate(content1: string, normalizedContent2: string): boolean {
+        const norm1 = this.normalizeContent(content1);
+        if (norm1 === normalizedContent2) return true;
+
+        // Fuzzy check: if edit distance is very small relative to length
+        // e.g. "Hello world." vs "Hello world!"
+        if (norm1.length > 10 && normalizedContent2.length > 10) {
+            const dist = this.levenshteinDistance(norm1, normalizedContent2);
+            const maxLen = Math.max(norm1.length, normalizedContent2.length);
+            // Allow 5% difference or 5 characters, whichever is smaller
+            const threshold = Math.min(5, Math.ceil(maxLen * 0.05));
+            return dist <= threshold;
+        }
+        return false;
+    }
+
+    private levenshteinDistance(a: string, b: string): number {
+        if (a.length === 0) return b.length;
+        if (b.length === 0) return a.length;
+        const matrix = [];
+        let i;
+        for (i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+        let j;
+        for (j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+        for (i = 1; i <= b.length; i++) {
+            for (j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                }
+            }
+        }
+        return matrix[b.length][a.length];
     }
 
     /**
@@ -171,10 +220,12 @@ export default class DuplicateMessageDetector {
 
     /**
      * Normalize message content for comparison
+     * Strips non-alphanumeric (keeps spaces) to catch "Hello." vs "Hello"
      */
     private normalizeContent(content: string): string {
         return content
             .toLowerCase()
+            .replace(/[^a-z0-9 ]/g, '')
             .trim()
             .replace(/\s+/g, ' '); // Collapse whitespace
     }

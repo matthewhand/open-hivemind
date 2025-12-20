@@ -135,6 +135,9 @@ export interface Bot {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  mcpGuardProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: string[];
@@ -198,7 +201,9 @@ export interface Bot {
 export interface CreateBotRequest {
   name: string;
   messageProvider: string;
-  llmProvider: string;
+  llmProvider?: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: string[];

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AgentConfigCardProps } from './types';
+import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
 
@@ -10,6 +10,10 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   status,
   pending,
   personaOptions,
+  responseProfileOptions,
+  guardrailProfileOptions,
+  llmProfileOptions,
+  mcpServerProfileOptions,
   messageProviderOptions,
   llmProviderOptions,
   messageProviderInfo,
@@ -19,6 +23,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   availableMcpServers,
   guardOptions,
   guardInput,
+  onGuardrailProfileChange,
   onSelectionChange,
   onSystemInstructionBlur,
   onGuardToggle,
@@ -32,6 +37,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   const connection = connectionStatusLabel(status?.connected, status?.status);
   const selectedMessageInfo = uiState?.messageProvider ? messageProviderInfo[uiState.messageProvider] : undefined;
   const selectedLlmInfo = uiState?.llmProvider ? llmProviderInfo[uiState.llmProvider] : undefined;
+  const guardrailProfileActive = Boolean(uiState?.mcpGuardProfile);
 
   return (
     <div className="card bg-base-100 shadow-xl border border-base-300 h-full">
@@ -87,6 +93,24 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 />
               </div>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="LLM Profile"
+                  value={uiState?.llmProfile || ''}
+                  options={llmProfileOptions}
+                  metadata={metadata.llmProfile}
+                  disabled={pending}
+                  allowEmpty
+                  helperContent={(
+                    <label className="label">
+                      <span className="label-text-alt">Optional template for LLM settings.</span>
+                    </label>
+                  )}
+                  onChange={(value) => onSelectionChange(bot, 'llmProfile', value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -126,11 +150,76 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
           </div>
         </div>
 
+        {/* Engagement Profile Section */}
+        <div className="card bg-base-200 shadow-sm mb-4">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Engagement Profile</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <FieldSelect
+                  label="Response Profile"
+                  value={uiState?.responseProfile || ''}
+                  options={responseProfileOptions}
+                  metadata={metadata.responseProfile}
+                  disabled={pending}
+                  allowEmpty
+                  onChange={(value) => onSelectionChange(bot, 'responseProfile', value)}
+                  helperContent={(
+                    <label className="label">
+                      <span className="label-text-alt">Uses global messaging settings unless a profile is selected.</span>
+                    </label>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* MCP Configuration Section */}
         <div className="card bg-base-200 shadow-sm mb-4">
           <div className="card-body">
             <h3 className="card-title text-lg">MCP Configuration</h3>
-            
+
+            <div className="form-control mb-4">
+              <FieldSelect
+                label="MCP Server Profile"
+                value={uiState?.mcpServerProfile || ''}
+                options={mcpServerProfileOptions.map(option => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                metadata={metadata.mcpServerProfile}
+                disabled={pending}
+                allowEmpty
+                helperContent={uiState?.mcpServerProfile ? (
+                  <label className="label">
+                    <span className="label-text-alt">MCP servers are loaded from the selected profile.</span>
+                  </label>
+                ) : undefined}
+                onChange={(value) => onSelectionChange(bot, 'mcpServerProfile', value, true)}
+              />
+            </div>
+
+            <div className="form-control mb-4">
+              <FieldSelect
+                label="Guardrail Profile"
+                value={uiState?.mcpGuardProfile || ''}
+                options={guardrailProfileOptions.map(option => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                metadata={metadata.mcpGuardProfile}
+                disabled={pending}
+                allowEmpty
+                helperContent={guardrailProfileActive && uiState?.mcpGuardProfile ? (
+                  <label className="label">
+                    <span className="label-text-alt">Guard settings are driven by the selected profile.</span>
+                  </label>
+                ) : undefined}
+                onChange={(value) => onGuardrailProfileChange(bot, value)}
+              />
+            </div>
+
             <div className="form-control mb-4">
               <label className="label">
                 <span className="label-text">MCP Servers</span>
@@ -162,7 +251,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                   className={`toggle ${uiState?.mcpGuard.enabled ? 'toggle-primary' : ''}`}
                   checked={uiState?.mcpGuard.enabled || false}
                   onChange={(e) => onGuardToggle(bot, e.target.checked)}
-                  disabled={metadata.mcpGuard?.locked || pending}
+                  disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                 />
               </label>
               <FieldHelper metadata={metadata.mcpGuard} fallback="Restrict who can trigger MCP tools" />
@@ -178,7 +267,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                     className="select select-bordered"
                     value={uiState.mcpGuard.type}
                     onChange={(e) => onGuardTypeChange(bot, e.target.value as GuardState['type'])}
-                    disabled={metadata.mcpGuard?.locked || pending}
+                    disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                   >
                     {guardOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -199,7 +288,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                       value={guardInput}
                       onChange={(e) => onGuardUsersChange(bot, e.target.value)}
                       onBlur={() => onGuardUsersBlur(bot)}
-                      disabled={metadata.mcpGuard?.locked || pending}
+                      disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                     />
                     <label className="label">
                       <span className="label-text-alt">Comma-separated list of user IDs permitted to invoke MCP tools.</span>
@@ -213,7 +302,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
 
         {/* Status Section */}
         <div className="divider"></div>
-        
+
         <div className="flex items-center gap-2 flex-wrap">
           {connection.icon}
           <span className={`text-sm ${connection.color === 'success' ? 'text-success' : connection.color === 'error' ? 'text-error' : 'text-base-content/70'}`}>
@@ -242,15 +331,15 @@ interface FieldSelectProps {
   helperContent?: React.ReactNode;
 }
 
-const FieldSelect: React.FC<FieldSelectProps> = ({ 
-  label, 
-  value, 
-  options, 
-  metadata, 
-  disabled, 
-  allowEmpty, 
-  onChange, 
-  helperContent 
+const FieldSelect: React.FC<FieldSelectProps> = ({
+  label,
+  value,
+  options,
+  metadata,
+  disabled,
+  allowEmpty,
+  onChange,
+  helperContent
 }) => (
   <div className="form-control">
     <label className="label">
@@ -302,10 +391,10 @@ const FieldHelper: React.FC<{ metadata?: FieldMetadata; fallback?: string }> = (
   return fallback ? <label className="label"><span className="label-text-alt">{fallback}</span></label> : null;
 };
 
-const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({ 
-  label, 
-  configured, 
-  detail 
+const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({
+  label,
+  configured,
+  detail
 }) => (
   <div className="flex items-center gap-2 mt-1">
     <div className={`w-2 h-2 rounded-full ${configured ? 'bg-success' : 'bg-error'}`}></div>
@@ -316,27 +405,27 @@ const StatusLine: React.FC<{ label: string; configured: boolean; detail: string 
 );
 
 const connectionStatusLabel = (
-  connected?: boolean, 
+  connected?: boolean,
   statusText?: string
 ): { icon: React.ReactNode; color: 'success' | 'default' | 'error'; label: string } => {
   if (connected === true) {
-    return { 
-      icon: <div className="w-2 h-2 rounded-full bg-success"></div>, 
-      color: 'success', 
-      label: statusText || 'Connected' 
+    return {
+      icon: <div className="w-2 h-2 rounded-full bg-success"></div>,
+      color: 'success',
+      label: statusText || 'Connected'
     };
   }
   if (connected === false) {
-    return { 
-      icon: <div className="w-2 h-2 rounded-full bg-error"></div>, 
-      color: 'error', 
-      label: statusText || 'Disconnected' 
+    return {
+      icon: <div className="w-2 h-2 rounded-full bg-error"></div>,
+      color: 'error',
+      label: statusText || 'Disconnected'
     };
   }
-  return { 
-    icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>, 
-    color: 'default', 
-    label: statusText || 'Unknown' 
+  return {
+    icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>,
+    color: 'default',
+    label: statusText || 'Unknown'
   };
 };
 
@@ -356,9 +445,9 @@ const renderProviderHelper = (info?: ProviderInfo) => {
       )}
       {info.docsUrl && (
         <label className="label">
-          <a 
-            href={info.docsUrl} 
-            target="_blank" 
+          <a
+            href={info.docsUrl}
+            target="_blank"
             rel="noopener noreferrer"
             className="label-text-alt link link-primary"
           >

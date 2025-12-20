@@ -49,7 +49,13 @@ export class OpenAiProvider implements ILlmProvider {
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || process.env.OPENAI_BASE_URL || DEFAULT_BASE_URL;
     const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
     const organization = this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
-    const model = this.config.model || process.env.OPENAI_MODEL || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
+    const model =
+      metadata?.modelOverride ||
+      metadata?.model ||
+      this.config.model ||
+      process.env.OPENAI_MODEL ||
+      openaiConfig.get('OPENAI_MODEL') ||
+      'gpt-4o';
 
     const systemPrompt = metadata?.systemPrompt || this.config.systemPrompt || openaiConfig.get('OPENAI_SYSTEM_PROMPT') || 'You are a helpful assistant.';
 

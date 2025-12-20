@@ -64,6 +64,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
   private messageProcessors: Map<string, SlackMessageProcessor> = new Map();
   private welcomeHandlers: Map<string, SlackWelcomeHandler> = new Map();
   private lastSentEventTs: Map<string, string> = new Map();
+  private lastModelActivity: Map<string, string> = new Map();
   private app?: Application;
   private joinTs: Map<string, number> = new Map();
   private botConfigs: Map<string, any> = new Map();
@@ -559,6 +560,37 @@ export class SlackService extends EventEmitter implements IMessengerService {
     }
   }
 
+  /**
+   * Triggers a typing indicator in the channel (RTM-only).
+   * Slack does not support typing indicators over the Web API or Socket Mode.
+   */
+  public async sendTyping(channelId: string, senderName?: string, threadId?: string): Promise<void> {
+    try {
+      const botName = senderName || Array.from(this.botManagers.keys())[0];
+      const botManager = this.getBotManager(botName);
+      const botInfo = botManager?.getAllBots?.()[0];
+
+      // RTM client supports sendTyping; Socket Mode does not.
+      if (botInfo?.rtmClient && typeof botInfo.rtmClient.sendTyping === 'function') {
+        await botInfo.rtmClient.sendTyping(channelId);
+        return;
+      }
+
+      // Default to fake typing when RTM isn't available (Socket Mode/Web API).
+      if (process.env.SLACK_FAKE_TYPING === 'false') {
+        debug(`sendTyping skipped (fake typing disabled). bot=${botName} channel=${channelId}`);
+        return;
+      }
+
+      const messageIO = this.messageIO as any;
+      if (typeof messageIO?.sendTypingPlaceholder === 'function') {
+        await messageIO.sendTypingPlaceholder(channelId, botName, threadId);
+      }
+    } catch (error) {
+      debug(`sendTyping failed for Slack channel ${channelId}: ${error}`);
+    }
+  }
+
   public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<IMessage[]> {
     debug('Entering getMessagesFromChannel', { channelId });
     if (!channelId) {
@@ -680,6 +712,28 @@ export class SlackService extends EventEmitter implements IMessengerService {
     return '';
   }
 
+  /**
+   * Get the topic/description for a Slack channel (best-effort).
+   */
+  public async getChannelTopic(channelId: string): Promise<string | null> {
+    try {
+      const firstBot = Array.from(this.botManagers.keys())[0];
+      const botManager = this.botManagers.get(firstBot);
+      const botInfo = botManager?.getAllBots?.()[0];
+      if (!botInfo?.webClient) return null;
+
+      const info = await botInfo.webClient.conversations.info({ channel: channelId });
+      if (!info?.ok) return null;
+
+      const topic = info.channel?.topic?.value;
+      const purpose = info.channel?.purpose?.value;
+      return (purpose || topic || null) as string | null;
+    } catch (error) {
+      debug(`Failed to fetch Slack channel topic for ${channelId}: ${error}`);
+      return null;
+    }
+  }
+
   public getAgentStartupSummaries() {
     const safePrompt = (cfg: any): string => {
       const p =
@@ -757,15 +811,20 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const senderKey = agentInstanceName || agentDisplayName;
 
       let botId = '';
+      let botUserName = '';
       try {
         const mgr = this.getBotManager(senderKey);
         const bots = mgr?.getAllBots?.() || [];
         botId = String(bots[0]?.botUserId || '');
+        botUserName = String(bots[0]?.botUserName || '');
       } catch {
         botId = '';
+        botUserName = '';
       }
 
-      const nameCandidates = Array.from(new Set([agentDisplayName, agentInstanceName].filter(Boolean)));
+      const nameCandidates = Array.from(
+        new Set([agentDisplayName, agentInstanceName, botUserName].filter(Boolean))
+      );
       return { botId, senderKey, nameCandidates };
     } catch {
       return null;
@@ -784,6 +843,95 @@ export class SlackService extends EventEmitter implements IMessengerService {
     }
 
     return '';
+  }
+
+  /**
+   * Best-effort model activity indicator (Slack bot tokens typically cannot set status).
+   * Gate behind SLACK_ENABLE_STATUS_UPDATES to avoid noisy failures.
+   */
+  public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
+    try {
+      if (process.env.SLACK_ENABLE_STATUS_UPDATES !== 'true') {
+        return;
+      }
+
+      const botName = senderKey || Array.from(this.botManagers.keys())[0];
+      const last = this.lastModelActivity.get(botName);
+      if (last === modelId) return;
+
+      const botManager = this.getBotManager(botName);
+      const botInfo = botManager?.getAllBots?.()[0];
+      if (!botInfo?.webClient) return;
+
+      // This may require user token scopes; if unsupported, Slack will reject.
+      await botInfo.webClient.users.profile.set({
+        profile: {
+          status_text: `Model: ${modelId}`.slice(0, 100),
+          status_emoji: ':robot_face:'
+        }
+      });
+
+      this.lastModelActivity.set(botName, modelId);
+    } catch (error) {
+      debug(`Slack setModelActivity failed: ${error}`);
+    }
+  }
+
+  /**
+   * Returns individual service wrappers for each managed Slack bot.
+   */
+  public getDelegatedServices(): Array<{
+    serviceName: string;
+    messengerService: IMessengerService;
+    botConfig: any;
+  }> {
+    const names = this.getBotNames();
+    return names.map((name) => {
+      const cfg = this.getBotConfig(name) || {};
+      const serviceName = `slack-${name}`;
+
+      const serviceWrapper: IMessengerService = {
+        initialize: async () => { /* managed by parent */ },
+        shutdown: async () => { /* managed by parent */ },
+
+        sendMessageToChannel: async (channelId: string, message: string, senderName?: string, threadId?: string, replyToMessageId?: string) => {
+          return this.sendMessageToChannel(channelId, message, name, threadId, replyToMessageId);
+        },
+
+        getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+
+        sendPublicAnnouncement: async (channelId: string, announcement: any) => this.sendPublicAnnouncement(channelId, announcement),
+
+        getChannelTopic: async (channelId: string) => this.getChannelTopic(channelId),
+
+        getClientId: () => {
+          try {
+            const mgr = this.getBotManager(name);
+            const bots = mgr?.getAllBots?.() || [];
+            return bots[0]?.botUserId || '';
+          } catch {
+            return '';
+          }
+        },
+
+        getDefaultChannel: () => cfg.defaultChannel || slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '',
+
+        setMessageHandler: () => { /* global handler managed by parent */ },
+
+        setModelActivity: async (modelId: string, senderKey?: string) => this.setModelActivity(modelId, senderKey || name),
+
+        sendTyping: async (channelId: string, senderName?: string, threadId?: string) => this.sendTyping(channelId, senderName || name, threadId),
+
+        supportsChannelPrioritization: this.supportsChannelPrioritization,
+        scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined
+      };
+
+      return {
+        serviceName,
+        messengerService: serviceWrapper,
+        botConfig: cfg
+      };
+    });
   }
 
   public async shutdown(): Promise<void> {

@@ -22,7 +22,7 @@ import {
   Cell
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
-import { Badge, Alert, Loading, Button, Pagination } from '../DaisyUI';
+import { Badge, Alert, Button, Pagination } from '../DaisyUI';
 
 interface ActivityFilter {
   agentId?: string;
@@ -400,7 +400,7 @@ const ActivityMonitor: React.FC = () => {
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loading />
+              <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -429,15 +429,15 @@ const ActivityMonitor: React.FC = () => {
                         <Badge>{activity.messageProvider}</Badge>
                       </td>
                       <td>
-                        <Badge color="secondary">{activity.llmProvider}</Badge>
+                        <Badge variant="secondary">{activity.llmProvider}</Badge>
                       </td>
                       <td>
-                        <Badge color={activity.messageType === 'incoming' ? 'primary' : 'ghost'}>
+                        <Badge variant={activity.messageType === 'incoming' ? 'primary' : 'neutral'}>
                           {activity.messageType}
                         </Badge>
                       </td>
                       <td>
-                        <Badge color={
+                        <Badge variant={
                           activity.status === 'success' ? 'success' :
                             activity.status === 'error' ? 'error' : 'warning'
                         }>
@@ -648,9 +648,7 @@ const ActivityMonitor: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-6" onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
       <div role="tablist" className="tabs tabs-boxed mb-6 bg-base-100 p-2">

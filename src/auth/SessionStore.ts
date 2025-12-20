@@ -51,7 +51,7 @@ export class SessionStore {
    * @returns True if valid
    */
   public async validateToken(token: string): Promise<boolean> {
-    for (const [sessionId, session] of this.sessions.entries()) {
+    for (const [, session] of this.sessions.entries()) {
       if (session.token === token) {
         // Check if session has expired
         if (new Date() > session.expiresAt) {

@@ -36,6 +36,30 @@ Configuration is at the core of Open-Hivemind’s flexibility:
 - **Environment Variables:** Critical parameters like `MESSAGE_PROVIDER`, `LLM_PROVIDER`, and multi-token settings are defined in environment files, allowing dynamic adjustments without code changes.
 - **Performance Tuning:** Administrators can fine-tune parameters such as `MESSAGE_RATE_LIMIT_PER_CHANNEL` and `MESSAGE_ADD_USER_HINT` to balance responsiveness and avoid flooding.
 
+### Task-Specific LLM Overrides (Provider + Model)
+By default, the bot uses the configured reply LLM for both responses and internal “helper” tasks (like semantic on-topic checks). You can override *specific tasks* to use different providers/models via environment variables.
+
+Supported tasks:
+- `semantic` (semantic relevance check for reply probability)
+- `summary` (helper summarization calls)
+- `followup` (LLM follow-up generation)
+- `idle` (idle response generation)
+
+Environment variables:
+- `LLM_TASK_<TASK>_PROVIDER` and `LLM_TASK_<TASK>_MODEL` (preferred)
+- Back-compat aliases: `LLM_<TASK>_PROVIDER` and `LLM_<TASK>_MODEL`
+
+Provider references can be:
+- Provider instance id (recommended): e.g. `openai-default`
+- Provider instance name: e.g. `Default OpenAI`
+- Provider type: e.g. `openai` (uses the first enabled provider of that type)
+
+Example:
+- `LLM_TASK_SEMANTIC_PROVIDER=openai-default`
+- `LLM_TASK_SEMANTIC_MODEL=gemini-3.0-flash`
+- `LLM_TASK_SUMMARY_PROVIDER=openai-default`
+- `LLM_TASK_SUMMARY_MODEL=gpt-5.1-nano`
+
 ## Troubleshooting and Debugging
 Maintaining a high-performance bot ecosystem requires proactive diagnosis:
 - **Detailed Logging:** Utilizing the Debug library, every critical operation is logged. This includes client initialization, error events, and message dispatch details, providing a comprehensive trail for troubleshooting.

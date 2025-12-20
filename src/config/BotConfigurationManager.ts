@@ -3,31 +3,30 @@ import Debug from 'debug';
 import path from 'path';
 import fs from 'fs';
 import { UserConfigStore } from './UserConfigStore';
+import { getGuardrailProfileByKey } from './guardrailProfiles';
+import { getLlmProfileByKey } from './llmProfiles';
+import { getMcpServerProfileByKey } from './mcpServerProfiles';
 
 // Define BotOverride interface locally since it's not exported
 interface BotOverride {
   messageProvider?: string;
   llmProvider?: string;
+  llmProfile?: string;
+  responseProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: unknown[];
   mcpGuard?: unknown;
+  mcpGuardProfile?: string;
+  mcpServerProfile?: string;
 }
-import {
+import type {
   BotConfig,
   MessageProvider,
   LlmProvider,
   McpServerConfig,
   McpGuardConfig,
-  DiscordConfig,
-  SlackConfig,
-  MattermostConfig,
-  OpenAIConfig,
-  FlowiseConfig,
-  OpenWebUIConfig,
-  OpenSwarmConfig,
-  ConfigurationValidationResult,
-  isBotConfig
+  ConfigurationValidationResult
 } from '@src/types/config';
 import { ConfigurationError, ValidationError } from '../types/errorClasses';
 
@@ -51,6 +50,14 @@ const botSchema = {
     env: 'BOTS_{name}_LLM_PROVIDER'
   },
 
+  // LLM provider profile configuration
+  LLM_PROFILE: {
+    doc: 'LLM provider profile name',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LLM_PROFILE'
+  },
+
   // Persona configuration
   PERSONA: {
     doc: 'Bot persona key',
@@ -66,6 +73,13 @@ const botSchema = {
     env: 'BOTS_{name}_SYSTEM_INSTRUCTION'
   },
 
+  RESPONSE_PROFILE: {
+    doc: 'Response profile name for engagement/delay overrides',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_RESPONSE_PROFILE'
+  },
+
   MCP_SERVERS: {
     doc: 'MCP servers configuration (JSON array)',
     format: Array,
@@ -78,6 +92,20 @@ const botSchema = {
     format: Object,
     default: { enabled: false, type: 'owner' },
     env: 'BOTS_{name}_MCP_GUARD'
+  },
+
+  MCP_GUARD_PROFILE: {
+    doc: 'MCP guardrail profile name',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MCP_GUARD_PROFILE'
+  },
+
+  MCP_SERVER_PROFILE: {
+    doc: 'MCP server profile name for predefined server bundles',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_MCP_SERVER_PROFILE'
   },
 
   // Discord-specific configuration
@@ -361,7 +389,7 @@ export class BotConfigurationManager {
    * Load multi-bot configuration from BOTS environment variable
    * (Now deprecated/internal helper for explicit list if needed, but logic is merged above)
    */
-  private loadMultiBotConfiguration(botsEnv: string): void {
+  private loadMultiBotConfiguration(): void {
     // Deprecated implementation - logic moved to loadConfiguration
   }
 
@@ -434,16 +462,31 @@ export class BotConfigurationManager {
 
     botConfig.validate({ allowed: 'warn' });
 
+    const llmProvider = botConfig.get('LLM_PROVIDER') as LlmProvider;
+    let llmModel: string | undefined;
+
+    // Resolve model based on provider
+    if (llmProvider === 'openai') {
+      llmModel = botConfig.get('OPENAI_MODEL');
+    } else if (llmProvider === 'openswarm') {
+      llmModel = botConfig.get('OPENSWARM_TEAM');
+    }
+
     // Build the bot configuration object
     const config: BotConfig = {
       name: botName,
       messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
-      llmProvider: botConfig.get('LLM_PROVIDER') as LlmProvider,
+      llmProvider,
+      llmModel,
+      llmProfile: (botConfig.get('LLM_PROFILE') as string) || undefined,
+      responseProfile: (botConfig.get('RESPONSE_PROFILE') as string) || undefined,
       persona: botConfig.get('PERSONA') as string || 'default',
       systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
-      mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' }
+      mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
+      mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined
     };
+
 
     // Add Discord configuration if token is provided
     const discordToken = botConfig.get('DISCORD_BOT_TOKEN');
@@ -538,10 +581,14 @@ export class BotConfigurationManager {
 
     assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
     assignIfAllowed('llmProvider', 'LLM_PROVIDER');
+    assignIfAllowed('llmProfile', 'LLM_PROFILE');
+    assignIfAllowed('responseProfile', 'RESPONSE_PROFILE');
     assignIfAllowed('persona', 'PERSONA');
     assignIfAllowed('systemInstruction', 'SYSTEM_INSTRUCTION');
     assignIfAllowed('mcpServers', 'MCP_SERVERS');
     assignIfAllowed('mcpGuard', 'MCP_GUARD');
+    assignIfAllowed('mcpGuardProfile', 'MCP_GUARD_PROFILE');
+    assignIfAllowed('mcpServerProfile', 'MCP_SERVER_PROFILE');
 
     if (!config.mcpGuard) {
       config.mcpGuard = { enabled: false, type: 'owner' };
@@ -549,6 +596,183 @@ export class BotConfigurationManager {
     if (!config.mcpServers) {
       config.mcpServers = [];
     }
+
+    this.applyLlmProfile(config);
+    this.applyGuardrailProfile(config);
+    this.applyMcpServerProfile(config);
+  }
+
+  private applyLlmProfile(config: BotConfig): void {
+    const llmProfileName = (config as any).llmProfile as string | undefined;
+    if (llmProfileName) {
+      const profile = getLlmProfileByKey(llmProfileName);
+      if (!profile) {
+        debug(`Unknown LLM provider profile "${llmProfileName}"`);
+      } else if (profile.provider !== config.llmProvider) {
+        debug(`LLM profile "${llmProfileName}" provider "${profile.provider}" does not match bot provider "${config.llmProvider}"`);
+      } else {
+        const profileConfig = this.ensureProfileConfig(profile.config);
+        this.applyLlmProfileConfig(config, profileConfig);
+      }
+    }
+  }
+
+  private ensureProfileConfig(rawConfig: unknown): Record<string, unknown> {
+    if (rawConfig && typeof rawConfig === 'object') {
+      return rawConfig as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  private applyLlmProfileConfig(config: BotConfig, profileConfig: Record<string, unknown>): void {
+    if (config.llmProvider === 'openai') {
+      const normalized = this.normalizeOpenAiProfile(profileConfig);
+      if (!config.openai) {
+        config.openai = {} as any;
+      }
+      this.mergeMissing(config.openai as unknown as Record<string, unknown>, normalized);
+      return;
+    }
+
+    if (config.llmProvider === 'flowise') {
+      const normalized = this.normalizeFlowiseProfile(profileConfig);
+      if (!config.flowise) {
+        config.flowise = {} as any;
+      }
+      this.mergeMissing(config.flowise as unknown as Record<string, unknown>, normalized);
+      return;
+    }
+
+    if (config.llmProvider === 'openwebui') {
+      const normalized = this.normalizeOpenWebuiProfile(profileConfig);
+      if (!config.openwebui) {
+        config.openwebui = {} as any;
+      }
+      this.mergeMissing(config.openwebui as unknown as Record<string, unknown>, normalized);
+      return;
+    }
+
+    if (config.llmProvider === 'openswarm') {
+      const normalized = this.normalizeOpenSwarmProfile(profileConfig);
+      if (!config.openswarm) {
+        config.openswarm = {} as any;
+      }
+      this.mergeMissing(config.openswarm as unknown as Record<string, unknown>, normalized);
+    }
+  }
+
+  private mergeMissing(target: Record<string, unknown>, incoming: Record<string, unknown>): void {
+    for (const [key, value] of Object.entries(incoming)) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+      const current = target[key];
+      if (current === undefined || current === null || (typeof current === 'string' && current.trim() === '')) {
+        target[key] = value;
+      }
+    }
+  }
+
+  private normalizeOpenAiProfile(profileConfig: Record<string, unknown>): Record<string, unknown> {
+    return {
+      apiKey: this.readString(profileConfig, 'apiKey'),
+      model: this.readString(profileConfig, 'model'),
+      baseUrl: this.readString(profileConfig, 'baseUrl'),
+      systemPrompt: this.readString(profileConfig, 'systemPrompt'),
+    };
+  }
+
+  private normalizeFlowiseProfile(profileConfig: Record<string, unknown>): Record<string, unknown> {
+    return {
+      apiKey: this.readString(profileConfig, 'apiKey'),
+      apiBaseUrl: this.readString(profileConfig, 'apiBaseUrl'),
+    };
+  }
+
+  private normalizeOpenWebuiProfile(profileConfig: Record<string, unknown>): Record<string, unknown> {
+    return {
+      apiKey: this.readString(profileConfig, 'apiKey'),
+      apiUrl: this.readString(profileConfig, 'apiUrl'),
+    };
+  }
+
+  private normalizeOpenSwarmProfile(profileConfig: Record<string, unknown>): Record<string, unknown> {
+    return {
+      baseUrl: this.readString(profileConfig, 'baseUrl'),
+      apiKey: this.readString(profileConfig, 'apiKey'),
+      team: this.readString(profileConfig, 'team'),
+    };
+  }
+
+  private readString(profileConfig: Record<string, unknown>, key: string): string | undefined {
+    const value = profileConfig[key];
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  private applyGuardrailProfile(config: BotConfig): void {
+    const profileName = (config as any).mcpGuardProfile as string | undefined;
+    if (!profileName) {
+      return;
+    }
+
+    const profile = getGuardrailProfileByKey(profileName);
+    if (!profile) {
+      debug(`Unknown MCP guard profile "${profileName}"`);
+      return;
+    }
+
+    const allowed = Array.isArray(profile.mcpGuard.allowedUserIds)
+      ? profile.mcpGuard.allowedUserIds.filter(Boolean)
+      : undefined;
+
+    config.mcpGuard = {
+      enabled: Boolean(profile.mcpGuard.enabled),
+      type: profile.mcpGuard.type === 'custom' ? 'custom' : 'owner',
+      allowedUsers: allowed,
+      allowedUserIds: allowed
+    } as any;
+  }
+
+  private applyMcpServerProfile(config: BotConfig): void {
+    const profileName = (config as any).mcpServerProfile as string | undefined;
+    if (!profileName) {
+      return;
+    }
+
+    const profile = getMcpServerProfileByKey(profileName);
+    if (!profile) {
+      debug(`Unknown MCP server profile "${profileName}"`);
+      return;
+    }
+
+    // Merge profile's mcpServers with existing ones (profile servers first, then explicit)
+    const profileServers = Array.isArray(profile.mcpServers) ? profile.mcpServers : [];
+    const existingServers = Array.isArray(config.mcpServers) ? config.mcpServers : [];
+
+    // Combine: profile servers + existing servers (dedup by name)
+    const seenNames = new Set<string>();
+    const merged: any[] = [];
+
+    for (const server of profileServers) {
+      if (server.name && !seenNames.has(server.name)) {
+        seenNames.add(server.name);
+        merged.push(server);
+      }
+    }
+    for (const server of existingServers) {
+      const name = (server as any).name;
+      if (name && !seenNames.has(name)) {
+        seenNames.add(name);
+        merged.push(server);
+      }
+    }
+
+    config.mcpServers = merged;
+    debug(`Applied MCP server profile "${profileName}": ${merged.length} servers`);
   }
 
   /**
@@ -673,6 +897,75 @@ export class BotConfigurationManager {
    */
   public getWarnings(): string[] {
     return [...this.warnings];
+  }
+
+  public async addBot(config: BotConfig): Promise<void> {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots'); // Or wherever bots are stored
+
+    // Ensure unique name/ID
+    const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    if (fs.existsSync(filePath)) {
+      throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+    }
+
+    if (!fs.existsSync(botsDir)) {
+      fs.mkdirSync(botsDir, { recursive: true });
+    }
+
+    // Write config
+    fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+
+    // Reload to pick up new bot
+    this.reload();
+  }
+
+  /**
+   * Update an existing bot configuration
+   * For env-var bots, this creates/updates a JSON override file
+   */
+  public async updateBot(name: string, updates: Record<string, unknown>): Promise<void> {
+    const existingBot = this.bots.get(name);
+    if (!existingBot) {
+      throw new Error(`Bot "${name}" not found`);
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    // For env-var configured bots, we store overrides in a JSON file
+    // These overrides take precedence over env vars
+    let currentConfig: Record<string, unknown> = {};
+
+    if (fs.existsSync(filePath)) {
+      try {
+        currentConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      } catch (e) {
+        debug(`Failed to read existing bot config ${filePath}: ${e}`);
+      }
+    }
+
+    // Merge updates
+    const mergedConfig = {
+      ...currentConfig,
+      ...updates,
+      name, // Ensure name is preserved
+      _updatedAt: new Date().toISOString()
+    };
+
+    if (!fs.existsSync(botsDir)) {
+      fs.mkdirSync(botsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(mergedConfig, null, 2));
+    debug(`Updated bot config for ${name} at ${filePath}`);
+
+    // Reload to apply changes
+    this.reload();
   }
 
   /**

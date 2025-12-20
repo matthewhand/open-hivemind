@@ -113,7 +113,7 @@ export const botDataProvider = {
     
     if (!data.name) errors.push('Bot name is required');
     if (!data.messageProvider) errors.push('Message provider is required');
-    if (!data.llmProvider) errors.push('LLM provider is required');
+    // Allow missing LLM provider if a default LLM is configured elsewhere
     
     // Provider-specific validation
     if (data.messageProvider === 'discord' && !data.discord?.token) {

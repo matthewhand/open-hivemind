@@ -48,6 +48,10 @@ export async function generateChatCompletion(
       history: historyMessages.map(msg => msg.getText()), // Convert to plain text
       metadata: metadata || {}, // Include metadata in payload
     };
+    // Optional model override (for task routing).
+    if (metadata && (metadata.modelOverride || metadata.model)) {
+      payload.model = metadata.modelOverride || metadata.model;
+    }
     if (metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.trim() !== '') {
       payload.systemPrompt = metadata.systemPrompt;
     }

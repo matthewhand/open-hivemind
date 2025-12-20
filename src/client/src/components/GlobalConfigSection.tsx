@@ -26,6 +26,10 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [jsonState, setJsonState] = useState<Record<string, string>>({});
+  const [testStatus, setTestStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const isMessageProviderSection = ['discord', 'slack', 'mattermost'].includes(section);
 
   useEffect(() => {
     fetchConfig();
@@ -86,6 +90,37 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     } finally {
       setSaving(false);
       setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!config) return;
+    setTesting(true);
+    setTestStatus(null);
+    try {
+      const stored = localStorage.getItem('auth_tokens');
+      const accessToken = stored ? (JSON.parse(stored) as { accessToken?: string })?.accessToken : undefined;
+      const res = await fetch('/api/config/message-provider/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          provider: section,
+          config: config.values,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || data.error || 'Connection test failed');
+      }
+      setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
+    } catch (err: any) {
+      setTestStatus({ type: 'error', message: err.message || 'Connection test failed' });
+    } finally {
+      setTesting(false);
+      setTimeout(() => setTestStatus(null), 4000);
     }
   };
 
@@ -166,22 +201,39 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   return (
     <Card className="bg-base-100 shadow-xl border border-base-200">
       <div className="card-body">
-         <div className="flex justify-between items-center mb-6">
+         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <div>
                 <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
                 <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
             </div>
-            <Button 
-                variant="primary" 
-                onClick={() => handleSave(config.values)}
-                loading={saving}
-                disabled={saving}
-            >
-                Save Changes
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {isMessageProviderSection && (
+                <Button
+                  variant="outline"
+                  onClick={handleTestConnection}
+                  loading={testing}
+                  disabled={testing}
+                >
+                  Test Connection
+                </Button>
+              )}
+              <Button 
+                  variant="primary" 
+                  onClick={() => handleSave(config.values)}
+                  loading={saving}
+                  disabled={saving}
+              >
+                  Save Changes
+              </Button>
+            </div>
          </div>
 
          {success && <div className="mb-4"><Alert status="success" message={success} /></div>}
+         {testStatus && (
+           <div className="mb-4">
+             <Alert status={testStatus.type} message={testStatus.message} />
+           </div>
+         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {Object.entries(config.values).map(([key, value]) => {
