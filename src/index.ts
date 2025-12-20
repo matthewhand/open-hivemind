@@ -466,6 +466,10 @@ async function main() {
         appLogger.info('🪝 Webhook service is disabled');
     }
 
+    // Print legend for decision logs
+    const StartupLegendService = require('./services/StartupLegendService').default;
+    StartupLegendService.printLegend();
+
     // Startup complete
     appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
 }

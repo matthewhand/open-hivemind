@@ -20,6 +20,13 @@ import ollamaConfig from '../../config/ollamaConfig';
 import mattermostConfig from '../../config/mattermostConfig';
 import openWebUIConfig from '../../config/openWebUIConfig';
 import webhookConfig from '../../config/webhookConfig';
+import { getGuardrailProfiles, saveGuardrailProfiles, GuardrailProfile } from '../../config/guardrailProfiles';
+import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
+import { BotManager } from '../../managers/BotManager';
+import { testDiscordConnection } from '../../integrations/discord/DiscordConnectionTest';
+import { testSlackConnection } from '../../integrations/slack/SlackConnectionTest';
+import { testMattermostConnection } from '../../integrations/mattermost/MattermostConnectionTest';
 
 console.log('Config router module loaded');
 const router = Router();
@@ -91,6 +98,188 @@ if (process.env.NODE_ENV !== 'test') {
 // GET /api/config/ping - Diagnostic endpoint
 router.get('/ping', (req, res) => {
   res.json({ message: 'pong', timestamp: new Date().toISOString() });
+});
+
+// Sensitive key patterns for redaction
+const SENSITIVE_PATTERNS = [
+  /token/i, /key/i, /secret/i, /password/i, /credential/i, /auth/i
+];
+
+function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_PATTERNS.some(pattern => pattern.test(key));
+}
+
+function redactValue(value: unknown): string {
+  if (!value) return '';
+  const str = String(value);
+  if (str.length <= 8) return '••••••••';
+  return str.slice(0, 4) + '••••' + str.slice(-4);
+}
+
+function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = parentKey ? `${parentKey}.${key}` : key;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = redactObject(value as Record<string, unknown>, fullKey);
+    } else if (isSensitiveKey(key) && value) {
+      result[key] = {
+        isRedacted: true,
+        redactedValue: redactValue(value),
+        hasValue: true
+      };
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+// GET /api/config/bots - List all configured bots with redacted secrets
+router.get('/bots', (req, res) => {
+  try {
+    const manager = BotConfigurationManager.getInstance();
+    const bots = manager.getAllBots();
+
+    // Redact sensitive values before sending to frontend
+    const safeBots = bots.map((bot: any) => {
+      const redacted = redactObject(bot as Record<string, unknown>);
+      return {
+        ...redacted,
+        name: bot.name,
+        messageProvider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        isActive: true, // TODO: Add actual status tracking
+        source: bot._source || 'env' // Indicate where config came from
+      };
+    });
+
+    res.json({
+      bots: safeBots,
+      count: safeBots.length,
+      warnings: manager.getWarnings()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_BOTS_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/bots/:name - Update bot configuration (with secret handling)
+router.put('/bots/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const updates = req.body;
+
+    const manager = BotConfigurationManager.getInstance();
+    const existingBot = manager.getBot(name);
+
+    if (!existingBot) {
+      return res.status(404).json({ error: `Bot "${name}" not found` });
+    }
+
+    // Merge updates, but filter out redacted placeholders
+    const cleanUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      // Skip if it's a redacted placeholder object
+      if (value && typeof value === 'object' && (value as any).isRedacted) {
+        continue; // Don't update - keep existing value
+      }
+      cleanUpdates[key] = value;
+    }
+
+    // Apply updates via manager
+    await manager.updateBot(name, cleanUpdates);
+
+    res.json({ success: true, message: `Bot "${name}" updated` });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_BOT_UPDATE_ERROR'
+    });
+  }
+});
+
+// GET /api/config/templates - List available templates
+router.get('/templates', (req, res) => {
+  try {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const templatesDir = path.join(configDir, 'templates');
+
+    if (!fs.existsSync(templatesDir)) {
+      return res.json({ templates: [] });
+    }
+
+    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.json'));
+    const templates = files.map(file => {
+      try {
+        const content = JSON.parse(fs.readFileSync(path.join(templatesDir, file), 'utf8'));
+        return {
+          id: file.replace('.json', ''),
+          name: content.name || file.replace('.json', ''),
+          description: content.description || 'No description provided',
+          provider: content.provider || content.messageProvider || 'unknown',
+          content
+        };
+      } catch (e) {
+        console.warn(`Failed to parse template ${file}:`, e);
+        return null; // Skip invalid
+      }
+    }).filter(t => t !== null);
+
+    res.json({ templates });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_TEMPLATES_ERROR'
+    });
+  }
+});
+
+// POST /api/config/templates/:id/create - Create bot from template
+router.post('/templates/:id/create', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, overrides } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Bot name is required' });
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const templatePath = path.join(configDir, 'templates', `${id}.json`);
+
+    if (!fs.existsSync(templatePath)) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
+
+    // Create new bot config based on template
+    const newBotConfig = {
+      ...template,
+      name, // User provided name
+      ...overrides // Optional overrides provided by UI
+    };
+
+    // Use BotConfigurationManager to Add new bot
+    const manager = BotConfigurationManager.getInstance();
+    await manager.addBot(newBotConfig);
+
+    res.json({ success: true, message: `Bot "${name}" created from template "${id}"` });
+
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'CONFIG_TEMPLATE_CREATE_ERROR'
+    });
+  }
 });
 
 // GET /api/config/global - Get all global configurations (schema + values)
@@ -737,6 +926,36 @@ router.get('/api/openapi', (req, res) => {
             }
           }
         },
+        '/api/config/llm-profiles': {
+          get: {
+            summary: 'Get LLM profile templates',
+            responses: {
+              200: { description: 'LLM profiles retrieved successfully' }
+            }
+          },
+          put: {
+            summary: 'Update LLM profile templates',
+            responses: {
+              200: { description: 'LLM profiles updated successfully' }
+            }
+          }
+        },
+        '/api/config/llm-status': {
+          get: {
+            summary: 'Get LLM default status and missing-provider summary',
+            responses: {
+              200: { description: 'LLM status retrieved successfully' }
+            }
+          }
+        },
+        '/api/config/message-provider/test': {
+          post: {
+            summary: 'Test message provider connectivity',
+            responses: {
+              200: { description: 'Message provider connectivity result' }
+            }
+          }
+        },
         '/api/config/restore': {
           post: {
             summary: 'Restore configuration from backup',
@@ -801,10 +1020,13 @@ function buildFieldMetadata(bot: any, store: ReturnType<typeof UserConfigStore.g
   return {
     messageProvider: describeField('messageProvider', 'MESSAGE_PROVIDER'),
     llmProvider: describeField('llmProvider', 'LLM_PROVIDER'),
+    llmProfile: describeField('llmProfile', 'LLM_PROFILE'),
+    responseProfile: describeField('responseProfile', 'RESPONSE_PROFILE'),
     persona: describeField('persona', 'PERSONA'),
     systemInstruction: describeField('systemInstruction', 'SYSTEM_INSTRUCTION'),
     mcpServers: describeField('mcpServers', 'MCP_SERVERS'),
     mcpGuard: describeField('mcpGuard', 'MCP_GUARD'),
+    mcpGuardProfile: describeField('mcpGuardProfile', 'MCP_GUARD_PROFILE'),
   };
 }
 
@@ -821,13 +1043,207 @@ router.get('/messaging', (req, res) => {
       MESSAGE_UNSOLICITED_ADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_ADDRESSED'),
       MESSAGE_UNSOLICITED_UNADDRESSED: messageConfig.get('MESSAGE_UNSOLICITED_UNADDRESSED'),
       MESSAGE_UNSOLICITED_BASE_CHANCE: messageConfig.get('MESSAGE_UNSOLICITED_BASE_CHANCE'),
-      MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS')
+      MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: messageConfig.get('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS'),
+      MESSAGE_RESPONSE_PROFILES: messageConfig.get('MESSAGE_RESPONSE_PROFILES')
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGING_CONFIG_GET_ERROR'
+    });
+  }
+});
+
+// GET /api/config/guardrails - Get MCP guardrail profiles
+router.get('/guardrails', (req, res) => {
+  try {
+    res.json({
+      profiles: getGuardrailProfiles()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'GUARDRAIL_CONFIG_GET_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/guardrails - Update MCP guardrail profiles
+router.put('/guardrails', (req, res) => {
+  try {
+    const payload = req.body;
+    const profiles = payload?.profiles;
+    if (!Array.isArray(profiles)) {
+      return res.status(400).json({ error: 'profiles must be an array' });
+    }
+
+    for (const profile of profiles) {
+      if (!profile || typeof profile !== 'object') {
+        return res.status(400).json({ error: 'profile entries must be objects' });
+      }
+      const typed = profile as GuardrailProfile;
+      if (!typed.key || typeof typed.key !== 'string') {
+        return res.status(400).json({ error: 'profile.key is required' });
+      }
+      if (!typed.name || typeof typed.name !== 'string') {
+        return res.status(400).json({ error: 'profile.name is required' });
+      }
+      if (!typed.mcpGuard || typeof typed.mcpGuard !== 'object') {
+        return res.status(400).json({ error: `profile.mcpGuard is required for ${typed.key}` });
+      }
+    }
+
+    saveGuardrailProfiles(profiles);
+    res.json({ success: true, profiles });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'GUARDRAIL_CONFIG_PUT_ERROR'
+    });
+  }
+});
+
+// GET /api/config/llm-status - LLM default + missing provider summary
+router.get('/llm-status', async (req, res) => {
+  try {
+    const llmDefaults = getLlmDefaultStatus();
+    const botManager = BotManager.getInstance();
+    const bots = await botManager.getAllBots();
+    const missing = bots.filter(bot => !bot.llmProvider || String(bot.llmProvider).trim() === '');
+
+    res.json({
+      defaultConfigured: llmDefaults.configured,
+      defaultProviders: llmDefaults.providers,
+      botsMissingLlmProvider: missing.map(bot => bot.name),
+      hasMissing: missing.length > 0,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_STATUS_GET_ERROR'
+    });
+  }
+});
+
+// POST /api/config/message-provider/test - Test message provider connectivity
+router.post('/message-provider/test', async (req, res) => {
+  try {
+    const provider = String(req.body?.provider || '').trim().toLowerCase();
+    const config = req.body?.config as Record<string, unknown> | undefined;
+
+    if (!provider) {
+      return res.status(400).json({ error: 'provider is required' });
+    }
+
+    if (!config || typeof config !== 'object') {
+      return res.status(400).json({ error: 'config is required' });
+    }
+
+    if (provider === 'discord') {
+      const rawToken = String(
+        (config as any).DISCORD_BOT_TOKEN || (config as any).token || ''
+      );
+      const token = rawToken.split(',')[0]?.trim() || '';
+      const result = await testDiscordConnection(token);
+      return res.json(result);
+    }
+
+    if (provider === 'slack') {
+      const token = String(
+        (config as any).SLACK_BOT_TOKEN || (config as any).botToken || ''
+      ).trim();
+      const result = await testSlackConnection(token);
+      return res.json(result);
+    }
+
+    if (provider === 'mattermost') {
+      const serverUrl = String(
+        (config as any).MATTERMOST_SERVER_URL || (config as any).serverUrl || (config as any).url || ''
+      ).trim();
+      const token = String(
+        (config as any).MATTERMOST_TOKEN || (config as any).token || ''
+      ).trim();
+      const result = await testMattermostConnection(serverUrl, token);
+      return res.json(result);
+    }
+
+    return res.status(400).json({ error: `Unsupported provider "${provider}"` });
+  } catch (error: any) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROVIDER_TEST_ERROR'
+    });
+  }
+});
+
+// GET /api/config/llm-profiles - Get LLM profile templates
+router.get('/llm-profiles', (req, res) => {
+  try {
+    res.json({
+      profiles: getLlmProfiles()
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_GET_ERROR'
+    });
+  }
+});
+
+// PUT /api/config/llm-profiles - Update LLM profile templates
+router.put('/llm-profiles', (req, res) => {
+  try {
+    const payload = req.body;
+    const profiles = payload?.profiles;
+    if (!profiles || typeof profiles !== 'object') {
+      return res.status(400).json({ error: 'profiles must be an object' });
+    }
+
+    const llmProfiles = Array.isArray(profiles.llm) ? profiles.llm : null;
+    if (!llmProfiles) {
+      return res.status(400).json({ error: 'profiles.llm must be an array' });
+    }
+
+    const validateProfile = (profile: any) => {
+      if (!profile || typeof profile !== 'object') {
+        return 'profile entries must be objects';
+      }
+      if (!profile.key || typeof profile.key !== 'string') {
+        return 'profile.key is required';
+      }
+      if (!profile.provider || typeof profile.provider !== 'string') {
+        return `profile.provider is required for ${profile.key}`;
+      }
+      if (profile.name && typeof profile.name !== 'string') {
+        return `profile.name must be a string for ${profile.key}`;
+      }
+      if (profile.description && typeof profile.description !== 'string') {
+        return `profile.description must be a string for ${profile.key}`;
+      }
+      if (profile.config && typeof profile.config !== 'object') {
+        return `profile.config must be an object for ${profile.key}`;
+      }
+      return null;
+    };
+
+    for (const profile of llmProfiles) {
+      const error = validateProfile(profile);
+      if (error) return res.status(400).json({ error });
+    }
+
+    saveLlmProfiles({ llm: llmProfiles });
+    res.json({ success: true, profiles: { llm: llmProfiles } });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_PUT_ERROR'
     });
   }
 });
@@ -875,5 +1291,3 @@ router.put('/messaging', async (req, res) => {
 });
 
 export default router;
-
-

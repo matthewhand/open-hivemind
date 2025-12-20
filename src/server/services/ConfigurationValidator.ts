@@ -1,5 +1,6 @@
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import convict from 'convict';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -18,6 +19,7 @@ export interface BotConfig {
   name: string;
   messageProvider: string;
   llmProvider: string;
+  llmProfile?: string;
   discord?: {
     token: string;
     clientId?: string;
@@ -61,6 +63,8 @@ export interface BotConfig {
     agentId?: string;
   };
   persona?: string;
+  mcpGuardProfile?: string;
+  responseProfile?: string;
   systemInstruction?: string;
   mcpServers?: string | string[];
   mcpGuard?: {
@@ -102,10 +106,25 @@ export class ConfigurationValidator {
         format: ['openai', 'flowise', 'openwebui', 'openswarm'],
         default: 'openai'
       },
+      llmProfile: {
+        doc: 'LLM provider profile',
+        format: String,
+        default: ''
+      },
       persona: {
         doc: 'Bot persona',
         format: String,
         default: 'default'
+      },
+      mcpGuardProfile: {
+        doc: 'MCP guardrail profile name',
+        format: String,
+        default: ''
+      },
+      responseProfile: {
+        doc: 'Response profile name',
+        format: String,
+        default: ''
       },
       systemInstruction: {
         doc: 'System instruction',
@@ -218,13 +237,18 @@ export class ConfigurationValidator {
       }
     }
 
-    if (!config.llmProvider) {
-      errors.push('LLM provider is required');
-    } else {
-      const validProviders = ['openai', 'flowise', 'openwebui', 'openswarm'];
-      if (!validProviders.includes(config.llmProvider)) {
-        errors.push(`Invalid LLM provider. Must be one of: ${validProviders.join(', ')}`);
+    const normalizedLlmProvider = typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
+    const llmDefaults = getLlmDefaultStatus();
+    const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider };
+
+    if (!normalizedLlmProvider) {
+      if (!llmDefaults.configured) {
+        errors.push('LLM provider is required when no default LLM provider is configured');
+      } else {
+        suggestions.push('No LLM provider selected; the default LLM provider will be used');
       }
+    } else {
+      this.validateLLMProvider(normalizedConfig, errors, warnings, suggestions);
     }
 
     // Provider-specific validation
@@ -298,7 +322,12 @@ export class ConfigurationValidator {
     warnings: string[],
     suggestions: string[]
   ): void {
-    switch (config.llmProvider) {
+    const provider = typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
+    if (!provider) {
+      return;
+    }
+
+    switch (provider) {
       case 'openai':
         if (!config.openai?.apiKey) {
           errors.push('OpenAI API key is required');

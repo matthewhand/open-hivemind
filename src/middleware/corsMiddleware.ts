@@ -9,7 +9,7 @@ const allowedOrigins = [
     'https://open-hivemind.vercel.app'
 ];
 
-const corsOptions: cors.CorsOptions = {
+const corsOptions = {
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) {

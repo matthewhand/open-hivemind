@@ -6,7 +6,7 @@
  */
 
 import Debug from 'debug';
-import { BaseHivemindError, NetworkError } from '../types/errorClasses';
+import { BaseHivemindError } from '../types/errorClasses';
 import { HivemindError, ErrorUtils } from '../types/errors';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 
@@ -215,6 +215,7 @@ export class ErrorLogger {
    * Determine log level based on error type and context
    */
   private determineLogLevel(error: HivemindError, context: ErrorContext): LogLevel {
+    void context;
     const statusCode = ErrorUtils.getStatusCode(error);
     const errorType = this.getErrorType(error);
 
@@ -377,6 +378,7 @@ export class ErrorLogger {
    * Check for error patterns and anomalies
    */
   private checkErrorPatterns(error: HivemindError, context: ErrorContext): void {
+    void context;
     const errorType = this.getErrorType(error);
     const count = this.errorCounts.get(errorType) || 0;
     
@@ -397,7 +399,7 @@ export class ErrorLogger {
 
     // Check for repeated errors from same correlation ID
     const recentErrors = Array.from(this.lastErrors.entries())
-      .filter(([_, timestamp]) => Date.now() - timestamp < 60000) // Last minute
+      .filter(([, timestamp]) => Date.now() - timestamp < 60000) // Last minute
       .length;
 
     if (recentErrors > 5) {

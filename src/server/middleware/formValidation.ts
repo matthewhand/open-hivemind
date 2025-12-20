@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult, matchedData } from 'express-validator';
 import Debug from 'debug';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 const debug = Debug('app:formValidation');
+
+const ALLOWED_LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'];
 
 /**
  * Validation middleware for bot configuration creation
@@ -28,11 +31,27 @@ export const validateBotConfigCreation = [
 
   // LLM provider validation
   body('llmProvider')
+    .custom((value) => {
+      const trimmed = typeof value === 'string' ? value.trim() : '';
+      const llmStatus = getLlmDefaultStatus();
+      if (!trimmed && !llmStatus.configured) {
+        throw new Error('LLM provider is required when no default LLM provider is configured');
+      }
+      if (!trimmed) {
+        return true;
+      }
+      if (!ALLOWED_LLM_PROVIDERS.includes(trimmed)) {
+        throw new Error(`LLM provider must be one of: ${ALLOWED_LLM_PROVIDERS.join(', ')}`);
+      }
+      return true;
+    }),
+
+  // LLM profile validation
+  body('llmProfile')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('LLM provider is required')
-    .isIn(['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'])
-    .withMessage('LLM provider must be one of: openai, flowise, openwebui, perplexity, replicate, n8n, openswarm'),
+    .isLength({ max: 100 })
+    .withMessage('LLM profile must be less than 100 characters'),
 
   // Persona validation
   body('persona')
@@ -40,6 +59,20 @@ export const validateBotConfigCreation = [
     .trim()
     .isLength({ max: 100 })
     .withMessage('Persona must be less than 100 characters'),
+
+  // Response profile validation
+  body('responseProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Response profile must be less than 100 characters'),
+
+  // MCP guard profile validation
+  body('mcpGuardProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('MCP guard profile must be less than 100 characters'),
 
   // System instruction validation
   body('systemInstruction')
@@ -246,11 +279,26 @@ export const validateBotConfigUpdate = [
   // LLM provider validation
   body('llmProvider')
     .optional()
+    .custom((value) => {
+      if (typeof value !== 'string') {
+        return true;
+      }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return true;
+      }
+      if (!ALLOWED_LLM_PROVIDERS.includes(trimmed)) {
+        throw new Error(`LLM provider must be one of: ${ALLOWED_LLM_PROVIDERS.join(', ')}`);
+      }
+      return true;
+    }),
+
+  // LLM profile validation
+  body('llmProfile')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('LLM provider cannot be empty')
-    .isIn(['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'])
-    .withMessage('LLM provider must be one of: openai, flowise, openwebui, perplexity, replicate, n8n, openswarm'),
+    .isLength({ max: 100 })
+    .withMessage('LLM profile must be less than 100 characters'),
 
   // Persona validation
   body('persona')
@@ -258,6 +306,20 @@ export const validateBotConfigUpdate = [
     .trim()
     .isLength({ max: 100 })
     .withMessage('Persona must be less than 100 characters'),
+
+  // Response profile validation
+  body('responseProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Response profile must be less than 100 characters'),
+
+  // MCP guard profile validation
+  body('mcpGuardProfile')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('MCP guard profile must be less than 100 characters'),
 
   // System instruction validation
   body('systemInstruction')
@@ -454,11 +516,14 @@ export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunctio
     const data = matchedData(req, { locations: ['body'] });
     
     // Trim string fields
-    if (data.name) data.name = data.name.trim();
-    if (data.messageProvider) data.messageProvider = data.messageProvider.trim();
-    if (data.llmProvider) data.llmProvider = data.llmProvider.trim();
-    if (data.persona) data.persona = data.persona.trim();
-    if (data.systemInstruction) data.systemInstruction = data.systemInstruction.trim();
+    if (typeof data.name === 'string') data.name = data.name.trim();
+    if (typeof data.messageProvider === 'string') data.messageProvider = data.messageProvider.trim();
+    if (typeof data.llmProvider === 'string') data.llmProvider = data.llmProvider.trim();
+    if (typeof data.llmProfile === 'string') data.llmProfile = data.llmProfile.trim();
+    if (typeof data.persona === 'string') data.persona = data.persona.trim();
+    if (typeof data.responseProfile === 'string') data.responseProfile = data.responseProfile.trim();
+    if (typeof data.mcpGuardProfile === 'string') data.mcpGuardProfile = data.mcpGuardProfile.trim();
+    if (typeof data.systemInstruction === 'string') data.systemInstruction = data.systemInstruction.trim();
     
     // Sanitize nested objects
     if (data.discord) {

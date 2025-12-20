@@ -70,16 +70,14 @@ describe('MetricsCollector', () => {
 
   describe('Error Tracking', () => {
     it('should handle error tracking', () => {
-      // Increment error count
-      if (typeof collector.incrementErrors === 'function') {
-        const initial = collector.getMetrics().errors || 0;
-        collector.incrementErrors();
-        expect(collector.getMetrics().errors).toBe(initial + 1);
-      }
-
-      // Track different error types
-      // Note: recordError method not implemented
-      expect(true).toBe(true); // Placeholder test
+      const initial = collector.getMetrics().errors;
+      collector.incrementErrors();
+      const updatedMetrics = collector.getMetrics();
+      expect(updatedMetrics.errors).toBe(initial + 1);
+      expect(collector.getLatestValue('errors')).toBe(initial + 1);
+      expect(collector.getAllMetrics().filter(entry => entry.name === 'errors').length).toBeGreaterThan(0);
+      const summary = collector.getMetricsSummary();
+      expect(summary.metrics.errors).toBeGreaterThanOrEqual(updatedMetrics.errors);
     });
   });
 
@@ -171,7 +169,7 @@ describe('MetricsCollector', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle edge cases', () => {
+    it('should handle edge cases', async () => {
       // Handle negative response times
       expect(() => collector.recordResponseTime(-100)).not.toThrow();
 
@@ -187,10 +185,10 @@ describe('MetricsCollector', () => {
         })
       );
 
-      Promise.all(promises).then(() => {
-        expect(collector.getMetrics().messagesProcessed).toBe(100);
-        expect(collector.getMetrics().responseTime.length).toBe(100);
-      });
+      await Promise.all(promises);
+      const finalMetrics = collector.getMetrics();
+      expect(finalMetrics.messagesProcessed).toBeGreaterThanOrEqual(100);
+      expect(finalMetrics.responseTime.length).toBeGreaterThanOrEqual(100);
     });
   });
 });

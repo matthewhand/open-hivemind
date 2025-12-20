@@ -81,10 +81,13 @@ export class UserConfigStore {
     return {
       messageProvider: botConfig.messageProvider as MessageProvider,
       llmProvider: botConfig.llmProvider as LlmProvider,
+      llmProfile: (botConfig as any).llmProfile as string | undefined,
+      responseProfile: botConfig.responseProfile as string | undefined,
       persona: botConfig.persona,
       systemInstruction: botConfig.systemInstruction,
       mcpServers: botConfig.mcpServers as McpServerConfig[],
       mcpGuard: botConfig.mcpGuard as McpGuardConfig,
+      mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
     };
   }
 
@@ -102,10 +105,13 @@ export class UserConfigStore {
       name: botName,
       messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
       llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
+      llmProfile: (overrides as any).llmProfile,
+      responseProfile: overrides.responseProfile,
       persona: overrides.persona,
       systemInstruction: overrides.systemInstruction,
       mcpServers: overrides.mcpServers,
       mcpGuard: overrides.mcpGuard,
+      mcpGuardProfile: (overrides as any).mcpGuardProfile,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),

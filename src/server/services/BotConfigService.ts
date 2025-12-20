@@ -8,7 +8,7 @@ const debug = Debug('app:BotConfigService');
 export interface CreateBotConfigRequest {
   name: string;
   messageProvider: string;
-  llmProvider: string;
+  llmProvider?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: string | string[];
@@ -107,7 +107,7 @@ export class BotConfigService {
       this.ensureDatabaseEnabled('create bot configurations');
 
       // Validate configuration
-      const validationResult = this.configValidator.validateBotConfig(configData);
+      const validationResult = this.configValidator.validateBotConfig(configData as BotConfig);
       if (!validationResult.isValid) {
         throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
       }
@@ -122,7 +122,7 @@ export class BotConfigService {
       const botConfig: BotConfiguration = {
         name: configData.name,
         messageProvider: configData.messageProvider,
-        llmProvider: configData.llmProvider,
+        llmProvider: configData.llmProvider?.trim() || '',
         persona: configData.persona,
         systemInstruction: configData.systemInstruction,
         mcpServers: configData.mcpServers as any,

@@ -43,7 +43,7 @@ const SettingsMessaging: React.FC = () => {
                 allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
                 unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
                 unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
-                baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.05) * 100,
+                baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
                 graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000
             });
         } catch {

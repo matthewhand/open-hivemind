@@ -10,7 +10,7 @@ export function getMinIntervalMs(): number {
     const value = messageConfig.get('MESSAGE_MIN_INTERVAL_MS');
     const numValue = typeof value === 'number' ? value : Number(value) || 1000;
     return isNaN(numValue) ? 1000 : numValue;
-  } catch (error) {
+  } catch {
     // If config access fails, return default
     return 1000;
   }
@@ -89,7 +89,7 @@ export function shouldProcessMessage(message: IMessage): boolean {
     }
 
     return true;
-  } catch (error) {
+  } catch {
     // If message methods throw, don't process the message
     return false;
   }
