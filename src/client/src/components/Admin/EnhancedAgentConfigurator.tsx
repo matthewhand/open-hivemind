@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Loading, Button } from '../DaisyUI';
+import { Badge, Alert, Button } from '../DaisyUI';
 import {
   PlusIcon,
   TrashIcon,
@@ -193,7 +193,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const paginatedAgents = agents.slice(startIndex, endIndex);
 
   if (loading) {
-    return <Loading />;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -219,9 +219,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       </div>
 
       {error && (
-        <Alert type="error" className="mb-6" onClose={() => setError(null)}>
-          {error}
-        </Alert>
+        <Alert status="error" message={error} onClose={() => setError(null)} />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -246,7 +244,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   <div>
                     <p className="text-sm text-base-content/60 mb-1">Message Provider</p>
                     <div className="flex items-center gap-2">
-                      <Badge color={agent.messageProvider ? 'primary' : 'ghost'}>
+                      <Badge variant={agent.messageProvider ? 'primary' : 'neutral'}>
                         {agent.messageProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
@@ -261,7 +259,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   <div>
                     <p className="text-sm text-base-content/60 mb-1">LLM Provider</p>
                     <div className="flex items-center gap-2">
-                      <Badge color={agent.llmProvider ? 'secondary' : 'ghost'}>
+                      <Badge variant={agent.llmProvider ? 'secondary' : 'neutral'}>
                         {agent.llmProvider || 'Not Set'}
                       </Badge>
                       {agent.envOverrides && Object.keys(agent.envOverrides).some(key =>
@@ -276,7 +274,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   {agent.persona && (
                     <div>
                       <p className="text-sm text-base-content/60 mb-1">Persona</p>
-                      <Badge color="accent">
+                      <Badge variant="primary">
                         {personas.find(p => p.key === agent.persona)?.name || agent.persona}
                       </Badge>
                     </div>
@@ -292,14 +290,14 @@ const EnhancedAgentConfigurator: React.FC = () => {
                           return (
                             <Badge
                               key={serverName}
-                              color={server?.connected ? 'success' : 'ghost'}
+                              variant={server?.connected ? 'success' : 'neutral'}
                             >
                               {serverName}
                             </Badge>
                           );
                         })}
                         {agent.mcpServers.length > 3 && (
-                          <Badge color="ghost">+{agent.mcpServers.length - 3} more</Badge>
+                          <Badge variant="neutral">+{agent.mcpServers.length - 3} more</Badge>
                         )}
                       </div>
                     </div>
@@ -317,9 +315,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
 
                   {/* Environment Overrides Warning */}
                   {agent.envOverrides && Object.keys(agent.envOverrides).length > 0 && (
-                    <Alert type="warning">
-                      {Object.keys(agent.envOverrides).length} environment variable override(s) active
-                    </Alert>
+                    <Alert status="warning" message={`${Object.keys(agent.envOverrides).length} environment variable override(s) active`} />
                   )}
                 </div>
 

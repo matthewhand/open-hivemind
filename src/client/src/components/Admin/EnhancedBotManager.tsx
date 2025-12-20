@@ -21,9 +21,7 @@ import {
   Badge,
   Modal,
   Checkbox,
-  Loading,
   Alert,
-  ToastNotification
 } from '../DaisyUI';
 import { botDataProvider, Bot, CreateBotRequest } from '../../services/botDataProvider';
 import ProviderConfig from '../ProviderConfig';
@@ -278,7 +276,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
     if (bot.isActive) {
       return { status: 'active', color: 'success', icon: <CheckCircleIcon className="w-5 h-5" /> };
     }
-    return { status: 'inactive', color: 'ghost', icon: <XCircleIcon className="w-5 h-5" /> };
+    return { status: 'inactive', color: 'neutral', icon: <XCircleIcon className="w-5 h-5" /> };
   };
 
   const filteredBots = bots.filter(bot =>
@@ -517,18 +515,18 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                       </div>
                     </td>
                     <td>
-                      <Badge color="primary">{bot.messageProvider}</Badge>
+                      <Badge variant="primary">{bot.messageProvider}</Badge>
                     </td>
                     <td>
-                      <Badge color="secondary">{bot.llmProvider}</Badge>
+                      <Badge variant="secondary">{bot.llmProvider}</Badge>
                     </td>
                     <td>
-                      <Badge color={status.color}>{status.status}</Badge>
+                      <Badge variant={status.color as any}>{status.status}</Badge>
                     </td>
                     <td>{bot.persona || 'default'}</td>
                     <td>
                       {bot.mcpServers.length > 0 ? (
-                        <Badge color="info">{bot.mcpServers.length} servers</Badge>
+                        <Badge variant="primary">{bot.mcpServers.length} servers</Badge>
                       ) : (
                         <span className="text-base-content/50">None</span>
                       )}
@@ -591,15 +589,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           )}
                           {bot.envOverrides && Object.keys(bot.envOverrides).length > 0 && (
                             <div className="md:col-span-2">
-                              <Alert type="warning">
-                                <ExclamationTriangleIcon className="w-5 h-5" />
-                                <div>
-                                  <div className="font-bold">Environment overrides active</div>
-                                  <div className="text-sm">
-                                    {Object.keys(bot.envOverrides).join(', ')}
-                                  </div>
-                                </div>
-                              </Alert>
+                              <Alert status="warning" message={`Environment overrides active: ${Object.keys(bot.envOverrides).join(', ')}`} />
                             </div>
                           )}
                         </div>
@@ -669,7 +659,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             onClick={openEditDialog ? handleEditBot : handleCreateBot}
             disabled={loading || !isFormValid()}
           >
-            {loading ? <Loading /> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
+            {loading ? <span className="loading loading-spinner loading-sm"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
           </Button>
         </div>
       </Modal>
@@ -691,31 +681,33 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
           <Button variant="ghost" onClick={() => setOpenDeleteDialog(false)}>
             Cancel
           </Button>
-          <Button
-            variant="error"
+          <button
+            className="btn btn-error"
             onClick={handleDeleteBot}
             disabled={loading}
           >
-            {loading ? <Loading /> : 'Delete'}
-          </Button>
+            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Delete'}
+          </button>
         </div>
       </Modal>
 
       {/* Toast Notifications */}
       {success && (
-        <ToastNotification
-          message={success}
-          type="success"
-          onClose={() => setSuccess(null)}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-success">
+            <span>{success}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setSuccess(null)}>✕</button>
+          </div>
+        </div>
       )}
 
       {error && (
-        <ToastNotification
-          message={error}
-          type="error"
-          onClose={() => setError(null)}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-error">
+            <span>{error}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+          </div>
+        </div>
       )}
     </div>
   );
