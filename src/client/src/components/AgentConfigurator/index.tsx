@@ -126,6 +126,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const [availableMcpServers, setAvailableMcpServers] = useState<string[]>([]);
   const [mcpError, setMcpError] = useState<string | null>(null);
   const [responseProfileOptions, setResponseProfileOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [mcpServerProfileOptions, setMcpServerProfileOptions] = useState<Array<{ value: string; label: string; description?: string }>>([]);
   const [guardrailProfileOptions, setGuardrailProfileOptions] = useState<Array<{ value: string; label: string; description?: string }>>([]);
   const [guardrailProfileMap, setGuardrailProfileMap] = useState<Record<string, GuardState>>({});
   const [llmProfiles, setLlmProfiles] = useState<ProviderProfile[]>([]);
@@ -250,6 +251,40 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     };
   }, []);
 
+  // Fetch MCP Server Profiles
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMcpServerProfiles = async () => {
+      try {
+        const response = await fetch('/api/config/mcp-profiles');
+        if (!response.ok) return;
+        const data = await response.json();
+        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+
+        const options = profiles
+          .filter((p: any) => p.enabled !== false)
+          .map((profile: any) => ({
+            value: String(profile.key || ''),
+            label: profile.name || profile.key,
+            description: profile.description,
+          }))
+          .filter((option: any) => option.value.length > 0)
+          .sort((a: any, b: any) => a.label.localeCompare(b.label));
+
+        if (isMounted) {
+          setMcpServerProfileOptions(options);
+        }
+      } catch {
+        // ignore mcp profile load errors
+      }
+    };
+
+    fetchMcpServerProfiles();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const bots = useMemo(() => configData?.bots ?? [], [configData]);
 
   useEffect(() => {
@@ -270,6 +305,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         llmProfile: (bot as any).llmProfile || '',
         responseProfile: bot.responseProfile || '',
         mcpGuardProfile: (bot as any).mcpGuardProfile || '',
+        mcpServerProfile: (bot as any).mcpServerProfile || '',
         persona: bot.persona || '',
         systemInstruction: bot.systemInstruction || '',
         mcpServers: normalizeMcpServers(bot.mcpServers),
@@ -463,6 +499,9 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       if (changes.mcpGuard !== undefined) {
         payload.mcpGuard = changes.mcpGuard;
       }
+      if (changes.mcpServerProfile !== undefined) {
+        payload.mcpServerProfile = changes.mcpServerProfile;
+      }
 
       if (Object.keys(payload).length === 0) {
         setPendingBots(prev => {
@@ -586,6 +625,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
                   pending={Boolean(pendingBots[bot.name])}
                   personaOptions={buildPersonaOptions(personas)}
                   responseProfileOptions={responseProfileOptions}
+                  mcpServerProfileOptions={mcpServerProfileOptions}
                   guardrailProfileOptions={guardrailProfileOptions}
                   llmProfileOptions={llmProfileOptions}
                   messageProviderOptions={messageProviderOptions}
@@ -619,10 +659,10 @@ const toOptionLabel = (info: ProviderInfo): { value: string; label: string } => 
   label: info.label
     ? info.label
     : info.key
-        .split(/[_\-\s]+/)
-        .filter(Boolean)
-        .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(' '),
+      .split(/[_\-\s]+/)
+      .filter(Boolean)
+      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' '),
 });
 
 const formatProfileLabel = (name: string): string => {

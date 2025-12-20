@@ -14,6 +14,7 @@ export interface BotUIState {
   llmProfile: string;
   responseProfile: string;
   mcpGuardProfile: string;
+  mcpServerProfile: string;
   persona: string;
   systemInstruction: string;
   mcpServers: string[];
@@ -32,6 +33,7 @@ export interface AgentConfigCardProps {
   pending: boolean;
   personaOptions: Array<{ value: string; label: string }>;
   responseProfileOptions: Array<{ value: string; label: string }>;
+  mcpServerProfileOptions: Array<{ value: string; label: string; description?: string }>;
   guardrailProfileOptions: Array<{ value: string; label: string; description?: string }>;
   llmProfileOptions: Array<{ value: string; label: string }>;
   messageProviderOptions: Array<{ value: string; label: string }>;

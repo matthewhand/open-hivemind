@@ -31,6 +31,7 @@ export interface BotMetadata {
   mcpServers?: FieldMetadata;
   mcpGuard?: FieldMetadata;
   mcpGuardProfile?: FieldMetadata;
+  mcpServerProfile?: FieldMetadata;
 }
 
 // Provider-specific configuration interfaces
@@ -132,6 +133,7 @@ export interface Bot {
   llmProfile?: string;
   responseProfile?: string;
   mcpGuardProfile?: string;
+  mcpServerProfile?: string;
   persona?: string;
   systemInstruction?: string;
   mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];

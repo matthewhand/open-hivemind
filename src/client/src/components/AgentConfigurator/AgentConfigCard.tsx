@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AgentConfigCardProps } from './types';
+import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
 
@@ -11,6 +11,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   pending,
   personaOptions,
   responseProfileOptions,
+  mcpServerProfileOptions,
   guardrailProfileOptions,
   llmProfileOptions,
   messageProviderOptions,
@@ -178,7 +179,27 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
         <div className="card bg-base-200 shadow-sm mb-4">
           <div className="card-body">
             <h3 className="card-title text-lg">MCP Configuration</h3>
-            
+
+            <div className="form-control mb-4">
+              <FieldSelect
+                label="MCP Server Profile"
+                value={uiState?.mcpServerProfile || ''}
+                options={mcpServerProfileOptions.map(option => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                metadata={metadata.mcpServerProfile}
+                disabled={pending}
+                allowEmpty
+                helperContent={(
+                  <label className="label">
+                    <span className="label-text-alt">Select a pre-configured set of MCP servers.</span>
+                  </label>
+                )}
+                onChange={(value) => onSelectionChange(bot, 'mcpServerProfile', value)}
+              />
+            </div>
+
             <div className="form-control mb-4">
               <FieldSelect
                 label="Guardrail Profile"
@@ -281,7 +302,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
 
         {/* Status Section */}
         <div className="divider"></div>
-        
+
         <div className="flex items-center gap-2 flex-wrap">
           {connection.icon}
           <span className={`text-sm ${connection.color === 'success' ? 'text-success' : connection.color === 'error' ? 'text-error' : 'text-base-content/70'}`}>
@@ -310,15 +331,15 @@ interface FieldSelectProps {
   helperContent?: React.ReactNode;
 }
 
-const FieldSelect: React.FC<FieldSelectProps> = ({ 
-  label, 
-  value, 
-  options, 
-  metadata, 
-  disabled, 
-  allowEmpty, 
-  onChange, 
-  helperContent 
+const FieldSelect: React.FC<FieldSelectProps> = ({
+  label,
+  value,
+  options,
+  metadata,
+  disabled,
+  allowEmpty,
+  onChange,
+  helperContent
 }) => (
   <div className="form-control">
     <label className="label">
@@ -370,10 +391,10 @@ const FieldHelper: React.FC<{ metadata?: FieldMetadata; fallback?: string }> = (
   return fallback ? <label className="label"><span className="label-text-alt">{fallback}</span></label> : null;
 };
 
-const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({ 
-  label, 
-  configured, 
-  detail 
+const StatusLine: React.FC<{ label: string; configured: boolean; detail: string }> = ({
+  label,
+  configured,
+  detail
 }) => (
   <div className="flex items-center gap-2 mt-1">
     <div className={`w-2 h-2 rounded-full ${configured ? 'bg-success' : 'bg-error'}`}></div>
@@ -384,27 +405,27 @@ const StatusLine: React.FC<{ label: string; configured: boolean; detail: string 
 );
 
 const connectionStatusLabel = (
-  connected?: boolean, 
+  connected?: boolean,
   statusText?: string
 ): { icon: React.ReactNode; color: 'success' | 'default' | 'error'; label: string } => {
   if (connected === true) {
-    return { 
-      icon: <div className="w-2 h-2 rounded-full bg-success"></div>, 
-      color: 'success', 
-      label: statusText || 'Connected' 
+    return {
+      icon: <div className="w-2 h-2 rounded-full bg-success"></div>,
+      color: 'success',
+      label: statusText || 'Connected'
     };
   }
   if (connected === false) {
-    return { 
-      icon: <div className="w-2 h-2 rounded-full bg-error"></div>, 
-      color: 'error', 
-      label: statusText || 'Disconnected' 
+    return {
+      icon: <div className="w-2 h-2 rounded-full bg-error"></div>,
+      color: 'error',
+      label: statusText || 'Disconnected'
     };
   }
-  return { 
-    icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>, 
-    color: 'default', 
-    label: statusText || 'Unknown' 
+  return {
+    icon: <div className="w-2 h-2 rounded-full bg-base-content/30"></div>,
+    color: 'default',
+    label: statusText || 'Unknown'
   };
 };
 
@@ -424,9 +445,9 @@ const renderProviderHelper = (info?: ProviderInfo) => {
       )}
       {info.docsUrl && (
         <label className="label">
-          <a 
-            href={info.docsUrl} 
-            target="_blank" 
+          <a
+            href={info.docsUrl}
+            target="_blank"
             rel="noopener noreferrer"
             className="label-text-alt link link-primary"
           >
