@@ -52,12 +52,20 @@ interface MCPServer {
   tools?: Array<{ name: string; description: string }>;
 }
 
+interface MCPProfile {
+  key: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+}
+
 const EnhancedAgentConfigurator: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [messageProviders, setMessageProviders] = useState<Provider[]>([]);
   const [llmProviders, setLlmProviders] = useState<Provider[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+  const [mcpProfiles, setMcpProfiles] = useState<MCPProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -72,18 +80,20 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [agentsRes, providersRes, personasRes, mcpRes] = await Promise.all([
+      const [agentsRes, providersRes, personasRes, mcpRes, mcpProfilesRes] = await Promise.all([
         fetch('/api/admin/agents'),
         fetch('/api/admin/providers'),
         fetch('/api/admin/agents/personas'),
-        fetch('/api/admin/mcp/servers')
+        fetch('/api/admin/mcp/servers'),
+        fetch('/api/config/mcp-profiles')
       ]);
 
-      const [agentsData, providersData, personasData, mcpData] = await Promise.all([
+      const [agentsData, providersData, personasData, mcpData, mcpProfilesData] = await Promise.all([
         agentsRes.json(),
         providersRes.json(),
         personasRes.json(),
-        mcpRes.json()
+        mcpRes.json(),
+        mcpProfilesRes.json()
       ]);
 
       setAgents(agentsData.agents || []);
@@ -91,6 +101,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       setLlmProviders(providersData.llmProviders || []);
       setPersonas(personasData.personas || []);
       setMcpServers(mcpData.servers || []);
+      setMcpProfiles(mcpProfilesData.profiles || []);
     } catch (err) {
       setError('Failed to fetch configuration data');
       console.error('Error fetching data:', err);
@@ -383,6 +394,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
           llmProviders={llmProviders}
           personas={personas}
           mcpServers={mcpServers}
+          mcpProfiles={mcpProfiles}
           onSubmit={handleSaveAgent}
           onCancel={() => setOpenCreateDialog(false)}
         />

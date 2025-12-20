@@ -8,6 +8,7 @@ interface Agent {
   llmProvider: string;
   persona?: string;
   systemInstruction?: string;
+  mcpServerProfile?: string;
   mcpServers: string[];
   mcpGuard: {
     enabled: boolean;
@@ -40,12 +41,20 @@ interface MCPServer {
   tools?: Array<{ name: string; description: string }>;
 }
 
+interface MCPProfile {
+  key: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+}
+
 interface AgentFormProps {
   agent?: Agent | null;
   messageProviders: Provider[];
   llmProviders: Provider[];
   personas: Persona[];
   mcpServers: MCPServer[];
+  mcpProfiles?: MCPProfile[];
   onSubmit: (data: Partial<Agent>) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -57,6 +66,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
   llmProviders,
   personas,
   mcpServers,
+  mcpProfiles = [],
   onSubmit,
   onCancel,
   loading = false,
@@ -124,6 +134,19 @@ const AgentForm: React.FC<AgentFormProps> = ({
       maxLength: 2000,
     },
     {
+      name: 'mcpServerProfile',
+      label: 'MCP Server Profile',
+      type: 'select',
+      options: [
+        { value: '', label: 'None (use individual servers)' },
+        ...mcpProfiles.filter(p => p.enabled).map(profile => ({
+          value: profile.key,
+          label: `${profile.name}${profile.description ? ` - ${profile.description}` : ''}`,
+        })),
+      ],
+      helperText: 'Select a pre-configured MCP server profile, or choose individual servers below',
+    },
+    {
       name: 'mcpServers',
       label: 'MCP Servers',
       type: 'select',
@@ -133,7 +156,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
         label: `${server.name} ${server.connected ? '(Connected)' : '(Not Connected)'}`,
         disabled: !server.connected,
       })),
-      helperText: 'Select MCP servers to make available to this agent',
+      helperText: 'Select additional MCP servers (in addition to profile)',
     },
     {
       name: 'mcpGuardEnabled',
@@ -194,7 +217,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     {
       legend: 'Behavior & Tools',
       description: 'Customize agent behavior and tool access',
-      fields: ['systemInstruction', 'mcpServers', 'isActive'],
+      fields: ['systemInstruction', 'mcpServerProfile', 'mcpServers', 'isActive'],
     },
     {
       legend: 'MCP Security Guard',
@@ -245,6 +268,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     llmProvider: '',
     persona: 'default',
     systemInstruction: '',
+    mcpServerProfile: '',
     mcpServers: [],
     mcpGuardEnabled: false,
     mcpGuardType: 'owner',
