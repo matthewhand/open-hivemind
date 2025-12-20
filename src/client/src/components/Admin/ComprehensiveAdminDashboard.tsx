@@ -11,6 +11,7 @@ import {
   DocumentDuplicateIcon,
   ShieldCheckIcon,
   ClockIcon,
+  ServerStackIcon,
 } from '@heroicons/react/24/outline';
 
 import EnhancedAgentConfigurator from './EnhancedAgentConfigurator';
@@ -21,6 +22,7 @@ import EnvMonitor from './EnvMonitor';
 import LlmProfileManager from './LlmProfileManager';
 import GuardrailProfileManager from './GuardrailProfileManager';
 import ResponseProfileManager from './ResponseProfileManager';
+import MCPServerProfileManager from './MCPServerProfileManager';
 import TemplateManager from './TemplateManager';
 import GlobalConfigurationManager from './GlobalConfigurationManager';
 import BotListManager from './BotListManager';
@@ -38,6 +40,7 @@ const ComprehensiveAdminDashboard: React.FC = () => {
     { label: 'Templates', icon: DocumentDuplicateIcon },
     { label: 'Global Settings', icon: Cog6ToothIcon },
     { label: 'MCP Servers', icon: WrenchScrewdriverIcon },
+    { label: 'MCP Profiles', icon: ServerStackIcon },
     { label: 'Personas', icon: UserGroupIcon },
     { label: 'Activity', icon: ChartBarIcon },
     { label: 'Environment', icon: CommandLineIcon },
@@ -117,9 +120,10 @@ const ComprehensiveAdminDashboard: React.FC = () => {
           {currentTab === 6 && <TemplateManager />}
           {currentTab === 7 && <GlobalConfigurationManager />}
           {currentTab === 8 && <MCPServerManager />}
-          {currentTab === 9 && <PersonaManager />}
-          {currentTab === 10 && <ActivityMonitor />}
-          {currentTab === 11 && <EnvMonitor />}
+          {currentTab === 9 && <MCPServerProfileManager />}
+          {currentTab === 10 && <PersonaManager />}
+          {currentTab === 11 && <ActivityMonitor />}
+          {currentTab === 12 && <EnvMonitor />}
         </div>
       </div>
     </div>
