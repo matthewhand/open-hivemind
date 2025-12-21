@@ -337,6 +337,12 @@ const messageConfig = convict({
     default: true,
     env: 'MESSAGE_ADD_USER_HINT'
   },
+  DISABLE_DELAYS: {
+    doc: 'When true, skips all artificial delays (reading delay, post-inference typing simulation). Typing indicator still shows during actual LLM inference. Per-bot override: BOT_NAME_DISABLE_DELAYS=true',
+    format: Boolean,
+    default: false,
+    env: 'DISABLE_DELAYS'
+  },
   MESSAGE_RATE_LIMIT_PER_CHANNEL: {
     doc: 'Rate limit per channel (messages per minute)',
     format: 'int',

@@ -269,7 +269,11 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // -----------------------------------------------------------------------
 
       const delayScaleRaw = getMessageSetting('MESSAGE_DELAY_MULTIPLIER', botConfig);
-      const delayScale = typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1;
+      const disableDelays = getMessageSetting('DISABLE_DELAYS', botConfig) === true;
+      const delayScale = disableDelays ? 0 : (typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1);
+      if (disableDelays) {
+        logger('DISABLE_DELAYS=true: Skipping artificial delays (typing still shown during inference)');
+      }
 
       const baseDelayConfig = (Number(getMessageSetting('MESSAGE_COMPOUNDING_DELAY_BASE_MS', botConfig)) || 1500) * delayScale;
       // Add chaos: 0.9x to 1.8x of base delay (e.g. 4500 -> 4050~8100ms)
