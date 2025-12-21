@@ -293,7 +293,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               className="flex-1"
             />
             <Button
-              variant="outline"
+              variant="secondary" className="btn-outline"
               startIcon={<Plus className="w-4 h-4" />}
               onClick={handleAddMcpServer}
               disabled={!newMcpServer.name || !newMcpServer.serverUrl}

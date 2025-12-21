@@ -209,7 +209,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
             <div className="flex flex-wrap items-center gap-2">
               {isMessageProviderSection && (
                 <Button
-                  variant="outline"
+                  variant="secondary" className="btn-outline"
                   onClick={handleTestConnection}
                   loading={testing}
                   disabled={testing}

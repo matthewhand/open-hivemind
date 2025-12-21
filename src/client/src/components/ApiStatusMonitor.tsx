@@ -294,7 +294,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
             </Tooltip>
             <Button
               onClick={monitoringActive ? handleStopMonitoring : handleStartMonitoring}
-              variant="outline"
+              variant="secondary" className="btn-outline"
               size="sm"
               className="flex items-center gap-2"
             >
@@ -319,7 +319,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
         {/* Status Summary */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          <Badge variant="outline" size="lg">
+          <Badge variant="neutral" className="badge-outline" size="lg">
             Total: {apiStatus.overall.stats.total}
           </Badge>
           <Badge variant="success" size="lg">

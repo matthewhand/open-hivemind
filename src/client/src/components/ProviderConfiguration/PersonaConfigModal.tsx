@@ -410,14 +410,14 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
                     {formData.description}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary" size="xs" variant="outline">
+                    <Badge variant="secondary" size="xs" className="badge-outline">
                       {CATEGORIES.find(c => c.value === formData.category)?.label}
                     </Badge>
                     {formData.traits
                       .filter(trait => trait.name && trait.value)
                       .slice(0, 3)
                       .map((trait, index) => (
-                        <Badge key={index} color="ghost" size="xs" variant="outline">
+                        <Badge key={index} variant="neutral" size="xs" className="badge-outline">
                           {trait.name}: {trait.value}
                         </Badge>
                       ))}

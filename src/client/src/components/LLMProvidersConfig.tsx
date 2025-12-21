@@ -217,7 +217,7 @@ const LLMProvidersConfig: React.FC = () => {
                     size="sm"
                     shape="circle"
                     color="error"
-                    variant="outline"
+                    variant="secondary" className="btn-outline"
                     onClick={() => handleDeleteProvider(provider.id)}
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -231,7 +231,7 @@ const LLMProvidersConfig: React.FC = () => {
                 </span>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary" className="btn-outline"
                   onClick={() => handleToggleActive(provider.id, !provider.isActive)}
                 >
                   {provider.isActive ? 'Deactivate' : 'Activate'}

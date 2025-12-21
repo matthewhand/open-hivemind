@@ -194,7 +194,7 @@ const ActivityMonitor: React.FC = () => {
             />
 
             <Button
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={clearFilters}
               className="self-end"
             >

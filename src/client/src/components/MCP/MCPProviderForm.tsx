@@ -427,7 +427,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                       type="button"
                       size="sm"
                       color="error"
-                      variant="outline"
+                      variant="secondary" className="btn-outline"
                       onClick={() => removeEnvVar(index)}
                     >
                       <FaTrash className="w-3 h-3" />
@@ -437,7 +437,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="secondary" className="btn-outline"
                   onClick={addEnvVar}
                   className="w-full"
                 >
@@ -596,7 +596,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="flex justify-end gap-4 pt-6 border-t border-base-300">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary" className="btn-outline"
                 onClick={onCancel}
               >
                 Cancel

@@ -76,7 +76,7 @@ const PerformanceMonitor: React.FC = () => {
           </p>
         </div>
         <Button
-          variant="outline"
+          variant="secondary" className="btn-outline"
           onClick={() => refetch()}
           disabled={isFetching}
           className="flex items-center gap-2"

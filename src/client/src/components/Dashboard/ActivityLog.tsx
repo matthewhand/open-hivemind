@@ -41,7 +41,7 @@ const ActivityLog: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <Card.Title>Activity Feed</Card.Title>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+            <Button variant="secondary" className="btn-outline" onClick={() => refetch()} disabled={isFetching}>
               <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               {isFetching ? 'Refreshing…' : 'Refresh'}
             </Button>

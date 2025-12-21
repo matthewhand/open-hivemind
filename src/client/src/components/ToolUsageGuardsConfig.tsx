@@ -247,7 +247,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     size="sm"
                     shape="circle"
                     color="error"
-                    variant="outline"
+                    variant="secondary" className="btn-outline"
                     onClick={() => handleDeleteGuard(guard.id)}
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -261,7 +261,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                 </span>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="secondary" className="btn-outline"
                   onClick={() => handleToggleActive(guard.id, !guard.isActive)}
                 >
                   {guard.isActive ? 'Deactivate' : 'Activate'}

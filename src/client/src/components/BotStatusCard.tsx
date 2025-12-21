@@ -206,7 +206,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={() => setDetailsOpen(true)}
               className="flex items-center gap-2"
             >
@@ -215,7 +215,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={() => {
                 setLoading(true);
                 setTimeout(() => {

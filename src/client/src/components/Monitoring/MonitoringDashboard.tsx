@@ -155,7 +155,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               Last updated: {lastRefresh.toLocaleTimeString()}
             </span>
             <Button
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={handleRefresh}
               disabled={loading}
               className="flex items-center gap-2"

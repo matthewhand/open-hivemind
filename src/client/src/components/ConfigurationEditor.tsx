@@ -133,7 +133,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="secondary" className="btn-outline"
             startIcon={<RefreshIcon />}
             onClick={() => window.location.reload()}
           >

@@ -195,7 +195,7 @@ const EnhancedDashboard: React.FC = () => {
             <Button variant="primary" size="lg" onClick={handleRefresh}>
               Refresh Dashboard
             </Button>
-            <Button variant="outline" size="lg" onClick={() => {
+            <Button variant="secondary" className="btn-outline" size="lg" onClick={() => {
               setToastMessage('Feature coming soon!');
               setToastType('info');
             }}>

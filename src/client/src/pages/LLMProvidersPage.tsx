@@ -163,7 +163,7 @@ const LLMProvidersPage: React.FC = () => {
                     <h4 className="text-xs font-semibold text-base-content/80 mb-2">Required Fields</h4>
                     <div className="flex flex-wrap gap-1">
                       {config.requiredFields.map((field) => (
-                        <Badge key={field.key} color="neutral" variant="outline" className="text-xs">
+                        <Badge key={field.key} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
                           {field.label}
                         </Badge>
                       ))}
@@ -176,7 +176,7 @@ const LLMProvidersPage: React.FC = () => {
                       <h4 className="text-xs font-semibold text-base-content/80 mb-2">Optional Fields</h4>
                       <div className="flex flex-wrap gap-1">
                         {config.optionalFields.map((field) => (
-                          <Badge key={field.key} color="ghost" variant="outline" className="text-xs">
+                          <Badge key={field.key} color="ghost" variant="secondary" className="btn-outline" className="text-xs">
                             {field.label}
                           </Badge>
                         ))}

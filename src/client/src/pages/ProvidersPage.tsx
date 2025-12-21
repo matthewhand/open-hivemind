@@ -84,7 +84,7 @@ const ProvidersPage: React.FC = () => {
                 <h3 className="text-sm font-semibold text-base-content/80 mb-3">Available Providers</h3>
                 <div className="flex flex-wrap gap-2">
                   {category.providers.map((provider, providerIndex) => (
-                    <Badge key={providerIndex} color="neutral" variant="outline" className="text-xs">
+                    <Badge key={providerIndex} color="neutral" variant="secondary" className="btn-outline" className="text-xs">
                       {provider}
                     </Badge>
                   ))}

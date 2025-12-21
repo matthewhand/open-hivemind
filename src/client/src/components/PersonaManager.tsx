@@ -219,7 +219,7 @@ const PersonaManager: React.FC = () => {
             size="sm"
             shape="circle"
             color="error"
-            variant="outline"
+            variant="secondary" className="btn-outline"
             onClick={() => handleDeletePersona(persona.key)}
             title="Delete"
           >

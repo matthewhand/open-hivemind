@@ -249,7 +249,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                   {getStatusIcon(provider.status?.status || 'stopped')}
                   <span className="ml-1">{provider.status?.status || 'stopped'}</span>
                 </Badge>
-                <Badge variant="outline" size="sm">
+                <Badge variant="neutral" className="badge-outline" size="sm">
                   {provider.type}
                 </Badge>
                 {provider.enabled && <Badge variant="success" size="sm">Enabled</Badge>}
@@ -348,7 +348,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary" className="btn-outline"
                 onClick={() => handleTestProvider(provider.id)}
                 disabled={provider.isTesting}
               >
@@ -362,7 +362,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
               <Button
                 size="sm"
                 color="error"
-                variant="outline"
+                variant="secondary" className="btn-outline"
                 onClick={() => handleDeleteProvider(provider.id)}
               >
                 <FaTrash className="w-3 h-3" />
@@ -382,7 +382,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
             <Card.Body className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <h4 className="font-medium">{template.name}</h4>
-                <Badge variant="outline" size="sm">{template.type}</Badge>
+                <Badge variant="neutral" className="badge-outline" size="sm">{template.type}</Badge>
               </div>
 
               <p className="text-sm text-base-content/70 mb-3">{template.description}</p>
@@ -436,7 +436,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary" className="btn-outline"
               onClick={handleExportProviders}
             >
               <FaDownload className="w-3 h-3 mr-1" />
@@ -540,7 +540,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           {/* TODO: Implement provider creation form */}
         </Modal.Body>
         <Modal.Actions>
-          <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+          <Button variant="secondary" className="btn-outline" onClick={() => setIsCreateModalOpen(false)}>
             Cancel
           </Button>
           <Button color="primary" onClick={() => setIsCreateModalOpen(false)}>
@@ -561,7 +561,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           )}
         </Modal.Body>
         <Modal.Actions>
-          <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+          <Button variant="secondary" className="btn-outline" onClick={() => setIsEditModalOpen(false)}>
             Cancel
           </Button>
           <Button color="primary" onClick={() => setIsEditModalOpen(false)}>
