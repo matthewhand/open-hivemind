@@ -221,7 +221,7 @@ const BotCard: React.FC<BotCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h2 className="card-title text-lg font-semibold">{bot.name}</h2>
-              <Badge color={getStatusColor(bot.status)} size="sm">
+              <Badge variant={getStatusColor(bot.status)} size="sm">
                 {getStatusText(bot.status)}
               </Badge>
             </div>

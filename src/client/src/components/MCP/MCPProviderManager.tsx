@@ -245,7 +245,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="card-title text-lg">{provider.name}</h3>
-                <Badge color={statusColor} size="sm">
+                <Badge variant={statusColor} size="sm">
                   {getStatusIcon(provider.status?.status || 'stopped')}
                   <span className="ml-1">{provider.status?.status || 'stopped'}</span>
                 </Badge>
@@ -287,7 +287,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                 <div className="mb-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-medium">Last Test:</span>
-                    <Badge color={testResult.success ? 'success' : 'error'} size="sm">
+                    <Badge variant={testResult.success ? 'success' : 'error'} size="sm">
                       {testResult.success ? 'Success' : 'Failed'}
                     </Badge>
                     <span className="text-xs text-base-content/60">

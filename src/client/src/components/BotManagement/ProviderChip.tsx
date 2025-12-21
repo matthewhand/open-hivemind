@@ -115,7 +115,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
           </div>
 
           {/* Status Badge */}
-          <Badge color={getStatusColor(provider.status)} size="xs" className="ml-1">
+          <Badge variant={getStatusColor(provider.status)} size="xs" className="ml-1">
             {getStatusText(provider.status)}
           </Badge>
 
