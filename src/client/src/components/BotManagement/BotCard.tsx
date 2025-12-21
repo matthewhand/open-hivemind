@@ -277,7 +277,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 Persona
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {currentPersona.isBuiltIn ? 'BUILTIN' : 'CUSTOM'}
               </Badge>
             </div>
@@ -325,7 +325,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 Message Providers
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {bot.messageProviders.length}
               </Badge>
             </div>
@@ -356,7 +356,7 @@ const BotCard: React.FC<BotCardProps> = ({
               <span className="text-sm font-semibold text-base-content/80">
                 LLM Providers
               </span>
-              <Badge color="neutral" size="xs">
+              <Badge variant="neutral" size="xs">
                 {bot.llmProviders.length}
               </Badge>
             </div>

@@ -410,7 +410,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
                     {formData.description}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <Badge color="secondary" size="xs" variant="outline">
+                    <Badge variant="secondary" size="xs" variant="outline">
                       {CATEGORIES.find(c => c.value === formData.category)?.label}
                     </Badge>
                     {formData.traits

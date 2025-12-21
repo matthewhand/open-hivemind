@@ -178,13 +178,13 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
                           {persona.isBuiltIn && (
-                            <Badge color="info" size="xs" variant="outline">
+                            <Badge variant="info" size="xs" variant="outline">
                               BUILTIN
                             </Badge>
                           )}
                         </div>
                         {showUsage && persona.usageCount > 0 && (
-                          <Badge color="neutral" size="xs" variant="ghost">
+                          <Badge variant="neutral" size="xs" variant="ghost">
                             {persona.usageCount}
                           </Badge>
                         )}
@@ -322,12 +322,12 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       />
                       <h4 className="font-semibold">{persona.name}</h4>
                       {persona.isBuiltIn && (
-                        <Badge color="info" size="xs" variant="outline">
+                        <Badge variant="info" size="xs" variant="outline">
                           BUILTIN
                         </Badge>
                       )}
                       {showUsage && persona.usageCount > 0 && (
-                        <Badge color="neutral" size="xs" variant="ghost">
+                        <Badge variant="neutral" size="xs" variant="ghost">
                           {persona.usageCount} uses
                         </Badge>
                       )}
@@ -347,7 +347,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                         </Badge>
                       ))}
                       {persona.traits.length > 3 && (
-                        <Badge color="ghost" size="xs" variant="outline">
+                        <Badge variant="ghost" size="xs" variant="outline">
                           +{persona.traits.length - 3} more
                         </Badge>
                       )}

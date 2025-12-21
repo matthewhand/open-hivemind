@@ -165,7 +165,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                   <div key={usage.component} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <span className="font-medium">{usage.component}</span>
-                      <Badge color="primary" size="xs">{usage.usageCount} uses</Badge>
+                      <Badge variant="primary" size="xs">{usage.usageCount} uses</Badge>
                     </div>
                     <div className="text-sm text-base-content/60">
                       <a href={usage.uri} className="link link-primary" target="_blank" rel="noopener noreferrer">
@@ -188,7 +188,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                   stats.unusedComponents.map((component) => (
                     <div key={component} className="flex items-center justify-between p-3 bg-base-200 rounded-lg opacity-75">
                       <span className="font-medium">{component}</span>
-                      <Badge color="ghost" size="xs">Not used yet</Badge>
+                      <Badge variant="ghost" size="xs">Not used yet</Badge>
                     </div>
                   ))
                 )}
@@ -208,7 +208,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                       <div className="card-body p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold">{suggestion.component}</h3>
-                          <Badge color="info" size="xs">{suggestion.category}</Badge>
+                          <Badge variant="info" size="xs">{suggestion.category}</Badge>
                         </div>
                         <p className="text-sm text-base-content/80">{suggestion.suggestedUse}</p>
                       </div>
@@ -236,7 +236,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                               <div key={component} className="flex items-center justify-between p-2 bg-base-100 rounded">
                                 <span>{component}</span>
                                 {usage && (
-                                  <Badge color="success" size="xs">{usage.usageCount} uses</Badge>
+                                  <Badge variant="success" size="xs">{usage.usageCount} uses</Badge>
                                 )}
                               </div>
                             );

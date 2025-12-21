@@ -6,7 +6,6 @@ import {
   Rating,
   Hero,
   Button,
-  ToastNotification,
   SkeletonCard,
   SkeletonList
 } from './DaisyUI';
@@ -169,7 +168,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const activeBots = bots.filter(bot => 
+  const activeBots = bots.filter(bot =>
     status?.bots.find((_, i) => bots[i]?.name === bot.name)?.status === 'active'
   ).length;
 
@@ -181,16 +180,16 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-base-200">
       {/* Toast Notification */}
       {showToast && (
-        <ToastNotification
-          message={toastMessage}
-          type="success"
-          onClose={() => setShowToast(false)}
-          duration={3000}
-        />
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-success">
+            <span>{toastMessage}</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)}>✕</button>
+          </div>
+        </div>
       )}
 
       {/* Hero Section */}
-      <Hero 
+      <Hero
         title="🧠 Open-Hivemind Dashboard"
         subtitle="Your AI Agent Swarm Control Center"
         backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
@@ -200,7 +199,7 @@ const Dashboard: React.FC = () => {
           <Button variant="primary" size="lg" onClick={fetchData}>
             🔄 Refresh Dashboard
           </Button>
-          
+
           {/* Stats Overview */}
           <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
             <div className="stat place-items-center">
@@ -269,8 +268,8 @@ const Dashboard: React.FC = () => {
 
                   {/* Status Badges */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge 
-                      variant={getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'info'} 
+                    <Badge
+                      variant={getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'info'}
                       className="text-xs font-semibold"
                     >
                       {botStatus.toUpperCase()}

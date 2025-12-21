@@ -252,7 +252,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
                 <Badge variant="outline" size="sm">
                   {provider.type}
                 </Badge>
-                {provider.enabled && <Badge color="success" size="sm">Enabled</Badge>}
+                {provider.enabled && <Badge variant="success" size="sm">Enabled</Badge>}
               </div>
 
               {provider.description && (
