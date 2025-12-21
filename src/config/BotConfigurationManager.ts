@@ -108,6 +108,13 @@ const botSchema = {
     env: 'BOTS_{name}_MCP_SERVER_PROFILE'
   },
 
+  DISABLE_DELAYS: {
+    doc: 'When true, skips all artificial delays. Bot responds as fast as LLM can generate.',
+    format: Boolean,
+    default: false,
+    env: 'BOTS_{name}_DISABLE_DELAYS'
+  },
+
   // Discord-specific configuration
   DISCORD_BOT_TOKEN: {
     doc: 'Discord bot token',

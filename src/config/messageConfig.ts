@@ -338,7 +338,7 @@ const messageConfig = convict({
     env: 'MESSAGE_ADD_USER_HINT'
   },
   DISABLE_DELAYS: {
-    doc: 'When true, skips all artificial delays (reading delay, post-inference typing simulation). Typing indicator still shows during actual LLM inference. Per-bot override: BOT_NAME_DISABLE_DELAYS=true',
+    doc: 'When true, skips all artificial delays (reading delay, post-inference typing simulation). Typing indicator still shows during actual LLM inference. Per-bot override: BOTS_{name}_DISABLE_DELAYS=true',
     format: Boolean,
     default: false,
     env: 'DISABLE_DELAYS'

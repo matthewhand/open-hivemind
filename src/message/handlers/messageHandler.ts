@@ -269,7 +269,8 @@ export async function handleMessage(message: IMessage, historyMessages: IMessage
       // -----------------------------------------------------------------------
 
       const delayScaleRaw = getMessageSetting('MESSAGE_DELAY_MULTIPLIER', botConfig);
-      const disableDelays = getMessageSetting('DISABLE_DELAYS', botConfig) === true;
+      // Check botConfig first (per-bot override via BOTS_{name}_DISABLE_DELAYS), then global default
+      const disableDelays = botConfig?.DISABLE_DELAYS === true || botConfig?.disableDelays === true || getMessageSetting('DISABLE_DELAYS', botConfig) === true;
       const delayScale = disableDelays ? 0 : (typeof delayScaleRaw === 'number' ? delayScaleRaw : Number(delayScaleRaw) || 1);
       if (disableDelays) {
         logger('DISABLE_DELAYS=true: Skipping artificial delays (typing still shown during inference)');
