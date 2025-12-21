@@ -226,7 +226,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               disabled={loading}
               className="flex items-center gap-2"
             >
-              {loading ? <Loading size="xs" /> : <ArrowPathIcon className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : <ArrowPathIcon className="w-4 h-4" />}
               Refresh
             </Button>
           </div>

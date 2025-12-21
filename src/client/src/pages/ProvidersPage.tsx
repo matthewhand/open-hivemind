@@ -74,7 +74,7 @@ const ProvidersPage: React.FC = () => {
                     <p className="text-base-content/60 mt-1">{category.description}</p>
                   </div>
                 </div>
-                <Badge color={category.color} size="sm">
+                <Badge variant={category.color} size="sm">
                   {category.providers.length} types
                 </Badge>
               </div>

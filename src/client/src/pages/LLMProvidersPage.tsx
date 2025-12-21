@@ -106,11 +106,11 @@ const LLMProvidersPage: React.FC = () => {
             and if it becomes unavailable or errors, the next provider in the chain takes over automatically.
           </p>
           <div className="flex items-center gap-4">
-            <Badge color="secondary">Primary</Badge>
+            <Badge variant="secondary">Primary</Badge>
             <span className="text-sm text-base-content/60">→</span>
-            <Badge color="neutral">Fallback 1</Badge>
+            <Badge variant="neutral">Fallback 1</Badge>
             <span className="text-sm text-base-content/60">→</span>
-            <Badge color="neutral">Fallback 2</Badge>
+            <Badge variant="neutral">Fallback 2</Badge>
           </div>
         </div>
       </Card>
@@ -135,7 +135,7 @@ const LLMProvidersPage: React.FC = () => {
                         <p className="text-sm text-base-content/60">{type}</p>
                       </div>
                     </div>
-                    <Badge color="secondary" size="sm">
+                    <Badge variant="secondary" size="sm">
                       {config.requiredFields.length} required
                     </Badge>
                   </div>

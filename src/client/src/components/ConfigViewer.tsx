@@ -99,7 +99,7 @@ const ConfigViewer: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <Loading size="lg" />
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }

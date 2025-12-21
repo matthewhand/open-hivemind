@@ -192,7 +192,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
     );
   };
 
-  if (loading) return <div className="flex justify-center p-8"><Loading size="lg" /></div>;
+  if (loading) return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;
   if (error) return <Alert status="error" message={error} />;
   if (!config) return <Alert status="warning" message="No configuration found" />;
 

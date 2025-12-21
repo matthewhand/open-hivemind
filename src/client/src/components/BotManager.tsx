@@ -244,7 +244,7 @@ const BotManager: React.FC = () => {
   if (isLoading && rawBots.length === 0) {
     return (
       <div className="flex justify-center items-center py-16">
-        <Loading size="lg" />
+        <span className="loading loading-spinner loading-lg"></span>
         <p className="ml-4">Loading bots...</p>
       </div>
     );
@@ -257,7 +257,7 @@ const BotManager: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl font-bold">Bot Instance Manager</h1>
           <div className="flex flex-wrap gap-2">
-            {(isFetching || (isLoading && rawBots.length > 0)) && <Loading size="sm" />}
+            {(isFetching || (isLoading && rawBots.length > 0)) && <span className="loading loading-spinner loading-sm"></span>}
             <Button variant="secondary" buttonStyle="outline" onClick={() => { refetch(); showToast('Configuration refreshed', 'info'); }}>
               <ArrowPathIcon className="w-4 h-4 mr-2" />
               Refresh

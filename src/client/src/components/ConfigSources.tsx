@@ -83,7 +83,7 @@ const ConfigSources: React.FC = () => {
     return (
       <Card>
         <div className="flex justify-center items-center py-8">
-          <Loading size="lg" />
+          <span className="loading loading-spinner loading-lg"></span>
           <p className="ml-4">Loading configuration sources...</p>
         </div>
       </Card>

@@ -185,7 +185,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
     return (
       <Card>
         <div className="flex items-center gap-2">
-          <Loading size="md" />
+          <span className="loading loading-spinner loading-md"></span>
           <p>Loading endpoints...</p>
         </div>
       </Card>

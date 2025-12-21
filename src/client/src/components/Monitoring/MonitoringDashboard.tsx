@@ -161,7 +161,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               className="flex items-center gap-2"
             >
               {loading ? (
-                <Loading size="sm" />
+                <span className="loading loading-spinner loading-sm"></span>
               ) : (
                 <ArrowPathIcon className="w-5 h-5" />
               )}

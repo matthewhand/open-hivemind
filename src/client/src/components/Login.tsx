@@ -103,7 +103,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><Loading size="sm" className="mr-2" /> Signing in...</>
+                <><span className="loading loading-spinner loading-sm mr-2"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}

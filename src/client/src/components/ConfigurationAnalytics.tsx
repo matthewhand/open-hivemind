@@ -118,7 +118,7 @@ const ConfigurationAnalytics: React.FC = () => {
   if (loading && metrics.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <Loading size="lg" />
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }

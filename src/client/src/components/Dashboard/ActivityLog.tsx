@@ -108,7 +108,7 @@ const ActivityLog: React.FC = () => {
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loading size="lg" />
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : error ? (
           <Alert variant="error">Failed to load activity log</Alert>

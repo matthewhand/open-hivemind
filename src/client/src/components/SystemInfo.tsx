@@ -167,7 +167,7 @@ const SystemInfo: React.FC = () => {
             </div>
             {isLoading && (
               <div className="flex items-center gap-2 mt-4 text-base-content/70">
-                <Loading size="sm" />
+                <span className="loading loading-spinner loading-sm"></span>
                 <span className="text-sm">Processing system action...</span>
               </div>
             )}

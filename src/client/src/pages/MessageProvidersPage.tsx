@@ -78,7 +78,7 @@ const MessageProvidersPage: React.FC = () => {
                         <p className="text-sm text-base-content/60">{type}</p>
                       </div>
                     </div>
-                    <Badge color="neutral" size="sm">
+                    <Badge variant="neutral" size="sm">
                       {config.requiredFields.length} required
                     </Badge>
                   </div>
