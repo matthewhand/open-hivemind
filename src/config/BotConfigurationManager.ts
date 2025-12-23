@@ -333,7 +333,7 @@ export class BotConfigurationManager {
 
     // Merge explicit list with discovered list
     const explicitBots = botsEnv ? botsEnv.split(',').map(n => n.trim()).filter(Boolean) : [];
-    const canonical = (n: string) => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+    const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
 
     // Deduplicate bots while preferring explicitly listed names from BOTS.
     const byCanonical = new Map<string, string>();
@@ -635,7 +635,12 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openai') {
       const normalized = this.normalizeOpenAiProfile(profileConfig);
       if (!config.openai) {
-        config.openai = {} as Partial<OpenAIConfig>;
+        config.openai = {
+          apiKey: '',
+          model: undefined,
+          baseUrl: undefined,
+          systemPrompt: undefined,
+        };
       }
       this.mergeMissing(config.openai as unknown as Record<string, unknown>, normalized);
       return;
@@ -644,7 +649,10 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'flowise') {
       const normalized = this.normalizeFlowiseProfile(profileConfig);
       if (!config.flowise) {
-        config.flowise = {} as Partial<FlowiseConfig>;
+        config.flowise = {
+          apiKey: '',
+          apiBaseUrl: undefined,
+        };
       }
       this.mergeMissing(config.flowise as unknown as Record<string, unknown>, normalized);
       return;
@@ -653,7 +661,10 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openwebui') {
       const normalized = this.normalizeOpenWebuiProfile(profileConfig);
       if (!config.openwebui) {
-        config.openwebui = {} as Partial<OpenWebUIConfig>;
+        config.openwebui = {
+          apiKey: '',
+          apiUrl: undefined,
+        };
       }
       this.mergeMissing(config.openwebui as unknown as Record<string, unknown>, normalized);
       return;
@@ -662,7 +673,11 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openswarm') {
       const normalized = this.normalizeOpenSwarmProfile(profileConfig);
       if (!config.openswarm) {
-        config.openswarm = {} as Partial<OpenSwarmConfig>;
+        config.openswarm = {
+          baseUrl: undefined,
+          apiKey: undefined,
+          team: undefined,
+        };
       }
       this.mergeMissing(config.openswarm as unknown as Record<string, unknown>, normalized);
     }
