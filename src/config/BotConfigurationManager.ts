@@ -26,9 +26,9 @@ import type {
   LlmProvider,
   McpServerConfig,
   McpGuardConfig,
-  ConfigurationValidationResult
+  ConfigurationValidationResult,
 } from '@src/types/config';
-import { ConfigurationError, ValidationError } from '../types/errorClasses';
+import { ConfigurationError } from '../types/errorClasses';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -39,7 +39,7 @@ const botSchema = {
     doc: 'Message provider type (discord, slack, etc.)',
     format: ['discord', 'slack', 'mattermost', 'webhook'],
     default: 'discord',
-    env: 'BOTS_{name}_MESSAGE_PROVIDER'
+    env: 'BOTS_{name}_MESSAGE_PROVIDER',
   },
 
   // LLM provider configuration
@@ -47,7 +47,7 @@ const botSchema = {
     doc: 'LLM provider type (openai, flowise, etc.)',
     format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
     default: 'flowise',
-    env: 'BOTS_{name}_LLM_PROVIDER'
+    env: 'BOTS_{name}_LLM_PROVIDER',
   },
 
   // LLM provider profile configuration
@@ -55,7 +55,7 @@ const botSchema = {
     doc: 'LLM provider profile name',
     format: String,
     default: '',
-    env: 'BOTS_{name}_LLM_PROFILE'
+    env: 'BOTS_{name}_LLM_PROFILE',
   },
 
   // Persona configuration
@@ -63,56 +63,56 @@ const botSchema = {
     doc: 'Bot persona key',
     format: String,
     default: 'default',
-    env: 'BOTS_{name}_PERSONA'
+    env: 'BOTS_{name}_PERSONA',
   },
 
   SYSTEM_INSTRUCTION: {
     doc: 'Bot system instruction/prompt',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SYSTEM_INSTRUCTION'
+    env: 'BOTS_{name}_SYSTEM_INSTRUCTION',
   },
 
   RESPONSE_PROFILE: {
     doc: 'Response profile name for engagement/delay overrides',
     format: String,
     default: '',
-    env: 'BOTS_{name}_RESPONSE_PROFILE'
+    env: 'BOTS_{name}_RESPONSE_PROFILE',
   },
 
   MCP_SERVERS: {
     doc: 'MCP servers configuration (JSON array)',
     format: Array,
     default: [],
-    env: 'BOTS_{name}_MCP_SERVERS'
+    env: 'BOTS_{name}_MCP_SERVERS',
   },
 
   MCP_GUARD: {
     doc: 'MCP tool usage guard configuration (JSON)',
     format: Object,
     default: { enabled: false, type: 'owner' },
-    env: 'BOTS_{name}_MCP_GUARD'
+    env: 'BOTS_{name}_MCP_GUARD',
   },
 
   MCP_GUARD_PROFILE: {
     doc: 'MCP guardrail profile name',
     format: String,
     default: '',
-    env: 'BOTS_{name}_MCP_GUARD_PROFILE'
+    env: 'BOTS_{name}_MCP_GUARD_PROFILE',
   },
 
   MCP_SERVER_PROFILE: {
     doc: 'MCP server profile name for predefined server bundles',
     format: String,
     default: '',
-    env: 'BOTS_{name}_MCP_SERVER_PROFILE'
+    env: 'BOTS_{name}_MCP_SERVER_PROFILE',
   },
 
   DISABLE_DELAYS: {
     doc: 'When true, skips all artificial delays. Bot responds as fast as LLM can generate.',
     format: Boolean,
     default: false,
-    env: 'BOTS_{name}_DISABLE_DELAYS'
+    env: 'BOTS_{name}_DISABLE_DELAYS',
   },
 
   // Discord-specific configuration
@@ -120,35 +120,35 @@ const botSchema = {
     doc: 'Discord bot token',
     format: String,
     default: '',
-    env: 'BOTS_{name}_DISCORD_BOT_TOKEN'
+    env: 'BOTS_{name}_DISCORD_BOT_TOKEN',
   },
 
   DISCORD_CLIENT_ID: {
     doc: 'Discord client ID',
     format: String,
     default: '',
-    env: 'BOTS_{name}_DISCORD_CLIENT_ID'
+    env: 'BOTS_{name}_DISCORD_CLIENT_ID',
   },
 
   DISCORD_GUILD_ID: {
     doc: 'Discord guild ID',
     format: String,
     default: '',
-    env: 'BOTS_{name}_DISCORD_GUILD_ID'
+    env: 'BOTS_{name}_DISCORD_GUILD_ID',
   },
 
   DISCORD_CHANNEL_ID: {
     doc: 'Default Discord channel ID',
     format: String,
     default: '',
-    env: 'BOTS_{name}_DISCORD_CHANNEL_ID'
+    env: 'BOTS_{name}_DISCORD_CHANNEL_ID',
   },
 
   DISCORD_VOICE_CHANNEL_ID: {
     doc: 'Discord voice channel ID',
     format: String,
     default: '',
-    env: 'BOTS_{name}_DISCORD_VOICE_CHANNEL_ID'
+    env: 'BOTS_{name}_DISCORD_VOICE_CHANNEL_ID',
   },
 
   // Slack-specific configuration
@@ -156,42 +156,42 @@ const botSchema = {
     doc: 'Slack bot token',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SLACK_BOT_TOKEN'
+    env: 'BOTS_{name}_SLACK_BOT_TOKEN',
   },
 
   SLACK_APP_TOKEN: {
     doc: 'Slack app token for Socket Mode',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SLACK_APP_TOKEN'
+    env: 'BOTS_{name}_SLACK_APP_TOKEN',
   },
 
   SLACK_SIGNING_SECRET: {
     doc: 'Slack signing secret for verifying requests',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SLACK_SIGNING_SECRET'
+    env: 'BOTS_{name}_SLACK_SIGNING_SECRET',
   },
 
   SLACK_JOIN_CHANNELS: {
     doc: 'Comma-separated Slack channel IDs to join',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SLACK_JOIN_CHANNELS'
+    env: 'BOTS_{name}_SLACK_JOIN_CHANNELS',
   },
 
   SLACK_DEFAULT_CHANNEL_ID: {
     doc: 'Default Slack channel ID for messages',
     format: String,
     default: '',
-    env: 'BOTS_{name}_SLACK_DEFAULT_CHANNEL_ID'
+    env: 'BOTS_{name}_SLACK_DEFAULT_CHANNEL_ID',
   },
 
   SLACK_MODE: {
     doc: 'Slack connection mode (socket or rtm)',
     format: ['socket', 'rtm'],
     default: 'socket',
-    env: 'BOTS_{name}_SLACK_MODE'
+    env: 'BOTS_{name}_SLACK_MODE',
   },
 
   // Mattermost-specific configuration
@@ -199,21 +199,21 @@ const botSchema = {
     doc: 'Mattermost server endpoint',
     format: String,
     default: '',
-    env: 'BOTS_{name}_MATTERMOST_SERVER_URL'
+    env: 'BOTS_{name}_MATTERMOST_SERVER_URL',
   },
 
   MATTERMOST_TOKEN: {
     doc: 'Mattermost authentication token',
     format: String,
     default: '',
-    env: 'BOTS_{name}_MATTERMOST_TOKEN'
+    env: 'BOTS_{name}_MATTERMOST_TOKEN',
   },
 
   MATTERMOST_CHANNEL: {
     doc: 'Default Mattermost channel for messages',
     format: String,
     default: '',
-    env: 'BOTS_{name}_MATTERMOST_CHANNEL'
+    env: 'BOTS_{name}_MATTERMOST_CHANNEL',
   },
 
   // OpenAI configuration
@@ -221,28 +221,28 @@ const botSchema = {
     doc: 'OpenAI API key',
     format: String,
     default: '',
-    env: 'BOTS_{name}_OPENAI_API_KEY'
+    env: 'BOTS_{name}_OPENAI_API_KEY',
   },
 
   OPENAI_MODEL: {
     doc: 'OpenAI model name',
     format: String,
     default: 'gpt-4',
-    env: 'BOTS_{name}_OPENAI_MODEL'
+    env: 'BOTS_{name}_OPENAI_MODEL',
   },
 
   OPENAI_BASE_URL: {
     doc: 'OpenAI API base URL',
     format: String,
     default: 'https://api.openai.com/v1',
-    env: 'BOTS_{name}_OPENAI_BASE_URL'
+    env: 'BOTS_{name}_OPENAI_BASE_URL',
   },
 
   OPENAI_SYSTEM_PROMPT: {
     doc: 'OpenAI system prompt for this bot',
     format: String,
     default: '',
-    env: 'BOTS_{name}_OPENAI_SYSTEM_PROMPT'
+    env: 'BOTS_{name}_OPENAI_SYSTEM_PROMPT',
   },
 
   // Flowise configuration
@@ -250,14 +250,14 @@ const botSchema = {
     doc: 'Flowise API key',
     format: String,
     default: '',
-    env: 'BOTS_{name}_FLOWISE_API_KEY'
+    env: 'BOTS_{name}_FLOWISE_API_KEY',
   },
 
   FLOWISE_API_BASE_URL: {
     doc: 'Flowise API base URL',
     format: String,
     default: 'http://localhost:3000/api/v1',
-    env: 'BOTS_{name}_FLOWISE_API_BASE_URL'
+    env: 'BOTS_{name}_FLOWISE_API_BASE_URL',
   },
 
   // OpenWebUI configuration
@@ -265,14 +265,14 @@ const botSchema = {
     doc: 'OpenWebUI API key',
     format: String,
     default: '',
-    env: 'BOTS_{name}_OPENWEBUI_API_KEY'
+    env: 'BOTS_{name}_OPENWEBUI_API_KEY',
   },
 
   OPENWEBUI_API_URL: {
     doc: 'OpenWebUI API URL',
     format: String,
     default: 'http://localhost:3000/api/',
-    env: 'BOTS_{name}_OPENWEBUI_API_URL'
+    env: 'BOTS_{name}_OPENWEBUI_API_URL',
   },
 
   // OpenSwarm configuration
@@ -280,22 +280,22 @@ const botSchema = {
     doc: 'OpenSwarm API base URL',
     format: String,
     default: 'http://localhost:8000/v1',
-    env: 'BOTS_{name}_OPENSWARM_BASE_URL'
+    env: 'BOTS_{name}_OPENSWARM_BASE_URL',
   },
 
   OPENSWARM_API_KEY: {
     doc: 'OpenSwarm API key',
     format: String,
     default: 'dummy-key',
-    env: 'BOTS_{name}_OPENSWARM_API_KEY'
+    env: 'BOTS_{name}_OPENSWARM_API_KEY',
   },
 
   OPENSWARM_TEAM: {
     doc: 'OpenSwarm team name (used as model)',
     format: String,
     default: 'default-team',
-    env: 'BOTS_{name}_OPENSWARM_TEAM'
-  }
+    env: 'BOTS_{name}_OPENSWARM_TEAM',
+  },
 };
 
 // BotConfig interface is now imported from @src/types/config
@@ -337,8 +337,8 @@ export class BotConfigurationManager {
 
     // Deduplicate bots while preferring explicitly listed names from BOTS.
     const byCanonical = new Map<string, string>();
-    for (const name of discoveredBots) byCanonical.set(canonical(name), name);
-    for (const name of explicitBots) byCanonical.set(canonical(name), name);
+    for (const name of discoveredBots) { byCanonical.set(canonical(name), name); }
+    for (const name of explicitBots) { byCanonical.set(canonical(name), name); }
     const allBotNames = Array.from(byCanonical.values());
 
     if (allBotNames.length > 0) {
@@ -374,13 +374,13 @@ export class BotConfigurationManager {
     for (const rawKey of envVars) {
       const key = String(rawKey || '');
       const upper = key.toUpperCase();
-      if (!upper.startsWith(prefix)) continue;
+      if (!upper.startsWith(prefix)) { continue; }
 
       for (const schemaKey of schemaKeys) {
         const suffix = `_${schemaKey}`;
-        if (!upper.endsWith(suffix)) continue;
+        if (!upper.endsWith(suffix)) { continue; }
         const namePart = upper.slice(prefix.length, upper.length - suffix.length);
-        if (!namePart) break;
+        if (!namePart) { break; }
         botNames.add(namePart.toLowerCase().replace(/_+/g, '-'));
         break;
       }
@@ -441,7 +441,7 @@ export class BotConfigurationManager {
           if (error instanceof Error) {
             debug(`Warning: Invalid value for ${envVar}:`, {
               error: error.message,
-              envVar
+              envVar,
             });
             this.warnings.push(`Invalid value for ${envVar}: ${error.message}`);
           } else {
@@ -449,7 +449,7 @@ export class BotConfigurationManager {
               `Invalid configuration value for ${envVar}`,
               envVar,
               'string',
-              typeof error
+              typeof error,
             );
             debug(`Warning: Invalid value for ${envVar}:`, configError.toJSON());
             this.warnings.push(`Invalid value for ${envVar}: ${configError.message}`);
@@ -491,7 +491,7 @@ export class BotConfigurationManager {
       systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
       mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
-      mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined
+      mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined,
     };
 
 
@@ -568,7 +568,7 @@ export class BotConfigurationManager {
       return;
     }
 
-    const assignIfAllowed = (field: keyof BotOverride, envKey: string) => {
+    const assignIfAllowed = (field: keyof BotOverride, envKey: string): void => {
       const overrideValue = overrides[field];
       if (overrideValue === undefined) {
         return;
@@ -583,7 +583,7 @@ export class BotConfigurationManager {
           ? { ...(overrideValue as unknown as Record<string, unknown>) }
           : overrideValue;
 
-      (config as any)[field] = clonedValue;
+      (config as Record<string, unknown>)[field] = clonedValue;
     };
 
     assignIfAllowed('messageProvider', 'MESSAGE_PROVIDER');
@@ -610,7 +610,7 @@ export class BotConfigurationManager {
   }
 
   private applyLlmProfile(config: BotConfig): void {
-    const llmProfileName = (config as any).llmProfile as string | undefined;
+    const llmProfileName = (config as { llmProfile?: string }).llmProfile as string | undefined;
     if (llmProfileName) {
       const profile = getLlmProfileByKey(llmProfileName);
       if (!profile) {
@@ -635,7 +635,7 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openai') {
       const normalized = this.normalizeOpenAiProfile(profileConfig);
       if (!config.openai) {
-        config.openai = {} as any;
+        config.openai = {} as Partial<OpenAIConfig>;
       }
       this.mergeMissing(config.openai as unknown as Record<string, unknown>, normalized);
       return;
@@ -644,7 +644,7 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'flowise') {
       const normalized = this.normalizeFlowiseProfile(profileConfig);
       if (!config.flowise) {
-        config.flowise = {} as any;
+        config.flowise = {} as Partial<FlowiseConfig>;
       }
       this.mergeMissing(config.flowise as unknown as Record<string, unknown>, normalized);
       return;
@@ -653,7 +653,7 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openwebui') {
       const normalized = this.normalizeOpenWebuiProfile(profileConfig);
       if (!config.openwebui) {
-        config.openwebui = {} as any;
+        config.openwebui = {} as Partial<OpenWebUIConfig>;
       }
       this.mergeMissing(config.openwebui as unknown as Record<string, unknown>, normalized);
       return;
@@ -662,7 +662,7 @@ export class BotConfigurationManager {
     if (config.llmProvider === 'openswarm') {
       const normalized = this.normalizeOpenSwarmProfile(profileConfig);
       if (!config.openswarm) {
-        config.openswarm = {} as any;
+        config.openswarm = {} as Partial<OpenSwarmConfig>;
       }
       this.mergeMissing(config.openswarm as unknown as Record<string, unknown>, normalized);
     }
@@ -721,7 +721,7 @@ export class BotConfigurationManager {
   }
 
   private applyGuardrailProfile(config: BotConfig): void {
-    const profileName = (config as any).mcpGuardProfile as string | undefined;
+    const profileName = (config as { mcpGuardProfile?: string }).mcpGuardProfile as string | undefined;
     if (!profileName) {
       return;
     }
@@ -740,12 +740,12 @@ export class BotConfigurationManager {
       enabled: Boolean(profile.mcpGuard.enabled),
       type: profile.mcpGuard.type === 'custom' ? 'custom' : 'owner',
       allowedUsers: allowed,
-      allowedUserIds: allowed
-    } as any;
+      allowedUserIds: allowed,
+    } as McpGuardConfig;
   }
 
   private applyMcpServerProfile(config: BotConfig): void {
-    const profileName = (config as any).mcpServerProfile as string | undefined;
+    const profileName = (config as { mcpServerProfile?: string }).mcpServerProfile as string | undefined;
     if (!profileName) {
       return;
     }
@@ -762,7 +762,7 @@ export class BotConfigurationManager {
 
     // Combine: profile servers + existing servers (dedup by name)
     const seenNames = new Set<string>();
-    const merged: any[] = [];
+    const merged: McpServerConfig[] = [];
 
     for (const server of profileServers) {
       if (server.name && !seenNames.has(server.name)) {
@@ -771,7 +771,7 @@ export class BotConfigurationManager {
       }
     }
     for (const server of existingServers) {
-      const name = (server as any).name;
+      const name = (server as { name?: string }).name;
       if (name && !seenNames.has(name)) {
         seenNames.add(name);
         merged.push(server);
@@ -844,10 +844,10 @@ export class BotConfigurationManager {
    * Detect LLM provider from legacy environment variables
    */
   private detectLegacyLlmProvider(): string {
-    if (process.env.OPENAI_API_KEY) return 'openai';
-    if (process.env.FLOWISE_API_KEY) return 'flowise';
-    if (process.env.OPENWEBUI_API_KEY) return 'openwebui';
-    if (process.env.OPENSWARM_BASE_URL) return 'openswarm';
+    if (process.env.OPENAI_API_KEY) { return 'openai'; }
+    if (process.env.FLOWISE_API_KEY) { return 'flowise'; }
+    if (process.env.OPENWEBUI_API_KEY) { return 'openwebui'; }
+    if (process.env.OPENSWARM_BASE_URL) { return 'openswarm'; }
     return 'flowise'; // Default fallback
   }
 
@@ -881,7 +881,7 @@ export class BotConfigurationManager {
    */
   public getDiscordBotConfigs(): BotConfig[] {
     return Array.from(this.bots.values()).filter(bot =>
-      bot.messageProvider === 'discord' && bot.discord?.token
+      bot.messageProvider === 'discord' && bot.discord?.token,
     );
   }
 
@@ -961,7 +961,7 @@ export class BotConfigurationManager {
       ...currentConfig,
       ...updates,
       name, // Ensure name is preserved
-      _updatedAt: new Date().toISOString()
+      _updatedAt: new Date().toISOString(),
     };
 
     if (!fs.existsSync(botsDir)) {
@@ -1011,7 +1011,7 @@ export class BotConfigurationManager {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings: []
+      warnings: [],
     };
   }
 
